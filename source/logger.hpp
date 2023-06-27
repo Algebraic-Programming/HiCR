@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-namespace taskr
+namespace HiCR
 {
 
 // Error logging function
@@ -68,4 +68,4 @@ inline void logDebug (const char *fileName, const int lineNumber, const char *fo
 }
 
 
-} // namespace taskr
+} // namespace HiCR
