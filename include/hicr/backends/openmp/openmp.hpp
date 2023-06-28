@@ -16,7 +16,11 @@ class OpenMP : public Backend
 
  OpenMP() = default;
  ~OpenMP() = default;
- resourceList_t queryResources() override;
+
+ resourceList_t queryResources() override
+ {
+   return resourceList_t();
+ }
 
 };
 

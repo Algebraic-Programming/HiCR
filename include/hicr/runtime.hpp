@@ -9,7 +9,11 @@ class Runtime
 
   Runtime() = default;
   ~Runtime() = default;
-  void initialize();
+
+  void initialize()
+  {
+   LOG_DEBUG("HiCR Initialized\n");
+  }
 
 };
 } // namespace HiCR
