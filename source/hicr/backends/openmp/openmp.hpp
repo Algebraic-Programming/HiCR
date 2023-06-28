@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <backends/backend.hpp>
+#include <hicr/backends/backend.hpp>
 
 namespace HiCR {
 
@@ -14,6 +14,8 @@ class OpenMP : public Backend
 
  public:
 
+ OpenMP() = default;
+ ~OpenMP() = default;
  resourceList_t queryResources() override;
 
 };

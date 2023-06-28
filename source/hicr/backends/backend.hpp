@@ -11,7 +11,7 @@ class Backend
  public:
 
  Backend() = default;
- ~Backend() = default;
+ virtual ~Backend() = default;
  virtual resourceList_t queryResources() = 0;
 
 };
