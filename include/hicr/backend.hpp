@@ -12,8 +12,12 @@ class Backend
 
  Backend() = default;
  virtual ~Backend() = default;
- virtual resourceList_t queryResources() = 0;
+ virtual void queryResources() = 0;
+ inline resourceList_t& getResourceList() { return _resourceList; }
 
+ protected:
+
+ resourceList_t _resourceList;
 };
 
 

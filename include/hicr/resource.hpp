@@ -1,23 +1,26 @@
 #pragma once
 
 #include <list>
-#include <cstdlib>
+#include <hicr/common.hpp>
 
 namespace HiCR
 {
 
 class Resource
 {
- private:
-
  public:
 
- Resource() = default;
+ Resource(resourceId_t id) : _id(id) {};
  ~Resource() = default;
- size_t id;
+
+ inline resourceId_t getId() { return _id; }
+
+ private:
+
+ resourceId_t _id;
 
 };
 
-typedef std::list<Resource> resourceList_t;
+typedef std::vector<Resource*> resourceList_t;
 
 } // namespace HiCR

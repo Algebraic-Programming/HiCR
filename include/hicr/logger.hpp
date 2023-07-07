@@ -9,7 +9,7 @@ namespace HiCR
 {
 
 // Error logging function
-#define LOG_ERROR(...) logError(__FILE__, __LINE__, __VA_ARGS__)
+#define LOG_ERROR(...) HiCR::logError(__FILE__, __LINE__, __VA_ARGS__)
 inline void logError [[noreturn]] (const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
@@ -31,7 +31,7 @@ inline void logError [[noreturn]] (const char *fileName, const int lineNumber, c
 }
 
 // warning logging function
-#define LOG_WARNING(...) logWarning(__FILE__, __LINE__, __VA_ARGS__)
+#define LOG_WARNING(...) HiCR::logWarning(__FILE__, __LINE__, __VA_ARGS__)
 inline void logWarning (const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
@@ -52,7 +52,7 @@ inline void logWarning (const char *fileName, const int lineNumber, const char *
 }
 
 // warning logging function
-#define LOG_DEBUG(...) logDebug(__FILE__, __LINE__, __VA_ARGS__)
+#define LOG_DEBUG(...) HiCR::logDebug(__FILE__, __LINE__, __VA_ARGS__)
 inline void logDebug (const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
