@@ -10,7 +10,7 @@ class Resource
 {
  public:
 
- Resource(resourceId_t id) : _id(id) {};
+ Resource(const resourceId_t id) : _id(id) {};
  ~Resource() = default;
 
  inline resourceId_t getId() { return _id; }

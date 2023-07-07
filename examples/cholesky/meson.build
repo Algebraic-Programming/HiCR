@@ -7,20 +7,10 @@ project('cholesky', [ 'c', 'cpp' ],
   ]
 )
 
-# Include path to the taskr RTS
-taskr_include_dir = get_option('taskr_include_dir')
-if taskr_include_dir == ''
- error('Option "taskr_include_dir" must be defined')
-endif
-
-# Include path to the HiCR unified framework
-hicr_include_dir = get_option('hicr_include_dir')
-if hicr_include_dir == ''
- error('Option "hicr_include_dir" must be defined')
-endif
-
 projectDeps = [
+    dependency('hwloc', required: true),
     dependency('openmp', required: true),
+    dependency('threads', required: true),
     dependency('openblas', required: true),
     dependency('lapacke', required: true),
    ]
@@ -56,18 +46,20 @@ executable('cholesky_blocked_omp_threads',
   cpp_args: cppArgs
 )
 
+taskr_include_dir = '../../../frontends/taskr/include'
+hicr_include_dir = '../../../include'
 boost_dep = dependency('boost',  modules : ['context'],  required : true)
 
 executable('cholesky_blocked_taskr_static',
   [ 'source/main.cpp', 'source/variants/blocked_taskr_static.cpp' ],
   include_directories: projectIncludes,
   dependencies: [ projectDeps, boost_dep ],
-  cpp_args: [ cppArgs, '-I' + taskr_include_dir, '-I' + hicr_include_dir, '-DHICR_ENABLE_BACKEND_OPENMP' ]
+  cpp_args: [ cppArgs, '-I' + taskr_include_dir, '-I' + hicr_include_dir, '-DHICR_ENABLE_BACKEND_PTHREADS' ]
 )
 
 executable('cholesky_blocked_taskr_dynamic',
   [ 'source/main.cpp', 'source/variants/blocked_taskr_dynamic.cpp' ],
   include_directories: projectIncludes,
   dependencies: [ projectDeps, boost_dep],
-  cpp_args: [ cppArgs, '-I' + taskr_include_dir, '-I' + hicr_include_dir ]
+  cpp_args: [ cppArgs, '-I' + taskr_include_dir, '-I' + hicr_include_dir, '-DHICR_ENABLE_BACKEND_PTHREADS'  ]
 )

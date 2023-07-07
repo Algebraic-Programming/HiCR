@@ -3,8 +3,8 @@
 #include <hicr/logger.hpp>
 #include <hicr/backend.hpp>
 
-#ifdef HICR_ENABLE_BACKEND_OPENMP
-#include <hicr/backends/openmp.hpp>
+#ifdef HICR_ENABLE_BACKEND_PTHREADS
+#include <../backends/pthreads/pthreads.hpp>
 #endif
 
 namespace HiCR
@@ -20,8 +20,8 @@ class Runtime
   void initialize()
   {
    // Initializing backends
-   #ifdef HICR_ENABLE_BACKEND_OPENMP
-	  _backends.push_back(new backends::OpenMP());
+   #ifdef HICR_ENABLE_BACKEND_PTHREADS
+	  _backends.push_back(new backends::PThreads());
    #endif
 
 	  _initialized = true;
