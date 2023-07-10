@@ -15,7 +15,7 @@ class Resource
 
  inline resourceId_t getId() { return _id; }
 
- private:
+ protected:
 
  resourceId_t _id;
 
