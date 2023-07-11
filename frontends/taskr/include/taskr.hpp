@@ -67,17 +67,16 @@ inline void run()
  for (size_t i = 0; i < taskPools.size(); i++)
  {
   auto worker = new Worker();
-  auto workerTask = new HiCR::Task([](void* worker){((Worker*)worker)->run();});
+  auto workerTask = new HiCR::Task(i, [](void* worker){((Worker*)worker)->run();});
+  worker->hicrTask() = workerTask;
   taskPools[i]->dispatchTask(workerTask, worker);
  }
 
- // Initializing resources
+ // Initializing workers
  for (size_t i = 0; i < resources.size(); i++) resources[i]->initialize();
 
- printf("Back on TaskR\n");
- fflush(stdout);
- sleep(2);
- exit(0);
+ // Waiting for workers to finish (i.e., all tasks have finished)
+ for (size_t i = 0; i < resources.size(); i++) resources[i]->await();
 }
 
 inline void finalize()

@@ -32,7 +32,7 @@ class PThreads : public Backend
  {
    if (obj->arity == 0) threadPUs.push_back(obj->os_index);
    for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
- };
+ }
 
  void queryResources() override
  {
@@ -51,14 +51,6 @@ class PThreads : public Backend
   }
  }
 
- void finalize() override
- {
-  // Setting threads for finalization
-  for (size_t i = 0; i < _resourceList.size(); i++) _resourceList[i]->finalize();
-
-  // Waiting for threads to finish
-  for (size_t i = 0; i < _resourceList.size(); i++) pthread_join(((pthreads::Thread*)_resourceList[i])->getPthreadId(), NULL);
- }
 };
 
 

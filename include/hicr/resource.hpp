@@ -17,6 +17,8 @@ class Resource
 
  virtual void initialize() = 0;
  virtual void finalize() = 0;
+ virtual void await() = 0;
+
  inline resourceId_t getId() { return _id; }
  void subscribe(TaskPool* pool) { _pools.insert(pool); }
 

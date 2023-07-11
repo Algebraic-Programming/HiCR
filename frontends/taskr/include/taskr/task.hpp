@@ -2,6 +2,7 @@
 
 #include <taskr/common.hpp>
 #include <taskr/runtime.hpp>
+#include <hicr/task.hpp>
 #include <vector>
 
 namespace taskr

@@ -15,9 +15,9 @@ checkFlag=""
 if [[ "${verify}" == "true" ]]; then checkFlag="--check"; fi
 args="${n} ${bs} ${checkFlag}"
 
-#OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=${num_cores} build/cholesky_unblocked ${args}
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=${num_cores} build/cholesky_unblocked ${args}
 #build/cholesky_blocked_ompss ${args}
 #build/cholesky_blocked_omp_threads ${args}
-#build/cholesky_blocked_omp_tasks ${args}
-echo "build/cholesky_blocked_taskr_static ${args}"
-#build/cholesky_blocked_taskr_dynamic ${args}
+build/cholesky_blocked_omp_tasks ${args}
+build/cholesky_blocked_taskr_static ${args}
+build/cholesky_blocked_taskr_dynamic ${args}

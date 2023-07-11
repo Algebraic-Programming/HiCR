@@ -2,6 +2,7 @@
 
 #include <taskr/runtime.hpp>
 #include <taskr/task.hpp>
+#include <hicr/task.hpp>
 
 namespace taskr
 {
@@ -14,7 +15,12 @@ private:
 
  Task* _currentTask;
 
+ // Corresponding HiCR task
+ HiCR::Task* _hicrTask;
+
 public:
+
+ inline HiCR::Task*& hicrTask() { return _hicrTask; }
 
  inline bool checkReadyTasks()
  {
@@ -69,6 +75,8 @@ public:
 
  inline void run()
  {
+  printf("Running TaskR worker\n");
+
   // Run tasks until all of them are finished
   while (_runtime->_taskCount > 0)
   {
@@ -78,6 +86,8 @@ public:
    // When no more ready tasks remain, use the worker to check the dependencies of those waiting (if any)
    checkWaitingTasks();
   }
+
+  _hicrTask->setTerminal();
  }
 
  inline Task* getCurrentTask() { return _currentTask; }

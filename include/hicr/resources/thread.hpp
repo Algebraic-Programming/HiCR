@@ -63,16 +63,27 @@ class Thread : public Resource
 
  void mainLoop()
  {
-  printAffinity();
-
   while(_finalize == false)
   {
-    for (auto pool : _pools)
-    {
-     auto task = pool->getNextTask();
+   for (auto pool : _pools)
+   {
+    auto task = pool->getNextTask();
 
-     if (task != NULL) printf("Thread %lu executing task %lu\n", _id, task->getId());
+    // If this pool contains no tasks, then go on to the next one
+    if (task == NULL) continue;
+
+    // Running task
+    task->run();
+
+    // If the task is marked as terminal, the current thread has to finish.
+    if (task->isTerminal() == true)
+    {
+     _finalize = true;
+
+     // We stop processing other tasks
+     break;
     }
+   }
   }
  }
 
@@ -80,6 +91,11 @@ class Thread : public Resource
 
  Thread(const resourceId_t id, const std::vector<int>& affinity) : Resource(id),_affinity {affinity} { };
  ~Thread() = default;
+
+ void await()
+ {
+  pthread_join(_pthreadId, NULL);
+ }
 
  void finalize()
  {
@@ -90,11 +106,6 @@ class Thread : public Resource
  {
   auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
   if (status != 0) LOG_ERROR("Could not create thread %lu\n", _id);
- }
-
- pthread_t getPthreadId() const
- {
-  return _pthreadId;
  }
 
 };

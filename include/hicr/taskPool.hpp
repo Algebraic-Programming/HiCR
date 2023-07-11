@@ -18,8 +18,12 @@ class TaskPool
 
  inline void dispatchTask(Task* task, void* arg)
  {
-  task->setArgument(arg);
+  task->argument() = arg;
   _queue.push(task);
+
+  if (task->state() != task_state::initial) LOG_ERROR("Attempting to run a task that is not in a initial state (State: %d).\n", task->state());
+
+  task->state() = task_state::dispatched;
  }
 
  inline Task* getNextTask()

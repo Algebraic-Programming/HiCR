@@ -29,10 +29,11 @@ class Coroutine
     {
      _contextSink = std::move(sink);
      fc(arg);
+     yield();
      return std::move(sink);
     };
 
-    // Creating new contextt
+    // Creating new context
     _contextSource = boost::context::callcc(coroutineFc);
   }
 
