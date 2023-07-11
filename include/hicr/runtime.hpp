@@ -25,7 +25,6 @@ class Runtime
    #endif
 
 	  _initialized = true;
-   LOG_DEBUG("HiCR Initialized");
   }
 
   inline std::vector<Backend*>& getBackends()

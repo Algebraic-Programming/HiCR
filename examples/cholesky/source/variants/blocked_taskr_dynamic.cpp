@@ -4,7 +4,6 @@
 
 const char* variantName = "Blocked Taskr (Dynamic)";
 
-inline uint64_t getLabelSyrk(const int i, const int j, const int nb)              { return 3*nb*nb*nb + i*nb + j; }
 inline uint64_t getLabelPotrf(const int i, const int nb)                          { return 2*nb*nb*nb + i; }
 inline uint64_t getLabelTrsm(const int i, const int j, const int nb)              { return 1*nb*nb*nb + i*nb + j; }
 inline uint64_t getLabelGemm(const int i, const int j, const int k, const int nb) { return 0*nb*nb*nb + i*nb*nb + j*nb + k; }
@@ -25,12 +24,8 @@ inline void blockedTrsm(double* __restrict__ A, const size_t n, const size_t bs,
 
 inline void blockedGemm(double* __restrict__ A, const size_t n, const size_t bs, const int i, const int j, const int k)
 {
- cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, bs, bs, bs, -1.0, &(A[ i * bs * n + k * bs ]), n,      &(A[ i * bs * n + j * bs ]), n, 1.0, &(A[ k * bs * n + j * bs ]), n );
-}
-
-inline void blockedSyrk(double* __restrict__ A, const size_t n, const size_t bs, const int i, const int j)
-{
- cblas_dsyrk(CblasRowMajor, CblasUpper, CblasTrans,   bs, bs,     -1.0, &(A[ i * bs * n + j * bs ]), n, 1.0, &(A[ j * bs * n + j * bs ]), n );
+ if (k != j) cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, bs, bs, bs, -1.0, &(A[ i * bs * n + k * bs ]), n,      &(A[ i * bs * n + j * bs ]), n, 1.0, &(A[ k * bs * n + j * bs ]), n );
+ if (k == j) cblas_dsyrk(CblasRowMajor, CblasUpper, CblasTrans,   bs, bs,     -1.0, &(A[ i * bs * n + k * bs ]), n, 1.0, &(A[ k * bs * n + j * bs ]), n );
 }
 
 inline void schedulePotrf(double* __restrict__ A, const size_t n, const size_t bs, const size_t nb, const int i)
@@ -42,7 +37,7 @@ inline void schedulePotrf(double* __restrict__ A, const size_t n, const size_t b
  if (nextI < nb)
  {
   auto potrfTask = new taskr::Task(getLabelPotrf(nextI, nb), [A, n, bs, nb, nextI] () { schedulePotrf(A, n, bs, nb, nextI); });
-  potrfTask->addTaskDependency(getLabelSyrk(i, nextI, nb));
+  potrfTask->addTaskDependency(getLabelGemm(i, nextI, nextI, nb));
   taskr::addTask(potrfTask);
  }
 }
@@ -79,21 +74,6 @@ inline void scheduleGemm(double* __restrict__ A, const size_t n, const size_t bs
  }
 }
 
-inline void scheduleSyrk(double* __restrict__ A, const size_t n, const size_t bs, const size_t nb, const int i, const int j)
-{
- blockedSyrk(A, n, bs, i, j);
-
- // If not finished, create next task
- size_t nextI = i+1;
- size_t nextJ = j+1;
- if (nextI < nb && nextJ < nb)
- {
-  auto syrkTask = new taskr::Task(getLabelSyrk(nextI, nextJ, nb), [A, n, bs, nb, nextI, nextJ] () { scheduleSyrk(A, n, bs, nb, nextI, nextJ); });
-  syrkTask->addTaskDependency(getLabelTrsm(nextI, nextJ, nb));
-  taskr::addTask(syrkTask);
- }
-}
-
 // blocked version with omp tasks dependencies
 void cholesky(double* __restrict__ A, const size_t n, const size_t bs)
 {
@@ -115,19 +95,10 @@ void cholesky(double* __restrict__ A, const size_t n, const size_t bs)
  for( size_t j = 1; j < nb; j++ )
   for( size_t k = 1; k < j + 1; k++ )
   {
-   if (j != k)
-   {
     auto gemmTask = new taskr::Task(getLabelGemm(0, j, k, nb), [A, n, bs, nb, j, k] () { scheduleGemm(A, n, bs, nb, 0, j, k); });
     gemmTask->addTaskDependency(getLabelTrsm(0, j, nb));
     gemmTask->addTaskDependency(getLabelTrsm(0, k, nb));
     taskr::addTask(gemmTask);
-   }
-   else
-   {
-    auto syrkTask = new taskr::Task(getLabelSyrk(0, j, nb), [A, n, bs, nb, j] () { scheduleSyrk(A, n, bs, nb, 0, j); });
-    syrkTask->addTaskDependency(getLabelTrsm(0, j, nb));
-    taskr::addTask(syrkTask);
-   }
   }
 
  // Running taskr

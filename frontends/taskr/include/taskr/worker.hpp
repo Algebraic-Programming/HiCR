@@ -75,8 +75,6 @@ public:
 
  inline void run()
  {
-  printf("Running TaskR worker\n");
-
   // Run tasks until all of them are finished
   while (_runtime->_taskCount > 0)
   {
