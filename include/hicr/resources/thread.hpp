@@ -22,6 +22,7 @@ class Thread : public Resource
 {
  private:
 
+ bool _finalize = false;
  pthread_t _pthreadId;
  std::vector<int> _affinity;
  thread_state _state = thread_state::initial;
@@ -32,7 +33,7 @@ class Thread : public Resource
   auto thread = (Thread*)p;
 
   // Setting initial thread affinity
-  thread->updateAffinity();
+  thread->updateAffinity(thread->_affinity);
 
   // Yielding execution to allow affinity to refresh
   sched_yield();
@@ -44,28 +45,35 @@ class Thread : public Resource
   return NULL;
  }
 
- void updateAffinity() const
+ static void updateAffinity(const std::vector<int>& affinity)
  {
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
-  for (size_t i = 0; i < _affinity.size(); i++) CPU_SET(_affinity[i], &cpuset);
-  if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) printf("[WARNING] Problem assigning affinity: %d.\n", _affinity[0]);
+  for (size_t i = 0; i < affinity.size(); i++) CPU_SET(affinity[i], &cpuset);
+  if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) printf("[WARNING] Problem assigning affinity: %d.\n", affinity[0]);
  }
 
  static void printAffinity()
  {
-   cpu_set_t cpuset;
-   if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0)  printf("[WARNING] Problem obtaining affinity.\n");
-    for (int i = 0; i < CPU_SETSIZE; i++)
-    if (CPU_ISSET(i, &cpuset)) printf("%2d ", i);
+  cpu_set_t cpuset;
+  if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0)  printf("[WARNING] Problem obtaining affinity.\n");
+  for (int i = 0; i < CPU_SETSIZE; i++)
+  if (CPU_ISSET(i, &cpuset)) printf("%2d ", i);
  }
-
 
  void mainLoop()
  {
   printAffinity();
 
-  while(1);
+  while(_finalize == false)
+  {
+    for (auto pool : _pools)
+    {
+     auto task = pool->getNextTask();
+
+     if (task != NULL) printf("Thread %lu executing task %lu\n", _id, task->getId());
+    }
+  }
  }
 
  public:
@@ -73,7 +81,12 @@ class Thread : public Resource
  Thread(const resourceId_t id, const std::vector<int>& affinity) : Resource(id),_affinity {affinity} { };
  ~Thread() = default;
 
- void launch()
+ void finalize()
+ {
+  _finalize = true;
+ }
+
+ void initialize()
  {
   auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
   if (status != 0) LOG_ERROR("Could not create thread %lu\n", _id);

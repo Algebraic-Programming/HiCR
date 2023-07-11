@@ -9,7 +9,7 @@
 #include <pthread.h>
 
 #include <hicr/backend.hpp>
-#include <../backends/pthreads/thread.hpp>
+#include <hicr/resources/thread.hpp>
 
 
 namespace HiCR {
@@ -22,9 +22,6 @@ class PThreads : public Backend
 
  // Local processor and memory hierarchy topology, as detected by Hwloc
  hwloc_topology_t _topology;
-
- // Thread set
- std::vector<pthreads::Thread*> _threads;
 
  public:
 
@@ -39,36 +36,29 @@ class PThreads : public Backend
 
  void queryResources() override
  {
-
   hwloc_topology_init(&_topology);
   hwloc_topology_load(_topology);
 
   std::vector<int> threadPUs;
   getThreadPUs(_topology, hwloc_get_root_obj(_topology), 0, threadPUs);
 
-  // Craeting Thread objects
+  // Creating Thread objects
   for (size_t i = 0; i < threadPUs.size(); i++)
   {
    auto affinity = std::vector<int>({threadPUs[i]});
    auto thread = new pthreads::Thread(i, affinity);
-   _threads.push_back(thread);
-   printf("Thread %lu assigned PU: %d\n", i, threadPUs[i]);
+   _resourceList.push_back(thread);
   }
-
-  // Launching threads
-  for (size_t i = 0; i < _threads.size(); i++) _threads[i]->launch();
-
-  // Waiting for threads to finish
-  for (size_t i = 0; i < _threads.size(); i++) pthread_join(_threads[i]->getPthreadId(), NULL);
-
-  exit(0);
-
-  // Creating resource list, one per openMP thread
-//  _resourceList.clear();
-//  for (int i = 0; i < threadCount; i++)
-//   _resourceList.push_back(new openMP::Thread(i));
  }
 
+ void finalize() override
+ {
+  // Setting threads for finalization
+  for (size_t i = 0; i < _resourceList.size(); i++) _resourceList[i]->finalize();
+
+  // Waiting for threads to finish
+  for (size_t i = 0; i < _resourceList.size(); i++) pthread_join(((pthreads::Thread*)_resourceList[i])->getPthreadId(), NULL);
+ }
 };
 
 

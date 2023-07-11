@@ -40,9 +40,6 @@ inline void run()
 {
  if (_runtimeInitialized == false) LOG_ERROR("Attempting to use Taskr without first initializing it.");
 
- // Clearing runtime's thread id to worker map
- _runtime->_workerIdToWorkerMap.clear();
-
  // Querying HiCR for available workers
  auto backends = _runtime->_hicr.getBackends();
 
@@ -55,22 +52,32 @@ inline void run()
   resources.insert(resources.end(), backendResources.begin(), backendResources.end());
  }
 
- // Instantiating workers
- #pragma omp parallel
+ // Creating individual task pools for the TaskR worker tasks
+ std::vector<HiCR::TaskPool*> taskPools;
+ for (size_t i = 0; i < resources.size(); i++)
  {
-  // Creating worker
-  Worker w;
-
-  // Adding worker to map
-  #pragma omp critical
-  _runtime->_workerIdToWorkerMap[w.getWorkerId()] = &w;
-
-  // Barrier to prevent accesing the worker map when others are still modifying it
-  #pragma omp barrier
-
-  // Running worker until all tasks are performed
-  w.run();
+  auto taskPool = new HiCR::TaskPool();
+  resources[i]->subscribe(taskPool);
+  taskPools.push_back(taskPool);
  }
+
+ // Creating workers and dispatching their tasks tasks
+ std::vector<Worker*> workers;
+ std::vector<HiCR::Task*> workerTasks;
+ for (size_t i = 0; i < taskPools.size(); i++)
+ {
+  auto worker = new Worker();
+  auto workerTask = new HiCR::Task([](void* worker){((Worker*)worker)->run();});
+  taskPools[i]->dispatchTask(workerTask, worker);
+ }
+
+ // Initializing resources
+ for (size_t i = 0; i < resources.size(); i++) resources[i]->initialize();
+
+ printf("Back on TaskR\n");
+ fflush(stdout);
+ sleep(2);
+ exit(0);
 }
 
 inline void finalize()
@@ -83,9 +90,6 @@ inline void finalize()
  // Setting runtime to non-initialized
  _runtimeInitialized = false;
 }
-
-inline Worker* getWorker() { return _runtime->_workerIdToWorkerMap[pthread_self()]; }
-inline Task* getTask() { return getWorker()->getCurrentTask(); }
 
 } // namespace taskr
 

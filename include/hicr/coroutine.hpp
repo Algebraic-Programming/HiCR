@@ -23,16 +23,17 @@ class Coroutine
    _contextSink = _contextSink.resume();
   }
 
-  inline void run(taskFunction_t& fc, void* arg)
+  inline void start (taskFunction_t& fc, void* arg)
   {
+    auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
+    {
+     _contextSink = std::move(sink);
+     fc(arg);
+     return std::move(sink);
+    };
+
     // Creating new contextt
-	_contextSource = boost::context::callcc(
-	[this, fc, arg](boost::context::continuation &&sink)
-	{
-	 _contextSink = std::move(sink);
-	 fc(arg);
-	 return std::move(sink);
-	});
+    _contextSource = boost::context::callcc(coroutineFc);
   }
 
  private:

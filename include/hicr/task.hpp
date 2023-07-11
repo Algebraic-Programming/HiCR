@@ -14,15 +14,20 @@ class Task
 {
  public:
 
-  Task(taskFunction_t& fc) : _fc(fc) {}
+  Task(taskFunction_t fc) : _fc(fc) {}
   ~Task() = default;
 
-  inline task_state getState() { return _state; };
+  inline void setArgument(void* argument) { _argument = argument; }
+  inline task_state getState() { return _state; }
+  inline taskId_t getId() { return _id; }
 
  private:
 
   // Current execution state of the task. Will change based on runtime scheduling events
   task_state _state = task_state::initial;
+
+  // Argument to execute the task with
+  void* _argument;
 
   // Identifier for the task, might not be unique
   taskId_t _id;

@@ -4,7 +4,7 @@
 #include <hicr/backend.hpp>
 
 #ifdef HICR_ENABLE_BACKEND_PTHREADS
-#include <../backends/pthreads/pthreads.hpp>
+#include <hicr/backends/pthreads.hpp>
 #endif
 
 namespace HiCR

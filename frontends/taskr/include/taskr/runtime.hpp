@@ -26,9 +26,6 @@ public:
  // Task count
  std::atomic<uint64_t> _taskCount;
 
- // Matp between threads and workers
- std::map<pthread_t, Worker*> _workerIdToWorkerMap;
-
  // Lock-free queue for ready tasks
  lockFreeQueue_t<Task*, MAX_SIMULTANEOUS_TASKS> _readyTaskQueue;
 

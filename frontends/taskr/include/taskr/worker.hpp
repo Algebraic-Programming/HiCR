@@ -12,15 +12,9 @@ class Worker
 {
 private:
 
- workerId_t _workerId;
  Task* _currentTask;
 
 public:
-
- inline Worker()
- {
-  _workerId = pthread_self();
- }
 
  inline bool checkReadyTasks()
  {
@@ -86,7 +80,6 @@ public:
   }
  }
 
- inline workerId_t getWorkerId() { return _workerId; }
  inline Task* getCurrentTask() { return _currentTask; }
 
 }; // class Worker

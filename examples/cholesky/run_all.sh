@@ -19,5 +19,5 @@ args="${n} ${bs} ${checkFlag}"
 #build/cholesky_blocked_ompss ${args}
 #build/cholesky_blocked_omp_threads ${args}
 #build/cholesky_blocked_omp_tasks ${args}
-build/cholesky_blocked_taskr_static ${args}
+echo "build/cholesky_blocked_taskr_static ${args}"
 #build/cholesky_blocked_taskr_dynamic ${args}
