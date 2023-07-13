@@ -58,9 +58,8 @@ inline void run()
  }
 
  // Creating event map ands events
- HiCR::eventMap_t eventMap;
- HiCR::Event onTaskFinishEvent([](HiCR::Task* task){onTaskFinish(task);});
- eventMap[HiCR::event_t::onTaskFinish] = &onTaskFinishEvent;
+ HiCR::EventMap eventMap;
+ eventMap.setEvent(HiCR::event_t::onTaskFinish, [](HiCR::Task* task){onTaskFinish(task);});
 
  // Creating individual task pools for the TaskR worker tasks
  std::vector<HiCR::Dispatcher*> dispatchers;

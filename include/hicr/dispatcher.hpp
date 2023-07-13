@@ -3,7 +3,6 @@
 #include <vector>
 #include <hicr/task.hpp>
 #include <hicr/common.hpp>
-#include <hicr/event.hpp>
 
 namespace HiCR
 {

@@ -3,7 +3,7 @@
 #include <hicr/logger.hpp>
 #include <hicr/common.hpp>
 #include <hicr/coroutine.hpp>
-#include <hicr/event.hpp>
+#include <hicr/eventMap.hpp>
 
 namespace HiCR
 {
@@ -38,7 +38,7 @@ class Task
    _state = task_state::running;
 
    // Triggering execution event, if defined
-   if( _eventMap != NULL && _eventMap->contains(event_t::onTaskExecute)) (*_eventMap)[event_t::onTaskExecute]->trigger(this);
+   if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
 
    // If this is the first time we execute this task, we create the new coroutine, otherwise resume the already created one
    if (_hasExecuted == false)
@@ -58,9 +58,9 @@ class Task
    if (_eventMap != NULL) switch(_state)
    {
      case task_state::running:  break;
-     case task_state::finished: if (_eventMap->contains(event_t::onTaskFinish)) (*_eventMap)[event_t::onTaskFinish]->trigger(this);  break;
-     case task_state::ready:    if (_eventMap->contains(event_t::onTaskYield))  (*_eventMap)[event_t::onTaskYield]->trigger(this);   break;
-     case task_state::waiting:  if (_eventMap->contains(event_t::onTaskSuspend))(*_eventMap)[event_t::onTaskSuspend]->trigger(this); break;
+     case task_state::finished: _eventMap->trigger(this, event_t::onTaskFinish); break;
+     case task_state::ready:    _eventMap->trigger(this, event_t::onTaskYield); break;
+     case task_state::waiting:  _eventMap->trigger(this, event_t::onTaskSuspend); break;
    }
   }
 
@@ -74,7 +74,7 @@ class Task
  }
 
  inline void setArgument(void* argument) { _argument = argument; }
- inline void setEventMap(eventMap_t* eventMap) { _eventMap = eventMap; }
+ inline void setEventMap(EventMap* eventMap) { _eventMap = eventMap; }
 
  private:
 
@@ -94,7 +94,7 @@ class Task
   Coroutine _coroutine;
 
   // Map of events to trigger
-  eventMap_t* _eventMap = NULL;
+  EventMap* _eventMap = NULL;
 };
 
 } // namespace HiCR
