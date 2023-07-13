@@ -53,23 +53,24 @@ inline void run()
  }
 
  // Creating individual task pools for the TaskR worker tasks
- std::vector<HiCR::TaskPool*> taskPools;
+ std::vector<HiCR::Dispatcher*> dispatchers;
  for (size_t i = 0; i < resources.size(); i++)
  {
-  auto taskPool = new HiCR::TaskPool();
-  resources[i]->subscribe(taskPool);
-  taskPools.push_back(taskPool);
+  auto dispatcher = new HiCR::Dispatcher();
+  resources[i]->subscribe(dispatcher);
+  dispatchers.push_back(dispatcher);
  }
 
  // Creating workers and dispatching their tasks tasks
  std::vector<Worker*> workers;
  std::vector<HiCR::Task*> workerTasks;
- for (size_t i = 0; i < taskPools.size(); i++)
+ for (size_t i = 0; i < dispatchers.size(); i++)
  {
   auto worker = new Worker();
   auto workerTask = new HiCR::Task(i, [](void* worker){((Worker*)worker)->run();});
   worker->hicrTask() = workerTask;
-  taskPools[i]->dispatchTask(workerTask, worker);
+  workerTask->setArgument(worker);
+  dispatchers[i]->push(workerTask);
  }
 
  // Initializing workers

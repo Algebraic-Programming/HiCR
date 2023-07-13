@@ -2,5 +2,5 @@
 #include <hicr/runtime.hpp>
 #include <hicr/task.hpp>
 #include <hicr/event.hpp>
-#include <hicr/taskPool.hpp>
+#include <hicr/dispatcher.hpp>
 

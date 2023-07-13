@@ -65,23 +65,31 @@ class Thread : public Resource
  {
   while(_finalize == false)
   {
-   for (auto pool : _pools)
+   for (auto dispatcher : _dispatchers)
    {
-    auto task = pool->getNextTask();
+    // Attempt to both pop and pull from dispatcher
+    auto task = dispatcher->popPull();
 
-    // If this pool contains no tasks, then go on to the next one
-    if (task == NULL) continue;
-
-    // Running task
-    task->run();
-
-    // If the task is marked as terminal, the current thread has to finish.
-    if (task->isTerminal() == true)
+    // If a task was returned, then execute it
+    if (task != NULL)
     {
-     _finalize = true;
+     // Running task
+     task->run();
 
-     // We stop processing other tasks
-     break;
+     // If the task is marked as terminal, the current thread has to finish.
+     if (task->state() == task_state::terminal)
+     {
+      _finalize = true;
+
+      // We stop processing other tasks
+      break;
+     }
+
+     // If the task is marked as yielded, re-add it to the task pool
+     if (task->state() == task_state::yielded)
+     {
+      dispatcher->push(task);
+     }
     }
    }
   }

@@ -85,7 +85,8 @@ public:
    checkWaitingTasks();
   }
 
-  _hicrTask->setTerminal();
+  // A terminal state indicates that the resource (worker) should also finish
+  _hicrTask->terminate();
  }
 
  inline Task* getCurrentTask() { return _currentTask; }

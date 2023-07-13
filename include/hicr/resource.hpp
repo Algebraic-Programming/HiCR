@@ -3,7 +3,7 @@
 #include <set>
 
 #include <hicr/common.hpp>
-#include <hicr/taskPool.hpp>
+#include <hicr/dispatcher.hpp>
 
 namespace HiCR
 {
@@ -20,15 +20,15 @@ class Resource
  virtual void await() = 0;
 
  inline resourceId_t getId() { return _id; }
- void subscribe(TaskPool* pool) { _pools.insert(pool); }
+ void subscribe(Dispatcher* dispatcher) { _dispatchers.insert(dispatcher); }
 
  protected:
 
  // Unique local identifier for the resource
  resourceId_t _id;
 
- // Task pools that this resource is subscribed to
- std::set<TaskPool*> _pools;
+ // Dispatchers that this resource is subscribed to
+ std::set<Dispatcher*> _dispatchers;
 };
 
 typedef std::vector<Resource*> resourceList_t;
