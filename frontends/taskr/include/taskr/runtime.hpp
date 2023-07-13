@@ -23,6 +23,17 @@ public:
  // Instance of the HiSilicon Common Runtime
  HiCR::Runtime _hicr;
 
+ // HiCR elements
+ HiCR::EventMap eventMap;
+ std::vector<HiCR::Backend*> backends;
+ std::vector<HiCR::Resource*> resources;
+ std::vector<HiCR::Dispatcher*> dispatchers;
+ std::vector<HiCR::Task*> workers;
+ std::map<HiCR::Task*, HiCR::Resource*> taskToResourceMap;
+
+ // Worker count
+ std::atomic<uint64_t> _workerCount;
+
  // Task count
  std::atomic<uint64_t> _taskCount;
 

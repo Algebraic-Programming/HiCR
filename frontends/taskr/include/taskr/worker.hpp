@@ -11,18 +11,9 @@ typedef uint64_t workerId_t;
 
 class Worker
 {
-private:
-
- Task* _currentTask;
-
- // Corresponding HiCR task
- HiCR::Task* _hicrTask;
-
 public:
 
- inline HiCR::Task*& hicrTask() { return _hicrTask; }
-
- inline bool checkReadyTasks()
+ static inline bool checkReadyTasks()
  {
   // Pointer to the next task to execute
   Task* task;
@@ -34,7 +25,6 @@ public:
   if (foundTask == false) return false;
 
   // If a task was found (queue was not empty), then execute and manage the task depending on its state
-  _currentTask = task;
   task->run();
 
   // Decreasing overall task count
@@ -50,7 +40,7 @@ public:
  }
 
  // This function finds a task in the waiting queue and checks its dependencies
- inline bool checkWaitingTasks() const
+ static inline bool checkWaitingTasks()
  {
   // Pointer to the next task to execute
   Task* task;
@@ -73,7 +63,7 @@ public:
   return true;
  }
 
- inline void run()
+ static inline void run()
  {
   // Run tasks until all of them are finished
   while (_runtime->_taskCount > 0)
@@ -85,8 +75,6 @@ public:
    checkWaitingTasks();
   }
  }
-
- inline Task* getCurrentTask() { return _currentTask; }
 
 }; // class Worker
 

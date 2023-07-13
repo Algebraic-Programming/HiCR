@@ -38,7 +38,8 @@ inline void initialize()
 
 static inline void onTaskFinish(HiCR::Task* task)
 {
-  printf("TaskRFinished worker task\n");
+  _runtime->_workerCount--;
+  _runtime->taskToResourceMap[task]->finalize();
 }
 
 inline void run()
@@ -46,48 +47,52 @@ inline void run()
  if (_runtimeInitialized == false) LOG_ERROR("Attempting to use Taskr without first initializing it.");
 
  // Querying HiCR for available workers
- auto backends = _runtime->_hicr.getBackends();
+ _runtime->backends = _runtime->_hicr.getBackends();
 
  // Gathering all resources that can execute worker tasks
- std::vector<HiCR::Resource*> resources;
- for (size_t i = 0; i < backends.size(); i++)
+ for (size_t i = 0; i < _runtime->backends.size(); i++)
  {
-  backends[i]->queryResources();
-  const auto& backendResources = backends[i]->getResourceList();
-  resources.insert(resources.end(), backendResources.begin(), backendResources.end());
+  _runtime->backends[i]->queryResources();
+  const auto& backendResources = _runtime->backends[i]->getResourceList();
+  _runtime->resources.insert(_runtime->resources.end(), backendResources.begin(), backendResources.end());
  }
 
  // Creating event map ands events
- HiCR::EventMap eventMap;
- eventMap.setEvent(HiCR::event_t::onTaskFinish, [](HiCR::Task* task){onTaskFinish(task);});
+ _runtime->eventMap.setEvent(HiCR::event_t::onTaskFinish, [](HiCR::Task* task){onTaskFinish(task);});
 
- // Creating individual task pools for the TaskR worker tasks
- std::vector<HiCR::Dispatcher*> dispatchers;
- for (size_t i = 0; i < resources.size(); i++)
+ // Creating workers and their tasks
+ for (size_t i = 0; i < _runtime->resources.size(); i++)
  {
   auto dispatcher = new HiCR::Dispatcher();
-  resources[i]->subscribe(dispatcher);
-  dispatchers.push_back(dispatcher);
+  auto worker = new HiCR::Task([](void* arg){Worker::run();});
+  worker->setEventMap(&_runtime->eventMap);
+  dispatcher->push(worker);
+  _runtime->resources[i]->subscribe(dispatcher);
+  _runtime->taskToResourceMap[worker] = _runtime->resources[i];
+  _runtime->workers.push_back(worker);
+  _runtime->dispatchers.push_back(dispatcher);
  }
 
- // Creating workers and dispatching their tasks tasks
- std::vector<Worker*> workers;
- std::vector<HiCR::Task*> workerTasks;
- for (size_t i = 0; i < dispatchers.size(); i++)
- {
-  auto worker = new Worker();
-  auto workerTask = new HiCR::Task([](void* worker){((Worker*)worker)->run();});
-  workerTask->setEventMap(&eventMap);
-  worker->hicrTask() = workerTask;
-  workerTask->setArgument(worker);
-  dispatchers[i]->push(workerTask);
- }
+ // Set initial worker count
+ _runtime->_workerCount = _runtime->workers.size();
 
  // Initializing workers
- for (size_t i = 0; i < resources.size(); i++) resources[i]->initialize();
+ for (size_t i = 0; i < _runtime->resources.size(); i++) _runtime->resources[i]->initialize();
 
  // Waiting for workers to finish (i.e., all tasks have finished)
- for (size_t i = 0; i < resources.size(); i++) resources[i]->await();
+ for (size_t i = 0; i < _runtime->resources.size(); i++) _runtime->resources[i]->await();
+
+ // Clearing resources
+ for (auto& x : _runtime->backends) delete x;
+ for (auto& x : _runtime->resources) delete x;
+ for (auto& x : _runtime->dispatchers) delete x;
+ for (auto& x : _runtime->workers) delete x;
+ _runtime->backends.clear();
+ _runtime->resources.clear();
+ _runtime->dispatchers.clear();
+ _runtime->workers.clear();
+
+ _runtime->taskToResourceMap.clear();
 }
 
 inline void finalize()
