@@ -84,9 +84,6 @@ public:
    // When no more ready tasks remain, use the worker to check the dependencies of those waiting (if any)
    checkWaitingTasks();
   }
-
-  // A terminal state indicates that the resource (worker) should also finish
-  _hicrTask->terminate();
  }
 
  inline Task* getCurrentTask() { return _currentTask; }

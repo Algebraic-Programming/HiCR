@@ -3,6 +3,7 @@
 #include <vector>
 #include <hicr/task.hpp>
 #include <hicr/common.hpp>
+#include <hicr/event.hpp>
 
 namespace HiCR
 {
@@ -35,9 +36,8 @@ class Dispatcher
 
  inline void push(Task* task)
  {
-  if (task->state() != task_state::initial) LOG_ERROR("Attempting to run a task that is not in a initial state (State: %d).\n", task->state());
+  if (task->getState() != task_state::ready) LOG_ERROR("Attempting to dispatch a task that is not in a initial state (State: %d).\n", task->getState());
 
-  task->state() = task_state::dispatched;
   _queue.push(task);
  }
 

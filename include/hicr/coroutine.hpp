@@ -1,10 +1,13 @@
 #pragma once
 
+#include <functional> // std::function
 #include <boost/context/continuation.hpp>
 #include <hicr/common.hpp>
 
 namespace HiCR
 {
+
+typedef std::function<void(void*)> coroutineFc_t;
 
 class Coroutine
 {
@@ -23,7 +26,7 @@ class Coroutine
    _contextSink = _contextSink.resume();
   }
 
-  inline void start (taskFunction_t& fc, void* arg)
+  inline void start (coroutineFc_t& fc, void* arg)
   {
     auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
     {

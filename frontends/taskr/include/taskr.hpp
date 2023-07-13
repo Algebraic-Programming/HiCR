@@ -36,6 +36,11 @@ inline void initialize()
  _runtimeInitialized = true;
 }
 
+static inline void onTaskFinish(HiCR::Task* task)
+{
+  printf("TaskRFinished worker task\n");
+}
+
 inline void run()
 {
  if (_runtimeInitialized == false) LOG_ERROR("Attempting to use Taskr without first initializing it.");
@@ -52,6 +57,11 @@ inline void run()
   resources.insert(resources.end(), backendResources.begin(), backendResources.end());
  }
 
+ // Creating event map ands events
+ HiCR::eventMap_t eventMap;
+ HiCR::Event onTaskFinishEvent([](HiCR::Task* task){onTaskFinish(task);});
+ eventMap[HiCR::event_t::onTaskFinish] = &onTaskFinishEvent;
+
  // Creating individual task pools for the TaskR worker tasks
  std::vector<HiCR::Dispatcher*> dispatchers;
  for (size_t i = 0; i < resources.size(); i++)
@@ -67,7 +77,8 @@ inline void run()
  for (size_t i = 0; i < dispatchers.size(); i++)
  {
   auto worker = new Worker();
-  auto workerTask = new HiCR::Task(i, [](void* worker){((Worker*)worker)->run();});
+  auto workerTask = new HiCR::Task([](void* worker){((Worker*)worker)->run();});
+  workerTask->setEventMap(&eventMap);
   worker->hicrTask() = workerTask;
   workerTask->setArgument(worker);
   dispatchers[i]->push(workerTask);

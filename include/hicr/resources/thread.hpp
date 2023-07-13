@@ -15,9 +15,6 @@ namespace backends {
 
 namespace pthreads {
 
-enum thread_state { initial, running, finished };
-
-
 class Thread : public Resource
 {
  private:
@@ -25,7 +22,6 @@ class Thread : public Resource
  bool _finalize = false;
  pthread_t _pthreadId;
  std::vector<int> _affinity;
- thread_state _state = thread_state::initial;
 
  static void* launchWrapper(void* p)
  {
@@ -71,26 +67,7 @@ class Thread : public Resource
     auto task = dispatcher->popPull();
 
     // If a task was returned, then execute it
-    if (task != NULL)
-    {
-     // Running task
-     task->run();
-
-     // If the task is marked as terminal, the current thread has to finish.
-     if (task->state() == task_state::terminal)
-     {
-      _finalize = true;
-
-      // We stop processing other tasks
-      break;
-     }
-
-     // If the task is marked as yielded, re-add it to the task pool
-     if (task->state() == task_state::yielded)
-     {
-      dispatcher->push(task);
-     }
-    }
+    if (task != NULL) task->run();
    }
   }
  }
