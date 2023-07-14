@@ -25,9 +25,6 @@ class Task
 {
  public:
 
-  Task(taskFunction_t fc) : _fc{fc} {}
-  ~Task() = default;
-
   inline const task_state getState() { return _state; };
 
   inline void run()
@@ -73,6 +70,8 @@ class Task
    _coroutine.yield();
  }
 
+ inline void* getArgument() { return _argument; } const
+ inline void setFunction(taskFunction_t fc) { _fc = fc; }
  inline void setArgument(void* argument) { _argument = argument; }
  inline void setEventMap(EventMap* eventMap) { _eventMap = eventMap; }
 

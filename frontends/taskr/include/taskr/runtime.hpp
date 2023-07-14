@@ -24,21 +24,13 @@ public:
  HiCR::Runtime _hicr;
 
  // HiCR elements
- HiCR::EventMap eventMap;
- std::vector<HiCR::Backend*> backends;
- std::vector<HiCR::Resource*> resources;
- std::vector<HiCR::Dispatcher*> dispatchers;
- std::vector<HiCR::Task*> workers;
- std::map<HiCR::Task*, HiCR::Resource*> taskToResourceMap;
-
- // Worker count
- std::atomic<uint64_t> _workerCount;
+ HiCR::EventMap* _eventMap;
+ HiCR::Dispatcher* _dispatcher;
+ std::vector<HiCR::Backend*> _backends;
+ std::vector<HiCR::Resource*> _resources;
 
  // Task count
  std::atomic<uint64_t> _taskCount;
-
- // Lock-free queue for ready tasks
- lockFreeQueue_t<Task*, MAX_SIMULTANEOUS_TASKS> _readyTaskQueue;
 
  // Lock-free queue for waiting tasks
  lockFreeQueue_t<Task*, MAX_SIMULTANEOUS_TASKS> _waitingTaskQueue;

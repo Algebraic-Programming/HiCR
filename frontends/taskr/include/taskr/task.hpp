@@ -61,5 +61,3 @@ inline Task(const taskLabel_t label, const callback_t& fc) : _label(label)
 
 } // namespace taskr
 
-
-
