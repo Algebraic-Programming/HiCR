@@ -8,16 +8,13 @@
 namespace taskr
 {
 
-class Worker;
-
 class Task
 {
 
- friend class Worker;
-
 private:
 
- callback_t _fc;
+ // HiCR Task object to implement TaskR tasks
+ HiCR::Task _hicrTask;
 
  // Tasks's label, chosen by the user
  taskLabel_t _label;
@@ -29,7 +26,13 @@ public:
 
 inline Task(const taskLabel_t label, const callback_t& fc) : _label(label)
  {
-   _fc = fc;
+   _hicrTask.setFunction([fc](void* arg){ fc(); });
+   _hicrTask.setArgument(this);
+ }
+
+ inline HiCR::Task* getHiCRTask()
+ {
+  return &_hicrTask;
  }
 
  inline taskLabel_t getLabel() const
@@ -41,12 +44,6 @@ inline Task(const taskLabel_t label, const callback_t& fc) : _label(label)
  {
   _taskDependencies.push_back(task);
  };
-
- inline void run()
- {
-   // Starting actual work
-   _fc();
- }
 
  inline bool isReady()
  {

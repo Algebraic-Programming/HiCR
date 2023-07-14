@@ -1,6 +1,5 @@
 #pragma once
 
-#include <taskr/extern/MetroHash/metrohash64.h>
 #include <taskr/extern/parallel_hashmap/phmap.h>
 #include <taskr/extern/atomic_queue/atomic_queue.h>
 #include <functional>
@@ -35,15 +34,6 @@ typedef std::function<void()> callback_t;
 #define SETEXTRAARGS , phmap::priv::hash_default_hash<V>, phmap::priv::hash_default_eq<V>, std::allocator<V>, 4, std::mutex
 template <class V> using HashSetT = SETNAME<V SETEXTRAARGS>;
 
-// Function to calculate hash from string
-inline hash_t calculateHashFromString(const std::string& s)
-{
- MetroHash64 hash;
- hash.Update((uint8_t*)s.data(), s.size());
- uint64_t result;
- hash.Finalize(reinterpret_cast<uint8_t *>(&result));
- return result;
-}
 
 } // namespace taskr
 

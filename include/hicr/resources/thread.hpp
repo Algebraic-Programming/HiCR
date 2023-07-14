@@ -64,7 +64,7 @@ class Thread : public Resource
    for (auto dispatcher : _dispatchers)
    {
     // Attempt to both pop and pull from dispatcher
-    auto task = dispatcher->popPull();
+    auto task = dispatcher->pull();
 
     // If a task was returned, then execute it
     if (task != NULL) task->run();

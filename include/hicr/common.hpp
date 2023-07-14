@@ -15,11 +15,5 @@ namespace HiCR
 #define COROUTINE_STACK_SIZE 65536
 #endif
 
-// Definition for resource unique identifiers
-typedef uint64_t resourceId_t;
-
-// Lockfree queue
-template <class T, unsigned int N> using lockFreeQueue_t = atomic_queue::AtomicQueue<T, N, (T)NULL>;
-
 } // namespace HiCR
 

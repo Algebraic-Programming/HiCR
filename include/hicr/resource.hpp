@@ -8,6 +8,9 @@
 namespace HiCR
 {
 
+// Definition for resource unique identifiers
+typedef uint64_t resourceId_t;
+
 class Resource
 {
  public:
@@ -32,5 +35,4 @@ class Resource
 };
 
 typedef std::vector<Resource*> resourceList_t;
-
 } // namespace HiCR

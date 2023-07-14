@@ -1,8 +1,6 @@
 #pragma once
 #include <taskr/runtime.hpp>
 #include <taskr/task.hpp>
-#include <taskr/worker.hpp>
-#include <omp.h>
 
 namespace taskr
 {
@@ -56,10 +54,8 @@ static inline HiCR::Task* checkWaitingTasks()
  if (isTaskReady == true)
  {
   // If a task was found (queue was not empty), then execute and manage the task depending on its state
-  auto hicrTask = new HiCR::Task();
-  hicrTask->setFunction([task](void* arg){task->run();});
+  auto hicrTask = task->getHiCRTask();
   hicrTask->setEventMap(_runtime->_eventMap);
-  hicrTask->setArgument(task);
   return hicrTask;
  }
 
@@ -94,11 +90,8 @@ inline void run()
 
  // Querying HiCR for available workers
  _runtime->_backends = _runtime->_hicr.getBackends();
- _runtime->_dispatcher = new HiCR::Dispatcher();
+ _runtime->_dispatcher = new HiCR::Dispatcher(&checkWaitingTasks);
  _runtime->_eventMap = new HiCR::EventMap();
-
- // Setting task pull function for dispatcher
- _runtime->_dispatcher->setPullFunction(&checkWaitingTasks);
 
  // Creating event map ands events
   _runtime->_eventMap->setEvent(HiCR::event_t::onTaskFinish, [](HiCR::Task* task){onTaskFinish(task);});
