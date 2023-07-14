@@ -35,7 +35,7 @@ class Thread : public Resource
   sched_yield();
 
   // Calling main loop
-  thread->mainLoop();
+  thread->_fc();
 
   // No returns
   return NULL;
@@ -57,41 +57,35 @@ class Thread : public Resource
   if (CPU_ISSET(i, &cpuset)) printf("%2d ", i);
  }
 
- void mainLoop()
- {
-  while(_finalize == false)
-  {
-   for (auto dispatcher : _dispatchers)
-   {
-    // Attempt to both pop and pull from dispatcher
-    auto task = dispatcher->pull();
-
-    // If a task was returned, then execute it
-    if (task != NULL) task->run();
-   }
-  }
- }
-
  public:
 
- Thread(const resourceId_t id, const std::vector<int>& affinity) : Resource(id),_affinity {affinity} { };
+ Thread(const resourceId_t id, const std::vector<int>& affinity) : Resource(id), _affinity {affinity} { };
  ~Thread() = default;
 
- void await()
+ void initialize() override
  {
-  pthread_join(_pthreadId, NULL);
  }
 
- void finalize()
+ void run(resourceFc_t fc) override
  {
-  _finalize = true;
- }
+  // Making a copy of the function
+  _fc = fc;
 
- void initialize()
- {
+  // Launching thread function wrapper
   auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
   if (status != 0) LOG_ERROR("Could not create thread %lu\n", _id);
  }
+
+ void finalize() override
+ {
+ }
+
+ void await() override
+ {
+  // Waiting for thread after execution
+  pthread_join(_pthreadId, NULL);
+ }
+
 
 };
 

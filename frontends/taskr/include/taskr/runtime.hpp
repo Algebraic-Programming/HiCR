@@ -9,7 +9,6 @@ namespace taskr
 {
 
 class Task;
-class Worker;
 class Runtime;
 
 // Static pointer to runtime singleton
@@ -28,6 +27,7 @@ public:
  HiCR::Dispatcher* _dispatcher;
  std::vector<HiCR::Backend*> _backends;
  std::vector<HiCR::Resource*> _resources;
+ std::vector<HiCR::Worker*> _workers;
 
  // Task count
  std::atomic<uint64_t> _taskCount;

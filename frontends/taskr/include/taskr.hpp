@@ -75,7 +75,7 @@ static inline void onTaskFinish(HiCR::Task* hicrTask)
   _runtime->_taskCount--;
 
   // If all tasks finished, then terminate execution
-  if (_runtime->_taskCount == 0) for (auto r : _runtime->_resources) r->finalize();
+  if (_runtime->_taskCount == 0) for (auto w : _runtime->_workers) w->stop();
 
   // Adding task label to finished task set
   _runtime->_finishedTaskHashMap.insert(task->getLabel());
@@ -104,14 +104,32 @@ inline void run()
   _runtime->_resources.insert(_runtime->_resources.end(), backendResources.begin(), backendResources.end());
  }
 
- // Subscribing resources to the main dispatcher
- for (size_t i = 0; i < _runtime->_resources.size(); i++)_runtime->_resources[i]->subscribe(_runtime->_dispatcher);
+ // Creating one worker per thread
+ for (size_t i = 0; i < _runtime->_resources.size(); i++)
+ {
+  auto worker = new HiCR::Worker();
 
- // Initializing workers
- for (size_t i = 0; i < _runtime->_resources.size(); i++) _runtime->_resources[i]->initialize();
+  // Assigning resource to the thread
+  worker->addResource(_runtime->_resources[i]);
 
- // Waiting for workers to finish (i.e., all tasks have finished)
- for (size_t i = 0; i < _runtime->_resources.size(); i++) _runtime->_resources[i]->await();
+  // Assigning worker to the common dispatcher
+  worker->subscribe(_runtime->_dispatcher);
+
+  // Finally adding worker to the worker set
+  _runtime->_workers.push_back(worker);
+
+  // Initializing worker
+  worker->initialize();
+ }
+
+ // Starting workers
+ for (auto& w : _runtime->_workers) w->start();
+
+ // Waiting for workers to finish
+ for (auto& w : _runtime->_workers) w->await();
+
+ // Finalizing workers
+ for (auto& w : _runtime->_workers) w->finalize();
 
  // Clearing resources
  for (auto& x : _runtime->_backends) delete x;

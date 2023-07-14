@@ -11,6 +11,9 @@ namespace HiCR
 // Definition for resource unique identifiers
 typedef uint64_t resourceId_t;
 
+// Definition for function to run at resource
+typedef std::function<void(void)> resourceFc_t;
+
 class Resource
 {
  public:
@@ -19,19 +22,19 @@ class Resource
  virtual ~Resource() = default;
 
  virtual void initialize() = 0;
+ virtual void run(resourceFc_t fc) = 0;
  virtual void finalize() = 0;
  virtual void await() = 0;
 
  inline resourceId_t getId() { return _id; }
- void subscribe(Dispatcher* dispatcher) { _dispatchers.insert(dispatcher); }
 
  protected:
 
  // Unique local identifier for the resource
  resourceId_t _id;
 
- // Dispatchers that this resource is subscribed to
- std::set<Dispatcher*> _dispatchers;
+ // Copy of a function to run
+ resourceFc_t _fc;
 };
 
 typedef std::vector<Resource*> resourceList_t;
