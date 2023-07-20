@@ -25,6 +25,8 @@ class EventMap
 {
  public:
 
+  friend class Task;
+
   inline void clear()
   {
    _eventMap.clear();
@@ -40,12 +42,14 @@ class EventMap
    _eventMap[event] = fc;
   }
 
+ private:
+
+  // Only callable by tasks themselves
   inline void trigger(Task* task, const event_t event) const
   {
     if (_eventMap.contains(event)) _eventMap.at(event)(task);
   }
 
- private:
 
   std::map<event_t, eventCallback_t> _eventMap;
 };

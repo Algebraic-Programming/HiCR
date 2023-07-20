@@ -4,13 +4,18 @@
 
 namespace HiCR {
 
+class Runtime;
+
 class Backend
 {
- private:
+ friend class Runtime;
+
+ protected:
+
+ Backend() = default;
 
  public:
 
- Backend() = default;
  virtual ~Backend() = default;
  virtual void queryResources() = 0;
  inline resourceList_t& getResourceList() { return _resourceList; }

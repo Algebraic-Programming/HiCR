@@ -31,7 +31,7 @@ class Worker
     auto task = dispatcher->pull();
 
     // If a task was returned, then execute it
-    if (task != NULL) task->run();
+    if (task != NULL) task->run(this);
    }
   }
  }
@@ -106,6 +106,8 @@ class Worker
 
  void subscribe(Dispatcher* dispatcher) { _dispatchers.insert(dispatcher); }
  void addResource(Resource* resource) { _resources.push_back(resource); }
+ std::vector<Resource*>& getResources() { return _resources; }
+ std::set<Dispatcher*>& getDispatchers(){ return _dispatchers; }
 };
 
 } // namespace HiCR

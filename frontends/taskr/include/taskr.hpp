@@ -90,11 +90,14 @@ inline void run()
 
  // Querying HiCR for available workers
  _runtime->_backends = _runtime->_hicr.getBackends();
- _runtime->_dispatcher = new HiCR::Dispatcher(&checkWaitingTasks);
+ _runtime->_dispatcher = new HiCR::Dispatcher();
  _runtime->_eventMap = new HiCR::EventMap();
 
  // Creating event map ands events
   _runtime->_eventMap->setEvent(HiCR::event_t::onTaskFinish, [](HiCR::Task* task){onTaskFinish(task);});
+
+ // Setting dispatcher pull function
+  _runtime->_dispatcher->setPullFunction(&checkWaitingTasks);
 
  // Gathering all resources that can execute worker tasks
  for (size_t i = 0; i < _runtime->_backends.size(); i++)

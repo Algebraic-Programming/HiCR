@@ -5,6 +5,8 @@
 #include <hicr/common.hpp>
 #include <hicr/dispatcher.hpp>
 
+class Worker;
+
 namespace HiCR
 {
 
@@ -16,19 +18,20 @@ typedef std::function<void(void)> resourceFc_t;
 
 class Resource
 {
+ friend class Worker;
+
  public:
 
- Resource(const resourceId_t id) : _id(id) {};
  virtual ~Resource() = default;
+ inline resourceId_t getId() { return _id; }
 
+ protected:
+
+ Resource(const resourceId_t id) : _id(id) {};
  virtual void initialize() = 0;
  virtual void run(resourceFc_t fc) = 0;
  virtual void finalize() = 0;
  virtual void await() = 0;
-
- inline resourceId_t getId() { return _id; }
-
- protected:
 
  // Unique local identifier for the resource
  resourceId_t _id;
