@@ -67,8 +67,8 @@ class Worker
   // Transitioning state
   _state = t_started;
 
-  // Launching worker in the lead resource
-  _resources[0]->run([this](){ this->mainLoop();});
+  // Launching worker in the lead resource (first one to be added)
+  _resources[0]->run([this](){ this->mainLoop(); });
  }
 
  void stop()

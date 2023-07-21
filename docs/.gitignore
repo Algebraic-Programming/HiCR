@@ -1,0 +1,4 @@
+build/
+doxygen/
+generated_code/
+copy_doxygen.sh

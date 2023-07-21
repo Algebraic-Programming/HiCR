@@ -10,6 +10,12 @@
 namespace HiCR
 {
 
+
+/**
+ * @brief Main HiCR runtime system class
+ *
+ * It can be used to query the system's available resources and their connectivity.
+ */
 class Runtime
 {
  public:
