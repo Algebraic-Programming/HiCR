@@ -132,6 +132,8 @@ inline void run()
  for (auto& w : _runtime->_workers) w->finalize();
 
  // Clearing created objects
+ for (auto& w : _runtime->_workers) delete w;
+ _runtime->_workers.clear();
  delete _runtime->_dispatcher;
  delete _runtime->_eventMap;
 }
