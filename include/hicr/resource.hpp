@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <memory>
 
 #include <hicr/common/logger.hpp>
 #include <hicr/dispatcher.hpp>
@@ -40,5 +41,6 @@ class Resource
  resourceFc_t _fc;
 };
 
-typedef std::vector<Resource*> resourceList_t;
+typedef std::vector<std::unique_ptr<Resource>> resourceList_t;
+
 } // namespace HiCR

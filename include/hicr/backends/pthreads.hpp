@@ -2,11 +2,13 @@
 
 #pragma once
 
-#include "hwloc.h"
+#include <memory>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <pthread.h>
+#include "hwloc.h"
 
 #include <hicr/backend.hpp>
 #include <hicr/resources/thread.hpp>
@@ -46,8 +48,8 @@ class PThreads : public Backend
   for (size_t i = 0; i < threadPUs.size(); i++)
   {
    auto affinity = std::vector<int>({threadPUs[i]});
-   auto thread = new pthreads::Thread(i, affinity);
-   _resourceList.push_back(thread);
+   auto thread = std::make_unique<pthreads::Thread>(i, affinity);
+   _resourceList.push_back(std::move(thread));
   }
  }
 

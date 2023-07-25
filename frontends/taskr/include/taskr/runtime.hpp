@@ -24,8 +24,6 @@ public:
  // HiCR elements
  HiCR::EventMap* _eventMap;
  HiCR::Dispatcher* _dispatcher;
- std::vector<HiCR::Backend*> _backends;
- std::vector<HiCR::Resource*> _resources;
  std::vector<HiCR::Worker*> _workers;
 
  // Task count

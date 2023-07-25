@@ -89,7 +89,6 @@ inline void run()
  if (_runtimeInitialized == false) LOG_ERROR("Attempting to use Taskr without first initializing it.");
 
  // Querying HiCR for available workers
- _runtime->_backends = _runtime->_hicr.getBackends();
  _runtime->_dispatcher = new HiCR::Dispatcher();
  _runtime->_eventMap = new HiCR::EventMap();
 
@@ -100,29 +99,27 @@ inline void run()
   _runtime->_dispatcher->setPullFunction(&checkWaitingTasks);
 
  // Gathering all resources that can execute worker tasks
- for (size_t i = 0; i < _runtime->_backends.size(); i++)
+ for (size_t i = 0; i < _runtime->_hicr.getBackends().size(); i++)
  {
-  _runtime->_backends[i]->queryResources();
-  const auto& backendResources = _runtime->_backends[i]->getResourceList();
-  _runtime->_resources.insert(_runtime->_resources.end(), backendResources.begin(), backendResources.end());
- }
+  _runtime->_hicr.getBackends()[i]->queryResources();
 
- // Creating one worker per thread
- for (size_t i = 0; i < _runtime->_resources.size(); i++)
- {
-  auto worker = new HiCR::Worker();
+  // Creating one worker per thread
+  for (auto& resource : _runtime->_hicr.getBackends()[i]->getResourceList())
+  {
+   auto worker = new HiCR::Worker();
 
-  // Assigning resource to the thread
-  worker->addResource(_runtime->_resources[i]);
+   // Assigning resource to the thread
+   worker->addResource(resource.get());
 
-  // Assigning worker to the common dispatcher
-  worker->subscribe(_runtime->_dispatcher);
+   // Assigning worker to the common dispatcher
+   worker->subscribe(_runtime->_dispatcher);
 
-  // Finally adding worker to the worker set
-  _runtime->_workers.push_back(worker);
+   // Finally adding worker to the worker set
+   _runtime->_workers.push_back(worker);
 
-  // Initializing worker
-  worker->initialize();
+   // Initializing worker
+   worker->initialize();
+  }
  }
 
  // Starting workers
@@ -134,11 +131,7 @@ inline void run()
  // Finalizing workers
  for (auto& w : _runtime->_workers) w->finalize();
 
- // Clearing resources
- for (auto& x : _runtime->_backends) delete x;
- for (auto& x : _runtime->_resources) delete x;
- _runtime->_backends.clear();
- _runtime->_resources.clear();
+ // Clearing created objects
  delete _runtime->_dispatcher;
  delete _runtime->_eventMap;
 }

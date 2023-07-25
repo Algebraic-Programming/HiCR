@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <hicr/common/logger.hpp>
 #include <hicr/backend.hpp>
 
@@ -10,6 +12,7 @@
 namespace HiCR
 {
 
+typedef std::vector<std::unique_ptr<Backend>> backendList_t;
 
 /**
  * @brief Main HiCR runtime system class
@@ -20,11 +23,8 @@ class Runtime
 {
  public:
 
-  Runtime() = default;
-  ~Runtime() = default;
-
   /**
-   * Detects the backends selected at compilation time.
+   * Detects the backends selected by the user at compilation time and stores them internally.
    */
   void initialize()
   {
@@ -32,16 +32,16 @@ class Runtime
 
    // Initializing backends
    #ifdef HICR_ENABLE_BACKEND_PTHREADS
-	  _backends.push_back(new backends::PThreads());
+	  _backends.push_back(std::make_unique<backends::PThreads>());
    #endif
   }
 
   /**
-   * Retrieves the list of the detected backends.
+   * Retrieves the list of backends detected at initialization.
    *
-   * @return A list of detected backends.
+   * @return A list of the detected backends.
    */
-  inline std::vector<Backend*>& getBackends()
+  inline const backendList_t& getBackends() const
   {
    return _backends;
   }
@@ -49,9 +49,9 @@ class Runtime
  private:
 
   /**
-   * Stores the set of detected backends
+   * Storage for the detected backends
    */
-  std::vector<Backend*> _backends;
+  backendList_t _backends;
 
 };
 
