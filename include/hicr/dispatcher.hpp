@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <hicr/task.hpp>
+#include <hicr/common/taskQueue.hpp>
 
 namespace HiCR
 {
@@ -15,6 +16,9 @@ class Dispatcher
  // Pull function, if defined by the user
  pullFunction_t _pullFc;
  bool isPullFunctionDefined = false;
+
+ // Internal queue for pushed tasks
+ common::taskQueue _queue;
 
  public:
 
@@ -32,11 +36,29 @@ class Dispatcher
   isPullFunctionDefined = false;
  }
 
-
  inline Task* pull()
  {
   if (isPullFunctionDefined == false) LOG_ERROR("Trying to pull on dispatcher but the pull function is not defined\n");
   return _pullFc();
+ }
+
+ inline void push(Task* task)
+ {
+  _queue.push(task);
+ }
+
+ inline Task* pop()
+ {
+  return _queue.pop();
+ }
+
+ inline Task* pullOrPop()
+ {
+  Task* task = pop();
+
+  if (isPullFunctionDefined == true && task == NULL) task = pull();
+
+  return task;
  }
 };
 

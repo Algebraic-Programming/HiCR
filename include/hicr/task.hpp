@@ -1,7 +1,6 @@
 #pragma once
 
-#include <hicr/logger.hpp>
-#include <hicr/common.hpp>
+#include <hicr/common/logger.hpp>
 #include <hicr/coroutine.hpp>
 #include <hicr/eventMap.hpp>
 

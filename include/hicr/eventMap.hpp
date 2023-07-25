@@ -2,8 +2,7 @@
 
 #include <map>
 
-#include <hicr/logger.hpp>
-#include <hicr/common.hpp>
+#include <hicr/common/logger.hpp>
 
 namespace HiCR
 {

@@ -2,7 +2,6 @@
 #include <map>
 #include <atomic>
 #include <hicr.hpp>
-#include <hicr/logger.hpp>
 #include <taskr/common.hpp>
 
 namespace taskr

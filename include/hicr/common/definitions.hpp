@@ -5,9 +5,9 @@
 namespace HiCR
 {
 
-// Maximum simultaneous tasks allowed
-#ifndef MAX_SIMULTANEOS_TASKS
-#define MAX_SIMULTANEOUS_TASKS 65536
+// Maximum simultaneous tasks allowed in a task queue
+#ifndef MAX_QUEUED_TASKS
+#define MAX_QUEUED_TASKS 65536
 #endif
 
 // Size of the stack dedicated to the execution of tasks (coroutines)

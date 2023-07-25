@@ -2,7 +2,6 @@
 
 #include <functional> // std::function
 #include <boost/context/continuation.hpp>
-#include <hicr/common.hpp>
 
 namespace HiCR
 {

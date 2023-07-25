@@ -1,6 +1,6 @@
 #pragma once
 
-#include <hicr/logger.hpp>
+#include <hicr/common/logger.hpp>
 #include <hicr/backend.hpp>
 
 #ifdef HICR_ENABLE_BACKEND_PTHREADS
@@ -34,8 +34,6 @@ class Runtime
    #ifdef HICR_ENABLE_BACKEND_PTHREADS
 	  _backends.push_back(new backends::PThreads());
    #endif
-
-	  _initialized = true;
   }
 
   /**
@@ -45,8 +43,6 @@ class Runtime
    */
   inline std::vector<Backend*>& getBackends()
   {
-   if (_initialized == false) LOG_ERROR("Attempting to use HiCR without first initializing it.");
-
    return _backends;
   }
 

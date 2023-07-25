@@ -2,7 +2,7 @@
 
 #include <set>
 
-#include <hicr/common.hpp>
+#include <hicr/common/logger.hpp>
 #include <hicr/dispatcher.hpp>
 
 class Worker;

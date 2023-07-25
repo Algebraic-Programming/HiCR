@@ -28,7 +28,7 @@ class Worker
    for (auto dispatcher : _dispatchers)
    {
     // Attempt to both pop and pull from dispatcher
-    auto task = dispatcher->pull();
+    auto task = dispatcher->pullOrPop();
 
     // If a task was returned, then execute it
     if (task != NULL) task->run(this);
