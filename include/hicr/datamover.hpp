@@ -3,6 +3,14 @@
  * All rights reserved.
  */
 
+/**
+ * @file Provides various memcpy functions as well as corresponding fences.
+ * @author A. N. Yzelman
+ * @date 26/7/2023
+ */
+
+#pragma once
+
 namespace HiCR {
 
 /**
