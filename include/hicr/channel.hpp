@@ -124,6 +124,19 @@ class Channel {
    */
   void pop();
   
+  /**
+   * Puts a new token unto the channel.
+   *
+   * @param[in] slot   In which memory region the token resides
+   * @param[in] offset At which offset within \a slot the token resides
+   * @param[in] size   The size of the token within \a slot
+   *
+   * @returns <tt>true</tt>  If the channel had sufficient capacity for pushing
+   *                         the token
+   * @returns <tt>false</tt> If the channel did not have sufficient capacity.
+   *                         In this case, the state of this channel shall be as
+   *                         though this call to push had never occurred.
+   */
   bool push(const MemorySlot& slot, const size_t offset, const size_t size);
 
   // TODO register an effect somehow? Need to support two events:

@@ -130,11 +130,15 @@ void fence(const TagSlot& tag);
  * @param[in] tag      The tag of the memory copies to fence for
  * @param[in] msgs_in  How many messages are incoming to this locality
  * @param[in] msgs_out How many messages are outgoing from this locality
+ * @param[in] dests    A set of memory resources (localities) to which we
+ *                     have outgoing memory copy requests
  * @param[in] sources  A set of memory resources (localities) from which 
  *                     we have incoming memory copy requests
  */
 void fence(
  const TagSlot& tag,
  const size_t msgs_in, const size_t msgs_out,
+ const set<MemoryResource*>& dests,
  const set<MemoryResource*>& sources
 );
+
