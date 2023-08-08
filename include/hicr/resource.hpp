@@ -1,3 +1,8 @@
+/*
+ * Copyright Huawei Technologies Switzerland AG
+ * All rights reserved.
+ */
+
 #pragma once
 
 #include <set>
@@ -5,6 +10,7 @@
 
 #include <hicr/common/logger.hpp>
 #include <hicr/dispatcher.hpp>
+#include <hicr/memorySpace.hpp>
 
 class Worker;
 
@@ -25,6 +31,7 @@ class Resource
 
  virtual ~Resource() = default;
  inline resourceId_t getId() { return _id; }
+ virtual MemorySpace& getMemorySpace() = 0;
 
  protected:
 
@@ -44,3 +51,4 @@ class Resource
 typedef std::vector<std::unique_ptr<Resource>> resourceList_t;
 
 } // namespace HiCR
+
