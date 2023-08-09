@@ -23,11 +23,16 @@ class Channel {
   /**
    * Constructs a channel.
    *
-   * @tparam SrcIt An iterator over HiCR resources
-   * @tparam DstIt An iterator over HiCR resources
+   * @tparam SrcIt An iterator over HiCR MemorySpaces
+   * @tparam DstIt An iterator over HiCR MemorySpaces
    *
    * Let \f$ S \f$ be a set of producers, and let \f$ D \f$ be a set of
-   * consumers. \f$ S, D \f$ must contain at least one element.
+   * consumers. \f$ S, D \f$ must contain at least one element. A channel
+   * lets any producer put so-called \em tokens into a distributed buffer,
+   * and lets any consumer retrieve tokens from that buffer.
+   *
+   * A channel is identified by an \a tag. The tag is a concept exposed by
+   * associated memory spaces, and created via MemorySpace::createTagSlot.
    *
    * @param[in] producers_start An iterator in begin position to \f$ S \f$
    * @param[in] producers_end   An iterator in end position to \f$ S \f$
@@ -49,6 +54,12 @@ class Channel {
    * @param[in] producersBroadcast Whether submitted tokens are to be broadcast
    *                               to all consumers.
    *
+   * In broadcasting mode, broadcasting any single token to \f$ c \f$ consumers
+   * counts as taking up \f$ c \f$ \a capacity.
+   *
+   * \note Rationale: in the worst case, the token ends up at \f$ c \f$
+   *       receiving buffers without any one of them being consumed yet.
+   *
    * A call to this constructor must be made collectively across all workers
    * that house the given resources. If the callee locality is in \f$ S \f$,
    * then the constructed channel is a producer. If the callee locality is in
@@ -60,8 +71,10 @@ class Channel {
    *
    * \note For zero-copy communication mechanisms, see HiCR::memcpy.
    *
-   * \warning A HiCR::memcpy only reverts to zero-copy communication if the
-   *          backend supports it.
+   * \todo This interface uses iterators instead of raw arrays for listing the
+   *       producers and consumers. The memorySpace and datamover interfaces use
+   *       raw arrays instead. We should probably just pick one API and make all
+   *       APIs consistent with that choice.
    */
   template<typename SrcIt, typename DstIt>
   Channel(
@@ -76,56 +89,105 @@ class Channel {
    * @returns The capacity of the channel.
    *
    * This is a one-sided blocking call that need not be made collectively.
+   *
+   * This function when called on a valid channel instance will never fail.
    */
   size_t capacity() const noexcept;
 
   /**
-   * @returns The number of elements in this consumer channel.
+   * @returns The number of elements in this channel.
    *
-   * Assumes that this channel at the current locality is a consumer.
-   *
-   * \note We could also define this for producers, and return the number of
-   *       un-sent tokens.
+   * If the current channel is a consumer, it corresponds to how many tokens
+   * may yet be consumed. If the current channel is a producer, it corresponds
+   * the channel capacity minus the returned value equals how many tokens may
+   * still be pushed.
    *
    * This is a one-sided blocking call that need not be made collectively.
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
+   *
+   * This function when called on a valid channel instance will never fail.
    */
-  size_t depth() const;
+  size_t depth() const noexcept;
 
   /**
    * Peeks in the local received queue and returns a pointer to the current
    * token.
    *
-   * Assumes that this channel at the current locality is a consumer.
+   * This is a one-sided blocking call that need not be made collectively.
    *
-   * @param[out] ptr  A pointer to the current token.
-   * @param[out] size The size of the memory region pointed to.
+   * This primitive may only be called by consumers.
+   *
+   * @param[out] ptr  A pointer to the current token. Its value on input will
+   *                  be ignored.
+   * @param[out] size The size of the memory region pointed to. Its value on
+   *                  input will be ignored.
    *
    * @returns <tt>true</tt> if the channel was non-empty.
    * @returns <tt>false</tt> if the channel was empty.
-   *
-   * This is a one-sided blocking call that need not be made collectively.
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
+   *
+   * A call to this function throws an exception if:
+   *  -# the channel at the current locality is a producer.
    */
-  bool peek(void * const ptr, size_t * const size) const;
+  bool peek(void * &ptr, size_t &size) const;
 
   /**
-   * Removes the current token from the channel, removes it, and moves to the
-   * next token (or to an empty channel state).
-   *
-   * Assumes that this channel at the current locality is a consumer.
+   * Similar to peek, but if the channel is empty, will wait until a new token
+   * arrives.
    *
    * This is a one-sided blocking call that need not be made collectively.
+   *
+   * This primitive may only be called by consumers.
+   *
+   * @param[out] ptr  A pointer to the current token. Its value on input will
+   *                  be ignored.
+   * @param[out] size The size of the memory region pointed to. Its value on
+   *                  input will be ignored.
+   *
+   * \warning This function may take an arbitrary amount of time and may, with
+   *          incorrect usage, even result in deadlock. Always make sure to use
+   *          this function in conjuction with e.g. SDF analysis to ensure no
+   *          deadlock may occur. This type of analysis typically produces a
+   *          minimum required channel capacity.
+   *
+   * \todo A preferred mechanism to wait for messages to have flushed may be
+   *       the event-based API described below in this header file.
+   *
+   * A call to this function throws an exception if:
+   *  -# the channel at the current locality is a producer.
    */
-  void pop();
-  
+  void peek_wait(void * &ptr, size_t &size);
+
+  /**
+   * Removes the current token from the channel, and moves to the next token
+   * (or to an empty channel state).
+   *
+   * This is a one-sided blocking call that need not be made collectively.
+   *
+   * This primitive may only be called by consumers.
+   *
+   * @returns Whether the channel is empty after the current token has been
+   *          removed.
+   *
+   * A call to this function throws an exception if:
+   *  -# the channel at the current locality is a producer;
+   *  -# the channel was empty.
+   *
+   * @see ::peek to determine whether the channel has an item to pop.
+   */
+  bool pop();
+
   /**
    * Puts a new token unto the channel.
+   *
+   * This is a one-sided blocking primitive that need not be made collectively.
+   *
+   * This primitive may only be called by producers.
    *
    * @param[in] slot   In which memory region the token resides
    * @param[in] offset At which offset within \a slot the token resides
@@ -136,8 +198,41 @@ class Channel {
    * @returns <tt>false</tt> If the channel did not have sufficient capacity.
    *                         In this case, the state of this channel shall be as
    *                         though this call to push had never occurred.
+   *
+   * A call to this function throws an exception if:
+   *  -# the channel at this locality is a consumer;
+   *  -# the \a slot, \a offset, \a size combination exceeds the memory region
+   *     of \a slot.
    */
   bool push(const MemorySlot& slot, const size_t offset, const size_t size);
+
+  /**
+   * Similar to push, but if the channel is full, will wait until outgoing
+   * buffer space frees up.
+   *
+   * This is a one-sided blocking call that need not be made collectively.
+   *
+   * The primitive may only be called by producers.
+   *
+   * @param[in] slot   In which memory region the token resides
+   * @param[in] offset At which offset within \a slot the token resides
+   * @param[in] size   The size of the token within \a slot
+   *
+   * \warning This function may take an arbitrary amount of time and may, with
+   *          incorrect usage, even result in deadlock. Always make sure to use
+   *          this function in conjuction with e.g. SDF analysis to ensure no
+   *          deadlock may occur. This type of analysis typically produces a
+   *          minimum required channel capacity.
+   *
+   * \todo A preferred mechanism to wait for messages to have flushed may be
+   *       the event-based API described below in this header file.
+   *
+   * A call to this function throws an exception if:
+   *  -# the channel at this locality is a consumer;
+   *  -# the \a slot, \a offset, \a size combination exceeds the memory region
+   *     of \a slot.
+   */
+  void push_wait(const MemorySlot& slot, const size_t offset, const size_t size);
 
   // TODO register an effect somehow? Need to support two events:
   //   1) full-to-non-full (producer side),

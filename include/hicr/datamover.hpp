@@ -59,6 +59,9 @@ namespace HiCR {
  *           looks into this table \f$ M \f$, picks the right backend mechanism,
  *           and translates the memcpy call into that backend-specific call.
  *
+ * \warning A HiCR::memcpy only reverts to zero-copy communication if the
+ *          backend it resolves to, supports it.
+ *
  * Exceptions are thrown in the following cases:
  *  -# HiCR cannot facilitate communication between the requested memory spaces.
  *  -# The offset and sizes result in a communication request that is outside
