@@ -20,21 +20,14 @@ class LPFMemorySlot : MemorySlot {
         }
 };
 
-//class LPFBackend {
-//    public:
-        void memcpy(
-                LPFMemorySlot & destination, const size_t dst_locality, const size_t dst_offset,
-                const LPFMemorySlot & source, const size_t src_locality, const size_t src_offset,
-                const size_t size,
-                const TagSlot& tag
-                )  {
-            std::cout << "Enter memcpy with 2 LPF memory locations\n";
-        }
-
-//        void queryResources() {
-//        }
-//
-//};
+void memcpy(
+        LPFMemorySlot & destination, const size_t dst_locality, const size_t dst_offset,
+        const LPFMemorySlot & source, const size_t src_locality, const size_t src_offset,
+        const size_t size,
+        const TagSlot& tag
+        )  {
+    std::cout << "Enter memcpy with 2 LPF memory locations\n";
+}
 
 class LPFMemoryResource : MemoryResource {
     private:
@@ -60,35 +53,19 @@ class LPFMemoryResource : MemoryResource {
             }
             LPFMemorySlot * slot = new LPFMemorySlot(*lpf_slot);
             std::cout << "After LPFMemorySlot constructor\n";
-            //lpf_sync(_ctx, LPF_SYNC_DEFAULT);
             return slot;
         }
-
-        //~LPFMemoryResource() {
-        //    for (auto slot : _lpf_slots) {
-        //        lpf_deregister(_ctx, slot);
-        //    }
-        //}
 
 };
 
 
-//template <class LPF> HiCR::MemoryResource<LPF> allocateMemorySlot(const size_t&) {
-//    return NULL;
-//}
-
 void spmd( lpf_t ctx, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args) {
 
-    std::cout << "Enter spmd\n";
     LPFMemoryResource lpf(ctx);
-    std::cout << "After constructor\n";
     auto slot1 = lpf.allocateMemorySlot(1000);
-    std::cout << "After allocateMemorySlot\n";
     auto slot2 = lpf.allocateMemorySlot(1000);
-    std::cout << "After allocateMemorySlot2\n";
     //LPFBackend lpf_back; 
     memcpy(*slot2, 0, 0, *slot1, 0, 0, 1000, 0);
-    //slot1 = slot2;
 
 }
 
