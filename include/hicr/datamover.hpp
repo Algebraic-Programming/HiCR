@@ -14,73 +14,8 @@
 namespace HiCR {
 
 /**
- * Encapsulates a memory region that is either the source or destination of a
- * call to put/get operations.
- *
- * There might be limited number of memory slots supported by a given backend.
- */
-class MemorySlot {
-  ...
-};
-
-/**
- * This is a specialization of the Resource class in HiCR, meant to express a 
- * hardware memory element within a hierarchy (E.g., Cache, RAM, HBM, Device)
- *
- * A more refined specification of this object and how it is discovered will be
- * provided later with the first draft of the Machine Model API.
- */
-class MemoryResource
-{
- ...
- 
- /**
- * Allocates a new memory slot within the memory resource.
- *
- * @param[in] addr  The start address of the memory region to be registered.
- * @param[in] size  The size of the memory region to be registered.
- */
- MemorySlot MemoryResource::allocateMemorySlot(const size_t size);
- 
- /**
- * Creates a memory slot within the memory resource given an existing allocation
- *
- * @param[in] addr  The start address of the memory region to be registered.
- * @param[in] size  The size of the memory region to be registered.
- */
- MemorySlot MemoryResource::createMemorySlot(void* addr, const size_t size);
- 
-  /**
- * This operation will resolve the release of the allocated memory space which this slot holds.
- */
- void MemoryResource::freeMemorySlot();
-}
-
-/**
- * A message tag.
- *
- * For asynchronous data movement, fences may operate on messages that share the
- * same tag; meaning, that while fencing on a single message or on a group of
- * messages that share a tag, other messages may remain in flight after the
- * fence completes.
- *
- * There are a limited set of tags exposed by the system.
- */
-class TagSlot {
- public:
-  /**
-   * Constructs a new message and fence tag.
-   *
-   * There are a limited set of tags exposed by the system.
-   *
-   * @param[in] uuid A universally unique numerical tag
-   */
-  TagSlot(const uint128_t uuid);
-}
-
-/**
  * Instructs the backend to perform an asynchronous memory copy from
- * within a source area, to within a destination area. 
+ * within a source area, to within a destination area.
  *
  * @param[in] source       The source memory region
  * @param[in] src_locality The locality of the source memory region
@@ -94,16 +29,47 @@ class TagSlot {
  *                         destination
  * @param[in] tag          The tag of this memory copy
  *
- * Either \a source and \a src_locality, or \a destination and \a dst_locality,
- * \em must refer to a local memory region.
- *
  * A call to this function is one-sided, non-blocking, and, if the hardware and
  * network supports it, zero-copy.
  *
+ * If there is no direct path of communication possible between the memory
+ * spaces that underlie \a source and \a destination (and their localities), an
+ * exception will be thrown.
+ *
+ * \note If \a source is a local memory slot, then \a src_locality \em must be
+ *       <tt>0</tt>-- a local memory slot only has its own locality.
+ *
+ * \note If \a destination is a local memory slot, then \a src_locality \em must
+ *       be <tt>0</tt>-- a local memory slot only has its own locality.
+ *
  * \note For blocking semantics, simply immediately follow this call to memcpy
- *       with a call to HiCR::fence().
+ *       with a call any of the HiCR::fence() variants. If you would like a
+ *       blocking memcpy, we can provide a small library that wraps this
+ *       function with a fence. While this would perhaps be easier to use, it
+ *       requires two-sided interaction (in case a remote memory space is
+ *       involved) \em and will likely wreak havoc on performance of the upper-
+ *       level run-time system.
+ *
+ * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
+ *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
+ *
+ * \internal Since memory slots are tied to memory spaces, a sparse matrix
+ *           \f$ M \f$ internal to HiCR prescribes which backends can facilitate
+ *           data movement between pairs of memory spaces. This memcpy hence
+ *           looks into this table \f$ M \f$, picks the right backend mechanism,
+ *           and translates the memcpy call into that backend-specific call.
+ *
+ * Exceptions are thrown in the following cases:
+ *  -# HiCR cannot facilitate communication between the requested memory spaces.
+ *  -# The offset and sizes result in a communication request that is outside
+ *     the region of either \a destination or \a source.
+ *  -# Both \a destination and \a source are local memory slots.
+ *  -# One (or both) of \a dst_locality and \a src_locality point to
+ *     non-existing memory spaces.
+ *  -# \a dst_locality is a local memory slot but \a dst_locality is not 0
+ *  -# \a src_locality is a local memory slot but \a src_locality is not 0
  */
-void Backend::memcpy(
+void memcpy(
  MemorySlot& destination, const size_t dst_locality, const size_t dst_offset,
  const MemorySlot& source, const size_t src_locality, const size_t src_offset,
  const size_t size,
@@ -118,6 +84,12 @@ void Backend::memcpy(
  *          completion event, the latency exists nonetheless. If, therefore,
  *          the latency cannot be hidden, then zero-cost fencing (see below)
  *          should be employed instead.
+ *
+ * Exceptions are thrown in the following cases:
+ *  -# One of the remote address spaces no longer has an active communication
+ *     channel. This is a critical failure from which HiCR cannot recover. The
+ *     user is encouraged to exit gracefully without initiating any further
+ *     communication or fences.
  */
 void fence(const TagSlot& tag);
 
@@ -130,15 +102,36 @@ void fence(const TagSlot& tag);
  * @param[in] tag      The tag of the memory copies to fence for
  * @param[in] msgs_in  How many messages are incoming to this locality
  * @param[in] msgs_out How many messages are outgoing from this locality
- * @param[in] dests    A set of memory resources (localities) to which we
- *                     have outgoing memory copy requests
- * @param[in] sources  A set of memory resources (localities) from which 
- *                     we have incoming memory copy requests
+ * @param[in] dests    An array of localities to which we have outgoing memory
+ *                     copy requests
+ * @param[in] sources  An array of localities from which we have incoming memory
+ *                     copy requests
+ *
+ * Exceptions are thrown in the following cases:
+ *  -# An entry of \a dests or \a sources is out of range w.r.t. the localities
+ *     \a tag has been created with.
+ *  -# One of the remote address spaces no longer has an active communication
+ *     channel. This is a critical failure from which HiCR cannot recover. The
+ *     user is encouraged to exit gracefully without initiating any further
+ *     communication or fences.
+ *
+ * \note One difference between the global fence is that this variant
+ *       potentially may \em not detect remote failures of resources that are
+ *       not tied to those in \a dests or \a sources; the execution may proceed
+ *       without triggering any exception, until such point another fence waits
+ *       for communication from a failed resource.
+ *
+ * \todo How does this interact with malleability of resources of which HiCR is
+ *       aware?
+ *
+ * \todo Should we take iterators instead of raw pointers?
  */
 void fence(
  const TagSlot& tag,
  const size_t msgs_in, const size_t msgs_out,
- const set<MemoryResource*>& dests,
- const set<MemoryResource*>& sources
+ const size_t * const dests,
+ const size_t * const sources
 );
+
+} // end namespace HiCR
 
