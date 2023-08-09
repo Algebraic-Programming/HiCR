@@ -29,17 +29,26 @@ namespace HiCR {
  *                         destination
  * @param[in] tag          The tag of this memory copy
  *
- * If there is no direct path of communication possible between the memory
- * spaces that underlie \a source and \a destination, an exception will be
- * thrown.
- *
- * One (or both) of \a source and \a destination must be a global memory slot.
- *
  * A call to this function is one-sided, non-blocking, and, if the hardware and
  * network supports it, zero-copy.
  *
+ * If there is no direct path of communication possible between the memory
+ * spaces that underlie \a source and \a destination (and their localities), an
+ * exception will be thrown.
+ *
+ * \note If \a source is a local memory slot, then \a src_locality \em must be
+ *       <tt>0</tt>-- a local memory slot only has its own locality.
+ *
+ * \note If \a destination is a local memory slot, then \a src_locality \em must
+ *       be <tt>0</tt>-- a local memory slot only has its own locality.
+ *
  * \note For blocking semantics, simply immediately follow this call to memcpy
- *       with a call to HiCR::fence().
+ *       with a call any of the HiCR::fence() variants. If you would like a
+ *       blocking memcpy, we can provide a small library that wraps this
+ *       function with a fence. While this would perhaps be easier to use, it
+ *       requires two-sided interaction (in case a remote memory space is
+ *       involved) \em and will likely wreak havoc on performance of the upper-
+ *       level run-time system.
  *
  * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
  *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
@@ -59,11 +68,6 @@ namespace HiCR {
  *     non-existing memory spaces.
  *  -# \a dst_locality is a local memory slot but \a dst_locality is not 0
  *  -# \a src_locality is a local memory slot but \a src_locality is not 0
- *
- * \todo Problem: currently, in fact, a MemorySpace is tied to a single address
- *       space, but the \a dst_locality and \a src_locality arguments indicate
- *       that the slot should be aware of remote connected memory spaces also.
- *       Is this another difference between a local and global memory slot?
  */
 void memcpy(
  MemorySlot& destination, const size_t dst_locality, const size_t dst_offset,
@@ -81,7 +85,11 @@ void memcpy(
  *          the latency cannot be hidden, then zero-cost fencing (see below)
  *          should be employed instead.
  *
- * \todo failure model
+ * Exceptions are thrown in the following cases:
+ *  -# One of the remote address spaces no longer has an active communication
+ *     channel. This is a critical failure from which HiCR cannot recover. The
+ *     user is encouraged to exit gracefully without initiating any further
+ *     communication or fences.
  */
 void fence(const TagSlot& tag);
 
@@ -94,18 +102,35 @@ void fence(const TagSlot& tag);
  * @param[in] tag      The tag of the memory copies to fence for
  * @param[in] msgs_in  How many messages are incoming to this locality
  * @param[in] msgs_out How many messages are outgoing from this locality
- * @param[in] dests    A set of memory resources (localities) to which we
- *                     have outgoing memory copy requests
- * @param[in] sources  A set of memory resources (localities) from which
- *                     we have incoming memory copy requests
+ * @param[in] dests    An array of localities to which we have outgoing memory
+ *                     copy requests
+ * @param[in] sources  An array of localities from which we have incoming memory
+ *                     copy requests
  *
- * \todo failure model
+ * Exceptions are thrown in the following cases:
+ *  -# An entry of \a dests or \a sources is out of range w.r.t. the localities
+ *     \a tag has been created with.
+ *  -# One of the remote address spaces no longer has an active communication
+ *     channel. This is a critical failure from which HiCR cannot recover. The
+ *     user is encouraged to exit gracefully without initiating any further
+ *     communication or fences.
+ *
+ * \note One difference between the global fence is that this variant
+ *       potentially may \em not detect remote failures of resources that are
+ *       not tied to those in \a dests or \a sources; the execution may proceed
+ *       without triggering any exception, until such point another fence waits
+ *       for communication from a failed resource.
+ *
+ * \todo How does this interact with malleability of resources of which HiCR is
+ *       aware?
+ *
+ * \todo Should we take iterators instead of raw pointers?
  */
 void fence(
  const TagSlot& tag,
  const size_t msgs_in, const size_t msgs_out,
- const set<MemoryResource*>& dests,
- const set<MemoryResource*>& sources
+ const size_t * const dests,
+ const size_t * const sources
 );
 
 } // end namespace HiCR

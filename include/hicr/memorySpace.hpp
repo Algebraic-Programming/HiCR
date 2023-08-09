@@ -52,6 +52,20 @@ class MemorySlot {
    */
   size_t getSize() const noexcept;
 
+  /**
+   * @returns The number of localities this memorySlot has been created with.
+   *
+   * This function never returns <tt>0</tt>. When given a valid MemorySlot
+   * instance, a call to this function never fails.
+   *
+   * \note When <tt>1</tt> is returned, this memory slot is a local slot. If
+   *       a larger value is returned, the memory slot is a global slot.
+   *
+   * When referring to localities corresponding to this memory slot, only IDs
+   * strictly lower than the returned value are valid.
+   */
+  size_t nLocalities() const noexcept;
+
 };
 
 /**
@@ -84,22 +98,33 @@ class TagSlot {
 	 // mechanism as for #MemorySlot to have it tie to specific backends--
 	 // see MemorySpace::createTagSlot
 
-	 /**
-	  * @returns a unique numerical identifier corresponding to this tag.
-	  *
-	  * The returned value is unique within the current HiCR instance. If a tag
-	  * is shared with other HiCR instances, there is a guarantee that each HiCR
-	  * instance returns the same ID.
-	  *
-	  * A call to this function on any valid instance of a #TagSlot shall never
-	  * fail.
-	  *
-	  * \todo Do we really need this? We already specified that the TagSlot may be
-	  *       memcpy'd, so the TagSlot itself is already a unique identifier.
-	  *       Defining the return type to have some limited byte size also severely
-	  *       limits backends, and perhaps overly so.
-	  */
-	 uint128_t getID() const noexcept;
+ /**
+  * @returns a unique numerical identifier corresponding to this tag.
+  *
+  * The returned value is unique within the current HiCR instance. If a tag
+  * is shared with other HiCR instances, there is a guarantee that each HiCR
+  * instance returns the same ID.
+  *
+  * A call to this function on any valid instance of a #TagSlot shall never
+  * fail.
+  *
+  * \todo Do we really need this? We already specified that the TagSlot may be
+  *       memcpy'd, so the TagSlot itself is already a unique identifier.
+  *       Defining the return type to have some limited byte size also severely
+  *       limits backends, and perhaps overly so.
+  */
+ uint128_t getID() const noexcept;
+
+  /**
+   * @returns The number of localities this tagSlot has been created with.
+   *
+   * This function never returns <tt>0</tt>. When given a valid TagSlot
+   * instance, a call to this function never fails.
+   *
+   * When referring to localities corresponding to this tag, only IDs strictly
+   * lower than the returned value are valid.
+   */
+  size_t nLocalities() const noexcept;
 
 };
 
@@ -159,6 +184,10 @@ public:
  /**
  * Allocates a new memory slot within the memory resource.
  *
+ * \note Explicitly acquiring a memory slot is required since some backends have
+ *       limited memory slots, such as e.g. an Infiniband NIC which requires
+ *       hardware buffers for each slot.
+ *
  * @param[in] size  The size of the memory region to be registered.
  *
  * A memory slot may potentially need to be registered with backends other than
@@ -168,49 +197,89 @@ public:
  * that the retrieved memory slot is to only facilitate memory copies within its
  * own memory space.
  *
- * @param[in] interactsWith An array of memory spaces that the memory slot may
- *                          interact with.
+ * @param[in] remotes An array of memory spaces that the memory slot may
+ *                    interact with. Optional; by default, this is an empty array
+ *                    (<tt>nullptr</tt>)
  *
- * \note This is required since some backends have limited memory slots, such as
- *       e.g. an Infiniband NIC which requires hardware buffers for each slot.
+ * When \a remotes are empty, a \em local memory slot will be returned. A local
+ * memory slot can only be used within this MemorySpace, and can only be used to
+ * refer to local source regions or local destination regions.
+ *
+ * A memory slot that is not local is called a \em global memory slot instead.
+ * A global memory slot has \$f k \f$ \em localities, where \f$ k \f$ is the
+ * length of the \a remotes array. Unlike a local memory slot, a global memory
+ * slot \em can be used to refer to \em remote source regions or remote
+ * destination regions; i.e., global memory slot can be used to request data
+ * movement between different memory spaces.
+ *
+ * If there are no direct paths of communication between any pair in the set of
+ * current memory space and the memory spaces in \a remotes, an exception will
+ * be thrown.
  *
  * \warning Use of a returned memory slot within a memory copy that has as
  *          source or destination a memory slot that is not owned by this memory
  *          space, while that memory space was not given as part of
  *          \a interactsWith, invites undefined behaviour.
  *
- * This function may fail for two reasons:
+ * This function may fail for the following reasons:
  *  -# out of memory;
- *  -# a related backend is out of resources to create a new memory slot.
+ *  -# a related backend is out of resources to create a new memory slot;
+ *  -# there is a duplicate memory space in the \a remotes array;
+ *  -# if there is no direct path of communication possible between any pair in
+ *     the set of the current memory space and all memory spaces in \a remotes.
+ *
+ * \todo Should we take iterators rather than request a raw array?
  */
- MemorySlot allocateMemorySlot(const size_t size, MemorySpace * const interactsWith = nullptr);
+ MemorySlot allocateMemorySlot(const size_t size, MemorySpace * const remotes = nullptr);
 
  /**
  * Creates a memory slot within this memory resource and given an existing
  * allocation.
  *
+ * \note Explicitly acquiring a memory slot is required since some backends have
+ *       limited memory slots, such as e.g. an Infiniband NIC which requires
+ *       hardware buffers for each slot.
+ *
  * @param[in] addr  The start address of the memory region to be registered.
  * @param[in] size  The size of the memory region to be registered.
- * @param[in] interactsWith An array of memory spaces that the memory slot may
- *                          interact with.
+ * @param[in] remotes An array of memory spaces that the memory slot may
+ *                    interact with. Optional; by default, this is an empty array
+ *                    (<tt>nullptr</tt>)
  *
- * @see allocateMemorySlot for more details regarding \a interactsWith.
+ * @see allocateMemorySlot for more details regarding \a remotes. Note that in
+ *      particular, an empty array \a remotes on a successful call results in a
+ *      local memory slot being returned, while a non-empty \a remotes results
+ *      in a global memory slot being returned.
  *
- * This function may fail for one reason:
- *  -# a related backend is out of resources to create a new memory slot.
+ * Destroying a returned memory slot will \em not free the memory at \a addr.
+ *
+ * This function may fail for the following reasons:
+ *  -# a related backend is out of resources to create a new memory slot;
+ *  -# there is a duplicate memory space in the \a remotes array;
+ *  -# if there is no direct path of communication possible between any pair in
+ *     the set of the current memory space and all memory spaces in \a remotes.
+ *
+ * \todo Should we take iterators rather than request a raw array?
  */
- MemorySlot createMemorySlot(void* addr, const size_t size, MemorySpace * const interactsWith = nullptr);
+ MemorySlot createMemorySlot(void* addr, const size_t size, MemorySpace * const remotes = nullptr);
 
  /**
   * Creates a tag slot for use with memory slots that are created via calls to
   * #allocateMemorySlot or #createMemorySlot within this same memory space.
   *
+ * @param[in] remotes An array of memory spaces that the tag may interact with.
+ *                    Optional; by default, this is an empty array,
+ *                    <tt>nullptr</tt>.
+ *
  * @see allocateMemorySlot for more details regarding \a interactsWith.
  *
  * This function may fail for one reason:
+ *  -# there is a duplicate memory space in the \a remotes array;
  *  -# a related backend is out of resources to create a new memory slot.
+ *
+ * \todo Should we take iterators rather than request a raw array?
  */
- TagSlot createTagSlot(MemorySpace * const interactsWith = nullptr);
+ TagSlot createTagSlot(MemorySpace * const remotes = nullptr);
 
 /*
  * This operation will resolve the release of the allocated memory space which this slot holds.

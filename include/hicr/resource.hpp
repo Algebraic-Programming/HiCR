@@ -23,6 +23,9 @@ typedef uint64_t resourceId_t;
 // Definition for function to run at resource
 typedef std::function<void(void)> resourceFc_t;
 
+/**
+ * A compute resource
+ */
 class Resource
 {
  friend class Worker;
@@ -31,6 +34,12 @@ class Resource
 
  virtual ~Resource() = default;
  inline resourceId_t getId() { return _id; }
+
+ /**
+  * Returns the memory space associated with this compute resource.
+  *
+  * This refers to addressable main memory.
+  */
  virtual MemorySpace& getMemorySpace() = 0;
 
  protected:
