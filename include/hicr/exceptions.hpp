@@ -8,7 +8,7 @@
  * @file Provides a failure model and corresponding exception classes.
  *
  * @author A. N. Yzelman
- * @date 8/8/2023 (factored out of datamover.hpp)
+ * @date 9/8/2023
  */
 
 #pragma once
