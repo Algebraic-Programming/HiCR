@@ -37,6 +37,16 @@ class MemorySlot {
  public:
 
   /**
+   * Releases all resources associated with this memory slot. If the memory
+   * slot was created via a call to #MemorySpace::allocateMemorySlot, then the
+   * associated memory will be freed as part of destruction.
+   *
+   * \internal In OO programming, standard practice is to declare destructors
+   *           virtual.
+   */
+  virtual ~MemorySlot() {}
+
+  /**
    * @returns The address of the memory region the slot has registered.
    *
    * This function when called on a valid MemorySlot instance may not fail.
@@ -93,10 +103,18 @@ class TagSlot {
 
  public:
 
-	 // there used to be a constructor here, but that precludes any backend from
-	 // managing a possibly constrained set of tags. Instead, we now use the same
-	 // mechanism as for #MemorySlot to have it tie to specific backends--
-	 // see MemorySpace::createTagSlot
+ // there used to be a constructor here, but that precludes any backend from
+ // managing a possibly constrained set of tags. Instead, we now use the same
+ // mechanism as for #MemorySlot to have it tie to specific backends--
+ // see MemorySpace::createTagSlot
+
+  /**
+   * Releases all resources associated to this tag.
+   *
+   * \internal In OO programming, standard practice is to declare destructors
+   *           virtual.
+   */
+ virtual ~TagSlot() {}
 
  /**
   * @returns a unique numerical identifier corresponding to this tag.
@@ -180,6 +198,13 @@ protected:
  MemorySpace();
 
 public:
+
+ /**
+  * \internal In OO programming, standard practice is to declare destructors
+  *           virtual. There is no user-visible effect of destroying a memory
+  *           space instance.
+  */
+ virtual ~MemorySpace() {}
 
  /**
  * Allocates a new memory slot within the memory resource.
@@ -280,6 +305,72 @@ public:
  * \todo Should we take iterators rather than request a raw array?
  */
  TagSlot createTagSlot(MemorySpace * const remotes = nullptr);
+
+/**
+ * Constructs a channel.
+ *
+ * @tparam SrcIt An iterator over HiCR MemorySpaces
+ * @tparam DstIt An iterator over HiCR MemorySpaces
+ *
+ * Let \f$ S \f$ be a set of producers, and let \f$ D \f$ be a set of
+ * consumers. \f$ S, D \f$ must contain at least one element. A channel
+ * lets any producer put so-called \em tokens into a distributed buffer,
+ * and lets any consumer retrieve tokens from that buffer.
+ *
+ * A channel is identified by an \a tag. The tag is a concept exposed by
+ * associated memory spaces, and created via MemorySpace::createTagSlot.
+ *
+ * @param[in] producers_start An iterator in begin position to \f$ S \f$
+ * @param[in] producers_end   An iterator in end position to \f$ S \f$
+ * @param[in] consumers_start An iterator in begin position to \f$ D \f$
+ * @param[in] consumers_end   An iterator in end position to \f$ D \f$
+ * @param[in] capacity        How many tokens may be in the channel at
+ *                            maximum, at any given time
+ * @param[in] tag             The channel tag. Every channel should have a
+ *                            unique tag associated to it.
+ *
+ * \warning Using the same \a tag for both a channel as well as individual
+ *          calls to HiCR::memcpy or HiCR::fence will result in undefined
+ *          behaviour.
+ *
+ * With normal semantics, a produced token ends up at one (out of potentially
+ * many) consumers. This channel, however, includes a possibility where tokens
+ * once submitted are broadcast to \em all consumers.
+ *
+ * @param[in] producersBroadcast Whether submitted tokens are to be broadcast
+ *                               to all consumers.
+ *
+ * In broadcasting mode, broadcasting any single token to \f$ c \f$ consumers
+ * counts as taking up \f$ c \f$ \a capacity.
+ *
+ * \note Rationale: in the worst case, the token ends up at \f$ c \f$
+ *       receiving buffers without any one of them being consumed yet.
+ *
+ * A call to this constructor must be made collectively across all workers
+ * that house the given resources. If the callee locality is in \f$ S \f$,
+ * then the constructed channel is a producer. If the callee locality is in
+ * \f$ D \f$, then the constructed channel is a consumer. A locality may
+ * never be both in \f$ S \f$ \em \f$ D \f$.
+ *
+ * Channels always encapsulate one-copy communication. This means there is
+ * always at least one copy of a token in either a sender or receiver buffer.
+ *
+ * \note For zero-copy communication mechanisms, see HiCR::memcpy.
+ *
+ * \todo This interface uses iterators instead of raw arrays for listing the
+ *       producers and consumers. The memorySpace and datamover interfaces use
+ *       raw arrays instead. We should probably just pick one API and make all
+ *       APIs consistent with that choice.
+ */
+template<typename SrcIt, typename DstIt>
+Channel createChannel(
+ const MemorySpace& mySpace,
+ const SrcIt& producers_start, const SrcIt& producers_end,
+ const DstIt& consumers_start, const DstIt& consumers_end,
+ const size_t capacity,
+ const TagSlot& tag,
+ const bool producersBroadcast = false
+);
 
 /*
  * This operation will resolve the release of the allocated memory space which this slot holds.
