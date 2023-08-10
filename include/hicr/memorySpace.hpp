@@ -34,6 +34,9 @@ class MemorySlot {
 
   typedef void * const ptr_t;
 
+  /** A memory slot may not be default-constructed. */
+  MemorySlot() {}
+
  public:
 
   /**
@@ -88,25 +91,30 @@ class MemorySlot {
  *
  * There are a limited set of tags exposed by the system.
  *
- * The TagSlot may be memcpy'd between HiCR instances that share the same
- * context. This implies that a TagSlot must be a plain-old-data type.
+ * The Tag may be memcpy'd between HiCR instances that share the same context.
+ * This implies that a Tag must be a plain-old-data type.
  *
- * \internal This also implies that a TagSlot must be some sort of shared union
+ * \internal This also implies that a Tag must be some sort of shared union
  *           struct between backends.
  *
- * The size of the TagSlot shall always be a multiple of <tt>sizeof(int)</tt>.
+ * The size of the Tag shall always be a multiple of <tt>sizeof(int)</tt>.
  *
  * \internal This last requirement ensures we can have an array of tags and use
  *           memcpy to communicate just parts of it.
  */
-class TagSlot {
+class Tag {
+
+ private:
+
+ /** A tag may not be default-constructed. */
+ Tag() {}
 
  public:
 
  // there used to be a constructor here, but that precludes any backend from
  // managing a possibly constrained set of tags. Instead, we now use the same
  // mechanism as for #MemorySlot to have it tie to specific backends--
- // see MemorySpace::createTagSlot
+ // see MemorySpace::createTag
 
   /**
    * Releases all resources associated to this tag.
@@ -114,7 +122,7 @@ class TagSlot {
    * \internal In OO programming, standard practice is to declare destructors
    *           virtual.
    */
- virtual ~TagSlot() {}
+ virtual ~Tag() {}
 
  /**
   * @returns a unique numerical identifier corresponding to this tag.
@@ -123,11 +131,11 @@ class TagSlot {
   * is shared with other HiCR instances, there is a guarantee that each HiCR
   * instance returns the same ID.
   *
-  * A call to this function on any valid instance of a #TagSlot shall never
+  * A call to this function on any valid instance of a #Tag shall never
   * fail.
   *
-  * \todo Do we really need this? We already specified that the TagSlot may be
-  *       memcpy'd, so the TagSlot itself is already a unique identifier.
+  * \todo Do we really need this? We already specified that the Tag may be
+  *       memcpy'd, so the Tag itself is already a unique identifier.
   *       Defining the return type to have some limited byte size also severely
   *       limits backends, and perhaps overly so.
   */
@@ -136,7 +144,7 @@ class TagSlot {
   /**
    * @returns The number of localities this tagSlot has been created with.
    *
-   * This function never returns <tt>0</tt>. When given a valid TagSlot
+   * This function never returns <tt>0</tt>. When given a valid Tag
    * instance, a call to this function never fails.
    *
    * When referring to localities corresponding to this tag, only IDs strictly
@@ -222,20 +230,35 @@ public:
  * that the retrieved memory slot is to only facilitate memory copies within its
  * own memory space.
  *
- * @param[in] remotes An array of memory spaces that the memory slot may
- *                    interact with. Optional; by default, this is an empty array
- *                    (<tt>nullptr</tt>)
+ * A memory slot has a concept of \em localities, which map one-to-one to memory
+ * spaces. Every memory slot has at least one locality that corresponds to this
+ * memory space. A locality is referenced by a unique <tt>size_t</tt> in the
+ * range of 0 to \f$ n \f$ (exclusive), where \f$ n \f$ is the total number of
+ * localities to be associated with the requested memory slot.
+ *
+ * @param[in] myLocalityID The ID of my locality.
+ *
+ * @param[in] remotes     An iterator over memory spaces that the memory slot
+ *                        may interact with. Optional; by default, this is an
+ *                        empty array (<tt>nullptr</tt>)
+ * @param[in] remotes_end An iterator in end position that matches \a remotes.
+ *                        Optional; by default, this is equal to \a remotes
+ *                        (i.e., signifying an empty set of memory spaces).
+ *
+ * The value for \a myLocalityID must be less than or equal to the number of
+ * elements in \a remotes. Every \f$ i \f$-th entry of \a remotes that is larger
+ * or equal to \a myLocalityID will have ID \f$ i + 1 \f$; all other entries of
+ * \a remotes will have ID \f$ i \f$.
  *
  * When \a remotes are empty, a \em local memory slot will be returned. A local
  * memory slot can only be used within this MemorySpace, and can only be used to
  * refer to local source regions or local destination regions.
  *
  * A memory slot that is not local is called a \em global memory slot instead.
- * A global memory slot has \$f k \f$ \em localities, where \f$ k \f$ is the
- * length of the \a remotes array. Unlike a local memory slot, a global memory
- * slot \em can be used to refer to \em remote source regions or remote
- * destination regions; i.e., global memory slot can be used to request data
- * movement between different memory spaces.
+ * A global memory slot has \$f k = n + 1 \f$ \em localities. Unlike a local
+ * memory slot, a global memory slot \em can be used to refer to \em remote
+ * source regions or remote destination regions; i.e., global memory slot can be
+ * used to request data movement between different memory spaces.
  *
  * If there are no direct paths of communication between any pair in the set of
  * current memory space and the memory spaces in \a remotes, an exception will
@@ -247,8 +270,9 @@ public:
  *          \a remotes, invites undefined behaviour.
  *
  * When creating a global memory slot, the call to this primitive must be
- * \em collective across all workers / memory spaces in \a remotes. This
- * argument must furthermore be equal across all collective calls.
+ * \em collective across all workers / memory spaces in \a remotes. The order
+ * in which remote memory spaces are iterated over furthermore must be equal
+ * across all collective calls.
  *
  * This function may fail for the following reasons:
  *  -# out of memory;
@@ -259,9 +283,13 @@ public:
  *  -# the order of memory spaces (if any) in \a remotes differs across the
  *     collective call.
  *
- * \todo Should we take iterators rather than request a raw array?
+ * @see createMemorySlot The allocateMemorySlot may be viewed as combining a
+ *      malloc with a call to #createMemorySlot. It is useful for buffers
+ *      managed by the run-time system itself; neither function is designed
+ *      to be called by the run-time end-user.
  */
- MemorySlot allocateMemorySlot(const size_t size, MemorySpace * const remotes = nullptr);
+ template< typename FwdIt = MemorySpace * >
+ MemorySlot allocateMemorySlot(const size_t size, const size_t myLocalityID = 0, FwdIt remotes = nullptr, const FwdIt remotes_end = remotes);
 
  /**
  * Creates a memory slot within this memory resource and given an existing
@@ -273,18 +301,25 @@ public:
  *
  * @param[in] addr  The start address of the memory region to be registered.
  * @param[in] size  The size of the memory region to be registered.
- * @param[in] remotes An array of memory spaces that the memory slot may
- *                    interact with. Optional; by default, this is an empty array
- *                    (<tt>nullptr</tt>)
  *
- * @see allocateMemorySlot for more details regarding \a remotes. Note that in
- *      particular, an empty array \a remotes on a successful call results in a
- *      local memory slot being returned, while a non-empty \a remotes results
- *      in a global memory slot being returned.
+ * @param[in] myLocalityID The ID of my locality. Optional; the default assumes
+ *                         a local memory slot and reads zero.
+ * @param[in] remotes     An iterator over memory spaces that the memory slot
+ *                        may interact with. Optional; by default, this is an
+ *                        empty array (<tt>nullptr</tt>)
+ * @param[in] remotes_end An iterator in end position that matches \a remotes.
+ *                        Optional; by default, this is equal to \a remotes
+ *                        (i.e., signifying an empty set of memory spaces).
+ *
+ * @see allocateMemorySlot for more details regarding \a remotes and locality
+ *      IDs. In particular, note that an empty array \a remotes on a successful
+ *      call results in a local memory slot being returned, while a non-empty
+ *      \a remotes results in a global memory slot being returned.
  *
  * When creating a global memory slot, the call to this primitive must be
- * \em collective across all workers / memory spaces in \a remotes. This
- * argument must furthermore be equal across all collective calls.
+ * \em collective across all workers / memory spaces in \a remotes. The order
+ * in which remote memory spaces are iterated over furthermore must be equal
+ * across all collective calls.
  *
  * Destroying a returned memory slot will \em not free the memory at \a addr.
  *
@@ -296,37 +331,54 @@ public:
  *  -# the order of memory spaces (if any) in \a remotes differs across the
  *     collective call.
  *
- * \todo Should we take iterators rather than request a raw array?
+ * @see allocateMemorySlot The #createMemorySlot may be viewed as a variant of
+ *      #allocateMemorySlot that skips allocation and instead registers a given
+ *      already-allocated memory region. This function is to be used by a
+ *      run-time for registering memory areas managed by the run-time end user;
+ *      neither #createMemorySlot nor #allocateMemorySlot are designed to be
+ *      called by the run-time end user.
  */
- MemorySlot createMemorySlot(void* addr, const size_t size, MemorySpace * const remotes = nullptr);
+ template< typename FwdIt = MemorySpace * >
+ MemorySlot createMemorySlot(void* const addr, const size_t size, const size_t myLocalityID, FwdIt remotes = nullptr, const FwdIt remotes_end = remotes);
 
 /**
  * Creates a tag slot for use with memory slots that are created via calls to
- * #allocateMemorySlot or #createMemorySlot within this same memory space.
+ * #allocateMemorySlot or #createMemorySlot.
  *
- * @param[in] remotes An array of memory spaces that the tag may interact with.
- *                    Optional; by default, \a remotes is <tt>nullptr</tt>.
+ * Like memory slots, tags have a set of localities. The memory spaces the
+ * localities correspond to define the backend that should register the tag.
  *
- * @see allocateMemorySlot for more details regarding \a remotes.
+ * @param[in] myLocalityID The ID of my locality. Optional; the default assumes
+ *                         a local tag and reads zero.
+ * @param[in] remotes      An iterator over memory spaces that the tag may
+ *                         interact with. Optional; by default, this is an empty
+ *                         array (<tt>nullptr</tt>).
+ * @param[in] remotes_end  An iterator in end position that matches \a remotes.
+ *                         Optional; by default, this is equal to \a remotes
+ *                         (i.e., signifying an empty set of memory spaces).
+ *
+ * @see allocateMemorySlot for more details regarding \a remotes and locality
+ *      IDs.
  *
  * \note A tag with an empty remote array may still be useful for separating
- *       local memory copies from remote ones.
+ *       local memory copies from remote ones. The resulting tag is a dubbed a
+ *       local tag, whereas tags with more than one localities are global tags.
  *
- * If \a remotes is non-empty, then for all memory spaces in \a remotes, this
- * call must be matched by a remote worker calling #::createTagSlot (i.e., the
- * call must be collective across all participating memory spaces). The
- * \a remotes argument must match across all workers / memory spaces that
- * participate in the collective call.
+ * If \a remotes is non-empty, then for all memory spaces \a remotes iterates
+ * over, this call must be matched by a remote call to #::createTag (i.e., the
+ * call must be collective across all participating memory spaces).
+ *
+ * The elements \a remotes iterates over must match across all memory spaces
+ * that participate in the collective call, and must iterate over the remotes in
+ * matching order.
  *
  * This function may fail for the following reasons:
  *  -# there is a duplicate memory space in the \a remotes array;
  *  -# a related backend is out of resources to create a new memory slot;
- *  -# the order of memory spaces (if any) in \a remotes differs across the
- *     collective call.
- *
- * \todo Should we take iterators rather than request a raw array?
+ *  -# the order of memory spaces differs across the collective call.
  */
- TagSlot createTagSlot(MemorySpace * const remotes = nullptr);
+ template< typename FwdIt = MemorySpace * >
+ Tag createTag(const size_t myLocalityID = 0, FwdIt remotes = nullptr, const FwdIt remotes_end = remotes);
 
 /**
  * Constructs a channel.
@@ -340,7 +392,7 @@ public:
  * any consumer retrieve tokens from that buffer.
  *
  * A channel is identified by a \a tag, and as such, it makes use of system
- * resources equivalent to a single call to #::createTagSlot.
+ * resources equivalent to a single call to #::createTag.
  *
  * In addition, the channel requires \f$ n = |S| + |D| \f$ buffers, and (thus)
  * as many memory slots. Hence the channel, on successful creation, makes use
