@@ -244,14 +244,20 @@ public:
  * \warning Use of a returned memory slot within a memory copy that has as
  *          source or destination a memory slot that is not owned by this memory
  *          space, while that memory space was not given as part of
- *          \a interactsWith, invites undefined behaviour.
+ *          \a remotes, invites undefined behaviour.
+ *
+ * When creating a global memory slot, the call to this primitive must be
+ * \em collective across all workers / memory spaces in \a remotes. This
+ * argument must furthermore be equal across all collective calls.
  *
  * This function may fail for the following reasons:
  *  -# out of memory;
  *  -# a related backend is out of resources to create a new memory slot;
  *  -# there is a duplicate memory space in the \a remotes array;
  *  -# if there is no direct path of communication possible between any pair in
- *     the set of the current memory space and all memory spaces in \a remotes.
+ *     the set of the current memory space and all memory spaces in \a remotes;
+ *  -# the order of memory spaces (if any) in \a remotes differs across the
+ *     collective call.
  *
  * \todo Should we take iterators rather than request a raw array?
  */
@@ -276,31 +282,47 @@ public:
  *      local memory slot being returned, while a non-empty \a remotes results
  *      in a global memory slot being returned.
  *
+ * When creating a global memory slot, the call to this primitive must be
+ * \em collective across all workers / memory spaces in \a remotes. This
+ * argument must furthermore be equal across all collective calls.
+ *
  * Destroying a returned memory slot will \em not free the memory at \a addr.
  *
  * This function may fail for the following reasons:
  *  -# a related backend is out of resources to create a new memory slot;
  *  -# there is a duplicate memory space in the \a remotes array;
  *  -# if there is no direct path of communication possible between any pair in
- *     the set of the current memory space and all memory spaces in \a remotes.
+ *     the set of the current memory space and all memory spaces in \a remotes;
+ *  -# the order of memory spaces (if any) in \a remotes differs across the
+ *     collective call.
  *
  * \todo Should we take iterators rather than request a raw array?
  */
  MemorySlot createMemorySlot(void* addr, const size_t size, MemorySpace * const remotes = nullptr);
 
- /**
-  * Creates a tag slot for use with memory slots that are created via calls to
-  * #allocateMemorySlot or #createMemorySlot within this same memory space.
-  *
- * @param[in] remotes An array of memory spaces that the tag may interact with.
- *                    Optional; by default, this is an empty array,
- *                    <tt>nullptr</tt>.
+/**
+ * Creates a tag slot for use with memory slots that are created via calls to
+ * #allocateMemorySlot or #createMemorySlot within this same memory space.
  *
- * @see allocateMemorySlot for more details regarding \a interactsWith.
+ * @param[in] remotes An array of memory spaces that the tag may interact with.
+ *                    Optional; by default, \a remotes is <tt>nullptr</tt>.
+ *
+ * @see allocateMemorySlot for more details regarding \a remotes.
+ *
+ * \note A tag with an empty remote array may still be useful for separating
+ *       local memory copies from remote ones.
+ *
+ * If \a remotes is non-empty, then for all memory spaces in \a remotes, this
+ * call must be matched by a remote worker calling #::createTagSlot (i.e., the
+ * call must be collective across all participating memory spaces). The
+ * \a remotes argument must match across all workers / memory spaces that
+ * participate in the collective call.
  *
  * This function may fail for the following reasons:
  *  -# there is a duplicate memory space in the \a remotes array;
- *  -# a related backend is out of resources to create a new memory slot.
+ *  -# a related backend is out of resources to create a new memory slot;
+ *  -# the order of memory spaces (if any) in \a remotes differs across the
+ *     collective call.
  *
  * \todo Should we take iterators rather than request a raw array?
  */
@@ -340,7 +362,7 @@ public:
  * locality is in \f$ D \f$, then the constructed channel is an \em consumer.
  * This memory space must be at least in one of \f$ S \f$ or \f$ D \f$, while
  * there may not be any duplicates in \f$ S \f$, in \f$ D \f$, nor in
- * \f$ S \cup D \f$.
+ * \f$ S \cup D \f$. Finally, \f$ n \f$ must be strictly larger than one.
  *
  * With normal semantics, a produced token ends up at one (out of potentially
  * many) consumers. This channel, however, includes a possibility where tokens
@@ -364,8 +386,14 @@ public:
  *  -# the current memory space is not in \f$ S \f$ nor \f$ D \f$;
  *  -# there is a duplicate memory space in \f$ S \f$ or \f$ D \f$ or
  *     \f$ S \cup D \f$;
+ *  -# \f$ n \f$ equals one or at least one of \f$ c, p \f$ equals zero, with
+ *     \f$ p = |S| \f$;
  *  -# the HiCR communication matrix \f$ M \f$ indicates a pair of memory spaces
  *     in \f$ S \cup D \f$ that have no direct line of communication;
+ *  -# the order of elements given by \a producers_start differs across the
+ *     collective call;
+ *  -# the order of elements given by \a consumers_start differs across the
+ *     collective call;
  *  -# a related backend is out of resources to create this new channel.
  *
  * @see #HiCR::memcpy for a definition of \f$ M \f$.
