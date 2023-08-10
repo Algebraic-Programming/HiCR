@@ -298,7 +298,7 @@ public:
  *
  * @see allocateMemorySlot for more details regarding \a interactsWith.
  *
- * This function may fail for one reason:
+ * This function may fail for the following reasons:
  *  -# there is a duplicate memory space in the \a remotes array;
  *  -# a related backend is out of resources to create a new memory slot.
  *
@@ -313,12 +313,19 @@ public:
  * @tparam DstIt An iterator over HiCR MemorySpaces
  *
  * Let \f$ S \f$ be a set of producers, and let \f$ D \f$ be a set of
- * consumers. \f$ S, D \f$ must contain at least one element. A channel
- * lets any producer put so-called \em tokens into a distributed buffer,
- * and lets any consumer retrieve tokens from that buffer.
+ * consumers. \f$ S, D \f$ must contain at least one element. A channel lets
+ * any producer put so-called \em tokens into a distributed buffer, and lets
+ * any consumer retrieve tokens from that buffer.
  *
- * A channel is identified by an \a tag. The tag is a concept exposed by
- * associated memory spaces, and created via MemorySpace::createTagSlot.
+ * A channel is identified by a \a tag, and as such, it makes use of system
+ * resources equivalent to a single call to #::createTagSlot.
+ *
+ * In addition, the channel requires \f$ n = |S| + |D| \f$ buffers, and (thus)
+ * as many memory slots. Hence the channel, on successful creation, makes use
+ * of system resources equivalent to \f$ n \f$ calls to #::allocateMemorySlot.
+ *
+ * The buffers and resources the channel allocates on successful construction,
+ * will be released on a call to the channel destructor.
  *
  * @param[in] producers_start An iterator in begin position to \f$ S \f$
  * @param[in] producers_end   An iterator in end position to \f$ S \f$
@@ -326,12 +333,14 @@ public:
  * @param[in] consumers_end   An iterator in end position to \f$ D \f$
  * @param[in] capacity        How many tokens may be in the channel at
  *                            maximum, at any given time
- * @param[in] tag             The channel tag. Every channel should have a
- *                            unique tag associated to it.
  *
- * \warning Using the same \a tag for both a channel as well as individual
- *          calls to HiCR::memcpy or HiCR::fence will result in undefined
- *          behaviour.
+ * A call to this constructor must be made collectively across all workers
+ * that house the given memory spaces. If the callee memory space is in
+ * \f$ S \f$, then the constructed channel is a \em producer. If the callee
+ * locality is in \f$ D \f$, then the constructed channel is an \em consumer.
+ * This memory space must be at least in one of \f$ S \f$ or \f$ D \f$, while
+ * there may not be any duplicates in \f$ S \f$, in \f$ D \f$, nor in
+ * \f$ S \cup D \f$.
  *
  * With normal semantics, a produced token ends up at one (out of potentially
  * many) consumers. This channel, however, includes a possibility where tokens
@@ -340,22 +349,26 @@ public:
  * @param[in] producersBroadcast Whether submitted tokens are to be broadcast
  *                               to all consumers.
  *
- * In broadcasting mode, broadcasting any single token to \f$ c \f$ consumers
- * counts as taking up \f$ c \f$ \a capacity.
+ * In broadcasting mode, broadcasting any single token to \f$ c = |D| \f$
+ * consumers counts as taking up \f$ c \f$ \a capacity.
  *
  * \note Rationale: in the worst case, the token ends up at \f$ c \f$
  *       receiving buffers without any one of them being consumed yet.
- *
- * A call to this constructor must be made collectively across all workers
- * that house the given resources. If the callee locality is in \f$ S \f$,
- * then the constructed channel is a producer. If the callee locality is in
- * \f$ D \f$, then the constructed channel is a consumer. A locality may
- * never be both in \f$ S \f$ \em \f$ D \f$.
  *
  * Channels always encapsulate one-copy communication. This means there is
  * always at least one copy of a token in either a sender or receiver buffer.
  *
  * \note For zero-copy communication mechanisms, see HiCR::memcpy.
+ *
+ * This function may fail for the following reasons:
+ *  -# the current memory space is not in \f$ S \f$ nor \f$ D \f$;
+ *  -# there is a duplicate memory space in \f$ S \f$ or \f$ D \f$ or
+ *     \f$ S \cup D \f$;
+ *  -# the HiCR communication matrix \f$ M \f$ indicates a pair of memory spaces
+ *     in \f$ S \cup D \f$ that have no direct line of communication;
+ *  -# a related backend is out of resources to create this new channel.
+ *
+ * @see #HiCR::memcpy for a definition of \f$ M \f$.
  *
  * \todo This interface uses iterators instead of raw arrays for listing the
  *       producers and consumers. The memorySpace and datamover interfaces use
@@ -364,11 +377,9 @@ public:
  */
 template<typename SrcIt, typename DstIt>
 Channel createChannel(
- const MemorySpace& mySpace,
  const SrcIt& producers_start, const SrcIt& producers_end,
  const DstIt& consumers_start, const DstIt& consumers_end,
  const size_t capacity,
- const TagSlot& tag,
  const bool producersBroadcast = false
 );
 
