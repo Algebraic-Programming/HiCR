@@ -401,6 +401,9 @@ public:
  * The buffers and resources the channel allocates on successful construction,
  * will be released on a call to the channel destructor.
  *
+ * @param[in] producer        Whether the calling context expects a producer
+ *                            #ChannelView. If not, it is assumed to expect a
+ *                            consumer #ChannelView.
  * @param[in] producers_start An iterator in begin position to \f$ S \f$
  * @param[in] producers_end   An iterator in end position to \f$ S \f$
  * @param[in] consumers_start An iterator in begin position to \f$ D \f$
@@ -410,18 +413,24 @@ public:
  *
  * A call to this constructor must be made collectively across all workers
  * that house the given memory spaces. If the callee memory space is in
- * \f$ S \f$, then the constructed channel is a \em producer. If the callee
- * locality is in \f$ D \f$, then the constructed channel is an \em consumer.
- * This memory space must be at least in one of \f$ S \f$ or \f$ D \f$, while
- * there may not be any duplicates in \f$ S \f$, in \f$ D \f$, nor in
- * \f$ S \cup D \f$. Finally, \f$ n \f$ must be strictly larger than one.
+ * \f$ S \f$ but not in \f$ D \f$, then the constructed channel must be a
+ * \em producer. If the callee locality is in \f$ D \f$ but not in \f$ S \f$,
+ * then the constructed channel must be a \em consumer. If there are duplicate
+ * memory spaces in \f$ S \cup D \f$, then equally many calls to #createChannel
+ * from each duplicate memory space are required. The current memory space must
+ * be at least in one of \f$ S \f$ or \f$ D \f$. Finally, \f$ n \f$ must be
+ * strictly larger than one.
  *
- * With normal semantics, a produced token ends up at one (out of potentially
- * many) consumers. This channel, however, includes a possibility where tokens
- * once submitted are broadcast to \em all consumers.
+ * \note \f$ n > 1 \f$ still allows for a channel with sources and destinations
+ *       wholle contained within a single memory space.
+ *
+ * With normal semantics, a produced token ends up at all (potentially many)
+ * consumers. This channel, however, includes a possibility where tokens once
+ * submitted are sent to just one of the consumers.
  *
  * @param[in] producersBroadcast Whether submitted tokens are to be broadcast
- *                               to all consumers.
+ *                               to all consumers. Optional; default is
+ *                               <tt>true</tt>.
  *
  * In broadcasting mode, broadcasting any single token to \f$ c = |D| \f$
  * consumers counts as taking up \f$ c \f$ \a capacity.
@@ -436,8 +445,10 @@ public:
  *
  * This function may fail for the following reasons:
  *  -# the current memory space is not in \f$ S \f$ nor \f$ D \f$;
- *  -# there is a duplicate memory space in \f$ S \f$ or \f$ D \f$ or
- *     \f$ S \cup D \f$;
+ *  -# \a producer is <tt>false</tt> but the current memory space is not in
+ *     \f$ D \f$;
+ *  -# \a producer is <tt>true</tt> but the current memory space is not in
+ *     \f$ S \f$;
  *  -# \f$ n \f$ equals one or at least one of \f$ c, p \f$ equals zero, with
  *     \f$ p = |S| \f$;
  *  -# the HiCR communication matrix \f$ M \f$ indicates a pair of memory spaces
@@ -455,12 +466,14 @@ public:
  *       raw arrays instead. We should probably just pick one API and make all
  *       APIs consistent with that choice.
  */
-template<typename SrcIt, typename DstIt>
-Channel createChannel(
+template<typename SrcIt, typename DstIt, typename T>
+ChannelView<T> createChannel(
+ bool producer,
  const SrcIt& producers_start, const SrcIt& producers_end,
  const DstIt& consumers_start, const DstIt& consumers_end,
  const size_t capacity,
- const bool producersBroadcast = false
+ const bool producersBroadcast = true,
+ const T& dummy = T()
 );
 
 /*
