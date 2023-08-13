@@ -16,7 +16,8 @@
 
 namespace HiCR {
 
-class Channel {
+template< typename T >
+class ChannelView {
 
  protected:
 
@@ -24,7 +25,7 @@ class Channel {
    * A channel may only be instantiated via a call to
    * #MemorySpace::createChannel.
    */
-  Channel() {}
+  ChannelView() {}
 
  public:
 
@@ -36,7 +37,7 @@ class Channel {
    * \internal In OO programming, standard practice is to declare destructors
    *           virtual.
    */
-  virtual ~Channel() {}
+  virtual ~ChannelView() {}
 
   /**
    * @returns The capacity of the channel.
@@ -87,7 +88,18 @@ class Channel {
    * A call to this function throws an exception if:
    *  -# the channel at the current locality is a producer.
    */
-  bool peek(void * &ptr, size_t &size) const;
+  bool peek(T &token) const;
+
+  /**
+   * Retrieves \a n tokens as a raw array.
+   * @param[in] n The batch size.
+   * @see peek.
+   *
+   * A call to this function throws an exception if:
+   *  -# the current #depth is less than \a n;
+   *  -# the channel at the current locality is a producer.
+   */
+  void peek(T * const &tokens, const size_t n ) const;
 
   /**
    * Similar to peek, but if the channel is empty, will wait until a new token
@@ -124,6 +136,8 @@ class Channel {
    *
    * This primitive may only be called by consumers.
    *
+   * @param[in] n How many tokens to pop. Optional; default is one.
+   *
    * @returns Whether the channel is empty after the current token has been
    *          removed.
    *
@@ -133,7 +147,7 @@ class Channel {
    *
    * @see ::peek to determine whether the channel has an item to pop.
    */
-  bool pop();
+  bool pop(const size_t n = 1);
 
   /**
    * Puts a new token unto the channel.
@@ -153,11 +167,47 @@ class Channel {
    *                         though this call to push had never occurred.
    *
    * A call to this function throws an exception if:
-   *  -# the channel at this locality is a consumer;
-   *  -# the \a slot, \a offset, \a size combination exceeds the memory region
-   *     of \a slot.
+   *  -# the channel at this locality is a consumer.
+   *
+   * \internal This variant could be expressed as a call to the next one.
    */
-  bool push(const MemorySlot& slot, const size_t offset, const size_t size);
+  bool push(const T& token);
+
+  /**
+   * Batched version of #push.
+   *
+   * @param[in] tokens Raw array of tokens to push into the channel;
+   * @param[in] n      The size of the raw array \a tokens.
+   *
+   * @returns How many tokens were successfully pushed into the channel.
+   *
+   * \note If no tokens were pushed, then \a n is returned.
+   *
+   * A call to this function throws an exception if:
+   *  -# the channel at this locality is a consumer.
+   *
+   * \internal This variant could be expressed as a call to the next one.
+   */
+  size_t push(const T * const tokens, const size_t n);
+
+  /**
+   * Batched version of #push.
+   *
+   * @tparam RndAccIt A random access iterator over items of type \a T.
+   *
+   * @param[in] tokens Iterator over tokens to be pushed into the channel;
+   * @param[in] tokens_end An iterator in end-position matching \a tokens.
+   *
+   * @returns How many tokens were successfully pushed into the channel.
+   *
+   * \note If no tokens were pushed, then \a n is returned, where \a n is
+   *       \a tokens_end - \a tokens.
+   *
+   * A call to this function throws an exception if:
+   *  -# the channel at this locality is a consumer.
+   */
+  template< typename RndAccIt >
+  size_t push(RndAccIt tokens, const RndAccIt tokens_end);
 
   /**
    * Similar to push, but if the channel is full, will wait until outgoing
@@ -185,7 +235,7 @@ class Channel {
    *  -# the \a slot, \a offset, \a size combination exceeds the memory region
    *     of \a slot.
    */
-  void push_wait(const MemorySlot& slot, const size_t offset, const size_t size);
+  void push_wait(const T& token);
 
   // TODO register an effect somehow? Need to support two events:
   //   1) full-to-non-full (producer side),
