@@ -10,7 +10,6 @@
 
 #include <hicr/common/logger.hpp>
 #include <hicr/dispatcher.hpp>
-#include <hicr/memorySpace.hpp>
 
 class Worker;
 
@@ -34,13 +33,6 @@ class Resource
 
  virtual ~Resource() = default;
  inline resourceId_t getId() { return _id; }
-
- /**
-  * Returns the memory space associated with this compute resource.
-  *
-  * This refers to addressable main memory.
-  */
- virtual MemorySpace& getMemorySpace() = 0;
 
  protected:
 
