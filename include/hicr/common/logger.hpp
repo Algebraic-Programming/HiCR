@@ -18,7 +18,6 @@ inline void logError [[noreturn]] (const char *fileName, const int lineNumber, c
   auto res = vasprintf(&outstr, format, ap);
   if (res < 0) throw std::runtime_error("Error in logError\n");
 
-
   std::string outString = std::string("[Error] ") + std::string(outstr);
   free(outstr);
 
@@ -32,7 +31,7 @@ inline void logError [[noreturn]] (const char *fileName, const int lineNumber, c
 
 // warning logging function
 #define LOG_WARNING(...) HiCR::logWarning(__FILE__, __LINE__, __VA_ARGS__)
-inline void logWarning (const char *fileName, const int lineNumber, const char *format, ...)
+inline void logWarning(const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;
@@ -53,7 +52,7 @@ inline void logWarning (const char *fileName, const int lineNumber, const char *
 
 // warning logging function
 #define LOG_DEBUG(...) HiCR::logDebug(__FILE__, __LINE__, __VA_ARGS__)
-inline void logDebug (const char *fileName, const int lineNumber, const char *format, ...)
+inline void logDebug(const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;
@@ -66,6 +65,5 @@ inline void logDebug (const char *fileName, const int lineNumber, const char *fo
 
   fprintf(stderr, "%s\n", outString.c_str());
 }
-
 
 } // namespace HiCR

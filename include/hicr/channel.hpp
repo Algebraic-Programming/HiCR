@@ -14,21 +14,20 @@
 
 #include "datamover.hpp"
 
-namespace HiCR {
+namespace HiCR
+{
 
-template< typename T >
-class ChannelView {
-
- protected:
-
+template <typename T>
+class ChannelView
+{
+  protected:
   /**
    * A channel may only be instantiated via a call to
    * #MemorySpace::createChannel.
    */
   ChannelView() {}
 
- public:
-
+  public:
   /**
    * Releases all resources corresponding to this channel, including allocated
    * buffer space as well as freeing up the \a tag used in construction for
@@ -99,7 +98,7 @@ class ChannelView {
    *  -# the current #depth is less than \a n;
    *  -# the channel at the current locality is a producer.
    */
-  void peek(T * const &tokens, const size_t n ) const;
+  void peek(T *const &tokens, const size_t n) const;
 
   /**
    * Similar to peek, but if the channel is empty, will wait until a new token
@@ -126,7 +125,7 @@ class ChannelView {
    * A call to this function throws an exception if:
    *  -# the channel at the current locality is a producer.
    */
-  void peek_wait(void * &ptr, size_t &size);
+  void peek_wait(void *&ptr, size_t &size);
 
   /**
    * Removes the current token from the channel, and moves to the next token
@@ -171,7 +170,7 @@ class ChannelView {
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  bool push(const T& token);
+  bool push(const T &token);
 
   /**
    * Batched version of #push.
@@ -188,7 +187,7 @@ class ChannelView {
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  size_t push(const T * const tokens, const size_t n);
+  size_t push(const T *const tokens, const size_t n);
 
   /**
    * Batched version of #push.
@@ -206,7 +205,7 @@ class ChannelView {
    * A call to this function throws an exception if:
    *  -# the channel at this locality is a consumer.
    */
-  template< typename RndAccIt >
+  template <typename RndAccIt>
   size_t push(RndAccIt tokens, const RndAccIt tokens_end);
 
   /**
@@ -235,11 +234,9 @@ class ChannelView {
    *  -# the \a slot, \a offset, \a size combination exceeds the memory region
    *     of \a slot.
    */
-  void push_wait(const T& token);
+  void push_wait(const T &token);
 
   // TODO register an effect somehow? Need to support two events:
   //   1) full-to-non-full (producer side),
   //   2) empty-to-nonempty (consumer side).
-
 };
-

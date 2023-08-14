@@ -13,7 +13,8 @@
 
 #pragma once
 
-namespace HiCR {
+namespace HiCR
+{
 
 /**
  * A class of exceptions that indicate some error in the arguments to a HiCR
@@ -27,12 +28,10 @@ namespace HiCR {
  * \internal This puts more pressure on the developers of HiCR, but is likely
  *           a very useful guarantee for HiCR users.
  */
-class LogicException : public std::logic_error {
-	
-public:
-
-LogicException( const char * const message ) : logic_error( message ) {}
-
+class LogicException : public std::logic_error
+{
+  public:
+  LogicException(const char *const message) : logic_error(message) {}
 };
 
 /**
@@ -47,12 +46,10 @@ LogicException( const char * const message ) : logic_error( message ) {}
  * \internal This puts more pressure on the developers of HiCR, but is likely
  *           a very useful guarantee for HiCR users.
  */
-class RuntimeException : public std::runtime_error {
-
-public:
-
-RuntimeException( const char * const message ) : runtime_error( message ) {}
-
+class RuntimeException : public std::runtime_error
+{
+  public:
+  RuntimeException(const char *const message) : runtime_error(message) {}
 };
 
 /**
@@ -61,13 +58,10 @@ RuntimeException( const char * const message ) : runtime_error( message ) {}
  * attempt to wind down the application as gracefully as possible, without
  * calling any other HiCR functionality.
  */
-class FatalException : public std::runtime_error {
-
-public:
-
-FatalException( const char * const message ) : runtime_error( message ) {}
-
+class FatalException : public std::runtime_error
+{
+  public:
+  FatalException(const char *const message) : runtime_error(message) {}
 };
 
 } // end namespace HiCR
-

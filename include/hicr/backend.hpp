@@ -2,28 +2,25 @@
 
 #include <hicr/resource.hpp>
 
-namespace HiCR {
+namespace HiCR
+{
 
 class Runtime;
 
 class Backend
 {
- friend class Runtime;
+  friend class Runtime;
 
- protected:
+  protected:
+  Backend() = default;
 
- Backend() = default;
+  public:
+  virtual ~Backend() = default;
+  virtual void queryResources() = 0;
+  inline resourceList_t &getResourceList() { return _resourceList; }
 
- public:
-
- virtual ~Backend() = default;
- virtual void queryResources() = 0;
- inline resourceList_t& getResourceList() { return _resourceList; }
-
- protected:
-
- resourceList_t _resourceList;
+  protected:
+  resourceList_t _resourceList;
 };
-
 
 } // namespace HiCR

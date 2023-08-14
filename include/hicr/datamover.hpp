@@ -11,7 +11,8 @@
 
 #pragma once
 
-namespace HiCR {
+namespace HiCR
+{
 
 /**
  * Instructs the backend to perform an asynchronous memory copy from
@@ -81,11 +82,7 @@ namespace HiCR {
  *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
  */
 void memcpy(
- MemorySlot& destination, const size_t dst_locality, const size_t dst_offset,
- const MemorySlot& source, const size_t src_locality, const size_t src_offset,
- const size_t size,
- const Tag& tag
-);
+  MemorySlot &destination, const size_t dst_locality, const size_t dst_offset, const MemorySlot &source, const size_t src_locality, const size_t src_offset, const size_t size, const Tag &tag);
 
 /**
  * Fences a group of memory copies.
@@ -118,7 +115,7 @@ void memcpy(
  *       aware? One possible answer is a special event that if left unhandled,
  *       is promoted to a fatal exception.
  */
-void fence(const Tag& tag);
+void fence(const Tag &tag);
 
 /**
  * Fences a group of memory copies using zero-cost synchronisation.
@@ -168,13 +165,15 @@ void fence(const Tag& tag);
  * \todo How does this interact with malleability of resources of which HiCR is
  *       aware? One possible answer is a special exception / event.
  */
-template< typename DstIt = const size_t *, typename SrcIt = const size_t * >
+template <typename DstIt = const size_t *, typename SrcIt = const size_t *>
 void fence(
- const Tag& tag,
- const size_t msgs_out, const size_t msgs_in,
- DstIt dests, const DstIt dests_end,
- SrcIt sources, const SrcIt sources_end
-);
+  const Tag &tag,
+  const size_t msgs_out,
+  const size_t msgs_in,
+  DstIt dests,
+  const DstIt dests_end,
+  SrcIt sources,
+  const SrcIt sources_end);
 
 /**
  * A nonblocking fence that returns whether the fence is completed.
@@ -218,13 +217,15 @@ void fence(
  *     user is encouraged to exit gracefully without initiating any further
  *     communication or fences.
  */
-template< typename DstIt = const size_t *, typename SrcIt = const size_t * >
+template <typename DstIt = const size_t *, typename SrcIt = const size_t *>
 bool test_fence(
- const Tag& tag,
- const size_t msgs_out, const size_t msgs_in,
- DstIt dests, const DstIt dests_end,
- SrcIt sources, const SrcIt sources_end
-);
+  const Tag &tag,
+  const size_t msgs_out,
+  const size_t msgs_in,
+  DstIt dests,
+  const DstIt dests_end,
+  SrcIt sources,
+  const SrcIt sources_end);
 
 /**
  * A blocking fence that waits on any tag that has previously unsuccessfully
@@ -300,8 +301,7 @@ bool test_fence(
  *           initialised by the first call to #test_fence and only if that call
  *           returned <tt>false</tt>.
  */
-template< typename FwdIt = const Tag * >
-Tag fence_any( FwdIt tags, const FwdIt tags_end );
+template <typename FwdIt = const Tag *>
+Tag fence_any(FwdIt tags, const FwdIt tags_end);
 
 } // end namespace HiCR
-
