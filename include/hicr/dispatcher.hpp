@@ -1,3 +1,8 @@
+/*
+ * Copyright Huawei Technologies Switzerland AG
+ * All rights reserved.
+ */
+
 #pragma once
 
 #include <vector>
@@ -62,5 +67,5 @@ class Dispatcher
  }
 };
 
-
 } // namespace HiCR
+
