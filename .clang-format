@@ -40,10 +40,10 @@ BraceWrapping:
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Allman
 BreakBeforeInheritanceComma: false
-BreakInheritanceList: BeforeColon
+BreakInheritanceList: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
-BreakConstructorInitializers: BeforeColon
+BreakConstructorInitializers: false
 BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: false
 ColumnLimit:     0
@@ -116,6 +116,6 @@ Standard:        Cpp11
 StatementMacros:
   - Q_UNUSED
   - QT_REQUIRE_VERSION
-TabWidth:        4
+TabWidth:        2
 UseTab:          Never
 ...

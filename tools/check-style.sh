@@ -22,7 +22,7 @@ dst=(
 function check()
 {
   if [ ! $? -eq 0 ]; then 
-    echo "[Korali] Error fixing style."
+    echo "Error fixing style."
     exit -1 
   fi
 }
@@ -43,11 +43,14 @@ function check_syntax()
 function fix_syntax()
 {
     for d in "${dst[@]}"; do
-      src_files=`find ${d} -type f -not -name "__*" -name "*.base"`
-
-      echo $src_files | xargs -n6 -P2 clang-format -style=file -i "$@"
-
-      check
+      basePath=`realpath ${d}` 
+      src_files=`find ${basePath} \( -name "*.cpp" -o -name "*.hpp" \) -not -path '*/.*' -not -path '*/build/*' -not -path '*/extern/*'`
+      
+      if [ ! -z "$src_files" ]
+      then
+        echo $src_files | xargs -n6 -P2 clang-format -style=file -i "$@"
+        check
+      fi
     done
 }
 
