@@ -1,3 +1,15 @@
+/*
+ * Copyright Huawei Technologies Switzerland AG
+ * All rights reserved.
+ */
+
+/**
+ * @file task.hpp
+ * @desc Provides a definition for the HiCR Task class.
+ * @author S. M. Martin
+ * @date 7/7/2023
+ */
+
 #pragma once
 
 #include <hicr/common/logger.hpp>

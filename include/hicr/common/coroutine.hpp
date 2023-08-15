@@ -7,7 +7,7 @@
 
 /**
  * @file coroutine.hpp
- * @desc Provides basic abstractions for coroutine support.
+ * @desc Provides a definition for the HiCR Coroutine class.
  * @author S. M. Martin
  * @date 7/7/2023
  */

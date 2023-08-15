@@ -1,3 +1,15 @@
+/*
+ * Copyright Huawei Technologies Switzerland AG
+ * All rights reserved.
+ */
+
+/**
+ * @file worker.hpp
+ * @desc Provides a definition for the HiCR Worker class.
+ * @author S. M. Martin
+ * @date 7/7/2023
+ */
+
 #pragma once
 
 #include <hicr/dispatcher.hpp>
@@ -7,26 +19,46 @@
 namespace HiCR
 {
 
+/**
+ * Complete state set that a worker can be in
+ */
 enum workerState_t
 {
-  t_uninitialized,
-  t_initialized,
-  t_started,
-  t_finishing
+  t_uninitialized, /// The worker object has been instantiated but not initialized
+  t_ready,         /// The worker has been ininitalized (or is back from executing) and can currently run
+  t_started,       /// The worker has started executing
+  t_finishing      /// The worker has been finalized
 };
 
+/**
+ * Defines the worker class, which is in charge of executing tasks.
+ *
+ * To receive pending tasks for execution, the worker needs to subscribe to task dispatchers. Upon execution, the worker will constantly check the dispatchers in search for new tasks for execution.
+ *
+ * To execute a task, the worker needs to be assigned at least a computational resource capable to executing the type of task submitted.
+ */
 class Worker
 {
   private:
-  // Worker state
+
+ /**
+  * Represents the internal state of the worker. Uninitialized upon construction.
+  */
   workerState_t _state = t_uninitialized;
 
-  // Dispatchers that this resource is subscribed to
+  /**
+   * Dispatchers that this resource is subscribed to
+   */
   std::set<Dispatcher *> _dispatchers;
 
-  // Group of resources the worker can freely use
+  /**
+   * Group of resources the worker can freely use
+   */
   std::vector<Resource *> _resources;
 
+  /**
+   * Internal loop of the worker in which it searchers constantly for tasks to run
+   */
   void mainLoop()
   {
     while (_state == t_started)
@@ -43,9 +75,13 @@ class Worker
   }
 
   public:
+
   Worker() = default;
   ~Worker() = default;
 
+  /**
+   * Initializes the worker and its resources
+   */
   void initialize()
   {
     // Checking state
@@ -58,13 +94,16 @@ class Worker
     for (auto r : _resources) r->initialize();
 
     // Transitioning state
-    _state = t_initialized;
+    _state = t_ready;
   }
 
+  /**
+   * Initializes the worker's task execution loop
+   */
   void start()
   {
     // Checking state
-    if (_state != t_initialized) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
+    if (_state != t_ready) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
 
     // Checking we have at least one assigned resource
     if (_resources.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
@@ -79,6 +118,9 @@ class Worker
                        });
   }
 
+  /**
+   * Stops the worker's task execution loop. After stopping it can be restarted later
+   */
   void stop()
   {
     // Checking state
@@ -88,6 +130,9 @@ class Worker
     _state = t_finishing;
   }
 
+  /**
+   * A function that will suspend the execution of the caller until the worker has stopped
+   */
   void await()
   {
     // Checking state
@@ -97,13 +142,16 @@ class Worker
     _resources[0]->await();
 
     // Transitioning state
-    _state = t_initialized;
+    _state = t_ready;
   }
 
-  void finalize()
+  /**
+   * A function that will terminate the worker's resources. After finalization, it needs to be re-initialized before it can run again.
+   */
+ void finalize()
   {
     // Checking state
-    if (_state != t_initialized) LOG_ERROR("Attempting to finalize a worker that is not in the 'initialized' state");
+    if (_state != t_ready) LOG_ERROR("Attempting to finalize a worker that is not in the 'initialized' state");
 
     // Finalize all resources
     for (auto r : _resources) r->finalize();
@@ -112,9 +160,32 @@ class Worker
     _state = t_uninitialized;
   }
 
+ /**
+  * Subscribes the worker to a task dispatcher. During execution, the worker will constantly query the dispatcher for new tasks to execute.
+  *
+  * \param[in] dispatcher The dispatcher to subscribe the worker to
+  */
   void subscribe(Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
+
+  /**
+   * Adds a computational resource to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
+   *
+   * \param[in] resource Resource to add to the worker
+   */
   void addResource(Resource *resource) { _resources.push_back(resource); }
+
+  /**
+   * Gets a reference to the workers assigned resources.
+   *
+   * \return A container with the worker's resources
+   */
   std::vector<Resource *> &getResources() { return _resources; }
+
+  /**
+   * Gets a reference to the dispatchers the worker has been subscribed to
+   *
+   * \return A container with the worker's subscribed dispatchers
+   */
   std::set<Dispatcher *> &getDispatchers() { return _dispatchers; }
 };
 

@@ -5,7 +5,7 @@
 
 /**
  * @file eventMap.hpp
- * @desc Provides a definition for the event map class.
+ * @desc Provides a definition for the HiCR EventMap class.
  * @author S. M. Martin
  * @date 7/7/2023
  */
