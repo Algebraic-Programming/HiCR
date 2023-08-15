@@ -5,14 +5,15 @@
  */
 
 /**
- * @file Provides various memcpy functions as well as corresponding fences.
+ * @file channel.hpp
+ * @desc Provides various memcpy functions as well as corresponding fences.
  * @author A. N. Yzelman
  * @date 28/7/2023
  */
 
 #pragma once
 
-#include "datamover.hpp"
+#include "dataMover.hpp"
 
 namespace HiCR
 {

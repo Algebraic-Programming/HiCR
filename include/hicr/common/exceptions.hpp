@@ -1,12 +1,11 @@
-
 /*
  * Copyright Huawei Technologies Switzerland AG
  * All rights reserved.
  */
 
 /**
- * @file Provides a failure model and corresponding exception classes.
- *
+ * @file exceptions.hpp
+ * @desc Provides a failure model and corresponding exception classes.
  * @author A. N. Yzelman
  * @date 9/8/2023
  */

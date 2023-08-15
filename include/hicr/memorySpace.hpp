@@ -4,150 +4,19 @@
  */
 
 /**
- * @file Provides memory spaces and memory slots.
+ * @file memorySpace.hpp
+ * @desc Provides a definition for the memory space class.
  * @author A. N. Yzelman
- * @date 8/8/2023 (factored out of datamover.hpp)
+ * @date 8/8/2023
  */
 
 #pragma once
 
+#include <hicr/memorySlot.hpp>
+
 namespace HiCR
 {
 
-/**
- * Encapsulates a memory region that is either the source or destination of a
- * call to put/get operations.
- *
- * Each backend provides its own type of MemorySlot.
- *
- * There might be limited number of memory slots supported by a given backend.
- * When a memory slot goes out of scope (or otherwise has its destructor
- * called), any associated resources are immediately freed. If the HiCR
- * #MemorySpace class was responsible for allocating the underlying memory, then
- * that memory shall be freed also.
- *
- * \note This means that destroying a memory slot would immediately allow
- *       creating a new one, without running into resource constraints.
- */
-class MemorySlot
-{
-  private:
-  typedef void *const ptr_t;
-
-  /** A memory slot may not be default-constructed. */
-  MemorySlot() {}
-
-  public:
-  /**
-   * Releases all resources associated with this memory slot. If the memory
-   * slot was created via a call to #MemorySpace::allocateMemorySlot, then the
-   * associated memory will be freed as part of destruction.
-   *
-   * \internal In OO programming, standard practice is to declare destructors
-   *           virtual.
-   */
-  virtual ~MemorySlot() {}
-
-  /**
-   * @returns The address of the memory region the slot has registered.
-   *
-   * This function when called on a valid MemorySlot instance may not fail.
-   *
-   * \todo This interface assumes any backend equates a memory slot to a
-   */
-  ptr_t &getPointer() const noexcept;
-
-  /**
-   * @returns The size of the memory region the slot has registered.
-   *
-   * This function when called on a valid MemorySlot instance may not fail.
-   */
-  size_t getSize() const noexcept;
-
-  /**
-   * @returns The number of localities this memorySlot has been created with.
-   *
-   * This function never returns <tt>0</tt>. When given a valid MemorySlot
-   * instance, a call to this function never fails.
-   *
-   * \note When <tt>1</tt> is returned, this memory slot is a local slot. If
-   *       a larger value is returned, the memory slot is a global slot.
-   *
-   * When referring to localities corresponding to this memory slot, only IDs
-   * strictly lower than the returned value are valid.
-   */
-  size_t nLocalities() const noexcept;
-};
-
-/**
- * Encapsulates a message tag.
- *
- * For asynchronous data movement, fences may operate on messages that share the
- * same tag; meaning, that while fencing on a single message or on a group of
- * messages that share a tag, other messages may remain in flight after the
- * fence completes.
- *
- * There are a limited set of tags exposed by the system.
- *
- * The Tag may be memcpy'd between HiCR instances that share the same context.
- * This implies that a Tag must be a plain-old-data type.
- *
- * \internal This also implies that a Tag must be some sort of shared union
- *           struct between backends.
- *
- * The size of the Tag shall always be a multiple of <tt>sizeof(int)</tt>.
- *
- * \internal This last requirement ensures we can have an array of tags and use
- *           memcpy to communicate just parts of it.
- */
-class Tag
-{
-  private:
-  /** A tag may not be default-constructed. */
-  Tag() {}
-
-  public:
-  // there used to be a constructor here, but that precludes any backend from
-  // managing a possibly constrained set of tags. Instead, we now use the same
-  // mechanism as for #MemorySlot to have it tie to specific backends--
-  // see MemorySpace::createTag
-
-  /**
-   * Releases all resources associated to this tag.
-   *
-   * \internal In OO programming, standard practice is to declare destructors
-   *           virtual.
-   */
-  virtual ~Tag() {}
-
-  /**
-   * @returns a unique numerical identifier corresponding to this tag.
-   *
-   * The returned value is unique within the current HiCR instance. If a tag
-   * is shared with other HiCR instances, there is a guarantee that each HiCR
-   * instance returns the same ID.
-   *
-   * A call to this function on any valid instance of a #Tag shall never
-   * fail.
-   *
-   * \todo Do we really need this? We already specified that the Tag may be
-   *       memcpy'd, so the Tag itself is already a unique identifier.
-   *       Defining the return type to have some limited byte size also severely
-   *       limits backends, and perhaps overly so.
-   */
-  uint128_t getID() const noexcept;
-
-  /**
-   * @returns The number of localities this tagSlot has been created with.
-   *
-   * This function never returns <tt>0</tt>. When given a valid Tag
-   * instance, a call to this function never fails.
-   *
-   * When referring to localities corresponding to this tag, only IDs strictly
-   * lower than the returned value are valid.
-   */
-  size_t nLocalities() const noexcept;
-};
 
 /**
  * This is a specialisation of the Resource class in HiCR, meant to express a
@@ -247,7 +116,7 @@ class MemorySpace
    * refer to local source regions or local destination regions.
    *
    * A memory slot that is not local is called a \em global memory slot instead.
-   * A global memory slot has \$f k = n + 1 \f$ \em localities. Unlike a local
+   * A global memory slot has \$f k = n + 1 \$ \em localities. Unlike a local
    * memory slot, a global memory slot \em can be used to refer to \em remote
    * source regions or remote destination regions; i.e., global memory slot can be
    * used to request data movement between different memory spaces.
@@ -477,3 +346,4 @@ class MemorySpace
 };
 
 } // end namespace HiCR
+
