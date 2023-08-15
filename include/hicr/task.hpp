@@ -7,33 +7,88 @@
 namespace HiCR
 {
 
-// Definition for task unique identifiers
-typedef uint64_t taskId_t;
-
-// Definition for a task function - supports lambda functions
-typedef coroutineFc_t taskFunction_t;
-
 class Worker;
 
+/**
+ * Definition for a task function that supports lambda functions
+ */
+typedef coroutineFc_t taskFunction_t;
+
+/**
+ * Complete state set that a task can be in
+ */
 enum task_state
 {
-  ready,    // Ready to run -- set automatically upon creation
-  running,  // Set by the worker upon execution
-  waiting,  // Set by the task if it suspends for an asynchronous operation
-  finished, // Set by the task upon complete termination
+  ready,    /// Ready to run -- set automatically upon creation
+  running,  /// Indicates that the task is currently running
+  waiting,  /// Set by the task if it suspends for an asynchronous operation
+  finished, /// Set by the task upon complete termination
 };
 
+/**
+ * This class defines the basic execution unit managed by HiCR.
+ *
+ * It includes a function to execute, an internal state, and an event map that triggers callbacks (if defined) whenever a state transition occurs.
+ *
+ * The function represents the entire lifetime of the task. That is, a task executes a single function, the one provided by the user, and will reach a terminated state after the function is fully executed.
+ *
+ * A task may be suspended before the function is fully executed. This is either by voluntary yielding, or by reaching an synchronous operation that prompts it to suspend. These two suspension reasons will result in different states.
+ */
 class Task
 {
   public:
+
+ /**
+  * Sets the function that the task will execute.
+  *
+  * @param[in] fc Speficies the function to execute.
+  */
   inline void setFunction(taskFunction_t fc) { _fc = fc; }
+
+  /**
+   * Sets the single argument (pointer) to the the task function
+   *
+   * @param[in] arg A pointer representing the function's argument
+   */
   inline void setArgument(void *argument) { _argument = argument; }
+
+  /**
+   * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
+   *
+   * @param[in] eventMap A pointer to an event map
+   */
   inline void setEventMap(EventMap *eventMap) { _eventMap = eventMap; }
+
+  /**
+   * Queries the task's internal state.
+   *
+   * \internal This is not a thread safe operation.
+   *
+   * @return The task's internal state
+   */
   inline const task_state getState() { return _state; };
+
+  /**
+   * Queries the task's function argument.
+   *
+   * @return A pointer user-defined task argument, if defined; A NULL pointer, if not.
+   */
   inline void *getArgument() { return _argument; }
+
+  /**
+   * Returns the worker that is currently executing this task. This call only makes sense if the task is in the 'Running' state.
+   *
+   * @return A pointer to the worker running this task, if running; a NULL pointer, if not.
+   */
   const inline Worker *getWorker() { return _worker; }
 
-  // Start running a task, this can only be done by a worker
+  /**
+   * This function starts running a task. It needs to be performed by a worker, by passing a pointer to itself.
+   *
+   * The execution of the task will trigger change of state from ready to running. Before reaching the terminated state, the task might transition to some of the suspended states.
+   *
+   * @param[in] A pointer to the worker that is calling this function.
+   */
   inline void run(Worker *worker)
   {
     if (_state != task_state::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
@@ -75,7 +130,10 @@ class Task
   }
 
   private:
-  // Yield must be called by the task itself, not by external agents.
+
+  /**
+   * This function yields the execution of the task, and returns to the worker's context.
+   */
   inline void yield()
   {
     // Change our state to yielded so that we can be reinserted into the pool
@@ -85,25 +143,39 @@ class Task
     _coroutine.yield();
   }
 
-  // Current execution state of the task. Will change based on runtime scheduling events
+  /**
+   * Current execution state of the task. Will change based on runtime scheduling events
+   */
   task_state _state = task_state::ready;
 
-  // Remember if the task has been executed already (coroutine still exists)
+  /**
+   *  Remember if the task has been executed already (coroutine still exists)
+   */
   bool _hasExecuted = false;
 
-  // Argument to execute the task with
+  /**
+   *   Argument to execute the task with
+   */
   void *_argument;
 
-  // Main function that the task will execute
+  /**
+   *  Main function that the task will execute
+   */
   taskFunction_t _fc;
 
-  // Task context preserved as a coroutine
+  /**
+   *  Task context preserved as a coroutine
+   */
   Coroutine _coroutine;
 
-  // Map of events to trigger
+  /**
+   *  Map of events to trigger
+   */
   EventMap *_eventMap = NULL;
 
-  // Worker currently executing the task
+  /**
+   * Worker currently executing the task
+   */
   Worker *_worker = NULL;
 };
 
