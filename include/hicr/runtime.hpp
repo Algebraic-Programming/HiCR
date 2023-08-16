@@ -1,3 +1,15 @@
+/*
+ * Copyright Huawei Technologies Switzerland AG
+ * All rights reserved.
+ */
+
+/**
+ * @file runtime.hpp
+ * @brief Provides a definition for a HiCR Runtime class
+ * @author S. M. Martin
+ * @date 13/7/2023
+ */
+
 #pragma once
 
 #include <memory>
@@ -5,13 +17,16 @@
 #include <hicr/backend.hpp>
 #include <hicr/common/logger.hpp>
 
-#ifdef HICR_ENABLE_BACKEND_PTHREADS
-  #include <hicr/backends/pthreads.hpp>
+#ifdef HICR_ENABLE_BACKEND_SHARED_MEMORY
+  #include <hicr/backends/sharedMemory/sharedMemory.hpp>
 #endif
 
 namespace HiCR
 {
 
+/**
+ * Common definition of a collection of HiCR backends
+ */
 typedef std::vector<std::unique_ptr<Backend>> backendList_t;
 
 /**

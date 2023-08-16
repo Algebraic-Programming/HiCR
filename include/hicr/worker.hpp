@@ -5,7 +5,7 @@
 
 /**
  * @file worker.hpp
- * @desc Provides a definition for the HiCR Worker class.
+ * brief Provides a definition for the HiCR Worker class.
  * @author S. M. Martin
  * @date 7/7/2023
  */
@@ -22,12 +22,27 @@ namespace HiCR
 /**
  * Complete state set that a worker can be in
  */
-enum workerState_t
+enum workerState
 {
-  t_uninitialized, /// The worker object has been instantiated but not initialized
-  t_ready,         /// The worker has been ininitalized (or is back from executing) and can currently run
-  t_started,       /// The worker has started executing
-  t_finishing      /// The worker has been finalized
+ /**
+  * The worker object has been instantiated but not initialized
+  */
+  uninitialized,
+
+  /**
+   * The worker has been ininitalized (or is back from executing) and can currently run
+   */
+  ready,
+
+  /**
+   * The worker has started executing
+   */
+  started,
+
+  /**
+   * The worker has been finalized
+   */
+  finishing
 };
 
 /**
@@ -44,7 +59,7 @@ class Worker
  /**
   * Represents the internal state of the worker. Uninitialized upon construction.
   */
-  workerState_t _state = t_uninitialized;
+  workerState _state = workerState::uninitialized;
 
   /**
    * Dispatchers that this resource is subscribed to
@@ -61,7 +76,7 @@ class Worker
    */
   void mainLoop()
   {
-    while (_state == t_started)
+    while (_state == workerState::started)
     {
       for (auto dispatcher : _dispatchers)
       {
@@ -85,7 +100,7 @@ class Worker
   void initialize()
   {
     // Checking state
-    if (_state != t_uninitialized) LOG_ERROR("Attempting to initialize already initialized worker");
+    if (_state != workerState::uninitialized) LOG_ERROR("Attempting to initialize already initialized worker");
 
     // Checking we have at least one assigned resource
     if (_resources.empty()) LOG_ERROR("Attempting to initialize worker without any assigned resources");
@@ -94,7 +109,7 @@ class Worker
     for (auto r : _resources) r->initialize();
 
     // Transitioning state
-    _state = t_ready;
+    _state = workerState::ready;
   }
 
   /**
@@ -103,13 +118,13 @@ class Worker
   void start()
   {
     // Checking state
-    if (_state != t_ready) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
+    if (_state != workerState::ready) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
 
     // Checking we have at least one assigned resource
     if (_resources.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
 
     // Transitioning state
-    _state = t_started;
+    _state = workerState::started;
 
     // Launching worker in the lead resource (first one to be added)
     _resources[0]->run([this]()
@@ -124,10 +139,10 @@ class Worker
   void stop()
   {
     // Checking state
-    if (_state != t_started) LOG_ERROR("Attempting to stop worker that is not in the 'started' state");
+    if (_state != workerState::started) LOG_ERROR("Attempting to stop worker that is not in the 'started' state");
 
     // Transitioning state
-    _state = t_finishing;
+    _state = workerState::finishing;
   }
 
   /**
@@ -136,13 +151,13 @@ class Worker
   void await()
   {
     // Checking state
-    if (_state != t_finishing && _state != t_started) LOG_ERROR("Attempting to wait for a worker that is not in the 'started' or 'finishing' state");
+    if (_state != workerState::finishing && _state != workerState::started) LOG_ERROR("Attempting to wait for a worker that is not in the 'started' or 'finishing' state");
 
     // Wait for the resource to free up
     _resources[0]->await();
 
     // Transitioning state
-    _state = t_ready;
+    _state = workerState::ready;
   }
 
   /**
@@ -151,13 +166,13 @@ class Worker
  void finalize()
   {
     // Checking state
-    if (_state != t_ready) LOG_ERROR("Attempting to finalize a worker that is not in the 'initialized' state");
+    if (_state != workerState::ready) LOG_ERROR("Attempting to finalize a worker that is not in the 'initialized' state");
 
     // Finalize all resources
     for (auto r : _resources) r->finalize();
 
     // Transitioning state
-    _state = t_uninitialized;
+    _state = workerState::uninitialized;
   }
 
  /**

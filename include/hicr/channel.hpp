@@ -6,7 +6,7 @@
 
 /**
  * @file channel.hpp
- * @desc Provides various memcpy functions as well as corresponding fences.
+ * @brief Provides various memcpy functions as well as corresponding fences.
  * @author A. N. Yzelman
  * @date 28/7/2023
  */

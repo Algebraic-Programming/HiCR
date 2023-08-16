@@ -5,7 +5,7 @@
 
 /**
  * @file dispatcher.hpp
- * @desc Provides a class definition for the task dispatcher object.
+ * @brief Provides a class definition for the task dispatcher object.
  * @author S. M. Martin
  * @date 13/7/2023
  */
@@ -98,7 +98,7 @@ class Dispatcher
   /**
    * Inserts a new Task for execution in the dispatcher's internal FIFO storage.
    *
-   * \param[in] A pointer to the task to store.
+   * \param[in] task A pointer to the task to store.
    */
   inline void push(Task *task)
   {
@@ -116,7 +116,7 @@ class Dispatcher
   }
 
   /**
-   * Attempts first a \a pop operation and then, if it returns a NULL pointer, runs the \pull function.
+   * Attempts first a \a pop operation and then, if it returns a NULL pointer, runs the #pull function.
    *
    * It will produce an exception if no pull function was defined.
    *

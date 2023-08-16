@@ -5,7 +5,7 @@
 
 /**
  * @file task.hpp
- * @desc Provides a definition for the HiCR Task class.
+ * brief Provides a definition for the HiCR Task class.
  * @author S. M. Martin
  * @date 7/7/2023
  */
@@ -29,12 +29,27 @@ typedef coroutineFc_t taskFunction_t;
 /**
  * Complete state set that a task can be in
  */
-enum task_state
+enum taskState
 {
-  ready,    /// Ready to run -- set automatically upon creation
-  running,  /// Indicates that the task is currently running
-  waiting,  /// Set by the task if it suspends for an asynchronous operation
-  finished, /// Set by the task upon complete termination
+ /**
+  * Ready to run -- set automatically upon creation
+  */
+  ready,
+
+  /**
+   * Indicates that the task is currently running
+   */
+  running,
+
+  /**
+   * Set by the task if it suspends for an asynchronous operation
+   */
+  waiting,
+
+  /**
+   * Set by the task upon complete termination
+   */
+  finished
 };
 
 /**
@@ -60,7 +75,7 @@ class Task
   /**
    * Sets the single argument (pointer) to the the task function
    *
-   * @param[in] arg A pointer representing the function's argument
+   * @param[in] argument A pointer representing the function's argument
    */
   inline void setArgument(void *argument) { _argument = argument; }
 
@@ -74,11 +89,11 @@ class Task
   /**
    * Queries the task's internal state.
    *
-   * \internal This is not a thread safe operation.
+   * @return The task internal state
    *
-   * @return The task's internal state
+   * \internal This is not a thread safe operation.
    */
-  inline const task_state getState() { return _state; };
+  inline const taskState getState() { return _state; }
 
   /**
    * Queries the task's function argument.
@@ -99,17 +114,17 @@ class Task
    *
    * The execution of the task will trigger change of state from ready to running. Before reaching the terminated state, the task might transition to some of the suspended states.
    *
-   * @param[in] A pointer to the worker that is calling this function.
+   * @param[in] worker A pointer to the worker that is calling this function.
    */
   inline void run(Worker *worker)
   {
-    if (_state != task_state::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
+    if (_state != taskState::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
 
     // Storing worker
     _worker = worker;
 
     // Setting state to running while we execute
-    _state = task_state::running;
+    _state = taskState::running;
 
     // Triggering execution event, if defined
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
@@ -129,15 +144,15 @@ class Task
     _worker = NULL;
 
     // If the state is still running (no suspension or yield), then the task has finished executing
-    if (_state == task_state::running) _state = task_state::finished;
+    if (_state == taskState::running) _state = taskState::finished;
 
     // Triggering events, if defined
     if (_eventMap != NULL) switch (_state)
       {
-      case task_state::running: break;
-      case task_state::finished: _eventMap->trigger(this, event_t::onTaskFinish); break;
-      case task_state::ready: _eventMap->trigger(this, event_t::onTaskYield); break;
-      case task_state::waiting: _eventMap->trigger(this, event_t::onTaskSuspend); break;
+      case taskState::running: break;
+      case taskState::finished: _eventMap->trigger(this, event_t::onTaskFinish); break;
+      case taskState::ready: _eventMap->trigger(this, event_t::onTaskYield); break;
+      case taskState::waiting: _eventMap->trigger(this, event_t::onTaskSuspend); break;
       }
   }
 
@@ -149,7 +164,7 @@ class Task
   inline void yield()
   {
     // Change our state to yielded so that we can be reinserted into the pool
-    _state = task_state::ready;
+    _state = taskState::ready;
 
     // Yielding execution back to worker
     _coroutine.yield();
@@ -158,7 +173,7 @@ class Task
   /**
    * Current execution state of the task. Will change based on runtime scheduling events
    */
-  task_state _state = task_state::ready;
+  taskState _state = taskState::ready;
 
   /**
    *  Remember if the task has been executed already (coroutine still exists)

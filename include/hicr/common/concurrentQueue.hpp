@@ -5,7 +5,7 @@
 
 /**
  * @file concurrentQueue.hpp
- * @desc Provides generic support for concurrent queues.
+ * @brief Provides generic support for concurrent queues.
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -42,15 +42,29 @@ template <class P, unsigned int N>
 class concurrentQueue
 {
   private:
-  // Internal implementation of the concurrent queue
+
+ /**
+  * Internal implementation of the concurrent queue
+  */
   lockFreeQueue_t<P, N> _queue;
 
   public:
+
+  /**
+   * Function to push new objects in the queue. This is a thread-safe lock-free operation
+   *
+   * \param[in] obj The object to push into the queue.
+   */
   inline void push(P obj)
   {
     _queue.push(obj);
   }
 
+  /**
+   * Function to pop an object from the queue. Poping removes an object from the front of the queue and returns it to the caller. This is a thread-safe lock-free operation
+   *
+   * \return The until-now front object of the queue.
+   */
   inline P pop()
   {
     P obj = NULL;

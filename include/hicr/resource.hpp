@@ -22,10 +22,14 @@ class Worker;
 namespace HiCR
 {
 
-// Definition for resource unique identifiers
+/**
+ * Definition for resource unique identifiers
+ */
 typedef uint64_t resourceId_t;
 
-// Definition for function to run at resource
+/**
+ * Definition for function to run at resource
+ */
 typedef std::function<void(void)> resourceFc_t;
 
 /**
@@ -47,6 +51,11 @@ class Resource
 
   protected:
 
+  /**
+   * Constructor for the resource object. It requires a backend-unique identifier.
+   *
+   * \param[in] id Identifier for the resource
+   */
   Resource(const resourceId_t id) : _id(id){};
 
   /**
@@ -82,6 +91,9 @@ class Resource
   resourceFc_t _fc;
 };
 
+/**
+ * Common definition of a collection of resources
+ */
 typedef std::vector<std::unique_ptr<Resource>> resourceList_t;
 
 } // namespace HiCR

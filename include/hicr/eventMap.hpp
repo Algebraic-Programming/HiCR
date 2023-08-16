@@ -5,7 +5,7 @@
 
 /**
  * @file eventMap.hpp
- * @desc Provides a definition for the HiCR EventMap class.
+ * @brief Provides a definition for the HiCR EventMap class.
  * @author S. M. Martin
  * @date 7/7/2023
  */
@@ -29,10 +29,25 @@ typedef std::function<void(Task *)> eventCallback_t;
  */
 enum event_t
 {
-  onTaskExecute, /// Triggered as the task starts or resumes execution
-  onTaskYield,   /// Triggered as the task voluntarily yields execution before finishing
-  onTaskSuspend, /// Triggered as the task is preempted into suspension by an asynchronous event
-  onTaskFinish   /// Triggered as the task finishes execution
+  /**
+   * Triggered as the task starts or resumes execution
+   */
+  onTaskExecute,
+
+  /**
+   * Triggered as the task voluntarily yields execution before finishing
+   */
+  onTaskYield,
+
+  /**
+   * Triggered as the task is preempted into suspension by an asynchronous event
+   */
+  onTaskSuspend,
+
+  /**
+   * Triggered as the task finishes execution
+   */
+  onTaskFinish
 };
 
 /**

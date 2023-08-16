@@ -7,7 +7,7 @@
 
 /**
  * @file coroutine.hpp
- * @desc Provides a definition for the HiCR Coroutine class.
+ * @brief Provides a definition for the HiCR Coroutine class.
  * @author S. M. Martin
  * @date 7/7/2023
  */
@@ -58,6 +58,9 @@ class Coroutine
    * Creates the context of the coroutine.
    *
    * This is separate from the class constructor to allow Just-in-time allocation of the stack. This enables the creation of many instances of this class, whereas only a few need to have an allocated stack at any given moment.
+   *
+   * \param[in] fc Function to run by the coroutine
+   * \param[in] arg Argument to pass to the function
    */
   inline void start(coroutineFc_t &fc, void *arg)
   {

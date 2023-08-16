@@ -5,7 +5,7 @@
 
 /**
  * @file messageTag.hpp
- * @desc Provides a definition for the memory tag class.
+ * @brief Provides a definition for the memory tag class.
  * @author A. N. Yzelman
  * @date 8/8/2023
  */
@@ -63,7 +63,7 @@ class Tag
    * is shared with other HiCR instances, there is a guarantee that each HiCR
    * instance returns the same ID.
    *
-   * A call to this function on any valid instance of a #Tag shall never
+   * A call to this function on any valid instance of a Tag shall never
    * fail.
    *
    * \todo Do we really need this? We already specified that the Tag may be
@@ -74,7 +74,7 @@ class Tag
   uint128_t getID() const noexcept;
 
   /**
-   * @returns The number of localities this tagSlot has been created with.
+   * @return The number of localities this tagSlot has been created with.
    *
    * This function never returns <tt>0</tt>. When given a valid Tag
    * instance, a call to this function never fails.

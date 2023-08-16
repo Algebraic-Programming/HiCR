@@ -5,7 +5,7 @@
 
 /**
  * @file exceptions.hpp
- * @desc Provides a failure model and corresponding exception classes.
+ * @brief Provides a failure model and corresponding exception classes.
  * @author A. N. Yzelman
  * @date 9/8/2023
  */
@@ -30,6 +30,12 @@ namespace HiCR
 class LogicException : public std::logic_error
 {
   public:
+
+ /**
+  * Constructor for a logic exception
+  *
+  * \param[in] message Explanation message for this exception
+  */
   LogicException(const char *const message) : logic_error(message) {}
 };
 
@@ -48,6 +54,12 @@ class LogicException : public std::logic_error
 class RuntimeException : public std::runtime_error
 {
   public:
+
+ /**
+   * Constructor for a runtime exception
+   *
+   * \param[in] message Explanation message for this exception
+   */
   RuntimeException(const char *const message) : runtime_error(message) {}
 };
 
@@ -60,6 +72,12 @@ class RuntimeException : public std::runtime_error
 class FatalException : public std::runtime_error
 {
   public:
+
+ /**
+   * Constructor for a fatal exception
+   *
+   * \param[in] message  Explanation message for this exception
+   */
   FatalException(const char *const message) : runtime_error(message) {}
 };
 

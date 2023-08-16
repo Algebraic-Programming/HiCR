@@ -5,13 +5,14 @@
 
 /**
  * @file memorySlot.hpp
- * @desc Provides a definition for the memory slot class.
+ * @brief Provides a definition for the memory slot class.
  * @author A. N. Yzelman
  * @date 8/8/2023
  */
 
-
 #pragma once
+
+#include <hicr/memorySpace.hpp>
 
 namespace HiCR
 {
@@ -25,7 +26,7 @@ namespace HiCR
  * There might be limited number of memory slots supported by a given backend.
  * When a memory slot goes out of scope (or otherwise has its destructor
  * called), any associated resources are immediately freed. If the HiCR
- * #MemorySpace class was responsible for allocating the underlying memory, then
+ * MemorySpace class was responsible for allocating the underlying memory, then
  * that memory shall be freed also.
  *
  * \note This means that destroying a memory slot would immediately allow
@@ -42,7 +43,7 @@ class MemorySlot
   public:
   /**
    * Releases all resources associated with this memory slot. If the memory
-   * slot was created via a call to #MemorySpace::allocateMemorySlot, then the
+   * slot was created via a call to MemorySpace::allocateMemorySlot, then the
    * associated memory will be freed as part of destruction.
    *
    * \internal In OO programming, standard practice is to declare destructors

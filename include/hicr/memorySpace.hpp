@@ -5,14 +5,12 @@
 
 /**
  * @file memorySpace.hpp
- * @desc Provides a definition for the memory space class.
+ * @brief Provides a definition for the memory space class.
  * @author A. N. Yzelman
  * @date 8/8/2023
  */
 
 #pragma once
-
-#include <hicr/memorySlot.hpp>
 
 namespace HiCR
 {
@@ -63,7 +61,7 @@ class MemorySpace
   protected:
   /**
    * A memory space cannot be constructed -- it may only be retrieved from a
-   * #Resource instance.
+   * Resource instance.
    */
   MemorySpace();
 
@@ -105,6 +103,7 @@ class MemorySpace
    * @param[in] remotes_end An iterator in end position that matches \a remotes.
    *                        Optional; by default, this is equal to \a remotes
    *                        (i.e., signifying an empty set of memory spaces).
+   * @return Returns an interator to a memory slot collection
    *
    * The value for \a myLocalityID must be less than or equal to the number of
    * elements in \a remotes. Every \f$ i \f$-th entry of \a remotes that is larger
@@ -171,6 +170,7 @@ class MemorySpace
    * @param[in] remotes_end An iterator in end position that matches \a remotes.
    *                        Optional; by default, this is equal to \a remotes
    *                        (i.e., signifying an empty set of memory spaces).
+   * @return Returns a the newly created memory slot
    *
    * @see allocateMemorySlot for more details regarding \a remotes and locality
    *      IDs. In particular, note that an empty array \a remotes on a successful
@@ -217,6 +217,7 @@ class MemorySpace
    * @param[in] remotes_end  An iterator in end position that matches \a remotes.
    *                         Optional; by default, this is equal to \a remotes
    *                         (i.e., signifying an empty set of memory spaces).
+   * @return Returns a the newly created tag
    *
    * @see allocateMemorySlot for more details regarding \a remotes and locality
    *      IDs.
@@ -226,7 +227,7 @@ class MemorySpace
    *       local tag, whereas tags with more than one localities are global tags.
    *
    * If \a remotes is non-empty, then for all memory spaces \a remotes iterates
-   * over, this call must be matched by a remote call to #::createTag (i.e., the
+   * over, this call must be matched by a remote call to createTag (i.e., the
    * call must be collective across all participating memory spaces).
    *
    * The elements \a remotes iterates over must match across all memory spaces
@@ -253,24 +254,25 @@ class MemorySpace
    * any consumer retrieve tokens from that buffer.
    *
    * A channel is identified by a \a tag, and as such, it makes use of system
-   * resources equivalent to a single call to #::createTag.
+   * resources equivalent to a single call to createTag.
    *
    * In addition, the channel requires \f$ n = |S| + |D| \f$ buffers, and (thus)
    * as many memory slots. Hence the channel, on successful creation, makes use
-   * of system resources equivalent to \f$ n \f$ calls to #::allocateMemorySlot.
+   * of system resources equivalent to \f$ n \f$ calls to allocateMemorySlot.
    *
    * The buffers and resources the channel allocates on successful construction,
    * will be released on a call to the channel destructor.
    *
    * @param[in] producer        Whether the calling context expects a producer
-   *                            #ChannelView. If not, it is assumed to expect a
-   *                            consumer #ChannelView.
+   *                            ChannelView. If not, it is assumed to expect a
+   *                            consumer ChannelView.
    * @param[in] producers_start An iterator in begin position to \f$ S \f$
    * @param[in] producers_end   An iterator in end position to \f$ S \f$
    * @param[in] consumers_start An iterator in begin position to \f$ D \f$
    * @param[in] consumers_end   An iterator in end position to \f$ D \f$
    * @param[in] capacity        How many tokens may be in the channel at
    *                            maximum, at any given time
+   * @param[in] dummy           Needs to be clarified
    *
    * A call to this constructor must be made collectively across all workers
    * that house the given memory spaces. If the callee memory space is in
@@ -292,6 +294,8 @@ class MemorySpace
    * @param[in] producersBroadcast Whether submitted tokens are to be broadcast
    *                               to all consumers. Optional; default is
    *                               <tt>true</tt>.
+   *
+   * @return Returns a view object to the newly created channel
    *
    * In broadcasting mode, broadcasting any single token to \f$ c = |D| \f$
    * consumers counts as taking up \f$ c \f$ \a capacity.
@@ -320,7 +324,7 @@ class MemorySpace
    *     collective call;
    *  -# a related backend is out of resources to create this new channel.
    *
-   * @see #HiCR::memcpy for a definition of \f$ M \f$.
+   * @see HiCR::memcpy for a definition of \f$ M \f$.
    *
    * \todo This interface uses iterators instead of raw arrays for listing the
    *       producers and consumers. The memorySpace and datamover interfaces use
