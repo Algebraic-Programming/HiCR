@@ -77,7 +77,6 @@ class Coroutine
   }
 
   private:
-
   /**
    * CPU execution context of the coroutine. This is the target context for the resume() function.
    */

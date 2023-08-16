@@ -86,4 +86,3 @@ class Tag
 };
 
 } // end namespace HiCR
-

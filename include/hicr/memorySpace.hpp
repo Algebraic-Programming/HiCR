@@ -15,7 +15,6 @@
 namespace HiCR
 {
 
-
 /**
  * This is a specialisation of the Resource class in HiCR, meant to express a
  * hardware memory element within a hierarchy (E.g., Cache, RAM, HBM, Device)
@@ -350,4 +349,3 @@ class MemorySpace
 };
 
 } // end namespace HiCR
-

@@ -32,11 +32,9 @@ class Backend
   friend class Runtime;
 
   protected:
-
   Backend() = default;
 
   public:
-
   virtual ~Backend() = default;
 
   /**
@@ -58,7 +56,6 @@ class Backend
   inline resourceList_t &getResourceList() { return _resourceList; }
 
   protected:
-
   /**
    * The internal container for the queried resources.
    */

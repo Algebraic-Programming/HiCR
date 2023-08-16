@@ -29,14 +29,12 @@ namespace sharedMemory
 class SharedMemory : public Backend
 {
   private:
-
   /**
-  * Local processor and memory hierarchy topology, as detected by Hwloc
-  */
+   * Local processor and memory hierarchy topology, as detected by Hwloc
+   */
   hwloc_topology_t _topology;
 
   public:
-
   SharedMemory() = default;
   ~SharedMemory() = default;
 
@@ -55,8 +53,8 @@ class SharedMemory : public Backend
   }
 
   /**
-  * Pthread implementation of the Backend queryResources() function. This will add one resource object per found Thread / Processing Unit (PU)
-  */
+   * Pthread implementation of the Backend queryResources() function. This will add one resource object per found Thread / Processing Unit (PU)
+   */
   void queryResources() override
   {
     hwloc_topology_init(&_topology);

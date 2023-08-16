@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <hicr/common/logger.hpp>
 #include <hicr/common/coroutine.hpp>
+#include <hicr/common/logger.hpp>
 #include <hicr/eventMap.hpp>
 
 namespace HiCR
@@ -34,9 +34,9 @@ namespace task
  */
 enum state_t
 {
- /**
-  * Ready to run -- set automatically upon creation
-  */
+  /**
+   * Ready to run -- set automatically upon creation
+   */
   ready,
 
   /**
@@ -69,12 +69,11 @@ enum state_t
 class Task
 {
   public:
-
- /**
-  * Sets the function that the task will execute.
-  *
-  * @param[in] fc Speficies the function to execute.
-  */
+  /**
+   * Sets the function that the task will execute.
+   *
+   * @param[in] fc Speficies the function to execute.
+   */
   inline void setFunction(taskFunction_t fc) { _fc = fc; }
 
   /**
@@ -162,7 +161,6 @@ class Task
   }
 
   private:
-
   /**
    * This function yields the execution of the task, and returns to the worker's context.
    */

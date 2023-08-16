@@ -58,10 +58,9 @@ enum event_t
 class EventMap
 {
   public:
-
- /**
-  * Clears the event map (no events will be triggered)
-  */
+  /**
+   * Clears the event map (no events will be triggered)
+   */
   inline void clear()
   {
     _eventMap.clear();
@@ -100,7 +99,6 @@ class EventMap
   }
 
   private:
-
   /**
    * Internal storage for the event map
    */

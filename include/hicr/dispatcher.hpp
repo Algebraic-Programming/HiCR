@@ -38,24 +38,22 @@ typedef std::function<Task *(void)> pullFunction_t;
 class Dispatcher
 {
   private:
-
- /**
-  * Storage for the pull function, as defined by a task producer
-  */
+  /**
+   * Storage for the pull function, as defined by a task producer
+   */
   pullFunction_t _pullFc;
 
   /**
-  * Boolean to register whether a pull function was defined. Initially set as false.
-  */
+   * Boolean to register whether a pull function was defined. Initially set as false.
+   */
   bool isPullFunctionDefined = false;
 
   /**
-  * Internal storage for pushed tasks
-  */
-  common::concurrentQueue<Task*, MAX_QUEUED_TASKS> _queue;
+   * Internal storage for pushed tasks
+   */
+  common::concurrentQueue<Task *, MAX_QUEUED_TASKS> _queue;
 
   public:
-
   Dispatcher() = default;
   ~Dispatcher() = default;
 

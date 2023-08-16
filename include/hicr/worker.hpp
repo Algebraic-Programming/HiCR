@@ -27,9 +27,9 @@ namespace worker
  */
 enum state_t
 {
- /**
-  * The worker object has been instantiated but not initialized
-  */
+  /**
+   * The worker object has been instantiated but not initialized
+   */
   uninitialized,
 
   /**
@@ -60,10 +60,9 @@ enum state_t
 class Worker
 {
   private:
-
- /**
-  * Represents the internal state of the worker. Uninitialized upon construction.
-  */
+  /**
+   * Represents the internal state of the worker. Uninitialized upon construction.
+   */
   worker::state_t _state = worker::uninitialized;
 
   /**
@@ -95,7 +94,6 @@ class Worker
   }
 
   public:
-
   Worker() = default;
   ~Worker() = default;
 
@@ -168,7 +166,7 @@ class Worker
   /**
    * A function that will terminate the worker's resources. After finalization, the worker needs to be re-initialized before it can run again.
    */
- void finalize()
+  void finalize()
   {
     // Checking state
     if (_state != worker::ready) LOG_ERROR("Attempting to finalize a worker that is not in the 'initialized' state");
@@ -180,11 +178,11 @@ class Worker
     _state = worker::uninitialized;
   }
 
- /**
-  * Subscribes the worker to a task dispatcher. During execution, the worker will constantly query the dispatcher for new tasks to execute.
-  *
-  * \param[in] dispatcher The dispatcher to subscribe the worker to
-  */
+  /**
+   * Subscribes the worker to a task dispatcher. During execution, the worker will constantly query the dispatcher for new tasks to execute.
+   *
+   * \param[in] dispatcher The dispatcher to subscribe the worker to
+   */
   void subscribe(Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
 
   /**

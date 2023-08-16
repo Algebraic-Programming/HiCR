@@ -50,7 +50,6 @@ class Resource
   inline resourceId_t getId() { return _id; }
 
   protected:
-
   /**
    * Constructor for the resource object. It requires a backend-unique identifier.
    *

@@ -10,7 +10,6 @@
  * @date 26/7/2023
  */
 
-
 #pragma once
 
 namespace HiCR
@@ -180,7 +179,5 @@ void fence(
   const DstIt dests_end,
   SrcIt sources,
   const SrcIt sources_end);
-
-
 
 } // end namespace HiCR

@@ -3,9 +3,9 @@
 #pragma once
 
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <pthread.h>
 
 #include <hicr/resource.hpp>
 
@@ -26,10 +26,9 @@ namespace sharedMemory
 class Thread : public Resource
 {
   private:
-
- /**
-  * Stores the thread id as returned by the Pthreads library upon creation
-  */
+  /**
+   * Stores the thread id as returned by the Pthreads library upon creation
+   */
   pthread_t _pthreadId;
 
   /**
@@ -85,7 +84,6 @@ class Thread : public Resource
   }
 
   public:
-
   /**
    * Constructor for the thread
    *
@@ -122,6 +120,6 @@ class Thread : public Resource
 
 } // namespace sharedMemory
 
-} // namespace backends
+} // namespace backend
 
 } // namespace HiCR
