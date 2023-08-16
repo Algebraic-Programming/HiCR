@@ -25,7 +25,7 @@ namespace worker
 /**
  * Complete state set that a worker can be in
  */
-enum workerState
+enum state_t
 {
  /**
   * The worker object has been instantiated but not initialized
@@ -64,7 +64,7 @@ class Worker
  /**
   * Represents the internal state of the worker. Uninitialized upon construction.
   */
-  workerState _state = worker::uninitialized;
+  worker::state_t _state = worker::uninitialized;
 
   /**
    * Dispatchers that this resource is subscribed to

@@ -26,10 +26,13 @@ class Worker;
  */
 typedef coroutineFc_t taskFunction_t;
 
+namespace task
+{
+
 /**
  * Complete state set that a task can be in
  */
-enum taskState
+enum state_t
 {
  /**
   * Ready to run -- set automatically upon creation
@@ -51,6 +54,8 @@ enum taskState
    */
   finished
 };
+
+} // namespace task
 
 /**
  * This class defines the basic execution unit managed by HiCR.
@@ -93,7 +98,7 @@ class Task
    *
    * \internal This is not a thread safe operation.
    */
-  inline const taskState getState() { return _state; }
+  inline const task::state_t getState() { return _state; }
 
   /**
    * Queries the task's function argument.
@@ -118,13 +123,13 @@ class Task
    */
   inline void run(Worker *worker)
   {
-    if (_state != taskState::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
+    if (_state != task::state_t::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
 
     // Storing worker
     _worker = worker;
 
     // Setting state to running while we execute
-    _state = taskState::running;
+    _state = task::state_t::running;
 
     // Triggering execution event, if defined
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
@@ -144,15 +149,15 @@ class Task
     _worker = NULL;
 
     // If the state is still running (no suspension or yield), then the task has finished executing
-    if (_state == taskState::running) _state = taskState::finished;
+    if (_state == task::state_t::running) _state = task::state_t::finished;
 
     // Triggering events, if defined
     if (_eventMap != NULL) switch (_state)
       {
-      case taskState::running: break;
-      case taskState::finished: _eventMap->trigger(this, event_t::onTaskFinish); break;
-      case taskState::ready: _eventMap->trigger(this, event_t::onTaskYield); break;
-      case taskState::waiting: _eventMap->trigger(this, event_t::onTaskSuspend); break;
+      case task::state_t::running: break;
+      case task::state_t::finished: _eventMap->trigger(this, event_t::onTaskFinish); break;
+      case task::state_t::ready: _eventMap->trigger(this, event_t::onTaskYield); break;
+      case task::state_t::waiting: _eventMap->trigger(this, event_t::onTaskSuspend); break;
       }
   }
 
@@ -164,7 +169,7 @@ class Task
   inline void yield()
   {
     // Change our state to yielded so that we can be reinserted into the pool
-    _state = taskState::ready;
+    _state = task::state_t::ready;
 
     // Yielding execution back to worker
     _coroutine.yield();
@@ -173,7 +178,7 @@ class Task
   /**
    * Current execution state of the task. Will change based on runtime scheduling events
    */
-  taskState _state = taskState::ready;
+  task::state_t _state = task::state_t::ready;
 
   /**
    *  Remember if the task has been executed already (coroutine still exists)
