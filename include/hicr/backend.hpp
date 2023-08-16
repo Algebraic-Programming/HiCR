@@ -5,7 +5,7 @@
 
 /**
  * @file backend.hpp
- * @desc Provides a definition for the backend class.
+ * @brief Provides a definition for the backend class.
  * @author S. M. Martin
  * @date 27/6/2023
  */
