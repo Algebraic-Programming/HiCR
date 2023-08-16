@@ -38,7 +38,7 @@ using lockFreeQueue_t = atomic_queue::AtomicQueue<T, N, (T)NULL>;
  * @tparam P Represents a pointer to the item type to be stored in the queue
  * @tparam N Represents the maximum number of elements supported in the queue. For performance reasons, this class does not check whether this value is exceeded during runtime. If needed, this check must be implemented by the layer using this class.
  */
-template <class P, unsigned int N>
+template <class P, size_t N>
 class concurrentQueue
 {
   private:

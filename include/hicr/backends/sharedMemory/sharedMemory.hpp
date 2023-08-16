@@ -10,12 +10,12 @@
 #include "hwloc.h"
 
 #include <hicr/backend.hpp>
-#include <hicr/resources/thread.hpp>
+#include <hicr/backends/sharedMemory/thread.hpp>
 
 namespace HiCR
 {
 
-namespace backends
+namespace backend
 {
 
 namespace sharedMemory
@@ -69,7 +69,7 @@ class SharedMemory : public Backend
     for (size_t i = 0; i < threadPUs.size(); i++)
     {
       auto affinity = std::vector<int>({threadPUs[i]});
-      auto thread = std::make_unique<SharedMemory::Thread>(i, affinity);
+      auto thread = std::make_unique<Thread>(i, affinity);
       _resourceList.push_back(std::move(thread));
     }
   }
@@ -77,6 +77,6 @@ class SharedMemory : public Backend
 
 } // namespace sharedMemory
 
-} // namespace backends
+} // namespace backend
 
 } // namespace HiCR

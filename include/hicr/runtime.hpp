@@ -45,8 +45,8 @@ class Runtime
     _backends.clear();
 
 // Initializing backends
-#ifdef HICR_ENABLE_BACKEND_PTHREADS
-    _backends.push_back(std::make_unique<backends::PThreads>());
+#ifdef HICR_ENABLE_BACKEND_SHARED_MEMORY
+    _backends.push_back(std::make_unique<backend::sharedMemory::SharedMemory>());
 #endif
   }
 

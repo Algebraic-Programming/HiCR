@@ -12,7 +12,7 @@
 namespace HiCR
 {
 
-namespace backends
+namespace backend
 {
 
 namespace sharedMemory

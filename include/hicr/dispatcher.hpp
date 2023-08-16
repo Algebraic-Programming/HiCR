@@ -52,7 +52,7 @@ class Dispatcher
   /**
   * Internal storage for pushed tasks
   */
-  common::concurrentQueue<Task, MAX_QUEUED_TASKS> _queue;
+  common::concurrentQueue<Task*, MAX_QUEUED_TASKS> _queue;
 
   public:
 

@@ -13,7 +13,7 @@
 #pragma once
 
 #include <hicr/common/logger.hpp>
-#include <hicr/coroutine.hpp>
+#include <hicr/common/coroutine.hpp>
 #include <hicr/eventMap.hpp>
 
 namespace HiCR

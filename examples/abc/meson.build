@@ -31,5 +31,5 @@ executable('abc',
   [ 'source/main.cpp'],
   include_directories: projectIncludes,
   dependencies: [ projectDeps, boost_dep ],
-  cpp_args: [ cppArgs, '-I' + taskr_include_dir, '-I' + hicr_include_dir, '-DHICR_ENABLE_BACKEND_PTHREADS' ]
+  cpp_args: [ cppArgs, '-I' + taskr_include_dir, '-I' + hicr_include_dir, '-DHICR_ENABLE_BACKEND_SHARED_MEMORY', '-Wfatal-errors' ]
 )
