@@ -5,9 +5,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <pthread.h>
 
 #include <hicr/resource.hpp>
-#include <pthread.h>
 
 namespace HiCR
 {
@@ -15,16 +15,33 @@ namespace HiCR
 namespace backends
 {
 
-namespace pthreads
+namespace sharedMemory
 {
 
+/**
+ * Implementation of a kernel-level thread as HiCR computational resource.
+ *
+ * This implementation uses PThreads as backend for the creation and management of OS threads..
+ */
 class Thread : public Resource
 {
   private:
-  bool _finalize = false;
+
+ /**
+  * Stores the thread id as returned by the Pthreads library upon creation
+  */
   pthread_t _pthreadId;
+
+  /**
+   * Stores the core affinity for the OS thread
+   */
   std::vector<int> _affinity;
 
+  /**
+   * Static wrapper function to setup affinity and run the thread's function
+   *
+   * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
+   */
   static void *launchWrapper(void *p)
   {
     // Gathering thread object
@@ -43,6 +60,11 @@ class Thread : public Resource
     return NULL;
   }
 
+  /**
+   * Sets up new affinity for the thread. The thread needs to yield or be preempted for the new affinity to work.
+   *
+   * \param[in] affinity New affinity to use
+   */
   static void updateAffinity(const std::vector<int> &affinity)
   {
     cpu_set_t cpuset;
@@ -51,6 +73,9 @@ class Thread : public Resource
     if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) printf("[WARNING] Problem assigning affinity: %d.\n", affinity[0]);
   }
 
+  /**
+   * Queries the OS for the currently set affinity for this thread, and prints it to screen.
+   */
   static void printAffinity()
   {
     cpu_set_t cpuset;
@@ -60,6 +85,13 @@ class Thread : public Resource
   }
 
   public:
+
+  /**
+   * Constructor for the thread
+   *
+   * \param[in] id The Id for the thread
+   * \param[in] affinity The affinity to set for the thread
+   */
   Thread(const resourceId_t id, const std::vector<int> &affinity) : Resource(id), _affinity{affinity} {};
   ~Thread() = default;
 
@@ -88,7 +120,7 @@ class Thread : public Resource
   }
 };
 
-} // namespace pthreads
+} // namespace sharedMemory
 
 } // namespace backends
 

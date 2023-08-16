@@ -146,7 +146,7 @@ class Worker
   }
 
   /**
-   * A function that will terminate the worker's resources. After finalization, it needs to be re-initialized before it can run again.
+   * A function that will terminate the worker's resources. After finalization, the worker needs to be re-initialized before it can run again.
    */
  void finalize()
   {
