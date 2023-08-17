@@ -6,6 +6,11 @@ function check()
  fi
 }
 
+# Clean any generated source
+rm -rf build
+rm -rf source/doxygen
+
+# Regenerating documentation
 doxygen; check
-cp -r doxygen source/doxygen; check
+doxysphinx build source/ build source/doxygen/html/; check
 sphinx-build -M html source/ build/; check

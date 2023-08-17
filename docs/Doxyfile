@@ -2,7 +2,7 @@
 PROJECT_NAME           = HiCR 
 HTML_OUTPUT            = html
 INPUT                  = ../include
-OUTPUT_DIRECTORY       = ./doxygen
+OUTPUT_DIRECTORY       = ./source/doxygen
 TAB_SIZE               = 2
 RECURSIVE              = YES
 QUIET                  = NO
@@ -21,7 +21,7 @@ GENERATE_TREEVIEW      = NO
 DISABLE_INDEX          = NO
 CREATE_SUBDIRS         = NO
 SEARCHENGINE           = NO
-GENERATE_TAGFILE       = ./doxygen/html/tagfile.xml
+GENERATE_TAGFILE       = ./source/doxygen/html/tagfile.xml
 DOT_IMAGE_FORMAT       = svg  # generates nicer svg images
 DOT_TRANSPARENT        = YES  # generate transparent images
 INTERACTIVE_SVG        = YES  # to be able to scroll and zoom into big images

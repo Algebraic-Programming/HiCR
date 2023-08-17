@@ -1,6 +1,0 @@
-sphinx<4.0
-sphinx_rtd_theme
-sphinxcontrib-bibtex
-jinja2==3.0.0
-pygments
-doxysphinx

@@ -10,7 +10,8 @@ User Manual
    
    using/basics
    using/install
-   
+   doxygen/html/index
+
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
