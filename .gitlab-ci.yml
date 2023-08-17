@@ -1,4 +1,4 @@
-image: python:3.11-alpine
+image: python:3.7-alpine
 
 pages:
   tags:
