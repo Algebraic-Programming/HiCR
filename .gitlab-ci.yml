@@ -5,7 +5,7 @@ pages:
   - docker
   - tiny 
   script:
-  - apk update && apk add gcc
+  - apk update && apk add build-base
   - /usr/local/bin/python -m pip install --upgrade pip
   - pip install sphinx
   - pip install sphinx_rtd_theme
