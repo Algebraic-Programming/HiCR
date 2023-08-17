@@ -7,7 +7,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include <hicr/resource.hpp>
+#include <hicr/computeResource.hpp>
 
 namespace HiCR
 {
@@ -23,7 +23,7 @@ namespace sharedMemory
  *
  * This implementation uses PThreads as backend for the creation and management of OS threads..
  */
-class Thread : public Resource
+class Thread : public ComputeResource
 {
   private:
   /**

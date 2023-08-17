@@ -1,0 +1,12 @@
+image: alpine
+
+pages:
+  script:
+  - apk update && apk add doxygen
+  - doxygen docs/Doxyfile
+  - mv docs/doxygen/html/ public/
+  artifacts:
+    paths:
+    - public
+  only:
+  - master

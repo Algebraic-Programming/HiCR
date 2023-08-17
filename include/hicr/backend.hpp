@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <hicr/resource.hpp>
+#include <hicr/computeResource.hpp>
 
 namespace HiCR
 {
@@ -47,19 +47,34 @@ class Backend
   virtual void queryResources() = 0;
 
   /**
-   * This function returns the list of queried resources, as obtained by.
+   * This function returns the list of queried compute resources, as visible by the backend.
    *
    * If this function is called before queryResources, then it will return an empty container.
    *
-   * @return The list of resources, as detected the last time \a queryResources was executed.
+   * @return The list of compute resources, as detected the last time \a queryResources was executed.
    */
-  inline resourceList_t &getResourceList() { return _resourceList; }
+  inline computeResourceList_t &getComputeResourceList() { return _computeResourceList; }
+
+  /**
+   * This function returns the list of queried memory spaces, as visible by the backend.
+   *
+   * If this function is called before queryResources, then it will return an empty container.
+   *
+   * @return The list of memory spaces, as detected the last time \a queryResources was executed.
+   */
+  inline memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
 
   protected:
+
   /**
    * The internal container for the queried resources.
    */
-  resourceList_t _resourceList;
+  computeResourceList_t _computeResourceList;
+
+  /**
+   * The internal container for the queried resources.
+   */
+  memorySpaceList_t _memorySpaceList;
 };
 
 } // namespace HiCR

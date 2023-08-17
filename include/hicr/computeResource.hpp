@@ -5,7 +5,7 @@
 
 /**
  * @file resource.hpp
- * @brief Provides a definition for a HiCR Resource class
+ * @brief Provides a definition for a HiCR ComputeResource class
  * @author S. M. Martin
  * @date 13/7/2023
  */
@@ -23,11 +23,6 @@ namespace HiCR
 {
 
 /**
- * Definition for resource unique identifiers
- */
-typedef uint64_t resourceId_t;
-
-/**
  * Definition for function to run at resource
  */
 typedef std::function<void(void)> resourceFc_t;
@@ -35,19 +30,12 @@ typedef std::function<void(void)> resourceFc_t;
 /**
  * This class represents an abstract definition for a computational resource in HiCR. Computational resources are assigned to workers to perform the work necessary to execute a task.
  */
-class Resource
+class ComputeResource
 {
   friend class Worker;
 
   public:
-  virtual ~Resource() = default;
-
-  /**
-   * Returns the id assigned to the resource, as assigned to it by the backend
-   *
-   * \return The resource's id
-   */
-  inline resourceId_t getId() { return _id; }
+  virtual ~ComputeResource() = default;
 
   protected:
   /**
@@ -80,11 +68,6 @@ class Resource
   virtual void await() = 0;
 
   /**
-   * Unique local identifier for the resource, assinged to it by the backend
-   */
-  resourceId_t _id;
-
-  /**
    * Copy of the function to be ran by the resource
    */
   resourceFc_t _fc;
@@ -93,6 +76,6 @@ class Resource
 /**
  * Common definition of a collection of resources
  */
-typedef std::vector<std::unique_ptr<Resource>> resourceList_t;
+typedef std::vector<std::unique_ptr<ComputeResource>> resourceList_t;
 
 } // namespace HiCR
