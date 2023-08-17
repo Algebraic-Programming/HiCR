@@ -4,7 +4,7 @@
  */
 
 /**
- * @file resource.hpp
+ * @file computeResource.hpp
  * @brief Provides a definition for a HiCR ComputeResource class
  * @author S. M. Martin
  * @date 13/7/2023
