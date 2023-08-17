@@ -5,12 +5,13 @@ pages:
   - docker
   - tiny 
   script:
+  - apk update && apk add gcc
   - /usr/local/bin/python -m pip install --upgrade pip
   - pip install sphinx
   - pip install sphinx_rtd_theme
   - pip install sphinxcontrib-bibtex
   - pip install doxysphinx
-  - apk update && apk add doxygen graphviz ttf-freefont texlive texmf-dist-latexextra texlive-dvi texmf-dist-fontsextra
+  - apk add doxygen graphviz ttf-freefont texlive texmf-dist-latexextra texlive-dvi texmf-dist-fontsextra
   - cd docs && ./build.sh && cd ..
   - mv docs/doxygen/html public
   artifacts:
