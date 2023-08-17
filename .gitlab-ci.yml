@@ -1,6 +1,9 @@
 image: alpine
 
 pages:
+  tags:
+  - docker
+  - tiny 
   script:
   - apk update && apk add doxygen
   - doxygen docs/Doxyfile
