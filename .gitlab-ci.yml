@@ -1,12 +1,12 @@
-image: alpine:3.18.3
+image: ubuntu:latest
 
 pages:
   tags:
   - docker
   - tiny 
-  before_script:
-  - apk update && apk add doxygen graphviz ttf-freefont ghostscript texlive 
   script:
+  - apt update
+  - apt install -y graphviz fonts-freefont-ttf ghostscript texlive doxygen
   - cd docs && doxygen Doxyfile
   - mv docs/doxygen/html/ public/
   artifacts:
@@ -14,3 +14,4 @@ pages:
     - public
   only:
   - master
+
