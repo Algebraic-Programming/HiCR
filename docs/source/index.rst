@@ -8,6 +8,7 @@ User Manual
    :caption: Using HiCR
    :maxdepth: 2
    
+   using/basics
    using/install
    
 * :ref:`genindex`

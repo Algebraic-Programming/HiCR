@@ -3,4 +3,4 @@ sphinx_rtd_theme
 sphinxcontrib-bibtex
 jinja2==3.0.0
 pygments
-breathe>=4.13.0
+doxysphinx

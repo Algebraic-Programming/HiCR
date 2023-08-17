@@ -19,12 +19,8 @@ import subprocess as sp
 
 # -- Project information -----------------------------------------------------
 project = 'HiCR'
-copyright = 'Huawei'
-author = 'Von Neumann Lab'
-
-# Run doxygen
-sp.run('(cd .. && doxygen --version)', shell=True) # get doxygen version
-sp.run('(cd .. && doxygen)', shell=True) # compile the xml source
+copyright = 'Huawei Technologies Switzerland AG'
+author = 'Sergio Martin'
 
 # -- General configuration ---------------------------------------------------
 
@@ -34,8 +30,7 @@ sp.run('(cd .. && doxygen)', shell=True) # compile the xml source
 extensions = [
   'sphinx.ext.todo',
   'sphinx.ext.mathjax',
-  'sphinx_rtd_theme',
-  'breathe',
+  'sphinx_rtd_theme'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,13 +50,6 @@ exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
-
-# breathe extension
-breathe_default_project = "HiCR"
-breathe_projects = {
-        "HiCR": "../doxygen/xml"
-}
-breathe_domain_by_extension = { "h" : "cpp", "cu" : "cpp" }
 
 # Tell sphinx what the primary language being documented is
 primary_domain = 'cpp'

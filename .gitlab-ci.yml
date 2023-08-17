@@ -5,7 +5,7 @@ pages:
   - docker
   - tiny 
   script:
-  - apk update && apk add doxygen graphviz ttf-freefont texlive texmf-dist-latexextra texlive-dvi
+  - apk update && apk add doxygen graphviz ttf-freefont texlive texmf-dist-latexextra texlive-dvi texlive-font-utils
   - cd docs && doxygen Doxyfile && cd ..
   - mv docs/doxygen/html public
   artifacts:
