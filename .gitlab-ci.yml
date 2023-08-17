@@ -6,8 +6,8 @@ pages:
   - tiny 
   script:
   - apk update && apk add doxygen graphviz ttf-freefont texlive texmf-dist-latexextra texlive-dvi
-  - cd docs && doxygen Doxyfile
-  - mv doxygen/html public
+  - pushd docs && doxygen Doxyfile && popd
+  - mv docs/doxygen/html public
   artifacts:
     paths:
     - public
