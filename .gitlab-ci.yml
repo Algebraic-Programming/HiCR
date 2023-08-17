@@ -6,7 +6,7 @@ pages:
   - tiny 
   script:
   - apk update && apk add doxygen
-  - doxygen docs/Doxyfile
+  - cd docs && doxygen Doxyfile
   - mv docs/doxygen/html/ public/
   artifacts:
     paths:
