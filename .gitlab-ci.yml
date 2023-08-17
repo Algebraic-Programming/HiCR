@@ -7,9 +7,7 @@ pages:
   script:
   - apk update && apk add doxygen graphviz ttf-freefont texlive texmf-dist-latexextra texlive-dvi
   - cd docs && doxygen Doxyfile
-  - mkdir .public
-  - cp -r doxygen/html/* .public
-  - mv .public public
+  - mv doxygen/html public
   artifacts:
     paths:
     - public
