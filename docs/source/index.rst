@@ -17,5 +17,6 @@ Lorem Ipsum
    
    Classes <doxygen/html/annotated_classes>
    Files <doxygen/html/files>
+   API <auto_api/conf/index>
 
 * :ref:`genindex`

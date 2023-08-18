@@ -1,10 +1,16 @@
-.PHONY: all clean
+.DEFAULT: all
+.PHONY: all doxygen doxysphinx sphinx clean
 
-all: 
+all: doxygen doxysphinx sphinx
+
+doxygen:
 	doxygen 
-	doxysphinx build source/ build source/doxygen/html/
-	sphinx-build -M html source/ build
-clean:
-	rm -rf build
-	rm -rf source/doxygen
 
+doxysphinx:
+	doxysphinx build source/ build/ Doxyfile
+
+sphinx:
+	sphinx-build -M html source/ build
+
+clean:
+	git clean -xdf .

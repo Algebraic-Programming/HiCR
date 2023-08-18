@@ -1,5 +1,6 @@
-README.rst
 doxygen/
+__pycache__/
+auto_api/
 examples/
 features/
 modules/
