@@ -6,7 +6,7 @@ pages:
   - tiny 
   script:
   - git submodule init && git submodule update
-  - cd docs && ./build.sh && cd .. 
+  - make -C docs
   - mv docs/doxygen/html public
   artifacts:
     paths:
