@@ -7,7 +7,7 @@ doxygen:
 	doxygen 
 
 doxysphinx:
-	doxysphinx build source/ build/ Doxyfile
+	doxysphinx build source/ build/html Doxyfile
 
 sphinx:
 	sphinx-build -M html source/ build
