@@ -11,7 +11,7 @@ Lorem Ipsum
    using/basics
    using/install
 
-   Classes <annotated_classes>
-   Files <files>
+   Classes <doxygen/html/annotated_classes>
+   Files <doxygen/html/files>
 
 * :ref:`genindex`
