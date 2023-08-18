@@ -1,10 +1,11 @@
-image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs
+image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
 
 pages:
   tags:
   - docker
   - tiny 
   script:
+  - git submodule init && git submodule update
   - cd docs && ./build.sh && cd .. 
   - mv docs/doxygen/html public
   artifacts:

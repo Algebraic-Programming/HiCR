@@ -16,6 +16,6 @@ RUN pip install sphinx_rtd_theme
 RUN pip install sphinxcontrib-bibtex
 RUN pip install doxysphinx
 
-
+RUN apk add git
 
 
