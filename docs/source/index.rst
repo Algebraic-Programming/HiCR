@@ -11,6 +11,7 @@ Lorem Ipsum
    using/basics
    using/install
 
+.. toctree::
    :caption: C++ API Reference
    :maxdepth: 2
    
