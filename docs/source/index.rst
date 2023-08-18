@@ -11,6 +11,9 @@ Lorem Ipsum
    using/basics
    using/install
 
+   :caption: C++ API Reference
+   :maxdepth: 2
+   
    Classes <doxygen/html/annotated_classes>
    Files <doxygen/html/files>
 
