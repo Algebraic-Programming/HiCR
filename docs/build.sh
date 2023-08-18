@@ -2,7 +2,7 @@ function check()
 {
  if [ ! $? -eq 0 ]; then 
    echo "Error building documentation."
-   exit -1 
+   exit 1 
  fi
 }
 

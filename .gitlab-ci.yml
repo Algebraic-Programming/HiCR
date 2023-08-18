@@ -1,18 +1,11 @@
-image: python:3.8-alpine
+image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs
 
 pages:
   tags:
   - docker
   - tiny 
   script:
-  - apk update && apk add build-base
-  - /usr/local/bin/python -m pip install --upgrade pip
-  - pip install sphinx
-  - pip install sphinx_rtd_theme
-  - pip install sphinxcontrib-bibtex
-  - pip install doxysphinx
-  - apk add doxygen graphviz ttf-freefont texlive texmf-dist-latexextra texlive-dvi texmf-dist-fontsextra
-  - cd docs && ./build.sh && cd ..
+  - cd docs && ./build.sh && cd .. 
   - mv docs/doxygen/html public
   artifacts:
     paths:
