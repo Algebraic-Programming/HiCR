@@ -10,8 +10,8 @@ Lorem Ipsum
    
    using/basics
    using/install
-   doxygen/html/index
+
+   Classes <annotated_classes>
+   Files <files>
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
