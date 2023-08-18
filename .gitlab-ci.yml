@@ -7,7 +7,7 @@ pages:
   script:
   - git submodule init && git submodule update
   - make -C docs
-  - mv docs/doxygen/html public
+  - mv docs/build/html public
   artifacts:
     paths:
     - public
