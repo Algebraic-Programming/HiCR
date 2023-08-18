@@ -39,13 +39,6 @@ class ComputeResource
 
   protected:
   /**
-   * Constructor for the resource object. It requires a backend-unique identifier.
-   *
-   * \param[in] id Identifier for the resource
-   */
-  Resource(const resourceId_t id) : _id(id){};
-
-  /**
    * Initializes the resource and leaves it ready to execute work
    */
   virtual void initialize() = 0;
@@ -72,10 +65,5 @@ class ComputeResource
    */
   resourceFc_t _fc;
 };
-
-/**
- * Common definition of a collection of resources
- */
-typedef std::vector<std::unique_ptr<ComputeResource>> resourceList_t;
 
 } // namespace HiCR

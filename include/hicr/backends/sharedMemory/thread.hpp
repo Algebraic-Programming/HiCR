@@ -87,10 +87,9 @@ class Thread : public ComputeResource
   /**
    * Constructor for the thread
    *
-   * \param[in] id The Id for the thread
    * \param[in] affinity The affinity to set for the thread
    */
-  Thread(const resourceId_t id, const std::vector<int> &affinity) : Resource(id), _affinity{affinity} {};
+  Thread(const std::vector<int> &affinity) : ComputeResource(), _affinity{affinity} {};
   ~Thread() = default;
 
   void initialize() override
@@ -104,7 +103,7 @@ class Thread : public ComputeResource
 
     // Launching thread function wrapper
     auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
-    if (status != 0) LOG_ERROR("Could not create thread %lu\n", _id);
+    if (status != 0) LOG_ERROR("Could not create thread %lu\n", _pthreadId);
   }
 
   void finalize() override

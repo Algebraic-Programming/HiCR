@@ -107,7 +107,7 @@ inline void run()
     _runtime->_hicr.getBackends()[i]->queryResources();
 
     // Creating one worker per thread
-    for (auto &resource : _runtime->_hicr.getBackends()[i]->getResourceList())
+    for (auto &resource : _runtime->_hicr.getBackends()[i]->getComputeResourceList())
     {
       auto worker = new HiCR::Worker();
 

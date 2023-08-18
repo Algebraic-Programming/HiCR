@@ -13,7 +13,7 @@
 #pragma once
 
 #include <hicr/dispatcher.hpp>
-#include <hicr/resource.hpp>
+#include <hicr/computeResource.hpp>
 #include <hicr/task.hpp>
 
 namespace HiCR
@@ -73,7 +73,7 @@ class Worker
   /**
    * Group of resources the worker can freely use
    */
-  std::vector<Resource *> _resources;
+  std::vector<ComputeResource *> _computeResources;
 
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
@@ -106,10 +106,10 @@ class Worker
     if (_state != worker::uninitialized) LOG_ERROR("Attempting to initialize already initialized worker");
 
     // Checking we have at least one assigned resource
-    if (_resources.empty()) LOG_ERROR("Attempting to initialize worker without any assigned resources");
+    if (_computeResources.empty()) LOG_ERROR("Attempting to initialize worker without any assigned resources");
 
     // Initializing all resources
-    for (auto r : _resources) r->initialize();
+    for (auto r : _computeResources) r->initialize();
 
     // Transitioning state
     _state = worker::ready;
@@ -124,13 +124,13 @@ class Worker
     if (_state != worker::ready) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
 
     // Checking we have at least one assigned resource
-    if (_resources.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
+    if (_computeResources.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
 
     // Transitioning state
     _state = worker::started;
 
     // Launching worker in the lead resource (first one to be added)
-    _resources[0]->run([this]()
+    _computeResources[0]->run([this]()
                        {
                          this->mainLoop();
                        });
@@ -157,7 +157,7 @@ class Worker
     if (_state != worker::finishing && _state != worker::started) LOG_ERROR("Attempting to wait for a worker that is not in the 'started' or 'finishing' state");
 
     // Wait for the resource to free up
-    _resources[0]->await();
+    _computeResources[0]->await();
 
     // Transitioning state
     _state = worker::ready;
@@ -172,7 +172,7 @@ class Worker
     if (_state != worker::ready) LOG_ERROR("Attempting to finalize a worker that is not in the 'initialized' state");
 
     // Finalize all resources
-    for (auto r : _resources) r->finalize();
+    for (auto r : _computeResources) r->finalize();
 
     // Transitioning state
     _state = worker::uninitialized;
@@ -190,14 +190,14 @@ class Worker
    *
    * \param[in] resource Resource to add to the worker
    */
-  void addResource(Resource *resource) { _resources.push_back(resource); }
+  void addResource(ComputeResource *resource) { _computeResources.push_back(resource); }
 
   /**
    * Gets a reference to the workers assigned resources.
    *
    * \return A container with the worker's resources
    */
-  std::vector<Resource *> &getResources() { return _resources; }
+  std::vector<ComputeResource *> &getResources() { return _computeResources; }
 
   /**
    * Gets a reference to the dispatchers the worker has been subscribed to

@@ -20,6 +20,16 @@ namespace HiCR
 class Runtime;
 
 /**
+ * Common definition of a collection of compute resources
+ */
+typedef std::vector<std::unique_ptr<ComputeResource>> computeResourceList_t;
+
+/**
+ * Common definition of a collection of memory spaces
+ */
+typedef std::vector<std::unique_ptr<ComputeResource>> memorySpaceList_t;
+
+/**
  * Encapsulates a HiCR Backend.
  *
  * Backends represent plugins to HiCR that provide support for a communication or device library. By adding new plugins developers extend HiCR's support for new hardware and software technologies.

@@ -67,8 +67,8 @@ class SharedMemory : public Backend
     for (size_t i = 0; i < threadPUs.size(); i++)
     {
       auto affinity = std::vector<int>({threadPUs[i]});
-      auto thread = std::make_unique<Thread>(i, affinity);
-      _resourceList.push_back(std::move(thread));
+      auto thread = std::make_unique<Thread>(affinity);
+      _computeResourceList.push_back(std::move(thread));
     }
   }
 };
