@@ -1,7 +1,8 @@
 
-*************
-User Manual
-*************
+HiSilicon Common Runtime (HiCR) User Manual
+============================================
+
+Lorem Ipsum
 
 .. toctree::
    :caption: Using HiCR
