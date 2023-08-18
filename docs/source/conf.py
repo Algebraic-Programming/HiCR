@@ -33,7 +33,6 @@ extensions = [
 	"sphinx.ext.mathjax",
 	"sphinx.ext.ifconfig",
 	"sphinx.ext.autodoc",
-	"autoapi.extension",
 	"sphinx.ext.viewcode",
 	"myst_parser",
 	"matplotlib.sphinxext.plot_directive",
@@ -50,14 +49,6 @@ extensions = [
 # Plantuml
 plantuml = "java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar"
 plantuml_output_format = "svg"
-
-# Autoapi
-autoapi_dirs = ["."]
-autoapi_root = "auto_api"
-autoapi_options = ["members", "undoc-members", "show-inheritance", "show-inheritance-diagram", "show-module-summary"]
-autoapi_keep_files = True
-autoapi_add_toctree_entry = False
-autodoc_typehints = "signature"
 
 # Myst
 myst_enable_extensions = ["colon_fence"]
