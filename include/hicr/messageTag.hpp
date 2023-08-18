@@ -12,6 +12,8 @@
 
 #pragma once
 
+typedef unsigned __int128 uint128_t; // FIXME
+
 namespace HiCR
 {
 

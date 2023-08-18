@@ -12,6 +12,9 @@
 
 #pragma once
 
+#include <hicr/memorySlot.hpp>
+#include <hicr/messageTag.hpp>
+
 namespace HiCR
 {
 
@@ -82,8 +85,15 @@ namespace HiCR
  * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
  *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
  */
-void memcpy(
-  MemorySlot &destination, const size_t dst_locality, const size_t dst_offset, const MemorySlot &source, const size_t src_locality, const size_t src_offset, const size_t size, const Tag &tag);
+void nb_memcpy(
+  MemorySlot &destination,
+  const size_t dst_locality,
+  const size_t dst_offset,
+  const MemorySlot &source,
+  const size_t src_locality,
+  const size_t src_offset,
+  const size_t size,
+  const Tag &tag);
 
 /**
  * Fences a group of memory copies.

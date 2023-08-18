@@ -241,3 +241,5 @@ class ChannelView
   //   1) full-to-non-full (producer side),
   //   2) empty-to-nonempty (consumer side).
 };
+
+}; // namespace HiCR

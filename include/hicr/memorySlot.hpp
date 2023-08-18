@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <hicr/memorySpace.hpp>
-
 namespace HiCR
 {
 

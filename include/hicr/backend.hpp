@@ -13,6 +13,7 @@
 #pragma once
 
 #include <hicr/computeResource.hpp>
+#include <hicr/memorySpace.hpp>
 
 namespace HiCR
 {
@@ -27,7 +28,7 @@ typedef std::vector<std::unique_ptr<ComputeResource>> computeResourceList_t;
 /**
  * Common definition of a collection of memory spaces
  */
-typedef std::vector<std::unique_ptr<ComputeResource>> memorySpaceList_t;
+typedef std::vector<std::unique_ptr<MemorySpace>> memorySpaceList_t;
 
 /**
  * Encapsulates a HiCR Backend.
