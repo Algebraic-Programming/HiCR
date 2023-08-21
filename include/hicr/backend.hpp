@@ -76,7 +76,6 @@ class Backend
   inline memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
 
   protected:
-
   /**
    * The internal container for the queried resources.
    */

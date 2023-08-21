@@ -2,7 +2,6 @@
 
 #include <hicr/task.hpp>
 #include <taskr/common.hpp>
-#include <taskr/runtime.hpp>
 #include <vector>
 
 namespace taskr
@@ -24,9 +23,7 @@ class Task
   inline Task(const taskLabel_t label, const callback_t &fc) : _label(label)
   {
     _hicrTask.setFunction([fc](void *arg)
-                          {
-                            fc();
-                          });
+                          { fc(); });
     _hicrTask.setArgument(this);
   }
 
@@ -45,15 +42,10 @@ class Task
     _taskDependencies.push_back(task);
   };
 
-  inline bool isReady()
+  inline const std::vector<taskLabel_t> &getDependencies()
   {
-    // Checking Task dependencies
-    for (size_t i = 0; i < _taskDependencies.size(); i++)
-      if (_runtime->_finishedTaskHashMap.contains(_taskDependencies[i]) == false) return false; // If any unsatisfied dependency was found, return immediately
-
-    return true;
+    return _taskDependencies;
   }
-
 }; // class Task
 
 } // namespace taskr

@@ -13,6 +13,11 @@ typedef uint64_t taskLabel_t;
 // Hash type
 typedef uint64_t hash_t;
 
+// Maximum simultaneous workers allowed
+#ifndef MAX_SIMULTANEOS_WORKERS
+  #define MAX_SIMULTANEOUS_WORKERS 1024
+#endif
+
 // Maximum simultaneous tasks allowed
 #ifndef MAX_SIMULTANEOS_TASKS
   #define MAX_SIMULTANEOUS_TASKS 65536

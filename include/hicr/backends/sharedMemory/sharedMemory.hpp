@@ -1,4 +1,14 @@
-// This is a minimal backend for multi-core support based on OpenMP
+/*
+ * Copyright Huawei Technologies Switzerland AG
+ * All rights reserved.
+ */
+
+/**
+ * @file sharedMemory.hpp
+ * @brief This is a minimal backend for shared memory multi-core support based on HWLoc and Pthreads
+ * @author S. M. Martin
+ * @date 14/8/2023
+ */
 
 #pragma once
 
@@ -26,7 +36,7 @@ namespace sharedMemory
  *
  * It detects and returns the processing units and memory spaces detected by the HWLoc library, and instantiates the former as pthreads and the latter as MemorySpace descriptors. It also detects their connectivity.
  */
-class SharedMemory : public Backend
+class SharedMemory final : public Backend
 {
   private:
   /**

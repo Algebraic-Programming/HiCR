@@ -31,5 +31,6 @@ RUN pip install sphinx-theme
 RUN pip install sphinx-book-theme
 
 RUN apk add git
-
+RUN apk add bash
+RUN apk add clang-extra-tools
 
