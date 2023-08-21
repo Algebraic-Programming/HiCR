@@ -37,9 +37,7 @@ inline void schedulePotrf(double *__restrict__ A, const size_t n, const size_t b
   if (nextI < nb)
   {
     auto potrfTask = new taskr::Task(getLabelPotrf(nextI, nb), [A, n, bs, nb, nextI]()
-                                     {
-                                       schedulePotrf(A, n, bs, nb, nextI);
-                                     });
+                                     { schedulePotrf(A, n, bs, nb, nextI); });
     potrfTask->addTaskDependency(getLabelGemm(i, nextI, nextI, nb));
     taskr::addTask(potrfTask);
   }
@@ -54,9 +52,7 @@ inline void scheduleTrsm(double *__restrict__ A, const size_t n, const size_t bs
   if (nextI < nb && j > i)
   {
     auto trsmTask = new taskr::Task(getLabelTrsm(nextI, j, nb), [A, n, bs, nb, nextI, j]()
-                                    {
-                                      scheduleTrsm(A, n, bs, nb, nextI, j);
-                                    });
+                                    { scheduleTrsm(A, n, bs, nb, nextI, j); });
     trsmTask->addTaskDependency(getLabelPotrf(nextI, nb));
     trsmTask->addTaskDependency(getLabelGemm(i, j, nextI, nb));
     taskr::addTask(trsmTask);
@@ -74,9 +70,7 @@ inline void scheduleGemm(double *__restrict__ A, const size_t n, const size_t bs
   if (nextI < nb && nextJ < nb && nextK < nb)
   {
     auto gemmTask = new taskr::Task(getLabelGemm(nextI, nextJ, nextK, nb), [A, n, bs, nb, nextI, nextJ, nextK]()
-                                    {
-                                      scheduleGemm(A, n, bs, nb, nextI, nextJ, nextK);
-                                    });
+                                    { scheduleGemm(A, n, bs, nb, nextI, nextJ, nextK); });
     gemmTask->addTaskDependency(getLabelTrsm(nextI, nextJ, nb));
     gemmTask->addTaskDependency(getLabelTrsm(nextI, nextK, nb));
     taskr::addTask(gemmTask);
@@ -92,17 +86,13 @@ void cholesky(double *__restrict__ A, const size_t n, const size_t bs)
   taskr::initialize();
 
   auto potrfTask = new taskr::Task(getLabelPotrf(0, nb), [A, n, bs, nb]()
-                                   {
-                                     schedulePotrf(A, n, bs, nb, 0);
-                                   });
+                                   { schedulePotrf(A, n, bs, nb, 0); });
   taskr::addTask(potrfTask);
 
   for (size_t j = 1; j < nb; j++)
   {
     auto dtrsmTask = new taskr::Task(getLabelTrsm(0, j, nb), [A, n, bs, nb, j]()
-                                     {
-                                       scheduleTrsm(A, n, bs, nb, 0, j);
-                                     });
+                                     { scheduleTrsm(A, n, bs, nb, 0, j); });
     dtrsmTask->addTaskDependency(getLabelPotrf(0, nb));
     taskr::addTask(dtrsmTask);
   }
@@ -111,9 +101,7 @@ void cholesky(double *__restrict__ A, const size_t n, const size_t bs)
     for (size_t k = 1; k < j + 1; k++)
     {
       auto gemmTask = new taskr::Task(getLabelGemm(0, j, k, nb), [A, n, bs, nb, j, k]()
-                                      {
-                                        scheduleGemm(A, n, bs, nb, 0, j, k);
-                                      });
+                                      { scheduleGemm(A, n, bs, nb, 0, j, k); });
       gemmTask->addTaskDependency(getLabelTrsm(0, j, nb));
       gemmTask->addTaskDependency(getLabelTrsm(0, k, nb));
       taskr::addTask(gemmTask);

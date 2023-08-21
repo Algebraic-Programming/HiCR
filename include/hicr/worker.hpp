@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <hicr/dispatcher.hpp>
 #include <hicr/computeResource.hpp>
+#include <hicr/dispatcher.hpp>
 #include <hicr/task.hpp>
 
 namespace HiCR
@@ -40,12 +40,22 @@ enum state_t
   /**
    * The worker has started executing
    */
-  started,
+  running,
 
   /**
-   * The worker has been finalized
+   * The worker has started executing
    */
-  finishing
+  suspended,
+
+  /**
+   * The worker has been issued for termination (but still running)
+   */
+  terminating,
+
+  /**
+   * The worker has terminated
+   */
+  terminated
 };
 
 } // namespace worker
@@ -80,15 +90,18 @@ class Worker
    */
   void mainLoop()
   {
-    while (_state == worker::started)
+    while (_state == worker::running)
     {
       for (auto dispatcher : _dispatchers)
       {
         // Attempt to both pop and pull from dispatcher
-        auto task = dispatcher->pullOrPop();
+        auto task = dispatcher->pull(this);
 
         // If a task was returned, then execute it
         if (task != NULL) task->run(this);
+
+        // If worker has been suspended, handle it now
+        if (_state == worker::suspended) _computeResources[0]->suspend();
       }
     }
   }
@@ -127,25 +140,50 @@ class Worker
     if (_computeResources.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
 
     // Transitioning state
-    _state = worker::started;
+    _state = worker::running;
 
     // Launching worker in the lead resource (first one to be added)
     _computeResources[0]->run([this]()
-                       {
-                         this->mainLoop();
-                       });
+                              { this->mainLoop(); });
   }
 
   /**
-   * Stops the worker's task execution loop. After stopping it can be restarted later
+   * Suspends the execution of the underlying resource(s). The resources are guaranteed to be suspended after this function is called
    */
-  void stop()
+  void suspend()
   {
     // Checking state
-    if (_state != worker::started) LOG_ERROR("Attempting to stop worker that is not in the 'started' state");
+    if (_state != worker::running) LOG_ERROR("Attempting to suspend worker that is not in the 'running' state");
 
     // Transitioning state
-    _state = worker::finishing;
+    _state = worker::suspended;
+  }
+
+  /**
+   * Resumes the execution of the underlying resource(s) after suspension
+   */
+  void resume()
+  {
+    // Checking state
+    if (_state != worker::suspended) LOG_ERROR("Attempting to resume worker that is not in the 'suspended' state");
+
+    // Transitioning state
+    _state = worker::running;
+
+    // Suspending resources
+    for (auto &r : _computeResources) r->resume();
+  }
+
+  /**
+   * Terminates the worker's task execution loop. After stopping it can be restarted later
+   */
+  void terminate()
+  {
+    // Checking state
+    if (_state != worker::running) LOG_ERROR("Attempting to stop worker that is not in the 'running' state");
+
+    // Transitioning state
+    _state = worker::terminating;
   }
 
   /**
@@ -154,28 +192,13 @@ class Worker
   void await()
   {
     // Checking state
-    if (_state != worker::finishing && _state != worker::started) LOG_ERROR("Attempting to wait for a worker that is not in the 'started' or 'finishing' state");
+    if (_state != worker::terminating && _state != worker::running && _state != worker::suspended) LOG_ERROR("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
 
     // Wait for the resource to free up
     _computeResources[0]->await();
 
     // Transitioning state
-    _state = worker::ready;
-  }
-
-  /**
-   * A function that will terminate the worker's resources. After finalization, the worker needs to be re-initialized before it can run again.
-   */
-  void finalize()
-  {
-    // Checking state
-    if (_state != worker::ready) LOG_ERROR("Attempting to finalize a worker that is not in the 'initialized' state");
-
-    // Finalize all resources
-    for (auto r : _computeResources) r->finalize();
-
-    // Transitioning state
-    _state = worker::uninitialized;
+    _state = worker::terminated;
   }
 
   /**

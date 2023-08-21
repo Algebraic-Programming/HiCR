@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#
 # Script to check or fix Clang format use
 # Taken from https://github.com/cselab/korali/blob/master/tools/style/style_cxx.sh (MIT License ETH Zurich)
 
@@ -30,11 +29,10 @@ function check()
 function check_syntax()
 {
     for d in "${dst[@]}"; do
-      python3 $fileDir/../extern/run-clang-format/run-clang-format.py --recursive ${d} --extensions "hpp,cpp" --exclude *build/* --exclude *extern/* \
-
+      python3 $fileDir/../extern/run-clang-format/run-clang-format.py --recursive ${d} --extensions "hpp,cpp" --exclude "*build/*" --exclude "*extern/*"
       if [ ! $? -eq 0 ]; then
         echo "Error: C++ Code formatting in file ${d} is not normalized."
-        echo "Solution: Please run '$fileDir/style_cxx.sh fix' to fix it."
+        echo "Solution: Please run '$0 fix' to fix it."
         exit -1
       fi
     done

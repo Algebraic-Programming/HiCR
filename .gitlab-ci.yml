@@ -6,6 +6,7 @@ pages:
   - tiny 
   script:
   - git submodule init && git submodule update
+  - tools/check-style.sh check
   - make -C docs
   - mv docs/build/html public
   artifacts:
@@ -13,3 +14,4 @@ pages:
     - public
   only:
   - master
+  - merge_requests

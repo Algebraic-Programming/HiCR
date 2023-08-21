@@ -17,8 +17,6 @@
 #include <hicr/common/logger.hpp>
 #include <hicr/dispatcher.hpp>
 
-class Worker;
-
 namespace HiCR
 {
 
@@ -32,33 +30,40 @@ typedef std::function<void(void)> resourceFc_t;
  */
 class ComputeResource
 {
-  friend class Worker;
-
   public:
   virtual ~ComputeResource() = default;
 
-  protected:
   /**
    * Initializes the resource and leaves it ready to execute work
    */
-  virtual void initialize() = 0;
+  virtual inline void initialize() = 0;
 
   /**
    * Starts running the resource and execute a user-defined function
    *
    * \param[in] fc The function to execute by the resource
    */
-  virtual void run(resourceFc_t fc) = 0;
+  virtual inline void run(resourceFc_t fc) = 0;
+
+  /**
+   * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
+   */
+  virtual inline void suspend() = 0;
+
+  /**
+   * Resumes the execution of the resource.
+   */
+  virtual inline void resume() = 0;
 
   /**
    * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has finalized.
    */
-  virtual void finalize() = 0;
+  virtual inline void finalize() = 0;
 
   /**
    * Suspends the execution of the caller until the finalization is ultimately completed
    */
-  virtual void await() = 0;
+  virtual inline void await() = 0;
 
   /**
    * Copy of the function to be ran by the resource
