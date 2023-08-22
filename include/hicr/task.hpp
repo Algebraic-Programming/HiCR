@@ -13,8 +13,8 @@
 #pragma once
 
 #include <hicr/common/coroutine.hpp>
+#include <hicr/common/eventMap.hpp>
 #include <hicr/common/logger.hpp>
-#include <hicr/eventMap.hpp>
 
 namespace HiCR
 {
@@ -88,7 +88,7 @@ class Task
    *
    * @param[in] eventMap A pointer to an event map
    */
-  inline void setEventMap(EventMap *eventMap) { _eventMap = eventMap; }
+  inline void setEventMap(EventMap<Task> *eventMap) { _eventMap = eventMap; }
 
   /**
    * Queries the task's internal state.
@@ -201,7 +201,7 @@ class Task
   /**
    *  Map of events to trigger
    */
-  EventMap *_eventMap = NULL;
+  EventMap<Task> *_eventMap = NULL;
 
   /**
    * Worker currently executing the task

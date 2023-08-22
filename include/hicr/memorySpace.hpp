@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <hicr/memorySlot.hpp>
 #include <hicr/channel.hpp>
+#include <hicr/memorySlot.hpp>
 #include <hicr/messageTag.hpp>
 
 namespace HiCR
@@ -153,10 +153,10 @@ class MemorySpace
    */
   template <typename FwdIt = MemorySpace *>
   MemorySlot allocateMemorySlot(
-		  const size_t size,
-		  const size_t myLocalityID = 0,
-		  FwdIt remotes = nullptr,
-		  const FwdIt remotes_end = nullptr);
+    const size_t size,
+    const size_t myLocalityID = 0,
+    FwdIt remotes = nullptr,
+    const FwdIt remotes_end = nullptr);
 
   /**
    * Creates a memory slot within this memory resource and given an existing
@@ -208,11 +208,11 @@ class MemorySpace
    */
   template <typename FwdIt = MemorySpace *>
   MemorySlot createMemorySlot(
-		  void *const addr,
-		  const size_t size,
-		  const size_t myLocalityID,
-		  FwdIt remotes = nullptr,
-		  const FwdIt remotes_end = nullptr);
+    void *const addr,
+    const size_t size,
+    const size_t myLocalityID,
+    FwdIt remotes = nullptr,
+    const FwdIt remotes_end = nullptr);
 
   /**
    * Creates a tag slot for use with memory slots that are created via calls to
@@ -253,9 +253,9 @@ class MemorySpace
    */
   template <typename FwdIt = MemorySpace *>
   Tag createTag(
-		  const size_t myLocalityID = 0,
-		  FwdIt remotes = nullptr,
-		  const FwdIt remotes_end = nullptr);
+    const size_t myLocalityID = 0,
+    FwdIt remotes = nullptr,
+    const FwdIt remotes_end = nullptr);
 
   /**
    * Constructs a channel.

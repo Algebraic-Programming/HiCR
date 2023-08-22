@@ -22,7 +22,7 @@ class Runtime
   HiCR::Runtime _hicr;
 
   // HiCR elements
-  HiCR::EventMap *_eventMap;
+  HiCR::EventMap<HiCR::Task> *_eventMap;
   HiCR::Dispatcher *_dispatcher;
   std::vector<HiCR::Worker *> _workers;
 
@@ -179,7 +179,7 @@ class Runtime
   {
     _dispatcher = new HiCR::Dispatcher([this](HiCR::Worker *worker)
                                        { return checkWaitingTasks(worker); });
-    _eventMap = new HiCR::EventMap();
+    _eventMap = new HiCR::EventMap<HiCR::Task>();
 
     // Creating event map ands events
     _eventMap->setEvent(HiCR::event_t::onTaskFinish, [this](HiCR::Task *task)
