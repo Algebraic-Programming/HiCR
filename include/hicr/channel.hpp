@@ -18,6 +18,12 @@
 namespace HiCR
 {
 
+/**
+ * Class definition for a HiCR ChannelView
+ *
+ * It exposes the functionality to be expected for a channel
+ *
+ */
 template <typename T>
 class ChannelView
 {
@@ -72,10 +78,7 @@ class ChannelView
    *
    * This primitive may only be called by consumers.
    *
-   * @param[out] ptr  A pointer to the current token. Its value on input will
-   *                  be ignored.
-   * @param[out] size The size of the memory region pointed to. Its value on
-   *                  input will be ignored.
+   * @param[out] token Storage onto which to copy the front data element (token)
    *
    * @returns <tt>true</tt> if the channel was non-empty.
    * @returns <tt>false</tt> if the channel was empty.
@@ -92,6 +95,7 @@ class ChannelView
 
   /**
    * Retrieves \a n tokens as a raw array.
+   * @param[out] tokens Storage from which to read the input tokens
    * @param[in] n The batch size.
    * @see peek.
    *
@@ -156,9 +160,7 @@ class ChannelView
    *
    * This primitive may only be called by producers.
    *
-   * @param[in] slot   In which memory region the token resides
-   * @param[in] offset At which offset within \a slot the token resides
-   * @param[in] size   The size of the token within \a slot
+   * @param[in] token  Input token to copy onto the channel
    *
    * @returns <tt>true</tt>  If the channel had sufficient capacity for pushing
    *                         the token
@@ -217,9 +219,7 @@ class ChannelView
    *
    * The primitive may only be called by producers.
    *
-   * @param[in] slot   In which memory region the token resides
-   * @param[in] offset At which offset within \a slot the token resides
-   * @param[in] size   The size of the token within \a slot
+   * @param[in] token  Input token to copy onto the channel
    *
    * \warning This function may take an arbitrary amount of time and may, with
    *          incorrect usage, even result in deadlock. Always make sure to use

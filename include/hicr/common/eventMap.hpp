@@ -22,7 +22,8 @@ namespace HiCR
 /**
  * Definition for an event callback. It includes a reference to the finished task
  */
-typedef std::function<void(Task *)> eventCallback_t;
+template <class T>
+using eventCallback_t = std::function<void(T *)>;
 
 /**
  * Enumeration of possible task-related events
@@ -55,6 +56,7 @@ enum event_t
  *
  * The callback is defined by the user and manually triggered by other (e.g., Task) classes, as the corresponding event occurs.
  */
+template <class T>
 class EventMap
 {
   public:
@@ -82,7 +84,7 @@ class EventMap
    * \param[in] event The event to add
    * \param[in] fc The callback function to call when the event is triggered
    */
-  inline void setEvent(const event_t event, eventCallback_t fc)
+  inline void setEvent(const event_t event, eventCallback_t<T> fc)
   {
     _eventMap[event] = fc;
   }
@@ -90,19 +92,19 @@ class EventMap
   /**
    * Triggers the execution of the callback function for a given event
    *
-   * \param[in] task The triggering Task. This is necessary as parameter for the callback function type
+   * \param[in] arg The argument to the trigger function
    * \param[in] event The triggered event.
    */
-  inline void trigger(Task *task, const event_t event) const
+  inline void trigger(T *arg, const event_t event) const
   {
-    if (_eventMap.contains(event)) _eventMap.at(event)(task);
+    if (_eventMap.contains(event)) _eventMap.at(event)(arg);
   }
 
   private:
   /**
    * Internal storage for the event map
    */
-  std::map<event_t, eventCallback_t> _eventMap;
+  std::map<event_t, eventCallback_t<T>> _eventMap;
 };
 
 } // namespace HiCR

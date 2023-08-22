@@ -9,9 +9,6 @@ int main(int argc, char **argv)
   // Initializing taskr
   taskr::initialize();
 
-  // Setting worker auto sleep (when there are not enough tasks)
-  taskr::setWorkerAutoSleep(true);
-
   for (size_t i = 0; i < ITERATIONS; i++)
   {
     auto cTask = new taskr::Task(i * 3 + 2, [i]()
