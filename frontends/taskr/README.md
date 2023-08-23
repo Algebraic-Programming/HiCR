@@ -1,3 +1,0 @@
-# taskr
-
-Task Runtime System

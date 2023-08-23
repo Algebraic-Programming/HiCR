@@ -1,7 +1,5 @@
 #pragma once
 
-#include <../../extern/atomic_queue/atomic_queue.h>
-
 namespace HiCR
 {
 

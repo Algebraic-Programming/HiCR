@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <../../../extern/atomic_queue/atomic_queue.h>
+#include <hicr/common/atomic_queue/atomic_queue.h>
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
