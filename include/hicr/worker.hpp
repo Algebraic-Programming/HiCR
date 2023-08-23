@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <hicr/common/definitions.hpp>
 #include <hicr/computeResource.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/task.hpp>
@@ -88,7 +89,7 @@ class Worker
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
    */
-  void mainLoop()
+  HICR_API inline void mainLoop()
   {
     while (_state == worker::running)
     {
@@ -113,7 +114,7 @@ class Worker
   /**
    * Initializes the worker and its resources
    */
-  void initialize()
+  HICR_API inline void initialize()
   {
     // Checking state
     if (_state != worker::uninitialized) LOG_ERROR("Attempting to initialize already initialized worker");
@@ -131,7 +132,7 @@ class Worker
   /**
    * Initializes the worker's task execution loop
    */
-  void start()
+  HICR_API inline void start()
   {
     // Checking state
     if (_state != worker::ready) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
@@ -150,7 +151,7 @@ class Worker
   /**
    * Suspends the execution of the underlying resource(s). The resources are guaranteed to be suspended after this function is called
    */
-  void suspend()
+  HICR_API inline void suspend()
   {
     // Checking state
     if (_state != worker::running) LOG_ERROR("Attempting to suspend worker that is not in the 'running' state");
@@ -162,7 +163,7 @@ class Worker
   /**
    * Resumes the execution of the underlying resource(s) after suspension
    */
-  void resume()
+  HICR_API inline void resume()
   {
     // Checking state
     if (_state != worker::suspended) LOG_ERROR("Attempting to resume worker that is not in the 'suspended' state");
@@ -177,7 +178,7 @@ class Worker
   /**
    * Terminates the worker's task execution loop. After stopping it can be restarted later
    */
-  void terminate()
+  HICR_API inline void terminate()
   {
     // Checking state
     if (_state != worker::running) LOG_ERROR("Attempting to stop worker that is not in the 'running' state");
@@ -189,7 +190,7 @@ class Worker
   /**
    * A function that will suspend the execution of the caller until the worker has stopped
    */
-  void await()
+  HICR_API inline void await()
   {
     // Checking state
     if (_state != worker::terminating && _state != worker::running && _state != worker::suspended) LOG_ERROR("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
@@ -206,28 +207,28 @@ class Worker
    *
    * \param[in] dispatcher The dispatcher to subscribe the worker to
    */
-  void subscribe(Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
+  HICR_API inline void subscribe(Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
 
   /**
    * Adds a computational resource to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
    *
    * \param[in] resource Resource to add to the worker
    */
-  void addResource(ComputeResource *resource) { _computeResources.push_back(resource); }
+  HICR_API inline void addResource(ComputeResource *resource) { _computeResources.push_back(resource); }
 
   /**
    * Gets a reference to the workers assigned resources.
    *
    * \return A container with the worker's resources
    */
-  std::vector<ComputeResource *> &getResources() { return _computeResources; }
+  HICR_API inline std::vector<ComputeResource *> &getResources() { return _computeResources; }
 
   /**
    * Gets a reference to the dispatchers the worker has been subscribed to
    *
    * \return A container with the worker's subscribed dispatchers
    */
-  std::set<Dispatcher *> &getDispatchers() { return _dispatchers; }
+  HICR_API inline std::set<Dispatcher *> &getDispatchers() { return _dispatchers; }
 };
 
 } // namespace HiCR

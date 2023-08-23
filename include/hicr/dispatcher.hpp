@@ -13,6 +13,7 @@
 #pragma once
 
 #include <hicr/common/concurrentQueue.hpp>
+#include <hicr/common/definitions.hpp>
 #include <hicr/task.hpp>
 #include <vector>
 
@@ -48,7 +49,7 @@ class Dispatcher
    *
    * \param[in] pullFc The function to call for obraining (pulling) new tasks. Should return NULL if no tasks are to be executed.
    */
-  Dispatcher(const pullFunction_t pullFc) : _pullFc(pullFc){};
+  HICR_API Dispatcher(const pullFunction_t pullFc) : _pullFc(pullFc){};
   ~Dispatcher() = default;
 
   /**
@@ -59,7 +60,7 @@ class Dispatcher
    * \param[in] worker A pointer to the calling worker. This is required for worker management (e.g., suspend/resume) at the upper layer.
    * \return Returns the pointer of a Task, as given by the pull function callback. If the callback returns no tasks for execution, then this function returns a NULL pointer.
    */
-  inline Task *pull(Worker *worker)
+  HICR_API inline Task *pull(Worker *worker)
   {
     return _pullFc(worker);
   }

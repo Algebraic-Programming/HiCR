@@ -3,8 +3,7 @@ testDeps = [
 ]
 
 testCppFlags = [
- '-Wfatal-errors',
- '-Werror'
+ hicrCppArgs
 ]
 
 testLinkFlags = [
@@ -13,3 +12,4 @@ testLinkFlags = [
 ]
 
 subdir('unit')
+subdir('coverage')

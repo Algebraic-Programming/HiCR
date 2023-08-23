@@ -15,6 +15,7 @@
 #include <memory>
 
 #include <hicr/backend.hpp>
+#include <hicr/common/definitions.hpp>
 #include <hicr/common/logger.hpp>
 
 #ifdef HICR_ENABLE_BACKEND_SHARED_MEMORY
@@ -40,7 +41,7 @@ class Runtime
   /**
    * Detects the backends selected by the user at compilation time and stores them internally.
    */
-  void initialize()
+  HICR_API inline void initialize()
   {
     _backends.clear();
 
@@ -55,7 +56,7 @@ class Runtime
    *
    * @return A list of the detected backends.
    */
-  inline const backendList_t &getBackends() const
+  HICR_API inline const backendList_t &getBackends() const
   {
     return _backends;
   }

@@ -14,6 +14,7 @@
 #include <memory>
 #include <set>
 
+#include <hicr/common/definitions.hpp>
 #include <hicr/common/logger.hpp>
 #include <hicr/dispatcher.hpp>
 
@@ -36,34 +37,34 @@ class ComputeResource
   /**
    * Initializes the resource and leaves it ready to execute work
    */
-  virtual inline void initialize() = 0;
+  HICR_API virtual inline void initialize() = 0;
 
   /**
    * Starts running the resource and execute a user-defined function
    *
    * \param[in] fc The function to execute by the resource
    */
-  virtual inline void run(resourceFc_t fc) = 0;
+  HICR_API virtual inline void run(resourceFc_t fc) = 0;
 
   /**
    * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
    */
-  virtual inline void suspend() = 0;
+  HICR_API virtual inline void suspend() = 0;
 
   /**
    * Resumes the execution of the resource.
    */
-  virtual inline void resume() = 0;
+  HICR_API virtual inline void resume() = 0;
 
   /**
    * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has finalized.
    */
-  virtual inline void finalize() = 0;
+  HICR_API virtual inline void finalize() = 0;
 
   /**
    * Suspends the execution of the caller until the finalization is ultimately completed
    */
-  virtual inline void await() = 0;
+  HICR_API virtual inline void await() = 0;
 
   /**
    * Copy of the function to be ran by the resource

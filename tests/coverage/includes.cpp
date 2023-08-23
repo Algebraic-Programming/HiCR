@@ -11,15 +11,9 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/task.hpp>
+#include <hicr.hpp>
 
 namespace
 {
-
-TEST(Task, Construction)
-{
-  auto t = new HiCR::Task();
-  EXPECT_FALSE(t == nullptr);
-}
 
 } // namespace

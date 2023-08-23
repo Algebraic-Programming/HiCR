@@ -5,7 +5,7 @@ pages:
   - tiny 
   script:
   - git submodule init && git submodule update
-  - tools/check-style.sh check
+  - docs/check-style.sh check
   - make -C docs
   - mv docs/build/html public
   artifacts:
@@ -23,9 +23,18 @@ test:
   - x86
   script:
   - mkdir build
-  - meson setup build -Dtest=true
+  - meson setup build -Dtest=true -Db_coverage=true
   - meson compile -C build
-  - meson test -C build 
+  - meson test -C build
+  - ninja -C build coverage
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+  artifacts:
+    name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
+    expire_in: 2 days
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/meson-logs/coverage.xml 
   only:
   - master
   - merge_requests

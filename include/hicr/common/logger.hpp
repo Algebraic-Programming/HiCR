@@ -1,5 +1,6 @@
 #pragma once
 
+#include <hicr/common/definitions.hpp>
 #include <stdarg.h>
 #include <stdexcept>
 #include <stdio.h>
@@ -10,7 +11,7 @@ namespace HiCR
 
 // Error logging function
 #define LOG_ERROR(...) HiCR::logError(__FILE__, __LINE__, __VA_ARGS__)
-inline void logError [[noreturn]] (const char *fileName, const int lineNumber, const char *format, ...)
+HICR_API inline void logError [[noreturn]] (const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;
@@ -31,7 +32,7 @@ inline void logError [[noreturn]] (const char *fileName, const int lineNumber, c
 
 // warning logging function
 #define LOG_WARNING(...) HiCR::logWarning(__FILE__, __LINE__, __VA_ARGS__)
-inline void logWarning(const char *fileName, const int lineNumber, const char *format, ...)
+HICR_API inline void logWarning(const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;
@@ -52,7 +53,7 @@ inline void logWarning(const char *fileName, const int lineNumber, const char *f
 
 // warning logging function
 #define LOG_DEBUG(...) HiCR::logDebug(__FILE__, __LINE__, __VA_ARGS__)
-inline void logDebug(const char *fileName, const int lineNumber, const char *format, ...)
+HICR_API inline void logDebug(const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;

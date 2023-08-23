@@ -5,9 +5,12 @@
 namespace HiCR
 {
 
-// Size of the stack dedicated to the execution of tasks (coroutines)
-#ifndef COROUTINE_STACK_SIZE
-  #define COROUTINE_STACK_SIZE 65536
+// API annotation for inline functions, to make sure they are considered during coverage analysis
+// This solution was taken from https://stackoverflow.com/a/10824832
+#if defined __GNUC__ && defined ENABLE_COVERAGE
+  #define HICR_API __attribute__((__used__))
+#elif
+  #define HICR_API
 #endif
 
 } // namespace HiCR

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <hicr/channel.hpp>
+#include <hicr/common/definitions.hpp>
 #include <hicr/memorySlot.hpp>
 #include <hicr/messageTag.hpp>
 

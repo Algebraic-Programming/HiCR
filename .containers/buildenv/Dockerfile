@@ -10,3 +10,4 @@ RUN apk add meson
 RUN apk add ninja
 RUN apk add boost-dev
 RUN apk add hwloc-dev
+RUN apk add gcovr
