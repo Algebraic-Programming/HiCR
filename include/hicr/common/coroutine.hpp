@@ -12,8 +12,19 @@
  * @date 7/7/2023
  */
 
+/**
+ * Size of the stack dedicated to the execution of tasks (coroutines)
+ *
+ * This is specific to pre-allocated stackful coroutines, and might be different for other coroutine implementations
+ */
+#ifndef COROUTINE_STACK_SIZE
+  #define COROUTINE_STACK_SIZE 65536
+#endif
+
 #include <boost/context/continuation.hpp>
 #include <functional> // std::function
+
+#include <hicr/common/definitions.hpp>
 
 namespace HiCR
 {
@@ -41,7 +52,7 @@ class Coroutine
   /**
    * Resumes the execution of the coroutine. The coroutine needs to have been started before this, otherwise undefined behavior is to be expected.
    */
-  inline void resume()
+  HICR_API inline void resume()
   {
     _contextSource = _contextSource.resume();
   }
@@ -49,7 +60,7 @@ class Coroutine
   /**
    * Yields the execution of the coroutine. The coroutine needs to be 'resumed' when running this function, otherwise undefined behavior is to be expected.
    */
-  inline void yield()
+  HICR_API inline void yield()
   {
     _contextSink = _contextSink.resume();
   }
@@ -62,7 +73,7 @@ class Coroutine
    * \param[in] fc Function to run by the coroutine
    * \param[in] arg Argument to pass to the function
    */
-  inline void start(coroutineFc_t &fc, void *arg)
+  HICR_API inline void start(coroutineFc_t &fc, void *arg)
   {
     auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
     {

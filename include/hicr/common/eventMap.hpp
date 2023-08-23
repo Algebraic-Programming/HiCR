@@ -14,6 +14,7 @@
 
 #include <map>
 
+#include <hicr/common/definitions.hpp>
 #include <hicr/common/logger.hpp>
 
 namespace HiCR
@@ -63,7 +64,7 @@ class EventMap
   /**
    * Clears the event map (no events will be triggered)
    */
-  inline void clear()
+  HICR_API inline void clear()
   {
     _eventMap.clear();
   }
@@ -73,7 +74,7 @@ class EventMap
    *
    * \param[in] event The event to remove from the map
    */
-  inline void removeEvent(const event_t event)
+  HICR_API inline void removeEvent(const event_t event)
   {
     _eventMap.erase(event);
   }
@@ -84,7 +85,7 @@ class EventMap
    * \param[in] event The event to add
    * \param[in] fc The callback function to call when the event is triggered
    */
-  inline void setEvent(const event_t event, eventCallback_t<T> fc)
+  HICR_API inline void setEvent(const event_t event, eventCallback_t<T> fc)
   {
     _eventMap[event] = fc;
   }
@@ -92,10 +93,10 @@ class EventMap
   /**
    * Triggers the execution of the callback function for a given event
    *
-   * \param[in] arg The argument to the trigger function
+   * \param[in] arg The argument to the trigger function.
    * \param[in] event The triggered event.
    */
-  inline void trigger(T *arg, const event_t event) const
+  HICR_API inline void trigger(T *arg, const event_t event) const
   {
     if (_eventMap.contains(event)) _eventMap.at(event)(arg);
   }

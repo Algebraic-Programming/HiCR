@@ -14,6 +14,7 @@
 #pragma once
 
 #include "dataMover.hpp"
+#include <hicr/common/definitions.hpp>
 
 namespace HiCR
 {
@@ -52,7 +53,7 @@ class ChannelView
    *
    * This function when called on a valid channel instance will never fail.
    */
-  size_t capacity() const noexcept;
+  HICR_API size_t capacity() const noexcept;
 
   /**
    * @returns The number of elements in this channel.
@@ -68,7 +69,7 @@ class ChannelView
    *
    * This function when called on a valid channel instance will never fail.
    */
-  size_t depth() const noexcept;
+  HICR_API size_t depth() const noexcept;
 
   /**
    * Peeks in the local received queue and returns a pointer to the current
@@ -91,7 +92,7 @@ class ChannelView
    * A call to this function throws an exception if:
    *  -# the channel at the current locality is a producer.
    */
-  bool peek(T &token) const;
+  HICR_API bool peek(T &token) const;
 
   /**
    * Retrieves \a n tokens as a raw array.
@@ -103,7 +104,7 @@ class ChannelView
    *  -# the current #depth is less than \a n;
    *  -# the channel at the current locality is a producer.
    */
-  void peek(T *const &tokens, const size_t n) const;
+  HICR_API void peek(T *const &tokens, const size_t n) const;
 
   /**
    * Similar to peek, but if the channel is empty, will wait until a new token
@@ -130,7 +131,7 @@ class ChannelView
    * A call to this function throws an exception if:
    *  -# the channel at the current locality is a producer.
    */
-  void peek_wait(void *&ptr, size_t &size);
+  HICR_API void peek_wait(void *&ptr, size_t &size);
 
   /**
    * Removes the current token from the channel, and moves to the next token
@@ -151,7 +152,7 @@ class ChannelView
    *
    * @see ::peek to determine whether the channel has an item to pop.
    */
-  bool pop(const size_t n = 1);
+  HICR_API bool pop(const size_t n = 1);
 
   /**
    * Puts a new token unto the channel.
@@ -173,7 +174,7 @@ class ChannelView
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  bool push(const T &token);
+  HICR_API bool push(const T &token);
 
   /**
    * Batched version of #push.
@@ -190,7 +191,7 @@ class ChannelView
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  size_t push(const T *const tokens, const size_t n);
+  HICR_API size_t push(const T *const tokens, const size_t n);
 
   /**
    * Batched version of #push.
@@ -235,7 +236,7 @@ class ChannelView
    *  -# the \a slot, \a offset, \a size combination exceeds the memory region
    *     of \a slot.
    */
-  void push_wait(const T &token);
+  HICR_API void push_wait(const T &token);
 
   // TODO register an effect somehow? Need to support two events:
   //   1) full-to-non-full (producer side),

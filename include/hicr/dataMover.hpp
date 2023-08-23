@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <hicr/common/definitions.hpp>
 #include <hicr/memorySlot.hpp>
 #include <hicr/messageTag.hpp>
 
@@ -85,7 +86,7 @@ namespace HiCR
  * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
  *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
  */
-void nb_memcpy(
+HICR_API void nb_memcpy(
   MemorySlot &destination,
   const size_t dst_locality,
   const size_t dst_offset,
@@ -126,7 +127,7 @@ void nb_memcpy(
  *       aware? One possible answer is a special event that if left unhandled,
  *       is promoted to a fatal exception.
  */
-void fence(const Tag &tag);
+HICR_API void fence(const Tag &tag);
 
 /**
  * Fences a group of memory copies using zero-cost synchronisation.

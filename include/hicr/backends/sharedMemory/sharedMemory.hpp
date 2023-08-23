@@ -56,7 +56,7 @@ class SharedMemory final : public Backend
    * \param[in] depth Stores the current exploration depth level, necessary to return only the processing units at the leaf level
    * \param[out] threadPUs Storage for the found procesing units
    */
-  static void getThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
+  HICR_API inline static void getThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
   {
     if (obj->arity == 0) threadPUs.push_back(obj->os_index);
     for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
@@ -65,7 +65,7 @@ class SharedMemory final : public Backend
   /**
    * Pthread implementation of the Backend queryResources() function. This will add one resource object per found Thread / Processing Unit (PU)
    */
-  void queryResources() override
+  HICR_API inline void queryResources() override
   {
     hwloc_topology_init(&_topology);
     hwloc_topology_load(_topology);

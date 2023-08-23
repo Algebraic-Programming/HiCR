@@ -52,7 +52,7 @@ class Thread final : public ComputeResource
    *
    * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
    */
-  static void *launchWrapper(void *p)
+  HICR_API inline static void *launchWrapper(void *p)
   {
     // Gathering thread object
     auto thread = (Thread *)p;
@@ -75,7 +75,7 @@ class Thread final : public ComputeResource
    *
    * \param[in] affinity New affinity to use
    */
-  static void updateAffinity(const std::vector<int> &affinity)
+  HICR_API static void updateAffinity(const std::vector<int> &affinity)
   {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
@@ -86,7 +86,7 @@ class Thread final : public ComputeResource
   /**
    * Queries the OS for the currently set affinity for this thread, and prints it to screen.
    */
-  static void printAffinity()
+  HICR_API static void printAffinity()
   {
     cpu_set_t cpuset;
     if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) printf("[WARNING] Problem obtaining affinity.\n");
@@ -99,7 +99,7 @@ class Thread final : public ComputeResource
    *
    * \param[in] sig Signal detected, set by the operating system upon detecting the signal
    */
-  static void catchSIGUSR1Signal(int sig) { signal(sig, Thread::catchSIGUSR1Signal); }
+  HICR_API inline static void catchSIGUSR1Signal(int sig) { signal(sig, Thread::catchSIGUSR1Signal); }
 
   public:
   /**
@@ -110,11 +110,11 @@ class Thread final : public ComputeResource
   Thread(const std::vector<int> &affinity) : ComputeResource(), _affinity{affinity} {};
   ~Thread() = default;
 
-  inline void initialize() override
+  HICR_API inline void initialize() override
   {
   }
 
-  inline void suspend() override
+  HICR_API inline void suspend() override
   {
     int status = 0;
     int signalSet;
@@ -129,13 +129,13 @@ class Thread final : public ComputeResource
     if (status != 0) LOG_ERROR("Could not suspend thread %lu\n", _pthreadId);
   }
 
-  inline void resume() override
+  HICR_API inline void resume() override
   {
     auto status = pthread_kill(_pthreadId, SIGUSR1);
     if (status != 0) LOG_ERROR("Could not resume thread %lu\n", _pthreadId);
   }
 
-  inline void run(resourceFc_t fc) override
+  HICR_API inline void run(resourceFc_t fc) override
   {
     // Making a copy of the function
     _fc = fc;
@@ -145,11 +145,11 @@ class Thread final : public ComputeResource
     if (status != 0) LOG_ERROR("Could not create thread %lu\n", _pthreadId);
   }
 
-  inline void finalize() override
+  HICR_API inline void finalize() override
   {
   }
 
-  inline void await() override
+  HICR_API inline void await() override
   {
     // Waiting for thread after execution
     pthread_join(_pthreadId, NULL);

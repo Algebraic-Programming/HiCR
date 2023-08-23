@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <hicr/common/definitions.hpp>
+
 namespace HiCR
 {
 
@@ -35,7 +37,7 @@ class LogicException : public std::logic_error
    *
    * \param[in] message Explanation message for this exception
    */
-  LogicException(const char *const message) : logic_error(message) {}
+  HICR_API LogicException(const char *const message) : logic_error(message) {}
 };
 
 /**
@@ -58,7 +60,7 @@ class RuntimeException : public std::runtime_error
    *
    * \param[in] message Explanation message for this exception
    */
-  RuntimeException(const char *const message) : runtime_error(message) {}
+  HICR_API RuntimeException(const char *const message) : runtime_error(message) {}
 };
 
 /**
@@ -75,7 +77,7 @@ class FatalException : public std::runtime_error
    *
    * \param[in] message  Explanation message for this exception
    */
-  FatalException(const char *const message) : runtime_error(message) {}
+  HICR_API FatalException(const char *const message) : runtime_error(message) {}
 };
 
 } // end namespace HiCR
