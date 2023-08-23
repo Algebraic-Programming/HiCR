@@ -1,6 +1,6 @@
-[submodule "extern/run-clang-format"]
-	path = extern/run-clang-format
+[submodule "docs/extern/run-clang-format"]
+	path = docs/extern/run-clang-format
 	url = https://github.com/Sarcasm/run-clang-format.git
-[submodule "extern/doxygen-awesome-css"]
-	path = extern/doxygen-awesome-css
+[submodule "docs/extern/doxygen-awesome-css"]
+	path = docs/extern/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git

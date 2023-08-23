@@ -12,9 +12,7 @@ fileDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # check these destinations
 dst=(
-    "$fileDir/../examples"
     "$fileDir/../include"
-    "$fileDir/../frontends"
     "$fileDir/../tests"
     )
 
@@ -29,7 +27,7 @@ function check()
 function check_syntax()
 {
     for d in "${dst[@]}"; do
-      python3 $fileDir/../extern/run-clang-format/run-clang-format.py --recursive ${d} --extensions "hpp,cpp" --exclude "*build/*" --exclude "*extern/*"
+      python3 $fileDir/extern/run-clang-format/run-clang-format.py --recursive ${d} --extensions "hpp,cpp" --exclude "*build/*" --exclude "*extern/*"
       if [ ! $? -eq 0 ]; then
         echo "Error: C++ Code formatting in file ${d} is not normalized."
         echo "Solution: Please run '$0 fix' to fix it."

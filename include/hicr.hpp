@@ -1,7 +1,5 @@
 #pragma once
 #include <hicr/backend.hpp>
-#include <hicr/backends/sharedMemory/sharedMemory.hpp>
-#include <hicr/backends/sharedMemory/thread.hpp>
 #include <hicr/channel.hpp>
 #include <hicr/common/concurrentQueue.hpp>
 #include <hicr/common/coroutine.hpp>
@@ -15,6 +13,5 @@
 #include <hicr/memorySlot.hpp>
 #include <hicr/memorySpace.hpp>
 #include <hicr/messageTag.hpp>
-#include <hicr/runtime.hpp>
 #include <hicr/task.hpp>
 #include <hicr/worker.hpp>
