@@ -5,7 +5,8 @@ pages:
   - tiny 
   script:
   - git submodule init && git submodule update
-  - docs/check-style.sh check
+  - docs/check-style.sh check include
+  - docs/check-style.sh check tests
   - make -C docs
   - mv docs/build/html public
   artifacts:
