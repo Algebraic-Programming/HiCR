@@ -7,7 +7,7 @@ namespace HiCR
 // This solution was taken from https://stackoverflow.com/a/10824832
 #if defined __GNUC__ && defined ENABLE_COVERAGE
   #define HICR_API __attribute__((__used__))
-#elif
+#else
   #define HICR_API
 #endif
 
