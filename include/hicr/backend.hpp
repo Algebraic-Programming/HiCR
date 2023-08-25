@@ -56,7 +56,7 @@ class Backend
    *
    * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
    */
-  HICR_API virtual void queryResources() = 0;
+  __USED__ virtual void queryResources() = 0;
 
   /**
    * This function returns the list of queried compute resources, as visible by the backend.
@@ -65,7 +65,7 @@ class Backend
    *
    * @return The list of compute resources, as detected the last time \a queryResources was executed.
    */
-  HICR_API inline computeResourceList_t &getComputeResourceList() { return _computeResourceList; }
+  __USED__ inline computeResourceList_t &getComputeResourceList() { return _computeResourceList; }
 
   /**
    * This function returns the list of queried memory spaces, as visible by the backend.
@@ -74,7 +74,7 @@ class Backend
    *
    * @return The list of memory spaces, as detected the last time \a queryResources was executed.
    */
-  HICR_API inline memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
+  __USED__ inline memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
 
   protected:
   /**

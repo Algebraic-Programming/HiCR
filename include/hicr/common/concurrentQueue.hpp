@@ -53,7 +53,7 @@ class ConcurrentQueue
    *
    * \param[in] obj The object to push into the queue.
    */
-  HICR_API inline void push(P obj)
+  __USED__ inline void push(P obj)
   {
     _queue.push(obj);
   }
@@ -63,7 +63,7 @@ class ConcurrentQueue
    *
    * \return The until-now front object of the queue.
    */
-  HICR_API inline P pop()
+  __USED__ inline P pop()
   {
     P obj = NULL;
 

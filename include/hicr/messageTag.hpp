@@ -78,7 +78,7 @@ class Tag
    *       Defining the return type to have some limited byte size also severely
    *       limits backends, and perhaps overly so.
    */
-  HICR_API inline uint128_t getID() const noexcept;
+  __USED__ inline uint128_t getID() const noexcept;
 
   /**
    * @return The number of localities this tagSlot has been created with.
@@ -89,7 +89,7 @@ class Tag
    * When referring to localities corresponding to this tag, only IDs strictly
    * lower than the returned value are valid.
    */
-  HICR_API inline size_t nLocalities() const noexcept;
+  __USED__ inline size_t nLocalities() const noexcept;
 };
 
 } // end namespace HiCR

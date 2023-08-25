@@ -58,14 +58,14 @@ class MemorySlot
    *
    * \todo This interface assumes any backend equates a memory slot to a
    */
-  HICR_API inline ptr_t &getPointer() const noexcept;
+  __USED__ inline ptr_t &getPointer() const noexcept;
 
   /**
    * @returns The size of the memory region the slot has registered.
    *
    * This function when called on a valid MemorySlot instance may not fail.
    */
-  HICR_API inline size_t getSize() const noexcept;
+  __USED__ inline size_t getSize() const noexcept;
 
   /**
    * @returns The number of localities this memorySlot has been created with.
@@ -79,7 +79,7 @@ class MemorySlot
    * When referring to localities corresponding to this memory slot, only IDs
    * strictly lower than the returned value are valid.
    */
-  HICR_API inline size_t nLocalities() const noexcept;
+  __USED__ inline size_t nLocalities() const noexcept;
 };
 
 } // end namespace HiCR

@@ -49,7 +49,7 @@ class Dispatcher
    *
    * \param[in] pullFc The function to call for obraining (pulling) new tasks. Should return NULL if no tasks are to be executed.
    */
-  HICR_API Dispatcher(const pullFunction_t pullFc) : _pullFc(pullFc){};
+  __USED__ Dispatcher(const pullFunction_t pullFc) : _pullFc(pullFc){};
   ~Dispatcher() = default;
 
   /**
@@ -60,7 +60,7 @@ class Dispatcher
    * \param[in] worker A pointer to the calling worker. This is required for worker management (e.g., suspend/resume) at the upper layer.
    * \return Returns the pointer of a Task, as given by the pull function callback. If the callback returns no tasks for execution, then this function returns a NULL pointer.
    */
-  HICR_API inline Task *pull(Worker *worker)
+  __USED__ inline Task *pull(Worker *worker)
   {
     return _pullFc(worker);
   }

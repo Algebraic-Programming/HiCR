@@ -64,7 +64,7 @@ class EventMap
   /**
    * Clears the event map (no events will be triggered)
    */
-  HICR_API inline void clear()
+  __USED__ inline void clear()
   {
     _eventMap.clear();
   }
@@ -74,7 +74,7 @@ class EventMap
    *
    * \param[in] event The event to remove from the map
    */
-  HICR_API inline void removeEvent(const event_t event)
+  __USED__ inline void removeEvent(const event_t event)
   {
     _eventMap.erase(event);
   }
@@ -85,7 +85,7 @@ class EventMap
    * \param[in] event The event to add
    * \param[in] fc The callback function to call when the event is triggered
    */
-  HICR_API inline void setEvent(const event_t event, eventCallback_t<T> fc)
+  __USED__ inline void setEvent(const event_t event, eventCallback_t<T> fc)
   {
     _eventMap[event] = fc;
   }
@@ -96,7 +96,7 @@ class EventMap
    * \param[in] arg The argument to the trigger function.
    * \param[in] event The triggered event.
    */
-  HICR_API inline void trigger(T *arg, const event_t event) const
+  __USED__ inline void trigger(T *arg, const event_t event) const
   {
     if (_eventMap.contains(event)) _eventMap.at(event)(arg);
   }
