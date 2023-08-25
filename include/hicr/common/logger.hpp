@@ -11,7 +11,7 @@ namespace HiCR
 
 // Error logging function
 #define LOG_ERROR(...) HiCR::logError(__FILE__, __LINE__, __VA_ARGS__)
-HICR_API inline void logError [[noreturn]] (const char *fileName, const int lineNumber, const char *format, ...)
+__USED__ inline void logError [[noreturn]] (const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;
@@ -32,7 +32,7 @@ HICR_API inline void logError [[noreturn]] (const char *fileName, const int line
 
 // warning logging function
 #define LOG_WARNING(...) HiCR::logWarning(__FILE__, __LINE__, __VA_ARGS__)
-HICR_API inline void logWarning(const char *fileName, const int lineNumber, const char *format, ...)
+__USED__ inline void logWarning(const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;
@@ -53,7 +53,7 @@ HICR_API inline void logWarning(const char *fileName, const int lineNumber, cons
 
 // warning logging function
 #define LOG_DEBUG(...) HiCR::logDebug(__FILE__, __LINE__, __VA_ARGS__)
-HICR_API inline void logDebug(const char *fileName, const int lineNumber, const char *format, ...)
+__USED__ inline void logDebug(const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;

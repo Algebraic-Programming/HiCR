@@ -37,34 +37,34 @@ class ComputeResource
   /**
    * Initializes the resource and leaves it ready to execute work
    */
-  HICR_API virtual inline void initialize() = 0;
+  __USED__ virtual inline void initialize() = 0;
 
   /**
    * Starts running the resource and execute a user-defined function
    *
    * \param[in] fc The function to execute by the resource
    */
-  HICR_API virtual inline void run(resourceFc_t fc) = 0;
+  __USED__ virtual inline void run(resourceFc_t fc) = 0;
 
   /**
    * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
    */
-  HICR_API virtual inline void suspend() = 0;
+  __USED__ virtual inline void suspend() = 0;
 
   /**
    * Resumes the execution of the resource.
    */
-  HICR_API virtual inline void resume() = 0;
+  __USED__ virtual inline void resume() = 0;
 
   /**
    * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has finalized.
    */
-  HICR_API virtual inline void finalize() = 0;
+  __USED__ virtual inline void finalize() = 0;
 
   /**
    * Suspends the execution of the caller until the finalization is ultimately completed
    */
-  HICR_API virtual inline void await() = 0;
+  __USED__ virtual inline void await() = 0;
 
   /**
    * Copy of the function to be ran by the resource

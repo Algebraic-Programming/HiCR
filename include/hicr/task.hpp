@@ -75,21 +75,21 @@ class Task
    *
    * @param[in] fc Speficies the function to execute.
    */
-  HICR_API inline void setFunction(taskFunction_t fc) { _fc = fc; }
+  __USED__ inline void setFunction(taskFunction_t fc) { _fc = fc; }
 
   /**
    * Sets the single argument (pointer) to the the task function
    *
    * @param[in] argument A pointer representing the function's argument
    */
-  HICR_API inline void setArgument(void *argument) { _argument = argument; }
+  __USED__ inline void setArgument(void *argument) { _argument = argument; }
 
   /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
    *
    * @param[in] eventMap A pointer to an event map
    */
-  HICR_API inline void setEventMap(EventMap<Task> *eventMap) { _eventMap = eventMap; }
+  __USED__ inline void setEventMap(EventMap<Task> *eventMap) { _eventMap = eventMap; }
 
   /**
    * Queries the task's internal state.
@@ -98,21 +98,21 @@ class Task
    *
    * \internal This is not a thread safe operation.
    */
-  HICR_API inline const task::state_t getState() { return _state; }
+  __USED__ inline const task::state_t getState() { return _state; }
 
   /**
    * Queries the task's function argument.
    *
    * @return A pointer user-defined task argument, if defined; A NULL pointer, if not.
    */
-  HICR_API inline void *getArgument() { return _argument; }
+  __USED__ inline void *getArgument() { return _argument; }
 
   /**
    * Returns the worker that is currently executing this task. This call only makes sense if the task is in the 'Running' state.
    *
    * @return A pointer to the worker running this task, if running; a NULL pointer, if not.
    */
-  HICR_API const inline Worker *getWorker() { return _worker; }
+  __USED__ const inline Worker *getWorker() { return _worker; }
 
   /**
    * This function starts running a task. It needs to be performed by a worker, by passing a pointer to itself.
@@ -121,7 +121,7 @@ class Task
    *
    * @param[in] worker A pointer to the worker that is calling this function.
    */
-  HICR_API inline void run(Worker *worker)
+  __USED__ inline void run(Worker *worker)
   {
     if (_state != task::state_t::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
 
@@ -165,7 +165,7 @@ class Task
   /**
    * This function yields the execution of the task, and returns to the worker's context.
    */
-  HICR_API inline void yield()
+  __USED__ inline void yield()
   {
     // Change our state to yielded so that we can be reinserted into the pool
     _state = task::state_t::ready;
