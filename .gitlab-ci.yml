@@ -5,8 +5,6 @@ pages:
   - tiny 
   script:
   - git submodule init && git submodule update
-  - docs/check-style.sh check include
-  - docs/check-style.sh check tests
   - make -C docs
   - mv docs/build/html public
   artifacts:
@@ -16,13 +14,16 @@ pages:
   - master
   - merge_requests
 
-test:
+build:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv:latest
   tags:
   - docker
   - high-core 
   - x86
   script:
+  - git submodule init && git submodule update
+  - docs/check-style.sh check include
+  - docs/check-style.sh check tests
   - mkdir build
   - meson setup build -Db_coverage=true
   - meson compile -C build

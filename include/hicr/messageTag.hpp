@@ -46,10 +46,12 @@ typedef std::pair<uint64_t, uint64_t> uint128_t;
 class Tag
 {
   private:
+
   /** A tag may not be default-constructed. */
   Tag() {}
 
   public:
+
   // there used to be a constructor here, but that precludes any backend from
   // managing a possibly constrained set of tags. Instead, we now use the same
   // mechanism as for #MemorySlot to have it tie to specific backends--

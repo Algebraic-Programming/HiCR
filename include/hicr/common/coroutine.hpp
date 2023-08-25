@@ -36,6 +36,7 @@ typedef std::function<void(void *)> coroutineFc_t;
 class Coroutine
 {
   public:
+
   Coroutine() = default;
   ~Coroutine() = default;
 
@@ -78,6 +79,7 @@ class Coroutine
   }
 
   private:
+
   /**
    * CPU execution context of the coroutine. This is the target context for the resume() function.
    */

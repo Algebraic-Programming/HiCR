@@ -71,6 +71,7 @@ enum state_t
 class Worker
 {
   private:
+
   /**
    * Represents the internal state of the worker. Uninitialized upon construction.
    */
@@ -108,6 +109,7 @@ class Worker
   }
 
   public:
+
   Worker() = default;
   ~Worker() = default;
 

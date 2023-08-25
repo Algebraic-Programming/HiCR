@@ -32,6 +32,7 @@ typedef std::function<void(void)> resourceFc_t;
 class ComputeResource
 {
   public:
+
   virtual ~ComputeResource() = default;
 
   /**

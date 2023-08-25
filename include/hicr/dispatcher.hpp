@@ -38,12 +38,14 @@ typedef std::function<Task *(HiCR::Worker *)> pullFunction_t;
 class Dispatcher
 {
   private:
+
   /**
    * Storage for the pull function, as defined by a task producer
    */
   pullFunction_t _pullFc;
 
   public:
+
   /**
    * Constructor for the task dispatcher
    *
