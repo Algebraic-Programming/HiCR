@@ -61,6 +61,7 @@ template <class T>
 class EventMap
 {
   public:
+
   /**
    * Clears the event map (no events will be triggered)
    */
@@ -102,6 +103,7 @@ class EventMap
   }
 
   private:
+
   /**
    * Internal storage for the event map
    */

@@ -35,12 +35,14 @@ namespace HiCR
 class MemorySlot
 {
   private:
+
   typedef void *const ptr_t;
 
   /** A memory slot may not be default-constructed. */
   MemorySlot() {}
 
   public:
+
   /**
    * Releases all resources associated with this memory slot. If the memory
    * slot was created via a call to MemorySpace::allocateMemorySlot, then the

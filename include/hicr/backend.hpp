@@ -44,9 +44,11 @@ class Backend
   friend class Runtime;
 
   protected:
+
   Backend() = default;
 
   public:
+
   virtual ~Backend() = default;
 
   /**
@@ -77,6 +79,7 @@ class Backend
   __USED__ inline memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
 
   protected:
+
   /**
    * The internal container for the queried resources.
    */

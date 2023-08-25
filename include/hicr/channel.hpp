@@ -29,6 +29,7 @@ template <typename T>
 class ChannelView
 {
   protected:
+
   /**
    * A channel may only be instantiated via a call to
    * #MemorySpace::createChannel.
@@ -36,6 +37,7 @@ class ChannelView
   ChannelView() {}
 
   public:
+
   /**
    * Releases all resources corresponding to this channel, including allocated
    * buffer space as well as freeing up the \a tag used in construction for

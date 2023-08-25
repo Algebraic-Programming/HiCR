@@ -70,6 +70,7 @@ enum state_t
 class Task
 {
   public:
+
   /**
    * Sets the function that the task will execute.
    *
@@ -162,6 +163,7 @@ class Task
   }
 
   private:
+
   /**
    * This function yields the execution of the task, and returns to the worker's context.
    */

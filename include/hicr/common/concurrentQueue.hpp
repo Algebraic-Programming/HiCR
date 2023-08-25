@@ -42,12 +42,14 @@ template <class P, size_t N>
 class ConcurrentQueue
 {
   private:
+
   /**
    * Internal implementation of the concurrent queue
    */
   lockFreeQueue_t<P, N> _queue;
 
   public:
+
   /**
    * Function to push new objects in the queue. This is a thread-safe lock-free operation
    *

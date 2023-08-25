@@ -63,6 +63,7 @@ namespace HiCR
 class MemorySpace
 {
   protected:
+
   /**
    * A memory space cannot be constructed -- it may only be retrieved from a
    * Resource instance.
@@ -70,6 +71,7 @@ class MemorySpace
   MemorySpace();
 
   public:
+
   /**
    * \internal In OO programming, standard practice is to declare destructors
    *           virtual. There is no user-visible effect of destroying a memory

@@ -32,6 +32,7 @@ namespace HiCR
 class LogicException : public std::logic_error
 {
   public:
+
   /**
    * Constructor for a logic exception
    *
@@ -55,6 +56,7 @@ class LogicException : public std::logic_error
 class RuntimeException : public std::runtime_error
 {
   public:
+
   /**
    * Constructor for a runtime exception
    *
@@ -72,6 +74,7 @@ class RuntimeException : public std::runtime_error
 class FatalException : public std::runtime_error
 {
   public:
+
   /**
    * Constructor for a fatal exception
    *
