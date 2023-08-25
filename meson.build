@@ -62,7 +62,8 @@ hicrTestDep = declare_dependency(
     dependencies:  hicrTestDeps,
     )
     
-# Test build targets
-if get_option('test') and meson.is_subproject() == false
+# Test build targets, if this os not a subproject
+if meson.is_subproject() == false
   subdir('tests')
 endif
+
