@@ -5,26 +5,41 @@ project('HiCR', [ 'cpp' ],
   ]
 )
 
-# Get compiler
-cpp = meson.get_compiler('cpp')
-
-hicrDeps = [
-    dependency('hwloc', required: true),
-    dependency('openmp', required: true),
-    dependency('threads', required: true),
+# Define HiCR build configuration and create a new dependency
+hicrBuildDeps = [
     dependency('boost',  modules : ['context'],  required : true)
    ]
 
-hicrCppArgs = [
- '-Wfatal-errors',
- '-Werror',
+hicrBuildCppArgs = [
  ]
 
-hicrIncludes = include_directories([
-   '../include'
+hicrBuildIncludes = include_directories([
+   'include'
   ])
   
-# If using coverage analysis
+hicrBuildDep = declare_dependency(
+    compile_args: hicrBuildCppArgs,
+    dependencies:  hicrBuildDeps,
+    include_directories: hicrBuildIncludes,
+    )
+    
+# Define HiCR standard test configuration and create a new dependency
+
+hicrTestDeps = [
+ dependency('gtest', required: true)
+]
+
+hicrTestCppFlags = [
+ '-Wfatal-errors',
+ '-Werror',
+]
+
+hicrTestLinkFlags = [
+ '-lgtest_main',
+ '-lgtest'
+]
+
+cpp = meson.get_compiler('cpp')
 if get_option('b_coverage')
   gcov_args = [
     '-fno-inline',
@@ -38,11 +53,16 @@ if get_option('b_coverage')
     ]
   endif
   
-  add_project_arguments(gcov_args, language: ['cpp'])
+  hicrTestCppFlags += gcov_args
 endif  
 
+hicrTestDep = declare_dependency(
+    compile_args: hicrTestCppFlags,
+    link_args: hicrTestLinkFlags,
+    dependencies:  hicrTestDeps,
+    )
+    
 # Test build targets
 if get_option('test')
-  nomalloc = environment({'MALLOC_PERTURB_': '0'})
   subdir('tests')
 endif

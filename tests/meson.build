@@ -1,15 +1,4 @@
-testDeps = [
- dependency('gtest', required: true)
-]
-
-testCppFlags = [
- hicrCppArgs
-]
-
-testLinkFlags = [
- '-lgtest_main',
- '-lgtest'
-]
+testDeps = [ hicrBuildDep, hicrTestDep ]
 
 subdir('unit')
 subdir('coverage')
