@@ -63,6 +63,6 @@ hicrTestDep = declare_dependency(
     )
     
 # Test build targets
-if get_option('test')
+if get_option('test') and meson.is_subproject() == false
   subdir('tests')
 endif
