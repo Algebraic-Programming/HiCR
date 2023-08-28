@@ -1,15 +1,17 @@
-pages:
+docs:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
   tags:
   - docker
   - tiny 
   script:
-  - git submodule init && git submodule update
+  - echo "Obtaining build tools..."
+  - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/build.git .build --recurse-submodules
+  - echo "Checking style..."
+  - cp .build/style/clang-format .clang-format
+  - .build/style/check-style.sh check include
+  - .build/style/check-style.sh check tests
+  - echo "Checking code documentation..."
   - make -C docs
-  - mv docs/build/html public
-  artifacts:
-    paths:
-    - public
   only:
   - master
   - merge_requests
@@ -21,13 +23,13 @@ build:
   - high-core 
   - x86
   script:
-  - git submodule init && git submodule update
-  - docs/check-style.sh check include
-  - docs/check-style.sh check tests
+  - echo "Building..."
   - mkdir build
   - meson setup build -Db_coverage=true
   - meson compile -C build
+  - echo "Running tests..."
   - meson test -C build
+  - echo "Creating coverage report..."
   - ninja -C build coverage
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
