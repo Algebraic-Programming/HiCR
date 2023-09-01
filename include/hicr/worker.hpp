@@ -207,28 +207,28 @@ class Worker
   /**
    * Subscribes the worker to a task dispatcher. During execution, the worker will constantly query the dispatcher for new tasks to execute.
    *
-   * \param[in] dispatcher The dispatcher to subscribe the worker to
+   * @param[in] dispatcher The dispatcher to subscribe the worker to
    */
   __USED__ inline void subscribe(Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
 
   /**
    * Adds a computational resource to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
    *
-   * \param[in] resource Resource to add to the worker
+   * @param[in] resource Resource to add to the worker
    */
   __USED__ inline void addResource(ComputeResource *resource) { _computeResources.push_back(resource); }
 
   /**
    * Gets a reference to the workers assigned resources.
    *
-   * \return A container with the worker's resources
+   * @return A container with the worker's resources
    */
   __USED__ inline std::vector<ComputeResource *> &getResources() { return _computeResources; }
 
   /**
    * Gets a reference to the dispatchers the worker has been subscribed to
    *
-   * \return A container with the worker's subscribed dispatchers
+   * @return A container with the worker's subscribed dispatchers
    */
   __USED__ inline std::set<Dispatcher *> &getDispatchers() { return _dispatchers; }
 };

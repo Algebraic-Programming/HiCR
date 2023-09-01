@@ -43,7 +43,7 @@ class ComputeResource
   /**
    * Starts running the resource and execute a user-defined function
    *
-   * \param[in] fc The function to execute by the resource
+   * @param[in] fc The function to execute by the resource
    */
   __USED__ virtual inline void run(resourceFc_t fc) = 0;
 

@@ -34,14 +34,28 @@ namespace HiCR
  */
 class MemorySlot
 {
+  protected:
+
+  /**
+   * Typedef for the base class buffer -- it might not be
+   * appropriate for some special memory slots.
+   */
+  typedef void *const ptr_t;
+  MemorySlot();
+
   private:
 
-  typedef void *const ptr_t;
-
-  /** A memory slot may not be default-constructed. */
-  MemorySlot() {}
+  ptr_t _buffer;
 
   public:
+
+  /**
+   * @param buffer A generic buffer pointer
+   * A non-default constructor setting the generic buffer pointer
+   */
+  MemorySlot(ptr_t buffer) : _buffer(buffer)
+  {
+  }
 
   /**
    * Releases all resources associated with this memory slot. If the memory
@@ -60,7 +74,10 @@ class MemorySlot
    *
    * \todo This interface assumes any backend equates a memory slot to a
    */
-  __USED__ inline ptr_t &getPointer() const noexcept;
+  __USED__ ptr_t &getPointer() const noexcept
+  {
+    return _buffer;
+  }
 
   /**
    * @returns The size of the memory region the slot has registered.

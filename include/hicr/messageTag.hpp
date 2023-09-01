@@ -47,10 +47,30 @@ class Tag
 {
   private:
 
+  size_t _id;
+
+  public:
+
+  // Kiril: I broke following rule:
   /** A tag may not be default-constructed. */
   Tag() {}
 
-  public:
+  /**
+   * Constructor of tag passing an ID
+   * @param[in] id The ID, should be managed internally by memory space
+   */
+  Tag(size_t id) : _id(id) {}
+
+  /**
+   * @param[in] tag The tag compared against
+   * @return Returns result of comparing tags
+   * A comparison operator is mandatory for Tag class
+   * as hash table deferredFuncs is based on tags
+   */
+  bool operator<(const Tag &tag) const
+  {
+    return (this->_id < tag._id);
+  }
 
   // there used to be a constructor here, but that precludes any backend from
   // managing a possibly constrained set of tags. Instead, we now use the same

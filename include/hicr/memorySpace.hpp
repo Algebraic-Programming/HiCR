@@ -65,10 +65,16 @@ class MemorySpace
   protected:
 
   /**
+   * as a memory space creates tags, it
+   *needs to also ID them, e.g. via a counter
+   */
+  size_t _tagCounter = 0;
+
+  /**
    * A memory space cannot be constructed -- it may only be retrieved from a
    * Resource instance.
    */
-  MemorySpace();
+  // MemorySpace(); <= Kiril: I commented this as I get compile issues otherwise
 
   public:
 
@@ -258,7 +264,12 @@ class MemorySpace
   Tag createTag(
     const size_t myLocalityID = 0,
     FwdIt remotes = nullptr,
-    const FwdIt remotes_end = nullptr);
+    const FwdIt remotes_end = nullptr)
+  {
+    Tag tag(_tagCounter);
+    _tagCounter++;
+    return tag;
+  }
 
   /**
    * Constructs a channel.
