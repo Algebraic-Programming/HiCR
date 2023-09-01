@@ -49,7 +49,7 @@ class Dispatcher
   /**
    * Constructor for the task dispatcher
    *
-   * \param[in] pullFc The function to call for obraining (pulling) new tasks. Should return NULL if no tasks are to be executed.
+   * @param[in] pullFc The function to call for obraining (pulling) new tasks. Should return NULL if no tasks are to be executed.
    */
   __USED__ Dispatcher(const pullFunction_t pullFc) : _pullFc(pullFc){};
   ~Dispatcher() = default;
@@ -59,7 +59,7 @@ class Dispatcher
    *
    * It will produce an exception if no pull function was defined.
    *
-   * \param[in] worker A pointer to the calling worker. This is required for worker management (e.g., suspend/resume) at the upper layer.
+   * @param[in] worker A pointer to the calling worker. This is required for worker management (e.g., suspend/resume) at the upper layer.
    * \return Returns the pointer of a Task, as given by the pull function callback. If the callback returns no tasks for execution, then this function returns a NULL pointer.
    */
   __USED__ inline Task *pull(Worker *worker)

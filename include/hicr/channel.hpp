@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "dataMover.hpp"
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
@@ -32,7 +31,7 @@ class ChannelView
 
   /**
    * A channel may only be instantiated via a call to
-   * #MemorySpace::createChannel.
+   * MemorySpace::createChannel.
    */
   ChannelView() {}
 
@@ -152,7 +151,7 @@ class ChannelView
    *  -# the channel at the current locality is a producer;
    *  -# the channel was empty.
    *
-   * @see ::peek to determine whether the channel has an item to pop.
+   * @see peek to determine whether the channel has an item to pop.
    */
   __USED__ bool pop(const size_t n = 1);
 

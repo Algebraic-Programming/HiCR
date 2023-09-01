@@ -15,6 +15,7 @@ docs:
   only:
   - master
   - merge_requests
+  - tags
 
 build:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv:latest
@@ -42,3 +43,5 @@ build:
   only:
   - master
   - merge_requests
+  - tags
+

@@ -8,7 +8,6 @@
 #include <hicr/common/exceptions.hpp>
 #include <hicr/common/logger.hpp>
 #include <hicr/computeResource.hpp>
-#include <hicr/dataMover.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/memorySlot.hpp>
 #include <hicr/memorySpace.hpp>
