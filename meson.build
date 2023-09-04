@@ -5,68 +5,14 @@ project('HiCR', [ 'cpp' ],
   ]
 )
 
-# Define HiCR build configuration and create a new dependency
-hicrBuildDeps = [
-    dependency('boost',  modules : ['context'],  required : true)
-   ]
-
-hicrBuildCppArgs = [
- ]
-
-hicrBuildIncludes = include_directories([
-   'include'
-  ])
-  
-hicrBuildDep = declare_dependency(
-    compile_args: hicrBuildCppArgs,
-    dependencies:  hicrBuildDeps,
-    include_directories: hicrBuildIncludes,
-    )
-    
-# Including backend dependencies
+# Including dependencies
+subdir('include/hicr/')
+subdir('include/taskr/')
 subdir('include/hicr/backends/sharedMemory/pthreads')    
     
-# Define HiCR standard test configuration and create a new dependency
+# Build example targets
+subdir('examples')
 
-hicrTestDeps = [
- dependency('gtest', required: true)
-]
-
-hicrTestCppFlags = [
- '-Wfatal-errors',
- '-Werror',
-]
-
-hicrTestLinkFlags = [
- '-lgtest_main',
- '-lgtest'
-]
-
-cpp = meson.get_compiler('cpp')
-if get_option('b_coverage')
-  gcov_args = [
-    '-fno-inline',
-    '-Wno-error=cpp',
-    '-DENABLE_COVERAGE',
-  ]
-  if cpp.get_id().to_lower() == 'gcc'
-    gcov_args += [
-      '-fno-default-inline',
-      '-fno-inline-small-functions',
-    ]
-  endif
-  
-  hicrTestCppFlags += gcov_args
-endif  
-
-hicrTestDep = declare_dependency(
-    compile_args: hicrTestCppFlags,
-    link_args: hicrTestLinkFlags,
-    dependencies:  hicrTestDeps,
-    )
-    
-# Build test targets, if this is not a subproject
-if meson.is_subproject() == false
-  subdir('tests')
-endif
+# Build test targets
+subdir('tests')
 
