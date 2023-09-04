@@ -1,4 +1,2 @@
-testDeps = [ hicrBuildDep, hicrTestDep ]
-
-subdir('unit')
-subdir('coverage')
+# Registering HiCR tests
+subdir('hicr')

@@ -14,6 +14,7 @@ docs:
   - make -C docs
   only:
   - master
+  - develop
   - merge_requests
   - tags
 
@@ -42,6 +43,7 @@ build:
         path: build/meson-logs/coverage.xml 
   only:
   - master
+  - develop 
   - merge_requests
   - tags
 

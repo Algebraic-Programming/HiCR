@@ -5,6 +5,6 @@ unit_task = executable('unit_task',
   
 test('task', unit_task,
   protocol: 'gtest',
-  suite: 'unit'
+  suite: [ 'hicr', 'unit' ]
 )
 
