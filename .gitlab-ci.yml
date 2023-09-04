@@ -5,8 +5,8 @@ docs:
   - tiny 
   script:
   - echo "Checking HiCR source and test formatting..."
-  - .build-tools/check-style.sh check ../include
-  - .build-tools/check-style.sh check ../tests
+  - .build-tools/style/check-style.sh check ../include
+  - .build-tools/style/check-style.sh check ../tests
   - echo "Building code documentation..."
   - make -C docs
   only:
