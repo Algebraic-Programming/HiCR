@@ -4,7 +4,7 @@
  */
 
 /**
- * @file task.hpp
+ * @file coverage.hpp
  * @brief Unit tests for the task class
  * @author S. M. Martin
  * @date 21/8/2023

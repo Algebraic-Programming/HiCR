@@ -23,6 +23,9 @@ hicrBuildDep = declare_dependency(
     include_directories: hicrBuildIncludes,
     )
     
+# Including backend dependencies
+subdir('include/hicr/backends/sharedMemory/pthreads')    
+    
 # Define HiCR standard test configuration and create a new dependency
 
 hicrTestDeps = [
