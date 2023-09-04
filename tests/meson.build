@@ -6,3 +6,6 @@ subdir('hicr')
 
 # Registering backend tests
 subdir('backends')
+
+# Registering frontend tests
+subdir('frontends')
