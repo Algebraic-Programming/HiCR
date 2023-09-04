@@ -4,7 +4,7 @@
  */
 
 /**
- * @file Pthreads.hpp
+ * @file pthreads.hpp
  * @brief This is a minimal backend for shared memory multi-core support based on HWLoc and Pthreads
  * @author S. M. Martin
  * @date 14/8/2023
