@@ -18,6 +18,12 @@ namespace HiCR
 {
 
 /**
+ * Typedef for the base class buffer -- it might not be
+ * appropriate for some special memory slots.
+ */
+typedef void *const ptr_t;
+
+/**
  * Encapsulates a memory region that is either the source or destination of a
  * call to put/get operations.
  *
@@ -36,24 +42,29 @@ class MemorySlot
 {
   protected:
 
-  /**
-   * Typedef for the base class buffer -- it might not be
-   * appropriate for some special memory slots.
-   */
-  typedef void *const ptr_t;
   MemorySlot();
 
   private:
 
+  /**
+   * Internal pointer for the memory slot buffer
+   */
   ptr_t _buffer;
+
+  /**
+   * Size of the slot allocation
+   */
+  size_t _size;
 
   public:
 
   /**
-   * @param buffer A generic buffer pointer
    * A non-default constructor setting the generic buffer pointer
+   *
+   * @param[in] buffer A generic buffer pointer
+   * @param[in] size Size of the memory slot (in bytes)
    */
-  MemorySlot(ptr_t buffer) : _buffer(buffer)
+  MemorySlot(ptr_t buffer, size_t size) : _buffer(buffer), _size(size)
   {
   }
 
@@ -84,7 +95,10 @@ class MemorySlot
    *
    * This function when called on a valid MemorySlot instance may not fail.
    */
-  __USED__ inline size_t getSize() const noexcept;
+  __USED__ inline size_t getSize() const noexcept
+  {
+    return _size;
+  }
 
   /**
    * @returns The number of localities this memorySlot has been created with.
