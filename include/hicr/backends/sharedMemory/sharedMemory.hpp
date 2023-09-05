@@ -33,9 +33,19 @@ namespace backend
 namespace sharedMemory
 {
 
+/**
+ * Internal representation of a memory slot for the shared memory backend
+ */
 struct memorySlotStruct_t
 {
+  /**
+   * Pointer to the local memory address containing this slot
+   */
   void *pointer;
+
+  /**
+   * Size of the memory slot
+   */
   size_t size;
 };
 
@@ -48,9 +58,15 @@ class SharedMemory final : public Backend
 {
   private:
 
+  /**
+   * Currently available tag id to be assigned. It should increment as each tag is assigned
+   */
   memorySlotId_t _currentTagId = 0;
 
-  std::map<memorySlotId_t, memorySlotStruct_t> _slotMap;
+  /**
+   * Thread-safe map that stores all allocated or created memory slots associated to this backend
+   */
+  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _slotMap;
 
   /**
    * list of deffered function calls in non-blocking data moves, which
@@ -116,6 +132,13 @@ class SharedMemory final : public Backend
     deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
   }
 
+  /**
+   * Waits for the completion of one or more pending operation(s) associated with a given tag
+   *
+   * \param[in] tag Identifier of the operation(s) to be waited  upon
+   *
+   * TO-DO: This all should be threading safe
+   */
   __USED__ inline void fence(const uint64_t tag) override
   {
     auto range = deferredFuncs.equal_range(tag);
@@ -129,6 +152,7 @@ class SharedMemory final : public Backend
   /**
    * Allocates memory in the current memory space (NUMA domain)
    *
+   * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in this memory space
    *
@@ -144,20 +168,22 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Allocates memory in the current memory space (NUMA domain)
-   *
+   * Associates a pointer allocated somewhere else and creates a memory slot with it
+   * \param[in] addr Address in local memory that will be represented by the slot
    * \param[in] size Size of the memory slot to create
-   * \return A newly allocated memory slot in this memory space
+   * \return The id of the memory slot that represents the given pointer
    */
-  __USED__ inline memorySlotId_t createMemorySlot [[noreturn]] (void *const addr, const size_t size) override
+  __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
   {
-    LOG_ERROR("The shared memory backend cannot accept rogue allocations for the creation of a memory slot\n");
+    auto tag = _currentTagId++;
+    _slotMap[tag] = memorySlotStruct_t{.pointer = addr, .size = size};
+    return tag;
   }
 
   /**
    * Frees up a memory slot reserved from this memory space
    *
-   * \param[in] slot Pointer to a memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
    */
   __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
   {
@@ -166,11 +192,23 @@ class SharedMemory final : public Backend
     _slotMap.erase(memorySlotId);
   }
 
+  /**
+   * Obtains the local pointer from a given memory slot.
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
+   * \return The local memory pointer, if applicable. NULL, otherwise.
+   */
   __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
   {
     return _slotMap.at(memorySlotId).pointer;
   }
 
+  /**
+   * Obtains the size of the memory slot
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the size.
+   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
+   */
   __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
   {
     return _slotMap.at(memorySlotId).size;

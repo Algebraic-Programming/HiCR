@@ -18,8 +18,19 @@
 namespace HiCR
 {
 
+/**
+ * Type definition for a generic memory space identifier
+ */
 typedef uint64_t memorySpaceId_t;
+
+/**
+ * Type definition for a generic memory slot identifier
+ */
 typedef uint64_t memorySlotId_t;
+
+/**
+ * Type definition for a tag (identifies and groups operations and allows them to be waited upon)
+ */
 typedef uint64_t tagId_t;
 
 /**
@@ -30,7 +41,6 @@ typedef std::vector<std::unique_ptr<ComputeResource>> computeResourceList_t;
 /**
  * Common definition of a collection of memory spaces
  */
-
 typedef std::vector<memorySlotId_t> memorySpaceList_t;
 
 /**
@@ -198,8 +208,21 @@ class Backend
    */
   virtual memorySlotId_t createMemorySlot(void *const addr, const size_t size) = 0;
 
-  virtual void *getMemorySlotLocalPointer(const memorySlotId_t slot) const = 0;
-  virtual size_t getMemorySlotSize(const memorySlotId_t slot) const = 0;
+  /**
+   * Obtains the local pointer from a given memory slot.
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
+   * \return The local memory pointer, if applicable. NULL, otherwise.
+   */
+  virtual void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const = 0;
+
+  /**
+   * Obtains the size of the memory slot
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the size.
+   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
+   */
+  virtual size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const = 0;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the resources provided by the library which it supports.
