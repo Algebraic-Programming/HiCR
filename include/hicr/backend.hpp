@@ -198,7 +198,7 @@ class Backend
    */
   virtual memorySlotId_t createMemorySlot(void *const addr, const size_t size) = 0;
 
-  virtual void* getMemorySlotLocalPointer(const memorySlotId_t slot) const = 0;
+  virtual void *getMemorySlotLocalPointer(const memorySlotId_t slot) const = 0;
   virtual size_t getMemorySlotSize(const memorySlotId_t slot) const = 0;
 
   /**

@@ -11,5 +11,5 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/sharedMemory.hpp>
 #include <hicr/backends/sharedMemory/processingUnit.hpp>
+#include <hicr/backends/sharedMemory/sharedMemory.hpp>

@@ -250,7 +250,11 @@ class Runtime
     Task *task;
 
     // If all tasks finished, then terminate execution immediately
-    if (_taskCount == 0) { worker->terminate(); return NULL; }
+    if (_taskCount == 0)
+    {
+      worker->terminate();
+      return NULL;
+    }
 
     // If maximum active workers is defined, then check if the threshold is
     // exceeded

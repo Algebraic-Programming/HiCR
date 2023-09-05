@@ -20,9 +20,9 @@
 
 #include "hwloc.h"
 
-#include <hicr/common/logger.hpp>
 #include <hicr/backend.hpp>
 #include <hicr/backends/sharedMemory/processingUnit.hpp>
+#include <hicr/common/logger.hpp>
 
 namespace HiCR
 {
@@ -35,8 +35,8 @@ namespace sharedMemory
 
 struct memorySlotStruct_t
 {
- void* pointer;
- size_t size;
+  void *pointer;
+  size_t size;
 };
 
 /**
@@ -108,7 +108,8 @@ class SharedMemory final : public Backend
 
   __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
-    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size) {std::memcpy(dst, src, size); };
+    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
+    { std::memcpy(dst, src, size); };
     const auto srcSlot = _slotMap.at(source);
     const auto dstSlot = _slotMap.at(destination);
     std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
@@ -117,12 +118,12 @@ class SharedMemory final : public Backend
 
   __USED__ inline void fence(const uint64_t tag) override
   {
-   auto range = deferredFuncs.equal_range(tag);
-   for (auto i = range.first; i != range.second; ++i)
-   {
-     auto f = std::move(i->second);
-     f.wait();
-   }
+    auto range = deferredFuncs.equal_range(tag);
+    for (auto i = range.first; i != range.second; ++i)
+    {
+      auto f = std::move(i->second);
+      f.wait();
+    }
   }
 
   /**
@@ -138,7 +139,7 @@ class SharedMemory final : public Backend
     hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
     auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET);
     auto tag = _currentTagId++;
-    _slotMap[tag] = memorySlotStruct_t { .pointer = ptr, .size = size };
+    _slotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
     return tag;
   }
 
@@ -165,16 +166,15 @@ class SharedMemory final : public Backend
     _slotMap.erase(memorySlotId);
   }
 
-  __USED__ inline void* getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
+  __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
   {
     return _slotMap.at(memorySlotId).pointer;
   }
 
   __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
   {
-   return _slotMap.at(memorySlotId).size;
+    return _slotMap.at(memorySlotId).size;
   }
-
 };
 
 } // namespace sharedMemory
