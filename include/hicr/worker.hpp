@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <unistd.h>
+
 #include <hicr/common/definitions.hpp>
 #include <hicr/computeResource.hpp>
 #include <hicr/dispatcher.hpp>

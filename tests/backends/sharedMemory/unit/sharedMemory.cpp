@@ -11,13 +11,13 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/pthreads/pthreads.hpp>
+#include <hicr/backends/sharedMemory/sharedMemory.hpp>
 
 namespace
 {
 TEST(Pthreads, Construction)
 {
-  auto t = new HiCR::backend::sharedMemory::pthreads::Pthreads();
+  auto t = new HiCR::backend::sharedMemory::SharedMemory();
   EXPECT_FALSE(t == nullptr);
 }
 } // namespace

@@ -1,42 +1,38 @@
+#include <hicr/backends/sharedMemory/sharedMemory.hpp>
 #include <hicr.hpp>
-#include <hicr/backends/sharedMemory/pthreads/pthreads.hpp>
-#include <iostream>
 
-using namespace HiCR::backend::sharedMemory;
-
-/*
-This example uses HiCR (without frontends like TaskR)
-to get the first backend found (assuming it is the shared memory
-backend), return all memory spaces of that backend (assuming
-it is the same as the NUMA nodes), and copy a block of 100 chars
-from the first to the last NUMA domain, relying on the HiCR API. In case
-the machine only has one NUMA node, it will copy data within this node.
-*/
+#define BUFFER_SIZE 256
+#define DST_OFFSET 0
+#define SRC_OFFSET 0
+#define TAG 0
 
 int main(int argc, char **argv)
 {
-  pthreads::Pthreads pthreadsBackend;
-  pthreadsBackend.queryResources();
+ // Instantiating Shared Memory backend
+ HiCR::backend::sharedMemory::SharedMemory backend;
 
-  auto memSpaceList = pthreadsBackend.getMemorySpaceList();
-  const size_t firstNuma = 0;
-  const size_t lastNuma = memSpaceList.size() - 1;
-  auto memSpace1 = static_cast<pthreads::SharedMemorySpace &>(*memSpaceList[firstNuma]);
-  auto memSpace2 = static_cast<pthreads::SharedMemorySpace &>(*memSpaceList[lastNuma]);
-  auto slot1 = memSpace1.allocateMemorySlot(100);
+ // Asking backend to check the available resources
+ backend.queryResources();
 
-  char *dataPtr = static_cast<char *>(slot1.getPointer());
-  for (char *it = dataPtr; it < dataPtr + 100; it++) *it = 'c';
+ // Obtaining memory spaces
+ auto memSpaces = backend.getMemorySpaceList();
 
-  auto slot2 = memSpace2.allocateMemorySlot(100);
-  auto tag = memSpace1.createTag(0);
+ // Allocating memory slots in different NUMA domains
+ auto slot1 = backend.allocateMemorySlot(memSpaces[0], BUFFER_SIZE); // Memory Space 0 = NUMA 0
+ auto slot2 = backend.allocateMemorySlot(memSpaces[1], BUFFER_SIZE); // Memory Space 1 = NUMA 1
 
-  // Non-blocking memcpy call, followed by fence guaranteeing completion
-  pthreadsBackend.nb_memcpy(slot2, 0, 0, slot1, 0, 0, 100, tag);
-  pthreadsBackend.wait(tag);
+ // Initializing values in memory slot 1
+ sprintf((char*)backend.getMemorySlotLocalPointer(slot1), "Hello, HiCR user!\n");
 
-  dataPtr = static_cast<char *>(slot2.getPointer());
-  for (char *it = dataPtr; it < dataPtr + 100; it++) assert(*it == 'c');
+ // Performing the copy
+ backend.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE, TAG);
 
-  return 0;
+ // Waiting on the operation to have finished
+ backend.fence(TAG);
+
+ // Checking whether the copy was successful
+ printf("%s", (const char*)backend.getMemorySlotLocalPointer(slot2));
+
+ return 0;
 }
+

@@ -61,12 +61,12 @@ class Runtime
   /**
    * Lock-free queue for waiting tasks.
    */
-  lockFreeQueue_t<Task *, MAX_SIMULTANEOUS_TASKS> _waitingTaskQueue;
+  HiCR::lockFreeQueue_t<Task *, MAX_SIMULTANEOUS_TASKS> _waitingTaskQueue;
 
   /**
    * Hash map for quick location of tasks based on their hashed names
    */
-  HashSetT<taskLabel_t> _finishedTaskHashMap;
+  HiCR::parallelHashSet_t<taskLabel_t> _finishedTaskHashMap;
 
   /**
    * Mutex for the active worker queue, required for the max active workers mechanism
@@ -87,7 +87,7 @@ class Runtime
   /**
    * Lock-free queue storing workers that remain in suspension. Required for the max active workers mechanism
    */
-  lockFreeQueue_t<HiCR::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
+  HiCR::lockFreeQueue_t<HiCR::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
 
   /**
    * Backend to extract compute resources from
@@ -227,10 +227,6 @@ class Runtime
     // Decreasing overall task count
     _taskCount--;
 
-    // If all tasks finished, then terminate execution
-    if (_taskCount == 0)
-      for (auto w : _workers) w->terminate();
-
     // Adding task label to finished task set
     _finishedTaskHashMap.insert(task->getLabel());
 
@@ -252,6 +248,13 @@ class Runtime
   {
     // Pointer to the next task to execute
     Task *task;
+
+    // If all tasks finished, then terminate execution immediately
+    if (_taskCount == 0)
+    {
+      worker->terminate();
+      return NULL;
+    }
 
     // If maximum active workers is defined, then check if the threshold is
     // exceeded

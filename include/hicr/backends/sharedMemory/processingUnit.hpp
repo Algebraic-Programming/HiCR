@@ -4,8 +4,8 @@
  */
 
 /**
- * @file thread.hpp
- * @brief Implements the Thread class for the pthreads-based backend.
+ * @file processingUnit.hpp
+ * @brief Implements the processing unit class for the shared memory backend.
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -29,15 +29,12 @@ namespace backend
 namespace sharedMemory
 {
 
-namespace pthreads
-{
-
 /**
  * Implementation of a kernel-level thread as HiCR computational resource.
  *
  * This implementation uses PThreads as backend for the creation and management of OS threads..
  */
-class Thread final : public ComputeResource
+class ProcessingUnit final : public ComputeResource
 {
   private:
 
@@ -59,16 +56,16 @@ class Thread final : public ComputeResource
   __USED__ inline static void *launchWrapper(void *p)
   {
     // Gathering thread object
-    auto thread = (Thread *)p;
+    auto processingUnit = (ProcessingUnit *)p;
 
     // Setting initial thread affinity
-    thread->updateAffinity(thread->_affinity);
+    processingUnit->updateAffinity(processingUnit->_affinity);
 
     // Yielding execution to allow affinity to refresh
     sched_yield();
 
     // Calling main loop
-    thread->_fc();
+    processingUnit->_fc();
 
     // No returns
     return NULL;
@@ -103,7 +100,7 @@ class Thread final : public ComputeResource
    *
    * \param[in] sig Signal detected, set by the operating system upon detecting the signal
    */
-  __USED__ inline static void catchSIGUSR1Signal(int sig) { signal(sig, Thread::catchSIGUSR1Signal); }
+  __USED__ inline static void catchSIGUSR1Signal(int sig) { signal(sig, ProcessingUnit::catchSIGUSR1Signal); }
 
   public:
 
@@ -112,8 +109,7 @@ class Thread final : public ComputeResource
    *
    * \param[in] affinity The affinity to set for the thread
    */
-  Thread(const std::vector<int> &affinity) : ComputeResource(), _affinity{affinity} {};
-  ~Thread() = default;
+  ProcessingUnit(const std::vector<int> &affinity) : ComputeResource(), _affinity{affinity} {};
 
   __USED__ inline void initialize() override
   {
@@ -125,7 +121,7 @@ class Thread final : public ComputeResource
     int signalSet;
     sigset_t suspendSet;
 
-    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
+    signal(SIGUSR1, ProcessingUnit::catchSIGUSR1Signal);
 
     status = sigaddset(&suspendSet, SIGUSR1);
     if (status != 0) LOG_ERROR("Could not suspend thread %lu\n", _pthreadId);
@@ -160,8 +156,6 @@ class Thread final : public ComputeResource
     pthread_join(_pthreadId, NULL);
   }
 };
-
-} // namespace pthreads
 
 } // end namespace sharedMemory
 
