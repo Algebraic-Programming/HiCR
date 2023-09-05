@@ -291,11 +291,13 @@ class Runtime
    */
   __USED__ inline void run()
   {
-    _dispatcher = new HiCR::Dispatcher([this](HiCR::Worker *worker) { return checkWaitingTasks(worker); });
+    _dispatcher = new HiCR::Dispatcher([this](HiCR::Worker *worker)
+                                       { return checkWaitingTasks(worker); });
     _eventMap = new HiCR::EventMap<HiCR::Task>();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::event_t::onTaskFinish, [this](HiCR::Task *task) { onTaskFinish(task); });
+    _eventMap->setEvent(HiCR::event_t::onTaskFinish, [this](HiCR::Task *task)
+                        { onTaskFinish(task); });
 
     // Querying computational resources
     _backend->queryResources();
