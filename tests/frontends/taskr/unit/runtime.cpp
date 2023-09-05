@@ -11,14 +11,14 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/pthreads/pthreads.hpp>
+#include <hicr/backends/sharedMemory/sharedMemory.hpp>
 #include <taskr/runtime.hpp>
 
 namespace
 {
 TEST(Runtime, Construction)
 {
-  auto t = new HiCR::backend::sharedMemory::pthreads::Pthreads();
+  auto t = new HiCR::backend::sharedMemory::SharedMemory();
   auto r = new taskr::Runtime(t);
   EXPECT_FALSE(r == nullptr);
 }

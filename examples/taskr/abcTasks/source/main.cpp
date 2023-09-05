@@ -1,14 +1,14 @@
 #include <cstdio>
 #include <cstring>
 #include <taskr.hpp>
-#include <hicr/backends/sharedMemory/pthreads/pthreads.hpp>
+#include <hicr/backends/sharedMemory/sharedMemory.hpp>
 
 #define ITERATIONS 1000
 
 int main(int argc, char **argv)
 {
   // Initializing Pthreads backend to run in parallel
-  auto t = new HiCR::backend::sharedMemory::pthreads::Pthreads();
+  auto t = new HiCR::backend::sharedMemory::SharedMemory();
 
   // Initializing taskr
   taskr::initialize(t);

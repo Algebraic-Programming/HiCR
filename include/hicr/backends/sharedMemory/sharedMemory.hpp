@@ -4,8 +4,8 @@
  */
 
 /**
- * @file pthreads.hpp
- * @brief This is a minimal backend for shared memory multi-core support based on HWLoc and Pthreads
+ * @file SharedMemory.hpp
+ * @brief This is a minimal backend for shared memory multi-core support based on HWLoc and SharedMemory
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -20,9 +20,9 @@
 
 #include "hwloc.h"
 
+#include <hicr/common/logger.hpp>
 #include <hicr/backend.hpp>
-#include <hicr/backends/sharedMemory/pthreads/sharedMemorySpace.hpp>
-#include <hicr/backends/sharedMemory/pthreads/thread.hpp>
+#include <hicr/backends/sharedMemory/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -33,15 +33,12 @@ namespace backend
 namespace sharedMemory
 {
 
-namespace pthreads
-{
-
 /**
- * Implementation of the Pthreads/HWloc-based HiCR Shared Memory Backend.
+ * Implementation of the SharedMemory/HWloc-based HiCR Shared Memory Backend.
  *
- * It detects and returns the processing units and memory spaces detected by the HWLoc library, and instantiates the former as pthreads and the latter as MemorySpace descriptors. It also detects their connectivity.
+ * It detects and returns the processing units and memory spaces detected by the HWLoc library, and instantiates the former as SharedMemory and the latter as MemorySpace descriptors. It also detects their connectivity.
  */
-class Pthreads final : public Backend
+class SharedMemory final : public Backend
 {
   private:
 
@@ -50,15 +47,13 @@ class Pthreads final : public Backend
    * complete in the wait call
    */
   std::multimap<Tag, std::future<void>> deferredFuncs;
+
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
    */
   hwloc_topology_t _topology;
 
   public:
-
-  Pthreads() = default;
-  ~Pthreads() = default;
 
   /**
    * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
@@ -89,7 +84,7 @@ class Pthreads final : public Backend
     for (size_t i = 0; i < threadPUs.size(); i++)
     {
       auto affinity = std::vector<int>({threadPUs[i]});
-      auto thread = std::make_unique<pthreads::Thread>(affinity);
+      auto thread = std::make_unique<ProcessingUnit>(affinity);
       _computeResourceList.push_back(std::move(thread));
     }
 
@@ -99,17 +94,15 @@ class Pthreads final : public Backend
     auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
     for (int i = 0; i < n; i++)
     {
-      SharedMemorySpace *ms = new SharedMemorySpace(i, _topology);
+      MemorySpace *ms = new MemorySpace(i);
       _memorySpaceList.push_back(ms);
     }
   }
 
-  void nb_memcpy(
+  __USED__ inline void memcpy(
     MemorySlot &destination,
-    const size_t dst_locality,
     const size_t dst_offset,
     const MemorySlot &source,
-    const size_t src_locality,
     const size_t src_offset,
     const size_t size,
     const Tag &tag) override
@@ -122,7 +115,7 @@ class Pthreads final : public Backend
     deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
   }
 
-  void wait(const Tag &tag)
+  __USED__ inline void fence(const Tag &tag) override
   {
     auto range = deferredFuncs.equal_range(tag);
     for (auto i = range.first; i != range.second; ++i)
@@ -131,9 +124,44 @@ class Pthreads final : public Backend
       f.wait();
     }
   }
+
+  /**
+   * Allocates memory in the current memory space (NUMA domain)
+   *
+   * \param[in] size Size of the memory slot to create
+   * \return A newly allocated memory slot in this memory space
+   */
+  __USED__ inline MemorySlot allocateMemorySlot(const MemorySpace* memSpace, const size_t size) override
+  {
+    hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memSpace->getID());
+    ptr_t memSlotPointer = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET);
+
+    return MemorySlot(memSlotPointer, size);
+  }
+
+  /**
+   * Allocates memory in the current memory space (NUMA domain)
+   *
+   * \param[in] size Size of the memory slot to create
+   * \return A newly allocated memory slot in this memory space
+   */
+  __USED__ inline MemorySlot createMemorySlot [[noreturn]] (void *const addr, const size_t size) override
+  {
+    LOG_ERROR("The shared memory backend cannot accept rogue allocations for the creation of a memory slot\n");
+  }
+
+  /**
+   * Frees up a memory slot reserved from this memory space
+   *
+   * \param[in] slot Pointer to a memory slot to free up. It becomes unusable after freeing.
+   */
+  __USED__ inline void freeMemorySlot(MemorySlot *slot) const
+  {
+    hwloc_free(_topology, slot->getPointer(), slot->getSize());
+  }
+
 };
 
-} // namespace pthreads
 } // namespace sharedMemory
 } // namespace backend
 } // namespace HiCR
