@@ -5,6 +5,8 @@ hicrBuildDeps = [
    ]
 
 hicrBuildCppArgs = [
+ '-Wfatal-errors',
+ '-Werror',
  ]
 
 hicrBuildIncludes = include_directories([
@@ -24,8 +26,6 @@ hicrTestDeps = [
 ]
 
 hicrTestCppFlags = [
- '-Wfatal-errors',
- '-Werror',
 ]
 
 hicrTestLinkFlags = [

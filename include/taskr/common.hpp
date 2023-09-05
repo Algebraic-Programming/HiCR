@@ -13,8 +13,7 @@
 #pragma once
 
 #include <functional>
-#include <taskr/extern/atomic_queue/atomic_queue.h>
-#include <taskr/extern/parallel_hashmap/phmap.h>
+#include <hicr/common/definitions.hpp>
 
 namespace taskr
 {
@@ -39,32 +38,8 @@ typedef uint64_t taskLabel_t;
 #endif
 
 /**
- * Templated Lockfree queue definition
- */
-template <class T, unsigned int N>
-using lockFreeQueue_t = atomic_queue::AtomicQueue<T, N, (T)NULL>;
-
-/**
  * Task callback function definition
  */
 typedef std::function<void()> callback_t;
-
-/**
- * Configuration for parallel hash sets
- */
-#define SETNAME phmap::parallel_flat_hash_set
-
-/**
- * Configuration for parallel hash sets
- */
-#define SETEXTRAARGS                                                    \
-  , phmap::priv::hash_default_hash<V>, phmap::priv::hash_default_eq<V>, \
-    std::allocator<V>, 4, std::mutex
-
-/**
- * Template for parallel hash sets
- */
-template <class V>
-using HashSetT = SETNAME<V SETEXTRAARGS>;
 
 } // namespace taskr

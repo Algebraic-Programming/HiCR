@@ -33,6 +33,12 @@ namespace backend
 namespace sharedMemory
 {
 
+struct memorySlotStruct_t
+{
+ void* pointer;
+ size_t size;
+};
+
 /**
  * Implementation of the SharedMemory/HWloc-based HiCR Shared Memory Backend.
  *
@@ -41,6 +47,10 @@ namespace sharedMemory
 class SharedMemory final : public Backend
 {
   private:
+
+  memorySlotId_t _currentTagId = 0;
+
+  std::map<memorySlotId_t, memorySlotStruct_t> _slotMap;
 
   /**
    * list of deffered function calls in non-blocking data moves, which
@@ -91,27 +101,17 @@ class SharedMemory final : public Backend
     /* Ask hwloc about number of NUMA nodes
      * and add as many memory spaces as NUMA domains
      */
+    _memorySpaceList.clear();
     auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
-    for (int i = 0; i < n; i++)
-    {
-      MemorySpace *ms = new MemorySpace(i);
-      _memorySpaceList.push_back(ms);
-    }
+    for (int i = 0; i < n; i++) _memorySpaceList.push_back(i);
   }
 
-  __USED__ inline void memcpy(
-    MemorySlot &destination,
-    const size_t dst_offset,
-    const MemorySlot &source,
-    const size_t src_offset,
-    const size_t size,
-    const uint64_t &tag) override
+  __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
-    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
-    {
-      std::memcpy(dst, src, size);
-    };
-    std::future<void> fut = std::async(std::launch::deferred, f, destination.getPointer(), source.getPointer(), size);
+    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size) {std::memcpy(dst, src, size); };
+    const auto srcSlot = _slotMap.at(source);
+    const auto dstSlot = _slotMap.at(destination);
+    std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
     deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
   }
 
@@ -130,13 +130,16 @@ class SharedMemory final : public Backend
    *
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in this memory space
+   *
+   * TO-DO: This all should be threading safe
    */
-  __USED__ inline MemorySlot allocateMemorySlot(const MemorySpace* memSpace, const size_t size) override
+  __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpace, const size_t size) override
   {
-    hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memSpace->getID());
-    ptr_t memSlotPointer = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET);
-
-    return MemorySlot(memSlotPointer, size);
+    hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
+    auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET);
+    auto tag = _currentTagId++;
+    _slotMap[tag] = memorySlotStruct_t { .pointer = ptr, .size = size };
+    return tag;
   }
 
   /**
@@ -145,7 +148,7 @@ class SharedMemory final : public Backend
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in this memory space
    */
-  __USED__ inline MemorySlot createMemorySlot [[noreturn]] (void *const addr, const size_t size) override
+  __USED__ inline memorySlotId_t createMemorySlot [[noreturn]] (void *const addr, const size_t size) override
   {
     LOG_ERROR("The shared memory backend cannot accept rogue allocations for the creation of a memory slot\n");
   }
@@ -155,9 +158,21 @@ class SharedMemory final : public Backend
    *
    * \param[in] slot Pointer to a memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeMemorySlot(MemorySlot *slot) const
+  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
   {
-    hwloc_free(_topology, slot->getPointer(), slot->getSize());
+    const auto slot = _slotMap.at(memorySlotId);
+    hwloc_free(_topology, slot.pointer, slot.size);
+    _slotMap.erase(memorySlotId);
+  }
+
+  __USED__ inline void* getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
+  {
+    return _slotMap.at(memorySlotId).pointer;
+  }
+
+  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
+  {
+   return _slotMap.at(memorySlotId).size;
   }
 
 };

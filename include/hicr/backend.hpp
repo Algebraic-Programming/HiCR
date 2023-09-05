@@ -14,11 +14,13 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/computeResource.hpp>
-#include <hicr/memorySpace.hpp>
-#include <hicr/memorySlot.hpp>
 
 namespace HiCR
 {
+
+typedef uint64_t memorySpaceId_t;
+typedef uint64_t memorySlotId_t;
+typedef uint64_t tagId_t;
 
 /**
  * Common definition of a collection of compute resources
@@ -29,8 +31,7 @@ typedef std::vector<std::unique_ptr<ComputeResource>> computeResourceList_t;
  * Common definition of a collection of memory spaces
  */
 
-// typedef std::vector<std::unique_ptr<MemorySpace>> memorySpaceList_t;
-typedef std::vector<MemorySpace *> memorySpaceList_t;
+typedef std::vector<memorySlotId_t> memorySpaceList_t;
 
 /**
  * Encapsulates a HiCR Backend.
@@ -42,14 +43,6 @@ typedef std::vector<MemorySpace *> memorySpaceList_t;
  */
 class Backend
 {
-  protected:
-
-  /**
-   * as a memory space creates tags, it
-   *needs to also ID them, e.g. via a counter
-   */
-  size_t _tagCounter = 0;
-
   public:
 
   virtual ~Backend() = default;
@@ -147,12 +140,12 @@ class Backend
    *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
    */
   virtual void memcpy(
-    MemorySlot &destination,
+    memorySlotId_t destination,
     const size_t dst_offset,
-    const MemorySlot &source,
+    const memorySlotId_t source,
     const size_t src_offset,
     const size_t size,
-    const uint64_t &tag) = 0;
+    const tagId_t &tag) = 0;
 
   /**
    * Fences a group of memory copies.
@@ -185,16 +178,16 @@ class Backend
    *       aware? One possible answer is a special event that if left unhandled,
    *       is promoted to a fatal exception.
    */
-  virtual void fence(const uint64_t tag) = 0;
+  virtual void fence(const tagId_t tag) = 0;
 
   /**
    * Allocates memory in the specified memory space
    *
-   * \param[in] memSpace Memory space to allocate memory in
+   * \param[in] memorySpaceId Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in the specified memory space
    */
-  virtual MemorySlot allocateMemorySlot(const MemorySpace* memSpace, const size_t size) = 0;
+  virtual memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
 
   /**
    * Creates a memory slot from a given address
@@ -203,7 +196,10 @@ class Backend
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual MemorySlot createMemorySlot(void *const addr, const size_t size) = 0;
+  virtual memorySlotId_t createMemorySlot(void *const addr, const size_t size) = 0;
+
+  virtual void* getMemorySlotLocalPointer(const memorySlotId_t slot) const = 0;
+  virtual size_t getMemorySlotSize(const memorySlotId_t slot) const = 0;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the resources provided by the library which it supports.

@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <hicr/common/parallel_hashmap/phmap.h>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
@@ -21,6 +22,17 @@ namespace HiCR
 {
 
 class Worker;
+class Task;
+
+/**
+ * Static storage for remembering the executing worker and task, based on the pthreadId
+ */
+static parallelHashMap_t<pthread_t, Task*> _threadToTaskMap;
+
+/**
+ * Function to return a pointer to the currently executing task from a global context
+ */
+__USED__ static inline Task* getCurrentTask() { return _threadToTaskMap[getpid()]; }
 
 /**
  * Definition for a task function that supports lambda functions
@@ -129,6 +141,9 @@ class Task
     // Storing worker
     _worker = worker;
 
+    // Also map task pointer to the runnign thread it into static storage for global access. This logic should perhaps be outsourced to the backend
+    _threadToTaskMap[getpid()] = this;
+
     // Setting state to running while we execute
     _state = task::state_t::running;
 
@@ -154,12 +169,12 @@ class Task
 
     // Triggering events, if defined
     if (_eventMap != NULL) switch (_state)
-      {
+    {
       case task::state_t::running: break;
       case task::state_t::finished: _eventMap->trigger(this, event_t::onTaskFinish); break;
       case task::state_t::ready: _eventMap->trigger(this, event_t::onTaskYield); break;
       case task::state_t::waiting: _eventMap->trigger(this, event_t::onTaskSuspend); break;
-      }
+    }
   }
 
   private:
@@ -211,5 +226,6 @@ class Task
    */
   Worker *_worker = NULL;
 };
+
 
 } // namespace HiCR

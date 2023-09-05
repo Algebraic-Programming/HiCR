@@ -9,7 +9,5 @@
 #include <hicr/common/logger.hpp>
 #include <hicr/computeResource.hpp>
 #include <hicr/dispatcher.hpp>
-#include <hicr/memorySlot.hpp>
-#include <hicr/memorySpace.hpp>
 #include <hicr/task.hpp>
 #include <hicr/worker.hpp>

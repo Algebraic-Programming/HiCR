@@ -22,7 +22,7 @@ int main(int argc, char **argv)
  auto slot2 = backend.allocateMemorySlot(memSpaces[1], BUFFER_SIZE); // Memory Space 1 = NUMA 1
 
  // Initializing values in memory slot 1
- sprintf((char*)slot1.getPointer(), "Hello, HiCR user!\n");
+ sprintf((char*)backend.getMemorySlotLocalPointer(slot1), "Hello, HiCR user!\n");
 
  // Performing the copy
  backend.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE, TAG);
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
  backend.fence(TAG);
 
  // Checking whether the copy was successful
- printf("%s", (const char*) slot2.getPointer());
+ printf("%s", (const char*)backend.getMemorySlotLocalPointer(slot2));
 
  return 0;
 }
