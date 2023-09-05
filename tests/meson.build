@@ -1,4 +1,11 @@
+# Base configuration for all tests
 testDeps = [ hicrBuildDep, hicrTestDep ]
 
-subdir('unit')
-subdir('coverage')
+# Registering HiCR tests
+subdir('hicr')
+
+# Registering backend tests
+subdir('backends')
+
+# Registering frontend tests
+subdir('frontends')

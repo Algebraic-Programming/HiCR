@@ -4,16 +4,14 @@ docs:
   - docker
   - tiny 
   script:
-  - echo "Obtaining build tools..."
-  - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/build.git .build --recurse-submodules
-  - echo "Checking style..."
-  - cp .build/style/clang-format .clang-format
-  - .build/style/check-style.sh check include
-  - .build/style/check-style.sh check tests
-  - echo "Checking code documentation..."
+  - echo "Checking HiCR source and test formatting..."
+  - .build-tools/style/check-style.sh check include
+  - .build-tools/style/check-style.sh check tests
+  - echo "Building code documentation..."
   - make -C docs
   only:
   - master
+  - develop
   - merge_requests
   - tags
 
@@ -42,6 +40,7 @@ build:
         path: build/meson-logs/coverage.xml 
   only:
   - master
+  - develop 
   - merge_requests
   - tags
 
