@@ -1,44 +1,38 @@
-#include <hicr.hpp>
 #include <hicr/backends/sharedMemory/sharedMemory.hpp>
-#include <iostream>
+#include <hicr.hpp>
 
-using namespace HiCR::backend::sharedMemory;
-
-/*
-This example uses HiCR get the first backend found (assuming it is the shared memory
-backend), return all memory spaces of that backend (assuming
-it is the same as the NUMA nodes), and copy a block of 100 chars
-from the first to the last NUMA domain, relying on the HiCR API. In case
-the machine only has one NUMA node, it will copy data within this node.
-*/
+#define BUFFER_SIZE 256
+#define DST_OFFSET 0
+#define SRC_OFFSET 0
+#define TAG 0
 
 int main(int argc, char **argv)
 {
-  SharedMemory backend;
-  backend.queryResources();
+ // Instantiating Shared Memory backend
+ HiCR::backend::sharedMemory::SharedMemory backend;
 
-  auto memSpaceList = backend.getMemorySpaceList();
+ // Asking backend to check the available resources
+ backend.queryResources();
 
-  const size_t firstNuma = 0;
-  const size_t lastNuma = memSpaceList.size() - 1;
+ // Obtaining memory spaces
+ auto memSpaces = backend.getMemorySpaceList();
 
-  auto memSpace1 = memSpaceList[firstNuma];
-  auto memSpace2 = memSpaceList[lastNuma];
+ // Allocating memory slots in different NUMA domains
+ auto slot1 = backend.allocateMemorySlot(memSpaces[0], BUFFER_SIZE); // Memory Space 0 = NUMA 0
+ auto slot2 = backend.allocateMemorySlot(memSpaces[1], BUFFER_SIZE); // Memory Space 1 = NUMA 1
 
-  auto slot1 = backend.allocateMemorySlot(memSpace1, 100);
+ // Initializing values in memory slot 1
+ sprintf((char*)slot1.getPointer(), "Hello, HiCR user!\n");
 
-  auto dataPtr1 = (char*)slot1.getPointer();
-  for (size_t i = 0; i < 100; i++) dataPtr1[i] = 'c';
+ // Performing the copy
+ backend.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE, TAG);
 
-  auto slot2 = backend.allocateMemorySlot(memSpace2, 100);
-  auto tag = backend.createTag();
+ // Waiting on the operation to have finished
+ backend.fence(TAG);
 
-  // Non-blocking memcpy call, followed by fence guaranteeing completion
-  backend.memcpy(slot2, 0, slot1, 0, 100, tag);
-  backend.fence(tag);
+ // Checking whether the copy was successful
+ printf("%s", (const char*) slot2.getPointer());
 
-  auto dataPtr2 = (char*)slot2.getPointer();
-  for (size_t i = 0; i < 100; i++) assert(dataPtr2[i] == 'c');
-
-  return 0;
+ return 0;
 }
+

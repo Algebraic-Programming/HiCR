@@ -4,8 +4,8 @@
  */
 
 /**
- * @file thread.hpp
- * @brief Implements the Thread class for the pthreads-based backend.
+ * @file processingUnit.hpp
+ * @brief Implements the processing unit class for the shared memory backend.
  * @author S. M. Martin
  * @date 14/8/2023
  */

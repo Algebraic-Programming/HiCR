@@ -15,6 +15,7 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/computeResource.hpp>
 #include <hicr/memorySpace.hpp>
+#include <hicr/memorySlot.hpp>
 
 namespace HiCR
 {
@@ -85,11 +86,9 @@ class Backend
    * within a source area, to within a destination area.
    *
    * @param[in] source       The source memory region
-   * @param[in] src_locality The locality of the source memory region
    * @param[in] src_offset   The offset (in bytes) within \a source at
    *                         \a src_locality
    * @param[in] destination  The destination memory region
-   * @param[in] dst_locality The locality of the destination memory region
    * @param[in] dst_offset   The offset (in bytes) within \a destination at
    *                         \a dst_locality
    * @param[in] size         The number of bytes to copy from the source to the
@@ -153,7 +152,7 @@ class Backend
     const MemorySlot &source,
     const size_t src_offset,
     const size_t size,
-    const Tag &tag) = 0;
+    const uint64_t &tag) = 0;
 
   /**
    * Fences a group of memory copies.
@@ -186,16 +185,25 @@ class Backend
    *       aware? One possible answer is a special event that if left unhandled,
    *       is promoted to a fatal exception.
    */
-  virtual void fence(const Tag &tag) = 0;
-  virtual MemorySlot allocateMemorySlot(const MemorySpace* memSpace, const size_t size) = 0;
-  virtual MemorySlot createMemorySlot(void *const addr, const size_t size) = 0;
+  virtual void fence(const uint64_t tag) = 0;
 
-  Tag createTag()
-  {
-    Tag tag(_tagCounter);
-    _tagCounter++;
-    return tag;
-  }
+  /**
+   * Allocates memory in the specified memory space
+   *
+   * \param[in] memSpace Memory space to allocate memory in
+   * \param[in] size Size of the memory slot to create
+   * \return A newly allocated memory slot in the specified memory space
+   */
+  virtual MemorySlot allocateMemorySlot(const MemorySpace* memSpace, const size_t size) = 0;
+
+  /**
+   * Creates a memory slot from a given address
+   *
+   * \param[in] addr Pointer to the start of the memory slot
+   * \param[in] size Size of the memory slot to create
+   * \return A newly created memory slot
+   */
+  virtual MemorySlot createMemorySlot(void *const addr, const size_t size) = 0;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the resources provided by the library which it supports.

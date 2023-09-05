@@ -4,8 +4,8 @@
  */
 
 /**
- * @file SharedMemory.hpp
- * @brief This is a minimal backend for shared memory multi-core support based on HWLoc and SharedMemory
+ * @file sharedMemory.hpp
+ * @brief This is a minimal backend for shared memory multi-core support based on HWLoc and Pthreads
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -46,7 +46,7 @@ class SharedMemory final : public Backend
    * list of deffered function calls in non-blocking data moves, which
    * complete in the wait call
    */
-  std::multimap<Tag, std::future<void>> deferredFuncs;
+  std::multimap<uint64_t, std::future<void>> deferredFuncs;
 
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
@@ -105,7 +105,7 @@ class SharedMemory final : public Backend
     const MemorySlot &source,
     const size_t src_offset,
     const size_t size,
-    const Tag &tag) override
+    const uint64_t &tag) override
   {
     std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
     {
@@ -115,14 +115,14 @@ class SharedMemory final : public Backend
     deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
   }
 
-  __USED__ inline void fence(const Tag &tag) override
+  __USED__ inline void fence(const uint64_t tag) override
   {
-    auto range = deferredFuncs.equal_range(tag);
-    for (auto i = range.first; i != range.second; ++i)
-    {
-      auto f = std::move(i->second);
-      f.wait();
-    }
+   auto range = deferredFuncs.equal_range(tag);
+   for (auto i = range.first; i != range.second; ++i)
+   {
+     auto f = std::move(i->second);
+     f.wait();
+   }
   }
 
   /**

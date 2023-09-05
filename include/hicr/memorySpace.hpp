@@ -14,8 +14,6 @@
 
 #include <hicr/channel.hpp>
 #include <hicr/common/definitions.hpp>
-#include <hicr/memorySlot.hpp>
-#include <hicr/messageTag.hpp>
 
 namespace HiCR
 {
@@ -80,111 +78,6 @@ class MemorySpace final
     return _id;
   }
 
-  /**
-   * Constructs a channel.
-   *
-   * @tparam SrcIt An iterator over HiCR MemorySpaces
-   * @tparam DstIt An iterator over HiCR MemorySpaces
-   *
-   * Let \f$ S \f$ be a set of producers, and let \f$ D \f$ be a set of
-   * consumers. \f$ S, D \f$ must contain at least one element. A channel lets
-   * any producer put so-called \em tokens into a distributed buffer, and lets
-   * any consumer retrieve tokens from that buffer.
-   *
-   * A channel is identified by a \a tag, and as such, it makes use of system
-   * resources equivalent to a single call to createTag.
-   *
-   * In addition, the channel requires \f$ n = |S| + |D| \f$ buffers, and (thus)
-   * as many memory slots. Hence the channel, on successful creation, makes use
-   * of system resources equivalent to \f$ n \f$ calls to allocateMemorySlot.
-   *
-   * The buffers and resources the channel allocates on successful construction,
-   * will be released on a call to the channel destructor.
-   *
-   * @param[in] producer        Whether the calling context expects a producer
-   *                            ChannelView. If not, it is assumed to expect a
-   *                            consumer ChannelView.
-   * @param[in] producers_start An iterator in begin position to \f$ S \f$
-   * @param[in] producers_end   An iterator in end position to \f$ S \f$
-   * @param[in] consumers_start An iterator in begin position to \f$ D \f$
-   * @param[in] consumers_end   An iterator in end position to \f$ D \f$
-   * @param[in] capacity        How many tokens may be in the channel at
-   *                            maximum, at any given time
-   * @param[in] dummy           Needs to be clarified
-   *
-   * A call to this constructor must be made collectively across all workers
-   * that house the given memory spaces. If the callee memory space is in
-   * \f$ S \f$ but not in \f$ D \f$, then the constructed channel must be a
-   * \em producer. If the callee locality is in \f$ D \f$ but not in \f$ S \f$,
-   * then the constructed channel must be a \em consumer. If there are duplicate
-   * memory spaces in \f$ S \cup D \f$, then equally many calls to #createChannel
-   * from each duplicate memory space are required. The current memory space must
-   * be at least in one of \f$ S \f$ or \f$ D \f$. Finally, \f$ n \f$ must be
-   * strictly larger than one.
-   *
-   * \note \f$ n > 1 \f$ still allows for a channel with sources and destinations
-   *       wholle contained within a single memory space.
-   *
-   * With normal semantics, a produced token ends up at all (potentially many)
-   * consumers. This channel, however, includes a possibility where tokens once
-   * submitted are sent to just one of the consumers.
-   *
-   * @param[in] producersBroadcast Whether submitted tokens are to be broadcast
-   *                               to all consumers. Optional; default is
-   *                               <tt>true</tt>.
-   *
-   * @return Returns a view object to the newly created channel
-   *
-   * In broadcasting mode, broadcasting any single token to \f$ c = |D| \f$
-   * consumers counts as taking up \f$ c \f$ \a capacity.
-   *
-   * \note Rationale: in the worst case, the token ends up at \f$ c \f$
-   *       receiving buffers without any one of them being consumed yet.
-   *
-   * Channels always encapsulate one-copy communication. This means there is
-   * always at least one copy of a token in either a sender or receiver buffer.
-   *
-   * \note For zero-copy communication mechanisms, see HiCR::memcpy.
-   *
-   * This function may fail for the following reasons:
-   *  -# the current memory space is not in \f$ S \f$ nor \f$ D \f$;
-   *  -# \a producer is <tt>false</tt> but the current memory space is not in
-   *     \f$ D \f$;
-   *  -# \a producer is <tt>true</tt> but the current memory space is not in
-   *     \f$ S \f$;
-   *  -# \f$ n \f$ equals one or at least one of \f$ c, p \f$ equals zero, with
-   *     \f$ p = |S| \f$;
-   *  -# the HiCR communication matrix \f$ M \f$ indicates a pair of memory spaces
-   *     in \f$ S \cup D \f$ that have no direct line of communication;
-   *  -# the order of elements given by \a producers_start differs across the
-   *     collective call;
-   *  -# the order of elements given by \a consumers_start differs across the
-   *     collective call;
-   *  -# a related backend is out of resources to create this new channel.
-   *
-   * @see HiCR::memcpy for a definition of \f$ M \f$.
-   *
-   * \todo This interface uses iterators instead of raw arrays for listing the
-   *       producers and consumers. The memorySpace and datamover interfaces use
-   *       raw arrays instead. We should probably just pick one API and make all
-   *       APIs consistent with that choice.
-   */
-  template <typename SrcIt, typename DstIt, typename T>
-  ChannelView<T> createChannel(
-    bool producer,
-    const SrcIt &producers_start,
-    const SrcIt &producers_end,
-    const DstIt &consumers_start,
-    const DstIt &consumers_end,
-    const size_t capacity,
-    const bool producersBroadcast = true,
-    const T &dummy = T());
-
-  /*
-   * This operation will resolve the release of the allocated memory space which this slot holds.
-   * \todo NOTE (AJ) disabled since I didn't get why this should not be embedded in the slot destructor
-   void MemoryResource::freeMemorySlot();
-   */
 };
 
 } // end namespace HiCR

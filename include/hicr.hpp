@@ -11,6 +11,5 @@
 #include <hicr/dispatcher.hpp>
 #include <hicr/memorySlot.hpp>
 #include <hicr/memorySpace.hpp>
-#include <hicr/messageTag.hpp>
 #include <hicr/task.hpp>
 #include <hicr/worker.hpp>
