@@ -16,23 +16,24 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
 #include <hicr/common/logger.hpp>
-#include <hicr/common/parallel_hashmap/phmap.h>
 
 namespace HiCR
 {
 
-class Worker;
 class Task;
 
 /**
  * Static storage for remembering the executing worker and task, based on the pthreadId
+ *
+ * \note Be mindful of possible destructive interactions between this thread local storage and coroutines.
+ *       If this fails at some point, it might be necessary to come back to a pthread_self() mechanism
  */
-static parallelHashMap_t<pthread_t, Task *> _threadToTaskMap;
+thread_local Task *_currentTask;
 
 /**
  * Function to return a pointer to the currently executing task from a global context
  */
-__USED__ static inline Task *getCurrentTask() { return _threadToTaskMap[getpid()]; }
+__USED__ static inline Task *getCurrentTask() { return _currentTask; }
 
 /**
  * Definition for a task function that supports lambda functions
@@ -121,28 +122,16 @@ class Task
   __USED__ inline void *getArgument() { return _argument; }
 
   /**
-   * Returns the worker that is currently executing this task. This call only makes sense if the task is in the 'Running' state.
-   *
-   * @return A pointer to the worker running this task, if running; a NULL pointer, if not.
-   */
-  __USED__ const inline Worker *getWorker() { return _worker; }
-
-  /**
    * This function starts running a task. It needs to be performed by a worker, by passing a pointer to itself.
    *
    * The execution of the task will trigger change of state from ready to running. Before reaching the terminated state, the task might transition to some of the suspended states.
-   *
-   * @param[in] worker A pointer to the worker that is calling this function.
    */
-  __USED__ inline void run(Worker *worker)
+  __USED__ inline void run()
   {
     if (_state != task::state_t::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
 
-    // Storing worker
-    _worker = worker;
-
     // Also map task pointer to the runnign thread it into static storage for global access. This logic should perhaps be outsourced to the backend
-    _threadToTaskMap[getpid()] = this;
+    _currentTask = this;
 
     // Setting state to running while we execute
     _state = task::state_t::running;
@@ -160,9 +149,6 @@ class Task
     {
       _coroutine.resume();
     }
-
-    // After returning, the task is no longer associated to a worker
-    _worker = NULL;
 
     // If the state is still running (no suspension or yield), then the task has finished executing
     if (_state == task::state_t::running) _state = task::state_t::finished;
@@ -220,11 +206,6 @@ class Task
    *  Map of events to trigger
    */
   EventMap<Task> *_eventMap = NULL;
-
-  /**
-   * Worker currently executing the task
-   */
-  Worker *_worker = NULL;
 };
 
 } // namespace HiCR

@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright Huawei Technologies Switzerland AG
  * All rights reserved.
@@ -11,6 +9,8 @@
  * @author S. M. Martin
  * @date 7/7/2023
  */
+
+#pragma once
 
 #include <boost/context/continuation.hpp>
 #include <functional> // std::function
@@ -45,7 +45,7 @@ class Coroutine
    */
   __USED__ inline void resume()
   {
-    _contextSource = _contextSource.resume();
+    _context = _context.resume();
   }
 
   /**
@@ -53,7 +53,7 @@ class Coroutine
    */
   __USED__ inline void yield()
   {
-    _contextSink = _contextSink.resume();
+    _context = _context.resume();
   }
 
   /**
@@ -66,16 +66,15 @@ class Coroutine
    */
   __USED__ inline void start(coroutineFc_t &fc, void *arg)
   {
-    auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
+    const auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
     {
-      _contextSink = std::move(sink);
+      _context = std::move(sink);
       fc(arg);
-      yield();
-      return std::move(sink);
+      return std::move(_context);
     };
 
     // Creating new context
-    _contextSource = boost::context::callcc(coroutineFc);
+    _context = boost::context::callcc(coroutineFc);
   }
 
   private:
@@ -83,12 +82,7 @@ class Coroutine
   /**
    * CPU execution context of the coroutine. This is the target context for the resume() function.
    */
-  boost::context::continuation _contextSource;
-
-  /**
-   * CPU execution context of the resume() caller. This is the return context for the yield() function.
-   */
-  boost::context::continuation _contextSink;
+  boost::context::continuation _context;
 };
 
 } // namespace HiCR

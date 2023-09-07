@@ -13,7 +13,8 @@
 #pragma once
 
 #include <hicr/common/definitions.hpp>
-#include <hicr/computeResource.hpp>
+#include <hicr/processingUnit.hpp>
+#include <vector>
 
 namespace HiCR
 {
@@ -36,7 +37,7 @@ typedef uint64_t tagId_t;
 /**
  * Common definition of a collection of compute resources
  */
-typedef std::vector<std::unique_ptr<ComputeResource>> computeResourceList_t;
+typedef std::vector<computeResourceId_t> computeResourceList_t;
 
 /**
  * Common definition of a collection of memory spaces
@@ -55,6 +56,7 @@ class Backend
 {
   public:
 
+  Backend() = default;
   virtual ~Backend() = default;
 
   /**
@@ -64,7 +66,7 @@ class Backend
    *
    * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
    */
-  __USED__ virtual void queryResources() = 0;
+  virtual void queryResources() = 0;
 
   /**
    * This function returns the list of queried compute resources, as visible by the backend.
@@ -73,7 +75,7 @@ class Backend
    *
    * @return The list of compute resources, as detected the last time \a queryResources was executed.
    */
-  __USED__ inline computeResourceList_t &getComputeResourceList() { return _computeResourceList; }
+  __USED__ inline const computeResourceList_t &getComputeResourceList() { return _computeResourceList; }
 
   /**
    * This function returns the list of queried memory spaces, as visible by the backend.
@@ -82,7 +84,16 @@ class Backend
    *
    * @return The list of memory spaces, as detected the last time \a queryResources was executed.
    */
-  __USED__ inline memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
+  __USED__ inline const memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
+
+  /**
+   * Creates a new processing unit from the provided compute resource
+   *
+   * \param[in] resource This is the identifier of the compute resource to use to instantiate into a processing unit. The identifier should be one of those provided by the backend. Providing an arbitrary identifier may lead to unexpected behavior.
+   *
+   * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
+   */
+  virtual std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const = 0;
 
   /**
    * Instructs the backend to perform an asynchronous memory copy from

@@ -4,8 +4,6 @@ testDeps = [ hicrBuildDep, hicrTestDep ]
 # Registering HiCR tests
 subdir('hicr')
 
-# Registering backend tests
-subdir('backends')
+# Registering taskr backend tests
+subdir('taskr')
 
-# Registering frontend tests
-subdir('frontends')

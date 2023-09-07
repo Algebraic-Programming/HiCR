@@ -237,7 +237,7 @@ class Runtime
 
   /**
    * This function represents the main loop of a worker that is looking for work to do.
-   * It first checks whether the maximum number of worker is exceeded. If that's the case, it enters suspension and retuns upon restart.
+   * It first checks whether the maximum number of worker is exceeded. If that's the case, it enters suspension and returns upon restart.
    * Otherwise, it finds a task in the waiting queue and checks its dependencies. If the task is ready to go, it runs it.
    * If no tasks are ready to go, it returns a NULL, which encodes -No Task-.
    *
@@ -291,8 +291,10 @@ class Runtime
    * Starts the execution of the TaskR runtime.
    * Creates a set of HiCR workers, based on the provided backend, and subscribes them to a dispatcher queue.
    * After creating the workers, it starts them and suspends the current context until they're back (all tasks have finished).
+   *
+   * \param [in] computeResourceList Is the list of compute resources corresponding to the backend define during initialization. Taskr will create one processing unit from each of these resources and assign one of them to each worker.
    */
-  __USED__ inline void run()
+  __USED__ inline void run(const HiCR::computeResourceList_t &computeResourceList)
   {
     _dispatcher = new HiCR::Dispatcher([this](HiCR::Worker *worker)
                                        { return checkWaitingTasks(worker); });
@@ -302,16 +304,30 @@ class Runtime
     _eventMap->setEvent(HiCR::event_t::onTaskFinish, [this](HiCR::Task *task)
                         { onTaskFinish(task); });
 
-    // Querying computational resources
-    _backend->queryResources();
+    // Making a local copy of the compute resource list, so that in case it is empty, we query it from the backend
+    auto actualComputeResourceList = computeResourceList;
 
-    // Creating one worker per thread
-    for (auto &resource : _backend->getComputeResourceList())
+    // In case no resources were provided by the user, using all of the available resources from the backend
+    if (computeResourceList.empty() == true)
     {
+      // Querying computational resources
+      _backend->queryResources();
+
+      // Updating the compute resource list
+      actualComputeResourceList = _backend->getComputeResourceList();
+    }
+
+    // Creating one worker per processung unit in the list
+    for (auto &resource : actualComputeResourceList)
+    {
+      // Creating new worker
       auto worker = new HiCR::Worker();
 
+      // Creating a processing unit out of the computational resource
+      auto processingUnit = _backend->createProcessingUnit(resource);
+
       // Assigning resource to the thread
-      worker->addResource(resource.get());
+      worker->addProcessingUnit(processingUnit);
 
       // Assigning worker to the common dispatcher
       worker->subscribe(_dispatcher);
@@ -334,7 +350,7 @@ class Runtime
 
     // Finalizing resources
     for (auto &w : _workers)
-      for (auto &r : w->getResources()) r->finalize();
+      for (auto &p : w->getProcessingUnits()) p->finalize();
 
     // Clearing created objects
     for (auto &w : _workers) delete w;

@@ -4,12 +4,17 @@
  */
 
 /**
- * @file coverage.cpp
- * @brief Coverage test for the include-only backend library
+ * @file pthreads.cpp
+ * @brief Unit tests for the HiCR Pthreads backend
  * @author S. M. Martin
  * @date 21/8/2023
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/processingUnit.hpp>
 #include <hicr/backends/sharedMemory/sharedMemory.hpp>
+
+TEST(Pthreads, Construction)
+{
+  auto t = new HiCR::backend::sharedMemory::SharedMemory();
+  EXPECT_FALSE(t == nullptr);
+}

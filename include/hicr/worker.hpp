@@ -12,15 +12,35 @@
 
 #pragma once
 
-#include <unistd.h>
-
 #include <hicr/common/definitions.hpp>
-#include <hicr/computeResource.hpp>
 #include <hicr/dispatcher.hpp>
+#include <hicr/processingUnit.hpp>
 #include <hicr/task.hpp>
+#include <memory>
+#include <unistd.h>
 
 namespace HiCR
 {
+
+/**
+ * Type definition for a generic memory space identifier
+ */
+typedef std::vector<std::unique_ptr<ProcessingUnit>> processingUnitList_t;
+
+class Worker;
+
+/**
+ * Static storage for remembering the executing worker
+ *
+ * \note Be mindful of possible destructive interactions between this thread local storage and coroutines.
+ *       If this fails at some point, it might be necessary to come back to a pthread_self() mechanism
+ */
+thread_local Worker *_currentWorker;
+
+/**
+ * Function to return a pointer to the currently executing worker from a global context
+ */
+__USED__ static inline Worker *getCurrentWorker() { return _currentWorker; }
 
 namespace worker
 {
@@ -87,13 +107,16 @@ class Worker
   /**
    * Group of resources the worker can freely use
    */
-  std::vector<ComputeResource *> _computeResources;
+  processingUnitList_t _processingUnits;
 
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
    */
   __USED__ inline void mainLoop()
   {
+    // Setting the pointer to the current worker into the thread local storage
+    _currentWorker = this;
+
     while (_state == worker::running)
     {
       for (auto dispatcher : _dispatchers)
@@ -102,10 +125,10 @@ class Worker
         auto task = dispatcher->pull(this);
 
         // If a task was returned, then execute it
-        if (task != NULL) task->run(this);
+        if (task != NULL) task->run();
 
         // If worker has been suspended, handle it now
-        if (_state == worker::suspended) _computeResources[0]->suspend();
+        if (_state == worker::suspended) _processingUnits[0]->suspend();
       }
     }
   }
@@ -124,10 +147,10 @@ class Worker
     if (_state != worker::uninitialized) LOG_ERROR("Attempting to initialize already initialized worker");
 
     // Checking we have at least one assigned resource
-    if (_computeResources.empty()) LOG_ERROR("Attempting to initialize worker without any assigned resources");
+    if (_processingUnits.empty()) LOG_ERROR("Attempting to initialize worker without any assigned resources");
 
     // Initializing all resources
-    for (auto r : _computeResources) r->initialize();
+    for (auto &r : _processingUnits) r->initialize();
 
     // Transitioning state
     _state = worker::ready;
@@ -142,14 +165,14 @@ class Worker
     if (_state != worker::ready) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
 
     // Checking we have at least one assigned resource
-    if (_computeResources.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
+    if (_processingUnits.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
 
     // Transitioning state
     _state = worker::running;
 
     // Launching worker in the lead resource (first one to be added)
-    _computeResources[0]->run([this]()
-                              { this->mainLoop(); });
+    _processingUnits[0]->run([this]()
+                             { this->mainLoop(); });
   }
 
   /**
@@ -176,7 +199,7 @@ class Worker
     _state = worker::running;
 
     // Suspending resources
-    for (auto &r : _computeResources) r->resume();
+    for (auto &r : _processingUnits) r->resume();
   }
 
   /**
@@ -200,7 +223,7 @@ class Worker
     if (_state != worker::terminating && _state != worker::running && _state != worker::suspended) LOG_ERROR("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
 
     // Wait for the resource to free up
-    _computeResources[0]->await();
+    _processingUnits[0]->await();
 
     // Transitioning state
     _state = worker::terminated;
@@ -214,18 +237,18 @@ class Worker
   __USED__ inline void subscribe(Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
 
   /**
-   * Adds a computational resource to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
+   * Adds a processing unit to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
    *
-   * @param[in] resource Resource to add to the worker
+   * @param[in] pu Processing unit to assign to the worker
    */
-  __USED__ inline void addResource(ComputeResource *resource) { _computeResources.push_back(resource); }
+  __USED__ inline void addProcessingUnit(std::unique_ptr<ProcessingUnit> &pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
-   * Gets a reference to the workers assigned resources.
+   * Gets a reference to the workers assigned processing units.
    *
    * @return A container with the worker's resources
    */
-  __USED__ inline std::vector<ComputeResource *> &getResources() { return _computeResources; }
+  __USED__ inline processingUnitList_t &getProcessingUnits() { return _processingUnits; }
 
   /**
    * Gets a reference to the dispatchers the worker has been subscribed to

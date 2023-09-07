@@ -12,12 +12,11 @@
 
 #include "gtest/gtest.h"
 #include <hicr/backends/sharedMemory/sharedMemory.hpp>
+#include <taskr/runtime.hpp>
 
-namespace
-{
-TEST(Pthreads, Construction)
+TEST(Runtime, Construction)
 {
   auto t = new HiCR::backend::sharedMemory::SharedMemory();
-  EXPECT_FALSE(t == nullptr);
+  auto r = new taskr::Runtime(t);
+  EXPECT_FALSE(r == nullptr);
 }
-} // namespace
