@@ -21,7 +21,7 @@
 #include "hwloc.h"
 
 #include <hicr/backend.hpp>
-#include <hicr/backends/sharedMemory/processingUnit.hpp>
+#include <hicr/backends/sharedMemory/thread.hpp>
 #include <hicr/common/logger.hpp>
 
 namespace HiCR
@@ -103,16 +103,10 @@ class SharedMemory final : public Backend
     hwloc_topology_init(&_topology);
     hwloc_topology_load(_topology);
 
+    // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
     std::vector<int> threadPUs;
     getThreadPUs(_topology, hwloc_get_root_obj(_topology), 0, threadPUs);
-
-    // Creating Thread objects
-    for (size_t i = 0; i < threadPUs.size(); i++)
-    {
-      auto affinity = std::vector<int>({threadPUs[i]});
-      auto thread = std::make_unique<ProcessingUnit>(affinity);
-      _computeResourceList.push_back(std::move(thread));
-    }
+    _computeResourceList.assign(threadPUs.begin(), threadPUs.end());
 
     /* Ask hwloc about number of NUMA nodes
      * and add as many memory spaces as NUMA domains
@@ -120,6 +114,11 @@ class SharedMemory final : public Backend
     _memorySpaceList.clear();
     auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
     for (int i = 0; i < n; i++) _memorySpaceList.push_back(i);
+  }
+
+  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const override
+  {
+    return std::move(std::make_unique<Thread>(resource));
   }
 
   __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override

@@ -1,14 +1,12 @@
 testDeps = [ hicrBuildDep, hicrTestDep ]
 
-subdir('unit')
+# Registering backend tests
+subdir('backends')
 
-coverage = executable('_coverage',
-  files(['coverage.cpp']),
-  dependencies: [  testDeps ],
-  )
-  
-test('coverage', coverage,
-  protocol: 'gtest',
-  suite: 'hicr'
-)
+# Registering common tests
+subdir('common')
+
+# Registering tests
+test('coverage', executable('_coverage', 'coverage.cpp', dependencies: [  testDeps ] ), protocol: 'gtest', suite: [ 'hicr' ] )
+test('task',     executable('task',      'task.cpp',     dependencies: [  testDeps ] ), protocol: 'gtest', suite: [ 'hicr' ] )
 

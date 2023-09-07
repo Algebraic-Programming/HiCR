@@ -69,14 +69,16 @@ __USED__ inline void setMaximumActiveWorkers(const ssize_t max)
  * Standalone function to start the execution of the TaskR runtime
  *
  * Upon start, TaskR gains control of the current context and executes any added tasks, based on their dependencies, until no tasks remain.
+ *
+ * \param[in] computeResourceList The list of compute resources, provided by the specified backend, to use in creating the processing units to assign to workers to execute tasks. If this value is not provided, TaskR will allocate as many processing units as compute resources detected by the backend.
  */
-__USED__ inline void run()
+__USED__ inline void run(const HiCR::computeResourceList_t &computeResourceList = HiCR::computeResourceList_t())
 {
   if (_runtimeInitialized == false)
     LOG_ERROR("Attempting to use Taskr without first initializing it.");
 
   // Running Taskr
-  _runtime->run();
+  _runtime->run(computeResourceList);
 }
 
 /**

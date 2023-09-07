@@ -21,7 +21,7 @@ function check()
 function check_syntax()
 {
   echo "Looking into ${rootDir}"
-  python3 $fileDir/run-clang-format/run-clang-format.py --recursive ${rootDir} --extensions "hpp,cpp" --exclude "*build/*"
+  python3 $fileDir/../../extern/run-clang-format/run-clang-format.py --recursive ${rootDir} --extensions "hpp,cpp" --exclude "*build/*"
   if [ ! $? -eq 0 ]; then
     echo "Error: C++ Code formatting in file ${d} is not normalized."
     echo "Solution: Please run '$0 fix' to fix it."

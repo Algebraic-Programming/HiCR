@@ -8,7 +8,7 @@ docs:
   - .build-tools/style/check-style.sh check include
   - .build-tools/style/check-style.sh check tests
   - echo "Building code documentation..."
-  - make -C docs
+  - make -j1 -C docs
   only:
   - master
   - develop
@@ -34,6 +34,9 @@ build:
   artifacts:
     name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     expire_in: 2 days
+    when: always
+    paths:
+      - build/meson-logs/*
     reports:
       coverage_report:
         coverage_format: cobertura

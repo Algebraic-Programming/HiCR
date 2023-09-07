@@ -12,8 +12,3 @@
 
 #include "gtest/gtest.h"
 #include <hicr.hpp>
-
-namespace
-{
-
-} // namespace

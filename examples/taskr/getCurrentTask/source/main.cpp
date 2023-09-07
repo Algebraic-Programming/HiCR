@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   taskr::addTask(new taskr::Task(0, []()
     {
      auto hicrTask   = HiCR::getCurrentTask();
-     auto hicrWorker = hicrTask->getWorker();
+     auto hicrWorker = HiCR::getCurrentWorker();
      printf("Current HiCR Task pointer:   0x%lX\n", (uint64_t)hicrTask);
      printf("Current HiCR Worker pointer: 0x%lX\n", (uint64_t)hicrWorker);
     }

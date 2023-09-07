@@ -10,7 +10,8 @@ hicrBuildCppArgs = [
  ]
 
 hicrBuildIncludes = include_directories([
-   '../../include'
+   '../../include',
+   '../../extern'
   ])
   
 hicrBuildDep = declare_dependency(

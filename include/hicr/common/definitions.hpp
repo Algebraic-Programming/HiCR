@@ -1,7 +1,7 @@
 #pragma once
 
-#include <hicr/common/atomic_queue/atomic_queue.h>
-#include <hicr/common/parallel_hashmap/phmap.h>
+#include <atomic_queue/atomic_queue.h>
+#include <parallel_hashmap/phmap.h>
 
 namespace HiCR
 {

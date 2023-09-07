@@ -4,7 +4,7 @@
  */
 
 /**
- * @file processingUnit.hpp
+ * @file thread.hpp
  * @brief Implements the processing unit class for the shared memory backend.
  * @author S. M. Martin
  * @date 14/8/2023
@@ -18,7 +18,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include <hicr/computeResource.hpp>
+#include <hicr/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -30,11 +30,11 @@ namespace sharedMemory
 {
 
 /**
- * Implementation of a kernel-level thread as HiCR computational resource.
+ * Implementation of a kernel-level thread as processing unit for the shared memory backend.
  *
  * This implementation uses PThreads as backend for the creation and management of OS threads..
  */
-class ProcessingUnit final : public ComputeResource
+class Thread final : public ProcessingUnit
 {
   private:
 
@@ -44,11 +44,6 @@ class ProcessingUnit final : public ComputeResource
   pthread_t _pthreadId;
 
   /**
-   * Stores the core affinity for the OS thread
-   */
-  std::vector<int> _affinity;
-
-  /**
    * Static wrapper function to setup affinity and run the thread's function
    *
    * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
@@ -56,16 +51,16 @@ class ProcessingUnit final : public ComputeResource
   __USED__ inline static void *launchWrapper(void *p)
   {
     // Gathering thread object
-    auto processingUnit = (ProcessingUnit *)p;
+    auto thread = (Thread *)p;
 
     // Setting initial thread affinity
-    processingUnit->updateAffinity(processingUnit->_affinity);
+    thread->updateAffinity(std::vector<int>({(int)thread->getComputeResourceId()}));
 
     // Yielding execution to allow affinity to refresh
     sched_yield();
 
     // Calling main loop
-    processingUnit->_fc();
+    thread->_fc();
 
     // No returns
     return NULL;
@@ -100,16 +95,16 @@ class ProcessingUnit final : public ComputeResource
    *
    * \param[in] sig Signal detected, set by the operating system upon detecting the signal
    */
-  __USED__ inline static void catchSIGUSR1Signal(int sig) { signal(sig, ProcessingUnit::catchSIGUSR1Signal); }
+  __USED__ inline static void catchSIGUSR1Signal(int sig) { signal(sig, Thread::catchSIGUSR1Signal); }
 
   public:
 
   /**
-   * Constructor for the thread
+   * Constructor for the Thread class
    *
-   * \param[in] affinity The affinity to set for the thread
+   * \param core Represents the core affinity to associate this processing unit to
    */
-  ProcessingUnit(const std::vector<int> &affinity) : ComputeResource(), _affinity{affinity} {};
+  __USED__ inline Thread(computeResourceId_t core) : ProcessingUnit(core){};
 
   __USED__ inline void initialize() override
   {
@@ -121,7 +116,7 @@ class ProcessingUnit final : public ComputeResource
     int signalSet;
     sigset_t suspendSet;
 
-    signal(SIGUSR1, ProcessingUnit::catchSIGUSR1Signal);
+    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
 
     status = sigaddset(&suspendSet, SIGUSR1);
     if (status != 0) LOG_ERROR("Could not suspend thread %lu\n", _pthreadId);
@@ -136,7 +131,7 @@ class ProcessingUnit final : public ComputeResource
     if (status != 0) LOG_ERROR("Could not resume thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void run(resourceFc_t fc) override
+  __USED__ inline void run(processingUnitFc_t fc) override
   {
     // Making a copy of the function
     _fc = fc;
