@@ -42,18 +42,39 @@ TEST(Task, SetterAndGetters)
   EXPECT_NO_THROW(t.setArgument(arg));
   EXPECT_EQ(t.getArgument(), arg);
 
-  HiCR::EventMap<HiCR::Task> e;
+  HiCR::taskEventMap_t e;
   EXPECT_NO_THROW(t.setEventMap(&e));
   EXPECT_EQ(t.getEventMap(), &e);
 
   HiCR::task::state_t state;
   EXPECT_NO_THROW(state = t.getState());
-  EXPECT_EQ(state, HiCR::task::ready);
+  EXPECT_EQ(state, HiCR::task::initialized);
 }
 
 TEST(Task, Run)
 {
   HiCR::Task t;
+
+  auto f = [](void* arg)
+  {
+    HiCR::Task* t = (HiCR::Task*) arg;
+
+    // Yielding as many times as necessary
+    t->yield();
+  };
+
+  // Setting function to run and argument
+  t.setFunction(f);
+  t.setArgument(&t);
+
+  // A first run should start the task
+  EXPECT_NO_THROW(t.run());
+
+  // A second run should resume the task
+  EXPECT_NO_THROW(t.run());
+
+  // The task has now finished, so a third run should fail
+  EXPECT_THROW(t.run(), HiCR::LogicException);
 }
 
 } // namespace

@@ -26,37 +26,11 @@ template <class T>
 using eventCallback_t = std::function<void(T *)>;
 
 /**
- * Enumeration of possible task-related events
- */
-enum event_t
-{
-  /**
-   * Triggered as the task starts or resumes execution
-   */
-  onTaskExecute,
-
-  /**
-   * Triggered as the task voluntarily yields execution before finishing
-   */
-  onTaskYield,
-
-  /**
-   * Triggered as the task is preempted into suspension by an asynchronous event
-   */
-  onTaskSuspend,
-
-  /**
-   * Triggered as the task finishes execution
-   */
-  onTaskFinish
-};
-
-/**
  * Defines a map that relates task-related events to their corresponding callback.
  *
  * The callback is defined by the user and manually triggered by other (e.g., Task) classes, as the corresponding event occurs.
  */
-template <class T>
+template <class T, class E>
 class EventMap
 {
   public:
@@ -74,7 +48,7 @@ class EventMap
    *
    * \param[in] event The event to remove from the map
    */
-  __USED__ inline void removeEvent(const event_t event)
+  __USED__ inline void removeEvent(const E event)
   {
     _eventMap.erase(event);
   }
@@ -85,7 +59,7 @@ class EventMap
    * \param[in] event The event to add
    * \param[in] fc The callback function to call when the event is triggered
    */
-  __USED__ inline void setEvent(const event_t event, eventCallback_t<T> fc)
+  __USED__ inline void setEvent(const E event, eventCallback_t<T> fc)
   {
     _eventMap[event] = fc;
   }
@@ -96,7 +70,7 @@ class EventMap
    * \param[in] arg The argument to the trigger function.
    * \param[in] event The triggered event.
    */
-  __USED__ inline void trigger(T *arg, const event_t event) const
+  __USED__ inline void trigger(T *arg, const E event) const
   {
     if (_eventMap.contains(event)) _eventMap.at(event)(arg);
   }
@@ -106,7 +80,7 @@ class EventMap
   /**
    * Internal storage for the event map
    */
-  std::map<event_t, eventCallback_t<T>> _eventMap;
+  std::map<E, eventCallback_t<T>> _eventMap;
 };
 
 } // namespace HiCR
