@@ -6,7 +6,7 @@
 /**
  * @file exceptions.hpp
  * @brief Provides a failure model and corresponding exception classes.
- * @author A. N. Yzelman
+ * @author A. N. Yzelman & Sergio Martin
  * @date 9/8/2023
  */
 
@@ -82,5 +82,62 @@ class FatalException : public std::runtime_error
    */
   __USED__ FatalException(const char *const message) : runtime_error(message) {}
 };
+
+enum exception_t
+{
+  /**
+   * Represents a logic exception
+   */
+  logic,
+
+  /**
+   * Represents a runtime exception
+   */
+  runtime,
+
+  /**
+   * Represents a fatal exception
+   */
+  fatal
+};
+
+// Macros for exception throwing
+#define THROW_LOGIC(...)   HiCR::throwException(exception_t::logic,   __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_RUNTIME(...) HiCR::throwException(exception_t::runtime, __FILE__, __LINE__, __VA_ARGS__)
+#define THROW_FATAL(...)   HiCR::throwException(exception_t::fatal,   __FILE__, __LINE__, __VA_ARGS__)
+__USED__ inline void throwException [[noreturn]] (const exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
+{
+  char *outstr = 0;
+  va_list ap;
+  va_start(ap, format);
+  auto res = vasprintf(&outstr, format, ap);
+  if (res < 0) throw std::runtime_error("Error in exceptions.hpp, throwLogic() function\n");
+
+  std::string typeString = "Undefined";
+  switch(type)
+  {
+   case exception_t::logic:   typeString = "Logic"; break;
+   case exception_t::runtime: typeString = "Runtime"; break;
+   case exception_t::fatal:   typeString = "Fatal"; break;
+   default: break;
+  }
+  std::string outString = std::string("[HiCR] ") + typeString + std::string(" Exception: ") + std::string(outstr);
+  free(outstr);
+
+  char info[1024];
+  snprintf(info, sizeof(info) - 1, " + From %s:%d\n", fileName, lineNumber);
+  outString += info;
+
+  switch(type)
+  {
+   case exception_t::logic:   throw LogicException(outString.c_str()); break;
+   case exception_t::runtime: throw RuntimeException(outString.c_str()); break;
+   case exception_t::fatal:   throw FatalException(outString.c_str()); break;
+   default: break;
+  }
+
+  throw std::runtime_error(outString.c_str());
+}
+
 
 } // end namespace HiCR

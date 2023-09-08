@@ -92,6 +92,13 @@ class Task
   __USED__ inline void setFunction(taskFunction_t fc) { _fc = fc; }
 
   /**
+   * Returns the function that was assigned to the task
+   *
+   * @return The assigned function
+   */
+  __USED__ inline taskFunction_t getFunction() { return _fc; }
+
+  /**
    * Sets the single argument (pointer) to the the task function
    *
    * @param[in] argument A pointer representing the function's argument
@@ -99,11 +106,25 @@ class Task
   __USED__ inline void setArgument(void *argument) { _argument = argument; }
 
   /**
+   * Queries the task's function argument.
+   *
+   * @return A pointer user-defined task argument, if defined; A NULL pointer, if not.
+   */
+  __USED__ inline void *getArgument() { return _argument; }
+
+  /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
    *
    * @param[in] eventMap A pointer to an event map
    */
   __USED__ inline void setEventMap(EventMap<Task> *eventMap) { _eventMap = eventMap; }
+
+  /**
+   * Gets the task's event map.
+   *
+   * @return A pointer to the task's an event map. NULL, if not defined.
+   */
+  __USED__ inline EventMap<Task>* getEventMap() { return _eventMap; }
 
   /**
    * Queries the task's internal state.
@@ -115,13 +136,6 @@ class Task
   __USED__ inline const task::state_t getState() { return _state; }
 
   /**
-   * Queries the task's function argument.
-   *
-   * @return A pointer user-defined task argument, if defined; A NULL pointer, if not.
-   */
-  __USED__ inline void *getArgument() { return _argument; }
-
-  /**
    * This function starts running a task. It needs to be performed by a worker, by passing a pointer to itself.
    *
    * The execution of the task will trigger change of state from ready to running. Before reaching the terminated state, the task might transition to some of the suspended states.
@@ -130,7 +144,7 @@ class Task
   {
     if (_state != task::state_t::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
 
-    // Also map task pointer to the runnign thread it into static storage for global access. This logic should perhaps be outsourced to the backend
+    // Also map task pointer to the running thread it into static storage for global access. This logic should perhaps be outsourced to the backend
     _currentTask = this;
 
     // Setting state to running while we execute
