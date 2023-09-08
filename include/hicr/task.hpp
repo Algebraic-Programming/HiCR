@@ -15,7 +15,7 @@
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
-#include <hicr/common/logger.hpp>
+#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
@@ -142,7 +142,7 @@ class Task
    */
   __USED__ inline void run()
   {
-    if (_state != task::state_t::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
+    if (_state != task::state_t::ready) HICR_THROW_LOGIC("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
 
     // Also map task pointer to the running thread it into static storage for global access. This logic should perhaps be outsourced to the backend
     _currentTask = this;

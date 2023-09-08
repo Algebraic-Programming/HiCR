@@ -15,7 +15,6 @@
 #include <set>
 
 #include <hicr/common/definitions.hpp>
-#include <hicr/common/logger.hpp>
 #include <hicr/dispatcher.hpp>
 
 namespace HiCR

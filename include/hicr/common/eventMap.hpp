@@ -15,7 +15,6 @@
 #include <map>
 
 #include <hicr/common/definitions.hpp>
-#include <hicr/common/logger.hpp>
 
 namespace HiCR
 {

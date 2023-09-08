@@ -13,9 +13,38 @@
 #pragma once
 
 #include <hicr/common/definitions.hpp>
+#include <stdarg.h>
 
 namespace HiCR
 {
+
+namespace exceptions
+{
+
+enum exception_t
+{
+  /**
+   * Represents a logic exception
+   */
+  logic,
+
+  /**
+   * Represents a runtime exception
+   */
+  runtime,
+
+  /**
+   * Represents a fatal exception
+   */
+  fatal
+};
+
+} // namespace exceptions
+
+// Macros for exception throwing
+#define HICR_THROW_LOGIC(...)   HiCR::throwException(HiCR::exceptions::exception_t::logic,   __FILE__, __LINE__, __VA_ARGS__)
+#define HICR_THROW_RUNTIME(...) HiCR::throwException(HiCR::exceptions::exception_t::runtime, __FILE__, __LINE__, __VA_ARGS__)
+#define HICR_THROW_FATAL(...)   HiCR::throwException(HiCR::exceptions::exception_t::fatal,   __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * A class of exceptions that indicate some error in the arguments to a HiCR
@@ -83,29 +112,7 @@ class FatalException : public std::runtime_error
   __USED__ FatalException(const char *const message) : runtime_error(message) {}
 };
 
-enum exception_t
-{
-  /**
-   * Represents a logic exception
-   */
-  logic,
-
-  /**
-   * Represents a runtime exception
-   */
-  runtime,
-
-  /**
-   * Represents a fatal exception
-   */
-  fatal
-};
-
-// Macros for exception throwing
-#define THROW_LOGIC(...)   HiCR::throwException(exception_t::logic,   __FILE__, __LINE__, __VA_ARGS__)
-#define THROW_RUNTIME(...) HiCR::throwException(exception_t::runtime, __FILE__, __LINE__, __VA_ARGS__)
-#define THROW_FATAL(...)   HiCR::throwException(exception_t::fatal,   __FILE__, __LINE__, __VA_ARGS__)
-__USED__ inline void throwException [[noreturn]] (const exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
+__USED__ inline void throwException [[noreturn]] (const exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;
@@ -116,9 +123,9 @@ __USED__ inline void throwException [[noreturn]] (const exception_t type, const 
   std::string typeString = "Undefined";
   switch(type)
   {
-   case exception_t::logic:   typeString = "Logic"; break;
-   case exception_t::runtime: typeString = "Runtime"; break;
-   case exception_t::fatal:   typeString = "Fatal"; break;
+   case exceptions::exception_t::logic:   typeString = "Logic"; break;
+   case exceptions::exception_t::runtime: typeString = "Runtime"; break;
+   case exceptions::exception_t::fatal:   typeString = "Fatal"; break;
    default: break;
   }
   std::string outString = std::string("[HiCR] ") + typeString + std::string(" Exception: ") + std::string(outstr);
@@ -130,9 +137,9 @@ __USED__ inline void throwException [[noreturn]] (const exception_t type, const 
 
   switch(type)
   {
-   case exception_t::logic:   throw LogicException(outString.c_str()); break;
-   case exception_t::runtime: throw RuntimeException(outString.c_str()); break;
-   case exception_t::fatal:   throw FatalException(outString.c_str()); break;
+   case exceptions::exception_t::logic:   throw LogicException(outString.c_str()); break;
+   case exceptions::exception_t::runtime: throw RuntimeException(outString.c_str()); break;
+   case exceptions::exception_t::fatal:   throw FatalException(outString.c_str()); break;
    default: break;
   }
 

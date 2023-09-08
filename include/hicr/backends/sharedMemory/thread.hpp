@@ -17,7 +17,7 @@
 #include <pthread.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-
+#include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
 
 namespace HiCR
@@ -76,7 +76,7 @@ class Thread final : public ProcessingUnit
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     for (size_t i = 0; i < affinity.size(); i++) CPU_SET(affinity[i], &cpuset);
-    if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) printf("[WARNING] Problem assigning affinity: %d.\n", affinity[0]);
+    if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem assigning affinity: %d.", affinity[0]);
   }
 
   /**
@@ -85,7 +85,7 @@ class Thread final : public ProcessingUnit
   __USED__ static void printAffinity()
   {
     cpu_set_t cpuset;
-    if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) printf("[WARNING] Problem obtaining affinity.\n");
+    if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("[WARNING] Problem obtaining affinity.");
     for (int i = 0; i < CPU_SETSIZE; i++)
       if (CPU_ISSET(i, &cpuset)) printf("%2d ", i);
   }
@@ -119,16 +119,16 @@ class Thread final : public ProcessingUnit
     signal(SIGUSR1, Thread::catchSIGUSR1Signal);
 
     status = sigaddset(&suspendSet, SIGUSR1);
-    if (status != 0) LOG_ERROR("Could not suspend thread %lu\n", _pthreadId);
+    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
 
     status = sigwait(&suspendSet, &signalSet);
-    if (status != 0) LOG_ERROR("Could not suspend thread %lu\n", _pthreadId);
+    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
   }
 
   __USED__ inline void resume() override
   {
     auto status = pthread_kill(_pthreadId, SIGUSR1);
-    if (status != 0) LOG_ERROR("Could not resume thread %lu\n", _pthreadId);
+    if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
   __USED__ inline void run(processingUnitFc_t fc) override
@@ -138,7 +138,7 @@ class Thread final : public ProcessingUnit
 
     // Launching thread function wrapper
     auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
-    if (status != 0) LOG_ERROR("Could not create thread %lu\n", _pthreadId);
+    if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
   }
 
   __USED__ inline void finalize() override

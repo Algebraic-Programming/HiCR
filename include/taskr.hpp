@@ -11,6 +11,7 @@
  */
 
 #pragma once
+#include <hicr/common/exceptions.hpp>
 #include <taskr/runtime.hpp>
 #include <taskr/task.hpp>
 
@@ -31,7 +32,7 @@ inline bool _runtimeInitialized = false;
 __USED__ inline void addTask(Task *task)
 {
   if (_runtimeInitialized == false)
-    LOG_ERROR("Attempting to use Taskr without first initializing it.");
+    HICR_THROW_LOGIC("Attempting to use Taskr without first initializing it.");
 
   // Adding task
   _runtime->addTask(task);
@@ -75,7 +76,7 @@ __USED__ inline void setMaximumActiveWorkers(const ssize_t max)
 __USED__ inline void run(const HiCR::computeResourceList_t &computeResourceList = HiCR::computeResourceList_t())
 {
   if (_runtimeInitialized == false)
-    LOG_ERROR("Attempting to use Taskr without first initializing it.");
+   HICR_THROW_LOGIC("Attempting to use Taskr without first initializing it.");
 
   // Running Taskr
   _runtime->run(computeResourceList);
@@ -89,7 +90,7 @@ __USED__ inline void run(const HiCR::computeResourceList_t &computeResourceList 
 __USED__ inline void finalize()
 {
   if (_runtimeInitialized == false)
-    LOG_ERROR("Attempting to use Taskr without first initializing it.");
+   HICR_THROW_LOGIC("Attempting to use Taskr without first initializing it.");
 
   // Freeing up singleton
   delete _runtime;

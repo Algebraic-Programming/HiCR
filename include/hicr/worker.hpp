@@ -15,6 +15,7 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/processingUnit.hpp>
+#include <hicr/common/exceptions.hpp>
 #include <hicr/task.hpp>
 #include <memory>
 #include <unistd.h>
@@ -144,10 +145,10 @@ class Worker
   __USED__ inline void initialize()
   {
     // Checking state
-    if (_state != worker::uninitialized) LOG_ERROR("Attempting to initialize already initialized worker");
+    if (_state != worker::uninitialized) HICR_THROW_LOGIC("Attempting to initialize already initialized worker");
 
     // Checking we have at least one assigned resource
-    if (_processingUnits.empty()) LOG_ERROR("Attempting to initialize worker without any assigned resources");
+    if (_processingUnits.empty()) HICR_THROW_LOGIC("Attempting to initialize worker without any assigned resources");
 
     // Initializing all resources
     for (auto &r : _processingUnits) r->initialize();
@@ -162,10 +163,10 @@ class Worker
   __USED__ inline void start()
   {
     // Checking state
-    if (_state != worker::ready) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
+    if (_state != worker::ready) HICR_THROW_LOGIC("Attempting to start worker that is not in the 'initialized' state");
 
     // Checking we have at least one assigned resource
-    if (_processingUnits.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
+    if (_processingUnits.empty()) HICR_THROW_LOGIC("Attempting to start worker without any assigned resources");
 
     // Transitioning state
     _state = worker::running;
@@ -181,7 +182,7 @@ class Worker
   __USED__ inline void suspend()
   {
     // Checking state
-    if (_state != worker::running) LOG_ERROR("Attempting to suspend worker that is not in the 'running' state");
+    if (_state != worker::running) HICR_THROW_LOGIC("Attempting to suspend worker that is not in the 'running' state");
 
     // Transitioning state
     _state = worker::suspended;
@@ -193,7 +194,7 @@ class Worker
   __USED__ inline void resume()
   {
     // Checking state
-    if (_state != worker::suspended) LOG_ERROR("Attempting to resume worker that is not in the 'suspended' state");
+    if (_state != worker::suspended) HICR_THROW_LOGIC("Attempting to resume worker that is not in the 'suspended' state");
 
     // Transitioning state
     _state = worker::running;
@@ -208,7 +209,7 @@ class Worker
   __USED__ inline void terminate()
   {
     // Checking state
-    if (_state != worker::running) LOG_ERROR("Attempting to stop worker that is not in the 'running' state");
+    if (_state != worker::running) HICR_THROW_LOGIC("Attempting to stop worker that is not in the 'running' state");
 
     // Transitioning state
     _state = worker::terminating;
@@ -220,7 +221,8 @@ class Worker
   __USED__ inline void await()
   {
     // Checking state
-    if (_state != worker::terminating && _state != worker::running && _state != worker::suspended) LOG_ERROR("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
+    if (_state != worker::terminating && _state != worker::running && _state != worker::suspended)
+     HICR_THROW_LOGIC("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
 
     // Wait for the resource to free up
     _processingUnits[0]->await();

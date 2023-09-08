@@ -22,7 +22,6 @@
 
 #include <hicr/backend.hpp>
 #include <hicr/backends/sharedMemory/thread.hpp>
-#include <hicr/common/logger.hpp>
 
 namespace HiCR
 {

@@ -15,6 +15,7 @@
 #include <hicr.hpp>
 #include <map>
 #include <mutex>
+#include <hicr/common/exceptions.hpp>
 #include <taskr/common.hpp>
 #include <taskr/task.hpp>
 
@@ -206,7 +207,7 @@ class Runtime
     _taskCount++;
 
     // Checking if maximum was exceeded
-    if (_taskCount >= MAX_SIMULTANEOUS_TASKS) LOG_ERROR("Maximum task size (MAX_SIMULTANEOUS_TASKS = %lu) exceeded.\n", MAX_SIMULTANEOUS_TASKS);
+    if (_taskCount >= MAX_SIMULTANEOUS_TASKS) HICR_THROW_LOGIC("Maximum task size (MAX_SIMULTANEOUS_TASKS = %lu) exceeded.\n", MAX_SIMULTANEOUS_TASKS);
 
     // Adding task to the waiting lis, it will be cleared out later
     _waitingTaskQueue.push(task);

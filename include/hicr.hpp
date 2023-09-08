@@ -6,7 +6,6 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/common/logger.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/processingUnit.hpp>
 #include <hicr/task.hpp>
