@@ -168,7 +168,7 @@ class Task
   {
     if (_state != task::state_t::initialized && _state != task::state_t::suspended) HICR_THROW_LOGIC("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", _state);
 
-    // Also map task pointer to the running thread it into static storage for global access. This logic should perhaps be outsourced to the backend
+    // Also map task pointer to the running thread it into static storage for global access.
     _currentTask = this;
 
     // Checking whether the function has executed before
@@ -186,13 +186,16 @@ class Task
     // If the state is still running (no suspension or yield), then the task has finished executing
     if (_state == task::state_t::running) _state = task::state_t::finished;
 
-    // Triggering events, if defined
+    // Triggering events, if defined. It is important to trigger events from the worker context (this one) and not from the task.
     if (_eventMap != NULL) switch (_state)
     {
     case task::state_t::finished: _eventMap->trigger(this, task::event_t::onTaskFinish); break;
     case task::state_t::suspended: _eventMap->trigger(this, task::event_t::onTaskSuspend); break;
-    default: HICR_THROW_RUNTIME("Event map is defined but the task is in an unsupported state: %u\n", _state); break;
+    default: HICR_THROW_FATAL("Event map is defined but the task is in an unsupported state: %u\n", _state); break;
     }
+
+    // Relenting current task pointer
+    _currentTask = NULL;
   }
 
   /**

@@ -55,9 +55,20 @@ TEST(Task, Run)
 {
   HiCR::Task t;
 
-  auto f = [](void* arg)
+  // Storage for internal checks in the task
+  bool hasRunningState = false;
+  bool hasCorrectTaskPointer = false;
+
+  auto f = [&hasRunningState, &hasCorrectTaskPointer](void* arg)
   {
+    // Recovering task's own pointer
     HiCR::Task* t = (HiCR::Task*) arg;
+
+    // Checking whether the state is correctly assigned
+    if (t->getState() == HiCR::task::state_t::running) hasRunningState = true;
+
+    // Checking whether the current task pointer is the correct one
+    if (HiCR::_currentTask == t) hasCorrectTaskPointer = true;
 
     // Yielding as many times as necessary
     t->yield();
@@ -68,13 +79,26 @@ TEST(Task, Run)
   t.setArgument(&t);
 
   // A first run should start the task
+  EXPECT_EQ(t.getState(), HiCR::task::state_t::initialized);
   EXPECT_NO_THROW(t.run());
+  EXPECT_TRUE(hasRunningState);
+  EXPECT_TRUE(hasCorrectTaskPointer);
+  EXPECT_EQ(t.getState(), HiCR::task::state_t::suspended);
+  EXPECT_EQ(HiCR::_currentTask, (HiCR::Task*)NULL);
 
   // A second run should resume the task
   EXPECT_NO_THROW(t.run());
+  EXPECT_EQ(t.getState(), HiCR::task::state_t::finished);
 
   // The task has now finished, so a third run should fail
   EXPECT_THROW(t.run(), HiCR::LogicException);
+}
+
+TEST(Task, Run)
+{
+  HiCR::Task t;
+
+  // TO-DO: Check _currentTask is correctly set from the event function
 }
 
 } // namespace
