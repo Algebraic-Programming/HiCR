@@ -18,7 +18,7 @@ namespace
 
 TEST(Task, Construction)
 {
-  HiCR::Task* t;
+  HiCR::Task *t;
   HiCR::taskFunction_t f;
 
   EXPECT_NO_THROW(t = new HiCR::Task(f, NULL));
@@ -51,10 +51,10 @@ TEST(Task, Run)
   bool hasCorrectTaskPointer = false;
 
   // Creating task function
-  auto f = [&hasRunningState, &hasCorrectTaskPointer](void* arg)
+  auto f = [&hasRunningState, &hasCorrectTaskPointer](void *arg)
   {
     // Recovering task's own pointer
-    HiCR::Task* t = (HiCR::Task*) arg;
+    HiCR::Task *t = (HiCR::Task *)arg;
 
     // Checking whether the state is correctly assigned
     if (t->getState() == HiCR::task::state_t::running) hasRunningState = true;
@@ -76,11 +76,11 @@ TEST(Task, Run)
   EXPECT_TRUE(hasRunningState);
   EXPECT_TRUE(hasCorrectTaskPointer);
   EXPECT_EQ(t.getState(), HiCR::task::state_t::suspended);
-  EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task*)NULL);
+  EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task *)NULL);
 
   // A second run should resume the task
   EXPECT_NO_THROW(t.run());
-  EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task*)NULL);
+  EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task *)NULL);
   EXPECT_EQ(t.getState(), HiCR::task::state_t::finished);
 
   // The task has now finished, so a third run should fail
@@ -89,80 +89,83 @@ TEST(Task, Run)
 
 TEST(Task, Events)
 {
- // Test flags
- bool onExecuteHasRun = false;
- bool onExecuteUpdated = false;
- bool onSuspendHasRun = false;
- bool onFinishHasRun = false;
+  // Test flags
+  bool onExecuteHasRun = false;
+  bool onExecuteUpdated = false;
+  bool onSuspendHasRun = false;
+  bool onFinishHasRun = false;
 
- // Creating callbacks
- auto onExecuteCallback = [&onExecuteHasRun](HiCR::Task* t) { onExecuteHasRun = true; };
- auto onSuspendCallback = [&onSuspendHasRun](HiCR::Task* t) { onSuspendHasRun = true; };
- auto onFinishCallback  = [&onFinishHasRun] (HiCR::Task* t) { onFinishHasRun = true; delete t ;};
+  // Creating callbacks
+  auto onExecuteCallback = [&onExecuteHasRun](HiCR::Task *t)
+  { onExecuteHasRun = true; };
+  auto onSuspendCallback = [&onSuspendHasRun](HiCR::Task *t)
+  { onSuspendHasRun = true; };
+  auto onFinishCallback = [&onFinishHasRun](HiCR::Task *t)
+  { onFinishHasRun = true; delete t ; };
 
- // Creating event map
- HiCR::taskEventMap_t eventMap;
+  // Creating event map
+  HiCR::taskEventMap_t eventMap;
 
- // Associating events to the map
- eventMap.setEvent(HiCR::task::event_t::onTaskExecute, onExecuteCallback);
- eventMap.setEvent(HiCR::task::event_t::onTaskSuspend, onSuspendCallback);
- eventMap.setEvent(HiCR::task::event_t::onTaskFinish,  onFinishCallback);
+  // Associating events to the map
+  eventMap.setEvent(HiCR::task::event_t::onTaskExecute, onExecuteCallback);
+  eventMap.setEvent(HiCR::task::event_t::onTaskSuspend, onSuspendCallback);
+  eventMap.setEvent(HiCR::task::event_t::onTaskFinish, onFinishCallback);
 
- // Creating task function
- auto f = [&onExecuteHasRun, &onExecuteUpdated](void* arg)
- {
-   // Recovering task's own pointer
-   HiCR::Task* t = (HiCR::Task*) arg;
+  // Creating task function
+  auto f = [&onExecuteHasRun, &onExecuteUpdated](void *arg)
+  {
+    // Recovering task's own pointer
+    HiCR::Task *t = (HiCR::Task *)arg;
 
-   // Checking on execute flag has updated correctly
-   if (onExecuteHasRun == true) onExecuteUpdated = true;
+    // Checking on execute flag has updated correctly
+    if (onExecuteHasRun == true) onExecuteUpdated = true;
 
-   // Yielding as many times as necessary
-   t->yield();
- };
+    // Yielding as many times as necessary
+    t->yield();
+  };
 
- // Creating a task without an event map to make sure the functions are not ran
- auto taskNoMap = new HiCR::Task(f);
+  // Creating a task without an event map to make sure the functions are not ran
+  auto taskNoMap = new HiCR::Task(f);
 
- // Setting function to run and argument
- taskNoMap->setArgument(taskNoMap);
+  // Setting function to run and argument
+  taskNoMap->setArgument(taskNoMap);
 
- // Launching task initially
- EXPECT_NO_THROW(taskNoMap->run());
- EXPECT_FALSE(onExecuteHasRun);
- EXPECT_FALSE(onExecuteUpdated);
- EXPECT_FALSE(onSuspendHasRun);
- EXPECT_FALSE(onFinishHasRun);
+  // Launching task initially
+  EXPECT_NO_THROW(taskNoMap->run());
+  EXPECT_FALSE(onExecuteHasRun);
+  EXPECT_FALSE(onExecuteUpdated);
+  EXPECT_FALSE(onSuspendHasRun);
+  EXPECT_FALSE(onFinishHasRun);
 
- // Resuming task
- EXPECT_NO_THROW(taskNoMap->run());
- EXPECT_FALSE(onFinishHasRun);
+  // Resuming task
+  EXPECT_NO_THROW(taskNoMap->run());
+  EXPECT_FALSE(onFinishHasRun);
 
- // Freeing memory
- EXPECT_NO_THROW(delete taskNoMap);
+  // Freeing memory
+  EXPECT_NO_THROW(delete taskNoMap);
 
- // Creating a task with an event map to make sure the functions are ran
- auto taskWithMap = new HiCR::Task(f);
+  // Creating a task with an event map to make sure the functions are ran
+  auto taskWithMap = new HiCR::Task(f);
 
- // Setting event map
- taskWithMap->setEventMap(&eventMap);
+  // Setting event map
+  taskWithMap->setEventMap(&eventMap);
 
- // Setting function to run and argument
- taskWithMap->setArgument(taskWithMap);
+  // Setting function to run and argument
+  taskWithMap->setArgument(taskWithMap);
 
- // Launching task initially
- EXPECT_NO_THROW(taskWithMap->run());
- EXPECT_TRUE(onExecuteHasRun);
- EXPECT_TRUE(onExecuteUpdated);
- EXPECT_TRUE(onSuspendHasRun);
- EXPECT_FALSE(onFinishHasRun);
+  // Launching task initially
+  EXPECT_NO_THROW(taskWithMap->run());
+  EXPECT_TRUE(onExecuteHasRun);
+  EXPECT_TRUE(onExecuteUpdated);
+  EXPECT_TRUE(onSuspendHasRun);
+  EXPECT_FALSE(onFinishHasRun);
 
- // Resuming task
- EXPECT_NO_THROW(taskWithMap->run());
- EXPECT_TRUE(onFinishHasRun);
+  // Resuming task
+  EXPECT_NO_THROW(taskWithMap->run());
+  EXPECT_TRUE(onFinishHasRun);
 
- // Attempting to re-free memory (should fail catastrophically)
- EXPECT_DEATH_IF_SUPPORTED(delete taskWithMap, "");
+  // Attempting to re-free memory (should fail catastrophically)
+  EXPECT_DEATH_IF_SUPPORTED(delete taskWithMap, "");
 }
 
 } // namespace

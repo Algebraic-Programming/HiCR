@@ -13,9 +13,9 @@
 #pragma once
 
 #include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/processingUnit.hpp>
-#include <hicr/common/exceptions.hpp>
 #include <hicr/task.hpp>
 #include <memory>
 #include <unistd.h>
@@ -222,7 +222,7 @@ class Worker
   {
     // Checking state
     if (_state != worker::terminating && _state != worker::running && _state != worker::suspended)
-     HICR_THROW_LOGIC("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
+      HICR_THROW_LOGIC("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
 
     // Wait for the resource to free up
     _processingUnits[0]->await();

@@ -13,9 +13,9 @@
 #pragma once
 #include <atomic>
 #include <hicr.hpp>
+#include <hicr/common/exceptions.hpp>
 #include <map>
 #include <mutex>
-#include <hicr/common/exceptions.hpp>
 #include <taskr/common.hpp>
 #include <taskr/task.hpp>
 
@@ -233,7 +233,7 @@ class Runtime
 
     // Free task's memory to prevent leaks. Could not use unique_ptr because the
     // type is not supported by boost's lock-free queue
-//    delete task;
+    //    delete task;
   }
 
   /**

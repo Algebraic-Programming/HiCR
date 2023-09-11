@@ -14,11 +14,11 @@
 
 #include <csignal>
 #include <fcntl.h>
+#include <hicr/common/exceptions.hpp>
+#include <hicr/processingUnit.hpp>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <hicr/common/exceptions.hpp>
-#include <hicr/processingUnit.hpp>
 
 namespace HiCR
 {

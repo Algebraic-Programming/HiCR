@@ -32,6 +32,8 @@ thread_local Task *_currentTask;
 
 /**
  * Function to return a pointer to the currently executing task from a global context
+ *
+ * @return A pointer to the current HiCR task, NULL if this function is called outside the context of a task run() function
  */
 __USED__ inline Task *getCurrentTask() { return _currentTask; }
 
@@ -40,10 +42,12 @@ __USED__ inline Task *getCurrentTask() { return _currentTask; }
  */
 typedef coroutineFc_t taskFunction_t;
 
-
 namespace task
 {
 
+/**
+ * Enumeration of possible task-related events that can trigger a user-defined function callback
+ */
 enum event_t
 {
   /**
@@ -118,7 +122,7 @@ class Task
    * @param[in] argument Specifies the argument to pass to the function.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(taskFunction_t fc, void* argument = NULL, taskEventMap_t* eventMap = NULL) : _argument(argument), _fc (fc), _eventMap (eventMap) {};
+  __USED__ Task(taskFunction_t fc, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _argument(argument), _fc(fc), _eventMap(eventMap){};
 
   /**
    * Sets the single argument (pointer) to the the task function
@@ -146,7 +150,7 @@ class Task
    *
    * @return A pointer to the task's an event map. NULL, if not defined.
    */
-  __USED__ inline taskEventMap_t* getEventMap() { return _eventMap; }
+  __USED__ inline taskEventMap_t *getEventMap() { return _eventMap; }
 
   /**
    * Queries the task's internal state.
@@ -182,16 +186,17 @@ class Task
     hasExecuted ? _coroutine.resume() : _coroutine.start(_fc, _argument);
 
     // If the task is suspended and event map is defined, trigger the corresponding event.
-    if (_state == task::state_t::suspended) if (_eventMap != NULL) _eventMap->trigger(this, task::event_t::onTaskSuspend);
+    if (_state == task::state_t::suspended)
+      if (_eventMap != NULL) _eventMap->trigger(this, task::event_t::onTaskSuspend);
 
     // If the task is still running (no suspension), then the task has fully finished executing
     if (_state == task::state_t::running)
     {
-     // Setting state as finished
-     _state = task::state_t::finished;
+      // Setting state as finished
+      _state = task::state_t::finished;
 
-     // Trigger the corresponding event, if the event map is defined. It is important that this function is called from outside the context of a task to allow the upper layer to free its memory upon finishing
-     if (_eventMap != NULL) _eventMap->trigger(this, task::event_t::onTaskFinish);
+      // Trigger the corresponding event, if the event map is defined. It is important that this function is called from outside the context of a task to allow the upper layer to free its memory upon finishing
+      if (_eventMap != NULL) _eventMap->trigger(this, task::event_t::onTaskFinish);
     }
 
     // Relenting current task pointer
