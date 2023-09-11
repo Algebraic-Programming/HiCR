@@ -33,7 +33,7 @@ thread_local Task *_currentTask;
 /**
  * Function to return a pointer to the currently executing task from a global context
  */
-__USED__ static inline Task *getCurrentTask() { return _currentTask; }
+__USED__ inline Task *getCurrentTask() { return _currentTask; }
 
 /**
  * Definition for a task function that supports lambda functions
@@ -108,19 +108,17 @@ class Task
 {
   public:
 
-  /**
-   * Sets the function that the task will execute.
-   *
-   * @param[in] fc Speficies the function to execute.
-   */
-  __USED__ inline void setFunction(taskFunction_t fc) { _fc = fc; }
+  Task() = delete;
+  ~Task() = default;
 
   /**
-   * Returns the function that was assigned to the task
+   * Constructor that sets the function that the task will execute and its argument.
    *
-   * @return The assigned function
+   * @param[in] fc Specifies the function to execute.
+   * @param[in] argument Specifies the argument to pass to the function.
+   * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ inline taskFunction_t getFunction() { return _fc; }
+  __USED__ Task(taskFunction_t fc, void* argument = NULL, taskEventMap_t* eventMap = NULL) : _argument(argument), _fc (fc), _eventMap (eventMap) {};
 
   /**
    * Sets the single argument (pointer) to the the task function
@@ -183,15 +181,17 @@ class Task
     // If this is the first time we execute this task, we create the new coroutine, otherwise resume the already created one
     hasExecuted ? _coroutine.resume() : _coroutine.start(_fc, _argument);
 
-    // If the state is still running (no suspension or yield), then the task has finished executing
-    if (_state == task::state_t::running) _state = task::state_t::finished;
+    // If the task is suspended and event map is defined, trigger the corresponding event.
+    if (_state == task::state_t::suspended) if (_eventMap != NULL) _eventMap->trigger(this, task::event_t::onTaskSuspend);
 
-    // Triggering events, if defined. It is important to trigger events from the worker context (this one) and not from the task.
-    if (_eventMap != NULL) switch (_state)
+    // If the task is still running (no suspension), then the task has fully finished executing
+    if (_state == task::state_t::running)
     {
-    case task::state_t::finished: _eventMap->trigger(this, task::event_t::onTaskFinish); break;
-    case task::state_t::suspended: _eventMap->trigger(this, task::event_t::onTaskSuspend); break;
-    default: HICR_THROW_FATAL("Event map is defined but the task is in an unsupported state: %u\n", _state); break;
+     // Setting state as finished
+     _state = task::state_t::finished;
+
+     // Trigger the corresponding event, if the event map is defined. It is important that this function is called from outside the context of a task to allow the upper layer to free its memory upon finishing
+     if (_eventMap != NULL) _eventMap->trigger(this, task::event_t::onTaskFinish);
     }
 
     // Relenting current task pointer

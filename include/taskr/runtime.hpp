@@ -233,7 +233,7 @@ class Runtime
 
     // Free task's memory to prevent leaks. Could not use unique_ptr because the
     // type is not supported by boost's lock-free queue
-    delete task;
+//    delete task;
   }
 
   /**

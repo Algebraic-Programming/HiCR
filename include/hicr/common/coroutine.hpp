@@ -64,7 +64,7 @@ class Coroutine
    * \param[in] fc Function to run by the coroutine
    * \param[in] arg Argument to pass to the function
    */
-  __USED__ inline void start(coroutineFc_t &fc, void *arg)
+  __USED__ inline void start(coroutineFc_t fc, void *arg)
   {
     const auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
     {

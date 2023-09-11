@@ -52,12 +52,9 @@ class Task
    * \param[in] label A user-defined unique identifier for the task. It is required for dependency management
    * \param[in] fc A user-defined function to run
    */
-  __USED__ inline Task(const taskLabel_t label, const callback_t &fc) : _label(label)
-  {
-    _hicrTask.setFunction([fc](void *arg)
-                          { fc(); });
-    _hicrTask.setArgument(this);
-  }
+  __USED__ inline Task(const taskLabel_t label, const callback_t &fc) :
+           _hicrTask(HiCR::Task([fc](void *arg) { fc(); }, this)),
+           _label(label) { }
 
   /**
    * Returns the underlying HiCR task
