@@ -33,7 +33,6 @@ typedef std::vector<std::unique_ptr<ProcessingUnit>> processingUnitList_t;
  */
 typedef std::set<Dispatcher *> dispatcherSet_t;
 
-
 class Worker;
 
 /**

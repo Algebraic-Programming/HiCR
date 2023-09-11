@@ -11,25 +11,28 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/task.hpp>
 #include <hicr/dispatcher.hpp>
+#include <hicr/task.hpp>
 
 TEST(Dispatcher, Construction)
 {
- // Creating by context
- EXPECT_NO_THROW(HiCR::Dispatcher([]() { return (HiCR::Task*)NULL; }));
+  // Creating by context
+  EXPECT_NO_THROW(HiCR::Dispatcher([]()
+                                   { return (HiCR::Task *)NULL; }));
 
- // Creating by new
- HiCR::Dispatcher* d;
- EXPECT_NO_THROW(d = new HiCR::Dispatcher([]() { return (HiCR::Task*)NULL; }));
- delete d;
+  // Creating by new
+  HiCR::Dispatcher *d = NULL;
+  EXPECT_NO_THROW(d = new HiCR::Dispatcher([]()
+                                           { return (HiCR::Task *)NULL; }));
+  delete d;
 }
 
 TEST(Dispatcher, Pull)
 {
- HiCR::Dispatcher d([]() { return (HiCR::Task*)NULL; });
+  HiCR::Dispatcher d([]()
+                     { return (HiCR::Task *)NULL; });
 
- HiCR::Task* t;
- EXPECT_NO_THROW(t = d.pull());
- EXPECT_EQ(t, (HiCR::Task*)NULL);
+  HiCR::Task *t;
+  EXPECT_NO_THROW(t = d.pull());
+  EXPECT_EQ(t, (HiCR::Task *)NULL);
 }

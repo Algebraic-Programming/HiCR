@@ -33,7 +33,8 @@ TEST(Task, SetterAndGetters)
   EXPECT_TRUE(w.getDispatchers().empty());
 
   // Now adding something to the lists/sets
-  auto d = HiCR::Dispatcher([]() { return (HiCR::Task*)NULL; });
+  auto d = HiCR::Dispatcher([]()
+                            { return (HiCR::Task *)NULL; });
 
   // Subscribing worker to dispatcher
   w.subscribe(&d);
