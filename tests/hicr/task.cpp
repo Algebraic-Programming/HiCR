@@ -138,6 +138,9 @@ TEST(Task, Events)
  EXPECT_NO_THROW(taskNoMap->run());
  EXPECT_FALSE(onFinishHasRun);
 
+ // Freeing memory
+ EXPECT_NO_THROW(delete taskNoMap);
+
  // Creating a task with an event map to make sure the functions are ran
  auto taskWithMap = new HiCR::Task(f);
 
