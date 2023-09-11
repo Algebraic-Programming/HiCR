@@ -28,6 +28,12 @@ namespace HiCR
  */
 typedef std::vector<std::unique_ptr<ProcessingUnit>> processingUnitList_t;
 
+/**
+ * Type definition for the set of dispatchers a worker is subscribed to
+ */
+typedef std::set<Dispatcher *> dispatcherSet_t;
+
+
 class Worker;
 
 /**
@@ -103,7 +109,7 @@ class Worker
   /**
    * Dispatchers that this resource is subscribed to
    */
-  std::set<Dispatcher *> _dispatchers;
+  dispatcherSet_t _dispatchers;
 
   /**
    * Group of resources the worker can freely use
@@ -263,7 +269,7 @@ class Worker
    *
    * @return A container with the worker's subscribed dispatchers
    */
-  __USED__ inline std::set<Dispatcher *> &getDispatchers() { return _dispatchers; }
+  __USED__ inline dispatcherSet_t &getDispatchers() { return _dispatchers; }
 };
 
 } // namespace HiCR

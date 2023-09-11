@@ -27,6 +27,40 @@ TEST(Worker, Construction)
   EXPECT_EXIT({ delete w; fprintf(stderr, "Delete worked"); exit(0); }, ::testing::ExitedWithCode(0), "Delete worked");
 }
 
+TEST(Task, SetterAndGetters)
+{
+  HiCR::Worker w;
+
+  // Getting empty lists
+  EXPECT_TRUE(w.getProcessingUnits().empty());
+  EXPECT_TRUE(w.getDispatchers().empty());
+
+  // Now adding something to the lists/sets
+  auto d = HiCR::Dispatcher([]() { return (HiCR::Task*)NULL; });
+
+  // Subscribing worker to dispatcher
+  w.subscribe(&d);
+
+  // Creating sequential backend
+  HiCR::backend::sequential::Sequential backend;
+
+  // Querying backend for its resources
+  backend.queryResources();
+
+  // Gathering compute resources from backend
+  auto computeResources = backend.getComputeResourceList();
+
+  // Creating processing unit from resource
+  auto processingUnit = backend.createProcessingUnit(computeResources[0]);
+
+  // Assigning processing unit to worker
+  w.addProcessingUnit(processingUnit);
+
+  // Getting filled lists
+  EXPECT_FALSE(w.getProcessingUnits().empty());
+  EXPECT_FALSE(w.getDispatchers().empty());
+}
+
 TEST(Worker, LifeCycle)
 {
   HiCR::Worker w;
