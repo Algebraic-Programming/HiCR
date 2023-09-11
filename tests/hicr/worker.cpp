@@ -77,7 +77,7 @@ TEST(Worker, LifeCycle)
   bool runningStateFound = false;
 
   // Creating task function
-  auto f = [&runningStateFound](void* arg)
+  auto f = [&runningStateFound](void *arg)
   {
     // Getting worker pointer
     auto w = HiCR::getCurrentWorker();
@@ -89,8 +89,8 @@ TEST(Worker, LifeCycle)
     if (w->getState() == HiCR::worker::state_t::running) runningStateFound = true;
 
     // suspending worker and yielding task
-     w->suspend();
-     t->yield();
+    w->suspend();
+    t->yield();
 
     // Terminating worker and yielding task
     w->terminate();
@@ -101,7 +101,8 @@ TEST(Worker, LifeCycle)
   HiCR::Task t(f);
 
   // Creating task dispatcher
-  auto d = HiCR::Dispatcher([&t]() { return &t; });
+  auto d = HiCR::Dispatcher([&t]()
+                            { return &t; });
 
   // Suscribing worker to dispatcher
   EXPECT_NO_THROW(w.subscribe(&d));

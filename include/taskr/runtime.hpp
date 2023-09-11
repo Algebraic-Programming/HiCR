@@ -154,7 +154,7 @@ class Runtime
       // If the new maximum is higher than the number of active workers, we need
       // to re-awaken some of them
       while ((_maximumActiveWorkers == 0 ||
-        (ssize_t)_maximumActiveWorkers > _activeWorkerCount) &&
+              (ssize_t)_maximumActiveWorkers > _activeWorkerCount) &&
              _suspendedWorkerQueue.was_size() > 0)
       {
         // Pointer to the worker to wake up
@@ -253,10 +253,10 @@ class Runtime
     // If all tasks finished, then terminate execution immediately
     if (_taskCount == 0)
     {
-     // Getting a pointer to the currently executing worker
-     auto worker = HiCR::getCurrentWorker();
+      // Getting a pointer to the currently executing worker
+      auto worker = HiCR::getCurrentWorker();
 
-     // Terminating worker. The function will not execute further
+      // Terminating worker. The function will not execute further
       worker->terminate();
     }
 

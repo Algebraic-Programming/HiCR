@@ -153,12 +153,11 @@ class Worker
    */
   __USED__ inline void initialize()
   {
+    // Checking we have at least one assigned resource
+    if (_processingUnits.empty()) HICR_THROW_LOGIC("Attempting to initialize worker without any assigned resources");
 
-   // Checking we have at least one assigned resource
-   if (_processingUnits.empty()) HICR_THROW_LOGIC("Attempting to initialize worker without any assigned resources");
-
-   // Checking state
-   if (_state != worker::uninitialized) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
+    // Checking state
+    if (_state != worker::uninitialized) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
 
     // Initializing all resources
     for (auto &r : _processingUnits) r->initialize();
@@ -172,8 +171,8 @@ class Worker
    */
   __USED__ inline void start()
   {
-   // Checking state
-   if (_state != worker::ready) HICR_THROW_RUNTIME("Attempting to start worker that is not in the 'initialized' state");
+    // Checking state
+    if (_state != worker::ready) HICR_THROW_RUNTIME("Attempting to start worker that is not in the 'initialized' state");
 
     // Transitioning state
     _state = worker::running;
@@ -229,7 +228,7 @@ class Worker
   {
     // Checking state
     if (_state != worker::terminating && _state != worker::running && _state != worker::suspended)
-     HICR_THROW_RUNTIME("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
+      HICR_THROW_RUNTIME("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
 
     // Wait for the resource to free up
     _processingUnits[0]->await();

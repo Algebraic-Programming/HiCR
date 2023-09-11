@@ -34,9 +34,9 @@ class Process final : public ProcessingUnit
 {
   private:
 
- /**
-  * Coroutine to handle suspend/resume functionality
-  */
+  /**
+   * Coroutine to handle suspend/resume functionality
+   */
   Coroutine _coroutine;
 
   public:
@@ -50,38 +50,40 @@ class Process final : public ProcessingUnit
 
   __USED__ inline void initialize() override
   {
-   // Nothing to do for initialize
-  return;
+    // Nothing to do for initialize
+    return;
   }
 
   __USED__ inline void suspend() override
   {
-   // Yielding execution
-   _coroutine.yield();
+    // Yielding execution
+    _coroutine.yield();
   }
 
   __USED__ inline void resume() override
   {
-   // Resume coroutine
-  _coroutine.resume();
+    // Resume coroutine
+    _coroutine.resume();
   }
 
   __USED__ inline void run(processingUnitFc_t fc) override
   {
     // Calling function in the context of a suspendable coroutine
-   _coroutine.start([fc](void* arg){ fc(); }, NULL);
+    _coroutine.start([fc](void *arg)
+                     { fc(); },
+                     NULL);
   }
 
   __USED__ inline void finalize() override
   {
-   // Nothing to do for finalize
-  return;
+    // Nothing to do for finalize
+    return;
   }
 
   __USED__ inline void await() override
   {
     // Nothing to do for await
-   return;
+    return;
   }
 };
 
