@@ -15,9 +15,6 @@
 #include <hicr/task.hpp>
 #include <hicr/worker.hpp>
 
-namespace
-{
-
 TEST(Worker, Construction)
 {
   HiCR::Worker *w = NULL;
@@ -164,5 +161,3 @@ TEST(Worker, LifeCycle)
   // Checking the worker is terminated
   EXPECT_EQ(w.getState(), HiCR::worker::state_t::terminated);
 }
-
-} // namespace

@@ -13,9 +13,6 @@
 #include "gtest/gtest.h"
 #include <hicr/task.hpp>
 
-namespace
-{
-
 TEST(Task, Construction)
 {
   HiCR::Task *t = NULL;
@@ -167,5 +164,3 @@ TEST(Task, Events)
   // Attempting to re-free memory (should fail catastrophically)
   EXPECT_DEATH_IF_SUPPORTED(delete taskWithMap, "");
 }
-
-} // namespace
