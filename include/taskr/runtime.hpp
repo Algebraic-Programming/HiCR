@@ -256,8 +256,11 @@ class Runtime
       // Getting a pointer to the currently executing worker
       auto worker = HiCR::getCurrentWorker();
 
-      // Terminating worker. The function will not execute further
+      // Terminating worker.
       worker->terminate();
+
+      // Returning a NULL function
+      return NULL;
     }
 
     // If maximum active workers is defined, then check if the threshold is exceeded

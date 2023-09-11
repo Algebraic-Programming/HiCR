@@ -44,7 +44,7 @@ class Process final : public ProcessingUnit
   /**
    * Constructor for the Process class
    *
-   * \param core Represents the core affinity to associate this processing unit to
+   * \param process An id for the process (should be zero)
    */
   __USED__ inline Process(computeResourceId_t process) : ProcessingUnit(process){};
 
