@@ -160,6 +160,9 @@ TEST(Task, Events)
  // Resuming task
  EXPECT_NO_THROW(taskWithMap->run());
  EXPECT_TRUE(onFinishHasRun);
+
+ // Attempting to re-free memory (should fail catastrophically)
+ EXPECT_DEATH_IF_SUPPORTED(delete taskWithMap, "");
 }
 
 } // namespace
