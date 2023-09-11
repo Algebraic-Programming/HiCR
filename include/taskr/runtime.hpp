@@ -76,9 +76,9 @@ class Runtime
 
   /**
    * User-defined maximum active worker count. Required for the max active workers mechanism
-   * A negative value indicates that there is no limitation to the maximum active worker count.
+   * A zero value indicates that there is no limitation to the maximum active worker count.
    */
-  ssize_t _maximumActiveWorkers = -1;
+  size_t _maximumActiveWorkers = 0;
 
   /**
    * Keeps track of the currently active worker count. Required for the max active workers mechanism
@@ -119,18 +119,19 @@ class Runtime
    * It will put any calling worker to sleep if the number of active workers exceed the maximum.
    * If the number of active workers is smaller than the maximum, it will try to 'wake up' other suspended workers, if any,
    * until the maximum is reached again.
-   *
-   * \param[in] worker A pointer to the caller worker. This is necessary for calling the worker's own suspend function.
    */
-  __USED__ inline void checkMaximumActiveWorkerCount(HiCR::Worker *worker)
+  __USED__ inline void checkMaximumActiveWorkerCount()
   {
+    // Getting a pointer to the currently executing worker
+    auto worker = HiCR::getCurrentWorker();
+
     // Try to get the active worker queue lock, otherwise keep going
     if (_activeWorkerQueueLock.try_lock())
     {
       // If the number of workers exceeds that of maximum active workers,
       // suspend current worker
       if (_maximumActiveWorkers > 0 &&
-          _activeWorkerCount > _maximumActiveWorkers)
+          _activeWorkerCount > (ssize_t)_maximumActiveWorkers)
       {
         // Adding worker to the queue
         _suspendedWorkerQueue.push(worker);
@@ -152,8 +153,8 @@ class Runtime
 
       // If the new maximum is higher than the number of active workers, we need
       // to re-awaken some of them
-      while ((_maximumActiveWorkers <= 0 ||
-              _maximumActiveWorkers > _activeWorkerCount) &&
+      while ((_maximumActiveWorkers == 0 ||
+        (ssize_t)_maximumActiveWorkers > _activeWorkerCount) &&
              _suspendedWorkerQueue.was_size() > 0)
       {
         // Pointer to the worker to wake up
@@ -190,7 +191,7 @@ class Runtime
    *
    * \param[in] max The desired number of maximum workers. A non-positive value means that there is no limit.
    */
-  __USED__ inline void setMaximumActiveWorkers(const ssize_t max)
+  __USED__ inline void setMaximumActiveWorkers(const size_t max)
   {
     // Storing new maximum active worker count
     _runtime->_maximumActiveWorkers = max;
@@ -233,7 +234,7 @@ class Runtime
 
     // Free task's memory to prevent leaks. Could not use unique_ptr because the
     // type is not supported by boost's lock-free queue
-    //    delete task;
+    delete task;
   }
 
   /**
@@ -242,10 +243,9 @@ class Runtime
    * Otherwise, it finds a task in the waiting queue and checks its dependencies. If the task is ready to go, it runs it.
    * If no tasks are ready to go, it returns a NULL, which encodes -No Task-.
    *
-   * \param[in] worker Pointer to the caller worker, necessary to obtain information about the current worker and possibly suspend it.
    * \return A pointer to a HiCR task to execute. NULL if there are no pending tasks.
    */
-  __USED__ inline HiCR::Task *checkWaitingTasks(HiCR::Worker *worker)
+  __USED__ inline HiCR::Task *checkWaitingTasks()
   {
     // Pointer to the next task to execute
     Task *task;
@@ -253,13 +253,15 @@ class Runtime
     // If all tasks finished, then terminate execution immediately
     if (_taskCount == 0)
     {
+     // Getting a pointer to the currently executing worker
+     auto worker = HiCR::getCurrentWorker();
+
+     // Terminating worker. The function will not execute further
       worker->terminate();
-      return NULL;
     }
 
-    // If maximum active workers is defined, then check if the threshold is
-    // exceeded
-    checkMaximumActiveWorkerCount(worker);
+    // If maximum active workers is defined, then check if the threshold is exceeded
+    checkMaximumActiveWorkerCount();
 
     // Poping next task from the lock-free queue
     bool foundTask = _waitingTaskQueue.try_pop(task);
@@ -297,8 +299,8 @@ class Runtime
    */
   __USED__ inline void run(const HiCR::computeResourceList_t &computeResourceList)
   {
-    _dispatcher = new HiCR::Dispatcher([this](HiCR::Worker *worker)
-                                       { return checkWaitingTasks(worker); });
+    _dispatcher = new HiCR::Dispatcher([this]()
+                                       { return checkWaitingTasks(); });
     _eventMap = new HiCR::taskEventMap_t();
 
     // Creating event map ands events

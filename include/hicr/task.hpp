@@ -168,7 +168,7 @@ class Task
    */
   __USED__ inline void run()
   {
-    if (_state != task::state_t::initialized && _state != task::state_t::suspended) HICR_THROW_LOGIC("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", _state);
+    if (_state != task::state_t::initialized && _state != task::state_t::suspended) HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", _state);
 
     // Also map task pointer to the running thread it into static storage for global access.
     _currentTask = this;
@@ -208,7 +208,7 @@ class Task
    */
   __USED__ inline void yield()
   {
-    if (_state != task::state_t::running) HICR_THROW_LOGIC("Attempting to yield a task that is not in a running state (State: %d).\n", _state);
+    if (_state != task::state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", _state);
 
     // Since this function is public, it can be called from anywhere in the code. However, we need to make sure on rutime that the context belongs to the task itself.
     if (getCurrentTask() != this) HICR_THROW_RUNTIME("Attempting to yield a task from a context that is not its own.\n");
