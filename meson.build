@@ -8,6 +8,7 @@ project('HiCR', [ 'cpp' ],
 # Including dependencies
 subdir('include/hicr')
 subdir('include/taskr')
+subdir('include/hicr/backends/sequential')    
 subdir('include/hicr/backends/sharedMemory')    
     
 # Build example targets

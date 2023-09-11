@@ -4,23 +4,20 @@
  */
 
 /**
- * @file sharedMemory.hpp
- * @brief This is a minimal backend for shared memory multi-core support based on HWLoc and Pthreads
+ * @file sequential.hpp
+ * @brief This is a minimal backend for sequential execution support
  * @author S. M. Martin
- * @date 14/8/2023
+ * @date 11/9/2023
  */
 
 #pragma once
 
 #include <cstring>
-#include <errno.h>
 #include <future>
-#include <memory>
-
-#include "hwloc.h"
+#include <stdio.h>
 
 #include <hicr/backend.hpp>
-#include <hicr/backends/sharedMemory/thread.hpp>
+#include <hicr/backends/sequential/process.hpp>
 
 namespace HiCR
 {
@@ -28,11 +25,11 @@ namespace HiCR
 namespace backend
 {
 
-namespace sharedMemory
+namespace sequential
 {
 
 /**
- * Internal representation of a memory slot for the shared memory backend
+ * Internal representation of a memory slot for the sequential backend
  */
 struct memorySlotStruct_t
 {
@@ -48,11 +45,11 @@ struct memorySlotStruct_t
 };
 
 /**
- * Implementation of the SharedMemory/HWloc-based HiCR Shared Memory Backend.
+ * Implementation of the HiCR Sequential backend
  *
- * It detects and returns the processing units and memory spaces detected by the HWLoc library, and instantiates the former as SharedMemory and the latter as MemorySpace descriptors. It also detects their connectivity.
+ * This backend is very useful for testing other HiCR modules in isolation (unit tests) without involving the use of threading, which might incur side-effects
  */
-class SharedMemory final : public Backend
+class Sequential final : public Backend
 {
   private:
 
@@ -73,50 +70,34 @@ class SharedMemory final : public Backend
   std::multimap<uint64_t, std::future<void>> deferredFuncs;
 
   /**
-   * Local processor and memory hierarchy topology, as detected by Hwloc
+   * This function returns the system physical memory size, which is what matters for a sequential program
+   *
+   * This is adapted from https://stackoverflow.com/a/2513561
    */
-  hwloc_topology_t _topology;
+  size_t getTotalSystemMemory()
+  {
+   size_t pages = sysconf(_SC_PHYS_PAGES);
+   size_t page_size = sysconf(_SC_PAGE_SIZE);
+   return pages * page_size;
+  }
 
   public:
-
-  /**
-   * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
-   *
-   * \param[in] topology An HWLoc topology object, already initialized
-   * \param[in] obj The root HWLoc object for the start of the exploration tree at every recursion level
-   * \param[in] depth Stores the current exploration depth level, necessary to return only the processing units at the leaf level
-   * \param[out] threadPUs Storage for the found procesing units
-   */
-  __USED__ inline static void getThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
-  {
-    if (obj->arity == 0) threadPUs.push_back(obj->os_index);
-    for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
-  }
 
   /**
    * Pthread implementation of the Backend queryResources() function. This will add one resource object per found Thread / Processing Unit (PU)
    */
   __USED__ inline void queryResources() override
   {
-    hwloc_topology_init(&_topology);
-    hwloc_topology_load(_topology);
+    // Only a single processing unit is created
+    _computeResourceList = computeResourceList_t({0});
 
-    // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
-    std::vector<int> threadPUs;
-    getThreadPUs(_topology, hwloc_get_root_obj(_topology), 0, threadPUs);
-    _computeResourceList.assign(threadPUs.begin(), threadPUs.end());
-
-    /* Ask hwloc about number of NUMA nodes
-     * and add as many memory spaces as NUMA domains
-     */
-    _memorySpaceList.clear();
-    auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
-    for (int i = 0; i < n; i++) _memorySpaceList.push_back(i);
+    // Only a single memory space is created
+    _memorySpaceList = memorySpaceList_t({0});
   }
 
   __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const override
   {
-    return std::move(std::make_unique<Thread>(resource));
+    return std::move(std::make_unique<Process>(resource));
   }
 
   __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
@@ -147,7 +128,7 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Allocates memory in the current memory space (NUMA domain)
+   * Allocates memory in the current memory space (whole system)
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
@@ -157,8 +138,7 @@ class SharedMemory final : public Backend
    */
   __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpace, const size_t size) override
   {
-    hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
-    auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET);
+    auto ptr = malloc(size);
     auto tag = _currentTagId++;
     _slotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
     return tag;
@@ -185,7 +165,7 @@ class SharedMemory final : public Backend
   __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
   {
     const auto slot = _slotMap.at(memorySlotId);
-    hwloc_free(_topology, slot.pointer, slot.size);
+    free(slot.pointer);
     _slotMap.erase(memorySlotId);
   }
 
@@ -212,6 +192,6 @@ class SharedMemory final : public Backend
   }
 };
 
-} // namespace sharedMemory
+} // namespace sequential
 } // namespace backend
 } // namespace HiCR
