@@ -18,12 +18,12 @@ namespace
 
 TEST(Task, Construction)
 {
-  HiCR::Task *t;
+  HiCR::Task *t = NULL;
   HiCR::taskFunction_t f;
 
   EXPECT_NO_THROW(t = new HiCR::Task(f, NULL));
   EXPECT_FALSE(t == nullptr);
-  EXPECT_NO_THROW(delete t);
+  EXPECT_EXIT({ delete t; fprintf(stderr, "Delete worked"); exit(0); }, ::testing::ExitedWithCode(0), "Delete worked");
 }
 
 TEST(Task, SetterAndGetters)
@@ -142,7 +142,7 @@ TEST(Task, Events)
   EXPECT_FALSE(onFinishHasRun);
 
   // Freeing memory
-  EXPECT_NO_THROW(delete taskNoMap);
+  EXPECT_EXIT({ delete taskNoMap; fprintf(stderr, "Delete worked"); exit(0); }, ::testing::ExitedWithCode(0), "Delete worked");
 
   // Creating a task with an event map to make sure the functions are ran
   auto taskWithMap = new HiCR::Task(f);
