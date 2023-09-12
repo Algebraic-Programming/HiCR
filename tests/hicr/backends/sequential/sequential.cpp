@@ -54,6 +54,7 @@ TEST(Sequential, Memory)
   // Allocating memory correctly now
   HiCR::memorySlotId_t s1 = 0;
   EXPECT_NO_THROW(s1 = b.allocateMemorySlot(r, testMemAllocSize));
+  EXPECT_EQ(b.getMemorySlotSize(s1), testMemAllocSize);
 
   // Getting local pointer from allocation
   void* s1LocalPtr = NULL;
@@ -63,6 +64,7 @@ TEST(Sequential, Memory)
   // Creating memory slot from a previous allocation
   HiCR::memorySlotId_t s2 = 0;
   EXPECT_NO_THROW(s2 = b.createMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
+  EXPECT_EQ(b.getMemorySlotSize(s2), testMemAllocSize);
 
   // Getting local pointer from allocation
   void* s2LocalPtr = NULL;

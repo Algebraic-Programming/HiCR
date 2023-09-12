@@ -114,7 +114,7 @@ class Sequential final : public Backend
     const auto srcSlot = _slotMap.at(source);
     const auto dstSlot = _slotMap.at(destination);
 
-    if (srcSlot.pointer == NULL || dstSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu -> %lu) provided in  memcpy. It either does not exit or represents a NULL pointer.", srcSlot, dstSlot);
+    if (srcSlot.pointer == NULL || dstSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu -> %lu) provided in  memcpy. It either does not exit or represents a NULL pointer.", source, destination);
 
     std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)  { std::memcpy(dst, src, size); };
     std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
@@ -177,8 +177,12 @@ class Sequential final : public Backend
    */
   __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
   {
-    const auto slot = _slotMap.at(memorySlotId);
-    free(slot.pointer);
+   const auto& memSlot = _slotMap.at(memorySlotId);
+
+   if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+
+    free(memSlot.pointer);
+
     _slotMap.erase(memorySlotId);
   }
 
@@ -190,7 +194,11 @@ class Sequential final : public Backend
    */
   __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
   {
-    return _slotMap.at(memorySlotId).pointer;
+   const auto& memSlot = _slotMap.at(memorySlotId);
+
+   if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+
+   return memSlot.pointer;
   }
 
   /**
@@ -201,7 +209,11 @@ class Sequential final : public Backend
    */
   __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
   {
-    return _slotMap.at(memorySlotId).size;
+   const auto& memSlot = _slotMap.at(memorySlotId);
+
+   if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+
+   return memSlot.size;
   }
 
   /**
