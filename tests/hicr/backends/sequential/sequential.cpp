@@ -5,7 +5,7 @@
 
 /**
  * @file worker.cpp
- * @brief Unit tests for the worker class
+ * @brief Unit tests for the sequential backend class
  * @author S. M. Martin
  * @date 11/9/2023
  */

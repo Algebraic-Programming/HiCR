@@ -48,25 +48,25 @@ class Process final : public ProcessingUnit
    */
   __USED__ inline Process(computeResourceId_t process) : ProcessingUnit(process){};
 
-  __USED__ inline void initialize() override
+  __USED__ inline void initializeImpl() override
   {
     // Nothing to do for initialize
     return;
   }
 
-  __USED__ inline void suspend() override
+  __USED__ inline void suspendImpl() override
   {
     // Yielding execution
     _coroutine.yield();
   }
 
-  __USED__ inline void resume() override
+  __USED__ inline void resumeImpl() override
   {
     // Resume coroutine
     _coroutine.resume();
   }
 
-  __USED__ inline void run(processingUnitFc_t fc) override
+  __USED__ inline void startImpl(processingUnitFc_t fc) override
   {
     // Calling function in the context of a suspendable coroutine
     _coroutine.start([fc](void *arg)
@@ -74,13 +74,13 @@ class Process final : public ProcessingUnit
                      NULL);
   }
 
-  __USED__ inline void finalize() override
+  __USED__ inline void terminateImpl() override
   {
-    // Nothing to do for finalize
+    // Nothing to do for terminate
     return;
   }
 
-  __USED__ inline void await() override
+  __USED__ inline void awaitImpl() override
   {
     // Nothing to do for await
     return;

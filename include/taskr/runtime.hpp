@@ -354,10 +354,6 @@ class Runtime
     // Waiting for workers to finish
     for (auto &w : _workers) w->await();
 
-    // Finalizing resources
-    for (auto &w : _workers)
-      for (auto &p : w->getProcessingUnits()) p->finalize();
-
     // Clearing created objects
     for (auto &w : _workers) delete w;
     _workers.clear();

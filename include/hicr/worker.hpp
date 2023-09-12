@@ -162,7 +162,7 @@ class Worker
     if (_processingUnits.empty()) HICR_THROW_LOGIC("Attempting to initialize worker without any assigned resources");
 
     // Checking state
-    if (_state != worker::uninitialized) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
+    if (_state != worker::uninitialized && _state != worker::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
 
     // Initializing all resources
     for (auto &r : _processingUnits) r->initialize();
@@ -183,7 +183,7 @@ class Worker
     _state = worker::running;
 
     // Launching worker in the lead resource (first one to be added)
-    _processingUnits[0]->run([this]()
+    _processingUnits[0]->start([this]()
                              { this->mainLoop(); });
   }
 
@@ -222,6 +222,9 @@ class Worker
     // Checking state
     if (_state != worker::running) HICR_THROW_RUNTIME("Attempting to stop worker that is not in the 'running' state");
 
+    // Requesting processing units to terminate as soon as possible
+    for (auto& p : _processingUnits) p->terminate();
+
     // Transitioning state
     _state = worker::terminating;
   }
@@ -235,8 +238,8 @@ class Worker
     if (_state != worker::terminating && _state != worker::running && _state != worker::suspended)
       HICR_THROW_RUNTIME("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
 
-    // Wait for the resource to free up
-    _processingUnits[0]->await();
+    // Wait for the resources to free up
+    for (auto& p : _processingUnits) p->await();
 
     // Transitioning state
     _state = worker::terminated;

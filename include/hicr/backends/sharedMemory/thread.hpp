@@ -44,6 +44,11 @@ class Thread final : public ProcessingUnit
   pthread_t _pthreadId;
 
   /**
+   * Copy of the function to be ran by the thread
+   */
+  processingUnitFc_t _fc;
+
+  /**
    * Static wrapper function to setup affinity and run the thread's function
    *
    * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
@@ -106,11 +111,11 @@ class Thread final : public ProcessingUnit
    */
   __USED__ inline Thread(computeResourceId_t core) : ProcessingUnit(core){};
 
-  __USED__ inline void initialize() override
+  __USED__ inline void initializeImpl() override
   {
   }
 
-  __USED__ inline void suspend() override
+  __USED__ inline void suspendImpl() override
   {
     int status = 0;
     int signalSet;
@@ -125,13 +130,13 @@ class Thread final : public ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void resume() override
+  __USED__ inline void resumeImpl() override
   {
     auto status = pthread_kill(_pthreadId, SIGUSR1);
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void run(processingUnitFc_t fc) override
+  __USED__ inline void startImpl(processingUnitFc_t fc) override
   {
     // Making a copy of the function
     _fc = fc;
@@ -141,11 +146,11 @@ class Thread final : public ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void finalize() override
+  __USED__ inline void terminateImpl() override
   {
   }
 
-  __USED__ inline void await() override
+  __USED__ inline void awaitImpl() override
   {
     // Waiting for thread after execution
     pthread_join(_pthreadId, NULL);
