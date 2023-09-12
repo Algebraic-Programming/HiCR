@@ -81,6 +81,11 @@ class Sequential final : public Backend
     return pages * page_size;
   }
 
+  /**
+   * This stores the total system memory to check that allocations do not exceed it
+   */
+  size_t _totalSystemMem = 0;
+
   public:
 
   /**
@@ -88,8 +93,12 @@ class Sequential final : public Backend
    */
   __USED__ inline void queryResources() override
   {
+
     // Only a single processing unit is created
     _computeResourceList = computeResourceList_t({0});
+
+    // Getting total system memory
+    _totalSystemMem = getTotalSystemMemory();
 
     // Only a single memory space is created
     _memorySpaceList = memorySpaceList_t({0});
@@ -102,10 +111,12 @@ class Sequential final : public Backend
 
   __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
-    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
-    { std::memcpy(dst, src, size); };
     const auto srcSlot = _slotMap.at(source);
     const auto dstSlot = _slotMap.at(destination);
+
+    if (srcSlot.pointer == NULL || dstSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu -> %lu) provided in  memcpy. It either does not exit or represents a NULL pointer.", srcSlot, dstSlot);
+
+    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)  { std::memcpy(dst, src, size); };
     std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
     deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
   }
@@ -138,6 +149,8 @@ class Sequential final : public Backend
    */
   __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpace, const size_t size) override
   {
+    if (size > _totalSystemMem) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, _totalSystemMem);
+
     auto ptr = malloc(size);
     auto tag = _currentTagId++;
     _slotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
@@ -189,6 +202,18 @@ class Sequential final : public Backend
   __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
   {
     return _slotMap.at(memorySlotId).size;
+  }
+
+  /**
+   * This function returns the available allocatable size in the current system RAM
+   *
+   * @param[in] memorySpace Always zero, represents the system's RAM
+   * @return The allocatable size within the system
+   */
+  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const override
+  {
+   if (memorySpace != 0) HICR_THROW_LOGIC("Only memory space zero is usable in the sequential backend");
+   return _totalSystemMem;
   }
 };
 

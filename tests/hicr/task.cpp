@@ -20,7 +20,7 @@ TEST(Task, Construction)
 
   EXPECT_NO_THROW(t = new HiCR::Task(f, NULL));
   EXPECT_FALSE(t == nullptr);
-  EXPECT_EXIT({ delete t; fprintf(stderr, "Delete worked"); exit(0); }, ::testing::ExitedWithCode(0), "Delete worked");
+  delete t;
 }
 
 TEST(Task, SetterAndGetters)

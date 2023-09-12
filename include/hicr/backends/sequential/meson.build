@@ -1,10 +1,7 @@
 # HiCR Sequential Backend Configuration
 
-hicrPthreadsBackendDeps = [
-   ]
-    
-hicrPthreadsBackendDep = declare_dependency(
-    )    
+hicrSequentialBackendDeps = [  ]
+hicrSequentialBackendDep = declare_dependency( )    
     
 
 

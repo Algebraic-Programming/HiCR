@@ -87,6 +87,14 @@ class Backend
   __USED__ inline const memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
 
   /**
+   * This function returns the available allocatable size provided by the given memory space
+   *
+   * @param[in] memorySpace The memory space to query
+   * @return The allocatable size within that memory space
+   */
+  virtual size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const = 0;
+
+  /**
    * Creates a new processing unit from the provided compute resource
    *
    * \param[in] resource This is the identifier of the compute resource to use to instantiate into a processing unit. The identifier should be one of those provided by the backend. Providing an arbitrary identifier may lead to unexpected behavior.

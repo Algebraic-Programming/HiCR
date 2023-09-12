@@ -21,7 +21,7 @@ TEST(Worker, Construction)
 
   EXPECT_NO_THROW(w = new HiCR::Worker());
   EXPECT_FALSE(w == nullptr);
-  EXPECT_EXIT({ delete w; fprintf(stderr, "Delete worked"); exit(0); }, ::testing::ExitedWithCode(0), "Delete worked");
+  delete w;
 }
 
 TEST(Task, SetterAndGetters)

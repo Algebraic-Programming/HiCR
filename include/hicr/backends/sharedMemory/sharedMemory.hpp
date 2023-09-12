@@ -210,6 +210,18 @@ class SharedMemory final : public Backend
   {
     return _slotMap.at(memorySlotId).size;
   }
+
+  /**
+   * This function returns the available allocatable size in the NUMA domain represented by the given memory space
+   *
+   * @param[in] memorySpace The NUMA domain to query
+   * @return The allocatable size within that NUMA domain
+   */
+  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const override
+  {
+   hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
+   return obj->attr->cache.size;
+  }
 };
 
 } // namespace sharedMemory

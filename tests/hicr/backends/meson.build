@@ -1,2 +1,2 @@
-# Registering Shared Memory backend tests
+subdir('sequential')
 subdir('sharedMemory')
