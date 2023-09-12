@@ -37,30 +37,32 @@ class Process final : public ProcessingUnit
   /**
    * Coroutine to handle suspend/resume functionality
    */
-  Coroutine _coroutine;
+  Coroutine* _coroutine;
 
   __USED__ inline void initializeImpl() override
   {
-    // Nothing to do for initialize
+    // Creating new coroutine to run
+    _coroutine = new HiCR::Coroutine();
+
     return;
   }
 
   __USED__ inline void suspendImpl() override
   {
     // Yielding execution
-    _coroutine.yield();
+    _coroutine->yield();
   }
 
   __USED__ inline void resumeImpl() override
   {
     // Resume coroutine
-    _coroutine.resume();
+    _coroutine->resume();
   }
 
   __USED__ inline void startImpl(processingUnitFc_t fc) override
   {
     // Calling function in the context of a suspendable coroutine
-    _coroutine.start([fc](void *arg)
+    _coroutine->start([fc](void *arg)
                      { fc(); },
                      NULL);
   }
@@ -73,7 +75,9 @@ class Process final : public ProcessingUnit
 
   __USED__ inline void awaitImpl() override
   {
-    // Nothing to do for await
+    // Deleting allocated coroutine
+    delete _coroutine;
+
     return;
   }
 

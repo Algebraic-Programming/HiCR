@@ -141,9 +141,6 @@ class Worker
 
   public:
 
-  Worker() = default;
-  ~Worker() = default;
-
   /**
    * Queries the worker's internal state.
    *
@@ -184,7 +181,7 @@ class Worker
 
     // Launching worker in the lead resource (first one to be added)
     _processingUnits[0]->start([this]()
-                               { this->mainLoop(); });
+                             { this->mainLoop(); });
   }
 
   /**
@@ -197,6 +194,9 @@ class Worker
 
     // Transitioning state
     _state = worker::suspended;
+
+    // Suspending processing units
+    for (auto &p : _processingUnits) p->suspend();
   }
 
   /**
@@ -207,11 +207,12 @@ class Worker
     // Checking state
     if (_state != worker::suspended) HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state");
 
+
     // Transitioning state
     _state = worker::running;
 
     // Suspending resources
-    for (auto &r : _processingUnits) r->resume();
+    for (auto &p : _processingUnits) p->resume();
   }
 
   /**
@@ -223,7 +224,7 @@ class Worker
     if (_state != worker::running) HICR_THROW_RUNTIME("Attempting to stop worker that is not in the 'running' state");
 
     // Requesting processing units to terminate as soon as possible
-    for (auto &p : _processingUnits) p->terminate();
+    for (auto& p : _processingUnits) p->terminate();
 
     // Transitioning state
     _state = worker::terminating;
@@ -238,7 +239,7 @@ class Worker
       HICR_THROW_RUNTIME("Attempting to wait for a worker that has not yet started or has already terminated");
 
     // Wait for the resources to free up
-    for (auto &p : _processingUnits) p->await();
+    for (auto& p : _processingUnits) p->await();
 
     // Transitioning state
     _state = worker::terminated;

@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <set>
 
 namespace HiCR
 {
@@ -49,6 +50,11 @@ class Thread final : public ProcessingUnit
   processingUnitFc_t _fc;
 
   /**
+   * Barrier to synchronize thread initialization
+   */
+  pthread_barrier_t initializationBarrier;
+
+  /**
    * Static wrapper function to setup affinity and run the thread's function
    *
    * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
@@ -58,11 +64,22 @@ class Thread final : public ProcessingUnit
     // Gathering thread object
     auto thread = (Thread *)p;
 
+    // Setting signal to hear for suspend/resume
+    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
+
+    // Setting thread as cancelable
+    int oldValue;
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldValue);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldValue);
+
     // Setting initial thread affinity
-    thread->updateAffinity(std::vector<int>({(int)thread->getComputeResourceId()}));
+    thread->updateAffinity(std::set<int>({(int)thread->getComputeResourceId()}));
 
     // Yielding execution to allow affinity to refresh
     sched_yield();
+
+    // The thread has now been properly initialized
+    pthread_barrier_wait(&thread->initializationBarrier);
 
     // Calling main loop
     thread->_fc();
@@ -72,35 +89,26 @@ class Thread final : public ProcessingUnit
   }
 
   /**
-   * Sets up new affinity for the thread. The thread needs to yield or be preempted for the new affinity to work.
-   *
-   * \param[in] affinity New affinity to use
-   */
-  __USED__ static void updateAffinity(const std::vector<int> &affinity)
-  {
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    for (size_t i = 0; i < affinity.size(); i++) CPU_SET(affinity[i], &cpuset);
-    if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem assigning affinity: %d.", affinity[0]);
-  }
-
-  /**
-   * Queries the OS for the currently set affinity for this thread, and prints it to screen.
-   */
-  __USED__ static void printAffinity()
-  {
-    cpu_set_t cpuset;
-    if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("[WARNING] Problem obtaining affinity.");
-    for (int i = 0; i < CPU_SETSIZE; i++)
-      if (CPU_ISSET(i, &cpuset)) printf("%2d ", i);
-  }
-
-  /**
    * Handler for the SIGUSR1 signal, used by HiCR to suspend/resume worker threads
    *
    * \param[in] sig Signal detected, set by the operating system upon detecting the signal
    */
-  __USED__ inline static void catchSIGUSR1Signal(int sig) { signal(sig, Thread::catchSIGUSR1Signal); }
+  __USED__ inline static void catchSIGUSR1Signal(int sig)
+  {
+   int status = 0;
+   int signalSet;
+   sigset_t suspendSet;
+
+   signal(SIGUSR1, Thread::catchSIGUSR1Signal);
+
+   status = sigaddset(&suspendSet, SIGUSR1);
+   if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
+
+   status = sigwait(&suspendSet, &signalSet);
+   if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
+
+   signal(SIGUSR1, Thread::catchSIGUSR1Signal);
+  }
 
   __USED__ inline void initializeImpl() override
   {
@@ -108,17 +116,7 @@ class Thread final : public ProcessingUnit
 
   __USED__ inline void suspendImpl() override
   {
-    int status = 0;
-    int signalSet;
-    sigset_t suspendSet;
 
-    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
-
-    status = sigaddset(&suspendSet, SIGUSR1);
-    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
-
-    status = sigwait(&suspendSet, &signalSet);
-    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
   }
 
   __USED__ inline void resumeImpl() override
@@ -129,16 +127,27 @@ class Thread final : public ProcessingUnit
 
   __USED__ inline void startImpl(processingUnitFc_t fc) override
   {
+    // Initializing barrier
+    pthread_barrier_init(&initializationBarrier, NULL, 2);
+
     // Making a copy of the function
     _fc = fc;
 
     // Launching thread function wrapper
     auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
     if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
+
+    // Waiting for proper initialization of the thread
+    pthread_barrier_wait(&initializationBarrier);
+
+    // Destroying barrier
+    pthread_barrier_destroy(&initializationBarrier);
   }
 
   __USED__ inline void terminateImpl() override
   {
+   // Killing threads directly
+   pthread_cancel(_pthreadId);
   }
 
   __USED__ inline void awaitImpl() override
@@ -148,6 +157,33 @@ class Thread final : public ProcessingUnit
   }
 
   public:
+
+  /**
+   * Sets up new affinity for the thread. The thread needs to yield or be preempted for the new affinity to work.
+   *
+   * \param[in] affinity New affinity to use
+   */
+  __USED__ static void updateAffinity(const std::set<int> &affinity)
+  {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    for (const auto c : affinity) CPU_SET(c, &cpuset);
+    if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem assigning affinity.");
+  }
+
+  /**
+   * Queries the OS for the currently set affinity for this thread, and prints it to screen.
+   */
+  __USED__ static std::set<int> getAffinity()
+  {
+    std::set<int> affinity;
+    cpu_set_t cpuset;
+    if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem obtaining affinity.");
+    for (int i = 0; i < CPU_SETSIZE; i++)
+      if (CPU_ISSET(i, &cpuset)) affinity.insert(i);
+
+    return affinity;
+  }
 
   /**
    * Constructor for the Thread class

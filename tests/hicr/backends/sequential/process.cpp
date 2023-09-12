@@ -12,7 +12,6 @@
 
 #include "gtest/gtest.h"
 #include <hicr/backends/sequential/process.hpp>
-#include <limits>
 
 namespace backend = HiCR::backend::sequential;
 
@@ -35,9 +34,15 @@ TEST(Process, LifeCycle)
   EXPECT_NO_THROW(pIdAlt = p.getComputeResourceId());
   EXPECT_EQ(pIdAlt, pId);
 
+  // Counter for execution times
+  int executionTimes = 0;
+
   // Creating runner function
-  auto fc = [&p]()
+  auto fc = [&p, &executionTimes]()
   {
+    // Increasing execution counter
+    executionTimes++;
+
     // Suspending initially
     p.suspend();
 
@@ -65,6 +70,9 @@ TEST(Process, LifeCycle)
   // Running
   EXPECT_NO_THROW(p.start(fc));
 
+  // Waiting for execution times to update
+  EXPECT_EQ(executionTimes, 1);
+
   // Testing forbidden transitions
   EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
   EXPECT_THROW(p.start(fc), HiCR::RuntimeException);
@@ -91,4 +99,16 @@ TEST(Process, LifeCycle)
 
   // Reinitializing
   EXPECT_NO_THROW(p.initialize());
+
+  // Re-running
+  EXPECT_NO_THROW(p.start(fc));
+
+  // Waiting for execution times to update
+  EXPECT_EQ(executionTimes, 2);
+
+  // Re-resuming
+  EXPECT_NO_THROW(p.resume());
+
+  // Re-awaiting
+  EXPECT_NO_THROW(p.await());
 }
