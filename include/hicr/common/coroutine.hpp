@@ -14,7 +14,7 @@
 
 #include <boost/context/continuation.hpp>
 #include <functional> // std::function
-#include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
@@ -35,6 +35,18 @@ typedef std::function<void(void *)> coroutineFc_t;
  */
 class Coroutine
 {
+  private:
+
+  /**
+   * This variable serves as safeguard in case the function has finished but the user wants to resume it
+   */
+  bool _hasFinished = false;
+
+  /**
+   * This variable serves as safeguard to prevent double resume/yield
+   */
+  bool _runningContext = false;
+
   public:
 
   Coroutine() = default;
@@ -45,6 +57,13 @@ class Coroutine
    */
   __USED__ inline void resume()
   {
+    if (_hasFinished == true) HICR_THROW_RUNTIME("Attempting to resume a coroutine that has already finished");
+    if (_runningContext == true) HICR_THROW_RUNTIME("Attempting to resume a coroutine that is already running");
+
+    // Setting coroutine to have entered the running context
+    _runningContext = true;
+
+    // Resuming
     _context = _context.resume();
   }
 
@@ -53,6 +72,13 @@ class Coroutine
    */
   __USED__ inline void yield()
   {
+    if (_hasFinished == true) HICR_THROW_RUNTIME("Attempting to suspend a coroutine that has already finished");
+    if (_runningContext == false) HICR_THROW_RUNTIME("Attempting to suspend a coroutine that is not running");
+
+    // Setting coroutine to have exited the running context
+    _runningContext = false;
+
+    // Yielding
     _context = _context.resume();
   }
 
@@ -68,10 +94,24 @@ class Coroutine
   {
     const auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
     {
+      // Storing caller context
       _context = std::move(sink);
+
+      // Executing coroutine function
       fc(arg);
+
+      // Setting the coroutine as finished
+      _hasFinished = true;
+
+      // Setting coroutine to have exited the running context
+      _runningContext = false;
+
+      // Returning to caller context
       return std::move(_context);
     };
+
+    // Setting coroutine to have entered the running context
+    _runningContext = true;
 
     // Creating new context
     _context = boost::context::callcc(coroutineFc);

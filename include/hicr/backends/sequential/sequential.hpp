@@ -93,7 +93,6 @@ class Sequential final : public Backend
    */
   __USED__ inline void queryResources() override
   {
-
     // Only a single processing unit is created
     _computeResourceList = computeResourceList_t({0});
 
@@ -116,7 +115,8 @@ class Sequential final : public Backend
 
     if (srcSlot.pointer == NULL || dstSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu -> %lu) provided in  memcpy. It either does not exit or represents a NULL pointer.", source, destination);
 
-    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)  { std::memcpy(dst, src, size); };
+    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
+    { std::memcpy(dst, src, size); };
     std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
     deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
   }
@@ -177,9 +177,9 @@ class Sequential final : public Backend
    */
   __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
   {
-   const auto& memSlot = _slotMap.at(memorySlotId);
+    const auto &memSlot = _slotMap.at(memorySlotId);
 
-   if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
 
     free(memSlot.pointer);
 
@@ -194,11 +194,11 @@ class Sequential final : public Backend
    */
   __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
   {
-   const auto& memSlot = _slotMap.at(memorySlotId);
+    const auto &memSlot = _slotMap.at(memorySlotId);
 
-   if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
 
-   return memSlot.pointer;
+    return memSlot.pointer;
   }
 
   /**
@@ -209,11 +209,11 @@ class Sequential final : public Backend
    */
   __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
   {
-   const auto& memSlot = _slotMap.at(memorySlotId);
+    const auto &memSlot = _slotMap.at(memorySlotId);
 
-   if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
 
-   return memSlot.size;
+    return memSlot.size;
   }
 
   /**
@@ -224,8 +224,8 @@ class Sequential final : public Backend
    */
   __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const override
   {
-   if (memorySpace != 0) HICR_THROW_LOGIC("Only memory space zero is usable in the sequential backend");
-   return _totalSystemMem;
+    if (memorySpace != 0) HICR_THROW_LOGIC("Only memory space zero is usable in the sequential backend");
+    return _totalSystemMem;
   }
 };
 

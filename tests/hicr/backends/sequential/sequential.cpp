@@ -11,8 +11,8 @@
  */
 
 #include "gtest/gtest.h"
-#include <limits>
 #include <hicr/backends/sequential/sequential.hpp>
+#include <limits>
 
 namespace backend = HiCR::backend::sequential;
 
@@ -38,7 +38,7 @@ TEST(Sequential, Memory)
   EXPECT_EQ(mList.size(), 1);
 
   // Getting memory resource
-  auto& r = mList[0];
+  auto &r = mList[0];
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;
@@ -57,7 +57,7 @@ TEST(Sequential, Memory)
   EXPECT_EQ(b.getMemorySlotSize(s1), testMemAllocSize);
 
   // Getting local pointer from allocation
-  void* s1LocalPtr = NULL;
+  void *s1LocalPtr = NULL;
   EXPECT_NO_THROW(s1LocalPtr = b.getMemorySlotLocalPointer(s1));
   memset(s1LocalPtr, 0, testMemAllocSize);
 
@@ -67,7 +67,7 @@ TEST(Sequential, Memory)
   EXPECT_EQ(b.getMemorySlotSize(s2), testMemAllocSize);
 
   // Getting local pointer from allocation
-  void* s2LocalPtr = NULL;
+  void *s2LocalPtr = NULL;
   EXPECT_NO_THROW(s2LocalPtr = b.getMemorySlotLocalPointer(s2));
   memset(s2LocalPtr, 0, testMemAllocSize);
 
@@ -84,7 +84,8 @@ TEST(Sequential, Memory)
 
   // Making sure the message was received
   bool sameStrings = true;
-  for (size_t i = 0; i < testMemAllocSize; i++) if (((const char*)s1LocalPtr)[i] != ((const char*)s2LocalPtr)[i]) sameStrings = false;
+  for (size_t i = 0; i < testMemAllocSize; i++)
+    if (((const char *)s1LocalPtr)[i] != ((const char *)s2LocalPtr)[i]) sameStrings = false;
   EXPECT_TRUE(sameStrings);
 
   // Freeing memory slots

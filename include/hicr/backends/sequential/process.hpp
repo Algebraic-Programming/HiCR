@@ -39,15 +39,6 @@ class Process final : public ProcessingUnit
    */
   Coroutine _coroutine;
 
-  public:
-
-  /**
-   * Constructor for the Process class
-   *
-   * \param process An id for the process (should be zero)
-   */
-  __USED__ inline Process(computeResourceId_t process) : ProcessingUnit(process){};
-
   __USED__ inline void initializeImpl() override
   {
     // Nothing to do for initialize
@@ -85,6 +76,15 @@ class Process final : public ProcessingUnit
     // Nothing to do for await
     return;
   }
+
+  public:
+
+  /**
+   * Constructor for the Process class
+   *
+   * \param process An id for the process (should be zero)
+   */
+  __USED__ inline Process(computeResourceId_t process) : ProcessingUnit(process){};
 };
 
 } // end namespace sequential

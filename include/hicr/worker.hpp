@@ -184,7 +184,7 @@ class Worker
 
     // Launching worker in the lead resource (first one to be added)
     _processingUnits[0]->start([this]()
-                             { this->mainLoop(); });
+                               { this->mainLoop(); });
   }
 
   /**
@@ -223,7 +223,7 @@ class Worker
     if (_state != worker::running) HICR_THROW_RUNTIME("Attempting to stop worker that is not in the 'running' state");
 
     // Requesting processing units to terminate as soon as possible
-    for (auto& p : _processingUnits) p->terminate();
+    for (auto &p : _processingUnits) p->terminate();
 
     // Transitioning state
     _state = worker::terminating;
@@ -234,12 +234,11 @@ class Worker
    */
   __USED__ inline void await()
   {
-    // Checking state
     if (_state != worker::terminating && _state != worker::running && _state != worker::suspended)
-      HICR_THROW_RUNTIME("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
+      HICR_THROW_RUNTIME("Attempting to wait for a worker that has not yet started or has already terminated");
 
     // Wait for the resources to free up
-    for (auto& p : _processingUnits) p->await();
+    for (auto &p : _processingUnits) p->await();
 
     // Transitioning state
     _state = worker::terminated;

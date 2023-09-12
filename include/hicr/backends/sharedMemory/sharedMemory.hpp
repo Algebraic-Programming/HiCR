@@ -219,8 +219,8 @@ class SharedMemory final : public Backend
    */
   __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const override
   {
-   hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
-   return obj->attr->cache.size;
+    hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
+    return obj->attr->cache.size;
   }
 };
 

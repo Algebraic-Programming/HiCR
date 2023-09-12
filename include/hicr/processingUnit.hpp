@@ -69,8 +69,7 @@ enum state_t
   terminated
 };
 
-} // namespace worker
-
+} // namespace processingUnit
 
 /**
  * This class represents an abstract definition for a Processing Unit resource in HiCR that:
@@ -148,14 +147,14 @@ class ProcessingUnit
    */
   __USED__ inline void initialize()
   {
-   // Checking internal state
-   if (_state != processingUnit::uninitialized && _state != processingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
+    // Checking internal state
+    if (_state != processingUnit::uninitialized && _state != processingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
 
-   // Calling PU-specific initialization
-   initializeImpl();
+    // Calling PU-specific initialization
+    initializeImpl();
 
-   // Transitioning state
-   _state = processingUnit::ready;
+    // Transitioning state
+    _state = processingUnit::ready;
   }
 
   /**
@@ -165,14 +164,14 @@ class ProcessingUnit
    */
   __USED__ inline void start(processingUnitFc_t fc)
   {
-   // Checking internal state
-   if (_state != processingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'initialized' state");
+    // Checking internal state
+    if (_state != processingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'initialized' state");
 
-   // Transitioning state
-   _state = processingUnit::running;
+    // Transitioning state
+    _state = processingUnit::running;
 
-   // Running internal implementation of the start function
-   startImpl(fc);
+    // Running internal implementation of the start function
+    startImpl(fc);
   }
 
   /**
@@ -180,14 +179,14 @@ class ProcessingUnit
    */
   __USED__ inline void suspend()
   {
-   // Checking state
-   if (_state != processingUnit::running) HICR_THROW_RUNTIME("Attempting to suspend processing unit that is not in the 'running' state");
+    // Checking state
+    if (_state != processingUnit::running) HICR_THROW_RUNTIME("Attempting to suspend processing unit that is not in the 'running' state");
 
-   // Transitioning state
-   _state = processingUnit::suspended;
+    // Transitioning state
+    _state = processingUnit::suspended;
 
-   // Calling internal implementation of the suspend function
-   suspendImpl();
+    // Calling internal implementation of the suspend function
+    suspendImpl();
   }
 
   /**
@@ -195,14 +194,14 @@ class ProcessingUnit
    */
   __USED__ inline void resume()
   {
-   // Checking state
-   if (_state != processingUnit::suspended) HICR_THROW_RUNTIME("Attempting to resume processing unit that is not in the 'suspended' state");
+    // Checking state
+    if (_state != processingUnit::suspended) HICR_THROW_RUNTIME("Attempting to resume processing unit that is not in the 'suspended' state");
 
-   // Transitioning state
-   _state = processingUnit::running;
+    // Transitioning state
+    _state = processingUnit::running;
 
-   // Calling internal implementation of the resume function
-   resumeImpl();
+    // Calling internal implementation of the resume function
+    resumeImpl();
   }
 
   /**
@@ -210,14 +209,14 @@ class ProcessingUnit
    */
   __USED__ inline void terminate()
   {
-   // Checking state
-   if (_state != processingUnit::running) HICR_THROW_RUNTIME("Attempting to stop processing unit that is not in the 'running' state");
+    // Checking state
+    if (_state != processingUnit::running) HICR_THROW_RUNTIME("Attempting to stop processing unit that is not in the 'running' state");
 
-   // Transitioning state
-   _state = processingUnit::terminating;
+    // Transitioning state
+    _state = processingUnit::terminating;
 
-   // Calling internal implementation of the terminate function
-   terminateImpl();
+    // Calling internal implementation of the terminate function
+    terminateImpl();
   }
 
   /**
@@ -225,15 +224,15 @@ class ProcessingUnit
    */
   __USED__ inline void await()
   {
-   // Checking state
-   if (_state != processingUnit::terminating && _state != processingUnit::running && _state != processingUnit::suspended)
-     HICR_THROW_RUNTIME("Attempting to wait for a processing unit that is not in the 'terminated', 'suspended' or 'running' state");
+    // Checking state
+    if (_state != processingUnit::terminating && _state != processingUnit::running && _state != processingUnit::suspended)
+      HICR_THROW_RUNTIME("Attempting to wait for a processing unit that has not yet started or has already terminated");
 
-   // Calling internal implementation of the await function
-   awaitImpl();
+    // Calling internal implementation of the await function
+    awaitImpl();
 
-   // Transitioning state
-   _state = processingUnit::terminated;
+    // Transitioning state
+    _state = processingUnit::terminated;
   }
 
   /**
@@ -242,7 +241,6 @@ class ProcessingUnit
    * \return The identifier of the compute resource associated to this processing unit.
    */
   __USED__ inline computeResourceId_t getComputeResourceId() { return _computeResourceId; }
-
 };
 
 } // namespace HiCR

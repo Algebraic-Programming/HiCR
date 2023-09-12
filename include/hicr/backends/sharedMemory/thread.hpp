@@ -102,15 +102,6 @@ class Thread final : public ProcessingUnit
    */
   __USED__ inline static void catchSIGUSR1Signal(int sig) { signal(sig, Thread::catchSIGUSR1Signal); }
 
-  public:
-
-  /**
-   * Constructor for the Thread class
-   *
-   * \param core Represents the core affinity to associate this processing unit to
-   */
-  __USED__ inline Thread(computeResourceId_t core) : ProcessingUnit(core){};
-
   __USED__ inline void initializeImpl() override
   {
   }
@@ -155,6 +146,15 @@ class Thread final : public ProcessingUnit
     // Waiting for thread after execution
     pthread_join(_pthreadId, NULL);
   }
+
+  public:
+
+  /**
+   * Constructor for the Thread class
+   *
+   * \param core Represents the core affinity to associate this processing unit to
+   */
+  __USED__ inline Thread(computeResourceId_t core) : ProcessingUnit(core){};
 };
 
 } // end namespace sharedMemory
