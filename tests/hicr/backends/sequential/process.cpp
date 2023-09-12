@@ -27,7 +27,13 @@ TEST(Process, Construction)
 
 TEST(Process, LifeCycle)
 {
-  backend::Process p(0);
+  HiCR::computeResourceId_t pId = 0;
+  backend::Process p(pId);
+
+  // Checking that the correct resourceId was used
+  HiCR::computeResourceId_t pIdAlt = pId + 1;
+  EXPECT_NO_THROW(pIdAlt = p.getComputeResourceId());
+  EXPECT_EQ(pIdAlt, pId);
 
   // Creating runner function
   auto fc = [&p]()
