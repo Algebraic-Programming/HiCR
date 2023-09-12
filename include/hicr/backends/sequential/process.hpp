@@ -37,7 +37,7 @@ class Process final : public ProcessingUnit
   /**
    * Coroutine to handle suspend/resume functionality
    */
-  Coroutine* _coroutine;
+  Coroutine *_coroutine;
 
   __USED__ inline void initializeImpl() override
   {
@@ -63,8 +63,8 @@ class Process final : public ProcessingUnit
   {
     // Calling function in the context of a suspendable coroutine
     _coroutine->start([fc](void *arg)
-                     { fc(); },
-                     NULL);
+                      { fc(); },
+                      NULL);
   }
 
   __USED__ inline void terminateImpl() override

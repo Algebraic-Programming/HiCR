@@ -17,9 +17,9 @@
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
 #include <pthread.h>
+#include <set>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <set>
 
 namespace HiCR
 {
@@ -95,19 +95,19 @@ class Thread final : public ProcessingUnit
    */
   __USED__ inline static void catchSIGUSR1Signal(int sig)
   {
-   int status = 0;
-   int signalSet;
-   sigset_t suspendSet;
+    int status = 0;
+    int signalSet;
+    sigset_t suspendSet;
 
-   signal(SIGUSR1, Thread::catchSIGUSR1Signal);
+    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
 
-   status = sigaddset(&suspendSet, SIGUSR1);
-   if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
+    status = sigaddset(&suspendSet, SIGUSR1);
+    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
 
-   status = sigwait(&suspendSet, &signalSet);
-   if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
+    status = sigwait(&suspendSet, &signalSet);
+    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
 
-   signal(SIGUSR1, Thread::catchSIGUSR1Signal);
+    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
   }
 
   __USED__ inline void initializeImpl() override
@@ -116,7 +116,6 @@ class Thread final : public ProcessingUnit
 
   __USED__ inline void suspendImpl() override
   {
-
   }
 
   __USED__ inline void resumeImpl() override
@@ -146,8 +145,8 @@ class Thread final : public ProcessingUnit
 
   __USED__ inline void terminateImpl() override
   {
-   // Killing threads directly
-   pthread_cancel(_pthreadId);
+    // Killing threads directly
+    pthread_cancel(_pthreadId);
   }
 
   __USED__ inline void awaitImpl() override
