@@ -32,7 +32,7 @@ TEST(Thread, AffinityFunctions)
  EXPECT_NO_THROW(originalAffinitySet = backend::Thread::getAffinity());
 
  // Attempting to set and check new affinity set
- std::set<int> newAffinitySet({1, 2, 3, 4});
+ std::set<int> newAffinitySet({0, 1});
  EXPECT_NO_THROW(backend::Thread::updateAffinity(newAffinitySet));
  EXPECT_EQ(newAffinitySet, backend::Thread::getAffinity());
 
@@ -44,9 +44,9 @@ TEST(Thread, AffinityFunctions)
 TEST(Thread, ThreadAffinity)
 {
  // Checking that a created thread has a correct affinity
- int threadAffinity = 5;
+ int threadAffinity = 1;
  std::set<int> threadAffinitySet({threadAffinity});
- backend::Thread p(5);
+ backend::Thread p(threadAffinity);
 
  bool hasCorrectAffinity = false;
  bool checkedAffinity = false;
