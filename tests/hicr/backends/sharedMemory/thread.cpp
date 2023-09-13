@@ -48,8 +48,8 @@ TEST(Thread, ThreadAffinity)
  std::set<int> threadAffinitySet({threadAffinity});
  backend::Thread p(threadAffinity);
 
- bool hasCorrectAffinity = false;
- bool checkedAffinity = false;
+ __volatile__ bool hasCorrectAffinity = false;
+ __volatile__ bool checkedAffinity = false;
 
  // Creating affinity checking function
  auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]()
