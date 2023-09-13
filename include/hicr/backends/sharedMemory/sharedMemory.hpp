@@ -59,18 +59,22 @@ class SharedMemory final : public Backend
   /**
    * Currently available tag id to be assigned. It should increment as each tag is assigned
    */
-  memorySlotId_t _currentTagId = 0;
+  memorySlotId_t _currentMemorySlotId = 0;
 
   /**
    * Thread-safe map that stores all allocated or created memory slots associated to this backend
    */
-  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _slotMap;
+  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _memorySlotMap;
 
   /**
-   * list of deffered function calls in non-blocking data moves, which
-   * complete in the wait call
+  * Thread-safe map that stores all detected memory spaces HWLoC objects associated to this backend
+  */
+ parallelHashMap_t<memorySpaceId_t, hwloc_obj_t> _memorySpaceMap;
+
+  /**
+   * List of deferred function calls in non-blocking data moves, which complete in the fence call
    */
-  std::multimap<uint64_t, std::future<void>> deferredFuncs;
+  std::multimap<tagId_t, std::future<void>> deferredFuncs;
 
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
@@ -106,12 +110,20 @@ class SharedMemory final : public Backend
     getThreadPUs(_topology, hwloc_get_root_obj(_topology), 0, threadPUs);
     _computeResourceList.assign(threadPUs.begin(), threadPUs.end());
 
-    /* Ask hwloc about number of NUMA nodes
-     * and add as many memory spaces as NUMA domains
-     */
+    // Clearing existing memory space entries
     _memorySpaceList.clear();
+    _memorySpaceMap.clear();
+
+    // Ask hwloc about number of NUMA nodes and add as many memory spaces as NUMA domains
     auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
-    for (int i = 0; i < n; i++) _memorySpaceList.push_back(i);
+    for (int i = 0; i < n; i++)
+    {
+     // Storing reference to the HWLoc object for future reference
+     _memorySpaceMap[i] = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, i);
+
+     // Storing new memory space
+     _memorySpaceList.push_back(i);
+    }
   }
 
   __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const override
@@ -121,12 +133,40 @@ class SharedMemory final : public Backend
 
   __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
-    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
-    { std::memcpy(dst, src, size); };
-    const auto srcSlot = _slotMap.at(source);
-    const auto dstSlot = _slotMap.at(destination);
-    std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
-    deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
+    // Getting pointer for the corresponding slots
+    const auto srcSlot = _memorySlotMap.at(source);
+    const auto dstSlot = _memorySlotMap.at(destination);
+
+    // Getting slot pointers
+    const auto srcPtr = srcSlot.pointer;
+    const auto dstPtr = dstSlot.pointer;
+
+    // Making sure the memory slots exist and is not null
+    if (srcPtr == NULL) HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", source);
+    if (dstPtr == NULL) HICR_THROW_RUNTIME("Invalid destination memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", destination);
+
+    // Getting slot sizes
+    const auto srcSize = srcSlot.size;
+    const auto dstSize = dstSlot.size;
+
+    // Making sure the memory slots exist and is not null
+    const auto actualSrcSize = size + src_offset;
+    const auto actualDstSize = size + dst_offset;
+    if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).",      size, src_offset, actualSrcSize, source, srcSize);
+    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
+
+    // Calculating actual offsets
+    const auto actualSrcPtr = (void*)((uint8_t*)srcPtr + src_offset);
+    auto actualDstPtr       = (void*)((uint8_t*)dstPtr + dst_offset);
+
+    // Creating function that satisfies the request (memcpy)
+    auto fc = [actualDstPtr, actualSrcPtr, size]() { std::memcpy(actualDstPtr, actualSrcPtr, size); };
+
+    // Creating a future as a deferred launch function
+    auto future = std::async(std::launch::deferred, fc);
+
+    // Inserting future into the deferred function multimap
+    deferredFuncs.insert(std::make_pair(tag, std::move(future)));
   }
 
   /**
@@ -138,12 +178,11 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void fence(const uint64_t tag) override
   {
+    // Gets all deferred functions belonging to this tag
     auto range = deferredFuncs.equal_range(tag);
-    for (auto i = range.first; i != range.second; ++i)
-    {
-      auto f = std::move(i->second);
-      f.wait();
-    }
+
+    // Wait for the finalization of each deferred function
+    for (auto itr = range.first; itr != range.second; itr++) itr->second.wait();
   }
 
   /**
@@ -157,11 +196,26 @@ class SharedMemory final : public Backend
    */
   __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpace, const size_t size) override
   {
-    hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
-    auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET);
-    auto tag = _currentTagId++;
-    _slotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
-    return tag;
+    auto maxSize = getMemorySpaceSize(memorySpace);
+    if (size > maxSize) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
+
+    // Recovering HWLoc object corresponding to this memory space
+    hwloc_obj_t obj = _memorySpaceMap.at(memorySpace);
+
+    // Allocating memory in the reqested memory space
+    auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+
+    // Error checking
+    if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpace);
+
+    // Incrementing memory slot id to prevent index re-use
+    auto slotId = _currentMemorySlotId++;
+
+    // Assinging new entry in the memory slot map
+    _memorySlotMap[slotId] = memorySlotStruct_t{.pointer = ptr, .size = size};
+
+    // Return the id of the just created slot
+    return slotId;
   }
 
   /**
@@ -172,9 +226,14 @@ class SharedMemory final : public Backend
    */
   __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
   {
-    auto tag = _currentTagId++;
-    _slotMap[tag] = memorySlotStruct_t{.pointer = addr, .size = size};
-    return tag;
+   // Incrementing memory slot id to prevent index re-use
+   auto slotId = _currentMemorySlotId++;
+
+   // Inserting passed address into the memory slot map
+    _memorySlotMap[slotId] = memorySlotStruct_t{.pointer = addr, .size = size};
+
+    // Return the id of the just created slot
+    return slotId;
   }
 
   /**
@@ -184,9 +243,20 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
   {
-    const auto slot = _slotMap.at(memorySlotId);
-    hwloc_free(_topology, slot.pointer, slot.size);
-    _slotMap.erase(memorySlotId);
+    // Getting memory slot entry from the map
+    const auto& slot = _memorySlotMap.at(memorySlotId);
+
+    // Making sure the memory slot exists and is not null
+    if (slot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", memorySlotId);
+
+    // Freeing memory slot
+    auto status = hwloc_free(_topology, slot.pointer, slot.size);
+
+    // Error checking
+    if (status != 0) HICR_THROW_RUNTIME("Could not free memory slot (%lu).", memorySlotId);
+
+    // Erasing memory slot from the map
+    _memorySlotMap.erase(memorySlotId);
   }
 
   /**
@@ -197,7 +267,7 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
   {
-    return _slotMap.at(memorySlotId).pointer;
+    return _memorySlotMap.at(memorySlotId).pointer;
   }
 
   /**
@@ -208,7 +278,7 @@ class SharedMemory final : public Backend
    */
   __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
   {
-    return _slotMap.at(memorySlotId).size;
+    return _memorySlotMap.at(memorySlotId).size;
   }
 
   /**
@@ -219,7 +289,10 @@ class SharedMemory final : public Backend
    */
   __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const override
   {
-    hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
+    // Recovering HWLoc object corresponding to this memory space
+   const auto obj = _memorySpaceMap.at(memorySpace);
+
+    // Returning entry corresponding to the memory size
     return obj->attr->cache.size;
   }
 };
