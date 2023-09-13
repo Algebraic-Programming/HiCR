@@ -251,7 +251,7 @@ class SharedMemory final : public Backend
     auto status = hwloc_free(_topology, slot.pointer, slot.size);
 
     // Error checking
-    if (status != 0) HICR_THROW_RUNTIME("Could not free memory slot (%lu).", memorySlotId);
+    if (status != 0) HICR_THROW_RUNTIME("Could not free memory slot (%lu), hwloc returned status: %u.", memorySlotId, status);
 
     // Erasing memory slot from the map
     _memorySlotMap.erase(memorySlotId);
