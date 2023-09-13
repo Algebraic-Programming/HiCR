@@ -201,7 +201,7 @@ class SharedMemory final : public Backend
     hwloc_obj_t obj = _memorySpaceMap.at(memorySpace);
 
     // Allocating memory in the reqested memory space
-    auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET);
+    auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, 0);
 
     // Error checking
     if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpace);
