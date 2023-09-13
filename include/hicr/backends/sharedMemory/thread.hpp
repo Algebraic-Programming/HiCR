@@ -30,6 +30,8 @@ namespace backend
 namespace sharedMemory
 {
 
+#define HICR_SUSPEND_RESUME_SIGNAL SIGUSR1
+
 /**
  * Implementation of a kernel-level thread as processing unit for the shared memory backend.
  *
@@ -65,7 +67,7 @@ class Thread final : public ProcessingUnit
     auto thread = (Thread *)p;
 
     // Setting signal to hear for suspend/resume
-    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
+    signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
 
     // Setting thread as cancelable
     int oldValue;
@@ -89,25 +91,25 @@ class Thread final : public ProcessingUnit
   }
 
   /**
-   * Handler for the SIGUSR1 signal, used by HiCR to suspend/resume worker threads
+   * Handler for the suspend/resume signal, used by HiCR to suspend/resume worker threads
    *
    * \param[in] sig Signal detected, set by the operating system upon detecting the signal
    */
-  __USED__ inline static void catchSIGUSR1Signal(int sig)
+  __USED__ inline static void catchSuspendResumeSignal(int sig)
   {
     int status = 0;
     int signalSet;
     sigset_t suspendSet;
 
-    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
-
-    status = sigaddset(&suspendSet, SIGUSR1);
+    // Waiting for that signal to arrive
+    status = sigaddset(&suspendSet, HICR_SUSPEND_RESUME_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
 
     status = sigwait(&suspendSet, &signalSet);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
 
-    signal(SIGUSR1, Thread::catchSIGUSR1Signal);
+    // Re-set next signal listening before exiting
+    signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
   }
 
   __USED__ inline void initializeImpl() override
@@ -116,11 +118,14 @@ class Thread final : public ProcessingUnit
 
   __USED__ inline void suspendImpl() override
   {
+   auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
+   if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
+
   }
 
   __USED__ inline void resumeImpl() override
   {
-    auto status = pthread_kill(_pthreadId, SIGUSR1);
+    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 

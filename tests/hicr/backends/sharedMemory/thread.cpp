@@ -88,18 +88,41 @@ TEST(Thread, LifeCycle)
   EXPECT_NO_THROW(pIdAlt = p.getComputeResourceId());
   EXPECT_EQ(pIdAlt, pId);
 
-  // Counter for execution times
-  int executionTimes = 0;
+  // Values for correct suspension/resume checking
+  int suspendCounter = 0;
+  int resumeCounter = 0;
+
+  // Barrier for synchronization
+  pthread_barrier_t barrier;
+  pthread_barrier_init(&barrier, NULL, 2);
 
   // Creating runner function
-  auto fc = [&executionTimes]()
+  auto fc1 = [&resumeCounter, &barrier, &suspendCounter]()
   {
-   executionTimes++;
-   while(true);
+    // Checking correct execution
+    resumeCounter++;
+    pthread_barrier_wait(&barrier);
+
+    // Checking suspension
+    while(suspendCounter == 0);
+
+    // Updating resume counter
+    resumeCounter++;
+    pthread_barrier_wait(&barrier);
+
+    // Checking suspension
+    while(suspendCounter == 1);
+
+    // Updating resume counter
+    resumeCounter++;
+    pthread_barrier_wait(&barrier);
+
+    // Waiting until the end
+    while(true) pthread_barrier_wait(&barrier);
   };
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.start(fc), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
@@ -116,55 +139,117 @@ TEST(Thread, LifeCycle)
   EXPECT_THROW(p.await(), HiCR::RuntimeException);
 
   // Running
-  EXPECT_NO_THROW(p.start(fc));
+  EXPECT_NO_THROW(p.start(fc1));
 
   // Waiting for execution times to update
-  while(executionTimes != 1);
+  pthread_barrier_wait(&barrier);
+  EXPECT_EQ(resumeCounter, 1);
 
   // Testing forbidden transitions
   EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.start(fc), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::RuntimeException);
 
   // Requesting the thread to suspend
   EXPECT_NO_THROW(p.suspend());
 
+  // Updating suspend flag
+  suspendCounter++;
+
   // Testing forbidden transitions
   EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.start(fc), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
+
+  // Checking resume counter value has not updated (this is probabilistic only)
+  sched_yield();
+  usleep(50000);
+  sched_yield();
+  EXPECT_EQ(resumeCounter, 1);
 
   // Resuming to terminate function
   EXPECT_NO_THROW(p.resume());
-//
-//  // Testing forbidden transitions
+
+  // Waiting for execution times to update
+  pthread_barrier_wait(&barrier);
+  EXPECT_EQ(resumeCounter, 2);
+
+  // Testing forbidden transitions
   EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.start(fc), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::RuntimeException);
 
+  // Re-suspend
+  EXPECT_NO_THROW(p.suspend());
+
+  // Updating suspend flag and waiting a bit
+  suspendCounter++;
+
+  // Checking resume counter value has not updated (this is probabilistic only)
+  sched_yield();
+  usleep(50000);
+  sched_yield();
+  EXPECT_EQ(resumeCounter, 2);
+
+  // Re-Resume
+  EXPECT_NO_THROW(p.resume());
+
+  // Waiting for execution times to update
+  pthread_barrier_wait(&barrier);
+  EXPECT_EQ(resumeCounter, 3);
+
+  // Terminate
   EXPECT_NO_THROW(p.terminate());
   EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.start(fc), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
 
-//  // Awaiting termination
+  // Awaiting termination
   EXPECT_NO_THROW(p.await());
-  EXPECT_THROW(p.start(fc), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
+
+  ///////// Checking re-run same thread
+
+  // Creating re-runner function
+  auto fc2 = [&resumeCounter, &barrier, &suspendCounter]()
+  {
+    // Checking correct execution
+    resumeCounter++;
+    while(true) pthread_barrier_wait(&barrier);
+  };
 
   // Reinitializing
   EXPECT_NO_THROW(p.initialize());
 
   // Re-running
-  EXPECT_NO_THROW(p.start(fc));
+  EXPECT_NO_THROW(p.start(fc2));
 
-  // Waiting for execution times to update
-  while(executionTimes != 2);
+  // Waiting for resume counter to update
+  pthread_barrier_wait(&barrier);
+  EXPECT_EQ(resumeCounter, 4);
+
+  // Re-terminating
+  EXPECT_NO_THROW(p.terminate());
+
+  // Re-awaiting
+  EXPECT_NO_THROW(p.await());
+
+  ///////////////// Creating case where the thread runs a function that finishes
+  auto fc3 = []()
+  {
+  };
+
+  // Reinitializing
+  EXPECT_NO_THROW(p.initialize());
+
+  // Re-running
+  EXPECT_NO_THROW(p.start(fc3));
 
   // Re-terminating
   EXPECT_NO_THROW(p.terminate());
