@@ -89,8 +89,8 @@ TEST(Thread, LifeCycle)
   EXPECT_EQ(pIdAlt, pId);
 
   // Values for correct suspension/resume checking
-  int suspendCounter = 0;
-  int resumeCounter = 0;
+  __volatile__ int suspendCounter = 0;
+  __volatile__ int resumeCounter = 0;
 
   // Barrier for synchronization
   pthread_barrier_t barrier;
@@ -100,21 +100,21 @@ TEST(Thread, LifeCycle)
   auto fc1 = [&resumeCounter, &barrier, &suspendCounter]()
   {
     // Checking correct execution
-    resumeCounter++;
+    resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);
 
     // Checking suspension
     while(suspendCounter == 0);
 
     // Updating resume counter
-    resumeCounter++;
+    resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);
 
     // Checking suspension
     while(suspendCounter == 1);
 
     // Updating resume counter
-    resumeCounter++;
+    resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);
 
     // Waiting until the end
@@ -154,7 +154,7 @@ TEST(Thread, LifeCycle)
   EXPECT_NO_THROW(p.suspend());
 
   // Updating suspend flag
-  suspendCounter++;
+  suspendCounter = suspendCounter + 1;
 
   // Testing forbidden transitions
   EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
@@ -184,7 +184,7 @@ TEST(Thread, LifeCycle)
   EXPECT_NO_THROW(p.suspend());
 
   // Updating suspend flag and waiting a bit
-  suspendCounter++;
+  suspendCounter = suspendCounter + 1;
 
   // Checking resume counter value has not updated (this is probabilistic only)
   sched_yield();
@@ -217,10 +217,10 @@ TEST(Thread, LifeCycle)
   ///////// Checking re-run same thread
 
   // Creating re-runner function
-  auto fc2 = [&resumeCounter, &barrier, &suspendCounter]()
+  auto fc2 = [&resumeCounter, &barrier]()
   {
     // Checking correct execution
-    resumeCounter++;
+    resumeCounter = resumeCounter + 1;
     while(true) pthread_barrier_wait(&barrier);
   };
 
