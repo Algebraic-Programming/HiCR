@@ -14,7 +14,6 @@
 
 #include <cstring>
 #include <errno.h>
-#include <future>
 #include <memory>
 
 #include "hwloc.h"
@@ -70,11 +69,6 @@ class SharedMemory final : public Backend
   * Thread-safe map that stores all detected memory spaces HWLoC objects associated to this backend
   */
  parallelHashMap_t<memorySpaceId_t, hwloc_obj_t> _memorySpaceMap;
-
-  /**
-   * List of deferred function calls in non-blocking data moves, which complete in the fence call
-   */
-  std::multimap<tagId_t, std::future<void>> deferredFuncs;
 
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
@@ -136,7 +130,7 @@ class SharedMemory final : public Backend
     return std::move(std::make_unique<Thread>(resource));
   }
 
-  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
+  __USED__ inline deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
     // Getting pointer for the corresponding slots
     const auto srcSlot = _memorySlotMap.at(source);
@@ -151,13 +145,7 @@ class SharedMemory final : public Backend
     const auto actualDstPtr = (void*)((uint8_t*)dstPtr + dst_offset);
 
     // Creating function that satisfies the request (memcpy)
-    auto fc = [actualDstPtr, actualSrcPtr, size]() { std::memcpy(actualDstPtr, actualSrcPtr, size); };
-
-    // Creating a future as a deferred launch function
-    auto future = std::async(std::launch::deferred, fc);
-
-    // Inserting future into the deferred function multimap
-    deferredFuncs.insert(std::make_pair(tag, std::move(future)));
+    return [actualDstPtr, actualSrcPtr, size]() { std::memcpy(actualDstPtr, actualSrcPtr, size); };
   }
 
 
@@ -193,22 +181,6 @@ class SharedMemory final : public Backend
   {
     if (obj->arity == 0) threadPUs.push_back(obj->os_index);
     for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
-  }
-
-  /**
-   * Waits for the completion of one or more pending operation(s) associated with a given tag
-   *
-   * \param[in] tag Identifier of the operation(s) to be waited  upon
-   *
-   * TO-DO: This all should be threading safe
-   */
-  __USED__ inline void fence(const uint64_t tag) override
-  {
-    // Gets all deferred functions belonging to this tag
-    auto range = deferredFuncs.equal_range(tag);
-
-    // Wait for the finalization of each deferred function
-    for (auto itr = range.first; itr != range.second; itr++) itr->second.wait();
   }
 
   /**

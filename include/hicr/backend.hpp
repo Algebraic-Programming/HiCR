@@ -12,10 +12,13 @@
 
 #pragma once
 
+#include <set>
+#include <mutex>
+#include <future>
+
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <set>
 
 namespace HiCR
 {
@@ -36,6 +39,11 @@ typedef uint64_t memorySlotId_t;
 typedef uint64_t tagId_t;
 
 /**
+ * Type definition for a deferred function representing pending operations
+ */
+typedef std::function<void()> deferredFunction_t;
+
+/**
  * Common definition of a collection of compute resources
  */
 typedef std::set<computeResourceId_t> computeResourceList_t;
@@ -44,6 +52,26 @@ typedef std::set<computeResourceId_t> computeResourceList_t;
  * Common definition of a collection of memory spaces
  */
 typedef std::set<memorySlotId_t> memorySpaceList_t;
+
+namespace backend
+{
+/**
+ * Alternatives for the execution of a given asynchronous operation
+ */
+enum launch_t
+{
+  /**
+   * The execution of the requested operation is performed immediately upon calling
+   */
+  immediate,
+
+  /**
+   * The execution of the requested operation is deferred until a fence operation is applied onto it
+   */
+  deferred
+};
+
+} // namespace backend
 
 /**
  * Encapsulates a HiCR Backend.
@@ -67,6 +95,16 @@ class Backend
   */
  memorySpaceList_t _memorySpaceList;
 
+ /**
+  * List of tag-identified deferred function calls in non-blocking operation, which complete in the fence call with the corresponding tag
+  */
+ std::multimap<tagId_t, std::future<void>> _deferredFunctions;
+
+ /**
+  * Mutex for accessing the deferred function collection in a thread-safe manner, for the lack of a thread-safe multimap
+  */
+ std::mutex _deferredFunctionMutex;
+
  protected:
 
  /**
@@ -82,7 +120,7 @@ class Backend
  /**
   * Backend-internal implementation of the memcpy function
   */
- virtual void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) = 0;
+ virtual deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) = 0;
 
  /**
   * Backend-internal implementation of the queryComputeResources function
@@ -245,7 +283,7 @@ class Backend
    * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
    *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
    */
-  __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag)
+  __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag, const backend::launch_t launchType = backend::launch_t::deferred)
   {
    // Making sure the memory slots exist and is not null
    if (isMemorySlotValid(source) == false)      HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or is invalid", source);
@@ -261,8 +299,23 @@ class Backend
    if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).",      size, src_offset, actualSrcSize, source, srcSize);
    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
 
-   // Now calling internal memcpy function
-   memcpyImpl(destination, dst_offset, source, src_offset, size, tag);
+   // Now calling internal memcpy function to give us a function that satisfies the operation
+   auto fc = memcpyImpl(destination, dst_offset, source, src_offset, size, tag);
+
+   // If the operation is to be executed immediately, do it now
+   if (launchType == backend::launch_t::immediate) fc();
+
+   // Else, create a future as a deferred launch function
+   if (launchType == backend::launch_t::deferred)
+   {
+    // Creating future with the function
+    auto future = std::async(std::launch::deferred, fc);
+
+    // Inserting future into the deferred function multimap
+    _deferredFunctionMutex.lock();
+    _deferredFunctions.insert(std::make_pair(tag, std::move(future)));
+    _deferredFunctionMutex.unlock();
+   }
   }
 
   /**
@@ -295,8 +348,34 @@ class Backend
    * \todo How does this interact with malleability of resources of which HiCR is
    *       aware? One possible answer is a special event that if left unhandled,
    *       is promoted to a fatal exception.
+   *
+   * \todo This all should be threading safe.
    */
-  virtual void fence(const tagId_t tag) = 0;
+  __USED__ inline void fence(const tagId_t tag)
+  {
+   // Gets all deferred functions belonging to this tag and removing them from the multimap. All of this in a mutex for thread safety
+   _deferredFunctionMutex.lock();
+
+   // Getting the number of deferred tags that coincide with the given tag
+   auto count = _deferredFunctions.count(tag);
+
+   // Creating local copy of the deferred tags (to release mutex asap) and pre-reserving enough space for it
+   std::vector<std::future<void>> tagFunctions;
+   tagFunctions.reserve(count);
+
+   // Moving the deferred functions from the multimap to the local copy
+   auto range = _deferredFunctions.equal_range(tag);
+   for (auto itr = range.first; itr != range.second; itr++) tagFunctions.push_back(std::move(itr->second));
+
+   // Releasing moved functions
+   _deferredFunctions.erase(tag);
+
+   // Releasing lock
+   _deferredFunctionMutex.unlock();
+
+   // Wait for the finalization of each deferred function
+   for (const auto& fcs : tagFunctions) fcs.wait();
+  }
 
   /**
    * Allocates memory in the specified memory space

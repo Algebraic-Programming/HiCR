@@ -112,36 +112,26 @@ class Sequential final : public Backend
     return std::move(std::make_unique<Process>(resource));
   }
 
-  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
+  __USED__ inline deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
+    // Getting pointer for the corresponding slots
     const auto srcSlot = _memorySlotMap.at(source);
     const auto dstSlot = _memorySlotMap.at(destination);
 
-    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
-    { std::memcpy(dst, src, size); };
-    std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
-    deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
+    // Getting slot pointers
+    const auto srcPtr = srcSlot.pointer;
+    const auto dstPtr = dstSlot.pointer;
+
+    // Calculating actual offsets
+    const auto actualSrcPtr = (void*)((uint8_t*)srcPtr + src_offset);
+    const auto actualDstPtr = (void*)((uint8_t*)dstPtr + dst_offset);
+
+    // Creating function that satisfies the request (memcpy)
+    return [actualDstPtr, actualSrcPtr, size]() { std::memcpy(actualDstPtr, actualSrcPtr, size); };
   }
 
   public:
 
-
-  /**
-   * Waits for the completion of one or more pending operation(s) associated with a given tag
-   *
-   * \param[in] tag Identifier of the operation(s) to be waited  upon
-   *
-   * TO-DO: This all should be threading safe
-   */
-  __USED__ inline void fence(const uint64_t tag) override
-  {
-    auto range = deferredFuncs.equal_range(tag);
-    for (auto i = range.first; i != range.second; ++i)
-    {
-      auto f = std::move(i->second);
-      f.wait();
-    }
-  }
 
   /**
    * Allocates memory in the current memory space (whole system)
