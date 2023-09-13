@@ -81,7 +81,105 @@ class SharedMemory final : public Backend
    */
   hwloc_topology_t _topology;
 
+  /**
+   * Pthread implementation of the Backend queryResources() function. This will add one compute resource object per Thread / Processing Unit (PU) found
+   */
+  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
+  {
+    // Loading topology
+    hwloc_topology_load(_topology);
+
+    // New compute resource list to return
+    computeResourceList_t computeResourceList;
+
+    // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
+    std::vector<int> threadPUs;
+    getThreadPUs(_topology, hwloc_get_root_obj(_topology), 0, threadPUs);
+    computeResourceList.insert(threadPUs.begin(), threadPUs.end());
+
+    // Returning new compute resource list
+    return computeResourceList;
+  }
+
+
+  /**
+   * Pthread implementation of the Backend queryResources() function. This will add one memory space object per NUMA domain found
+   */
+  __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
+  {
+    // Loading topology
+    hwloc_topology_load(_topology);
+
+    // Clearing existing memory space map
+    _memorySpaceMap.clear();
+
+    // New memory space list to return
+    memorySpaceList_t memorySpaceList;
+
+    // Ask hwloc about number of NUMA nodes and add as many memory spaces as NUMA domains
+    auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
+    for (int i = 0; i < n; i++)
+    {
+     // Storing reference to the HWLoc object for future reference
+     _memorySpaceMap[i] = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, i);
+
+     // Storing new memory space
+     memorySpaceList.insert(i);
+    }
+
+    // Returning new memory space list
+    return memorySpaceList;
+  }
+
+  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
+  {
+    return std::move(std::make_unique<Thread>(resource));
+  }
+
+  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
+  {
+    // Getting pointer for the corresponding slots
+    const auto srcSlot = _memorySlotMap.at(source);
+    const auto dstSlot = _memorySlotMap.at(destination);
+
+    // Getting slot pointers
+    const auto srcPtr = srcSlot.pointer;
+    const auto dstPtr = dstSlot.pointer;
+
+    // Calculating actual offsets
+    const auto actualSrcPtr = (void*)((uint8_t*)srcPtr + src_offset);
+    const auto actualDstPtr = (void*)((uint8_t*)dstPtr + dst_offset);
+
+    // Creating function that satisfies the request (memcpy)
+    auto fc = [actualDstPtr, actualSrcPtr, size]() { std::memcpy(actualDstPtr, actualSrcPtr, size); };
+
+    // Creating a future as a deferred launch function
+    auto future = std::async(std::launch::deferred, fc);
+
+    // Inserting future into the deferred function multimap
+    deferredFuncs.insert(std::make_pair(tag, std::move(future)));
+  }
+
+
   public:
+
+  /**
+   * The constructor is employed to reserve memory required for hwloc
+   */
+  SharedMemory() : Backend()
+  {
+   // Reserving memory for hwloc
+   hwloc_topology_init(&_topology);
+  }
+
+  /**
+   * The constructor is employed to free memory required for hwloc
+   */
+  ~SharedMemory()
+  {
+   // Freeing Reserved memory for hwloc
+   hwloc_topology_destroy(_topology);
+  }
 
   /**
    * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
@@ -95,78 +193,6 @@ class SharedMemory final : public Backend
   {
     if (obj->arity == 0) threadPUs.push_back(obj->os_index);
     for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
-  }
-
-  /**
-   * Pthread implementation of the Backend queryResources() function. This will add one resource object per found Thread / Processing Unit (PU)
-   */
-  __USED__ inline void queryResources() override
-  {
-    hwloc_topology_init(&_topology);
-    hwloc_topology_load(_topology);
-
-    // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
-    std::vector<int> threadPUs;
-    getThreadPUs(_topology, hwloc_get_root_obj(_topology), 0, threadPUs);
-    _computeResourceList.assign(threadPUs.begin(), threadPUs.end());
-
-    // Clearing existing memory space entries
-    _memorySpaceList.clear();
-    _memorySpaceMap.clear();
-
-    // Ask hwloc about number of NUMA nodes and add as many memory spaces as NUMA domains
-    auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
-    for (int i = 0; i < n; i++)
-    {
-     // Storing reference to the HWLoc object for future reference
-     _memorySpaceMap[i] = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, i);
-
-     // Storing new memory space
-     _memorySpaceList.push_back(i);
-    }
-  }
-
-  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const override
-  {
-    return std::move(std::make_unique<Thread>(resource));
-  }
-
-  __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
-  {
-    // Getting pointer for the corresponding slots
-    const auto srcSlot = _memorySlotMap.at(source);
-    const auto dstSlot = _memorySlotMap.at(destination);
-
-    // Getting slot pointers
-    const auto srcPtr = srcSlot.pointer;
-    const auto dstPtr = dstSlot.pointer;
-
-    // Making sure the memory slots exist and is not null
-    if (srcPtr == NULL) HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", source);
-    if (dstPtr == NULL) HICR_THROW_RUNTIME("Invalid destination memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", destination);
-
-    // Getting slot sizes
-    const auto srcSize = srcSlot.size;
-    const auto dstSize = dstSlot.size;
-
-    // Making sure the memory slots exist and is not null
-    const auto actualSrcSize = size + src_offset;
-    const auto actualDstSize = size + dst_offset;
-    if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).",      size, src_offset, actualSrcSize, source, srcSize);
-    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
-
-    // Calculating actual offsets
-    const auto actualSrcPtr = (void*)((uint8_t*)srcPtr + src_offset);
-    auto actualDstPtr       = (void*)((uint8_t*)dstPtr + dst_offset);
-
-    // Creating function that satisfies the request (memcpy)
-    auto fc = [actualDstPtr, actualSrcPtr, size]() { std::memcpy(actualDstPtr, actualSrcPtr, size); };
-
-    // Creating a future as a deferred launch function
-    auto future = std::async(std::launch::deferred, fc);
-
-    // Inserting future into the deferred function multimap
-    deferredFuncs.insert(std::make_pair(tag, std::move(future)));
   }
 
   /**
@@ -287,13 +313,33 @@ class SharedMemory final : public Backend
    * @param[in] memorySpace The NUMA domain to query
    * @return The allocatable size within that NUMA domain
    */
-  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const override
+  __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
-    // Recovering HWLoc object corresponding to this memory space
-   const auto obj = _memorySpaceMap.at(memorySpace);
+     // Recovering HWLoc object corresponding to this memory space
+    const auto obj = _memorySpaceMap.at(memorySpace);
 
     // Returning entry corresponding to the memory size
     return obj->attr->cache.size;
+  }
+
+  /**
+   * Checks whether the memory slot id exists and is valid.
+   *
+   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
+   *
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
+   */
+  __USED__ bool isMemorySlotValid(const memorySlotId_t memorySlotId) const override
+  {
+   // Getting pointer for the corresponding slot
+   const auto slot = _memorySlotMap.at(memorySlotId);
+
+   // If it is NULL, it means it was never created
+   if (slot.pointer == NULL) return false;
+
+   // Otherwise it is ok
+   return true;
   }
 };
 

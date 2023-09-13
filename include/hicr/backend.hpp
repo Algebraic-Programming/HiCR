@@ -13,8 +13,9 @@
 #pragma once
 
 #include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <vector>
+#include <set>
 
 namespace HiCR
 {
@@ -37,12 +38,12 @@ typedef uint64_t tagId_t;
 /**
  * Common definition of a collection of compute resources
  */
-typedef std::vector<computeResourceId_t> computeResourceList_t;
+typedef std::set<computeResourceId_t> computeResourceList_t;
 
 /**
  * Common definition of a collection of memory spaces
  */
-typedef std::vector<memorySlotId_t> memorySpaceList_t;
+typedef std::set<memorySlotId_t> memorySpaceList_t;
 
 /**
  * Encapsulates a HiCR Backend.
@@ -54,19 +55,81 @@ typedef std::vector<memorySlotId_t> memorySpaceList_t;
  */
 class Backend
 {
+ private:
+
+ /**
+  * The internal container for the queried compute resources.
+  */
+ computeResourceList_t _computeResourceList;
+
+ /**
+  * The internal container for the queried memory spaces.
+  */
+ memorySpaceList_t _memorySpaceList;
+
+ protected:
+
+ /**
+  * Backend-internal implementation of the getMemorySpaceSize function
+  */
+ virtual size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const = 0;
+
+ /**
+  * Backend-internal implementation of the createProcessingUnit function
+  */
+ virtual std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const = 0;
+
+ /**
+  * Backend-internal implementation of the memcpy function
+  */
+ virtual void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) = 0;
+
+ /**
+  * Backend-internal implementation of the queryComputeResources function
+  */
+ virtual computeResourceList_t queryComputeResourcesImpl() = 0;
+
+ /**
+  * Backend-internal implementation of the queryMemorySpaces function
+  */
+ virtual memorySpaceList_t queryMemorySpacesImpl() = 0;
+
   public:
 
   Backend() = default;
   virtual ~Backend() = default;
 
   /**
-   * This function prompts the backend to perform the necessary steps to discover and list the resources provided by the library which it supports.
+   * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.
    *
    * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
    *
    * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
    */
-  virtual void queryResources() = 0;
+  __USED__ inline void queryComputeResources()
+  {
+   // Clearing existing compute resources
+   _computeResourceList.clear();
+
+   // Calling backend-internal implementation
+   _computeResourceList = queryComputeResourcesImpl();
+  }
+
+  /**
+   * This function prompts the backend to perform the necessary steps to discover and list the memory spaces provided by the library which it supports.
+   *
+   * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
+   *
+   * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
+   */
+  __USED__ inline void queryMemorySpaces()
+  {
+   // Clearing existing memory space entries
+   _memorySpaceList.clear();
+
+   // Calling backend-internal implementation
+   _memorySpaceList = queryMemorySpacesImpl();
+  }
 
   /**
    * This function returns the list of queried compute resources, as visible by the backend.
@@ -92,7 +155,14 @@ class Backend
    * @param[in] memorySpace The memory space to query
    * @return The allocatable size within that memory space
    */
-  virtual size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const = 0;
+  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const
+  {
+   // Checking whether the referenced memory space actually exists
+   if (_memorySpaceList.contains(memorySpace) == false) HICR_THROW_RUNTIME("Attempting to get size from memory space that does not exist (%lu) in this backend", memorySpace);
+
+   // Calling internal implementation
+   return getMemorySpaceSizeImpl(memorySpace);
+  }
 
   /**
    * Creates a new processing unit from the provided compute resource
@@ -101,7 +171,14 @@ class Backend
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const = 0;
+  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const
+  {
+   // Checking whether the referenced compute resource actually exists
+   if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
+
+   // Calling internal implementation
+   return createProcessingUnitImpl(resource);
+  }
 
   /**
    * Instructs the backend to perform an asynchronous memory copy from
@@ -168,13 +245,25 @@ class Backend
    * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
    *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
    */
-  virtual void memcpy(
-    memorySlotId_t destination,
-    const size_t dst_offset,
-    const memorySlotId_t source,
-    const size_t src_offset,
-    const size_t size,
-    const tagId_t &tag) = 0;
+  __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag)
+  {
+   // Making sure the memory slots exist and is not null
+   if (isMemorySlotValid(source) == false)      HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or is invalid", source);
+   if (isMemorySlotValid(destination) == false) HICR_THROW_RUNTIME("Invalid destination memory slot(s) (%lu) provided. It either does not exist or is invalid", destination);
+
+   // Getting slot sizes
+   const auto srcSize = getMemorySlotSize(source);
+   const auto dstSize = getMemorySlotSize(destination);
+
+   // Making sure the memory slots exist and is not null
+   const auto actualSrcSize = size + src_offset;
+   const auto actualDstSize = size + dst_offset;
+   if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).",      size, src_offset, actualSrcSize, source, srcSize);
+   if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
+
+   // Now calling internal memcpy function
+   memcpyImpl(destination, dst_offset, source, src_offset, size, tag);
+  }
 
   /**
    * Fences a group of memory copies.
@@ -244,21 +333,12 @@ class Backend
   virtual size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const = 0;
 
   /**
-   * This function prompts the backend to perform the necessary steps to discover and list the resources provided by the library which it supports.
+   * Checks whether the memory slot id exists and is valid
    *
-   * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
-   *
-   * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
    */
-  /**
-   * The internal container for the queried resources.
-   */
-  computeResourceList_t _computeResourceList;
-
-  /**
-   * The internal container for the queried resources.
-   */
-  memorySpaceList_t _memorySpaceList;
+  virtual bool isMemorySlotValid(const memorySlotId_t memorySlotId) const = 0;
 };
 
 } // namespace HiCR

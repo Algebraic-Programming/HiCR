@@ -61,7 +61,7 @@ class Sequential final : public Backend
   /**
    * Thread-safe map that stores all allocated or created memory slots associated to this backend
    */
-  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _slotMap;
+  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _memorySlotMap;
 
   /**
    * list of deffered function calls in non-blocking data moves, which
@@ -70,11 +70,16 @@ class Sequential final : public Backend
   std::multimap<uint64_t, std::future<void>> deferredFuncs;
 
   /**
+   * This stores the total system memory to check that allocations do not exceed it
+   */
+  size_t _totalSystemMem = 0;
+
+  /**
    * This function returns the system physical memory size, which is what matters for a sequential program
    *
    * This is adapted from https://stackoverflow.com/a/2513561
    */
-  size_t getTotalSystemMemory()
+  __USED__ inline static size_t getTotalSystemMemory()
   {
     size_t pages = sysconf(_SC_PHYS_PAGES);
     size_t page_size = sysconf(_SC_PAGE_SIZE);
@@ -82,44 +87,44 @@ class Sequential final : public Backend
   }
 
   /**
-   * This stores the total system memory to check that allocations do not exceed it
+   * Sequential backend implementation that returns a single compute element.
    */
-  size_t _totalSystemMem = 0;
-
-  public:
-
-  /**
-   * Pthread implementation of the Backend queryResources() function. This will add one resource object per found Thread / Processing Unit (PU)
-   */
-  __USED__ inline void queryResources() override
+  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
   {
     // Only a single processing unit is created
-    _computeResourceList = computeResourceList_t({0});
-
-    // Getting total system memory
-    _totalSystemMem = getTotalSystemMemory();
-
-    // Only a single memory space is created
-    _memorySpaceList = memorySpaceList_t({0});
+    return computeResourceList_t({0});
   }
 
-  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const override
+  /**
+   * Sequential backend implementation that returns a single memory space representing the entire RAM host memory.
+   */
+  __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
+  {
+    // Getting total system memory
+    _totalSystemMem = Sequential::getTotalSystemMemory();
+
+    // Only a single memory space is created
+    return memorySpaceList_t({0});
+  }
+
+  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
     return std::move(std::make_unique<Process>(resource));
   }
 
-  __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
+  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
-    const auto srcSlot = _slotMap.at(source);
-    const auto dstSlot = _slotMap.at(destination);
-
-    if (srcSlot.pointer == NULL || dstSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu -> %lu) provided in  memcpy. It either does not exit or represents a NULL pointer.", source, destination);
+    const auto srcSlot = _memorySlotMap.at(source);
+    const auto dstSlot = _memorySlotMap.at(destination);
 
     std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
     { std::memcpy(dst, src, size); };
     std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
     deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
   }
+
+  public:
+
 
   /**
    * Waits for the completion of one or more pending operation(s) associated with a given tag
@@ -153,7 +158,7 @@ class Sequential final : public Backend
 
     auto ptr = malloc(size);
     auto tag = _currentTagId++;
-    _slotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
+    _memorySlotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
     return tag;
   }
 
@@ -166,7 +171,7 @@ class Sequential final : public Backend
   __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
   {
     auto tag = _currentTagId++;
-    _slotMap[tag] = memorySlotStruct_t{.pointer = addr, .size = size};
+    _memorySlotMap[tag] = memorySlotStruct_t{.pointer = addr, .size = size};
     return tag;
   }
 
@@ -177,13 +182,13 @@ class Sequential final : public Backend
    */
   __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
   {
-    const auto &memSlot = _slotMap.at(memorySlotId);
+    const auto &memSlot = _memorySlotMap.at(memorySlotId);
 
     if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
 
     free(memSlot.pointer);
 
-    _slotMap.erase(memorySlotId);
+    _memorySlotMap.erase(memorySlotId);
   }
 
   /**
@@ -194,7 +199,7 @@ class Sequential final : public Backend
    */
   __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
   {
-    const auto &memSlot = _slotMap.at(memorySlotId);
+    const auto &memSlot = _memorySlotMap.at(memorySlotId);
 
     if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
 
@@ -209,7 +214,7 @@ class Sequential final : public Backend
    */
   __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
   {
-    const auto &memSlot = _slotMap.at(memorySlotId);
+    const auto &memSlot = _memorySlotMap.at(memorySlotId);
 
     if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
 
@@ -222,10 +227,29 @@ class Sequential final : public Backend
    * @param[in] memorySpace Always zero, represents the system's RAM
    * @return The allocatable size within the system
    */
-  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const override
+  __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
-    if (memorySpace != 0) HICR_THROW_LOGIC("Only memory space zero is usable in the sequential backend");
     return _totalSystemMem;
+  }
+
+  /**
+   * Checks whether the memory slot id exists and is valid.
+   *
+   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
+   *
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
+   */
+  __USED__ bool isMemorySlotValid(const memorySlotId_t memorySlotId) const override
+  {
+   // Getting pointer for the corresponding slot
+   const auto &slot = _memorySlotMap.at(memorySlotId);
+
+   // If it is NULL, it means it was never created
+   if (slot.pointer == NULL) return false;
+
+   // Otherwise it is ok
+   return true;
   }
 };
 

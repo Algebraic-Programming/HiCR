@@ -43,13 +43,13 @@ TEST(Task, SetterAndGetters)
   HiCR::backend::sequential::Sequential backend;
 
   // Querying backend for its resources
-  backend.queryResources();
+  backend.queryComputeResources();
 
   // Gathering compute resources from backend
   auto computeResources = backend.getComputeResourceList();
 
   // Creating processing unit from resource
-  auto processingUnit = backend.createProcessingUnit(computeResources[0]);
+  auto processingUnit = backend.createProcessingUnit(*computeResources.begin());
 
   // Assigning processing unit to worker
   w.addProcessingUnit(processingUnit);
@@ -73,13 +73,13 @@ TEST(Worker, LifeCycle)
   HiCR::backend::sequential::Sequential backend;
 
   // Querying backend for its resources
-  backend.queryResources();
+  backend.queryComputeResources();
 
   // Gathering compute resources from backend
   auto computeResources = backend.getComputeResourceList();
 
   // Creating processing unit from resource
-  auto processingUnit = backend.createProcessingUnit(computeResources[0]);
+  auto processingUnit = backend.createProcessingUnit(*computeResources.begin());
 
   // Assigning processing unit to worker
   w.addProcessingUnit(processingUnit);

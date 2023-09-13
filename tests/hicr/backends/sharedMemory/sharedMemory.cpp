@@ -30,7 +30,7 @@ TEST(SharedMemory, Memory)
   backend::SharedMemory b;
 
   // Querying resources
-  EXPECT_NO_THROW(b.queryResources());
+  EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
   HiCR::memorySpaceList_t mList;
@@ -38,7 +38,7 @@ TEST(SharedMemory, Memory)
   EXPECT_GT(mList.size(), 0);
 
   // Getting memory resource
-  auto &r = mList[0];
+  auto &r = *mList.begin();
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;

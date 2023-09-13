@@ -317,7 +317,7 @@ class Runtime
     if (computeResourceList.empty() == true)
     {
       // Querying computational resources
-      _backend->queryResources();
+      _backend->queryComputeResources();
 
       // Updating the compute resource list
       actualComputeResourceList = _backend->getComputeResourceList();

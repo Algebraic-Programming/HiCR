@@ -12,14 +12,14 @@ int main(int argc, char **argv)
  HiCR::backend::sharedMemory::SharedMemory backend;
 
  // Asking backend to check the available resources
- backend.queryResources();
+ backend.queryMemorySpaces();
 
  // Obtaining memory spaces
  auto memSpaces = backend.getMemorySpaceList();
 
  // Allocating memory slots in different NUMA domains
- auto slot1 = backend.allocateMemorySlot(memSpaces[0], BUFFER_SIZE); // Memory Space 0 = NUMA 0
- auto slot2 = backend.allocateMemorySlot(memSpaces[1], BUFFER_SIZE); // Memory Space 1 = NUMA 1
+ auto slot1 = backend.allocateMemorySlot(*memSpaces.begin(), BUFFER_SIZE); // First NUMA Domain
+ auto slot2 = backend.allocateMemorySlot(*memSpaces.end(), BUFFER_SIZE);   // Last NUMA Domain
 
  // Initializing values in memory slot 1
  sprintf((char*)backend.getMemorySlotLocalPointer(slot1), "Hello, HiCR user!\n");
