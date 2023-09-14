@@ -60,12 +60,6 @@ class Sequential final : public Backend
   parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _memorySlotMap;
 
   /**
-   * list of deffered function calls in non-blocking data moves, which
-   * complete in the wait call
-   */
-  std::multimap<uint64_t, std::future<void>> deferredFuncs;
-
-  /**
    * This stores the total system memory to check that allocations do not exceed it
    */
   size_t _totalSystemMem = 0;
@@ -149,7 +143,7 @@ class Sequential final : public Backend
     return std::move(std::make_unique<Process>(resource));
   }
 
-  __USED__ inline deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
+  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
     // Getting pointer for the corresponding slots
     const auto srcSlot = _memorySlotMap.at(source);
@@ -163,9 +157,20 @@ class Sequential final : public Backend
     const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
     const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
 
-    // Creating function that satisfies the request (memcpy)
-    return [actualDstPtr, actualSrcPtr, size]()
-    { std::memcpy(actualDstPtr, actualSrcPtr, size); };
+    // Running memcpy now
+    std::memcpy(actualDstPtr, actualSrcPtr, size);
+  }
+
+  /**
+   * Implementation of the fence operation for the sequential backend. In this case, nothing needs to be done, as
+   * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
+   * ensures its completion.
+   *
+   * \param[in] tag Tag to execute a fence against
+   */
+  __USED__ inline void fenceImpl(const tagId_t tag)
+  {
+    // Nothing to check for, the memcpys are already done
   }
 
   /**

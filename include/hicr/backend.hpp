@@ -248,22 +248,7 @@ class Backend
    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
 
    // Now calling internal memcpy function to give us a function that satisfies the operation
-   auto fc = memcpyImpl(destination, dst_offset, source, src_offset, size, tag);
-
-   // If the operation is to be executed immediately, do it now
-   if (launchType == Backend::launch_t::immediate) fc();
-
-   // Else, create a future as a deferred launch function
-   if (launchType == Backend::launch_t::deferred)
-   {
-     // Creating future with the function
-     auto future = std::async(std::launch::deferred, fc);
-
-     // Inserting future into the deferred function multimap
-     _deferredFunctionMutex.lock();
-     _deferredFunctions.insert(std::make_pair(tag, std::move(future)));
-     _deferredFunctionMutex.unlock();
-   }
+   memcpyImpl(destination, dst_offset, source, src_offset, size, tag);
  }
 
  /**
@@ -275,13 +260,6 @@ class Backend
   * to arrive at the remote memory space, modulo any fatal exception).
   *
   * @param[in] tag The tag of the memory copies to wait for.
-  *
-  * \warning This wait implies a (non-blocking) all-to-all across all memory
-  *          spaces the \a tag was created with. While this latency can be hidden
-  *          by yielding plus a completion event or by polling (see test_wait),
-  *          the latency exists nonetheless. If, therefore, this latency cannot
-  *          be hidden, then zero-cost fencing (see below) should be employed
-  *          instead.
   *
   * \note While the wait is blocking, local successful completion does \em not
   *       guarantee that all other memory spaces the given \a tag has been
@@ -301,28 +279,8 @@ class Backend
   */
  __USED__ inline void fence(const tagId_t tag)
  {
-   // Gets all deferred functions belonging to this tag and removing them from the multimap. All of this in a mutex for thread safety
-   _deferredFunctionMutex.lock();
-
-   // Getting the number of deferred tags that coincide with the given tag
-   auto count = _deferredFunctions.count(tag);
-
-   // Creating local copy of the deferred tags (to release mutex asap) and pre-reserving enough space for it
-   std::vector<std::future<void>> tagFunctions;
-   tagFunctions.reserve(count);
-
-   // Moving the deferred functions from the multimap to the local copy
-   auto range = _deferredFunctions.equal_range(tag);
-   for (auto itr = range.first; itr != range.second; itr++) tagFunctions.push_back(std::move(itr->second));
-
-   // Releasing moved functions
-   _deferredFunctions.erase(tag);
-
-   // Releasing lock
-   _deferredFunctionMutex.unlock();
-
-   // Wait for the finalization of each deferred function
-   for (const auto &fcs : tagFunctions) fcs.wait();
+   // Now call the proper fence, as implemented by the backend
+   fenceImpl(tag);
  }
 
  /**
@@ -508,9 +466,15 @@ class Backend
   * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
   * @param[in] size         The number of bytes to copy from the source to the destination
   * @param[in] tag          The tag of this memory copy
-  * @return Returns a function that represents the backend-specific completion of the memcpy operation
   */
- virtual deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) = 0;
+ virtual void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) = 0;
+
+ /**
+  * Backend-internal implementation of the fence function
+  *
+  * \param[in] tag Tag to execute a fence against
+  */
+ virtual void fenceImpl(const tagId_t tag) = 0;
 
  /**
   * Backend-internal implementation of the queryComputeResources function
@@ -570,16 +534,6 @@ class Backend
    * The internal container for the queried memory spaces.
    */
   memorySpaceList_t _memorySpaceList;
-
-  /**
-   * List of tag-identified deferred function calls in non-blocking operation, which complete in the fence call with the corresponding tag
-   */
-  std::multimap<tagId_t, std::future<void>> _deferredFunctions;
-
-  /**
-   * Mutex for accessing the deferred function collection in a thread-safe manner, for the lack of a thread-safe multimap
-   */
-  std::mutex _deferredFunctionMutex;
 
   /**
    * Currently available slot id to be assigned. It should atomically increment as each slot is assigned
