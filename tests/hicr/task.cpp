@@ -106,7 +106,7 @@ TEST(Task, Events)
   // Associating events to the map
   eventMap.setEvent(HiCR::Task::event_t::onTaskExecute, onExecuteCallback);
   eventMap.setEvent(HiCR::Task::event_t::onTaskSuspend, onSuspendCallback);
-  eventMap.setEvent(HiCR::Task::event_t::onTaskFinish,  onFinishCallback);
+  eventMap.setEvent(HiCR::Task::event_t::onTaskFinish, onFinishCallback);
 
   // Creating task function
   auto f = [&onExecuteHasRun, &onExecuteUpdated](void *arg)

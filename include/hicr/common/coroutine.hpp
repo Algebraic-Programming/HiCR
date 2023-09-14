@@ -30,7 +30,6 @@ namespace common
  */
 class Coroutine
 {
-
   public:
 
   /**

@@ -35,7 +35,6 @@ namespace sequential
  */
 class Sequential final : public Backend
 {
-
   public:
 
   /**
@@ -118,33 +117,33 @@ class Sequential final : public Backend
    */
   __USED__ bool isMemorySlotValid(const memorySlotId_t memorySlotId) const override
   {
-   // Getting pointer for the corresponding slot
-   const auto &slot = _memorySlotMap.at(memorySlotId);
+    // Getting pointer for the corresponding slot
+    const auto &slot = _memorySlotMap.at(memorySlotId);
 
-   // If it is NULL, it means it was never created
-   if (slot.pointer == NULL) return false;
+    // If it is NULL, it means it was never created
+    if (slot.pointer == NULL) return false;
 
-   // Otherwise it is ok
-   return true;
+    // Otherwise it is ok
+    return true;
   }
 
   private:
 
- /**
-  * Internal representation of a memory slot for the sequential backend
-  */
- struct memorySlotStruct_t
- {
-   /**
-    * Pointer to the local memory address containing this slot
-    */
-   void *pointer;
+  /**
+   * Internal representation of a memory slot for the sequential backend
+   */
+  struct memorySlotStruct_t
+  {
+    /**
+     * Pointer to the local memory address containing this slot
+     */
+    void *pointer;
 
-   /**
-    * Size of the memory slot
-    */
-   size_t size;
- };
+    /**
+     * Size of the memory slot
+     */
+    size_t size;
+  };
 
   /**
    * Currently available tag id to be assigned. It should increment as each tag is assigned
@@ -216,13 +215,13 @@ class Sequential final : public Backend
     const auto dstPtr = dstSlot.pointer;
 
     // Calculating actual offsets
-    const auto actualSrcPtr = (void*)((uint8_t*)srcPtr + src_offset);
-    const auto actualDstPtr = (void*)((uint8_t*)dstPtr + dst_offset);
+    const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
+    const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
 
     // Creating function that satisfies the request (memcpy)
-    return [actualDstPtr, actualSrcPtr, size]() { std::memcpy(actualDstPtr, actualSrcPtr, size); };
+    return [actualDstPtr, actualSrcPtr, size]()
+    { std::memcpy(actualDstPtr, actualSrcPtr, size); };
   }
-
 
   /**
    * Allocates memory in the current memory space (whole system)

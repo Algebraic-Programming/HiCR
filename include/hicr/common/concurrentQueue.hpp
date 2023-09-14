@@ -34,7 +34,6 @@ namespace common
 template <class P, size_t N>
 class ConcurrentQueue
 {
-
   public:
 
   /**

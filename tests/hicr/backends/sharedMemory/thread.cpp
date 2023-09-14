@@ -10,9 +10,9 @@
  * @date 12/9/2023
  */
 
-#include <set>
 #include "gtest/gtest.h"
 #include <hicr/backends/sharedMemory/thread.hpp>
+#include <set>
 
 namespace backend = HiCR::backend::sharedMemory;
 
@@ -27,55 +27,57 @@ TEST(Thread, Construction)
 
 TEST(Thread, AffinityFunctions)
 {
- // Storing current affinity set
- std::set<int> originalAffinitySet;
- EXPECT_NO_THROW(originalAffinitySet = backend::Thread::getAffinity());
+  // Storing current affinity set
+  std::set<int> originalAffinitySet;
+  EXPECT_NO_THROW(originalAffinitySet = backend::Thread::getAffinity());
 
- // Attempting to set and check new affinity set
- std::set<int> newAffinitySet({0, 1});
- EXPECT_NO_THROW(backend::Thread::updateAffinity(newAffinitySet));
- EXPECT_EQ(newAffinitySet, backend::Thread::getAffinity());
+  // Attempting to set and check new affinity set
+  std::set<int> newAffinitySet({0, 1});
+  EXPECT_NO_THROW(backend::Thread::updateAffinity(newAffinitySet));
+  EXPECT_EQ(newAffinitySet, backend::Thread::getAffinity());
 
- // Re-setting affinity set
- EXPECT_NO_THROW(backend::Thread::updateAffinity(originalAffinitySet));
- EXPECT_EQ(originalAffinitySet, backend::Thread::getAffinity());
+  // Re-setting affinity set
+  EXPECT_NO_THROW(backend::Thread::updateAffinity(originalAffinitySet));
+  EXPECT_EQ(originalAffinitySet, backend::Thread::getAffinity());
 }
 
 TEST(Thread, ThreadAffinity)
 {
- // Checking that a created thread has a correct affinity
- int threadAffinity = 1;
- std::set<int> threadAffinitySet({threadAffinity});
- backend::Thread p(threadAffinity);
+  // Checking that a created thread has a correct affinity
+  int threadAffinity = 1;
+  std::set<int> threadAffinitySet({threadAffinity});
+  backend::Thread p(threadAffinity);
 
- __volatile__ bool hasCorrectAffinity = false;
- __volatile__ bool checkedAffinity = false;
+  __volatile__ bool hasCorrectAffinity = false;
+  __volatile__ bool checkedAffinity = false;
 
- // Creating affinity checking function
- auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]()
- {
-  // Getting actual affinity set from the running thread
-  auto actualThreadAffinity = backend::Thread::getAffinity();
+  // Creating affinity checking function
+  auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]()
+  {
+    // Getting actual affinity set from the running thread
+    auto actualThreadAffinity = backend::Thread::getAffinity();
 
-  // Checking whether the one detected corresponds to the resource id
-  if (actualThreadAffinity == threadAffinitySet) hasCorrectAffinity = true;
+    // Checking whether the one detected corresponds to the resource id
+    if (actualThreadAffinity == threadAffinitySet) hasCorrectAffinity = true;
 
-  // Raising checked flag
-  checkedAffinity = true;
+    // Raising checked flag
+    checkedAffinity = true;
 
-  // Waiting
-  while(true);
- };
+    // Waiting
+    while (true)
+      ;
+  };
 
- // Initializing and running thread
- EXPECT_NO_THROW(p.initialize());
- EXPECT_NO_THROW(p.start(fc));
+  // Initializing and running thread
+  EXPECT_NO_THROW(p.initialize());
+  EXPECT_NO_THROW(p.start(fc));
 
- // Waiting for the thread to report
- while(checkedAffinity == false);
+  // Waiting for the thread to report
+  while (checkedAffinity == false)
+    ;
 
- // Checking if the thread's affinity was correctly set
- EXPECT_TRUE(hasCorrectAffinity);
+  // Checking if the thread's affinity was correctly set
+  EXPECT_TRUE(hasCorrectAffinity);
 }
 
 TEST(Thread, LifeCycle)
@@ -104,21 +106,23 @@ TEST(Thread, LifeCycle)
     pthread_barrier_wait(&barrier);
 
     // Checking suspension
-    while(suspendCounter == 0);
+    while (suspendCounter == 0)
+      ;
 
     // Updating resume counter
     resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);
 
     // Checking suspension
-    while(suspendCounter == 1);
+    while (suspendCounter == 1)
+      ;
 
     // Updating resume counter
     resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);
 
     // Waiting until the end
-    while(true) pthread_barrier_wait(&barrier);
+    while (true) pthread_barrier_wait(&barrier);
   };
 
   // Testing forbidden transitions
@@ -221,7 +225,7 @@ TEST(Thread, LifeCycle)
   {
     // Checking correct execution
     resumeCounter = resumeCounter + 1;
-    while(true) pthread_barrier_wait(&barrier);
+    while (true) pthread_barrier_wait(&barrier);
   };
 
   // Reinitializing
@@ -241,8 +245,7 @@ TEST(Thread, LifeCycle)
   EXPECT_NO_THROW(p.await());
 
   ///////////////// Creating case where the thread runs a function that finishes
-  auto fc3 = []()
-  {
+  auto fc3 = []() {
   };
 
   // Reinitializing

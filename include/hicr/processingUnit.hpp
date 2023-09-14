@@ -41,7 +41,6 @@ class ProcessingUnit
 {
   public:
 
-
   /**
    * Complete state set that a worker can be in
    */
@@ -192,7 +191,6 @@ class ProcessingUnit
    */
   __USED__ inline computeResourceId_t getComputeResourceId() { return _computeResourceId; }
 
-
   protected:
 
   /**
@@ -238,8 +236,6 @@ class ProcessingUnit
    * Identifier of the compute resource associated to this processing unit
    */
   computeResourceId_t _computeResourceId;
-
-
 };
 
 } // namespace HiCR

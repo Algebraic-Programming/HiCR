@@ -48,8 +48,6 @@ thread_local Worker *_currentWorker;
  */
 __USED__ static inline Worker *getCurrentWorker() { return _currentWorker; }
 
-
-
 /**
  * Defines the worker class, which is in charge of executing tasks.
  *
@@ -61,41 +59,41 @@ class Worker
 {
   public:
 
- /**
-  * Complete state set that a worker can be in
-  */
- enum state_t
- {
-   /**
-    * The worker object has been instantiated but not initialized
-    */
-   uninitialized,
+  /**
+   * Complete state set that a worker can be in
+   */
+  enum state_t
+  {
+    /**
+     * The worker object has been instantiated but not initialized
+     */
+    uninitialized,
 
-   /**
-    * The worker has been ininitalized (or is back from executing) and can currently run
-    */
-   ready,
+    /**
+     * The worker has been ininitalized (or is back from executing) and can currently run
+     */
+    ready,
 
-   /**
-    * The worker has started executing
-    */
-   running,
+    /**
+     * The worker has started executing
+     */
+    running,
 
-   /**
-    * The worker has started executing
-    */
-   suspended,
+    /**
+     * The worker has started executing
+     */
+    suspended,
 
-   /**
-    * The worker has been issued for termination (but still running)
-    */
-   terminating,
+    /**
+     * The worker has been issued for termination (but still running)
+     */
+    terminating,
 
-   /**
-    * The worker has terminated
-    */
-   terminated
- };
+    /**
+     * The worker has terminated
+     */
+    terminated
+  };
 
   /**
    * Queries the worker's internal state.

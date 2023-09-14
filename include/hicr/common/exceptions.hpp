@@ -24,7 +24,6 @@ namespace common
 namespace exceptions
 {
 
-
 /**
  * Enumeration of different exception types in HiCR for internal use
  */

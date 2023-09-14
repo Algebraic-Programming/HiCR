@@ -37,7 +37,6 @@ thread_local Task *_currentTask;
  */
 __USED__ inline Task *getCurrentTask() { return _currentTask; }
 
-
 /**
  * This class defines the basic execution unit managed by HiCR.
  *
@@ -49,65 +48,64 @@ __USED__ inline Task *getCurrentTask() { return _currentTask; }
  */
 class Task
 {
+  public:
 
-public:
+  /**
+   * Enumeration of possible task-related events that can trigger a user-defined function callback
+   */
+  enum event_t
+  {
+    /**
+     * Triggered as the task starts or resumes execution
+     */
+    onTaskExecute,
 
- /**
-  * Enumeration of possible task-related events that can trigger a user-defined function callback
-  */
- enum event_t
- {
-   /**
-    * Triggered as the task starts or resumes execution
-    */
-   onTaskExecute,
+    /**
+     * Triggered as the task is preempted into suspension by an asynchronous event
+     */
+    onTaskSuspend,
 
-   /**
-    * Triggered as the task is preempted into suspension by an asynchronous event
-    */
-   onTaskSuspend,
+    /**
+     * Triggered as the task finishes execution
+     */
+    onTaskFinish
+  };
 
-   /**
-    * Triggered as the task finishes execution
-    */
-   onTaskFinish
- };
+  /**
+   * Complete state set that a task can be in
+   */
+  enum state_t
+  {
+    /**
+     * Ready to run -- set automatically upon creation
+     */
+    initialized,
 
- /**
-  * Complete state set that a task can be in
-  */
- enum state_t
- {
-   /**
-    * Ready to run -- set automatically upon creation
-    */
-   initialized,
+    /**
+     * Indicates that the task is currently running
+     */
+    running,
 
-   /**
-    * Indicates that the task is currently running
-    */
-   running,
+    /**
+     * Set by the task if it suspends for an asynchronous operation
+     */
+    suspended,
 
-   /**
-    * Set by the task if it suspends for an asynchronous operation
-    */
-   suspended,
+    /**
+     * Set by the task upon complete termination
+     */
+    finished
+  };
 
-   /**
-    * Set by the task upon complete termination
-    */
-   finished
- };
+  /**
+   * Type definition for the task's event map
+   */
+  typedef common::EventMap<Task, event_t> taskEventMap_t;
 
- /**
-  * Type definition for the task's event map
-  */
- typedef common::EventMap<Task, event_t> taskEventMap_t;
-
- /**
-  * Definition for a task function that supports lambda functions
-  */
- typedef common::Coroutine::coroutineFc_t taskFunction_t;
+  /**
+   * Definition for a task function that supports lambda functions
+   */
+  typedef common::Coroutine::coroutineFc_t taskFunction_t;
 
   Task() = delete;
   ~Task() = default;
