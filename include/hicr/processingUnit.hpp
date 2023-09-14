@@ -30,47 +30,6 @@ typedef uint64_t computeResourceId_t;
  */
 typedef std::function<void(void)> processingUnitFc_t;
 
-namespace processingUnit
-{
-
-/**
- * Complete state set that a worker can be in
- */
-enum state_t
-{
-  /**
-   * The worker object has been instantiated but not initialized
-   */
-  uninitialized,
-
-  /**
-   * The worker has been ininitalized (or is back from executing) and can currently run
-   */
-  ready,
-
-  /**
-   * The worker has started executing
-   */
-  running,
-
-  /**
-   * The worker has started executing
-   */
-  suspended,
-
-  /**
-   * The worker has been issued for termination (but still running)
-   */
-  terminating,
-
-  /**
-   * The worker has terminated
-   */
-  terminated
-};
-
-} // namespace processingUnit
-
 /**
  * This class represents an abstract definition for a Processing Unit resource in HiCR that:
  *
@@ -80,17 +39,159 @@ enum state_t
  */
 class ProcessingUnit
 {
-  private:
+  public:
+
 
   /**
-   * Represents the internal state of the processing unit. Uninitialized upon construction.
+   * Complete state set that a worker can be in
    */
-  processingUnit::state_t _state = processingUnit::uninitialized;
+  enum state_t
+  {
+    /**
+     * The worker object has been instantiated but not initialized
+     */
+    uninitialized,
+
+    /**
+     * The worker has been ininitalized (or is back from executing) and can currently run
+     */
+    ready,
+
+    /**
+     * The worker has started executing
+     */
+    running,
+
+    /**
+     * The worker has started executing
+     */
+    suspended,
+
+    /**
+     * The worker has been issued for termination (but still running)
+     */
+    terminating,
+
+    /**
+     * The worker has terminated
+     */
+    terminated
+  };
 
   /**
-   * Identifier of the compute resource associated to this processing unit
+   * Disabled default constructor
    */
-  computeResourceId_t _computeResourceId;
+  ProcessingUnit() = delete;
+
+  /**
+   * A processing unit is created to instantiate a single compute resource
+   *
+   * \param computeResourceId The identifier of the compute resource to instantiate, as indicated by the backend
+   */
+  __USED__ inline ProcessingUnit(computeResourceId_t computeResourceId) : _computeResourceId(computeResourceId){};
+
+  virtual ~ProcessingUnit() = default;
+
+  /**
+   * Initializes the resource and leaves it ready to execute work
+   */
+  __USED__ inline void initialize()
+  {
+    // Checking internal state
+    if (_state != ProcessingUnit::uninitialized && _state != ProcessingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
+
+    // Calling PU-specific initialization
+    initializeImpl();
+
+    // Transitioning state
+    _state = ProcessingUnit::ready;
+  }
+
+  /**
+   * Starts running the resource and execute a user-defined function
+   *
+   * @param[in] fc The function to execute by the resource
+   */
+  __USED__ inline void start(processingUnitFc_t fc)
+  {
+    // Checking internal state
+    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'initialized' state");
+
+    // Transitioning state
+    _state = ProcessingUnit::running;
+
+    // Running internal implementation of the start function
+    startImpl(fc);
+  }
+
+  /**
+   * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
+   */
+  __USED__ inline void suspend()
+  {
+    // Checking state
+    if (_state != ProcessingUnit::running) HICR_THROW_RUNTIME("Attempting to suspend processing unit that is not in the 'running' state");
+
+    // Transitioning state
+    _state = ProcessingUnit::suspended;
+
+    // Calling internal implementation of the suspend function
+    suspendImpl();
+  }
+
+  /**
+   * Resumes the execution of the resource.
+   */
+  __USED__ inline void resume()
+  {
+    // Checking state
+    if (_state != ProcessingUnit::suspended) HICR_THROW_RUNTIME("Attempting to resume processing unit that is not in the 'suspended' state");
+
+    // Transitioning state
+    _state = ProcessingUnit::running;
+
+    // Calling internal implementation of the resume function
+    resumeImpl();
+  }
+
+  /**
+   * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
+   */
+  __USED__ inline void terminate()
+  {
+    // Checking state
+    if (_state != ProcessingUnit::running) HICR_THROW_RUNTIME("Attempting to stop processing unit that is not in the 'running' state");
+
+    // Transitioning state
+    _state = ProcessingUnit::terminating;
+
+    // Calling internal implementation of the terminate function
+    terminateImpl();
+  }
+
+  /**
+   * Suspends the execution of the caller until the finalization is ultimately completed
+   */
+  __USED__ inline void await()
+  {
+    // Checking state
+    if (_state != ProcessingUnit::terminating && _state != ProcessingUnit::running && _state != ProcessingUnit::suspended)
+      HICR_THROW_RUNTIME("Attempting to wait for a processing unit that has not yet started or has already terminated");
+
+    // Calling internal implementation of the await function
+    awaitImpl();
+
+    // Transitioning state
+    _state = ProcessingUnit::terminated;
+  }
+
+  /**
+   * Returns the processing unit's associated compute resource
+   *
+   * \return The identifier of the compute resource associated to this processing unit.
+   */
+  __USED__ inline computeResourceId_t getComputeResourceId() { return _computeResourceId; }
+
 
   protected:
 
@@ -126,121 +227,19 @@ class ProcessingUnit
    */
   virtual void awaitImpl() = 0;
 
-  public:
+  private:
 
   /**
-   * Disabled default constructor
+   * Represents the internal state of the processing unit. Uninitialized upon construction.
    */
-  ProcessingUnit() = delete;
+  ProcessingUnit::state_t _state = ProcessingUnit::uninitialized;
 
   /**
-   * A processing unit is created to instantiate a single compute resource
-   *
-   * \param computeResourceId The identifier of the compute resource to instantiate, as indicated by the backend
+   * Identifier of the compute resource associated to this processing unit
    */
-  __USED__ inline ProcessingUnit(computeResourceId_t computeResourceId) : _computeResourceId(computeResourceId){};
+  computeResourceId_t _computeResourceId;
 
-  virtual ~ProcessingUnit() = default;
 
-  /**
-   * Initializes the resource and leaves it ready to execute work
-   */
-  __USED__ inline void initialize()
-  {
-    // Checking internal state
-    if (_state != processingUnit::uninitialized && _state != processingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
-
-    // Calling PU-specific initialization
-    initializeImpl();
-
-    // Transitioning state
-    _state = processingUnit::ready;
-  }
-
-  /**
-   * Starts running the resource and execute a user-defined function
-   *
-   * @param[in] fc The function to execute by the resource
-   */
-  __USED__ inline void start(processingUnitFc_t fc)
-  {
-    // Checking internal state
-    if (_state != processingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'initialized' state");
-
-    // Transitioning state
-    _state = processingUnit::running;
-
-    // Running internal implementation of the start function
-    startImpl(fc);
-  }
-
-  /**
-   * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
-   */
-  __USED__ inline void suspend()
-  {
-    // Checking state
-    if (_state != processingUnit::running) HICR_THROW_RUNTIME("Attempting to suspend processing unit that is not in the 'running' state");
-
-    // Transitioning state
-    _state = processingUnit::suspended;
-
-    // Calling internal implementation of the suspend function
-    suspendImpl();
-  }
-
-  /**
-   * Resumes the execution of the resource.
-   */
-  __USED__ inline void resume()
-  {
-    // Checking state
-    if (_state != processingUnit::suspended) HICR_THROW_RUNTIME("Attempting to resume processing unit that is not in the 'suspended' state");
-
-    // Transitioning state
-    _state = processingUnit::running;
-
-    // Calling internal implementation of the resume function
-    resumeImpl();
-  }
-
-  /**
-   * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
-   */
-  __USED__ inline void terminate()
-  {
-    // Checking state
-    if (_state != processingUnit::running) HICR_THROW_RUNTIME("Attempting to stop processing unit that is not in the 'running' state");
-
-    // Transitioning state
-    _state = processingUnit::terminating;
-
-    // Calling internal implementation of the terminate function
-    terminateImpl();
-  }
-
-  /**
-   * Suspends the execution of the caller until the finalization is ultimately completed
-   */
-  __USED__ inline void await()
-  {
-    // Checking state
-    if (_state != processingUnit::terminating && _state != processingUnit::running && _state != processingUnit::suspended)
-      HICR_THROW_RUNTIME("Attempting to wait for a processing unit that has not yet started or has already terminated");
-
-    // Calling internal implementation of the await function
-    awaitImpl();
-
-    // Transitioning state
-    _state = processingUnit::terminated;
-  }
-
-  /**
-   * Returns the processing unit's associated compute resource
-   *
-   * \return The identifier of the compute resource associated to this processing unit.
-   */
-  __USED__ inline computeResourceId_t getComputeResourceId() { return _computeResourceId; }
 };
 
 } // namespace HiCR
