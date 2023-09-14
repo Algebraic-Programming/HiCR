@@ -108,48 +108,6 @@ class SharedMemory final : public Backend
     for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
   }
 
-  /**
-   * Obtains the local pointer from a given memory slot.
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
-   * \return The local memory pointer, if applicable. NULL, otherwise.
-   */
-  __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
-  {
-    return _memorySlotMap.at(memorySlotId).pointer;
-  }
-
-  /**
-   * Obtains the size of the memory slot
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the size.
-   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
-   */
-  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
-  {
-    return _memorySlotMap.at(memorySlotId).size;
-  }
-
-  /**
-   * Checks whether the memory slot id exists and is valid.
-   *
-   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
-   *
-   * \param[in] memorySlotId Identifier of the slot to check
-   * \return True, if the referenced memory slot exists and is valid; false, otherwise
-   */
-  __USED__ bool isMemorySlotValid(const memorySlotId_t memorySlotId) const override
-  {
-    // Getting pointer for the corresponding slot
-    const auto slot = _memorySlotMap.at(memorySlotId);
-
-    // If it is NULL, it means it was never created
-    if (slot.pointer == NULL) return false;
-
-    // Otherwise it is ok
-    return true;
-  }
-
   private:
 
   /**
@@ -190,6 +148,28 @@ class SharedMemory final : public Backend
   };
 
   /**
+   * Obtains the local pointer from a given memory slot.
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
+   * \return The local memory pointer, if applicable. NULL, otherwise.
+   */
+  __USED__ inline void *getMemorySlotLocalPointerImpl(const memorySlotId_t memorySlotId) const override
+  {
+    return _memorySlotMap.at(memorySlotId).pointer;
+  }
+
+  /**
+   * Obtains the size of the memory slot
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the size.
+   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
+   */
+  __USED__ inline size_t getMemorySlotSizeImpl(const memorySlotId_t memorySlotId) const override
+  {
+    return _memorySlotMap.at(memorySlotId).size;
+  }
+
+  /**
    * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
    */
   binding_type _hwlocBindingRequested = binding_type::strict_binding;
@@ -208,6 +188,27 @@ class SharedMemory final : public Backend
    * Local processor and memory hierarchy topology, as detected by Hwloc
    */
   hwloc_topology_t _topology;
+
+
+  /**
+   * Checks whether the memory slot id exists and is valid.
+   *
+   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
+   *
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
+   */
+  __USED__ bool isMemorySlotValidImpl(const memorySlotId_t memorySlotId) const override
+  {
+    // Getting pointer for the corresponding slot
+    const auto slot = _memorySlotMap.at(memorySlotId);
+
+    // If it is NULL, it means it was never created
+    if (slot.pointer == NULL) return false;
+
+    // Otherwise it is ok
+    return true;
+  }
 
   /**
    * Pthread implementation of the Backend queryResources() function. This will add one compute resource object per Thread / Processing Unit (PU) found

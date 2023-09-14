@@ -415,7 +415,15 @@ class Backend
   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
   * \return The local memory pointer, if applicable. NULL, otherwise.
   */
- virtual void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const = 0;
+ __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const
+ {
+  // Checking whether the slot has been associated with this backend
+  if (_allocatedMemorySlotSet.contains(memorySlotId) == false && _registeredMemorySlotSet.contains(memorySlotId) == false)
+   HICR_THROW_LOGIC("Attempting to get the size a memory slot (%lu) that is not associated to this backend", memorySlotId);
+
+  // Calling backend-specific function
+  return getMemorySlotLocalPointerImpl(memorySlotId);
+ }
 
  /**
   * Obtains the size of the memory slot
@@ -423,17 +431,56 @@ class Backend
   * \param[in] memorySlotId Identifier of the slot from where to source the size.
   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
   */
- virtual size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const = 0;
+ __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const
+ {
+  // Checking whether the slot has been associated with this backend
+  if (_allocatedMemorySlotSet.contains(memorySlotId) == false && _registeredMemorySlotSet.contains(memorySlotId) == false)
+   HICR_THROW_LOGIC("Attempting to get the size a memory slot (%lu) that is not associated to this backend", memorySlotId);
+
+  // Calling backend-specific function
+  return getMemorySlotSizeImpl(memorySlotId);
+ }
 
  /**
-  * Checks whether the memory slot id exists and is valid
+  * Checks whether the memory slot id exists and is a valid slot (e.g., the pointer is not NULL)
   *
   * \param[in] memorySlotId Identifier of the slot to check
   * \return True, if the referenced memory slot exists and is valid; false, otherwise
   */
- virtual bool isMemorySlotValid(const memorySlotId_t memorySlotId) const = 0;
+ __USED__ inline bool isMemorySlotValid(const memorySlotId_t memorySlotId) const
+ {
+  // Checking whether the slot has been allocated with this backend
+  if (_allocatedMemorySlotSet.contains(memorySlotId) == false && _registeredMemorySlotSet.contains(memorySlotId) == false) return false;
+
+  // Running the implementation function
+  return isMemorySlotValidImpl(memorySlotId);
+ }
 
  protected:
+
+ /**
+  * Backend-internal implementation of the getMemorySlotLocalPointer function
+  *
+  * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
+  * \return The local memory pointer, if applicable. NULL, otherwise.
+  */
+ virtual void *getMemorySlotLocalPointerImpl(const memorySlotId_t memorySlotId) const = 0;
+
+ /**
+  * Backend-internal implementation of the getMemorySlotSize function
+  *
+  * \param[in] memorySlotId Identifier of the slot from where to source the size.
+  * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
+  */
+ virtual size_t getMemorySlotSizeImpl(const memorySlotId_t memorySlotId) const = 0;
+
+ /**
+  * Backend-internal implementation of the isMemorySlotValid function
+  *
+  * \param[in] memorySlotId Identifier of the slot to check
+  * \return True, if the referenced memory slot exists and is valid; false, otherwise
+  */
+ virtual bool isMemorySlotValidImpl(const memorySlotId_t memorySlotId) const = 0;
 
  /**
   * Backend-internal implementation of the getMemorySpaceSize function
