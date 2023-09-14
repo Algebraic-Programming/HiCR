@@ -214,9 +214,19 @@ class Sequential final : public Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] The identifier for the new memory slot
    */
-  __USED__ inline void createMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void registerMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
   {
     _memorySlotMap[memSlotId] = memorySlotStruct_t{.pointer = addr, .size = size};
+  }
+
+  /**
+   * De-registers a memory slot previously registered
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   */
+  __USED__ inline void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) override
+  {
+   _memorySlotMap.erase(memorySlotId);
   }
 
   /**

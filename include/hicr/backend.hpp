@@ -344,27 +344,51 @@ class Backend
    // Calling internal implementation
    allocateMemorySlotImpl(memorySpaceId, size, newMemorySlotId);
 
+   // Adding allocated memory slot to the set
+   _allocatedMemorySlotSet.insert(newMemorySlotId);
+
    // Returning the id of the new memory slot
    return newMemorySlotId;
  }
 
  /**
-  * Creates a memory slot from a given address
+  * Registers a memory slot from a given address
   *
   * \param[in] addr Pointer to the start of the memory slot
   * \param[in] size Size of the memory slot to create
   * \return A newly created memory slot
   */
- virtual memorySlotId_t createMemorySlot(void *const addr, const size_t size)
+ virtual memorySlotId_t registerMemorySlot(void *const addr, const size_t size)
  {
   // Increase + swap memory slot for thread-safety
   auto newMemorySlotId = _currentMemorySlotId++;
 
   // Calling internal implementation
-  createMemorySlotImpl(addr, size, newMemorySlotId);
+  registerMemorySlotImpl(addr, size, newMemorySlotId);
+
+  // Adding created memory slot to the set
+  _registeredMemorySlotSet.insert(newMemorySlotId);
 
   // Returning the id of the new memory slot
   return newMemorySlotId;
+ }
+
+ /**
+  * De-registers a memory slot previously registered
+  *
+  * \param[in] memorySlotId Identifier of the memory slot to deregister.
+  */
+ __USED__ inline void deregisterMemorySlot(memorySlotId_t memorySlotId)
+ {
+  // Checking whether the slot has been allocated with this backend
+  if (_registeredMemorySlotSet.contains(memorySlotId) == false)
+   HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that was not registered to this backend", memorySlotId);
+
+  // Calling internal implementation
+  deregisterMemorySlotImpl(memorySlotId);
+
+  // Adding created memory slot to the set
+  _registeredMemorySlotSet.erase(memorySlotId);
  }
 
  /**
@@ -374,7 +398,15 @@ class Backend
   */
  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
  {
+  // Checking whether the slot has been allocated with this backend
+  if (_allocatedMemorySlotSet.contains(memorySlotId) == false)
+   HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that was not allocated by this backend", memorySlotId);
+
+  // Actually freeing up slot
   freeMemorySlotImpl(memorySlotId);
+
+  // Removing entry from the set
+  _allocatedMemorySlotSet.erase(memorySlotId);
  }
 
  /**
@@ -457,13 +489,13 @@ class Backend
  virtual void allocateMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size, const memorySlotId_t memSlotId) = 0;
 
  /**
-  * Creates a memory slot from a given address
+  * Backend-internal implementation of the registerMemorySlot function
   *
   * \param[in] addr Pointer to the start of the memory slot
   * \param[in] size Size of the memory slot to create
   * \param[in] The identifier for the new memory slot
   */
- virtual void createMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) = 0;
+ virtual void registerMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) = 0;
 
  /**
    * Backend-internal implementation of the freeMemorySlot function
@@ -471,6 +503,14 @@ class Backend
    * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
    */
   virtual void freeMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
+
+
+  /**
+   * Backend-internal implementation of the deregisterMemorySlot function
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   */
+  virtual void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
 
  private:
 
@@ -498,6 +538,16 @@ class Backend
    * Currently available slot id to be assigned. It should atomically increment as each slot is assigned
    */
   std::atomic<memorySlotId_t> _currentMemorySlotId = 0;
+
+  /**
+   * Stores the set of allocated (and unfreed) memory slots
+   */
+  parallelHashSet_t<memorySlotId_t> _allocatedMemorySlotSet;
+
+  /**
+   * Stores the set of registered memory slots
+   */
+  parallelHashSet_t<memorySlotId_t> _registeredMemorySlotSet;
 };
 
 } // namespace HiCR

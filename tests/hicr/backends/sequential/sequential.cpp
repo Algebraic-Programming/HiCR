@@ -63,7 +63,7 @@ TEST(Sequential, Memory)
 
   // Creating memory slot from a previous allocation
   HiCR::memorySlotId_t s2 = 0;
-  EXPECT_NO_THROW(s2 = b.createMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
+  EXPECT_NO_THROW(s2 = b.registerMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(b.getMemorySlotSize(s2), testMemAllocSize);
 
   // Getting local pointer from allocation
@@ -88,7 +88,7 @@ TEST(Sequential, Memory)
     if (((const char *)s1LocalPtr)[i] != ((const char *)s2LocalPtr)[i]) sameStrings = false;
   EXPECT_TRUE(sameStrings);
 
-  // Freeing memory slots
+  // Freeing and reregistering memory slots
   EXPECT_NO_THROW(b.freeMemorySlot(s1));
-  EXPECT_NO_THROW(b.freeMemorySlot(s2));
+  EXPECT_NO_THROW(b.deregisterMemorySlot(s2));
 }
