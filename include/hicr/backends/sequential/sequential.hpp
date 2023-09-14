@@ -130,8 +130,6 @@ class Sequential final : public Backend
     return [actualDstPtr, actualSrcPtr, size]() { std::memcpy(actualDstPtr, actualSrcPtr, size); };
   }
 
-  public:
-
 
   /**
    * Allocates memory in the current memory space (whole system)
@@ -142,7 +140,7 @@ class Sequential final : public Backend
    *
    * TO-DO: This all should be threading safe
    */
-  __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline memorySlotId_t allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
     if (size > _totalSystemMem) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, _totalSystemMem);
 
@@ -151,6 +149,8 @@ class Sequential final : public Backend
     _memorySlotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
     return tag;
   }
+
+  public:
 
   /**
    * Associates a pointer allocated somewhere else and creates a memory slot with it

@@ -132,6 +132,12 @@ class Backend
   */
  virtual memorySpaceList_t queryMemorySpacesImpl() = 0;
 
+ /**
+  * Backend-internal implementation of the queryMemorySpaces function
+  */
+ virtual memorySlotId_t allocateMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
+
+
   public:
 
   Backend() = default;
@@ -384,7 +390,15 @@ class Backend
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in the specified memory space
    */
-  virtual memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
+  __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)
+  {
+   // Checks whether the size requested exceeds the memory space size
+   auto maxSize = getMemorySpaceSize(memorySpaceId);
+   if (size > maxSize) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
+
+   // Calling internal implementation
+   return allocateMemorySlotImpl(memorySpaceId, size);
+  }
 
   /**
    * Creates a memory slot from a given address
