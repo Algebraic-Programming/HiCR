@@ -49,7 +49,7 @@ TEST(Sequential, Memory)
   EXPECT_GE(totalMem, testMemAllocSize);
 
   // Trying to allocate more than allowed
-  EXPECT_THROW(b.allocateMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::LogicException);
+  EXPECT_THROW(b.allocateMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
 
   // Allocating memory correctly now
   HiCR::memorySlotId_t s1 = 0;

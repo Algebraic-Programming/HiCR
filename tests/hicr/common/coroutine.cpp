@@ -17,7 +17,7 @@
 
 TEST(Coroutine, Construction)
 {
-  auto c = new HiCR::Coroutine();
+  auto c = new HiCR::common::Coroutine();
   EXPECT_FALSE(c == nullptr);
 }
 
@@ -51,7 +51,7 @@ void *threadFc(void *arg)
   pthread_barrier_wait(&_barrier);
 
   // Recovering coroutine reference
-  auto coroutines = (HiCR::Coroutine **)arg;
+  auto coroutines = (HiCR::common::Coroutine **)arg;
 
   // Resuming coroutines many times
   for (size_t i = 0; i < RESUME_COUNT; i++)
@@ -75,20 +75,20 @@ void *threadFc(void *arg)
 TEST(Coroutine, TLS)
 {
   // Storage for the coroutine array
-  HiCR::Coroutine *coroutines[COROUTINE_COUNT];
+  HiCR::common::Coroutine *coroutines[COROUTINE_COUNT];
 
   // Creating new HiCR coroutine
-  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::Coroutine();
+  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::common::Coroutine();
 
   // Creating per-coroutine mutexes
   _mutexes.resize(COROUTINE_COUNT);
   for (size_t i = 0; i < COROUTINE_COUNT; i++) _mutexes[i] = new std::mutex;
 
   // Creating coroutine function
-  HiCR::coroutineFc_t coroutineFc = [](void *arg)
+  HiCR::common::Coroutine::coroutineFc_t coroutineFc = [](void *arg)
   {
     // Recovering a pointer to the coroutine
-    auto coroutine = (HiCR::Coroutine *)arg;
+    auto coroutine = (HiCR::common::Coroutine *)arg;
 
     // Executing coroutine yield cycle as many times as necessary
     while (true)

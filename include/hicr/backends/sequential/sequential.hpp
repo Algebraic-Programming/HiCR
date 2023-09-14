@@ -29,29 +29,122 @@ namespace sequential
 {
 
 /**
- * Internal representation of a memory slot for the sequential backend
- */
-struct memorySlotStruct_t
-{
-  /**
-   * Pointer to the local memory address containing this slot
-   */
-  void *pointer;
-
-  /**
-   * Size of the memory slot
-   */
-  size_t size;
-};
-
-/**
  * Implementation of the HiCR Sequential backend
  *
  * This backend is very useful for testing other HiCR modules in isolation (unit tests) without involving the use of threading, which might incur side-effects
  */
 class Sequential final : public Backend
 {
+
+  public:
+
+  /**
+   * Associates a pointer allocated somewhere else and creates a memory slot with it
+   * \param[in] addr Address in local memory that will be represented by the slot
+   * \param[in] size Size of the memory slot to create
+   * \return The id of the memory slot that represents the given pointer
+   */
+  __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
+  {
+    auto tag = _currentTagId++;
+    _memorySlotMap[tag] = memorySlotStruct_t{.pointer = addr, .size = size};
+    return tag;
+  }
+
+  /**
+   * Frees up a memory slot reserved from this memory space
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   */
+  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
+  {
+    const auto &memSlot = _memorySlotMap.at(memorySlotId);
+
+    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+
+    free(memSlot.pointer);
+
+    _memorySlotMap.erase(memorySlotId);
+  }
+
+  /**
+   * Obtains the local pointer from a given memory slot.
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
+   * \return The local memory pointer, if applicable. NULL, otherwise.
+   */
+  __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
+  {
+    const auto &memSlot = _memorySlotMap.at(memorySlotId);
+
+    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+
+    return memSlot.pointer;
+  }
+
+  /**
+   * Obtains the size of the memory slot
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the size.
+   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
+   */
+  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
+  {
+    const auto &memSlot = _memorySlotMap.at(memorySlotId);
+
+    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+
+    return memSlot.size;
+  }
+
+  /**
+   * This function returns the available allocatable size in the current system RAM
+   *
+   * @param[in] memorySpace Always zero, represents the system's RAM
+   * @return The allocatable size within the system
+   */
+  __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
+  {
+    return _totalSystemMem;
+  }
+
+  /**
+   * Checks whether the memory slot id exists and is valid.
+   *
+   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
+   *
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
+   */
+  __USED__ bool isMemorySlotValid(const memorySlotId_t memorySlotId) const override
+  {
+   // Getting pointer for the corresponding slot
+   const auto &slot = _memorySlotMap.at(memorySlotId);
+
+   // If it is NULL, it means it was never created
+   if (slot.pointer == NULL) return false;
+
+   // Otherwise it is ok
+   return true;
+  }
+
   private:
+
+ /**
+  * Internal representation of a memory slot for the sequential backend
+  */
+ struct memorySlotStruct_t
+ {
+   /**
+    * Pointer to the local memory address containing this slot
+    */
+   void *pointer;
+
+   /**
+    * Size of the memory slot
+    */
+   size_t size;
+ };
 
   /**
    * Currently available tag id to be assigned. It should increment as each tag is assigned
@@ -148,98 +241,6 @@ class Sequential final : public Backend
     auto tag = _currentTagId++;
     _memorySlotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
     return tag;
-  }
-
-  public:
-
-  /**
-   * Associates a pointer allocated somewhere else and creates a memory slot with it
-   * \param[in] addr Address in local memory that will be represented by the slot
-   * \param[in] size Size of the memory slot to create
-   * \return The id of the memory slot that represents the given pointer
-   */
-  __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
-  {
-    auto tag = _currentTagId++;
-    _memorySlotMap[tag] = memorySlotStruct_t{.pointer = addr, .size = size};
-    return tag;
-  }
-
-  /**
-   * Frees up a memory slot reserved from this memory space
-   *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
-   */
-  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
-  {
-    const auto &memSlot = _memorySlotMap.at(memorySlotId);
-
-    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
-
-    free(memSlot.pointer);
-
-    _memorySlotMap.erase(memorySlotId);
-  }
-
-  /**
-   * Obtains the local pointer from a given memory slot.
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
-   * \return The local memory pointer, if applicable. NULL, otherwise.
-   */
-  __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
-  {
-    const auto &memSlot = _memorySlotMap.at(memorySlotId);
-
-    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
-
-    return memSlot.pointer;
-  }
-
-  /**
-   * Obtains the size of the memory slot
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the size.
-   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
-   */
-  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
-  {
-    const auto &memSlot = _memorySlotMap.at(memorySlotId);
-
-    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
-
-    return memSlot.size;
-  }
-
-  /**
-   * This function returns the available allocatable size in the current system RAM
-   *
-   * @param[in] memorySpace Always zero, represents the system's RAM
-   * @return The allocatable size within the system
-   */
-  __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
-  {
-    return _totalSystemMem;
-  }
-
-  /**
-   * Checks whether the memory slot id exists and is valid.
-   *
-   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
-   *
-   * \param[in] memorySlotId Identifier of the slot to check
-   * \return True, if the referenced memory slot exists and is valid; false, otherwise
-   */
-  __USED__ bool isMemorySlotValid(const memorySlotId_t memorySlotId) const override
-  {
-   // Getting pointer for the corresponding slot
-   const auto &slot = _memorySlotMap.at(memorySlotId);
-
-   // If it is NULL, it means it was never created
-   if (slot.pointer == NULL) return false;
-
-   // Otherwise it is ok
-   return true;
   }
 };
 

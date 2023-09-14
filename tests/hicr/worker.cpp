@@ -67,7 +67,7 @@ TEST(Worker, LifeCycle)
   EXPECT_EQ(w.getState(), HiCR::Worker::state_t::uninitialized);
 
   // Attempting to run without any assigned resources
-  EXPECT_THROW(w.initialize(), HiCR::LogicException);
+  EXPECT_THROW(w.initialize(), HiCR::common::LogicException);
 
   // Creating sequential backend
   HiCR::backend::sequential::Sequential backend;
@@ -85,22 +85,22 @@ TEST(Worker, LifeCycle)
   w.addProcessingUnit(processingUnit);
 
   // Fail on trying to start without initializing
-  EXPECT_THROW(w.start(), HiCR::RuntimeException);
+  EXPECT_THROW(w.start(), HiCR::common::RuntimeException);
 
   // Now the worker has a resource, the initialization shouldn't fail
   EXPECT_NO_THROW(w.initialize());
 
   // Fail on trying to await without starting
-  EXPECT_THROW(w.await(), HiCR::RuntimeException);
+  EXPECT_THROW(w.await(), HiCR::common::RuntimeException);
 
   // Fail on trying to resume without starting
-  EXPECT_THROW(w.suspend(), HiCR::RuntimeException);
+  EXPECT_THROW(w.suspend(), HiCR::common::RuntimeException);
 
   // Fail on trying to resume without starting
-  EXPECT_THROW(w.resume(), HiCR::RuntimeException);
+  EXPECT_THROW(w.resume(), HiCR::common::RuntimeException);
 
   // Fail on trying to re-initialize
-  EXPECT_THROW(w.initialize(), HiCR::RuntimeException);
+  EXPECT_THROW(w.initialize(), HiCR::common::RuntimeException);
 
   // Worker state should be ready now
   EXPECT_EQ(w.getState(), HiCR::Worker::state_t::ready);
@@ -148,7 +148,7 @@ TEST(Worker, LifeCycle)
   EXPECT_EQ(w.getState(), HiCR::Worker::state_t::suspended);
 
   // Fail on trying to terminate when not running
-  EXPECT_THROW(w.terminate(), HiCR::RuntimeException);
+  EXPECT_THROW(w.terminate(), HiCR::common::RuntimeException);
 
   // Testing resume function
   EXPECT_NO_THROW(w.resume());

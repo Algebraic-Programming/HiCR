@@ -32,55 +32,6 @@ namespace sequential
  */
 class Process final : public ProcessingUnit
 {
-  private:
-
-  /**
-   * Coroutine to handle suspend/resume functionality
-   */
-  Coroutine *_coroutine;
-
-  __USED__ inline void initializeImpl() override
-  {
-    // Creating new coroutine to run
-    _coroutine = new HiCR::Coroutine();
-
-    return;
-  }
-
-  __USED__ inline void suspendImpl() override
-  {
-    // Yielding execution
-    _coroutine->yield();
-  }
-
-  __USED__ inline void resumeImpl() override
-  {
-    // Resume coroutine
-    _coroutine->resume();
-  }
-
-  __USED__ inline void startImpl(processingUnitFc_t fc) override
-  {
-    // Calling function in the context of a suspendable coroutine
-    _coroutine->start([fc](void *arg)
-                      { fc(); },
-                      NULL);
-  }
-
-  __USED__ inline void terminateImpl() override
-  {
-    // Nothing to do for terminate
-    return;
-  }
-
-  __USED__ inline void awaitImpl() override
-  {
-    // Deleting allocated coroutine
-    delete _coroutine;
-
-    return;
-  }
-
   public:
 
   /**
@@ -89,6 +40,55 @@ class Process final : public ProcessingUnit
    * \param process An id for the process (should be zero)
    */
   __USED__ inline Process(computeResourceId_t process) : ProcessingUnit(process){};
+
+  private:
+
+   /**
+    * Coroutine to handle suspend/resume functionality
+    */
+   common::Coroutine *_coroutine;
+
+   __USED__ inline void initializeImpl() override
+   {
+     // Creating new coroutine to run
+     _coroutine = new common::Coroutine();
+
+     return;
+   }
+
+   __USED__ inline void suspendImpl() override
+   {
+     // Yielding execution
+     _coroutine->yield();
+   }
+
+   __USED__ inline void resumeImpl() override
+   {
+     // Resume coroutine
+     _coroutine->resume();
+   }
+
+   __USED__ inline void startImpl(processingUnitFc_t fc) override
+   {
+     // Calling function in the context of a suspendable coroutine
+     _coroutine->start([fc](void *arg)
+                       { fc(); },
+                       NULL);
+   }
+
+   __USED__ inline void terminateImpl() override
+   {
+     // Nothing to do for terminate
+     return;
+   }
+
+   __USED__ inline void awaitImpl() override
+   {
+     // Deleting allocated coroutine
+     delete _coroutine;
+
+     return;
+   }
 };
 
 } // end namespace sequential

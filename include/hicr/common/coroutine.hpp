@@ -19,13 +19,8 @@
 namespace HiCR
 {
 
-/**
- * Defines the type accepted by the coroutine function as execution unit.
- *
- * \internal The question as to whether std::function entails too much overhead needs to evaluated, and perhaps deprecate it in favor of static function references. For the time being, this seems adequate enough.
- *
- */
-typedef std::function<void(void *)> coroutineFc_t;
+namespace common
+{
 
 /**
  * Abstracts the basic functionality of a coroutine execution
@@ -35,22 +30,16 @@ typedef std::function<void(void *)> coroutineFc_t;
  */
 class Coroutine
 {
-  private:
-
-  /**
-   * This variable serves as safeguard in case the function has finished but the user wants to resume it
-   */
-  bool _hasFinished = false;
-
-  /**
-   * This variable serves as safeguard to prevent double resume/yield
-   */
-  bool _runningContext = false;
 
   public:
 
-  Coroutine() = default;
-  ~Coroutine() = default;
+  /**
+   * Defines the type accepted by the coroutine function as execution unit.
+   *
+   * \internal The question as to whether std::function entails too much overhead needs to evaluated, and perhaps deprecate it in favor of static function references. For the time being, this seems adequate enough.
+   *
+   */
+  typedef std::function<void(void *)> coroutineFc_t;
 
   /**
    * Resumes the execution of the coroutine. The coroutine needs to have been started before this, otherwise undefined behavior is to be expected.
@@ -120,9 +109,21 @@ class Coroutine
   private:
 
   /**
+   * This variable serves as safeguard in case the function has finished but the user wants to resume it
+   */
+  bool _hasFinished = false;
+
+  /**
+   * This variable serves as safeguard to prevent double resume/yield
+   */
+  bool _runningContext = false;
+
+  /**
    * CPU execution context of the coroutine. This is the target context for the resume() function.
    */
   boost::context::continuation _context;
 };
+
+} // namespace common
 
 } // namespace HiCR

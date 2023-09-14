@@ -18,8 +18,12 @@
 namespace HiCR
 {
 
+namespace common
+{
+
 namespace exceptions
 {
+
 
 /**
  * Enumeration of different exception types in HiCR for internal use
@@ -49,21 +53,21 @@ enum exception_t
  *
  * \param[in] ... C-Formatted string and its additional arguments
  */
-#define HICR_THROW_LOGIC(...) HiCR::throwException(HiCR::exceptions::exception_t::logic, __FILE__, __LINE__, __VA_ARGS__)
+#define HICR_THROW_LOGIC(...) HiCR::common::throwException(HiCR::common::exceptions::exception_t::logic, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * Macro for throwing a runtime exception in HiCR. It automatically includes additional information in the message, such as line number and source file.
  *
  * \param[in] ... C-Formatted string and its additional arguments
  */
-#define HICR_THROW_RUNTIME(...) HiCR::throwException(HiCR::exceptions::exception_t::runtime, __FILE__, __LINE__, __VA_ARGS__)
+#define HICR_THROW_RUNTIME(...) HiCR::common::throwException(HiCR::common::exceptions::exception_t::runtime, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * Macro for throwing a fatal exception in HiCR. It automatically includes additional information in the message, such as line number and source file.
  *
  * \param[in] ... C-Formatted string and its additional arguments
  */
-#define HICR_THROW_FATAL(...) HiCR::throwException(HiCR::exceptions::exception_t::fatal, __FILE__, __LINE__, __VA_ARGS__)
+#define HICR_THROW_FATAL(...) HiCR::common::throwException(HiCR::common::exceptions::exception_t::fatal, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * A class of exceptions that indicate some error in the arguments to a HiCR
@@ -140,7 +144,7 @@ class FatalException : public std::runtime_error
  * @param[in] format C-Formatted message provided by the user explaining the reason of the exception
  * @param[in] ... Arguments, if any, to the C-Formatted message
  */
-__USED__ inline void throwException [[noreturn]] (const exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
+__USED__ inline void throwException [[noreturn]] (const common::exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
 {
   char *outstr = 0;
   va_list ap;
@@ -174,4 +178,6 @@ __USED__ inline void throwException [[noreturn]] (const exceptions::exception_t 
   throw std::runtime_error(outString.c_str());
 }
 
-} // end namespace HiCR
+} // namespace common
+
+} // namespace HiCR

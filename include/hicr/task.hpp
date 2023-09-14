@@ -102,13 +102,12 @@ public:
  /**
   * Type definition for the task's event map
   */
- typedef EventMap<Task, event_t> taskEventMap_t;
+ typedef common::EventMap<Task, event_t> taskEventMap_t;
 
  /**
   * Definition for a task function that supports lambda functions
   */
- typedef coroutineFc_t taskFunction_t;
-
+ typedef common::Coroutine::coroutineFc_t taskFunction_t;
 
   Task() = delete;
   ~Task() = default;
@@ -238,7 +237,7 @@ public:
   /**
    *  Task context preserved as a coroutine
    */
-  Coroutine _coroutine;
+  common::Coroutine _coroutine;
 
   /**
    *  Map of events to trigger

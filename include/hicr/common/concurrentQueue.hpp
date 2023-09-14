@@ -34,12 +34,6 @@ namespace common
 template <class P, size_t N>
 class ConcurrentQueue
 {
-  private:
-
-  /**
-   * Internal implementation of the concurrent queue
-   */
-  lockFreeQueue_t<P, N> _queue;
 
   public:
 
@@ -68,6 +62,13 @@ class ConcurrentQueue
     // If we did not find an object in the queue, then return a NULL pointer
     return obj;
   }
+
+  private:
+
+  /**
+   * Internal implementation of the concurrent queue
+   */
+  lockFreeQueue_t<P, N> _queue;
 };
 
 } // namespace common

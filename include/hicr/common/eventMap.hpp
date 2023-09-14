@@ -19,6 +19,9 @@
 namespace HiCR
 {
 
+namespace common
+{
+
 /**
  * Definition for an event callback. It includes a reference to the finished task
  */
@@ -82,5 +85,7 @@ class EventMap
    */
   std::map<E, eventCallback_t<T>> _eventMap;
 };
+
+} // namespace common
 
 } // namespace HiCR

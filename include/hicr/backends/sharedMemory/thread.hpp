@@ -39,126 +39,6 @@ namespace sharedMemory
  */
 class Thread final : public ProcessingUnit
 {
-  private:
-
-  /**
-   * Stores the thread id as returned by the Pthreads library upon creation
-   */
-  pthread_t _pthreadId;
-
-  /**
-   * Copy of the function to be ran by the thread
-   */
-  processingUnitFc_t _fc;
-
-  /**
-   * Barrier to synchronize thread initialization
-   */
-  pthread_barrier_t initializationBarrier;
-
-  /**
-   * Static wrapper function to setup affinity and run the thread's function
-   *
-   * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
-   */
-  __USED__ inline static void *launchWrapper(void *p)
-  {
-    // Gathering thread object
-    auto thread = (Thread *)p;
-
-    // Setting signal to hear for suspend/resume
-    signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
-
-    // Setting thread as cancelable
-    int oldValue;
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldValue);
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldValue);
-
-    // Setting initial thread affinity
-    thread->updateAffinity(std::set<int>({(int)thread->getComputeResourceId()}));
-
-    // Yielding execution to allow affinity to refresh
-    sched_yield();
-
-    // The thread has now been properly initialized
-    pthread_barrier_wait(&thread->initializationBarrier);
-
-    // Calling main loop
-    thread->_fc();
-
-    // No returns
-    return NULL;
-  }
-
-  /**
-   * Handler for the suspend/resume signal, used by HiCR to suspend/resume worker threads
-   *
-   * \param[in] sig Signal detected, set by the operating system upon detecting the signal
-   */
-  __USED__ inline static void catchSuspendResumeSignal(int sig)
-  {
-    int status = 0;
-    int signalSet;
-    sigset_t suspendSet;
-
-    // Waiting for that signal to arrive
-    status = sigaddset(&suspendSet, HICR_SUSPEND_RESUME_SIGNAL);
-    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
-
-    status = sigwait(&suspendSet, &signalSet);
-    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
-
-    // Re-set next signal listening before exiting
-    signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
-  }
-
-  __USED__ inline void initializeImpl() override
-  {
-  }
-
-  __USED__ inline void suspendImpl() override
-  {
-   auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
-   if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
-
-  }
-
-  __USED__ inline void resumeImpl() override
-  {
-    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
-    if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
-  }
-
-  __USED__ inline void startImpl(processingUnitFc_t fc) override
-  {
-    // Initializing barrier
-    pthread_barrier_init(&initializationBarrier, NULL, 2);
-
-    // Making a copy of the function
-    _fc = fc;
-
-    // Launching thread function wrapper
-    auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
-    if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
-
-    // Waiting for proper initialization of the thread
-    pthread_barrier_wait(&initializationBarrier);
-
-    // Destroying barrier
-    pthread_barrier_destroy(&initializationBarrier);
-  }
-
-  __USED__ inline void terminateImpl() override
-  {
-    // Killing threads directly
-    pthread_cancel(_pthreadId);
-  }
-
-  __USED__ inline void awaitImpl() override
-  {
-    // Waiting for thread after execution
-    pthread_join(_pthreadId, NULL);
-  }
 
   public:
 
@@ -195,6 +75,128 @@ class Thread final : public ProcessingUnit
    * \param core Represents the core affinity to associate this processing unit to
    */
   __USED__ inline Thread(computeResourceId_t core) : ProcessingUnit(core){};
+
+  private:
+
+   /**
+    * Stores the thread id as returned by the Pthreads library upon creation
+    */
+   pthread_t _pthreadId;
+
+   /**
+    * Copy of the function to be ran by the thread
+    */
+   processingUnitFc_t _fc;
+
+   /**
+    * Barrier to synchronize thread initialization
+    */
+   pthread_barrier_t initializationBarrier;
+
+   /**
+    * Static wrapper function to setup affinity and run the thread's function
+    *
+    * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
+    */
+   __USED__ inline static void *launchWrapper(void *p)
+   {
+     // Gathering thread object
+     auto thread = (Thread *)p;
+
+     // Setting signal to hear for suspend/resume
+     signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
+
+     // Setting thread as cancelable
+     int oldValue;
+     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldValue);
+     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldValue);
+
+     // Setting initial thread affinity
+     thread->updateAffinity(std::set<int>({(int)thread->getComputeResourceId()}));
+
+     // Yielding execution to allow affinity to refresh
+     sched_yield();
+
+     // The thread has now been properly initialized
+     pthread_barrier_wait(&thread->initializationBarrier);
+
+     // Calling main loop
+     thread->_fc();
+
+     // No returns
+     return NULL;
+   }
+
+   /**
+    * Handler for the suspend/resume signal, used by HiCR to suspend/resume worker threads
+    *
+    * \param[in] sig Signal detected, set by the operating system upon detecting the signal
+    */
+   __USED__ inline static void catchSuspendResumeSignal(int sig)
+   {
+     int status = 0;
+     int signalSet;
+     sigset_t suspendSet;
+
+     // Waiting for that signal to arrive
+     status = sigaddset(&suspendSet, HICR_SUSPEND_RESUME_SIGNAL);
+     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
+
+     status = sigwait(&suspendSet, &signalSet);
+     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
+
+     // Re-set next signal listening before exiting
+     signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
+   }
+
+   __USED__ inline void initializeImpl() override
+   {
+   }
+
+   __USED__ inline void suspendImpl() override
+   {
+    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
+    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
+
+   }
+
+   __USED__ inline void resumeImpl() override
+   {
+     auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
+     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
+   }
+
+   __USED__ inline void startImpl(processingUnitFc_t fc) override
+   {
+     // Initializing barrier
+     pthread_barrier_init(&initializationBarrier, NULL, 2);
+
+     // Making a copy of the function
+     _fc = fc;
+
+     // Launching thread function wrapper
+     auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
+     if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
+
+     // Waiting for proper initialization of the thread
+     pthread_barrier_wait(&initializationBarrier);
+
+     // Destroying barrier
+     pthread_barrier_destroy(&initializationBarrier);
+   }
+
+   __USED__ inline void terminateImpl() override
+   {
+     // Killing threads directly
+     pthread_cancel(_pthreadId);
+   }
+
+   __USED__ inline void awaitImpl() override
+   {
+     // Waiting for thread after execution
+     pthread_join(_pthreadId, NULL);
+   }
+
 };
 
 } // end namespace sharedMemory

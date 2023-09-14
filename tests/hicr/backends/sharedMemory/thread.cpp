@@ -122,21 +122,21 @@ TEST(Thread, LifeCycle)
   };
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
-  EXPECT_THROW(p.await(), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.await(), HiCR::common::RuntimeException);
 
   // Initializing
   EXPECT_NO_THROW(p.initialize());
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
-  EXPECT_THROW(p.await(), HiCR::RuntimeException);
+  EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.await(), HiCR::common::RuntimeException);
 
   // Running
   EXPECT_NO_THROW(p.start(fc1));
@@ -146,9 +146,9 @@ TEST(Thread, LifeCycle)
   EXPECT_EQ(resumeCounter, 1);
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
+  EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
 
   // Requesting the thread to suspend
   EXPECT_NO_THROW(p.suspend());
@@ -157,10 +157,10 @@ TEST(Thread, LifeCycle)
   suspendCounter = suspendCounter + 1;
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
+  EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
 
   // Checking resume counter value has not updated (this is probabilistic only)
   sched_yield();
@@ -176,9 +176,9 @@ TEST(Thread, LifeCycle)
   EXPECT_EQ(resumeCounter, 2);
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
+  EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
 
   // Re-suspend
   EXPECT_NO_THROW(p.suspend());
@@ -201,18 +201,18 @@ TEST(Thread, LifeCycle)
 
   // Terminate
   EXPECT_NO_THROW(p.terminate());
-  EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
+  EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
 
   // Awaiting termination
   EXPECT_NO_THROW(p.await());
-  EXPECT_THROW(p.start(fc1), HiCR::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(fc1), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
 
   ///////// Checking re-run same thread
 
