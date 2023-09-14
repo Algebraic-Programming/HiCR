@@ -14,6 +14,8 @@
 #pragma once
 
 #include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <hicr/backend.hpp>
 
 namespace HiCR
 {
@@ -25,28 +27,8 @@ namespace HiCR
  *
  */
 template <typename T>
-class ChannelView
+class Channel
 {
-  protected:
-
-  /**
-   * A channel may only be instantiated via a call to
-   * MemorySpace::createChannel.
-   */
-  ChannelView() {}
-
-  public:
-
-  /**
-   * Releases all resources corresponding to this channel, including allocated
-   * buffer space as well as freeing up the \a tag used in construction for
-   * other channels or memcpy requests.
-   *
-   * \internal In OO programming, standard practice is to declare destructors
-   *           virtual.
-   */
-  virtual ~ChannelView() {}
-
   /**
    * @returns The capacity of the channel.
    *
@@ -241,7 +223,19 @@ class ChannelView
 
   // TODO register an effect somehow? Need to support two events:
   //   1) full-to-non-full (producer side),
-  //   2) empty-to-nonempty (consumer side).
+  //   2) empty-to-nonempty (consumer side)
+
+private:
+
+  /**
+   * Pointer to the backend that is in charge of executing the memory transfer operations
+   */
+  Backend* _backend;
+
+  /**
+   * Memory slot that represents the exchange buffer between producer and consumer
+   */
+  memorySlotId_t _exchangeBuffer;
 };
 
 }; // namespace HiCR

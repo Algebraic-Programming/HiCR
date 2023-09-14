@@ -109,57 +109,6 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Associates a pointer allocated somewhere else and creates a memory slot with it
-   * \param[in] addr Address in local memory that will be represented by the slot
-   * \param[in] size Size of the memory slot to create
-   * \return The id of the memory slot that represents the given pointer
-   */
-  __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
-  {
-    // Incrementing memory slot id to prevent index re-use
-    auto slotId = _currentMemorySlotId++;
-
-    // Inserting passed address into the memory slot map
-    _memorySlotMap[slotId] = memorySlotStruct_t{.pointer = addr, .size = size};
-
-    // Return the id of the just created slot
-    return slotId;
-  }
-
-  /**
-   * Frees up a memory slot reserved from this memory space
-   *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
-   */
-  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
-  {
-    // Getting memory slot entry from the map
-    const auto &slot = _memorySlotMap.at(memorySlotId);
-
-    // Making sure the memory slot exists and is not null
-    if (slot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", memorySlotId);
-
-    // If using strict binding, use hwloc_free to properly unmap the memory binding
-    if (slot.bindingType == binding_type::strict_binding)
-    {
-      // Freeing memory slot
-      auto status = hwloc_free(_topology, slot.pointer, slot.size);
-
-      // Error checking
-      if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot (%lu).", memorySlotId);
-    }
-
-    // If using strict non binding, use system's free
-    if (slot.bindingType == binding_type::strict_non_binding)
-    {
-      free(slot.pointer);
-    }
-
-    // Erasing memory slot from the map
-    _memorySlotMap.erase(memorySlotId);
-  }
-
-  /**
    * Obtains the local pointer from a given memory slot.
    *
    * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
@@ -244,11 +193,6 @@ class SharedMemory final : public Backend
    * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
    */
   binding_type _hwlocBindingRequested = binding_type::strict_binding;
-
-  /**
-   * Currently available tag id to be assigned. It should increment as each tag is assigned
-   */
-  memorySlotId_t _currentMemorySlotId = 0;
 
   /**
    * Thread-safe map that stores all allocated or created memory slots associated to this backend
@@ -359,11 +303,11 @@ class SharedMemory final : public Backend
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
-   * \return A newly allocated memory slot in this memory space
+   * \param[in] The identifier for the new memory slot
    *
    * TO-DO: This all should be threading safe
    */
-  __USED__ inline memorySlotId_t allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline void allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
   {
     // Recovering memory space from the map
     auto &memSpace = _memorySpaceMap.at(memorySpace);
@@ -379,14 +323,53 @@ class SharedMemory final : public Backend
     // Error checking
     if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpace);
 
-    // Incrementing memory slot id to prevent index re-use
-    auto slotId = _currentMemorySlotId++;
-
     // Assinging new entry in the memory slot map
-    _memorySlotMap[slotId] = memorySlotStruct_t{.pointer = ptr, .size = size, .bindingType = memSpace.bindingSupport};
+    _memorySlotMap[memSlotId] = memorySlotStruct_t{.pointer = ptr, .size = size, .bindingType = memSpace.bindingSupport};
+  }
 
-    // Return the id of the just created slot
-    return slotId;
+  /**
+   * Associates a pointer allocated somewhere else and creates a memory slot with it
+   * \param[in] addr Address in local memory that will be represented by the slot
+   * \param[in] size Size of the memory slot to create
+   * \param[in] The identifier for the new memory slot
+   */
+  __USED__ inline void createMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
+  {
+    // Inserting passed address into the memory slot map
+    _memorySlotMap[memSlotId] = memorySlotStruct_t{.pointer = addr, .size = size};
+  }
+
+  /**
+   * Frees up a memory slot reserved from this memory space
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   */
+  __USED__ inline void freeMemorySlotImpl(memorySlotId_t memorySlotId) override
+  {
+    // Getting memory slot entry from the map
+    const auto &slot = _memorySlotMap.at(memorySlotId);
+
+    // Making sure the memory slot exists and is not null
+    if (slot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", memorySlotId);
+
+    // If using strict binding, use hwloc_free to properly unmap the memory binding
+    if (slot.bindingType == binding_type::strict_binding)
+    {
+      // Freeing memory slot
+      auto status = hwloc_free(_topology, slot.pointer, slot.size);
+
+      // Error checking
+      if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot (%lu).", memorySlotId);
+    }
+
+    // If using strict non binding, use system's free
+    if (slot.bindingType == binding_type::strict_non_binding)
+    {
+      free(slot.pointer);
+    }
+
+    // Erasing memory slot from the map
+    _memorySlotMap.erase(memorySlotId);
   }
 
   /**

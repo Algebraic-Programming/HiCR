@@ -79,7 +79,7 @@ TEST(SharedMemory, Memory)
   memcpy(s1LocalPtr, testMessage.data(), testMessage.size());
 
   // Copying message from one slot to the other
-  HiCR::tagId_t tag = 0;
+  HiCR::Backend::tagId_t tag = 0;
   EXPECT_NO_THROW(b.memcpy(s2, 0, s1, 0, testMessage.size(), tag));
 
   // Force memcpy operation to finish

@@ -38,35 +38,6 @@ class Sequential final : public Backend
   public:
 
   /**
-   * Associates a pointer allocated somewhere else and creates a memory slot with it
-   * \param[in] addr Address in local memory that will be represented by the slot
-   * \param[in] size Size of the memory slot to create
-   * \return The id of the memory slot that represents the given pointer
-   */
-  __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
-  {
-    auto tag = _currentTagId++;
-    _memorySlotMap[tag] = memorySlotStruct_t{.pointer = addr, .size = size};
-    return tag;
-  }
-
-  /**
-   * Frees up a memory slot reserved from this memory space
-   *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
-   */
-  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
-  {
-    const auto &memSlot = _memorySlotMap.at(memorySlotId);
-
-    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
-
-    free(memSlot.pointer);
-
-    _memorySlotMap.erase(memorySlotId);
-  }
-
-  /**
    * Obtains the local pointer from a given memory slot.
    *
    * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
@@ -146,11 +117,6 @@ class Sequential final : public Backend
   };
 
   /**
-   * Currently available tag id to be assigned. It should increment as each tag is assigned
-   */
-  memorySlotId_t _currentTagId = 0;
-
-  /**
    * Thread-safe map that stores all allocated or created memory slots associated to this backend
    */
   parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _memorySlotMap;
@@ -228,18 +194,45 @@ class Sequential final : public Backend
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
-   * \return A newly allocated memory slot in this memory space
-   *
-   * TO-DO: This all should be threading safe
+   * \param[in] memSlotId The identifier of the new memory slot
    */
-  __USED__ inline memorySlotId_t allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline void allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
   {
-    if (size > _totalSystemMem) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, _totalSystemMem);
-
+    // Atempting to allocate the new memory slot
     auto ptr = malloc(size);
-    auto tag = _currentTagId++;
-    _memorySlotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
-    return tag;
+
+    // Check whether it was successful
+    if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
+
+    // Adding new slot in the local registry
+    _memorySlotMap[memSlotId] = memorySlotStruct_t{.pointer = ptr, .size = size};
+  }
+
+  /**
+   * Associates a pointer allocated somewhere else and creates a memory slot with it
+   * \param[in] addr Address in local memory that will be represented by the slot
+   * \param[in] size Size of the memory slot to create
+   * \param[in] The identifier for the new memory slot
+   */
+  __USED__ inline void createMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
+  {
+    _memorySlotMap[memSlotId] = memorySlotStruct_t{.pointer = addr, .size = size};
+  }
+
+  /**
+   * Frees up a memory slot reserved from this memory space
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   */
+  __USED__ inline void freeMemorySlotImpl(memorySlotId_t memorySlotId) override
+  {
+    const auto &memSlot = _memorySlotMap.at(memorySlotId);
+
+    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
+
+    free(memSlot.pointer);
+
+    _memorySlotMap.erase(memorySlotId);
   }
 };
 
