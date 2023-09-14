@@ -16,7 +16,7 @@
 TEST(Task, Construction)
 {
   HiCR::Task *t = NULL;
-  HiCR::taskFunction_t f;
+  HiCR::Task::taskFunction_t f;
 
   EXPECT_NO_THROW(t = new HiCR::Task(f, NULL));
   EXPECT_FALSE(t == nullptr);
@@ -25,20 +25,20 @@ TEST(Task, Construction)
 
 TEST(Task, SetterAndGetters)
 {
-  HiCR::taskFunction_t f;
+  HiCR::Task::taskFunction_t f;
   HiCR::Task t(f, NULL);
 
   auto arg = &t;
   EXPECT_NO_THROW(t.setArgument(arg));
   EXPECT_EQ(t.getArgument(), arg);
 
-  HiCR::taskEventMap_t e;
+  HiCR::Task::taskEventMap_t e;
   EXPECT_NO_THROW(t.setEventMap(&e));
   EXPECT_EQ(t.getEventMap(), &e);
 
-  HiCR::task::state_t state;
+  HiCR::Task::state_t state;
   EXPECT_NO_THROW(state = t.getState());
-  EXPECT_EQ(state, HiCR::task::initialized);
+  EXPECT_EQ(state, HiCR::Task::state_t::initialized);
 }
 
 TEST(Task, Run)
@@ -54,7 +54,7 @@ TEST(Task, Run)
     HiCR::Task *t = (HiCR::Task *)arg;
 
     // Checking whether the state is correctly assigned
-    if (t->getState() == HiCR::task::state_t::running) hasRunningState = true;
+    if (t->getState() == HiCR::Task::state_t::running) hasRunningState = true;
 
     // Checking whether the current task pointer is the correct one
     if (HiCR::getCurrentTask() == t) hasCorrectTaskPointer = true;
@@ -68,17 +68,17 @@ TEST(Task, Run)
   t.setArgument(&t);
 
   // A first run should start the task
-  EXPECT_EQ(t.getState(), HiCR::task::state_t::initialized);
+  EXPECT_EQ(t.getState(), HiCR::Task::state_t::initialized);
   EXPECT_NO_THROW(t.run());
   EXPECT_TRUE(hasRunningState);
   EXPECT_TRUE(hasCorrectTaskPointer);
-  EXPECT_EQ(t.getState(), HiCR::task::state_t::suspended);
+  EXPECT_EQ(t.getState(), HiCR::Task::state_t::suspended);
   EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task *)NULL);
 
   // A second run should resume the task
   EXPECT_NO_THROW(t.run());
   EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task *)NULL);
-  EXPECT_EQ(t.getState(), HiCR::task::state_t::finished);
+  EXPECT_EQ(t.getState(), HiCR::Task::state_t::finished);
 
   // The task has now finished, so a third run should fail
   EXPECT_THROW(t.run(), HiCR::RuntimeException);
@@ -101,12 +101,12 @@ TEST(Task, Events)
   { onFinishHasRun = true; delete t ; };
 
   // Creating event map
-  HiCR::taskEventMap_t eventMap;
+  HiCR::Task::taskEventMap_t eventMap;
 
   // Associating events to the map
-  eventMap.setEvent(HiCR::task::event_t::onTaskExecute, onExecuteCallback);
-  eventMap.setEvent(HiCR::task::event_t::onTaskSuspend, onSuspendCallback);
-  eventMap.setEvent(HiCR::task::event_t::onTaskFinish, onFinishCallback);
+  eventMap.setEvent(HiCR::Task::event_t::onTaskExecute, onExecuteCallback);
+  eventMap.setEvent(HiCR::Task::event_t::onTaskSuspend, onSuspendCallback);
+  eventMap.setEvent(HiCR::Task::event_t::onTaskFinish,  onFinishCallback);
 
   // Creating task function
   auto f = [&onExecuteHasRun, &onExecuteUpdated](void *arg)

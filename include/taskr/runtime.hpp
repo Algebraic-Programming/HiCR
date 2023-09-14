@@ -41,7 +41,7 @@ class Runtime
   /**
    * Pointer to the internal HiCR event map, required to capture finishing or yielding tasks
    */
-  HiCR::taskEventMap_t *_eventMap;
+  HiCR::Task::taskEventMap_t *_eventMap;
 
   /**
    * Single dispatcher that distributes pending tasks to idle workers as they become idle
@@ -304,10 +304,10 @@ class Runtime
   {
     _dispatcher = new HiCR::Dispatcher([this]()
                                        { return checkWaitingTasks(); });
-    _eventMap = new HiCR::taskEventMap_t();
+    _eventMap = new HiCR::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::task::event_t::onTaskFinish, [this](HiCR::Task *task)
+    _eventMap->setEvent(HiCR::Task::event_t::onTaskFinish, [this](HiCR::Task *task)
                         { onTaskFinish(task); });
 
     // Making a local copy of the compute resource list, so that in case it is empty, we query it from the backend
