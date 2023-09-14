@@ -30,6 +30,9 @@ namespace backend
 namespace sharedMemory
 {
 
+/**
+ * Signal to use to suspend thread (might need to be adapted to each system)
+ */
 #define HICR_SUSPEND_RESUME_SIGNAL SIGUSR1
 
 /**
@@ -57,6 +60,8 @@ class Thread final : public ProcessingUnit
 
   /**
    * Queries the OS for the currently set affinity for this thread, and prints it to screen.
+   *
+   * \return The set of cores/processing units that this thread is bound to
    */
   __USED__ static std::set<int> getAffinity()
   {

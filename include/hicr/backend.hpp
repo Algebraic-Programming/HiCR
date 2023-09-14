@@ -109,31 +109,54 @@ class Backend
 
  /**
   * Backend-internal implementation of the getMemorySpaceSize function
+  *
+  * @param[in] memorySpace The memory space to query
+  * @return The allocatable size within that memory space
   */
  virtual size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const = 0;
 
  /**
   * Backend-internal implementation of the createProcessingUnit function
+  *
+  * \param[in] resource This is the identifier of the compute resource to use to instantiate into a processing unit. The identifier should be one of those provided by the backend. Providing an arbitrary identifier may lead to unexpected behavior.
+  *
+  * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
   */
  virtual std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const = 0;
 
  /**
   * Backend-internal implementation of the memcpy function
+  *
+  * @param[in] source       The source memory region
+  * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
+  * @param[in] destination  The destination memory region
+  * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
+  * @param[in] size         The number of bytes to copy from the source to the destination
+  * @param[in] tag          The tag of this memory copy
+  * @return Returns a function that represents the backend-specific completion of the memcpy operation
   */
  virtual deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) = 0;
 
  /**
   * Backend-internal implementation of the queryComputeResources function
+  *
+  * @return A list of compute resources
   */
  virtual computeResourceList_t queryComputeResourcesImpl() = 0;
 
  /**
   * Backend-internal implementation of the queryMemorySpaces function
+  *
+  * @return A list of memory spaces
   */
  virtual memorySpaceList_t queryMemorySpacesImpl() = 0;
 
  /**
   * Backend-internal implementation of the queryMemorySpaces function
+  *
+  *  \param[in] memorySpaceId Memory space to allocate memory in
+  * \param[in] size Size of the memory slot to create
+  * \return A newly allocated memory slot in the specified memory space
   */
  virtual memorySlotId_t allocateMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
 
@@ -237,6 +260,7 @@ class Backend
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    * @param[in] tag          The tag of this memory copy
+   * @param[in] launchType   Specifies whether the resolution of the operation hould be executed immediately or deferred until the fence
    *
    * A call to this function is one-sided, non-blocking, and, if the hardware and
    * network supports it, zero-copy.

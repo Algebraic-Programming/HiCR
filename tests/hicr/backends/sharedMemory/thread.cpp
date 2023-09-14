@@ -164,7 +164,7 @@ TEST(Thread, LifeCycle)
 
   // Checking resume counter value has not updated (this is probabilistic only)
   sched_yield();
-  usleep(50000);
+  usleep(150000);
   sched_yield();
   EXPECT_EQ(resumeCounter, 1);
 

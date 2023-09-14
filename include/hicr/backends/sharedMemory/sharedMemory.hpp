@@ -60,6 +60,9 @@ class SharedMemory final : public Backend
 
   /**
    * Function to determine whether the memory space supports strictly bound memory allocations
+   *
+   * @param[in] memorySpace The memory space to check binding
+   * @return The supported memory binding type by the memory space
    */
   __USED__ inline binding_type getSupportedBindingType(const memorySpaceId_t memorySpace) const
   {
@@ -68,6 +71,8 @@ class SharedMemory final : public Backend
 
   /**
    * Function to set memory allocating binding type
+   *
+   * \param[in] type Specifies the desired binding type for future allocations
    */
   __USED__ inline void setRequestedBindingType(const binding_type type)
   {
