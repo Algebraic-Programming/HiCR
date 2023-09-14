@@ -5,29 +5,29 @@
 
 /**
  * @file worker.cpp
- * @brief Unit tests for the HiCR shared memory backend class
+ * @brief Unit tests for the sequential backend class
  * @author S. M. Martin
- * @date 13/9/2023
+ * @date 11/9/2023
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/sharedMemory.hpp>
+#include <hicr/backends/sequential/sequential.hpp>
 #include <limits>
 
-namespace backend = HiCR::backend::sharedMemory;
+namespace backend = HiCR::backend::sequential;
 
-TEST(SharedMemory, Construction)
+TEST(Sequential, Construction)
 {
-  backend::SharedMemory *b = NULL;
+  backend::Sequential *b = NULL;
 
-  EXPECT_NO_THROW(b = new backend::SharedMemory());
+  EXPECT_NO_THROW(b = new backend::Sequential());
   EXPECT_FALSE(b == nullptr);
   delete b;
 }
 
-TEST(SharedMemory, Memory)
+TEST(Sequential, Memory)
 {
-  backend::SharedMemory b;
+  backend::Sequential b;
 
   // Querying resources
   EXPECT_NO_THROW(b.queryMemorySpaces());
@@ -35,13 +35,10 @@ TEST(SharedMemory, Memory)
   // Getting memory resource list (should be size 1)
   HiCR::memorySpaceList_t mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
-  EXPECT_GT(mList.size(), 0);
+  EXPECT_EQ(mList.size(), 1);
 
   // Getting memory resource
   auto &r = *mList.begin();
-
-  // Adjusting memory binding support to the system's
-  EXPECT_NO_THROW(b.setRequestedBindingType(b.getSupportedBindingType(r)));
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;

@@ -25,7 +25,7 @@ class Worker;
 /**
  * Defines a standard type for a pull function.
  */
-typedef std::function<Task *(HiCR::Worker *)> pullFunction_t;
+typedef std::function<Task *()> pullFunction_t;
 
 /**
  * Class definition for a pull-only task dispatcher object.
@@ -59,12 +59,11 @@ class Dispatcher
    *
    * It will produce an exception if no pull function was defined.
    *
-   * @param[in] worker A pointer to the calling worker. This is required for worker management (e.g., suspend/resume) at the upper layer.
    * \return Returns the pointer of a Task, as given by the pull function callback. If the callback returns no tasks for execution, then this function returns a NULL pointer.
    */
-  __USED__ inline Task *pull(Worker *worker)
+  __USED__ inline Task *pull()
   {
-    return _pullFc(worker);
+    return _pullFc();
   }
 };
 

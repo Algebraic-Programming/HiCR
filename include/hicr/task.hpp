@@ -15,7 +15,7 @@
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
-#include <hicr/common/logger.hpp>
+#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
@@ -32,44 +32,10 @@ thread_local Task *_currentTask;
 
 /**
  * Function to return a pointer to the currently executing task from a global context
+ *
+ * @return A pointer to the current HiCR task, NULL if this function is called outside the context of a task run() function
  */
-__USED__ static inline Task *getCurrentTask() { return _currentTask; }
-
-/**
- * Definition for a task function that supports lambda functions
- */
-typedef coroutineFc_t taskFunction_t;
-
-namespace task
-{
-
-/**
- * Complete state set that a task can be in
- */
-enum state_t
-{
-  /**
-   * Ready to run -- set automatically upon creation
-   */
-  ready,
-
-  /**
-   * Indicates that the task is currently running
-   */
-  running,
-
-  /**
-   * Set by the task if it suspends for an asynchronous operation
-   */
-  waiting,
-
-  /**
-   * Set by the task upon complete termination
-   */
-  finished
-};
-
-} // namespace task
+__USED__ inline Task *getCurrentTask() { return _currentTask; }
 
 /**
  * This class defines the basic execution unit managed by HiCR.
@@ -85,11 +51,73 @@ class Task
   public:
 
   /**
-   * Sets the function that the task will execute.
-   *
-   * @param[in] fc Speficies the function to execute.
+   * Enumeration of possible task-related events that can trigger a user-defined function callback
    */
-  __USED__ inline void setFunction(taskFunction_t fc) { _fc = fc; }
+  enum event_t
+  {
+    /**
+     * Triggered as the task starts or resumes execution
+     */
+    onTaskExecute,
+
+    /**
+     * Triggered as the task is preempted into suspension by an asynchronous event
+     */
+    onTaskSuspend,
+
+    /**
+     * Triggered as the task finishes execution
+     */
+    onTaskFinish
+  };
+
+  /**
+   * Complete state set that a task can be in
+   */
+  enum state_t
+  {
+    /**
+     * Ready to run -- set automatically upon creation
+     */
+    initialized,
+
+    /**
+     * Indicates that the task is currently running
+     */
+    running,
+
+    /**
+     * Set by the task if it suspends for an asynchronous operation
+     */
+    suspended,
+
+    /**
+     * Set by the task upon complete termination
+     */
+    finished
+  };
+
+  /**
+   * Type definition for the task's event map
+   */
+  typedef common::EventMap<Task, event_t> taskEventMap_t;
+
+  /**
+   * Definition for a task function that supports lambda functions
+   */
+  typedef common::Coroutine::coroutineFc_t taskFunction_t;
+
+  Task() = delete;
+  ~Task() = default;
+
+  /**
+   * Constructor that sets the function that the task will execute and its argument.
+   *
+   * @param[in] fc Specifies the function to execute.
+   * @param[in] argument Specifies the argument to pass to the function.
+   * @param[in] eventMap Pointer to the event map callbacks to be called by the task
+   */
+  __USED__ Task(taskFunction_t fc, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _argument(argument), _fc(fc), _eventMap(eventMap){};
 
   /**
    * Sets the single argument (pointer) to the the task function
@@ -99,11 +127,25 @@ class Task
   __USED__ inline void setArgument(void *argument) { _argument = argument; }
 
   /**
+   * Queries the task's function argument.
+   *
+   * @return A pointer user-defined task argument, if defined; A NULL pointer, if not.
+   */
+  __USED__ inline void *getArgument() { return _argument; }
+
+  /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
    *
    * @param[in] eventMap A pointer to an event map
    */
-  __USED__ inline void setEventMap(EventMap<Task> *eventMap) { _eventMap = eventMap; }
+  __USED__ inline void setEventMap(taskEventMap_t *eventMap) { _eventMap = eventMap; }
+
+  /**
+   * Gets the task's event map.
+   *
+   * @return A pointer to the task's an event map. NULL, if not defined.
+   */
+  __USED__ inline taskEventMap_t *getEventMap() { return _eventMap; }
 
   /**
    * Queries the task's internal state.
@@ -112,80 +154,73 @@ class Task
    *
    * \internal This is not a thread safe operation.
    */
-  __USED__ inline const task::state_t getState() { return _state; }
-
-  /**
-   * Queries the task's function argument.
-   *
-   * @return A pointer user-defined task argument, if defined; A NULL pointer, if not.
-   */
-  __USED__ inline void *getArgument() { return _argument; }
+  __USED__ inline const state_t getState() { return _state; }
 
   /**
    * This function starts running a task. It needs to be performed by a worker, by passing a pointer to itself.
    *
-   * The execution of the task will trigger change of state from ready to running. Before reaching the terminated state, the task might transition to some of the suspended states.
+   * The execution of the task will trigger change of state from initialized to running. Before reaching the terminated state, the task might transition to some of the suspended states.
    */
   __USED__ inline void run()
   {
-    if (_state != task::state_t::ready) LOG_ERROR("Attempting to run a task that is not in a ready state (State: %d).\n", _state);
+    if (_state != state_t::initialized && _state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", _state);
 
-    // Also map task pointer to the runnign thread it into static storage for global access. This logic should perhaps be outsourced to the backend
+    // Also map task pointer to the running thread it into static storage for global access.
     _currentTask = this;
 
+    // Checking whether the function has executed before
+    bool hasExecuted = _state != state_t::initialized;
+
     // Setting state to running while we execute
-    _state = task::state_t::running;
+    _state = state_t::running;
 
     // Triggering execution event, if defined
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
 
     // If this is the first time we execute this task, we create the new coroutine, otherwise resume the already created one
-    if (_hasExecuted == false)
+    hasExecuted ? _coroutine.resume() : _coroutine.start(_fc, _argument);
+
+    // If the task is suspended and event map is defined, trigger the corresponding event.
+    if (_state == state_t::suspended)
+      if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskSuspend);
+
+    // If the task is still running (no suspension), then the task has fully finished executing
+    if (_state == state_t::running)
     {
-      _coroutine.start(_fc, _argument);
-      _hasExecuted = true;
-    }
-    else
-    {
-      _coroutine.resume();
+      // Setting state as finished
+      _state = state_t::finished;
+
+      // Trigger the corresponding event, if the event map is defined. It is important that this function is called from outside the context of a task to allow the upper layer to free its memory upon finishing
+      if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskFinish);
     }
 
-    // If the state is still running (no suspension or yield), then the task has finished executing
-    if (_state == task::state_t::running) _state = task::state_t::finished;
-
-    // Triggering events, if defined
-    if (_eventMap != NULL) switch (_state)
-      {
-      case task::state_t::running: break;
-      case task::state_t::finished: _eventMap->trigger(this, event_t::onTaskFinish); break;
-      case task::state_t::ready: _eventMap->trigger(this, event_t::onTaskYield); break;
-      case task::state_t::waiting: _eventMap->trigger(this, event_t::onTaskSuspend); break;
-      }
+    // Relenting current task pointer
+    _currentTask = NULL;
   }
-
-  private:
 
   /**
    * This function yields the execution of the task, and returns to the worker's context.
    */
   __USED__ inline void yield()
   {
+    if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", _state);
+
+    // Since this function is public, it can be called from anywhere in the code. However, we need to make sure on rutime that the context belongs to the task itself.
+    if (getCurrentTask() != this) HICR_THROW_RUNTIME("Attempting to yield a task from a context that is not its own.\n");
+
     // Change our state to yielded so that we can be reinserted into the pool
-    _state = task::state_t::ready;
+    _state = state_t::suspended;
 
     // Yielding execution back to worker
     _coroutine.yield();
   }
 
+  private:
+
   /**
    * Current execution state of the task. Will change based on runtime scheduling events
    */
-  task::state_t _state = task::state_t::ready;
-
-  /**
-   *  Remember if the task has been executed already (coroutine still exists)
-   */
-  bool _hasExecuted = false;
+  state_t _state = state_t::initialized;
 
   /**
    *   Argument to execute the task with
@@ -200,12 +235,12 @@ class Task
   /**
    *  Task context preserved as a coroutine
    */
-  Coroutine _coroutine;
+  common::Coroutine _coroutine;
 
   /**
    *  Map of events to trigger
    */
-  EventMap<Task> *_eventMap = NULL;
+  taskEventMap_t *_eventMap = NULL;
 };
 
 } // namespace HiCR

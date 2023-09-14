@@ -16,8 +16,8 @@ int main(int argc, char **argv)
   taskr::initialize(t);
 
   // Getting the core subset from the argument list (could be from a file too)
-  std::vector<uint64_t> coreSubset;
-  for (int i = 1; i < argc; i++) coreSubset.push_back(std::atoi(argv[i]));
+  HiCR::computeResourceList_t coreSubset;
+  for (int i = 1; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
 
   // Adding multiple compute tasks
   printf("Running %u work tasks with %lu cores...\n", WORK_TASK_COUNT, coreSubset.size());

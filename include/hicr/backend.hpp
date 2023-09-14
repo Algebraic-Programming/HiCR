@@ -12,9 +12,13 @@
 
 #pragma once
 
+#include <future>
+#include <mutex>
+#include <set>
+
 #include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <vector>
 
 namespace HiCR
 {
@@ -35,14 +39,39 @@ typedef uint64_t memorySlotId_t;
 typedef uint64_t tagId_t;
 
 /**
+ * Type definition for a deferred function representing pending operations
+ */
+typedef std::function<void()> deferredFunction_t;
+
+/**
  * Common definition of a collection of compute resources
  */
-typedef std::vector<computeResourceId_t> computeResourceList_t;
+typedef std::set<computeResourceId_t> computeResourceList_t;
 
 /**
  * Common definition of a collection of memory spaces
  */
-typedef std::vector<memorySlotId_t> memorySpaceList_t;
+typedef std::set<memorySlotId_t> memorySpaceList_t;
+
+namespace backend
+{
+/**
+ * Alternatives for the execution of a given asynchronous operation
+ */
+enum launch_t
+{
+  /**
+   * The execution of the requested operation is performed immediately upon calling
+   */
+  immediate,
+
+  /**
+   * The execution of the requested operation is deferred until a fence operation is applied onto it
+   */
+  deferred
+};
+
+} // namespace backend
 
 /**
  * Encapsulates a HiCR Backend.
@@ -54,19 +83,119 @@ typedef std::vector<memorySlotId_t> memorySpaceList_t;
  */
 class Backend
 {
+  private:
+
+  /**
+   * The internal container for the queried compute resources.
+   */
+  computeResourceList_t _computeResourceList;
+
+  /**
+   * The internal container for the queried memory spaces.
+   */
+  memorySpaceList_t _memorySpaceList;
+
+  /**
+   * List of tag-identified deferred function calls in non-blocking operation, which complete in the fence call with the corresponding tag
+   */
+  std::multimap<tagId_t, std::future<void>> _deferredFunctions;
+
+  /**
+   * Mutex for accessing the deferred function collection in a thread-safe manner, for the lack of a thread-safe multimap
+   */
+  std::mutex _deferredFunctionMutex;
+
+  protected:
+
+  /**
+   * Backend-internal implementation of the getMemorySpaceSize function
+   *
+   * @param[in] memorySpace The memory space to query
+   * @return The allocatable size within that memory space
+   */
+  virtual size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const = 0;
+
+  /**
+   * Backend-internal implementation of the createProcessingUnit function
+   *
+   * \param[in] resource This is the identifier of the compute resource to use to instantiate into a processing unit. The identifier should be one of those provided by the backend. Providing an arbitrary identifier may lead to unexpected behavior.
+   *
+   * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
+   */
+  virtual std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const = 0;
+
+  /**
+   * Backend-internal implementation of the memcpy function
+   *
+   * @param[in] source       The source memory region
+   * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
+   * @param[in] destination  The destination memory region
+   * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
+   * @param[in] size         The number of bytes to copy from the source to the destination
+   * @param[in] tag          The tag of this memory copy
+   * @return Returns a function that represents the backend-specific completion of the memcpy operation
+   */
+  virtual deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) = 0;
+
+  /**
+   * Backend-internal implementation of the queryComputeResources function
+   *
+   * @return A list of compute resources
+   */
+  virtual computeResourceList_t queryComputeResourcesImpl() = 0;
+
+  /**
+   * Backend-internal implementation of the queryMemorySpaces function
+   *
+   * @return A list of memory spaces
+   */
+  virtual memorySpaceList_t queryMemorySpacesImpl() = 0;
+
+  /**
+   * Backend-internal implementation of the queryMemorySpaces function
+   *
+   *  \param[in] memorySpaceId Memory space to allocate memory in
+   * \param[in] size Size of the memory slot to create
+   * \return A newly allocated memory slot in the specified memory space
+   */
+  virtual memorySlotId_t allocateMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
+
   public:
 
   Backend() = default;
   virtual ~Backend() = default;
 
   /**
-   * This function prompts the backend to perform the necessary steps to discover and list the resources provided by the library which it supports.
+   * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.
    *
    * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
    *
    * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
    */
-  virtual void queryResources() = 0;
+  __USED__ inline void queryComputeResources()
+  {
+    // Clearing existing compute resources
+    _computeResourceList.clear();
+
+    // Calling backend-internal implementation
+    _computeResourceList = queryComputeResourcesImpl();
+  }
+
+  /**
+   * This function prompts the backend to perform the necessary steps to discover and list the memory spaces provided by the library which it supports.
+   *
+   * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
+   *
+   * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
+   */
+  __USED__ inline void queryMemorySpaces()
+  {
+    // Clearing existing memory space entries
+    _memorySpaceList.clear();
+
+    // Calling backend-internal implementation
+    _memorySpaceList = queryMemorySpacesImpl();
+  }
 
   /**
    * This function returns the list of queried compute resources, as visible by the backend.
@@ -87,13 +216,35 @@ class Backend
   __USED__ inline const memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
 
   /**
+   * This function returns the available allocatable size provided by the given memory space
+   *
+   * @param[in] memorySpace The memory space to query
+   * @return The allocatable size within that memory space
+   */
+  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const
+  {
+    // Checking whether the referenced memory space actually exists
+    if (_memorySpaceList.contains(memorySpace) == false) HICR_THROW_RUNTIME("Attempting to get size from memory space that does not exist (%lu) in this backend", memorySpace);
+
+    // Calling internal implementation
+    return getMemorySpaceSizeImpl(memorySpace);
+  }
+
+  /**
    * Creates a new processing unit from the provided compute resource
    *
    * \param[in] resource This is the identifier of the compute resource to use to instantiate into a processing unit. The identifier should be one of those provided by the backend. Providing an arbitrary identifier may lead to unexpected behavior.
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const = 0;
+  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const
+  {
+    // Checking whether the referenced compute resource actually exists
+    if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
+
+    // Calling internal implementation
+    return createProcessingUnitImpl(resource);
+  }
 
   /**
    * Instructs the backend to perform an asynchronous memory copy from
@@ -108,6 +259,7 @@ class Backend
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    * @param[in] tag          The tag of this memory copy
+   * @param[in] launchType   Specifies whether the resolution of the operation hould be executed immediately or deferred until the fence
    *
    * A call to this function is one-sided, non-blocking, and, if the hardware and
    * network supports it, zero-copy.
@@ -160,13 +312,40 @@ class Backend
    * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
    *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
    */
-  virtual void memcpy(
-    memorySlotId_t destination,
-    const size_t dst_offset,
-    const memorySlotId_t source,
-    const size_t src_offset,
-    const size_t size,
-    const tagId_t &tag) = 0;
+  __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag, const backend::launch_t launchType = backend::launch_t::deferred)
+  {
+    // Making sure the memory slots exist and is not null
+    if (isMemorySlotValid(source) == false) HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or is invalid", source);
+    if (isMemorySlotValid(destination) == false) HICR_THROW_RUNTIME("Invalid destination memory slot(s) (%lu) provided. It either does not exist or is invalid", destination);
+
+    // Getting slot sizes
+    const auto srcSize = getMemorySlotSize(source);
+    const auto dstSize = getMemorySlotSize(destination);
+
+    // Making sure the memory slots exist and is not null
+    const auto actualSrcSize = size + src_offset;
+    const auto actualDstSize = size + dst_offset;
+    if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).", size, src_offset, actualSrcSize, source, srcSize);
+    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
+
+    // Now calling internal memcpy function to give us a function that satisfies the operation
+    auto fc = memcpyImpl(destination, dst_offset, source, src_offset, size, tag);
+
+    // If the operation is to be executed immediately, do it now
+    if (launchType == backend::launch_t::immediate) fc();
+
+    // Else, create a future as a deferred launch function
+    if (launchType == backend::launch_t::deferred)
+    {
+      // Creating future with the function
+      auto future = std::async(std::launch::deferred, fc);
+
+      // Inserting future into the deferred function multimap
+      _deferredFunctionMutex.lock();
+      _deferredFunctions.insert(std::make_pair(tag, std::move(future)));
+      _deferredFunctionMutex.unlock();
+    }
+  }
 
   /**
    * Fences a group of memory copies.
@@ -198,8 +377,34 @@ class Backend
    * \todo How does this interact with malleability of resources of which HiCR is
    *       aware? One possible answer is a special event that if left unhandled,
    *       is promoted to a fatal exception.
+   *
+   * \todo This all should be threading safe.
    */
-  virtual void fence(const tagId_t tag) = 0;
+  __USED__ inline void fence(const tagId_t tag)
+  {
+    // Gets all deferred functions belonging to this tag and removing them from the multimap. All of this in a mutex for thread safety
+    _deferredFunctionMutex.lock();
+
+    // Getting the number of deferred tags that coincide with the given tag
+    auto count = _deferredFunctions.count(tag);
+
+    // Creating local copy of the deferred tags (to release mutex asap) and pre-reserving enough space for it
+    std::vector<std::future<void>> tagFunctions;
+    tagFunctions.reserve(count);
+
+    // Moving the deferred functions from the multimap to the local copy
+    auto range = _deferredFunctions.equal_range(tag);
+    for (auto itr = range.first; itr != range.second; itr++) tagFunctions.push_back(std::move(itr->second));
+
+    // Releasing moved functions
+    _deferredFunctions.erase(tag);
+
+    // Releasing lock
+    _deferredFunctionMutex.unlock();
+
+    // Wait for the finalization of each deferred function
+    for (const auto &fcs : tagFunctions) fcs.wait();
+  }
 
   /**
    * Allocates memory in the specified memory space
@@ -208,7 +413,15 @@ class Backend
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in the specified memory space
    */
-  virtual memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
+  __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)
+  {
+    // Checks whether the size requested exceeds the memory space size
+    auto maxSize = getMemorySpaceSize(memorySpaceId);
+    if (size > maxSize) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
+
+    // Calling internal implementation
+    return allocateMemorySlotImpl(memorySpaceId, size);
+  }
 
   /**
    * Creates a memory slot from a given address
@@ -236,21 +449,12 @@ class Backend
   virtual size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const = 0;
 
   /**
-   * This function prompts the backend to perform the necessary steps to discover and list the resources provided by the library which it supports.
+   * Checks whether the memory slot id exists and is valid
    *
-   * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
-   *
-   * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
    */
-  /**
-   * The internal container for the queried resources.
-   */
-  computeResourceList_t _computeResourceList;
-
-  /**
-   * The internal container for the queried resources.
-   */
-  memorySpaceList_t _memorySpaceList;
+  virtual bool isMemorySlotValid(const memorySlotId_t memorySlotId) const = 0;
 };
 
 } // namespace HiCR

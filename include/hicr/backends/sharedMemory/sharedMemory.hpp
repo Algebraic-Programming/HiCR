@@ -14,15 +14,12 @@
 
 #include <cstring>
 #include <errno.h>
-#include <future>
 #include <memory>
-#include <stdio.h>
 
 #include "hwloc.h"
 
 #include <hicr/backend.hpp>
 #include <hicr/backends/sharedMemory/thread.hpp>
-#include <hicr/common/logger.hpp>
 
 namespace HiCR
 {
@@ -34,52 +31,68 @@ namespace sharedMemory
 {
 
 /**
- * Internal representation of a memory slot for the shared memory backend
- */
-struct memorySlotStruct_t
-{
-  /**
-   * Pointer to the local memory address containing this slot
-   */
-  void *pointer;
-
-  /**
-   * Size of the memory slot
-   */
-  size_t size;
-};
-
-/**
  * Implementation of the SharedMemory/HWloc-based HiCR Shared Memory Backend.
  *
  * It detects and returns the processing units and memory spaces detected by the HWLoc library, and instantiates the former as SharedMemory and the latter as MemorySpace descriptors. It also detects their connectivity.
  */
 class SharedMemory final : public Backend
 {
-  private:
-
-  /**
-   * Currently available tag id to be assigned. It should increment as each tag is assigned
-   */
-  memorySlotId_t _currentTagId = 0;
-
-  /**
-   * Thread-safe map that stores all allocated or created memory slots associated to this backend
-   */
-  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _slotMap;
-
-  /**
-   * list of deffered function calls in non-blocking data moves, which
-   * complete in the wait call
-   */
-  std::multimap<uint64_t, std::future<void>> deferredFuncs;
-
-  /**
-   * Local processor and memory hierarchy topology, as detected by Hwloc
-   */
-  hwloc_topology_t _topology;
-
   public:
+
+  /**
+   * Enumeration to determine whether HWLoc supports strict binding and what the user prefers (similar to MPI_Threading_level)
+   */
+  enum binding_type
+  {
+    /**
+     * With strict binding, the memory is allocated strictly in the specified memory space
+     */
+    strict_binding = 1,
+
+    /**
+     * With strict non-binding, the memory is given by the system allocator. In this case, the binding is most likely setup by the first thread that touches the reserved pages (first touch policy)
+     */
+    strict_non_binding = 0
+  };
+
+  /**
+   * Function to determine whether the memory space supports strictly bound memory allocations
+   *
+   * @param[in] memorySpace The memory space to check binding
+   * @return The supported memory binding type by the memory space
+   */
+  __USED__ inline binding_type getSupportedBindingType(const memorySpaceId_t memorySpace) const
+  {
+    return _memorySpaceMap.at(memorySpace).bindingSupport;
+  }
+
+  /**
+   * Function to set memory allocating binding type
+   *
+   * \param[in] type Specifies the desired binding type for future allocations
+   */
+  __USED__ inline void setRequestedBindingType(const binding_type type)
+  {
+    _hwlocBindingRequested = type;
+  }
+
+  /**
+   * The constructor is employed to reserve memory required for hwloc
+   */
+  SharedMemory() : Backend()
+  {
+    // Reserving memory for hwloc
+    hwloc_topology_init(&_topology);
+  }
+
+  /**
+   * The constructor is employed to free memory required for hwloc
+   */
+  ~SharedMemory()
+  {
+    // Freeing Reserved memory for hwloc
+    hwloc_topology_destroy(_topology);
+  }
 
   /**
    * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
@@ -96,56 +109,249 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Pthread implementation of the Backend queryResources() function. This will add one resource object per found Thread / Processing Unit (PU)
+   * Associates a pointer allocated somewhere else and creates a memory slot with it
+   * \param[in] addr Address in local memory that will be represented by the slot
+   * \param[in] size Size of the memory slot to create
+   * \return The id of the memory slot that represents the given pointer
    */
-  __USED__ inline void queryResources() override
+  __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
   {
-    hwloc_topology_init(&_topology);
+    // Incrementing memory slot id to prevent index re-use
+    auto slotId = _currentMemorySlotId++;
+
+    // Inserting passed address into the memory slot map
+    _memorySlotMap[slotId] = memorySlotStruct_t{.pointer = addr, .size = size};
+
+    // Return the id of the just created slot
+    return slotId;
+  }
+
+  /**
+   * Frees up a memory slot reserved from this memory space
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   */
+  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
+  {
+    // Getting memory slot entry from the map
+    const auto &slot = _memorySlotMap.at(memorySlotId);
+
+    // Making sure the memory slot exists and is not null
+    if (slot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", memorySlotId);
+
+    // If using strict binding, use hwloc_free to properly unmap the memory binding
+    if (slot.bindingType == binding_type::strict_binding)
+    {
+      // Freeing memory slot
+      auto status = hwloc_free(_topology, slot.pointer, slot.size);
+
+      // Error checking
+      if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot (%lu).", memorySlotId);
+    }
+
+    // If using strict non binding, use system's free
+    if (slot.bindingType == binding_type::strict_non_binding)
+    {
+      free(slot.pointer);
+    }
+
+    // Erasing memory slot from the map
+    _memorySlotMap.erase(memorySlotId);
+  }
+
+  /**
+   * Obtains the local pointer from a given memory slot.
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
+   * \return The local memory pointer, if applicable. NULL, otherwise.
+   */
+  __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
+  {
+    return _memorySlotMap.at(memorySlotId).pointer;
+  }
+
+  /**
+   * Obtains the size of the memory slot
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the size.
+   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
+   */
+  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
+  {
+    return _memorySlotMap.at(memorySlotId).size;
+  }
+
+  /**
+   * Checks whether the memory slot id exists and is valid.
+   *
+   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
+   *
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
+   */
+  __USED__ bool isMemorySlotValid(const memorySlotId_t memorySlotId) const override
+  {
+    // Getting pointer for the corresponding slot
+    const auto slot = _memorySlotMap.at(memorySlotId);
+
+    // If it is NULL, it means it was never created
+    if (slot.pointer == NULL) return false;
+
+    // Otherwise it is ok
+    return true;
+  }
+
+  private:
+
+  /**
+   * Structure representing a shared memory backend memory space
+   */
+  struct memorySpace_t
+  {
+    /**
+     * HWloc object representing this memory space
+     */
+    hwloc_obj_t obj;
+
+    /**
+     * Stores whether it is possible to allocate bound memory in this memory space
+     */
+    binding_type bindingSupport;
+  };
+
+  /**
+   * Internal representation of a memory slot for the shared memory backend
+   */
+  struct memorySlotStruct_t
+  {
+    /**
+     * Pointer to the local memory address containing this slot
+     */
+    void *pointer;
+
+    /**
+     * Size of the memory slot
+     */
+    size_t size;
+
+    /**
+     * Store whether a bound memory allocation has performed
+     */
+    binding_type bindingType;
+  };
+
+  /**
+   * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
+   */
+  binding_type _hwlocBindingRequested = binding_type::strict_binding;
+
+  /**
+   * Currently available tag id to be assigned. It should increment as each tag is assigned
+   */
+  memorySlotId_t _currentMemorySlotId = 0;
+
+  /**
+   * Thread-safe map that stores all allocated or created memory slots associated to this backend
+   */
+  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _memorySlotMap;
+
+  /**
+   * Thread-safe map that stores all detected memory spaces HWLoC objects associated to this backend
+   */
+  parallelHashMap_t<memorySpaceId_t, memorySpace_t> _memorySpaceMap;
+
+  /**
+   * Local processor and memory hierarchy topology, as detected by Hwloc
+   */
+  hwloc_topology_t _topology;
+
+  /**
+   * Pthread implementation of the Backend queryResources() function. This will add one compute resource object per Thread / Processing Unit (PU) found
+   */
+  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
+  {
+    // Loading topology
     hwloc_topology_load(_topology);
+
+    // New compute resource list to return
+    computeResourceList_t computeResourceList;
 
     // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
     std::vector<int> threadPUs;
     getThreadPUs(_topology, hwloc_get_root_obj(_topology), 0, threadPUs);
-    _computeResourceList.assign(threadPUs.begin(), threadPUs.end());
+    computeResourceList.insert(threadPUs.begin(), threadPUs.end());
 
-    /* Ask hwloc about number of NUMA nodes
-     * and add as many memory spaces as NUMA domains
-     */
-    _memorySpaceList.clear();
-    auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
-    for (int i = 0; i < n; i++) _memorySpaceList.push_back(i);
+    // Returning new compute resource list
+    return computeResourceList;
   }
 
-  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const override
+  /**
+   * Pthread implementation of the Backend queryResources() function. This will add one memory space object per NUMA domain found
+   */
+  __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
+  {
+    // Loading topology
+    hwloc_topology_load(_topology);
+
+    // Clearing existing memory space map
+    _memorySpaceMap.clear();
+
+    // New memory space list to return
+    memorySpaceList_t memorySpaceList;
+
+    // Ask hwloc about number of NUMA nodes and add as many memory spaces as NUMA domains
+    auto n = hwloc_get_nbobjs_by_type(_topology, HWLOC_OBJ_NUMANODE);
+    for (int i = 0; i < n; i++)
+    {
+      // Getting HWLoc object related to this NUMA domain
+      auto obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, i);
+
+      // Checking whther bound memory allocation and freeing is supported
+      binding_type bindingSupport = strict_non_binding;
+      size_t size = 1024;
+      auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+      if (ptr != NULL)
+      {
+        // Attempting to free with hwloc
+        auto status = hwloc_free(_topology, ptr, size);
+
+        // Freeing was successful, then strict binding is supported
+        if (status == 0) bindingSupport = strict_binding;
+      }
+
+      // Storing reference to the HWLoc object for future reference
+      _memorySpaceMap[i] = memorySpace_t{.obj = obj, .bindingSupport = bindingSupport};
+
+      // Storing new memory space
+      memorySpaceList.insert(i);
+    }
+
+    // Returning new memory space list
+    return memorySpaceList;
+  }
+
+  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
     return std::move(std::make_unique<Thread>(resource));
   }
 
-  __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
+  __USED__ inline deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
   {
-    std::function<void(void *, const void *, size_t)> f = [](void *dst, const void *src, size_t size)
-    { std::memcpy(dst, src, size); };
-    const auto srcSlot = _slotMap.at(source);
-    const auto dstSlot = _slotMap.at(destination);
-    std::future<void> fut = std::async(std::launch::deferred, f, dstSlot.pointer, srcSlot.pointer, size);
-    deferredFuncs.insert(std::make_pair(tag, std::move(fut)));
-  }
+    // Getting pointer for the corresponding slots
+    const auto srcSlot = _memorySlotMap.at(source);
+    const auto dstSlot = _memorySlotMap.at(destination);
 
-  /**
-   * Waits for the completion of one or more pending operation(s) associated with a given tag
-   *
-   * \param[in] tag Identifier of the operation(s) to be waited  upon
-   *
-   * TO-DO: This all should be threading safe
-   */
-  __USED__ inline void fence(const uint64_t tag) override
-  {
-    auto range = deferredFuncs.equal_range(tag);
-    for (auto i = range.first; i != range.second; ++i)
-    {
-      auto f = std::move(i->second);
-      f.wait();
-    }
+    // Getting slot pointers
+    const auto srcPtr = srcSlot.pointer;
+    const auto dstPtr = dstSlot.pointer;
+
+    // Calculating actual offsets
+    const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
+    const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
+
+    // Creating function that satisfies the request (memcpy)
+    return [actualDstPtr, actualSrcPtr, size]()
+    { std::memcpy(actualDstPtr, actualSrcPtr, size); };
   }
 
   /**
@@ -157,60 +363,45 @@ class SharedMemory final : public Backend
    *
    * TO-DO: This all should be threading safe
    */
-  __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline memorySlotId_t allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
-    hwloc_obj_t obj = hwloc_get_obj_by_type(_topology, HWLOC_OBJ_NUMANODE, memorySpace);
-    auto ptr = hwloc_alloc_membind(_topology, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_BYNODESET);
-    auto tag = _currentTagId++;
-    _slotMap[tag] = memorySlotStruct_t{.pointer = ptr, .size = size};
-    return tag;
+    // Recovering memory space from the map
+    auto &memSpace = _memorySpaceMap.at(memorySpace);
+
+    // Checking whether the operation requested is supported by the HWLoc on this memory space
+    if (_hwlocBindingRequested > memSpace.bindingSupport) HICR_THROW_LOGIC("Requesting an allocation binding support level (%u) not supported by the operating system (HWLoc max support: %u)", _hwlocBindingRequested, memSpace.bindingSupport);
+
+    // Allocating memory in the reqested memory space
+    void *ptr = NULL;
+    if (memSpace.bindingSupport == binding_type::strict_binding) ptr = hwloc_alloc_membind(_topology, size, memSpace.obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+    if (memSpace.bindingSupport == binding_type::strict_non_binding) ptr = malloc(size);
+
+    // Error checking
+    if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpace);
+
+    // Incrementing memory slot id to prevent index re-use
+    auto slotId = _currentMemorySlotId++;
+
+    // Assinging new entry in the memory slot map
+    _memorySlotMap[slotId] = memorySlotStruct_t{.pointer = ptr, .size = size, .bindingType = memSpace.bindingSupport};
+
+    // Return the id of the just created slot
+    return slotId;
   }
 
   /**
-   * Associates a pointer allocated somewhere else and creates a memory slot with it
-   * \param[in] addr Address in local memory that will be represented by the slot
-   * \param[in] size Size of the memory slot to create
-   * \return The id of the memory slot that represents the given pointer
-   */
-  __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
-  {
-    auto tag = _currentTagId++;
-    _slotMap[tag] = memorySlotStruct_t{.pointer = addr, .size = size};
-    return tag;
-  }
-
-  /**
-   * Frees up a memory slot reserved from this memory space
+   * This function returns the available allocatable size in the NUMA domain represented by the given memory space
    *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   * @param[in] memorySpace The NUMA domain to query
+   * @return The allocatable size within that NUMA domain
    */
-  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
+  __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
-    const auto slot = _slotMap.at(memorySlotId);
-    hwloc_free(_topology, slot.pointer, slot.size);
-    _slotMap.erase(memorySlotId);
-  }
+    // Recovering memory space
+    const auto memSpace = _memorySpaceMap.at(memorySpace);
 
-  /**
-   * Obtains the local pointer from a given memory slot.
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
-   * \return The local memory pointer, if applicable. NULL, otherwise.
-   */
-  __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
-  {
-    return _slotMap.at(memorySlotId).pointer;
-  }
-
-  /**
-   * Obtains the size of the memory slot
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the size.
-   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
-   */
-  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
-  {
-    return _slotMap.at(memorySlotId).size;
+    // Returning entry corresponding to the memory size
+    return memSpace.obj->attr->cache.size;
   }
 };
 
