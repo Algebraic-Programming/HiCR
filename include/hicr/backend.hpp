@@ -25,26 +25,6 @@ namespace HiCR
 {
 
 /**
- * Type definition for a generic memory space identifier
- */
-typedef uint64_t memorySpaceId_t;
-
-/**
- * Type definition for a generic memory slot identifier
- */
-typedef uint64_t memorySlotId_t;
-
-/**
- * Common definition of a collection of compute resources
- */
-typedef std::set<computeResourceId_t> computeResourceList_t;
-
-/**
- * Common definition of a collection of memory spaces
- */
-typedef std::set<memorySlotId_t> memorySpaceList_t;
-
-/**
  * Encapsulates a HiCR Backend.
  *
  * Backends represent plugins to HiCR that provide support for a communication or device library. By adding new plugins developers extend HiCR's support for new hardware and software technologies.
@@ -57,30 +37,29 @@ class Backend
  public:
 
  /**
-  * Type definition for a deferred function representing pending operations
+  * Type definition for a generic memory space identifier
   */
- typedef std::function<void()> deferredFunction_t;
+ typedef uint64_t memorySpaceId_t;
+
+ /**
+  * Type definition for a generic memory slot identifier
+  */
+ typedef uint64_t memorySlotId_t;
+
+ /**
+  * Common definition of a collection of compute resources
+  */
+ typedef std::set<computeResourceId_t> computeResourceList_t;
+
+ /**
+  * Common definition of a collection of memory spaces
+  */
+ typedef std::set<memorySlotId_t> memorySpaceList_t;
 
  /**
   * Type definition for a tag (identifies and groups operations and allows them to be waited upon)
   */
  typedef uint64_t tagId_t;
-
- /**
-  * Alternatives for the execution of a given asynchronous operation
-  */
- enum launch_t
- {
-   /**
-    * The execution of the requested operation is performed immediately upon calling
-    */
-   immediate,
-
-   /**
-    * The execution of the requested operation is deferred until a fence operation is applied onto it
-    */
-   deferred
- };
 
  virtual ~Backend() = default;
 
@@ -231,7 +210,7 @@ class Backend
   * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
   *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
   */
- __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag, const Backend::launch_t launchType = Backend::launch_t::deferred)
+ __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag)
  {
    // Making sure the memory slots exist and is not null
    if (isMemorySlotValid(source) == false) HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or is invalid", source);

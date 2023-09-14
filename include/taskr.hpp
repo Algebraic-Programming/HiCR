@@ -73,7 +73,7 @@ __USED__ inline void setMaximumActiveWorkers(const ssize_t max)
  *
  * \param[in] computeResourceList The list of compute resources, provided by the specified backend, to use in creating the processing units to assign to workers to execute tasks. If this value is not provided, TaskR will allocate as many processing units as compute resources detected by the backend.
  */
-__USED__ inline void run(const HiCR::computeResourceList_t &computeResourceList = HiCR::computeResourceList_t())
+__USED__ inline void run(const HiCR::Backend::computeResourceList_t &computeResourceList = HiCR::Backend::computeResourceList_t())
 {
   if (_runtimeInitialized == false)
     HICR_THROW_LOGIC("Attempting to use Taskr without first initializing it.");

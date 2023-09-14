@@ -235,7 +235,7 @@ private:
   /**
    * Memory slot that represents the exchange buffer between producer and consumer
    */
-  memorySlotId_t _exchangeBuffer;
+  Backend::memorySlotId_t _exchangeBuffer;
 };
 
 }; // namespace HiCR

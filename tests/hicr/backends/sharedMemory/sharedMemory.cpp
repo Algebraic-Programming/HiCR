@@ -33,7 +33,7 @@ TEST(SharedMemory, Memory)
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  HiCR::memorySpaceList_t mList;
+  HiCR::Backend::memorySpaceList_t mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
   EXPECT_GT(mList.size(), 0);
 
@@ -55,7 +55,7 @@ TEST(SharedMemory, Memory)
   EXPECT_THROW(b.allocateMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
 
   // Allocating memory correctly now
-  HiCR::memorySlotId_t s1 = 0;
+  HiCR::Backend::memorySlotId_t s1 = 0;
   EXPECT_NO_THROW(s1 = b.allocateMemorySlot(r, testMemAllocSize));
   EXPECT_EQ(b.getMemorySlotSize(s1), testMemAllocSize);
 
@@ -65,7 +65,7 @@ TEST(SharedMemory, Memory)
   memset(s1LocalPtr, 0, testMemAllocSize);
 
   // Creating memory slot from a previous allocation
-  HiCR::memorySlotId_t s2 = 0;
+  HiCR::Backend::memorySlotId_t s2 = 0;
   EXPECT_NO_THROW(s2 = b.registerMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(b.getMemorySlotSize(s2), testMemAllocSize);
 
