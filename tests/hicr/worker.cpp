@@ -64,7 +64,7 @@ TEST(Worker, LifeCycle)
   HiCR::Worker w;
 
   // Worker state should in an uninitialized state first
-  EXPECT_EQ(w.getState(), HiCR::worker::state_t::uninitialized);
+  EXPECT_EQ(w.getState(), HiCR::Worker::state_t::uninitialized);
 
   // Attempting to run without any assigned resources
   EXPECT_THROW(w.initialize(), HiCR::LogicException);
@@ -103,7 +103,7 @@ TEST(Worker, LifeCycle)
   EXPECT_THROW(w.initialize(), HiCR::RuntimeException);
 
   // Worker state should be ready now
-  EXPECT_EQ(w.getState(), HiCR::worker::state_t::ready);
+  EXPECT_EQ(w.getState(), HiCR::Worker::state_t::ready);
 
   // Flag to check running state
   bool runningStateFound = false;
@@ -118,7 +118,7 @@ TEST(Worker, LifeCycle)
     auto t = HiCR::getCurrentTask();
 
     // Checking running state
-    if (w->getState() == HiCR::worker::state_t::running) runningStateFound = true;
+    if (w->getState() == HiCR::Worker::state_t::running) runningStateFound = true;
 
     // suspending worker and yielding task
     w->suspend();
@@ -145,7 +145,7 @@ TEST(Worker, LifeCycle)
   EXPECT_TRUE(runningStateFound);
 
   // Checking the worker is suspended
-  EXPECT_EQ(w.getState(), HiCR::worker::state_t::suspended);
+  EXPECT_EQ(w.getState(), HiCR::Worker::state_t::suspended);
 
   // Fail on trying to terminate when not running
   EXPECT_THROW(w.terminate(), HiCR::RuntimeException);
@@ -154,11 +154,11 @@ TEST(Worker, LifeCycle)
   EXPECT_NO_THROW(w.resume());
 
   // Checking the worker is terminating
-  EXPECT_EQ(w.getState(), HiCR::worker::state_t::terminating);
+  EXPECT_EQ(w.getState(), HiCR::Worker::state_t::terminating);
 
   // Awaiting for worker termination
   EXPECT_NO_THROW(w.await());
 
   // Checking the worker is terminated
-  EXPECT_EQ(w.getState(), HiCR::worker::state_t::terminated);
+  EXPECT_EQ(w.getState(), HiCR::Worker::state_t::terminated);
 }
