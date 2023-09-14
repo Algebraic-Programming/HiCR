@@ -40,6 +40,9 @@ TEST(SharedMemory, Memory)
   // Getting memory resource
   auto &r = *mList.begin();
 
+  // Adjusting memory binding support to the system's
+  EXPECT_NO_THROW(b.setRequestedBindingType(b.getSupportedBindingType(r)));
+
   // Getting total memory size
   size_t testMemAllocSize = 1024;
   size_t totalMem = 0;
