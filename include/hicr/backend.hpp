@@ -393,6 +393,16 @@ class Backend
   return isMemorySlotValidImpl(memorySlotId);
  }
 
+ /**
+  * Returns a new, instance-unique tag id to use for operations
+  *
+  * \return A unique tag id
+  */
+ __USED__ inline tagId_t createTag() noexcept
+ {
+  return _currentAvailableTag++;
+ }
+
  protected:
 
  /**
@@ -528,6 +538,11 @@ class Backend
    * Stores the set of registered memory slots
    */
   parallelHashSet_t<memorySlotId_t> _registeredMemorySlotSet;
+
+  /**
+   * Current available tag to use
+   */
+  std::atomic<tagId_t> _currentAvailableTag = 0;
 };
 
 } // namespace HiCR

@@ -16,6 +16,7 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <queue>
 
 namespace HiCR
 {
@@ -107,6 +108,18 @@ class Task
    */
   typedef common::Coroutine::coroutineFc_t taskFunction_t;
 
+  /**
+   * Definition for a task function that register operations that have been started by the task but not yet finalized
+   *
+   * Running the function must return True, if the operation has finished, and; False, if the operation finished
+   */
+  typedef std::function<bool()> pendingOperationFunction_t;
+
+  /**
+   * Definition for the collection of pending operations
+   */
+  typedef std::queue<pendingOperationFunction_t> pendingOperationFunctionQueue_t;
+
   Task() = delete;
   ~Task() = default;
 
@@ -155,6 +168,44 @@ class Task
    * \internal This is not a thread safe operation.
    */
   __USED__ inline const state_t getState() { return _state; }
+
+  /**
+   * Registers an operation that has been started by the task but has not yet finished
+   *
+   * @param[in] op The pending operation
+   */
+  __USED__ inline void registerPendingOperation(pendingOperationFunction_t op)
+  {
+   _pendingOperations.push(op);
+  }
+
+  /**
+   * Checks for the finalization of all the task's pending operations and reports whether they have finished
+   *
+   * Operations that have finished are removed from the Task's storage. These will be removed, even if some might remain and the return is false
+   *
+   * @return True, if the task no longer contains pending operations; false, if pending operations remain.
+   */
+  __USED__ inline bool checkPendingOperations()
+  {
+   while (_pendingOperations.empty() == false)
+   {
+    // Getting the pending function
+    const auto& fc = _pendingOperations.front();
+
+    // Running it to see whether it has finished
+    bool finished = fc();
+
+    // If it hasn't return false immediately
+    if (finished == false) return false;
+
+    // Otherwise, remove current element
+    _pendingOperations.pop();
+   }
+
+   // No pending operations remain, return true
+   return true;
+  }
 
   /**
    * This function starts running a task. It needs to be performed by a worker, by passing a pointer to itself.
@@ -241,6 +292,11 @@ class Task
    *  Map of events to trigger
    */
   taskEventMap_t *_eventMap = NULL;
+
+  /**
+   * List of pending operations initiated by the task but not yet finished
+   */
+  pendingOperationFunctionQueue_t _pendingOperations;
 };
 
 } // namespace HiCR

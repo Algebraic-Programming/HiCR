@@ -1,2 +1,3 @@
 subdir('memcpy')
+subdir('channel')
 
