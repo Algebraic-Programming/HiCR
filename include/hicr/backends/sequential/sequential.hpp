@@ -248,6 +248,24 @@ class Sequential final : public Backend
     // Otherwise it is ok
     return true;
   }
+
+  /**
+   * Does whatever necessary to register a new tag identified with the number passed as argument
+   *
+   * Nothing to do in this case for now.
+   *
+   * \param[in] tag A newly created unique tag id
+   */
+  __USED__ inline void createTagImpl(const tagId_t tag) { }
+
+  /**
+   * Does whatever necessary to destroy a new tag identified with the number passed as argument
+   *
+   * Nothing to do in this case for now.
+   *
+   * \param[in] tag The tag to destroy
+   */
+  __USED__ inline void destroyTagImpl(const tagId_t tag) {}
 };
 
 } // namespace sequential

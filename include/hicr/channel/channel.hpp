@@ -78,12 +78,25 @@ public:
     return _tokenSize;
   }
 
+  /**
+   * This function can be used to check the size of the coordination buffer that needs to be provided
+   * in the creation of the channel
+   *
+   * \return Size (bytes) of the coordination buffer
+   */
+  __USED__ static inline size_t getCoordinationBufferSize() noexcept
+  {
+    return sizeof(size_t);
+  }
+
   protected:
 
-  Channel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, const size_t tokenSize) :
+  Channel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) :
    _backend(backend),
    _exchangeBuffer(exchangeBuffer),
+   _coordinationBuffer(coordinationBuffer),
    _exchangeTag(backend->createTag()),
+   _coordinationTag(backend->createTag()),
    _tokenSize(tokenSize),
    _capacity(tokenSize == 0 ? 0 : backend->getMemorySlotSize(exchangeBuffer) / tokenSize)
   {
@@ -91,7 +104,13 @@ public:
    if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size (%lu) larger than the buffer size (%lu).\n", tokenSize, backend->getMemorySlotSize(exchangeBuffer));
   }
 
-  ~Channel() = default;
+  ~Channel()
+  {
+   // It might not be necessary, but semantically these tags were created by request, and therefore must be destroyed by request also
+   _backend->destroyTag(_exchangeTag);
+   _backend->destroyTag(_coordinationTag);
+  }
+
 
   /**
    * @returns The current position of the buffer head
@@ -117,14 +136,24 @@ public:
   Backend* _backend;
 
   /**
-   * Memory slot that represents the exchange buffer between producer and consumer
+   * Memory slot that represents the target buffer that producer sends data to
    */
   Backend::memorySlotId_t _exchangeBuffer;
 
   /**
-   * Unique tag to use for operations
+   * Memory slot that enables coordination communication from the consumer to the producer
+   */
+  Backend::memorySlotId_t _coordinationBuffer;
+
+  /**
+   * Unique tag to use for data exchange
    */
   const Backend::tagId_t _exchangeTag;
+
+  /**
+   * Unique tag to use for coordination between channels
+   */
+  const Backend::tagId_t _coordinationTag;
 
   /**
    * This function advances buffer head (e.g., when an element is pushed)
@@ -165,6 +194,16 @@ public:
     // Adjust depth
     _depth = _depth - n;
   }
+
+  /**
+   * Counts how many tokens have been pushed into the channel globally
+   */
+  size_t _pushedTokens = 0;
+
+  /**
+   * Counts how many tokens have been popped out of the channel globally
+   */
+  size_t _poppedTokens = 0;
 
   private:
 

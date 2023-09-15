@@ -196,7 +196,7 @@ class Task
     // Running it to see whether it has finished
     bool finished = fc();
 
-    // If it hasn't return false immediately
+    // If it hasn't, return false immediately
     if (finished == false) return false;
 
     // Otherwise, remove current element

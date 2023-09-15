@@ -30,7 +30,10 @@ namespace HiCR
 class ProducerChannel : Channel
 {
 public:
-  ProducerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, tokenSize) {}
+  ProducerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) :
+   Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
+   _poppedTokensPointer ((size_t*)backend->getMemorySlotLocalPointer(coordinationBuffer))
+  {}
   ~ProducerChannel() = default;
 
   /**
@@ -68,6 +71,9 @@ public:
      // Advance head, as we have added a new element
      advanceHead(1);
     }
+
+    // Increase the counter of pushed tokens
+    _pushedTokens += n;
 
     // Succeeded in pushing the token(s)
     return true;
@@ -124,6 +130,9 @@ public:
     // Advance head, as we have added a new element
     advanceHead(1);
    }
+
+   // Increase the counter of pushed tokens
+   _pushedTokens += n;
   }
 
   /**
@@ -134,18 +143,34 @@ public:
    * since it will be called repeatedly to check whether a pending operation
    * has finished
    *
-   * @return The number of tokens that were popped in the receiver side
+   * @return The number of newly popped tokens in the receiver side
    */
   __USED__ inline size_t checkReceiverPops()
   {
-   // We have to figure out how to resolve this
-   size_t poppedTokens = 0;
+   // Storing the current number of popped tokens
+   auto currentPoppedTokens = _poppedTokens;
+
+   // Update number of popped tokens
+   _poppedTokens = *_poppedTokensPointer;
+
+   // The number of newly popped tokens is the difference
+   size_t newlyPoppedTokens = _poppedTokens - currentPoppedTokens;
 
    // for each popped token, free up space in the circular buffer
-   advanceTail(poppedTokens);
+   advanceTail(newlyPoppedTokens);
 
-   return poppedTokens;
+   // Returning the number of newly popped tokens
+   return newlyPoppedTokens;
   }
+
+private:
+
+  /**
+   * This pointer represents the position in local memory where the producer can check
+   * how many popped elements have been performed by the consumer. The pointer value is
+   * determined at creation time
+   */
+  const size_t* _poppedTokensPointer;
 };
 
 }; // namespace HiCR

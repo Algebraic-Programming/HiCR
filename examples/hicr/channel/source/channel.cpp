@@ -16,11 +16,12 @@ int main(int argc, char **argv)
  auto memSpaces = backend.getMemorySpaceList();
 
  // Allocating memory slot for the channel buffer
- auto buffer = backend.allocateMemorySlot(*memSpaces.begin(), CAPACITY * sizeof(ELEMENT_TYPE));
+ auto dataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), CAPACITY * sizeof(ELEMENT_TYPE));
+ auto coordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
 
  // Creating producer and consumer channels
- auto producer = HiCR::ProducerChannel(&backend, buffer, sizeof(ELEMENT_TYPE));
- auto consumer = HiCR::ConsumerChannel(&backend, buffer, sizeof(ELEMENT_TYPE));
+ auto producer = HiCR::ProducerChannel(&backend, dataBuffer, coordinationBuffer, sizeof(ELEMENT_TYPE));
+ auto consumer = HiCR::ConsumerChannel(&backend, dataBuffer, coordinationBuffer, sizeof(ELEMENT_TYPE));
 
  // Allocating a send slot to put the values we want to communicate
  auto sendSlot = backend.allocateMemorySlot(*memSpaces.begin(), sizeof(ELEMENT_TYPE));

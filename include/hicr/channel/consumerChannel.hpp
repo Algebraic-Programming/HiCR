@@ -30,7 +30,7 @@ class ConsumerChannel : public Channel
 {
 public:
 
-  ConsumerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, tokenSize) {}
+  ConsumerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize) {}
   ~ConsumerChannel() = default;
 
   /**

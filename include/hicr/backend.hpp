@@ -398,9 +398,31 @@ class Backend
   *
   * \return A unique tag id
   */
- __USED__ inline tagId_t createTag() noexcept
+ __USED__ inline tagId_t createTag()
  {
-  return _currentAvailableTag++;
+  // Obtaining a new unique tag for this backend
+  auto newTag = _currentAvailableTag++;
+
+  // Calling internal implementation, in case something else needs to be done to accomodate this new tag
+  createTagImpl(newTag);
+
+  // Returning new tag
+  return newTag;
+ }
+
+ /**
+  * Destroys a previously created tag
+  *
+  * \param[in] tag The tag to destroy
+  */
+ __USED__ inline void destroyTag(const tagId_t tag)
+ {
+  // Not a sufficient check because probably using a set might be better to check for re-destroy
+  if (tag < _currentAvailableTag)
+     HICR_THROW_RUNTIME("Attempting to delete a tag (%lu) that was not created", tag);
+
+  // Calling internal implementation, in case something else needs to be done to destroy this tag
+  destroyTagImpl(tag);
  }
 
  protected:
@@ -511,6 +533,20 @@ class Backend
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
   virtual void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
+
+  /**
+   * Backend-internal implementation of the createTag function
+   *
+   * \return A unique tag id
+   */
+  virtual void createTagImpl(const tagId_t tag) = 0;
+
+  /**
+   * Backend-internal implementation of the destroyTag function
+   *
+   * \param[in] tag The tag to destroy
+   */
+  virtual void destroyTagImpl(const tagId_t tag) = 0;
 
  private:
 
