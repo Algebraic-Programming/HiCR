@@ -39,45 +39,10 @@ class Sequential final : public Backend
   private:
 
   /**
-   * Internal representation of a memory slot for the sequential backend
-   */
-  struct memorySlotStruct_t
-  {
-    /**
-     * Pointer to the local memory address containing this slot
-     */
-    void *pointer;
-
-    /**
-     * Size of the memory slot
-     */
-    size_t size;
-  };
-
-  /**
-   * Thread-safe map that stores all allocated or created memory slots associated to this backend
-   */
-  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _memorySlotMap;
-
-  /**
    * This stores the total system memory to check that allocations do not exceed it
    */
   size_t _totalSystemMem = 0;
 
-  /**
-   * Obtains the local pointer from a given memory slot.
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
-   * \return The local memory pointer, if applicable. NULL, otherwise.
-   */
-  __USED__ inline void *getMemorySlotLocalPointerImpl(const memorySlotId_t memorySlotId) const override
-  {
-    const auto &memSlot = _memorySlotMap.at(memorySlotId);
-
-    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
-
-    return memSlot.pointer;
-  }
 
   /**
    * This function returns the available allocatable size in the current system RAM
@@ -88,21 +53,6 @@ class Sequential final : public Backend
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
     return _totalSystemMem;
-  }
-
-  /**
-   * Obtains the size of the memory slot
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the size.
-   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
-   */
-  __USED__ inline size_t getMemorySlotSizeImpl(const memorySlotId_t memorySlotId) const override
-  {
-    const auto &memSlot = _memorySlotMap.at(memorySlotId);
-
-    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
-
-    return memSlot.size;
   }
 
   /**
@@ -143,7 +93,7 @@ class Sequential final : public Backend
     return std::move(std::make_unique<Process>(resource));
   }
 
-  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
+  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size) override
   {
     // Getting pointer for the corresponding slots
     const auto srcSlot = _memorySlotMap.at(source);
@@ -159,18 +109,31 @@ class Sequential final : public Backend
 
     // Running memcpy now
     std::memcpy(actualDstPtr, actualSrcPtr, size);
+
+    // Increasing message received/sent counters for memory slots
+    _memorySlotMap[source].messagesSent++;
+    _memorySlotMap[destination].messagesRecv++;
+  }
+
+  /**
+   * Queries the backend to update the internal state of the memory slot.
+   * One main use case of this function is to update the number of messages received and sent to/from this slot.
+   * This is a non-blocking, non-collective function.
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to query for updates.
+   */
+  __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
+  {
+   // This function should check and update the abstract class for completed memcpy operations
   }
 
   /**
    * Implementation of the fence operation for the sequential backend. In this case, nothing needs to be done, as
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
-   *
-   * \param[in] tag Tag to execute a fence against
    */
-  __USED__ inline void fenceImpl(const tagId_t tag)
+  __USED__ inline void fenceImpl()
   {
-    // Nothing to check for, the memcpys are already done
   }
 
   /**
@@ -180,7 +143,7 @@ class Sequential final : public Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] memSlotId The identifier of the new memory slot
    */
-  __USED__ inline void allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void* allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
   {
     // Atempting to allocate the new memory slot
     auto ptr = malloc(size);
@@ -188,8 +151,8 @@ class Sequential final : public Backend
     // Check whether it was successful
     if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
 
-    // Adding new slot in the local registry
-    _memorySlotMap[memSlotId] = memorySlotStruct_t{.pointer = ptr, .size = size};
+    // Now returning pointer
+    return ptr;
   }
 
   /**
@@ -200,7 +163,7 @@ class Sequential final : public Backend
    */
   __USED__ inline void registerMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
   {
-    _memorySlotMap[memSlotId] = memorySlotStruct_t{.pointer = addr, .size = size};
+    // Nothing to do here for this backend
   }
 
   /**
@@ -210,7 +173,7 @@ class Sequential final : public Backend
    */
   __USED__ inline void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) override
   {
-   _memorySlotMap.erase(memorySlotId);
+   // Nothing to do here for this backend
   }
 
   /**
@@ -225,8 +188,6 @@ class Sequential final : public Backend
     if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
 
     free(memSlot.pointer);
-
-    _memorySlotMap.erase(memorySlotId);
   }
 
   /**
@@ -249,23 +210,6 @@ class Sequential final : public Backend
     return true;
   }
 
-  /**
-   * Does whatever necessary to register a new tag identified with the number passed as argument
-   *
-   * Nothing to do in this case for now.
-   *
-   * \param[in] tag A newly created unique tag id
-   */
-  __USED__ inline void createTagImpl(const tagId_t tag) { }
-
-  /**
-   * Does whatever necessary to destroy a new tag identified with the number passed as argument
-   *
-   * Nothing to do in this case for now.
-   *
-   * \param[in] tag The tag to destroy
-   */
-  __USED__ inline void destroyTagImpl(const tagId_t tag) {}
 };
 
 } // namespace sequential

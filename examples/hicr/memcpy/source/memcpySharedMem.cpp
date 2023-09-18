@@ -4,7 +4,6 @@
 #define BUFFER_SIZE 256
 #define DST_OFFSET 0
 #define SRC_OFFSET 0
-#define TAG 0
 
 int main(int argc, char **argv)
 {
@@ -22,16 +21,16 @@ int main(int argc, char **argv)
  auto slot2 = backend.allocateMemorySlot(*memSpaces.rbegin(), BUFFER_SIZE);   // Last NUMA Domain
 
  // Initializing values in memory slot 1
- sprintf((char*)backend.getMemorySlotLocalPointer(slot1), "Hello, HiCR user!\n");
+ sprintf((char*)backend.getMemorySlotPointer(slot1), "Hello, HiCR user!\n");
 
  // Performing the copy
- backend.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE, TAG);
+ backend.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE);
 
  // Waiting on the operation to have finished
- backend.fence(TAG);
+ backend.fence();
 
  // Checking whether the copy was successful
- printf("%s", (const char*)backend.getMemorySlotLocalPointer(slot2));
+ printf("%s", (const char*)backend.getMemorySlotPointer(slot2));
 
  return 0;
 }

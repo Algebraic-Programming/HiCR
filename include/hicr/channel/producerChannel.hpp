@@ -16,6 +16,7 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/channel/channel.hpp>
+#include <hicr/backend.hpp>
 #include <hicr/task.hpp>
 
 namespace HiCR
@@ -32,7 +33,7 @@ class ProducerChannel : Channel
 public:
   ProducerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) :
    Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
-   _poppedTokensPointer ((size_t*)backend->getMemorySlotLocalPointer(coordinationBuffer))
+   _poppedTokensPointer ((size_t*)backend->getMemorySlotPointer(coordinationBuffer))
   {}
   ~ProducerChannel() = default;
 
@@ -40,8 +41,6 @@ public:
    * Puts new token(s) unto the channel.
    *
    * This is a one-sided blocking primitive that need not be made collectively.
-   *
-   * This primitive may only be called by producers.
    *
    * @param[in] sourceSlot  Source slot (buffer) from whence to read the token(s)
    * @param[in] n  Number of tokens to read from the buffer
@@ -59,14 +58,14 @@ public:
    */
   __USED__ inline bool push(Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
-    // If the exchange buffer is full, reject the operation
+    // If the exchange buffer does not have n free slots, reject the operation
     if (getDepth() + n > getCapacity()) return false;
 
     // Copy tokens
     for (size_t i = 0; i < n; i++)
     {
      // Copying with source increasing offset per token
-     _backend->memcpy(_exchangeBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize(), _exchangeTag);
+     _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
      // Advance head, as we have added a new element
      advanceHead(1);
@@ -84,8 +83,6 @@ public:
    * buffer space frees up.
    *
    * This is a one-sided blocking call that need not be made collectively.
-   *
-   * The primitive may only be called by producers.
    *
    * This function can only be called from the context of a running HiCR::Task,
    * because it is the only element in HiCR that can be freely suspended.
@@ -125,7 +122,7 @@ public:
     }
 
     // Copying with source increasing offset per token
-    _backend->memcpy(_exchangeBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize(), _exchangeTag);
+    _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
     // Advance head, as we have added a new element
     advanceHead(1);

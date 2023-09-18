@@ -93,10 +93,8 @@ public:
 
   Channel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) :
    _backend(backend),
-   _exchangeBuffer(exchangeBuffer),
-   _coordinationBuffer(coordinationBuffer),
-   _exchangeTag(backend->createTag()),
-   _coordinationTag(backend->createTag()),
+   _dataExchangeMemorySlot(exchangeBuffer),
+   _coordinationMemorySlot(coordinationBuffer),
    _tokenSize(tokenSize),
    _capacity(tokenSize == 0 ? 0 : backend->getMemorySlotSize(exchangeBuffer) / tokenSize)
   {
@@ -106,11 +104,7 @@ public:
 
   ~Channel()
   {
-   // It might not be necessary, but semantically these tags were created by request, and therefore must be destroyed by request also
-   _backend->destroyTag(_exchangeTag);
-   _backend->destroyTag(_coordinationTag);
   }
-
 
   /**
    * @returns The current position of the buffer head
@@ -128,35 +122,42 @@ public:
     return _head;
   }
 
+  /**
+   * @returns The current position of the buffer head
+   *
+   * Returns the position of the buffer head to set as offset for sending/receiving operations.
+   *
+   * This is a one-sided blocking call that need not be made collectively.
+   *
+   * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
+   *
+   * This function when called on a valid channel instance will never fail.
+   */
+  __USED__ inline size_t getTailPosition() const noexcept
+  {
+    return _tail;
+  }
+
   protected:
 
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  Backend* _backend;
+  Backend* const _backend;
 
   /**
-   * Memory slot that represents the target buffer that producer sends data to
+   * Memory slot that represents the target data buffer that producer sends data to
    */
-  Backend::memorySlotId_t _exchangeBuffer;
+  const Backend::memorySlotId_t _dataExchangeMemorySlot;
 
   /**
    * Memory slot that enables coordination communication from the consumer to the producer
    */
-  Backend::memorySlotId_t _coordinationBuffer;
+  const Backend::memorySlotId_t _coordinationMemorySlot;
 
   /**
-   * Unique tag to use for data exchange
-   */
-  const Backend::tagId_t _exchangeTag;
-
-  /**
-   * Unique tag to use for coordination between channels
-   */
-  const Backend::tagId_t _coordinationTag;
-
-  /**
-   * This function advances buffer head (e.g., when an element is pushed)
+   * This function advances the circular buffer head (e.g., when an element is pushed). It goes back around if the capacity is exceeded
+   * The head cannot advance in such a way that the depth exceeds capacity.
    */
   __USED__ inline void advanceHead(const size_t n = 1) noexcept
   {
@@ -174,11 +175,11 @@ public:
 
     // Adjust depth
     _depth = newDepth;
-
   }
 
   /**
-   * This function advances buffer head (e.g., when an element is pushed)
+   * This function advances buffer tail (e.g., when an element is popped). It goes back around if the capacity is exceeded
+   * The tail cannot advanced more than the current depth (that would mean that more elements were consumed than pushed).
    */
   __USED__ inline void advanceTail(const size_t n = 1) noexcept
   {

@@ -24,21 +24,34 @@ int main(int argc, char **argv)
  auto consumer = HiCR::ConsumerChannel(&backend, dataBuffer, coordinationBuffer, sizeof(ELEMENT_TYPE));
 
  // Allocating a send slot to put the values we want to communicate
- auto sendSlot = backend.allocateMemorySlot(*memSpaces.begin(), sizeof(ELEMENT_TYPE));
- auto sendBuffer = (ELEMENT_TYPE*)backend.getMemorySlotLocalPointer(sendSlot);
- *sendBuffer = 42;
+ ELEMENT_TYPE sendBuffer = 42;
+ auto sendBufferPtr = &sendBuffer;
+ auto sendSlot = backend.registerMemorySlot(sendBufferPtr, sizeof(ELEMENT_TYPE));
 
  // Pushing value to the channel
  producer.push(sendSlot);
 
+ // Checking for new tokens on the receiver side
+ consumer.checkReceivedTokens();
+
  // Getting the value from the channel
-// double recvValue = 0.0;
- //consumer.peek(&recvValue);
- //consumer.pop();
+ ELEMENT_TYPE* recvBufferPtr = NULL;
+ bool peekResult = consumer.peek((void**)&recvBufferPtr);
+
+ // If peek did not succeed, fail and exit
+ if (peekResult == false) { fprintf(stderr, "Did not receive a message!\n"); exit(-1); }
+
+ // Popping received value to free up channel
+ consumer.pop();
 
  // Printing values
- printf("Sent Value:     %u\n", *sendBuffer);
- //printf("Received Value: %u\n", recvValue);
+ printf("Sent Value:     %u\n", *sendBufferPtr);
+ printf("Received Value: %u\n", *recvBufferPtr);
+
+ // Freeing up memory
+ backend.freeMemorySlot(dataBuffer);
+ backend.freeMemorySlot(coordinationBuffer);
+ backend.deregisterMemorySlot(sendSlot);
 
  return 0;
 }
