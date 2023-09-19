@@ -35,14 +35,12 @@ namespace sequential
  */
 class Sequential final : public Backend
 {
-
   private:
 
   /**
    * This stores the total system memory to check that allocations do not exceed it
    */
   size_t _totalSystemMem = 0;
-
 
   /**
    * This function returns the available allocatable size in the current system RAM
@@ -124,7 +122,7 @@ class Sequential final : public Backend
    */
   __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
   {
-   // This function should check and update the abstract class for completed memcpy operations
+    // This function should check and update the abstract class for completed memcpy operations
   }
 
   /**
@@ -143,7 +141,7 @@ class Sequential final : public Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] memSlotId The identifier of the new memory slot
    */
-  __USED__ inline void* allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void *allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
   {
     // Atempting to allocate the new memory slot
     auto ptr = malloc(size);
@@ -159,7 +157,7 @@ class Sequential final : public Backend
    * Associates a pointer allocated somewhere else and creates a memory slot with it
    * \param[in] addr Address in local memory that will be represented by the slot
    * \param[in] size Size of the memory slot to create
-   * \param[in] The identifier for the new memory slot
+   * \param[in] memSlotId The identifier for the new memory slot
    */
   __USED__ inline void registerMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
   {
@@ -173,7 +171,7 @@ class Sequential final : public Backend
    */
   __USED__ inline void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) override
   {
-   // Nothing to do here for this backend
+    // Nothing to do here for this backend
   }
 
   /**
@@ -209,7 +207,6 @@ class Sequential final : public Backend
     // Otherwise it is ok
     return true;
   }
-
 };
 
 } // namespace sequential

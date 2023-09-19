@@ -13,10 +13,10 @@
 
 #pragma once
 
+#include <hicr/backend.hpp>
+#include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/channel.hpp>
-#include <hicr/backend.hpp>
 #include <hicr/task.hpp>
 
 namespace HiCR
@@ -30,17 +30,31 @@ namespace HiCR
  */
 class ConsumerChannel : public Channel
 {
-public:
+  public:
 
-  ConsumerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
-  // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
-  _poppedTokensSlot(backend->registerMemorySlot(&_poppedTokens, sizeof(size_t)))
-  {}
+  /**
+   * The constructor of the consumer channel class.
+   *
+   * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
+   *
+   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
+   * \param[in] exchangeBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
+   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
+   * token.
+   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
+   * popped. It may also be used for other coordination signals.
+   * \param[in] tokenSize The size of each token.
+   */
+  ConsumerChannel(Backend *backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
+                                                                                                                                                  // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
+                                                                                                                                                  _poppedTokensSlot(backend->registerMemorySlot(&_poppedTokens, sizeof(size_t)))
+  {
+  }
 
   ~ConsumerChannel()
   {
-   // Unregistering memory slot corresponding to popped token count
-   _backend->deregisterMemorySlot(_poppedTokensSlot);
+    // Unregistering memory slot corresponding to popped token count
+    _backend->deregisterMemorySlot(_poppedTokensSlot);
   }
 
   /**
@@ -62,31 +76,30 @@ public:
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
    */
-  __USED__ inline bool peek(void** ptrBuffer, const size_t n = 1) const
+  __USED__ inline bool peek(void **ptrBuffer, const size_t n = 1) const
   {
-     // If the exchange buffer does not have n tokens pushed, reject operation
-     if (getDepth() < n) return false;
+    // If the exchange buffer does not have n tokens pushed, reject operation
+    if (getDepth() < n) return false;
 
-     // Getting base pointer for the exchange buffer
-     const auto basePtr = (uint8_t*) _backend->getMemorySlotPointer(_dataExchangeMemorySlot);
+    // Getting base pointer for the exchange buffer
+    const auto basePtr = (uint8_t *)_backend->getMemorySlotPointer(_dataExchangeMemorySlot);
 
-     // Assigning the pointer to each token requested
-     for (size_t i = 0; i < n; i++)
-     {
+    // Assigning the pointer to each token requested
+    for (size_t i = 0; i < n; i++)
+    {
       // Calculating buffer position
       size_t bufferPos = (getTailPosition() + i) % getCapacity();
 
       // Calculating pointer to such position
-      auto* tokenPtr = basePtr + bufferPos * getTokenSize();
+      auto *tokenPtr = basePtr + bufferPos * getTokenSize();
 
       // Assigning pointer to the output buffer
       ptrBuffer[i] = tokenPtr;
-     }
+    }
 
-     // Succeeded in pushing the token(s)
-     return true;
+    // Succeeded in pushing the token(s)
+    return true;
   }
-
 
   /**
    * Similar to peek, but if the channel is empty, will wait until a new token
@@ -106,23 +119,24 @@ public:
    * \todo A preferred mechanism to wait for messages to have flushed may be
    *       the event-based API described below in this header file.
    */
-  __USED__ inline void peekWait(void** ptrBuffer, const size_t n = 1)
+  __USED__ inline void peekWait(void **ptrBuffer, const size_t n = 1)
   {
-   // This function can only be called from a running HiCR::Task
-   if (_currentTask == NULL) HICR_THROW_LOGIC("ProducerChannel's peekWait function can only be called from inside the context of a running HiCR::Task\n");
+    // This function can only be called from a running HiCR::Task
+    if (_currentTask == NULL) HICR_THROW_LOGIC("ProducerChannel's peekWait function can only be called from inside the context of a running HiCR::Task\n");
 
-   // While the number of tokens in the buffer is less than the desired number, wait for it
-   while (getDepth() < n )
-   {
-    // Set the function that checks whether the buffer is now free to send more messages
-    _currentTask->registerPendingOperation([this](){ return checkReceivedTokens() > 0; });
+    // While the number of tokens in the buffer is less than the desired number, wait for it
+    while (getDepth() < n)
+    {
+      // Set the function that checks whether the buffer is now free to send more messages
+      _currentTask->registerPendingOperation([this]()
+                                             { return checkReceivedTokens() > 0; });
 
-    // Suspend current task
-    _currentTask->yield();
-   }
+      // Suspend current task
+      _currentTask->yield();
+    }
 
-   // Now do the peek, as designed above
-   peek(ptrBuffer, n);
+    // Now do the peek, as designed above
+    peek(ptrBuffer, n);
   }
 
   /**
@@ -143,19 +157,19 @@ public:
    */
   __USED__ inline bool pop(const size_t n = 1)
   {
-   // If the exchange buffer does not have n tokens pushed, reject operation
-   if (getDepth() < n) return false;
+    // If the exchange buffer does not have n tokens pushed, reject operation
+    if (getDepth() < n) return false;
 
-   // Advancing tail (removes elements from the circular buffer)
-   advanceTail(n);
+    // Advancing tail (removes elements from the circular buffer)
+    advanceTail(n);
 
-   // Increasing the total number of popped tokens
-   _poppedTokens += n;
+    // Increasing the total number of popped tokens
+    _poppedTokens += n;
 
-   // Notifying producer(s) of buffer liberation
-   _backend->memcpy(_coordinationMemorySlot, 0, _poppedTokensSlot, 0, sizeof(size_t));
+    // Notifying producer(s) of buffer liberation
+    _backend->memcpy(_coordinationMemorySlot, 0, _poppedTokensSlot, 0, sizeof(size_t));
 
-   return false;
+    return false;
   }
 
   /**
@@ -166,26 +180,26 @@ public:
    */
   __USED__ inline size_t checkReceivedTokens()
   {
-   // Perform a non-blocking check of the data exchange buffer, to see if there are new messages
-   _backend->queryMemorySlotUpdates(_dataExchangeMemorySlot);
+    // Perform a non-blocking check of the data exchange buffer, to see if there are new messages
+    _backend->queryMemorySlotUpdates(_dataExchangeMemorySlot);
 
-   // Temporarily storing the current received token (1 message = 1 token) count
-   auto pushedTokensTmp = _pushedTokens;
+    // Temporarily storing the current received token (1 message = 1 token) count
+    auto pushedTokensTmp = _pushedTokens;
 
-   // Updating pushed tokens count
-   _pushedTokens = _backend->getMemorySlotReceivedMessages(_dataExchangeMemorySlot);
+    // Updating pushed tokens count
+    _pushedTokens = _backend->getMemorySlotReceivedMessages(_dataExchangeMemorySlot);
 
-   // The number of received tokens is the difference between the current pushed tokens and the previous one
-   auto receivedTokens = _pushedTokens - pushedTokensTmp;
+    // The number of received tokens is the difference between the current pushed tokens and the previous one
+    auto receivedTokens = _pushedTokens - pushedTokensTmp;
 
-   // We advance the head locally as many times as newly received tokens
-   advanceHead(receivedTokens);
+    // We advance the head locally as many times as newly received tokens
+    advanceHead(receivedTokens);
 
-   // Returning the number of received tokens
-   return receivedTokens;
+    // Returning the number of received tokens
+    return receivedTokens;
   }
 
-private:
+  private:
 
   /**
    * Local memory slot to update the number of popped tokens in the producer(s)

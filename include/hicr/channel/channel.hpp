@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include <hicr/backend.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/backend.hpp>
 
 namespace HiCR
 {
@@ -28,8 +28,7 @@ namespace HiCR
  */
 class Channel
 {
-
-public:
+  public:
 
   /**
    * @returns The capacity of the channel.
@@ -40,7 +39,7 @@ public:
    */
   __USED__ inline size_t getCapacity() const noexcept
   {
-   return _capacity;
+    return _capacity;
   }
 
   /**
@@ -91,15 +90,27 @@ public:
 
   protected:
 
-  Channel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) :
-   _backend(backend),
-   _dataExchangeMemorySlot(exchangeBuffer),
-   _coordinationMemorySlot(coordinationBuffer),
-   _tokenSize(tokenSize),
-   _capacity(tokenSize == 0 ? 0 : backend->getMemorySlotSize(exchangeBuffer) / tokenSize)
+  /**
+   * The constructor of the base Channel class.
+   *
+   * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
+   *
+   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
+   * \param[in] exchangeBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
+   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
+   * token.
+   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
+   * popped. It may also be used for other coordination signals.
+   * \param[in] tokenSize The size of each token.
+   */
+  Channel(Backend *backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : _backend(backend),
+                                                                                                                                          _dataExchangeMemorySlot(exchangeBuffer),
+                                                                                                                                          _coordinationMemorySlot(coordinationBuffer),
+                                                                                                                                          _tokenSize(tokenSize),
+                                                                                                                                          _capacity(tokenSize == 0 ? 0 : backend->getMemorySlotSize(exchangeBuffer) / tokenSize)
   {
-   if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
-   if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size (%lu) larger than the buffer size (%lu).\n", tokenSize, backend->getMemorySlotSize(exchangeBuffer));
+    if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
+    if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size (%lu) larger than the buffer size (%lu).\n", tokenSize, backend->getMemorySlotSize(exchangeBuffer));
   }
 
   ~Channel()
@@ -143,7 +154,7 @@ public:
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  Backend* const _backend;
+  Backend *const _backend;
 
   /**
    * Memory slot that represents the target data buffer that producer sends data to
@@ -158,13 +169,15 @@ public:
   /**
    * This function advances the circular buffer head (e.g., when an element is pushed). It goes back around if the capacity is exceeded
    * The head cannot advance in such a way that the depth exceeds capacity.
+   *
+   * \param[in] n The number of positions to advance the head of the circular buffer
    */
   __USED__ inline void advanceHead(const size_t n = 1) noexcept
   {
     // Calculating new depth
     size_t newDepth = _depth + n;
 
-   // Sanity check
+    // Sanity check
     if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) exceeded capacity (%lu) on advance head. This is probably a bug in HiCR.\n", _depth, _capacity);
 
     // Advance head
@@ -180,11 +193,13 @@ public:
   /**
    * This function advances buffer tail (e.g., when an element is popped). It goes back around if the capacity is exceeded
    * The tail cannot advanced more than the current depth (that would mean that more elements were consumed than pushed).
+   *
+   * \param[in] n The number of positions to advance the head of the circular buffer
    */
   __USED__ inline void advanceTail(const size_t n = 1) noexcept
   {
-   // Sanity check
-   if (n > _depth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", _depth, n);
+    // Sanity check
+    if (n > _depth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", _depth, n);
 
     // Advance head
     _tail += n;

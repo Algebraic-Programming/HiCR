@@ -176,7 +176,7 @@ class Task
    */
   __USED__ inline void registerPendingOperation(pendingOperationFunction_t op)
   {
-   _pendingOperations.push(op);
+    _pendingOperations.push(op);
   }
 
   /**
@@ -188,23 +188,23 @@ class Task
    */
   __USED__ inline bool checkPendingOperations()
   {
-   while (_pendingOperations.empty() == false)
-   {
-    // Getting the pending function
-    const auto& fc = _pendingOperations.front();
+    while (_pendingOperations.empty() == false)
+    {
+      // Getting the pending function
+      const auto &fc = _pendingOperations.front();
 
-    // Running it to see whether it has finished
-    bool finished = fc();
+      // Running it to see whether it has finished
+      bool finished = fc();
 
-    // If it hasn't, return false immediately
-    if (finished == false) return false;
+      // If it hasn't, return false immediately
+      if (finished == false) return false;
 
-    // Otherwise, remove current element
-    _pendingOperations.pop();
-   }
+      // Otherwise, remove current element
+      _pendingOperations.pop();
+    }
 
-   // No pending operations remain, return true
-   return true;
+    // No pending operations remain, return true
+    return true;
   }
 
   /**

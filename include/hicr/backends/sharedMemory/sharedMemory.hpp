@@ -154,7 +154,6 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void fenceImpl()
   {
-
   }
 
   /**
@@ -176,7 +175,6 @@ class SharedMemory final : public Backend
    * Local processor and memory hierarchy topology, as detected by Hwloc
    */
   hwloc_topology_t _topology;
-
 
   /**
    * Checks whether the memory slot id exists and is valid.
@@ -295,11 +293,11 @@ class SharedMemory final : public Backend
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
-   * \param[in] The identifier for the new memory slot
+   * \param[in] memSlotId The identifier for the new memory slot
    *
-   * TO-DO: This all should be threading safe
+   * \internal This all should be threading safe
    */
-  __USED__ inline void* allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void *allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
   {
     // Recovering memory space from the map
     auto &memSpace = _memorySpaceMap.at(memorySpace);
@@ -326,12 +324,12 @@ class SharedMemory final : public Backend
    * Associates a pointer allocated somewhere else and creates a memory slot with it
    * \param[in] addr Address in local memory that will be represented by the slot
    * \param[in] size Size of the memory slot to create
-   * \param[in] The identifier for the new memory slot
+   * \param[in] memorySlotId The identifier for the new memory slot
    */
   __USED__ inline void registerMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memorySlotId) override
   {
     // For registered memory slots, we assume non-bound registration
-   _memorySlotBindingMap[memorySlotId] = binding_type::strict_non_binding;
+    _memorySlotBindingMap[memorySlotId] = binding_type::strict_non_binding;
   }
 
   /**
@@ -342,7 +340,7 @@ class SharedMemory final : public Backend
   __USED__ inline void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) override
   {
     // Removing its binding information
-   _memorySlotBindingMap.erase(memorySlotId);
+    _memorySlotBindingMap.erase(memorySlotId);
   }
 
   /**
@@ -387,7 +385,7 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
   {
-   // This function should check and update the abstract class for completed memcpy operations
+    // This function should check and update the abstract class for completed memcpy operations
   }
 
   /**

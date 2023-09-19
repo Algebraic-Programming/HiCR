@@ -1,8 +1,8 @@
 #pragma once
 #include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
-#include <hicr/channel/producerChannel.hpp>
 #include <hicr/channel/consumerChannel.hpp>
+#include <hicr/channel/producerChannel.hpp>
 #include <hicr/common/concurrentQueue.hpp>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/definitions.hpp>

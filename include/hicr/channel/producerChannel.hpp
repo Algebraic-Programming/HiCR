@@ -13,10 +13,10 @@
 
 #pragma once
 
+#include <hicr/backend.hpp>
+#include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/channel.hpp>
-#include <hicr/backend.hpp>
 #include <hicr/task.hpp>
 
 namespace HiCR
@@ -30,11 +30,26 @@ namespace HiCR
  */
 class ProducerChannel : Channel
 {
-public:
-  ProducerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) :  Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
-    // Creating a memory slot for the local pointer of the _poppedTokens value, in order to update producers about the number of pops this consumer does
-   _poppedTokensPointer ((size_t*)backend->getMemorySlotPointer(coordinationBuffer))
-  {}
+  public:
+
+  /**
+   * The constructor of the producer channel class.
+   *
+   * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
+   *
+   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
+   * \param[in] exchangeBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
+   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
+   * token.
+   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
+   * popped. It may also be used for other coordination signals.
+   * \param[in] tokenSize The size of each token.
+   */
+  ProducerChannel(Backend *backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
+                                                                                                                                                  // Creating a memory slot for the local pointer of the _poppedTokens value, in order to update producers about the number of pops this consumer does
+                                                                                                                                                  _poppedTokensPointer((size_t *)backend->getMemorySlotPointer(coordinationBuffer))
+  {
+  }
   ~ProducerChannel() = default;
 
   /**
@@ -64,11 +79,11 @@ public:
     // Copy tokens
     for (size_t i = 0; i < n; i++)
     {
-     // Copying with source increasing offset per token
-     _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      // Copying with source increasing offset per token
+      _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
-     // Advance head, as we have added a new element
-     advanceHead(1);
+      // Advance head, as we have added a new element
+      advanceHead(1);
     }
 
     // Increase the counter of pushed tokens
@@ -104,36 +119,39 @@ public:
    */
   __USED__ inline void pushWait(Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
-   // This function can only be called from a running HiCR::Task
-   if (_currentTask == NULL)  HICR_THROW_LOGIC("ProducerChannel's pushWait function can only be called from inside the context of a running HiCR::Task\n");
+    // This function can only be called from a running HiCR::Task
+    if (_currentTask == NULL) HICR_THROW_LOGIC("ProducerChannel's pushWait function can only be called from inside the context of a running HiCR::Task\n");
 
-   // Copy tokens
-   for (size_t i = 0; i < n; i++)
-   {
-    // If the exchange buffer is full, the task needs to be suspended until it's freed
-    if (getDepth() == getCapacity())
+    // Copy tokens
+    for (size_t i = 0; i < n; i++)
     {
-      // Set the function that checks whether the buffer is now free to send more messages
-     _currentTask->registerPendingOperation([this](){ return checkReceiverPops() > 0; });
+      // If the exchange buffer is full, the task needs to be suspended until it's freed
+      if (getDepth() == getCapacity())
+      {
+        // Set the function that checks whether the buffer is now free to send more messages
+        _currentTask->registerPendingOperation([this]()
+                                               { return checkReceiverPops() > 0; });
 
-     // Suspend current task
-     _currentTask->yield();
+        // Suspend current task
+        _currentTask->yield();
+      }
+
+      // Copying with source increasing offset per token
+      _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+
+      // Advance head, as we have added a new element
+      advanceHead(1);
     }
 
-    // Copying with source increasing offset per token
-    _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
-
-    // Advance head, as we have added a new element
-    advanceHead(1);
-   }
-
-   // Increase the counter of pushed tokens
-   _pushedTokens += n;
+    // Increase the counter of pushed tokens
+    _pushedTokens += n;
   }
 
   /**
    * Checks whether the receiver has freed up space in the receiver buffer
    * and reports how many tokens were popped.
+   *
+   * \return The number of newly popped tokens in the receiver side
    *
    * \internal This function needs to be re-callable without side-effects
    * since it will be called repeatedly to check whether a pending operation
@@ -144,34 +162,33 @@ public:
    * in the backend, this will deadlock. To enable synchronized communication,
    * a call to Backend::queryMemorySlotUpdates should be added here.
    *
-   * @return The number of newly popped tokens in the receiver side
    */
   __USED__ inline size_t checkReceiverPops()
   {
-   // Storing the current number of popped tokens
-   auto currentPoppedTokens = _poppedTokens;
+    // Storing the current number of popped tokens
+    auto currentPoppedTokens = _poppedTokens;
 
-   // Update number of popped tokens
-   _poppedTokens = *_poppedTokensPointer;
+    // Update number of popped tokens
+    _poppedTokens = *_poppedTokensPointer;
 
-   // The number of newly popped tokens is the difference
-   size_t newlyPoppedTokens = _poppedTokens - currentPoppedTokens;
+    // The number of newly popped tokens is the difference
+    size_t newlyPoppedTokens = _poppedTokens - currentPoppedTokens;
 
-   // for each popped token, free up space in the circular buffer
-   advanceTail(newlyPoppedTokens);
+    // for each popped token, free up space in the circular buffer
+    advanceTail(newlyPoppedTokens);
 
-   // Returning the number of newly popped tokens
-   return newlyPoppedTokens;
+    // Returning the number of newly popped tokens
+    return newlyPoppedTokens;
   }
 
-private:
+  private:
 
   /**
    * This pointer represents the position in local memory where the producer can check
    * how many popped elements have been performed by the consumer. The pointer value is
    * determined at creation time
    */
-  const size_t* _poppedTokensPointer;
+  const size_t *_poppedTokensPointer;
 };
 
 }; // namespace HiCR
