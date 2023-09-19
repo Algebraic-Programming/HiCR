@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv)
 {
- // Instantiating Shared Memory backend
+ // Instantiating backend
  HiCR::backend::sequential::Sequential backend;
 
  // Asking backend to check the available resources
@@ -20,8 +20,8 @@ int main(int argc, char **argv)
  auto coordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
 
  // Creating producer and consumer channels
- auto producer = HiCR::ProducerChannel(&backend, dataBuffer, coordinationBuffer, sizeof(ELEMENT_TYPE));
- auto consumer = HiCR::ConsumerChannel(&backend, dataBuffer, coordinationBuffer, sizeof(ELEMENT_TYPE));
+ auto producer = HiCR::ProducerChannel(&backend, dataBuffer, coordinationBuffer, sizeof(ELEMENT_TYPE), CAPACITY);
+ auto consumer = HiCR::ConsumerChannel(&backend, dataBuffer, coordinationBuffer, sizeof(ELEMENT_TYPE), CAPACITY);
 
  // Allocating a send slot to put the values we want to communicate
  ELEMENT_TYPE sendBuffer = 42;
@@ -30,9 +30,6 @@ int main(int argc, char **argv)
 
  // Pushing value to the channel
  producer.push(sendSlot);
-
- // Checking for new tokens on the receiver side
- consumer.checkReceivedTokens();
 
  // Getting the value from the channel
  ELEMENT_TYPE* recvBufferPtr = NULL;

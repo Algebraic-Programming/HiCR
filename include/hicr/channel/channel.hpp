@@ -95,6 +95,12 @@ class Channel
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
+   * \internal For this implementation of channels to work correctly, the underlying backend should guarantee that
+   * messages (one per token) should arrive in order. That is, if the producer sends tokens 'A' and 'B', the internal
+   * counter for messages received for the data buffer should only increase after 'A' was received (even if B arrived
+   * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
+   * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
+   *
    * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
    * \param[in] exchangeBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
@@ -103,14 +109,29 @@ class Channel
    * popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
    */
-  Channel(Backend *backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : _backend(backend),
-                                                                                                                                          _dataExchangeMemorySlot(exchangeBuffer),
-                                                                                                                                          _coordinationMemorySlot(coordinationBuffer),
-                                                                                                                                          _tokenSize(tokenSize),
-                                                                                                                                          _capacity(tokenSize == 0 ? 0 : backend->getMemorySlotSize(exchangeBuffer) / tokenSize)
+  Channel(Backend *backend,
+    Backend::memorySlotId_t exchangeBuffer,
+    Backend::memorySlotId_t coordinationBuffer,
+    const size_t tokenSize,
+    const size_t capacity) :
+  _backend(backend),
+  _dataExchangeMemorySlot(exchangeBuffer),
+  _coordinationMemorySlot(coordinationBuffer),
+  _tokenSize(tokenSize),
+  _capacity(capacity)
   {
     if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
-    if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size (%lu) larger than the buffer size (%lu).\n", tokenSize, backend->getMemorySlotSize(exchangeBuffer));
+    if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
+
+    // Checking that the provided data buffer has the right size
+    auto requiredDataBufferSize = _tokenSize * _capacity;
+    auto providedDataBufferSize = _backend->getMemorySlotSize(_dataExchangeMemorySlot);
+    if (providedDataBufferSize < requiredDataBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a data buffer size (%lu) smaller than the required size (Capacity (%lu) x Token Size (%lu) = %lu).\n", providedDataBufferSize, _capacity, _tokenSize, requiredDataBufferSize);
+
+    // Checking that the provided coordination buffer has the right size
+    auto requiredCoordinationBufferSize = getCoordinationBufferSize();
+    auto providedCoordinationBufferSize = _backend->getMemorySlotSize(_coordinationMemorySlot);
+    if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
   }
 
   ~Channel()
@@ -172,7 +193,7 @@ class Channel
    *
    * \param[in] n The number of positions to advance the head of the circular buffer
    */
-  __USED__ inline void advanceHead(const size_t n = 1) noexcept
+  __USED__ inline void advanceHead(const size_t n = 1)
   {
     // Calculating new depth
     size_t newDepth = _depth + n;
@@ -196,7 +217,7 @@ class Channel
    *
    * \param[in] n The number of positions to advance the head of the circular buffer
    */
-  __USED__ inline void advanceTail(const size_t n = 1) noexcept
+  __USED__ inline void advanceTail(const size_t n = 1)
   {
     // Sanity check
     if (n > _depth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", _depth, n);

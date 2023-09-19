@@ -4,7 +4,7 @@
  */
 
 /**
- * @file worker.cpp
+ * @file sharedMemory.cpp
  * @brief Unit tests for the HiCR shared memory backend class
  * @author S. M. Martin
  * @date 13/9/2023

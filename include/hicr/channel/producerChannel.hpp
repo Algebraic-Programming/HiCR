@@ -45,10 +45,17 @@ class ProducerChannel : Channel
    * popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
    */
-  ProducerChannel(Backend *backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
-                                                                                                                                                  // Creating a memory slot for the local pointer of the _poppedTokens value, in order to update producers about the number of pops this consumer does
-                                                                                                                                                  _poppedTokensPointer((size_t *)backend->getMemorySlotPointer(coordinationBuffer))
+  ProducerChannel(Backend *backend,
+    Backend::memorySlotId_t exchangeBuffer,
+    Backend::memorySlotId_t coordinationBuffer,
+    const size_t tokenSize,
+    const size_t capacity) :
+     Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize, capacity),
+     // Creating a memory slot for the local pointer of the _poppedTokens value, in order to update producers about the number of pops this consumer does
+     _poppedTokensPointer((size_t *)backend->getMemorySlotPointer(coordinationBuffer))
   {
+   // Initializing popped tokens to zero
+   *_poppedTokensPointer = 0;
   }
   ~ProducerChannel() = default;
 
@@ -73,6 +80,11 @@ class ProducerChannel : Channel
    */
   __USED__ inline bool push(Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
+    // Make sure source slot is beg enough to satisfy the operation
+    auto requiredBufferSize = getTokenSize() * n;
+    auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
+    if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
+
     // If the exchange buffer does not have n free slots, reject the operation
     if (getDepth() + n > getCapacity()) return false;
 
@@ -119,22 +131,16 @@ class ProducerChannel : Channel
    */
   __USED__ inline void pushWait(Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
-    // This function can only be called from a running HiCR::Task
-    if (_currentTask == NULL) HICR_THROW_LOGIC("ProducerChannel's pushWait function can only be called from inside the context of a running HiCR::Task\n");
+   // Make sure source slot is beg enough to satisfy the operation
+   auto requiredBufferSize = getTokenSize() * n;
+   auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
+   if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
     // Copy tokens
     for (size_t i = 0; i < n; i++)
     {
       // If the exchange buffer is full, the task needs to be suspended until it's freed
-      if (getDepth() == getCapacity())
-      {
-        // Set the function that checks whether the buffer is now free to send more messages
-        _currentTask->registerPendingOperation([this]()
-                                               { return checkReceiverPops() > 0; });
-
-        // Suspend current task
-        _currentTask->yield();
-      }
+      while (getDepth() == getCapacity()) checkReceiverPops();
 
       // Copying with source increasing offset per token
       _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
@@ -146,6 +152,8 @@ class ProducerChannel : Channel
     // Increase the counter of pushed tokens
     _pushedTokens += n;
   }
+
+  private:
 
   /**
    * Checks whether the receiver has freed up space in the receiver buffer
@@ -165,6 +173,17 @@ class ProducerChannel : Channel
    */
   __USED__ inline size_t checkReceiverPops()
   {
+    // If this function is called from a task context, we can suspend it now
+    if (_currentTask != NULL)
+    {
+     // Set the function that checks whether the buffer is now free to send more messages
+     _currentTask->registerPendingOperation([this]()
+                                            { return *_poppedTokensPointer > _poppedTokens; });
+
+     // Suspend current task
+     _currentTask->yield();
+    }
+
     // Storing the current number of popped tokens
     auto currentPoppedTokens = _poppedTokens;
 
@@ -188,7 +207,7 @@ class ProducerChannel : Channel
    * how many popped elements have been performed by the consumer. The pointer value is
    * determined at creation time
    */
-  const size_t *_poppedTokensPointer;
+  size_t *const _poppedTokensPointer;
 };
 
 }; // namespace HiCR

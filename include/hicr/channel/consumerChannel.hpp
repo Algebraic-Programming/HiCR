@@ -45,9 +45,14 @@ class ConsumerChannel : public Channel
    * popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
    */
-  ConsumerChannel(Backend *backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
-                                                                                                                                                  // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
-                                                                                                                                                  _poppedTokensSlot(backend->registerMemorySlot(&_poppedTokens, sizeof(size_t)))
+  ConsumerChannel(Backend *backend,
+    Backend::memorySlotId_t exchangeBuffer,
+    Backend::memorySlotId_t coordinationBuffer,
+    const size_t tokenSize,
+    const size_t capacity) :
+     Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize, capacity),
+     // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
+    _poppedTokensSlot(backend->registerMemorySlot(&_poppedTokens, sizeof(size_t)))
   {
   }
 
@@ -70,14 +75,19 @@ class ConsumerChannel : public Channel
    * @returns <tt>false</tt>, otherwise.
    *
    * This is a getter function that should complete in \f$ \Theta(n) \f$ time.
+   * This function has one side-effect: it detects pending incoming messages and,
+   * if there are, it updates the internal circular buffer with them.
    *
    * @see getDepth to determine whether the channel has an item to pop.
    *
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
    */
-  __USED__ inline bool peek(void **ptrBuffer, const size_t n = 1) const
+  __USED__ inline bool peek(void **ptrBuffer, const size_t n = 1)
   {
+    // We check only once for incoming messages (non-blocking operation)
+    checkReceivedTokens();
+
     // If the exchange buffer does not have n tokens pushed, reject operation
     if (getDepth() < n) return false;
 
@@ -122,18 +132,10 @@ class ConsumerChannel : public Channel
   __USED__ inline void peekWait(void **ptrBuffer, const size_t n = 1)
   {
     // This function can only be called from a running HiCR::Task
-    if (_currentTask == NULL) HICR_THROW_LOGIC("ProducerChannel's peekWait function can only be called from inside the context of a running HiCR::Task\n");
+    if (_currentTask == NULL) HICR_THROW_LOGIC("Consumer channel's peekWait function can only be called from inside the context of a running HiCR::Task\n");
 
     // While the number of tokens in the buffer is less than the desired number, wait for it
-    while (getDepth() < n)
-    {
-      // Set the function that checks whether the buffer is now free to send more messages
-      _currentTask->registerPendingOperation([this]()
-                                             { return checkReceivedTokens() > 0; });
-
-      // Suspend current task
-      _currentTask->yield();
-    }
+    while (getDepth() < n) checkReceivedTokens();
 
     // Now do the peek, as designed above
     peek(ptrBuffer, n);
@@ -169,7 +171,22 @@ class ConsumerChannel : public Channel
     // Notifying producer(s) of buffer liberation
     _backend->memcpy(_coordinationMemorySlot, 0, _poppedTokensSlot, 0, sizeof(size_t));
 
-    return false;
+    // If we reached this point, then the operation was successful
+    return true;
+  }
+
+  private:
+
+  __USED__ inline size_t getCurrentPushedTokenCount()
+  {
+   // Perform a non-blocking check of the data exchange buffer, to see if there are new messages
+   _backend->queryMemorySlotUpdates(_dataExchangeMemorySlot);
+
+   // Updating pushed tokens count
+   auto pushedTokens = _backend->getMemorySlotReceivedMessages(_dataExchangeMemorySlot);
+
+   // Returning the number of pushed tokens
+   return pushedTokens;
   }
 
   /**
@@ -180,17 +197,19 @@ class ConsumerChannel : public Channel
    */
   __USED__ inline size_t checkReceivedTokens()
   {
-    // Perform a non-blocking check of the data exchange buffer, to see if there are new messages
-    _backend->queryMemorySlotUpdates(_dataExchangeMemorySlot);
+    // If this function is called from a task context, we can suspend it now
+    if (_currentTask != NULL)
+    {
+     // Set the function that checks whether we have received new messages (more of them were pushed than our previous check)
+     _currentTask->registerPendingOperation([this]()
+                                            { return getCurrentPushedTokenCount() > _pushedTokens; });
 
-    // Temporarily storing the current received token (1 message = 1 token) count
-    auto pushedTokensTmp = _pushedTokens;
+     // Suspend current task
+     _currentTask->yield();
+    }
 
-    // Updating pushed tokens count
-    _pushedTokens = _backend->getMemorySlotReceivedMessages(_dataExchangeMemorySlot);
-
-    // The number of received tokens is the difference between the current pushed tokens and the previous one
-    auto receivedTokens = _pushedTokens - pushedTokensTmp;
+    // The number of received tokens is the difference between the currently pushed tokens and the previous one
+    auto receivedTokens = _pushedTokens - getCurrentPushedTokenCount();
 
     // We advance the head locally as many times as newly received tokens
     advanceHead(receivedTokens);
@@ -198,8 +217,6 @@ class ConsumerChannel : public Channel
     // Returning the number of received tokens
     return receivedTokens;
   }
-
-  private:
 
   /**
    * Local memory slot to update the number of popped tokens in the producer(s)

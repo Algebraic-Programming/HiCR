@@ -4,7 +4,7 @@
  */
 
 /**
- * @file worker.cpp
+ * @file sequential.cpp
  * @brief Unit tests for the sequential backend class
  * @author S. M. Martin
  * @date 11/9/2023

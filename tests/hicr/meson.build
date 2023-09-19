@@ -3,6 +3,9 @@ testDeps = [ hicrBuildDep, hicrTestDep ]
 # Registering backend tests
 subdir('backends')
 
+# Registering channel tests
+subdir('channel')
+
 # Registering common tests
 subdir('common')
 
