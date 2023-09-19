@@ -33,6 +33,7 @@ class ConsumerChannel : public Channel
 public:
 
   ConsumerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) : Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
+  // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
   _poppedTokensSlot(backend->registerMemorySlot(&_poppedTokens, sizeof(size_t)))
   {}
 
@@ -49,6 +50,7 @@ public:
    * This is a one-sided blocking call that need not be made collectively.
    *
    * @param[out] ptrBuffer Storage onto which to copy the initial pointer for each of the n tokens to peek.
+   * @param[in] n The number of tokens to peek.
    *
    * @returns <tt>true</tt> if the channel has n tokens in it.
    * @returns <tt>false</tt>, otherwise.
@@ -59,9 +61,6 @@ public:
    *
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
-   *
-   * A call to this function throws an exception if:
-   *  -# the channel at the current locality is a producer.
    */
   __USED__ inline bool peek(void** ptrBuffer, const size_t n = 1) const
   {
@@ -95,10 +94,8 @@ public:
    *
    * This is a one-sided blocking call that need not be made collectively.
    *
-   * @param[out] ptr  A pointer to the current token. Its value on input will
-   *                  be ignored.
-   * @param[out] size The size of the memory region pointed to. Its value on
-   *                  input will be ignored.
+   * @param[out] ptrBuffer Storage onto which to copy the initial pointer for each of the n tokens to peek.
+   * @param[in] n The number of tokens to peek.
    *
    * \warning This function may take an arbitrary amount of time and may, with
    *          incorrect usage, even result in deadlock. Always make sure to use
@@ -109,8 +106,23 @@ public:
    * \todo A preferred mechanism to wait for messages to have flushed may be
    *       the event-based API described below in this header file.
    */
-  __USED__ inline void peek_wait(void *&ptr, size_t &size)
+  __USED__ inline void peekWait(void** ptrBuffer, const size_t n = 1)
   {
+   // This function can only be called from a running HiCR::Task
+   if (_currentTask == NULL) HICR_THROW_LOGIC("ProducerChannel's peekWait function can only be called from inside the context of a running HiCR::Task\n");
+
+   // While the number of tokens in the buffer is less than the desired number, wait for it
+   while (getDepth() < n )
+   {
+    // Set the function that checks whether the buffer is now free to send more messages
+    _currentTask->registerPendingOperation([this](){ return checkReceivedTokens() > 0; });
+
+    // Suspend current task
+    _currentTask->yield();
+   }
+
+   // Now do the peek, as designed above
+   peek(ptrBuffer, n);
   }
 
   /**
@@ -121,9 +133,13 @@ public:
    *
    * @param[in] n How many tokens to pop. Optional; default is one.
    *
-   * @returns Whether the pop operation was successful
+   * @returns <tt>true</tt>, if there were at least n tokens in the channel.
+   * @returns <tt>false</tt>, otherwise.
    *
-   * @see getDepth to determine whether the channel has an item to pop.
+   * In case there are less than n tokens in the channel, no tokens will be popped.
+   *
+   * @see getDepth to determine whether the channel has an item to pop before calling
+   * this function.
    */
   __USED__ inline bool pop(const size_t n = 1)
   {
@@ -145,8 +161,10 @@ public:
   /**
    * This is a non-blocking non-collective function that requests the channel (and its underlying backend)
    * to check for the arrival of new messages. If this function is not called, then updates are not registered.
+   *
+   * @return The number of newly received tokens.
    */
-  __USED__ inline void checkReceivedTokens()
+  __USED__ inline size_t checkReceivedTokens()
   {
    // Perform a non-blocking check of the data exchange buffer, to see if there are new messages
    _backend->queryMemorySlotUpdates(_dataExchangeMemorySlot);
@@ -157,8 +175,14 @@ public:
    // Updating pushed tokens count
    _pushedTokens = _backend->getMemorySlotReceivedMessages(_dataExchangeMemorySlot);
 
+   // The number of received tokens is the difference between the current pushed tokens and the previous one
+   auto receivedTokens = _pushedTokens - pushedTokensTmp;
+
    // We advance the head locally as many times as newly received tokens
-   advanceHead(_pushedTokens - pushedTokensTmp);
+   advanceHead(receivedTokens);
+
+   // Returning the number of received tokens
+   return receivedTokens;
   }
 
 private:
@@ -167,8 +191,6 @@ private:
    * Local memory slot to update the number of popped tokens in the producer(s)
    */
   const Backend::memorySlotId_t _poppedTokensSlot;
-
-
 };
 
 }; // namespace HiCR

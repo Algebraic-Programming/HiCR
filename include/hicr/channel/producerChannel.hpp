@@ -31,8 +31,8 @@ namespace HiCR
 class ProducerChannel : Channel
 {
 public:
-  ProducerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) :
-   Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
+  ProducerChannel(Backend* backend, Backend::memorySlotId_t exchangeBuffer, Backend::memorySlotId_t coordinationBuffer, const size_t tokenSize) :  Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize),
+    // Creating a memory slot for the local pointer of the _poppedTokens value, in order to update producers about the number of pops this consumer does
    _poppedTokensPointer ((size_t*)backend->getMemorySlotPointer(coordinationBuffer))
   {}
   ~ProducerChannel() = default;
@@ -87,7 +87,8 @@ public:
    * This function can only be called from the context of a running HiCR::Task,
    * because it is the only element in HiCR that can be freely suspended.
    *
-   * @param[in] token  Input token to copy onto the channel
+   * @param[in] sourceSlot Memory slot from whence n tokens will be read and pushed into the channel
+   * @param[in] n The number of n tokens to push into the channel
    *
    * \warning This function may take an arbitrary amount of time and may, with
    *          incorrect usage, even result in deadlock. Always make sure to use
@@ -99,9 +100,7 @@ public:
    *       the event-based API described below in this header file.
    *
    * A call to this function throws an exception if:
-   *  -# the channel at this locality is a consumer;
-   *  -# the \a slot, \a offset, \a size combination exceeds the memory region
-   *     of \a slot.
+   *  -# the \a slot, \a offset, \a size combination exceeds the memory region of \a slot.
    */
   __USED__ inline void pushWait(Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
@@ -138,7 +137,12 @@ public:
    *
    * \internal This function needs to be re-callable without side-effects
    * since it will be called repeatedly to check whether a pending operation
-   * has finished
+   * has finished.
+   *
+   * \internal This function relies on HiCR's one-sided communication semantics.
+   * If the update of the popped tokens value required some kind of function call
+   * in the backend, this will deadlock. To enable synchronized communication,
+   * a call to Backend::queryMemorySlotUpdates should be added here.
    *
    * @return The number of newly popped tokens in the receiver side
    */
