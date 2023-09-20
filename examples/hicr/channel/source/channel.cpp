@@ -43,6 +43,9 @@ void producerFc()
  // Printing values
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
+ // Make sure the consumer got the message before exiting
+ while(producer.getDepth() > 0) producer.checkReceiverPops();
+
  // Freeing up memory
  backend.freeMemorySlot(coordinationBuffer);
  backend.deregisterMemorySlot(sendSlot);

@@ -28,7 +28,7 @@ namespace HiCR
  * It exposes the functionality to be expected for a consumer channel
  *
  */
-class ConsumerChannel : public Channel
+class ConsumerChannel final : public Channel
 {
   public:
 

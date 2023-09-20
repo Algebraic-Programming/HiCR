@@ -28,7 +28,7 @@ namespace HiCR
  * It exposes the functionality to be expected for a producer channel
  *
  */
-class ProducerChannel : Channel
+class ProducerChannel final : public Channel
 {
   public:
 
@@ -148,8 +148,6 @@ class ProducerChannel : Channel
     // Increase the counter of pushed tokens
     _pushedTokens += n;
   }
-
-  private:
 
   /**
    * Checks whether the receiver has freed up space in the receiver buffer
