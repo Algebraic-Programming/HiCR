@@ -354,7 +354,7 @@ class SharedMemory final : public Backend
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  __USED__ inline memorySlotArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag,  const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline memorySlotIdArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag,  const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
    // TO-DO
    HICR_THROW_RUNTIME("Not implemented yet");

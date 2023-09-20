@@ -9,84 +9,87 @@
 #define CAPACITY 256
 #define ELEMENT_TYPE unsigned int
 
-void producerFc(HiCR::Backend* backend)
+void producerFc()
 {
+ // Instantiating backend
+ HiCR::backend::sequential::Sequential backend;
+
  // Asking backend to check the available resources
-  backend->queryMemorySpaces();
+ backend.queryMemorySpaces();
 
-  // Obtaining memory spaces
-  auto memSpaces = backend->getMemorySpaceList();
+ // Obtaining memory spaces
+ auto memSpaces = backend.getMemorySpaceList();
 
-  // Getting required buffer sizes
-  auto coordinationBufferSize = HiCR::Channel::getCoordinationBufferSize();
+ // Getting required buffer sizes
+ auto coordinationBufferSize = HiCR::Channel::getCoordinationBufferSize();
 
-  // Allocating memory slot for the coordination buffer
-  auto coordinationBuffer = backend->allocateMemorySlot(*memSpaces.begin(), coordinationBufferSize);
+ // Allocating memory slot for the coordination buffer
+ auto coordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), coordinationBufferSize);
 
-  // Registering buffers globally for them to be used by remote actors
-  auto globalBuffers = backend->exchangeGlobalMemorySlots(CHANNEL_TAG, EXPECTED_GLOBAL_BUFFER_COUNT, PRODUCER_KEY, {coordinationBuffer});
+ // Registering buffers globally for them to be used by remote actors
+ auto globalBuffers = backend.exchangeGlobalMemorySlots(CHANNEL_TAG, EXPECTED_GLOBAL_BUFFER_COUNT, PRODUCER_KEY, {coordinationBuffer});
 
-  // Creating producer and consumer channels
-  auto producer = HiCR::ProducerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
+ // Creating producer and consumer channels
+ auto producer = HiCR::ProducerChannel(&backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
 
-  // Allocating a send slot to put the values we want to communicate
-  ELEMENT_TYPE sendBuffer = 42;
-  auto sendBufferPtr = &sendBuffer;
-  auto sendSlot = backend->registerMemorySlot(sendBufferPtr, sizeof(ELEMENT_TYPE));
+ // Allocating a send slot to put the values we want to communicate
+ ELEMENT_TYPE sendBuffer = 42;
+ auto sendBufferPtr = &sendBuffer;
+ auto sendSlot = backend.registerMemorySlot(sendBufferPtr, sizeof(ELEMENT_TYPE));
 
-  // Pushing value to the channel
-  producer.push(sendSlot);
+ // Pushing value to the channel
+ producer.push(sendSlot);
 
-  // Printing values
-  printf("Sent Value:     %u\n", *sendBufferPtr);
+ // Printing values
+ printf("Sent Value:     %u\n", *sendBufferPtr);
 
-  // Freeing up memory
-  backend->freeMemorySlot(coordinationBuffer);
-  backend->deregisterMemorySlot(sendSlot);
+ // Freeing up memory
+ backend.freeMemorySlot(coordinationBuffer);
+ backend.deregisterMemorySlot(sendSlot);
 }
 
-void consumerFc(HiCR::Backend* backend)
+void consumerFc()
 {
+ // Instantiating backend
+ HiCR::backend::sequential::Sequential backend;
+
  // Asking backend to check the available resources
-  backend->queryMemorySpaces();
+ backend.queryMemorySpaces();
 
-  // Obtaining memory spaces
-  auto memSpaces = backend->getMemorySpaceList();
+ // Obtaining memory spaces
+ auto memSpaces = backend.getMemorySpaceList();
 
-  // Getting required buffer sizes
-  auto tokenBufferSize = HiCR::Channel::getTokenBufferSize(sizeof(ELEMENT_TYPE), CAPACITY);
+ // Getting required buffer sizes
+ auto tokenBufferSize = HiCR::Channel::getTokenBufferSize(sizeof(ELEMENT_TYPE), CAPACITY);
 
-  // Allocating memory slot for the token buffer
-  auto tokenBuffer = backend->allocateMemorySlot(*memSpaces.begin(), tokenBufferSize);
+ // Allocating memory slot for the token buffer
+ auto tokenBuffer = backend.allocateMemorySlot(*memSpaces.begin(), tokenBufferSize);
 
-  // Registering buffers globally for them to be used by remote actors
-  auto globalBuffers = backend->exchangeGlobalMemorySlots(CHANNEL_TAG, EXPECTED_GLOBAL_BUFFER_COUNT, CONSUMER_KEY, {tokenBuffer});
+ // Registering buffers globally for them to be used by remote actors
+ auto globalBuffers = backend.exchangeGlobalMemorySlots(CHANNEL_TAG, EXPECTED_GLOBAL_BUFFER_COUNT, CONSUMER_KEY, {tokenBuffer});
 
-  // Creating producer and consumer channels
-  auto consumer = HiCR::ConsumerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
+ // Creating producer and consumer channels
+ auto consumer = HiCR::ConsumerChannel(&backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
 
-  // Getting the value from the channel
-  ELEMENT_TYPE* recvBufferPtr = NULL;
-  consumer.peekWait((void**)&recvBufferPtr);
+ // Getting the value from the channel
+ ELEMENT_TYPE* recvBufferPtr = NULL;
+ consumer.peekWait((void**)&recvBufferPtr);
 
-  // Popping received value to free up channel
-  consumer.pop();
+ // Popping received value to free up channel
+ consumer.pop();
 
-  // Printing values
-  printf("Received Value: %u\n", *recvBufferPtr);
+ // Printing values
+ printf("Received Value: %u\n", *recvBufferPtr);
 
-  // Freeing up memory
-  backend->freeMemorySlot(tokenBuffer);
+ // Freeing up memory
+ backend.freeMemorySlot(tokenBuffer);
 }
 
 
 int main(int argc, char **argv)
 {
- // Instantiating backend
- HiCR::backend::sequential::Sequential backend;
-
- auto consumerThread = std::thread(consumerFc, &backend);
- auto producerThread = std::thread(producerFc, &backend);
+ auto consumerThread = std::thread(consumerFc);
+ auto producerThread = std::thread(producerFc);
 
  consumerThread.join();
  producerThread.join();

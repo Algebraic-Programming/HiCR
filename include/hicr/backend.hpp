@@ -120,9 +120,9 @@ class Backend
   typedef parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> memorySlotList_t;
 
   /**
-   * Common definition of a map that links key ids with memory slot arrays (for global exchange)
+   * Common definition of a map that links key ids with memory slot id arrays (for global exchange)
    */
-  typedef parallelHashMap_t<globalKey_t, std::vector<memorySlotId_t>> memorySlotArrayMap_t;
+  typedef parallelHashMap_t<globalKey_t, std::vector<memorySlotId_t>> memorySlotIdArrayMap_t;
 
   /**
    * Structure to report the number of inbound/outbound messages exchanged
@@ -398,7 +398,7 @@ class Backend
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  __USED__ inline memorySlotArrayMap_t exchangeGlobalMemorySlots(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline memorySlotIdArrayMap_t exchangeGlobalMemorySlots(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
    // Checking whether all slots have been allocated/registered with this backend
    for (auto memorySlotId : localMemorySlotIds)
@@ -653,7 +653,7 @@ class Backend
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  virtual memorySlotArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds) = 0;
+  virtual memorySlotIdArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function

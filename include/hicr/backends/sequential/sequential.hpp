@@ -30,6 +30,16 @@ namespace sequential
 {
 
 /**
+ * Common definition of a map that links key ids with memory slot arrays (for global exchange)
+ */
+typedef parallelHashMap_t<Backend::globalKey_t, std::vector<Backend::memorySlotStruct_t*>> memorySlotArrayMap_t;
+
+/**
+ * Collection of globally registered memory slots
+ */
+parallelHashMap_t<Backend::tag_t, memorySlotArrayMap_t> _globalMemorySlotArrayTagMap;
+
+/**
  * Implementation of the HiCR Sequential backend
  *
  * This backend is very useful for testing other HiCR modules in isolation (unit tests) without involving the use of threading, which might incur side-effects
@@ -38,15 +48,16 @@ class Sequential final : public Backend
 {
   private:
 
+   /**
+    * This set remembers which of the registered memory slots are actually global
+    */
+   parallelHashMap_t<memorySlotId_t, memorySlotStruct_t*> _globalRegisteredMemorySlots;
+
+
   /**
    * This stores the total system memory to check that allocations do not exceed it
    */
   size_t _totalSystemMem = 0;
-
-  /**
-   * Collection of globally registered memory slots
-   */
-  parallelHashMap_t<tag_t, memorySlotArrayMap_t> _globalMemorySlotArrayTagMap;
 
   /**
    * This function returns the available allocatable size in the current system RAM
@@ -100,12 +111,12 @@ class Sequential final : public Backend
   __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size) override
   {
     // Getting pointer for the corresponding slots
-    const auto srcSlot = _memorySlotMap.at(source);
-    const auto dstSlot = _memorySlotMap.at(destination);
+    const auto srcSlot = _globalRegisteredMemorySlots.contains(source)      == false ? &_memorySlotMap.at(source)      : _globalRegisteredMemorySlots.at(source);
+    const auto dstSlot = _globalRegisteredMemorySlots.contains(destination) == false ? &_memorySlotMap.at(destination) : _globalRegisteredMemorySlots.at(destination);
 
     // Getting slot pointers
-    const auto srcPtr = srcSlot.pointer;
-    const auto dstPtr = dstSlot.pointer;
+    const auto srcPtr = srcSlot->pointer;
+    const auto dstPtr = dstSlot->pointer;
 
     // Calculating actual offsets
     const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
@@ -115,8 +126,8 @@ class Sequential final : public Backend
     std::memcpy(actualDstPtr, actualSrcPtr, size);
 
     // Increasing message received/sent counters for memory slots
-    _memorySlotMap[source].messagesSent++;
-    _memorySlotMap[destination].messagesRecv++;
+    srcSlot->messagesSent++;
+    dstSlot->messagesRecv++;
   }
 
   /**
@@ -128,7 +139,16 @@ class Sequential final : public Backend
    */
   __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
   {
-    // This function should check and update the abstract class for completed memcpy operations
+    // If the given memory slot is a global one, the message exchanged counters need to be updated with the local copy information
+   if (_globalRegisteredMemorySlots.contains(memorySlotId) == true)
+   {
+    const auto globalSlot = _globalRegisteredMemorySlots.at(memorySlotId);
+    const auto localSlot  = &_memorySlotMap.at(memorySlotId);
+
+    // Updating message counts
+    localSlot->messagesRecv = globalSlot->messagesRecv;
+    localSlot->messagesSent = globalSlot->messagesSent;
+   }
   }
 
   /**
@@ -191,17 +211,34 @@ class Sequential final : public Backend
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  __USED__ inline memorySlotArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline memorySlotIdArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
    // Adding local memory slots to the global map
    for (const auto memorySlotId : localMemorySlotIds)
-    _globalMemorySlotArrayTagMap[tag][globalKey].push_back(memorySlotId);
+    _globalMemorySlotArrayTagMap[tag][globalKey].push_back(&_memorySlotMap.at(memorySlotId));
 
    // Suspending until the numer of global memory slots is equal or higher than expected
    while (getGlobalMemorySlotCount(tag) < expectedGlobalSlotCount);
 
+   // Creating new memory slot id map array
+   memorySlotIdArrayMap_t newGlobalMemorySlotArrayMap;
+
+   // Registering new memory slots
+   for (const auto& key : _globalMemorySlotArrayTagMap[tag])
+    for (const auto& slot : key.second)
+    {
+     // Registering new slot id from the global exchange
+     auto newGlobalSlotId = registerMemorySlot(slot->pointer, slot->size);
+
+     // Storing new slot Id
+     newGlobalMemorySlotArrayMap[key.first].push_back(newGlobalSlotId);
+
+     // Remembering this is a globally registered memory slot
+     _globalRegisteredMemorySlots[newGlobalSlotId] = slot;
+    }
+
    // Returning global slot map
-   return _globalMemorySlotArrayTagMap[tag];
+   return newGlobalMemorySlotArrayMap;
   }
 
   /**
@@ -229,10 +266,10 @@ class Sequential final : public Backend
   __USED__ bool isMemorySlotValidImpl(const memorySlotId_t memorySlotId) const override
   {
     // Getting pointer for the corresponding slot
-    const auto &slot = _memorySlotMap.at(memorySlotId);
+    const auto slot = _globalRegisteredMemorySlots.contains(memorySlotId) == false ? &_memorySlotMap.at(memorySlotId) : _globalRegisteredMemorySlots.at(memorySlotId);
 
     // If it is NULL, it means it was never created
-    if (slot.pointer == NULL) return false;
+    if (slot->pointer == NULL) return false;
 
     // Otherwise it is ok
     return true;
