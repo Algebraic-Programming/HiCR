@@ -2,8 +2,10 @@
 #include <hicr.hpp>
 #include <thread>
 
+#define CHANNEL_TAG 0
 #define PRODUCER_KEY 0
 #define CONSUMER_KEY 1
+#define EXPECTED_GLOBAL_BUFFER_COUNT 2
 #define CAPACITY 256
 #define ELEMENT_TYPE unsigned int
 
@@ -22,10 +24,10 @@ void producerFc(HiCR::Backend* backend)
   auto coordinationBuffer = backend->allocateMemorySlot(*memSpaces.begin(), coordinationBufferSize);
 
   // Registering buffers globally for them to be used by remote actors
-  auto globalBuffers = backend->exchangeGlobalMemorySlots(2, PRODUCER_KEY, {coordinationBuffer});
+  auto globalBuffers = backend->exchangeGlobalMemorySlots(CHANNEL_TAG, EXPECTED_GLOBAL_BUFFER_COUNT, PRODUCER_KEY, {coordinationBuffer});
 
   // Creating producer and consumer channels
-  auto producer = HiCR::ProducerChannel(backend, globalBuffers[CONSUMER_KEY][0], coordinationBuffer, sizeof(ELEMENT_TYPE), CAPACITY);
+  auto producer = HiCR::ProducerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
 
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer = 42;
@@ -58,17 +60,14 @@ void consumerFc(HiCR::Backend* backend)
   auto tokenBuffer = backend->allocateMemorySlot(*memSpaces.begin(), tokenBufferSize);
 
   // Registering buffers globally for them to be used by remote actors
-  auto globalBuffers = backend->exchangeGlobalMemorySlots(2, CONSUMER_KEY, {tokenBuffer});
+  auto globalBuffers = backend->exchangeGlobalMemorySlots(CHANNEL_TAG, EXPECTED_GLOBAL_BUFFER_COUNT, CONSUMER_KEY, {tokenBuffer});
 
   // Creating producer and consumer channels
-  auto consumer = HiCR::ConsumerChannel(backend, tokenBuffer, globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
+  auto consumer = HiCR::ConsumerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
 
   // Getting the value from the channel
   ELEMENT_TYPE* recvBufferPtr = NULL;
-  bool peekResult = consumer.peek((void**)&recvBufferPtr);
-
-  // If peek did not succeed, fail and exit
-  if (peekResult == false) { fprintf(stderr, "Did not receive a message!\n"); exit(-1); }
+  consumer.peekWait((void**)&recvBufferPtr);
 
   // Popping received value to free up channel
   consumer.pop();
@@ -86,11 +85,11 @@ int main(int argc, char **argv)
  // Instantiating backend
  HiCR::backend::sequential::Sequential backend;
 
- auto producerThread = std::thread(producerFc, &backend);
  auto consumerThread = std::thread(consumerFc, &backend);
+ auto producerThread = std::thread(producerFc, &backend);
 
- producerThread.join();
  consumerThread.join();
+ producerThread.join();
 
  return 0;
 }

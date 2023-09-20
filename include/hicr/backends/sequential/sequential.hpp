@@ -16,6 +16,7 @@
 #include <future>
 #include <stdio.h>
 
+#include <hicr/common/definitions.hpp>
 #include <hicr/backend.hpp>
 #include <hicr/backends/sequential/process.hpp>
 
@@ -45,7 +46,7 @@ class Sequential final : public Backend
   /**
    * Collection of globally registered memory slots
    */
-  memorySlotArrayMap_t _globalMemorySlotArrayMap;
+  parallelHashMap_t<tag_t, memorySlotArrayMap_t> _globalMemorySlotArrayTagMap;
 
   /**
    * This function returns the available allocatable size in the current system RAM
@@ -184,22 +185,23 @@ class Sequential final : public Backend
    *
    * This is a collective function that will block until the user-specified expected slot count is found.
    *
-   * \param[in] expectedGlobalSlotCount Indicates the number of global slots to be returned by this function.
+   * \param[in] tag Identifies a particular subset of global memory slots, and returns it
+   * \param[in] expectedMemorySlotCount Indicates the number of expected global memory slots associated by the tag
    * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
-   * \returns A map of global memory slot arrays, mapped by key
+   * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  __USED__ inline memorySlotArrayMap_t exchangeGlobalMemorySlotsImpl(const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline memorySlotArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
    // Adding local memory slots to the global map
    for (const auto memorySlotId : localMemorySlotIds)
-   _globalMemorySlotArrayMap[globalKey].push_back(memorySlotId);
+    _globalMemorySlotArrayTagMap[tag][globalKey].push_back(memorySlotId);
 
    // Suspending until the numer of global memory slots is equal or higher than expected
-   while (getGlobalMemorySlotCount() < expectedGlobalSlotCount);
+   while (getGlobalMemorySlotCount(tag) < expectedGlobalSlotCount);
 
    // Returning global slot map
-   return _globalMemorySlotArrayMap;
+   return _globalMemorySlotArrayTagMap[tag];
   }
 
   /**
@@ -243,11 +245,11 @@ class Sequential final : public Backend
    *
    * \returns The number of global memory slots registered
    */
-  __USED__ size_t getGlobalMemorySlotCount()
+  __USED__ size_t getGlobalMemorySlotCount(const tag_t tag)
   {
    size_t globalMemorySlotCount = 0;
 
-   for (const auto& key : _globalMemorySlotArrayMap) globalMemorySlotCount += key.second.size();
+   for (const auto& key : _globalMemorySlotArrayTagMap[tag]) globalMemorySlotCount += key.second.size();
 
    return globalMemorySlotCount;
   }

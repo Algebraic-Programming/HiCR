@@ -131,9 +131,6 @@ class ConsumerChannel : public Channel
    */
   __USED__ inline void peekWait(void **ptrBuffer, const size_t n = 1)
   {
-    // This function can only be called from a running HiCR::Task
-    if (_currentTask == NULL) HICR_THROW_LOGIC("Consumer channel's peekWait function can only be called from inside the context of a running HiCR::Task\n");
-
     // While the number of tokens in the buffer is less than the desired number, wait for it
     while (getDepth() < n) checkReceivedTokens();
 
