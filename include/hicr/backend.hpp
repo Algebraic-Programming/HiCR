@@ -95,19 +95,29 @@ class Backend
   typedef uint64_t memorySlotId_t;
 
   /**
+   * Type definition for a global key (for exchange)
+   */
+  typedef uint64_t globalKey_t;
+
+  /**
    * Common definition of a collection of compute resources
    */
-  typedef std::set<computeResourceId_t> computeResourceList_t;
+  typedef parallelHashSet_t<computeResourceId_t> computeResourceList_t;
 
   /**
    * Common definition of a collection of memory spaces
    */
-  typedef std::set<memorySpaceId_t> memorySpaceList_t;
+  typedef parallelHashSet_t<memorySpaceId_t> memorySpaceList_t;
 
   /**
-   * Common definition of a collection of memory spaces
+   * Common definition of a collection of memory slots
    */
-  typedef std::map<memorySlotId_t, memorySlotStruct_t> memorySlotList_t;
+  typedef parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> memorySlotList_t;
+
+  /**
+   * Common definition of a map that links key ids with memory slot arrays (for global exchange)
+   */
+  typedef parallelHashMap_t<globalKey_t, std::vector<memorySlotId_t>> memorySlotArrayMap_t;
 
   /**
    * Structure to report the number of inbound/outbound messages exchanged
@@ -357,11 +367,11 @@ class Backend
    */
   __USED__ inline void deregisterMemorySlot(memorySlotId_t memorySlotId)
   {
-    // Checking whether the slot has been allocated with this backend
+    // Checking whether the slot has been associated with this backend
     if (_memorySlotMap.contains(memorySlotId) == false)
       HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
 
-    // Checking whether the slot has been allocated with this backend
+    // Checking whether the slot has been registered
     if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::registered)
       HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that was not manually registered to this backend", memorySlotId);
 
@@ -370,6 +380,27 @@ class Backend
 
     // Removing memory slot from the set
     _memorySlotMap.erase(memorySlotId);
+  }
+
+  /**
+   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
+   *
+   * This is a collective function that will block until the user-specified expected slot count is found.
+   *
+   * \param[in] expectedGlobalSlotCount Indicates the number of global slots to be returned by this function.
+   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
+   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
+   * \returns A map of global memory slot arrays, mapped by key
+   */
+  __USED__ inline memorySlotArrayMap_t exchangeGlobalMemorySlots(const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  {
+   // Checking whether all slots have been allocated/registered with this backend
+   for (auto memorySlotId : localMemorySlotIds)
+    if (_memorySlotMap.contains(memorySlotId) == false)
+      HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
+
+   // Calling internal implementation
+   return exchangeGlobalMemorySlotsImpl(expectedGlobalSlotCount, globalKey, localMemorySlotIds);
   }
 
   /**
@@ -606,6 +637,16 @@ class Backend
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
   virtual void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
+
+  /**
+   * Backend-internal implementation of the exchangeGlobalMemorySlots function
+   *
+   * \param[in] expectedGlobalSlotCount Indicates the number of global slots to be returned by this function.
+   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
+   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
+   * \returns A map of global memory slot arrays, mapped by key
+   */
+  virtual memorySlotArrayMap_t exchangeGlobalMemorySlotsImpl(const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function

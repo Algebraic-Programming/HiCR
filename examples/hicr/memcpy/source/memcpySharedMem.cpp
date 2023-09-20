@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 
  // Allocating memory slots in different NUMA domains
  auto slot1 = backend.allocateMemorySlot(*memSpaces.begin(),  BUFFER_SIZE); // First NUMA Domain
- auto slot2 = backend.allocateMemorySlot(*memSpaces.rbegin(), BUFFER_SIZE);   // Last NUMA Domain
+ auto slot2 = backend.allocateMemorySlot(*memSpaces.end() - 1, BUFFER_SIZE);   // Last NUMA Domain
 
  // Initializing values in memory slot 1
  sprintf((char*)backend.getMemorySlotPointer(slot1), "Hello, HiCR user!\n");

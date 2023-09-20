@@ -43,6 +43,11 @@ class Sequential final : public Backend
   size_t _totalSystemMem = 0;
 
   /**
+   * Collection of globally registered memory slots
+   */
+  memorySlotArrayMap_t _globalMemorySlotArrayMap;
+
+  /**
    * This function returns the available allocatable size in the current system RAM
    *
    * @param[in] memorySpace Always zero, represents the system's RAM
@@ -175,6 +180,29 @@ class Sequential final : public Backend
   }
 
   /**
+   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
+   *
+   * This is a collective function that will block until the user-specified expected slot count is found.
+   *
+   * \param[in] expectedGlobalSlotCount Indicates the number of global slots to be returned by this function.
+   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
+   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
+   * \returns A map of global memory slot arrays, mapped by key
+   */
+  __USED__ inline memorySlotArrayMap_t exchangeGlobalMemorySlotsImpl(const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  {
+   // Adding local memory slots to the global map
+   for (const auto memorySlotId : localMemorySlotIds)
+   _globalMemorySlotArrayMap[globalKey].push_back(memorySlotId);
+
+   // Suspending until the numer of global memory slots is equal or higher than expected
+   while (getGlobalMemorySlotCount() < expectedGlobalSlotCount);
+
+   // Returning global slot map
+   return _globalMemorySlotArrayMap;
+  }
+
+  /**
    * Frees up a memory slot reserved from this memory space
    *
    * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
@@ -206,6 +234,22 @@ class Sequential final : public Backend
 
     // Otherwise it is ok
     return true;
+  }
+
+  private:
+
+  /**
+   * This function counts how many global memory slots are registered
+   *
+   * \returns The number of global memory slots registered
+   */
+  __USED__ size_t getGlobalMemorySlotCount()
+  {
+   size_t globalMemorySlotCount = 0;
+
+   for (const auto& key : _globalMemorySlotArrayMap) globalMemorySlotCount += key.second.size();
+
+   return globalMemorySlotCount;
   }
 };
 
