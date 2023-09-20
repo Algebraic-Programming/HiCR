@@ -83,7 +83,7 @@ class ConsumerChannel final : public Channel
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
    */
-  __USED__ inline bool peek(void **ptrBuffer, const size_t n = 1)
+  __USED__ inline bool peek(const Backend::memorySlotId_t dstSlot, const size_t n = 1)
   {
     // We check only once for incoming messages (non-blocking operation)
     checkReceivedTokens();
@@ -104,7 +104,7 @@ class ConsumerChannel final : public Channel
       auto *tokenPtr = basePtr + bufferPos * getTokenSize();
 
       // Assigning pointer to the output buffer
-      ptrBuffer[i] = tokenPtr;
+      ((void**)_backend->getMemorySlotPointer(dstSlot))[i] = tokenPtr;
     }
 
     // Succeeded in pushing the token(s)
@@ -129,13 +129,13 @@ class ConsumerChannel final : public Channel
    * \todo A preferred mechanism to wait for messages to have flushed may be
    *       the event-based API described below in this header file.
    */
-  __USED__ inline void peekWait(void **ptrBuffer, const size_t n = 1)
+  __USED__ inline void peekWait(const Backend::memorySlotId_t dstSlot, const size_t n = 1)
   {
     // While the number of tokens in the buffer is less than the desired number, wait for it
     while (getDepth() < n) checkReceivedTokens();
 
     // Now do the peek, as designed above
-    peek(ptrBuffer, n);
+    peek(dstSlot, n);
   }
 
   /**

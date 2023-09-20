@@ -78,7 +78,8 @@ void consumerFc()
 
  // Getting the value from the channel
  ELEMENT_TYPE* recvBufferPtr = NULL;
- consumer.peekWait((void**)&recvBufferPtr);
+ auto recvSlot = backend.registerMemorySlot(&recvBufferPtr, sizeof(ELEMENT_TYPE*));
+ consumer.peekWait(recvSlot);
 
  // Popping received value to free up channel
  consumer.pop();
@@ -88,6 +89,7 @@ void consumerFc()
 
  // Freeing up memory
  backend.freeMemorySlot(tokenBuffer);
+ backend.deregisterMemorySlot(recvSlot);
  backend.deregisterMemorySlot(globalBuffers[CONSUMER_KEY][0]);
  backend.deregisterMemorySlot(globalBuffers[PRODUCER_KEY][0]);
 }
