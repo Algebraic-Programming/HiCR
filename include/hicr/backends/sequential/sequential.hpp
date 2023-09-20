@@ -40,6 +40,12 @@ typedef parallelHashMap_t<Backend::globalKey_t, std::vector<Backend::memorySlotS
 parallelHashMap_t<Backend::tag_t, memorySlotArrayMap_t> _globalMemorySlotArrayTagMap;
 
 /**
+ * Barrier to clean up memory slot array tag map after using it
+ */
+std::map<Backend::tag_t, size_t> _globalMemorySlotArrayTagBarrier;
+std::mutex _globalMemorySlotArrayTagBarrierMutex;
+
+/**
  * Implementation of the HiCR Sequential backend
  *
  * This backend is very useful for testing other HiCR modules in isolation (unit tests) without involving the use of threading, which might incur side-effects
@@ -236,6 +242,22 @@ class Sequential final : public Backend
      // Remembering this is a globally registered memory slot
      _globalRegisteredMemorySlots[newGlobalSlotId] = slot;
     }
+
+   // Now that we're done copying, activating barrier to clean up the array map
+   _globalMemorySlotArrayTagBarrierMutex.lock();
+   _globalMemorySlotArrayTagBarrier[tag] += localMemorySlotIds.size();
+   _globalMemorySlotArrayTagBarrierMutex.unlock();
+
+   while(_globalMemorySlotArrayTagBarrier[tag] < expectedGlobalSlotCount);
+
+   // Clearing barrier for the next use
+   _globalMemorySlotArrayTagBarrierMutex.lock();
+   if (_globalMemorySlotArrayTagBarrier[tag] == expectedGlobalSlotCount) _globalMemorySlotArrayTagMap.erase(tag);
+   _globalMemorySlotArrayTagBarrier[tag] -= localMemorySlotIds.size();
+   _globalMemorySlotArrayTagBarrierMutex.unlock();
+
+   // Making sure everyone reaches this point before continuing
+   while(_globalMemorySlotArrayTagBarrier[tag] != 0);
 
    // Returning global slot map
    return newGlobalMemorySlotArrayMap;

@@ -49,6 +49,8 @@ void producerFc()
  // Freeing up memory
  backend.freeMemorySlot(coordinationBuffer);
  backend.deregisterMemorySlot(sendSlot);
+ backend.deregisterMemorySlot(globalBuffers[CONSUMER_KEY][0]);
+ backend.deregisterMemorySlot(globalBuffers[PRODUCER_KEY][0]);
 }
 
 void consumerFc()
@@ -86,6 +88,8 @@ void consumerFc()
 
  // Freeing up memory
  backend.freeMemorySlot(tokenBuffer);
+ backend.deregisterMemorySlot(globalBuffers[CONSUMER_KEY][0]);
+ backend.deregisterMemorySlot(globalBuffers[PRODUCER_KEY][0]);
 }
 
 
