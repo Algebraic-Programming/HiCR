@@ -30,13 +30,17 @@ TEST(ProducerChannel, Construction)
  const auto tokenSize = sizeof(size_t);
  const auto channelCapacity = 16;
 
+ // Getting required buffer sizes
+ auto tokenBufferSize = HiCR::Channel::getTokenBufferSize(tokenSize, channelCapacity);
+ auto coordinationBufferSize = HiCR::Channel::getCoordinationBufferSize();
+
  // Allocating bad memory slots
- auto badDataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), (channelCapacity * tokenSize) - 1);
- auto badCoordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize() - 1);
+ auto badDataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
+ auto badCoordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), coordinationBufferSize - 1);
 
  // Allocating correct memory slots
- auto correctDataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), channelCapacity * tokenSize);
- auto correctCoordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
+ auto correctDataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), tokenBufferSize);
+ auto correctCoordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), coordinationBufferSize);
 
  // Creating with incorrect parameters
  EXPECT_THROW(new HiCR::ProducerChannel(&backend, correctDataBuffer, correctCoordinationBuffer, 0, channelCapacity), HiCR::common::LogicException);
@@ -112,7 +116,6 @@ TEST(ProducerChannel, Push)
  EXPECT_FALSE(result);
 }
 
-
 TEST(ProducerChannel, PushWait)
 {
  // Instantiating backend
@@ -146,32 +149,26 @@ TEST(ProducerChannel, PushWait)
   // Trying to fill send buffer (shouldn't wait)
   EXPECT_NO_THROW(producer.pushWait(sendBuffer, channelCapacity));
 
-  // Trying to push one token (shouldn't wait)
-//  EXPECT_NO_THROW(producer.pushWait(sendBuffer, 1));
+  // To actually test for waiting, one needs to use threads
+  std::thread* producerThread;
 
-//  // Trying to push capacity, but after having pushed one, should fail
-//  result = false;
-//  EXPECT_NO_THROW(result = producer->push(sendBuffer, channelCapacity));
-//  EXPECT_FALSE(result);
-//
-//  // Trying to push to capacity, should't fail
-//  result = false;
-//  EXPECT_NO_THROW(result = producer->push(sendBuffer, channelCapacity - 1));
-//  EXPECT_TRUE(result);
-//
-//  // Channel is full but trying to push zero should't fail
-//  result = false;
-//  EXPECT_NO_THROW(result = producer->push(sendBuffer, 0));
-//  EXPECT_TRUE(result);
-//
-//  // Channel is full and trying to push one more should fail
-//  result = false;
-//  EXPECT_NO_THROW(result = producer->push(sendBuffer, 1));
-//  EXPECT_FALSE(result);
+  // Producer function
+  auto producerFc = [&producer, &sendBuffer](){ producer.pushWait(sendBuffer, 1); };
 
- // Creating consumer channel
-// HiCR::ConsumerChannel* consumer = NULL;
-// consumer = new HiCR::ConsumerChannel(&backend, dataBuffer, coordinationBuffer, sizeof(size_t));
+  // Running producer thread that tries to pushWait one token and enters suspension
+  producerThread = new std::thread(producerFc);
+
+  // Creating consumer channel
+  HiCR::ConsumerChannel consumer(&backend, dataBuffer, coordinationBuffer, tokenSize, channelCapacity);
+
+  // Popping one element to liberate thread
+  while (consumer.pop() == false);
+
+  // Wait for producer
+  producerThread->join();
+
+  // Freeing up memory
+  delete producerThread;
 
 }
 

@@ -38,7 +38,7 @@ class ConsumerChannel : public Channel
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
    * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
-   * \param[in] exchangeBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
+   * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
    * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
@@ -46,11 +46,11 @@ class ConsumerChannel : public Channel
    * \param[in] tokenSize The size of each token.
    */
   ConsumerChannel(Backend *backend,
-    Backend::memorySlotId_t exchangeBuffer,
-    Backend::memorySlotId_t coordinationBuffer,
+    const Backend::memorySlotId_t tokenBuffer,
+    const Backend::memorySlotId_t coordinationBuffer,
     const size_t tokenSize,
     const size_t capacity) :
-     Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize, capacity),
+     Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity),
      // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
     _poppedTokensSlot(backend->registerMemorySlot(&_poppedTokens, sizeof(size_t)))
   {
@@ -92,7 +92,7 @@ class ConsumerChannel : public Channel
     if (getDepth() < n) return false;
 
     // Getting base pointer for the exchange buffer
-    const auto basePtr = (uint8_t *)_backend->getMemorySlotPointer(_dataExchangeMemorySlot);
+    const auto basePtr = (uint8_t *)_backend->getMemorySlotPointer(_tokenBuffer);
 
     // Assigning the pointer to each token requested
     for (size_t i = 0; i < n; i++)
@@ -169,7 +169,7 @@ class ConsumerChannel : public Channel
     _poppedTokens += n;
 
     // Notifying producer(s) of buffer liberation
-    _backend->memcpy(_coordinationMemorySlot, 0, _poppedTokensSlot, 0, sizeof(size_t));
+    _backend->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
 
     // If we reached this point, then the operation was successful
     return true;
@@ -179,11 +179,11 @@ class ConsumerChannel : public Channel
 
   __USED__ inline size_t getCurrentPushedTokenCount()
   {
-   // Perform a non-blocking check of the data exchange buffer, to see if there are new messages
-   _backend->queryMemorySlotUpdates(_dataExchangeMemorySlot);
+   // Perform a non-blocking check of the token buffer, to see if there are new messages
+   _backend->queryMemorySlotUpdates(_tokenBuffer);
 
    // Updating pushed tokens count
-   auto pushedTokens = _backend->getMemorySlotReceivedMessages(_dataExchangeMemorySlot);
+   auto pushedTokens = _backend->getMemorySlotReceivedMessages(_tokenBuffer);
 
    // Returning the number of pushed tokens
    return pushedTokens;
@@ -209,7 +209,7 @@ class ConsumerChannel : public Channel
     }
 
     // The number of received tokens is the difference between the currently pushed tokens and the previous one
-    auto receivedTokens = _pushedTokens - getCurrentPushedTokenCount();
+    auto receivedTokens = getCurrentPushedTokenCount() - _pushedTokens;
 
     // We advance the head locally as many times as newly received tokens
     advanceHead(receivedTokens);

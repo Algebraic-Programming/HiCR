@@ -78,6 +78,17 @@ class Channel
   }
 
   /**
+   * This function can be used to check the size of the token buffer that needs to be provided
+   * to the channel.
+   *
+   * \return Size (bytes) of the token buffer
+   */
+  __USED__ static inline size_t getTokenBufferSize(const size_t tokenSize, const size_t capacity) noexcept
+  {
+    return tokenSize * capacity;
+  }
+
+  /**
    * This function can be used to check the size of the coordination buffer that needs to be provided
    * in the creation of the channel
    *
@@ -102,7 +113,7 @@ class Channel
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    *
    * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
-   * \param[in] exchangeBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
+   * \param[in] tokenBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
    * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
@@ -110,27 +121,27 @@ class Channel
    * \param[in] tokenSize The size of each token.
    */
   Channel(Backend *backend,
-    Backend::memorySlotId_t exchangeBuffer,
+    Backend::memorySlotId_t tokenBuffer,
     Backend::memorySlotId_t coordinationBuffer,
     const size_t tokenSize,
     const size_t capacity) :
   _backend(backend),
-  _dataExchangeMemorySlot(exchangeBuffer),
-  _coordinationMemorySlot(coordinationBuffer),
+  _tokenBuffer(tokenBuffer),
+  _coordinationBuffer(coordinationBuffer),
   _tokenSize(tokenSize),
   _capacity(capacity)
   {
     if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
     if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
 
-    // Checking that the provided data buffer has the right size
-    auto requiredDataBufferSize = _tokenSize * _capacity;
-    auto providedDataBufferSize = _backend->getMemorySlotSize(_dataExchangeMemorySlot);
-    if (providedDataBufferSize < requiredDataBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a data buffer size (%lu) smaller than the required size (Capacity (%lu) x Token Size (%lu) = %lu).\n", providedDataBufferSize, _capacity, _tokenSize, requiredDataBufferSize);
+    // Checking that the provided token exchange  buffer has the right size
+    auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
+    auto providedTokenBufferSize = _backend->getMemorySlotSize(_tokenBuffer);
+    if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
 
     // Checking that the provided coordination buffer has the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
-    auto providedCoordinationBufferSize = _backend->getMemorySlotSize(_coordinationMemorySlot);
+    auto providedCoordinationBufferSize = _backend->getMemorySlotSize(_coordinationBuffer);
     if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
   }
 
@@ -178,14 +189,14 @@ class Channel
   Backend *const _backend;
 
   /**
-   * Memory slot that represents the target data buffer that producer sends data to
+   * Memory slot that represents the token buffer that producer sends data to
    */
-  const Backend::memorySlotId_t _dataExchangeMemorySlot;
+  Backend::memorySlotId_t _tokenBuffer;
 
   /**
    * Memory slot that enables coordination communication from the consumer to the producer
    */
-  const Backend::memorySlotId_t _coordinationMemorySlot;
+  Backend::memorySlotId_t _coordinationBuffer;
 
   /**
    * This function advances the circular buffer head (e.g., when an element is pushed). It goes back around if the capacity is exceeded
@@ -199,7 +210,7 @@ class Channel
     size_t newDepth = _depth + n;
 
     // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) exceeded capacity (%lu) on advance head. This is probably a bug in HiCR.\n", _depth, _capacity);
+    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on advance head. This is probably a bug in HiCR.\n", _depth, n, newDepth, _capacity);
 
     // Advance head
     _head += n;

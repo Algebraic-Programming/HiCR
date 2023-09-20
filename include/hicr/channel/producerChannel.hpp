@@ -38,25 +38,21 @@ class ProducerChannel : Channel
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
    * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
-   * \param[in] exchangeBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
-   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
-   * token.
-   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
    * popped. It may also be used for other coordination signals.
+   * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
+   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
+   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
    * \param[in] tokenSize The size of each token.
    */
   ProducerChannel(Backend *backend,
-    Backend::memorySlotId_t exchangeBuffer,
-    Backend::memorySlotId_t coordinationBuffer,
+    const Backend::memorySlotId_t tokenBuffer,
+    const Backend::memorySlotId_t coordinationBuffer,
     const size_t tokenSize,
     const size_t capacity) :
-     Channel(backend, exchangeBuffer, coordinationBuffer, tokenSize, capacity),
+     Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity),
      // Creating a memory slot for the local pointer of the _poppedTokens value, in order to update producers about the number of pops this consumer does
      _poppedTokensPointer((size_t *)backend->getMemorySlotPointer(coordinationBuffer))
-  {
-   // Initializing popped tokens to zero
-   *_poppedTokensPointer = 0;
-  }
+  {  }
   ~ProducerChannel() = default;
 
   /**
@@ -92,7 +88,7 @@ class ProducerChannel : Channel
     for (size_t i = 0; i < n; i++)
     {
       // Copying with source increasing offset per token
-      _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
       // Advance head, as we have added a new element
       advanceHead(1);
@@ -143,7 +139,7 @@ class ProducerChannel : Channel
       while (getDepth() == getCapacity()) checkReceiverPops();
 
       // Copying with source increasing offset per token
-      _backend->memcpy(_dataExchangeMemorySlot, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
       // Advance head, as we have added a new element
       advanceHead(1);
