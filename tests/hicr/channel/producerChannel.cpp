@@ -31,11 +31,11 @@ TEST(ProducerChannel, Construction)
   const auto channelCapacity = 16;
 
   // Getting required buffer sizes
-  auto tokenBufferSize = HiCR::Channel::getTokenBufferSize(tokenSize, channelCapacity);
+  auto tokenBufferSize        = HiCR::Channel::getTokenBufferSize(tokenSize, channelCapacity);
   auto coordinationBufferSize = HiCR::Channel::getCoordinationBufferSize();
 
   // Allocating bad memory slots
-  auto badDataBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
+  auto badDataBuffer         = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
   auto badCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize - 1);
 
   // Allocating correct memory slots
@@ -68,11 +68,11 @@ TEST(ProducerChannel, Push)
   const auto channelCapacity = 16;
 
   // Allocating correct memory slots
-  auto dataBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), channelCapacity * tokenSize);
+  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::Channel::getTokenBufferSize(tokenSize, channelCapacity));
   auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
 
   // Creating producer channel
-  HiCR::ProducerChannel producer(&backend, dataBuffer, coordinationBuffer, tokenSize, channelCapacity);
+  HiCR::ProducerChannel producer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
@@ -132,11 +132,11 @@ TEST(ProducerChannel, PushWait)
   const auto channelCapacity = 2;
 
   // Allocating correct memory slots
-  auto dataBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), channelCapacity * tokenSize);
+  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::Channel::getTokenBufferSize(tokenSize, channelCapacity));
   auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
 
   // Creating producer channel
-  HiCR::ProducerChannel producer(&backend, dataBuffer, coordinationBuffer, tokenSize, channelCapacity);
+  HiCR::ProducerChannel producer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
@@ -160,7 +160,7 @@ TEST(ProducerChannel, PushWait)
   producerThread = new std::thread(producerFc);
 
   // Creating consumer channel
-  HiCR::ConsumerChannel consumer(&backend, dataBuffer, coordinationBuffer, tokenSize, channelCapacity);
+  HiCR::ConsumerChannel consumer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
 
   // Popping one element to liberate thread
   while (consumer.pop() == false)

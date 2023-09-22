@@ -5,7 +5,7 @@
  */
 
 /**
- * @file channel.hpp
+ * @file producerChannel.hpp
  * @brief Provides functionality for a producer channel over HiCR
  * @author A. N. Yzelman & S. M Martin
  * @date 28/7/2023

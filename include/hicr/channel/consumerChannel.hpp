@@ -5,7 +5,7 @@
  */
 
 /**
- * @file channel.hpp
+ * @file consumerChannel.hpp
  * @brief Provides functionality for a consumer channel over HiCR
  * @author A. N. Yzelman & S. M Martin
  * @date 15/9/2023
