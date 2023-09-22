@@ -35,12 +35,12 @@ TEST(ProducerChannel, Construction)
  auto coordinationBufferSize = HiCR::Channel::getCoordinationBufferSize();
 
  // Allocating bad memory slots
- auto badDataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
- auto badCoordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), coordinationBufferSize - 1);
+ auto badDataBuffer         = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
+ auto badCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize - 1);
 
  // Allocating correct memory slots
- auto correctDataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), tokenBufferSize);
- auto correctCoordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), coordinationBufferSize);
+ auto correctDataBuffer         = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
+ auto correctCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
 
  // Creating with incorrect parameters
  EXPECT_THROW(new HiCR::ProducerChannel(&backend, correctDataBuffer, correctCoordinationBuffer, 0, channelCapacity), HiCR::common::LogicException);
@@ -68,8 +68,8 @@ TEST(ProducerChannel, Push)
  const auto channelCapacity = 16;
 
  // Allocating correct memory slots
- auto dataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), channelCapacity * tokenSize);
- auto coordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
+ auto dataBuffer         = backend.allocateLocalMemorySlot(*memSpaces.begin(), channelCapacity * tokenSize);
+ auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
 
  // Creating producer channel
  HiCR::ProducerChannel producer(&backend, dataBuffer, coordinationBuffer, tokenSize, channelCapacity);
@@ -77,7 +77,7 @@ TEST(ProducerChannel, Push)
  // Creating send buffer
  auto sendBufferCapacity = channelCapacity + 1;
  auto sendBufferSize = sendBufferCapacity * tokenSize;
- auto sendBuffer  = backend.allocateMemorySlot(*memSpaces.begin(), sendBufferSize);
+ auto sendBuffer  = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
  // Attempting to push no tokens (shouldn't fail)
  EXPECT_NO_THROW(producer.push(sendBuffer, 0));
@@ -132,8 +132,8 @@ TEST(ProducerChannel, PushWait)
   const auto channelCapacity = 2;
 
   // Allocating correct memory slots
-  auto dataBuffer         = backend.allocateMemorySlot(*memSpaces.begin(), channelCapacity * tokenSize);
-  auto coordinationBuffer = backend.allocateMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
+  auto dataBuffer         = backend.allocateLocalMemorySlot(*memSpaces.begin(), channelCapacity * tokenSize);
+  auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
 
   // Creating producer channel
   HiCR::ProducerChannel producer(&backend, dataBuffer, coordinationBuffer, tokenSize, channelCapacity);
@@ -141,7 +141,7 @@ TEST(ProducerChannel, PushWait)
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
   auto sendBufferSize = sendBufferCapacity * tokenSize;
-  auto sendBuffer  = backend.allocateMemorySlot(*memSpaces.begin(), sendBufferSize);
+  auto sendBuffer  = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
   // Attempting to push more tokens than buffer size (should throw exception)
   EXPECT_THROW(producer.pushWait(sendBuffer, sendBufferCapacity + 1), HiCR::common::LogicException);

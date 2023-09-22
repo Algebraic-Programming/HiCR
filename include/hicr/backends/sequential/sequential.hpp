@@ -30,29 +30,38 @@ namespace sequential
 {
 
 /**
- * Common definition of a map that links key ids with memory slot arrays (for global exchange)
- */
-typedef parallelHashMap_t<Backend::globalKey_t, std::vector<Backend::memorySlotStruct_t*>> memorySlotArrayMap_t;
-
-/**
- * Collection of globally registered memory slots
- */
-parallelHashMap_t<Backend::tag_t, memorySlotArrayMap_t> _globalMemorySlotArrayTagMap;
-
-/**
- * Barrier to clean up memory slot array tag map after using it
- */
-std::map<Backend::tag_t, size_t> _globalMemorySlotArrayTagBarrier;
-std::mutex _globalMemorySlotArrayTagBarrierMutex;
-
-/**
  * Implementation of the HiCR Sequential backend
  *
  * This backend is very useful for testing other HiCR modules in isolation (unit tests) without involving the use of threading, which might incur side-effects
  */
 class Sequential final : public Backend
 {
+public:
+
+ /**
+  * Common definition of a collection of memory slots
+  */
+ typedef parallelHashMap_t<tag_t, size_t> fenceCountTagMap_t;
+
+ /**
+  * Constructor for the sequential backend.
+  *
+  * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
+  */
+  Sequential(const size_t fenceCount = 1) : Backend(), _fenceCount(fenceCount) { }
+  ~Sequential() = default;
+
   private:
+
+  /**
+   * Specifies how many times a fence has to be called for it to release callers
+   */
+  const size_t _fenceCount;
+
+  /**
+   * Counter for calls to fence, filtered per tag
+   */
+  fenceCountTagMap_t _fenceCountTagMap;
 
    /**
     * This set remembers which of the registered memory slots are actually global
@@ -159,11 +168,16 @@ class Sequential final : public Backend
 
   /**
    * Implementation of the fence operation for the sequential backend. In this case, nothing needs to be done, as
-   * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
+   * the memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl()
+  __USED__ inline void fenceImpl(const tag_t tag) override
   {
+   // Increasing the counter for the fence corresponding to the tag
+   _fenceCountTagMap[tag]++;
+
+   // Until we reached the required count, wait on it
+   while(_fenceCountTagMap[tag] < _fenceCount);
   }
 
   /**
@@ -171,9 +185,9 @@ class Sequential final : public Backend
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier of the new memory slot
+   * \param[in] memSlotId The identifier of the new local memory slot
    */
-  __USED__ inline void *allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
   {
     // Atempting to allocate the new memory slot
     auto ptr = malloc(size);
@@ -186,12 +200,12 @@ class Sequential final : public Backend
   }
 
   /**
-   * Associates a pointer allocated somewhere else and creates a memory slot with it
+   * Associates a pointer locally-allocated manually and creates a local memory slot with it
    * \param[in] addr Address in local memory that will be represented by the slot
    * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier for the new memory slot
+   * \param[in] memSlotId The identifier for the new local memory slot
    */
-  __USED__ inline void registerMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
   {
     // Nothing to do here for this backend
   }
@@ -201,7 +215,7 @@ class Sequential final : public Backend
    *
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
-  __USED__ inline void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
   {
     // Nothing to do here for this backend
   }
@@ -212,63 +226,23 @@ class Sequential final : public Backend
    * This is a collective function that will block until the user-specified expected slot count is found.
    *
    * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] expectedMemorySlotCount Indicates the number of expected global memory slots associated by the tag
    * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  __USED__ inline memorySlotIdArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t key, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
    // Adding local memory slots to the global map
    for (const auto memorySlotId : localMemorySlotIds)
-    _globalMemorySlotArrayTagMap[tag][globalKey].push_back(&_memorySlotMap.at(memorySlotId));
-
-   // Suspending until the numer of global memory slots is equal or higher than expected
-   while (getGlobalMemorySlotCount(tag) < expectedGlobalSlotCount);
-
-   // Creating new memory slot id map array
-   memorySlotIdArrayMap_t newGlobalMemorySlotArrayMap;
-
-   // Registering new memory slots
-   for (const auto& key : _globalMemorySlotArrayTagMap[tag])
-    for (const auto& slot : key.second)
-    {
-     // Registering new slot id from the global exchange
-     auto newGlobalSlotId = registerMemorySlot(slot->pointer, slot->size);
-
-     // Storing new slot Id
-     newGlobalMemorySlotArrayMap[key.first].push_back(newGlobalSlotId);
-
-     // Remembering this is a globally registered memory slot
-     _globalRegisteredMemorySlots[newGlobalSlotId] = slot;
-    }
-
-   // Now that we're done copying, activating barrier to clean up the array map
-   _globalMemorySlotArrayTagBarrierMutex.lock();
-   _globalMemorySlotArrayTagBarrier[tag] += localMemorySlotIds.size();
-   _globalMemorySlotArrayTagBarrierMutex.unlock();
-
-   while(_globalMemorySlotArrayTagBarrier[tag] < expectedGlobalSlotCount);
-
-   // Clearing barrier for the next use
-   _globalMemorySlotArrayTagBarrierMutex.lock();
-   if (_globalMemorySlotArrayTagBarrier[tag] == expectedGlobalSlotCount) _globalMemorySlotArrayTagMap.erase(tag);
-   _globalMemorySlotArrayTagBarrier[tag] -= localMemorySlotIds.size();
-   _globalMemorySlotArrayTagBarrierMutex.unlock();
-
-   // Making sure everyone reaches this point before continuing
-   while(_globalMemorySlotArrayTagBarrier[tag] != 0);
-
-   // Returning global slot map
-   return newGlobalMemorySlotArrayMap;
+    registerGlobalMemorySlot(tag, key, getLocalMemorySlotPointer(memorySlotId), getMemorySlotSize(memorySlotId));
   }
 
   /**
-   * Frees up a memory slot reserved from this memory space
+   * Frees up a local memory slot reserved from this memory space
    *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlotId Identifier of the local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeMemorySlotImpl(memorySlotId_t memorySlotId) override
+  __USED__ inline void freeLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
   {
     const auto &memSlot = _memorySlotMap.at(memorySlotId);
 
@@ -297,21 +271,6 @@ class Sequential final : public Backend
     return true;
   }
 
-  private:
-
-  /**
-   * This function counts how many global memory slots are registered
-   *
-   * \returns The number of global memory slots registered
-   */
-  __USED__ size_t getGlobalMemorySlotCount(const tag_t tag)
-  {
-   size_t globalMemorySlotCount = 0;
-
-   for (const auto& key : _globalMemorySlotArrayTagMap[tag]) globalMemorySlotCount += key.second.size();
-
-   return globalMemorySlotCount;
-  }
 };
 
 } // namespace sequential

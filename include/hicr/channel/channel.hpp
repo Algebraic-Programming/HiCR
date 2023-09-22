@@ -58,7 +58,7 @@ class Channel
    */
   __USED__ inline size_t getDepth() const noexcept
   {
-    return _depth;
+    return (_capacity + _head - _tail) % _capacity;
   }
 
   /**
@@ -128,6 +128,8 @@ class Channel
   _backend(backend),
   _tokenBuffer(tokenBuffer),
   _coordinationBuffer(coordinationBuffer),
+  // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
+  _tailPositionSlot(backend->registerLocalMemorySlot(&_tail, sizeof(_tail))),
   _tokenSize(tokenSize),
   _capacity(capacity)
   {
@@ -147,6 +149,8 @@ class Channel
 
   ~Channel()
   {
+   // Unregistering memory slot corresponding to popped token count
+   _backend->deregisterLocalMemorySlot(_tailPositionSlot);
   }
 
   /**
@@ -207,19 +211,16 @@ class Channel
   __USED__ inline void advanceHead(const size_t n = 1)
   {
     // Calculating new depth
-    size_t newDepth = _depth + n;
+    size_t newDepth = getDepth() + n;
 
     // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on advance head. This is probably a bug in HiCR.\n", _depth, n, newDepth, _capacity);
+    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on advance head. This is probably a bug in HiCR.\n", getDepth(), n, newDepth, _capacity);
 
     // Advance head
     _head += n;
 
     // Wrap around circular buffer, if necessary
     if (_head >= _capacity) _head = _head - _capacity;
-
-    // Adjust depth
-    _depth = newDepth;
   }
 
   /**
@@ -231,27 +232,19 @@ class Channel
   __USED__ inline void advanceTail(const size_t n = 1)
   {
     // Sanity check
-    if (n > _depth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", _depth, n);
+    if (n > getDepth()) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", getDepth(), n);
 
     // Advance head
     _tail += n;
 
     // Wrap around circular buffer, if necessary
     if (_tail >= _capacity) _tail = _tail - _capacity;
-
-    // Adjust depth
-    _depth = _depth - n;
   }
 
   /**
-   * Counts how many tokens have been pushed into the channel globally
+   * Local memory slot to update the tail position
    */
-  size_t _pushedTokens = 0;
-
-  /**
-   * Counts how many tokens have been popped out of the channel globally
-   */
-  size_t _poppedTokens = 0;
+  const Backend::memorySlotId_t _tailPositionSlot;
 
   private:
 
@@ -274,11 +267,6 @@ class Channel
    * Buffer position at the tail
    */
   size_t _tail = 0;
-
-  /**
-   * Current depth of the tokens saved in the buffer
-   */
-  size_t _depth = 0;
 };
 
 }; // namespace HiCR

@@ -49,10 +49,7 @@ class ProducerChannel final : public Channel
     const Backend::memorySlotId_t coordinationBuffer,
     const size_t tokenSize,
     const size_t capacity) :
-     Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity),
-     // Creating a memory slot for the local pointer of the _poppedTokens value, in order to update producers about the number of pops this consumer does
-     _poppedTokensPointer((size_t *)backend->getMemorySlotPointer(coordinationBuffer))
-  {  }
+    Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity) {  }
   ~ProducerChannel() = default;
 
   /**
@@ -93,9 +90,6 @@ class ProducerChannel final : public Channel
       // Advance head, as we have added a new element
       advanceHead(1);
     }
-
-    // Increase the counter of pushed tokens
-    _pushedTokens += n;
 
     // Succeeded in pushing the token(s)
     return true;
@@ -144,9 +138,6 @@ class ProducerChannel final : public Channel
       // Advance head, as we have added a new element
       advanceHead(1);
     }
-
-    // Increase the counter of pushed tokens
-    _pushedTokens += n;
   }
 
   /**
@@ -165,43 +156,11 @@ class ProducerChannel final : public Channel
    * a call to Backend::queryMemorySlotUpdates should be added here.
    *
    */
-  __USED__ inline size_t checkReceiverPops()
+  __USED__ inline void checkReceiverPops()
   {
-    // If this function is called from a task context, we can suspend it now
-    if (_currentTask != NULL)
-    {
-     // Set the function that checks whether the buffer is now free to send more messages
-     _currentTask->registerPendingOperation([this]()
-                                            { return *_poppedTokensPointer > _poppedTokens; });
-
-     // Suspend current task
-     _currentTask->yield();
-    }
-
-    // Storing the current number of popped tokens
-    auto currentPoppedTokens = _poppedTokens;
-
-    // Update number of popped tokens
-    _poppedTokens = *_poppedTokensPointer;
-
-    // The number of newly popped tokens is the difference
-    size_t newlyPoppedTokens = _poppedTokens - currentPoppedTokens;
-
-    // for each popped token, free up space in the circular buffer
-    advanceTail(newlyPoppedTokens);
-
-    // Returning the number of newly popped tokens
-    return newlyPoppedTokens;
+   // Updating local value of the tail until it changes
+   _backend->memcpy(_tailPositionSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
   }
-
-  private:
-
-  /**
-   * This pointer represents the position in local memory where the producer can check
-   * how many popped elements have been performed by the consumer. The pointer value is
-   * determined at creation time
-   */
-  size_t *const _poppedTokensPointer;
 };
 
 }; // namespace HiCR

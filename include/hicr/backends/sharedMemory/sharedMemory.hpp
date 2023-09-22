@@ -152,7 +152,7 @@ class SharedMemory final : public Backend
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl()
+  __USED__ inline void fenceImpl(const tag_t tag) override
   {
   }
 
@@ -289,15 +289,15 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Allocates memory in the current memory space (NUMA domain)
+   * Allocates a local memory slot in the current memory space (NUMA domain)
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier for the new memory slot
+   * \param[in] memSlotId The identifier for the new local memory slot
    *
    * \internal This all should be threading safe
    */
-  __USED__ inline void *allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
   {
     // Recovering memory space from the map
     auto &memSpace = _memorySpaceMap.at(memorySpace);
@@ -321,15 +321,14 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Associates a pointer allocated somewhere else and creates a memory slot with it
+   * Associates a local pointer allocated somewhere else and creates a local memory slot with it
    * \param[in] addr Address in local memory that will be represented by the slot
    * \param[in] size Size of the memory slot to create
-   * \param[in] memorySlotId The identifier for the new memory slot
+   * \param[in] memorySlotId The identifier for the local new memory slot
    */
-  __USED__ inline void registerMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memorySlotId) override
+  __USED__ inline void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memorySlotId) override
   {
-    // For registered memory slots, we assume non-bound registration
-    _memorySlotBindingMap[memorySlotId] = binding_type::strict_non_binding;
+   // Nothing to do here
   }
 
   /**
@@ -337,10 +336,9 @@ class SharedMemory final : public Backend
    *
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
-  __USED__ inline void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
   {
-    // Removing its binding information
-    _memorySlotBindingMap.erase(memorySlotId);
+   // Nothing to do here
   }
 
   /**
@@ -349,29 +347,25 @@ class SharedMemory final : public Backend
    * This is a collective function that will block until the user-specified expected slot count is found.
    *
    * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] expectedMemorySlotCount Indicates the number of expected global memory slots associated by the tag
    * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  __USED__ inline memorySlotIdArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag,  const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
    // TO-DO
    HICR_THROW_RUNTIME("Not implemented yet");
   }
 
   /**
-   * Frees up a memory slot reserved from this memory space
+   * Frees up a local memory slot reserved from this memory space
    *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlotId Identifier of the locally allocated memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeMemorySlotImpl(memorySlotId_t memorySlotId) override
+  __USED__ inline void freeLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
   {
     // Getting memory slot entry from the map
     const auto &slot = _memorySlotMap.at(memorySlotId);
-
-    // Making sure the memory slot exists and is not null
-    if (slot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", memorySlotId);
 
     // If using strict binding, use hwloc_free to properly unmap the memory binding
     if (_memorySlotBindingMap.at(memorySlotId) == binding_type::strict_binding)

@@ -52,26 +52,26 @@ TEST(SharedMemory, Memory)
   EXPECT_GE(totalMem, testMemAllocSize);
 
   // Trying to allocate more than allowed
-  EXPECT_THROW(b.allocateMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
+  EXPECT_THROW(b.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
 
   // Allocating memory correctly now
   HiCR::Backend::memorySlotId_t s1 = 0;
-  EXPECT_NO_THROW(s1 = b.allocateMemorySlot(r, testMemAllocSize));
+  EXPECT_NO_THROW(s1 = b.allocateLocalMemorySlot(r, testMemAllocSize));
   EXPECT_EQ(b.getMemorySlotSize(s1), testMemAllocSize);
 
   // Getting local pointer from allocation
   void *s1LocalPtr = NULL;
-  EXPECT_NO_THROW(s1LocalPtr = b.getMemorySlotPointer(s1));
+  EXPECT_NO_THROW(s1LocalPtr = b.getLocalMemorySlotPointer(s1));
   memset(s1LocalPtr, 0, testMemAllocSize);
 
   // Creating memory slot from a previous allocation
   HiCR::Backend::memorySlotId_t s2 = 0;
-  EXPECT_NO_THROW(s2 = b.registerMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
+  EXPECT_NO_THROW(s2 = b.registerLocalMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(b.getMemorySlotSize(s2), testMemAllocSize);
 
   // Getting local pointer from allocation
   void *s2LocalPtr = NULL;
-  EXPECT_NO_THROW(s2LocalPtr = b.getMemorySlotPointer(s2));
+  EXPECT_NO_THROW(s2LocalPtr = b.getLocalMemorySlotPointer(s2));
   memset(s2LocalPtr, 0, testMemAllocSize);
 
   // Creating message to transmit
@@ -82,7 +82,7 @@ TEST(SharedMemory, Memory)
   EXPECT_NO_THROW(b.memcpy(s2, 0, s1, 0, testMessage.size()));
 
   // Force memcpy operation to finish
-  EXPECT_NO_THROW(b.fence());
+  EXPECT_NO_THROW(b.fence(0));
 
   // Making sure the message was received
   bool sameStrings = true;
@@ -91,6 +91,6 @@ TEST(SharedMemory, Memory)
   EXPECT_TRUE(sameStrings);
 
   // Freeing memory slots
-  EXPECT_NO_THROW(b.freeMemorySlot(s1));
-  EXPECT_NO_THROW(b.deregisterMemorySlot(s2));
+  EXPECT_NO_THROW(b.freeLocalMemorySlot(s1));
+  EXPECT_NO_THROW(b.deregisterLocalMemorySlot(s2));
 }

@@ -50,17 +50,8 @@ class ConsumerChannel final : public Channel
     const Backend::memorySlotId_t coordinationBuffer,
     const size_t tokenSize,
     const size_t capacity) :
-     Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity),
-     // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
-    _poppedTokensSlot(backend->registerMemorySlot(&_poppedTokens, sizeof(size_t)))
-  {
-  }
-
-  ~ConsumerChannel()
-  {
-    // Unregistering memory slot corresponding to popped token count
-    _backend->deregisterMemorySlot(_poppedTokensSlot);
-  }
+     Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity) { }
+  ~ConsumerChannel() = default;
 
   /**
    * Peeks in the local received queue and returns a pointer to the current
@@ -68,11 +59,10 @@ class ConsumerChannel final : public Channel
    *
    * This is a one-sided blocking call that need not be made collectively.
    *
-   * @param[out] ptrBuffer Storage onto which to copy the initial pointer for each of the n tokens to peek.
    * @param[in] n The number of tokens to peek.
    *
-   * @returns <tt>true</tt> if the channel has n tokens in it.
-   * @returns <tt>false</tt>, otherwise.
+   * @returns If successful, a vector of size n with the relative positions within the token buffer of the received elements.
+   * @returns If not successful, an empty vector
    *
    * This is a getter function that should complete in \f$ \Theta(n) \f$ time.
    * This function has one side-effect: it detects pending incoming messages and,
@@ -83,16 +73,16 @@ class ConsumerChannel final : public Channel
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
    */
-  __USED__ inline bool peek(const Backend::memorySlotId_t dstSlot, const size_t n = 1)
+  __USED__ inline std::vector<size_t> peek(const size_t n = 1)
   {
     // We check only once for incoming messages (non-blocking operation)
     checkReceivedTokens();
 
-    // If the exchange buffer does not have n tokens pushed, reject operation
-    if (getDepth() < n) return false;
+    // Creating vector to store the token positions
+    std::vector<size_t> positions;
 
-    // Getting base pointer for the exchange buffer
-    const auto basePtr = (uint8_t *)_backend->getMemorySlotPointer(_tokenBuffer);
+    // If the exchange buffer does not have n tokens pushed, reject operation
+    if (getDepth() < n) return positions;
 
     // Assigning the pointer to each token requested
     for (size_t i = 0; i < n; i++)
@@ -100,15 +90,12 @@ class ConsumerChannel final : public Channel
       // Calculating buffer position
       size_t bufferPos = (getTailPosition() + i) % getCapacity();
 
-      // Calculating pointer to such position
-      auto *tokenPtr = basePtr + bufferPos * getTokenSize();
-
-      // Assigning pointer to the output buffer
-      ((void**)_backend->getMemorySlotPointer(dstSlot))[i] = tokenPtr;
+      // Assigning offset to the output buffer
+      positions.push_back(bufferPos);
     }
 
     // Succeeded in pushing the token(s)
-    return true;
+    return positions;
   }
 
   /**
@@ -117,8 +104,8 @@ class ConsumerChannel final : public Channel
    *
    * This is a one-sided blocking call that need not be made collectively.
    *
-   * @param[out] ptrBuffer Storage onto which to copy the initial pointer for each of the n tokens to peek.
    * @param[in] n The number of tokens to peek.
+   * @returns If successful, a vector of size n with the relative positions within the token buffer of the received elements.
    *
    * \warning This function may take an arbitrary amount of time and may, with
    *          incorrect usage, even result in deadlock. Always make sure to use
@@ -129,13 +116,13 @@ class ConsumerChannel final : public Channel
    * \todo A preferred mechanism to wait for messages to have flushed may be
    *       the event-based API described below in this header file.
    */
-  __USED__ inline void peekWait(const Backend::memorySlotId_t dstSlot, const size_t n = 1)
+  __USED__ inline std::vector<size_t> peekWait(const size_t n = 1)
   {
     // While the number of tokens in the buffer is less than the desired number, wait for it
     while (getDepth() < n) checkReceivedTokens();
 
     // Now do the peek, as designed above
-    peek(dstSlot, n);
+    return peek(n);
   }
 
   /**
@@ -162,11 +149,8 @@ class ConsumerChannel final : public Channel
     // Advancing tail (removes elements from the circular buffer)
     advanceTail(n);
 
-    // Increasing the total number of popped tokens
-    _poppedTokens += n;
-
     // Notifying producer(s) of buffer liberation
-    _backend->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
+    _backend->memcpy(_coordinationBuffer, 0, _tailPositionSlot, 0, sizeof(size_t));
 
     // If we reached this point, then the operation was successful
     return true;
@@ -194,17 +178,6 @@ class ConsumerChannel final : public Channel
    */
   __USED__ inline size_t checkReceivedTokens()
   {
-    // If this function is called from a task context, we can suspend it now
-    if (_currentTask != NULL)
-    {
-     // Set the function that checks whether we have received new messages (more of them were pushed than our previous check)
-     _currentTask->registerPendingOperation([this]()
-                                            { return getCurrentPushedTokenCount() > _pushedTokens; });
-
-     // Suspend current task
-     _currentTask->yield();
-    }
-
     // The number of received tokens is the difference between the currently pushed tokens and the previous one
     auto receivedTokens = getCurrentPushedTokenCount() - _pushedTokens;
 
@@ -215,10 +188,12 @@ class ConsumerChannel final : public Channel
     return receivedTokens;
   }
 
+  private:
+
   /**
-   * Local memory slot to update the number of popped tokens in the producer(s)
+   * Internal counter for the number of pushed tokens by the producer
    */
-  const Backend::memorySlotId_t _poppedTokensSlot;
+  size_t _pushedTokens = 0;
 };
 
 }; // namespace HiCR

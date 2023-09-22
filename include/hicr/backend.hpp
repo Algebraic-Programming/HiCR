@@ -36,8 +36,28 @@ class Backend
 {
   public:
 
+ /**
+  * Type definition for a generic memory space identifier
+  */
+ typedef uint64_t memorySpaceId_t;
+
+ /**
+  * Type definition for a generic memory slot identifier
+  */
+ typedef uint64_t memorySlotId_t;
+
+ /**
+  * Type definition for a global key (for exchanging global memory slots)
+  */
+ typedef uint64_t globalKey_t;
+
+ /**
+  * Type definition for a comunication tag
+  */
+ typedef uint64_t tag_t;
+
   /**
-   * Enumeration to determine whether HWLoc supports strict binding and what the user prefers (similar to MPI_Threading_level)
+   * Enumeration to determine how the memory slot has been created
    */
   enum memorySlotCreationType_t
   {
@@ -47,9 +67,25 @@ class Backend
     allocated,
 
     /**
-     * When a memory slot is manually registered, it is assigned to the backend having been allocated elsewhere (e.g., when using the system's own malloc). The internal pointer may be changed and cannot be freed with the backend's free operation.
+     * When a memory slot is manually registered, it is assigned to the backend having been allocated elsewhere or is global
      */
     registered
+  };
+
+  /**
+   * Enumeration to determine whether the memory slot is local or global
+   */
+  enum memorySlotLocalityType_t
+  {
+    /**
+     * When a memory slot is local, it was created by the current backend and can be freed and accessed directly
+     */
+    local,
+
+    /**
+     * When a memory slot is global, it was exchanged with other backends (possibly remote)
+     */
+    global
   };
 
   /**
@@ -74,6 +110,21 @@ class Backend
     memorySlotCreationType_t creationType;
 
     /**
+     * Stores the locality of the memory slot
+     */
+    memorySlotLocalityType_t localityType;
+
+    /**
+     * Only for global slots - Tag identifier
+     */
+    tag_t globalTag = 0;
+
+    /**
+     * Only for global slots - Key identifier
+     */
+    globalKey_t globalKey = 0;
+
+    /**
      * Messages received into this slot
      */
     size_t messagesRecv = 0;
@@ -84,25 +135,6 @@ class Backend
     size_t messagesSent = 0;
   };
 
-  /**
-   * Type definition for a generic memory space identifier
-   */
-  typedef uint64_t memorySpaceId_t;
-
-  /**
-   * Type definition for a generic memory slot identifier
-   */
-  typedef uint64_t memorySlotId_t;
-
-  /**
-   * Type definition for a global key (for exchange)
-   */
-  typedef uint64_t globalKey_t;
-
-  /**
-   * Type definition for a comunication tag
-   */
-  typedef uint64_t tag_t;
 
   /**
    * Common definition of a collection of compute resources
@@ -125,9 +157,15 @@ class Backend
   typedef parallelHashMap_t<globalKey_t, std::vector<memorySlotId_t>> memorySlotIdArrayMap_t;
 
   /**
-   * Structure to report the number of inbound/outbound messages exchanged
+   * Type definition for reporting the number of inbound/outbound messages exchanged
    */
   typedef std::pair<size_t, size_t> exchangedMessages_t;
+
+  /**
+   * Type definition for a tag/key map of global variables
+   */
+  typedef parallelHashMap_t<tag_t, std::map<globalKey_t, std::vector<memorySlotId_t>>> globalMemorySlotTagKeyMap_t;
+
 
   virtual ~Backend() = default;
 
@@ -293,6 +331,7 @@ class Backend
    * all outgoing memory movement has left the local interface (and is guaranteed
    * to arrive at the remote memory space, modulo any fatal exception).
    *
+   * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    * Exceptions are thrown in the following cases:
    *  -# One of the remote address spaces no longer has an active communication
    *     channel. This is a fatal exception from which HiCR cannot recover. The
@@ -305,20 +344,20 @@ class Backend
    *
    * \todo This all should be threading safe.
    */
-  __USED__ inline void fence()
+  __USED__ inline void fence(const tag_t tag)
   {
     // Now call the proper fence, as implemented by the backend
-    fenceImpl();
+    fenceImpl(tag);
   }
 
   /**
-   * Allocates memory in the specified memory space
+   * Allocates a local memory slotin the specified memory space
    *
    * \param[in] memorySpaceId Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in the specified memory space
    */
-  __USED__ inline memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)
+  __USED__ inline memorySlotId_t allocateLocalMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)
   {
     // Checks whether the size requested exceeds the memory space size
     auto maxSize = getMemorySpaceSize(memorySpaceId);
@@ -328,10 +367,10 @@ class Backend
     auto newMemorySlotId = _currentMemorySlotId++;
 
     // Calling internal implementation
-    auto ptr = allocateMemorySlotImpl(memorySpaceId, size, newMemorySlotId);
+    auto ptr = allocateLocalMemorySlotImpl(memorySpaceId, size, newMemorySlotId);
 
     // Creating new memory slot structure
-    auto newMemSlot = memorySlotStruct_t{.pointer = ptr, .size = size, .creationType = memorySlotCreationType_t::allocated};
+    auto newMemSlot = memorySlotStruct_t{.pointer = ptr, .size = size, .creationType = memorySlotCreationType_t::allocated, .localityType = memorySlotLocalityType_t::local};
 
     // Adding allocated memory slot to the set
     _memorySlotMap[newMemorySlotId] = newMemSlot;
@@ -341,22 +380,27 @@ class Backend
   }
 
   /**
-   * Registers a memory slot from a given address
+   * Registers a local memory slot from a given address
    *
    * \param[in] ptr Pointer to the start of the memory slot
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual memorySlotId_t registerMemorySlot(void *const ptr, const size_t size)
+  virtual memorySlotId_t registerLocalMemorySlot(void *const ptr, const size_t size)
   {
     // Increase + swap memory slot for thread-safety
     auto newMemorySlotId = _currentMemorySlotId++;
 
     // Calling internal implementation
-    registerMemorySlotImpl(ptr, size, newMemorySlotId);
+    registerLocalMemorySlotImpl(ptr, size, newMemorySlotId);
 
     // Creating new memory slot structure
-    auto newMemSlot = memorySlotStruct_t{.pointer = ptr, .size = size, .creationType = memorySlotCreationType_t::registered};
+    auto newMemSlot = memorySlotStruct_t{
+     .pointer = ptr,
+     .size = size,
+     .creationType = memorySlotCreationType_t::registered,
+     .localityType = memorySlotLocalityType_t::local
+    };
 
     // Adding created memory slot to the set
     _memorySlotMap[newMemorySlotId] = newMemSlot;
@@ -366,22 +410,67 @@ class Backend
   }
 
   /**
-   * De-registers a memory slot previously registered
+   * Registers a global memory slot from a given address
+   *
+   * \param[in] ptr Pointer to the start of the memory slot
+   * \param[in] size Size of the memory slot to create
+   * \return A newly created memory slot
+   */
+  virtual memorySlotId_t registerGlobalMemorySlot(tag_t tag, globalKey_t key, void *const ptr, const size_t size)
+  {
+    // Increase + swap memory slot for thread-safety
+    auto newMemorySlotId = _currentMemorySlotId++;
+
+    // Creating new memory slot structure
+    auto newMemSlot = memorySlotStruct_t{
+     .pointer = ptr,
+     .size = size,
+     .creationType = memorySlotCreationType_t::registered,
+     .localityType = memorySlotLocalityType_t::global,
+     .globalTag = tag,
+     .globalKey = key };
+
+    // Adding created memory slot to the set
+    _memorySlotMap[newMemorySlotId] = newMemSlot;
+
+    // Adding memory slot to the global map (based on tag and key)
+    _globalMemorySlotTagKeyMap[tag][key].push_back(newMemorySlotId);
+
+    // Returning the id of the new memory slot
+    return newMemorySlotId;
+  }
+
+  /**
+   * Retrieves the map of globally registered slots
+   *
+   * \return The map of registered global memory slots, filtered by tag and mapped by key
+   */
+  __USED__ inline globalMemorySlotTagKeyMap_t getGlobalMemorySlots()
+  {
+    return _globalMemorySlotTagKeyMap;
+  }
+
+  /**
+   * De-registers a previously registered memory slot
    *
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
-  __USED__ inline void deregisterMemorySlot(memorySlotId_t memorySlotId)
+  __USED__ inline void deregisterLocalMemorySlot(memorySlotId_t memorySlotId)
   {
     // Checking whether the slot has been associated with this backend
     if (_memorySlotMap.contains(memorySlotId) == false)
       HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
+
+    // Checking whether the slot is local
+    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local)
+      HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not local to this backend", memorySlotId);
 
     // Checking whether the slot has been registered
     if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::registered)
       HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that was not manually registered to this backend", memorySlotId);
 
     // Calling internal implementation
-    deregisterMemorySlotImpl(memorySlotId);
+    deregisterLocalMemorySlotImpl(memorySlotId);
 
     // Removing memory slot from the set
     _memorySlotMap.erase(memorySlotId);
@@ -393,12 +482,11 @@ class Backend
    * This is a collective function that will block until the user-specified expected slot count is found.
    *
    * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] expectedMemorySlotCount Indicates the number of expected global memory slots associated by the tag
    * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  __USED__ inline memorySlotIdArrayMap_t exchangeGlobalMemorySlots(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
    // Checking whether all slots have been allocated/registered with this backend
    for (auto memorySlotId : localMemorySlotIds)
@@ -406,7 +494,7 @@ class Backend
       HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
 
    // Calling internal implementation
-   return exchangeGlobalMemorySlotsImpl(tag, expectedGlobalSlotCount, globalKey, localMemorySlotIds);
+   exchangeGlobalMemorySlotsImpl(tag, globalKey, localMemorySlotIds);
   }
 
   /**
@@ -414,18 +502,22 @@ class Backend
    *
    * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
+  __USED__ inline void freeLocalMemorySlot(memorySlotId_t memorySlotId)
   {
     // Checking whether the slot has been allocated with this backend
     if (_memorySlotMap.contains(memorySlotId) == false)
       HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not associated to this backend", memorySlotId);
+
+    // Checking whether the slot is local
+    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local)
+      HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not local to this backend", memorySlotId);
 
     // Checking whether the slot has been allocated with this backend
     if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::allocated)
       HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that was not allocated with this backend", memorySlotId);
 
     // Actually freeing up slot
-    freeMemorySlotImpl(memorySlotId);
+    freeLocalMemorySlotImpl(memorySlotId);
 
     // Removing entry from the set
     _memorySlotMap.erase(memorySlotId);
@@ -454,7 +546,7 @@ class Backend
    * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
    * \return The local memory pointer, if applicable. NULL, otherwise.
    */
-  __USED__ inline void *getMemorySlotPointer(const memorySlotId_t memorySlotId) const
+  __USED__ inline void *getLocalMemorySlotPointer(const memorySlotId_t memorySlotId) const
   {
     // Checking whether the slot has been associated with this backend
     if (_memorySlotMap.contains(memorySlotId) == false)
@@ -462,26 +554,6 @@ class Backend
 
     // Returning memory slot pointer
     return _memorySlotMap.at(memorySlotId).pointer;
-  }
-
-  /**
-   * Sets the local pointer for a given memory slot.
-   *
-   * \param[in] memorySlotId Id of the memory slot that will change its local pointer. This memory slot should have been registered but not allocated in this backend.
-   * \param[in] ptr Pointer to the local memory of the backend to set to this memory slot
-   */
-  __USED__ inline void setMemorySlotPointer(const memorySlotId_t memorySlotId, void *ptr)
-  {
-    // Checking whether the slot has been allocated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to set pointer for a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Checking whether the slot has been allocated with this backend
-    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::registered)
-      HICR_THROW_LOGIC("Attempting to set pointer for a memory slot (%lu) that was not manually registered to this backend", memorySlotId);
-
-    // Assigning pointer
-    _memorySlotMap[memorySlotId].pointer = ptr;
   }
 
   /**
@@ -595,7 +667,7 @@ class Backend
    * Backend-internal implementation of the fence function
    *
    */
-  virtual void fenceImpl() = 0;
+  virtual void fenceImpl(const tag_t tag) = 0;
 
   /**
    * Backend-internal implementation of the queryComputeResources function
@@ -612,48 +684,47 @@ class Backend
   virtual memorySpaceList_t queryMemorySpacesImpl() = 0;
 
   /**
-   * Backend-internal implementation of the queryMemorySpaces function
+   * Backend-internal implementation of the queryLocalMemorySlot function
    *
    * \param[in] memorySpaceId Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier for the new memory slot
-   * \return The internal pointer associated to the memory slot
+   * \param[in] memSlotId The identifier for the new local memory slot
+   * \return The internal pointer associated to the local memory slot
    */
-  virtual void *allocateMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size, const memorySlotId_t memSlotId) = 0;
+  virtual void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size, const memorySlotId_t memSlotId) = 0;
 
   /**
-   * Backend-internal implementation of the registerMemorySlot function
+   * Backend-internal implementation of the registerLocalMemorySlot function
    *
    * \param[in] addr Pointer to the start of the memory slot
    * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier for the new memory slot
+   * \param[in] memSlotId The identifier for the new local memory slot
    */
-  virtual void registerMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) = 0;
+  virtual void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) = 0;
 
   /**
-   * Backend-internal implementation of the freeMemorySlot function
+   * Backend-internal implementation of the freeLocalMemorySlot function
    *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlotId Identifier of the local memory slot to free up. It becomes unusable after freeing.
    */
-  virtual void freeMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
+  virtual void freeLocalMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
 
   /**
    * Backend-internal implementation of the deregisterMemorySlot function
    *
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
-  virtual void deregisterMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
+  virtual void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
 
   /**
    * Backend-internal implementation of the exchangeGlobalMemorySlots function
    *
    * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] expectedMemorySlotCount Indicates the number of expected global memory slots associated by the tag
    * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
-  virtual memorySlotIdArrayMap_t exchangeGlobalMemorySlotsImpl(const tag_t tag, const size_t expectedGlobalSlotCount, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds) = 0;
+  virtual void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
@@ -678,6 +749,11 @@ class Backend
    * Currently available slot id to be assigned. It should atomically increment as each slot is assigned
    */
   std::atomic<memorySlotId_t> _currentMemorySlotId = 0;
+
+  /**
+   * Storage for global tag/key associated global memory slot exchange
+   */
+  globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
 };
 
 } // namespace HiCR
