@@ -33,6 +33,27 @@ class ConsumerChannel final : public Channel
   public:
 
   /**
+   * The constructor of the consumer channel class.
+   *
+   * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
+   *
+   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
+   * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
+   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
+   * token.
+   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
+   * popped. It may also be used for other coordination signals.
+   * \param[in] tokenSize The size of each token.
+   * \param[in] capacity The maximum number of tokens that will be held by this channel
+   */
+  ConsumerChannel(Backend *backend,
+                  const Backend::memorySlotId_t tokenBuffer,
+                  const Backend::memorySlotId_t coordinationBuffer,
+                  const size_t tokenSize,
+                  const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity) {}
+  ~ConsumerChannel() = default;
+
+  /**
    * Peeks in the local received queue and returns a pointer to the current
    * token.
    *
