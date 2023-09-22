@@ -91,6 +91,9 @@ class ProducerChannel final : public Channel
       advanceHead(1);
     }
 
+    // Increasing the number of pushed tokens
+    _pushedTokens += n;
+
     // Succeeded in pushing the token(s)
     return true;
   }
@@ -138,6 +141,9 @@ class ProducerChannel final : public Channel
       // Advance head, as we have added a new element
       advanceHead(1);
     }
+
+    // Increasing the number of pushed tokens
+    _pushedTokens += n;
   }
 
   /**
@@ -158,8 +164,17 @@ class ProducerChannel final : public Channel
    */
   __USED__ inline void checkReceiverPops()
   {
+   // Getting current tail position
+   size_t currentPoppedElements = _poppedTokens;
+
    // Updating local value of the tail until it changes
-   _backend->memcpy(_tailPositionSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
+   _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
+
+   // Calculating difference between previous and new tail position
+   size_t n = _poppedTokens - currentPoppedElements;
+
+   // Adjusting depth
+   advanceTail(n);
   }
 };
 

@@ -58,7 +58,7 @@ class Channel
    */
   __USED__ inline size_t getDepth() const noexcept
   {
-    return (_capacity + _head - _tail) % _capacity;
+    return _depth;
   }
 
   /**
@@ -129,7 +129,7 @@ class Channel
   _tokenBuffer(tokenBuffer),
   _coordinationBuffer(coordinationBuffer),
   // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
-  _tailPositionSlot(backend->registerLocalMemorySlot(&_tail, sizeof(_tail))),
+  _poppedTokensSlot(backend->registerLocalMemorySlot(&_poppedTokens, sizeof(size_t))),
   _tokenSize(tokenSize),
   _capacity(capacity)
   {
@@ -150,7 +150,7 @@ class Channel
   ~Channel()
   {
    // Unregistering memory slot corresponding to popped token count
-   _backend->deregisterLocalMemorySlot(_tailPositionSlot);
+   _backend->deregisterLocalMemorySlot(_poppedTokensSlot);
   }
 
   /**
@@ -166,7 +166,7 @@ class Channel
    */
   __USED__ inline size_t getHeadPosition() const noexcept
   {
-    return _head;
+    return (_tail + _depth) % _capacity;
   }
 
   /**
@@ -203,24 +203,21 @@ class Channel
   Backend::memorySlotId_t _coordinationBuffer;
 
   /**
-   * This function advances the circular buffer head (e.g., when an element is pushed). It goes back around if the capacity is exceeded
+   * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.
    * The head cannot advance in such a way that the depth exceeds capacity.
    *
-   * \param[in] n The number of positions to advance the head of the circular buffer
+   * \param[in] n The number of positions to advance
    */
   __USED__ inline void advanceHead(const size_t n = 1)
   {
-    // Calculating new depth
-    size_t newDepth = getDepth() + n;
+   // Calculating new depth
+  const auto newDepth = _depth + n;
 
-    // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on advance head. This is probably a bug in HiCR.\n", getDepth(), n, newDepth, _capacity);
+   // Sanity check
+   if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", _depth, n, newDepth, _capacity);
 
-    // Advance head
-    _head += n;
-
-    // Wrap around circular buffer, if necessary
-    if (_head >= _capacity) _head = _head - _capacity;
+    // Storing new depth
+   _depth = newDepth;
   }
 
   /**
@@ -232,19 +229,29 @@ class Channel
   __USED__ inline void advanceTail(const size_t n = 1)
   {
     // Sanity check
-    if (n > getDepth()) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", getDepth(), n);
+    if (n > _depth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", _depth, n);
 
-    // Advance head
-    _tail += n;
+    // Decrease depth
+    _depth -= n;
 
-    // Wrap around circular buffer, if necessary
-    if (_tail >= _capacity) _tail = _tail - _capacity;
+    // Advance tail
+    _tail = (_tail + n) % _capacity;
   }
 
   /**
    * Local memory slot to update the tail position
    */
-  const Backend::memorySlotId_t _tailPositionSlot;
+  const Backend::memorySlotId_t _poppedTokensSlot;
+
+  /**
+   * The number of popped tokens
+   */
+  size_t _poppedTokens = 0;
+
+  /**
+   * Internal counter for the number of pushed tokens by the producer
+   */
+  size_t _pushedTokens = 0;
 
   private:
 
@@ -261,7 +268,7 @@ class Channel
   /**
    * Buffer position at the head
    */
-  size_t _head = 0;
+  size_t _depth = 0;
 
   /**
    * Buffer position at the tail

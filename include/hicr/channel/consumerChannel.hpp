@@ -143,32 +143,26 @@ class ConsumerChannel final : public Channel
    */
   __USED__ inline bool pop(const size_t n = 1)
   {
+    // We check only once for incoming messages (non-blocking operation)
+    checkReceivedTokens();
+
     // If the exchange buffer does not have n tokens pushed, reject operation
     if (getDepth() < n) return false;
 
     // Advancing tail (removes elements from the circular buffer)
     advanceTail(n);
 
+    // Increasing the number of popped tokens
+    _poppedTokens += n;
+
     // Notifying producer(s) of buffer liberation
-    _backend->memcpy(_coordinationBuffer, 0, _tailPositionSlot, 0, sizeof(size_t));
+    _backend->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
 
     // If we reached this point, then the operation was successful
     return true;
   }
 
   private:
-
-  __USED__ inline size_t getCurrentPushedTokenCount()
-  {
-   // Perform a non-blocking check of the token buffer, to see if there are new messages
-   _backend->queryMemorySlotUpdates(_tokenBuffer);
-
-   // Updating pushed tokens count
-   auto pushedTokens = _backend->getMemorySlotReceivedMessages(_tokenBuffer);
-
-   // Returning the number of pushed tokens
-   return pushedTokens;
-  }
 
   /**
    * This is a non-blocking non-collective function that requests the channel (and its underlying backend)
@@ -178,22 +172,24 @@ class ConsumerChannel final : public Channel
    */
   __USED__ inline size_t checkReceivedTokens()
   {
+    // Perform a non-blocking check of the token buffer, to see if there are new messages
+    _backend->queryMemorySlotUpdates(_tokenBuffer);
+
+    // Updating pushed tokens count
+    auto newPushedTokens = _backend->getMemorySlotReceivedMessages(_tokenBuffer);
+
     // The number of received tokens is the difference between the currently pushed tokens and the previous one
-    auto receivedTokens = getCurrentPushedTokenCount() - _pushedTokens;
+    auto receivedTokens = newPushedTokens - _pushedTokens;
 
     // We advance the head locally as many times as newly received tokens
     advanceHead(receivedTokens);
 
+    // Update the number of pushed tokens
+    _pushedTokens = newPushedTokens;
+
     // Returning the number of received tokens
     return receivedTokens;
   }
-
-  private:
-
-  /**
-   * Internal counter for the number of pushed tokens by the producer
-   */
-  size_t _pushedTokens = 0;
 };
 
 }; // namespace HiCR
