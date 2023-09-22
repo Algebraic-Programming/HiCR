@@ -30,28 +30,6 @@ namespace HiCR
  */
 class ProducerChannel final : public Channel
 {
-  public:
-
-  /**
-   * The constructor of the producer channel class.
-   *
-   * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
-   *
-   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
-   * popped. It may also be used for other coordination signals.
-   * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
-   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
-   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
-   * \param[in] tokenSize The size of each token.
-   */
-  ProducerChannel(Backend *backend,
-    const Backend::memorySlotId_t tokenBuffer,
-    const Backend::memorySlotId_t coordinationBuffer,
-    const size_t tokenSize,
-    const size_t capacity) :
-    Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity) {  }
-  ~ProducerChannel() = default;
-
   /**
    * Puts new token(s) unto the channel.
    *
@@ -124,10 +102,10 @@ class ProducerChannel final : public Channel
    */
   __USED__ inline void pushWait(Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
-   // Make sure source slot is beg enough to satisfy the operation
-   auto requiredBufferSize = getTokenSize() * n;
-   auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
-   if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
+    // Make sure source slot is beg enough to satisfy the operation
+    auto requiredBufferSize = getTokenSize() * n;
+    auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
+    if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
     // Copy tokens
     for (size_t i = 0; i < n; i++)
@@ -164,17 +142,17 @@ class ProducerChannel final : public Channel
    */
   __USED__ inline void checkReceiverPops()
   {
-   // Getting current tail position
-   size_t currentPoppedElements = _poppedTokens;
+    // Getting current tail position
+    size_t currentPoppedElements = _poppedTokens;
 
-   // Updating local value of the tail until it changes
-   _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
+    // Updating local value of the tail until it changes
+    _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
 
-   // Calculating difference between previous and new tail position
-   size_t n = _poppedTokens - currentPoppedElements;
+    // Calculating difference between previous and new tail position
+    size_t n = _poppedTokens - currentPoppedElements;
 
-   // Adjusting depth
-   advanceTail(n);
+    // Adjusting depth
+    advanceTail(n);
   }
 };
 

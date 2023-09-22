@@ -328,7 +328,7 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memorySlotId) override
   {
-   // Nothing to do here
+    // Nothing to do here
   }
 
   /**
@@ -338,7 +338,7 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
   {
-   // Nothing to do here
+    // Nothing to do here
   }
 
   /**
@@ -353,8 +353,8 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
-   // TO-DO
-   HICR_THROW_RUNTIME("Not implemented yet");
+    // TO-DO
+    HICR_THROW_RUNTIME("Not implemented yet");
   }
 
   /**

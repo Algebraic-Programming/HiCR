@@ -78,10 +78,12 @@ class Channel
   }
 
   /**
-   * This function can be used to check the size of the token buffer that needs to be provided
+   * This function can be used to check the minimum size of the token buffer that needs to be provided
    * to the channel.
    *
-   * \return Size (bytes) of the token buffer
+   * \param[in] tokenSize The expected size of the tokens to use in the channel
+   * \param[in] capacity The expected capacity (in token count) to use in the channel
+   * \return Minimum size (bytes) required of the token buffer
    */
   __USED__ static inline size_t getTokenBufferSize(const size_t tokenSize, const size_t capacity) noexcept
   {
@@ -106,12 +108,6 @@ class Channel
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \internal For this implementation of channels to work correctly, the underlying backend should guarantee that
-   * messages (one per token) should arrive in order. That is, if the producer sends tokens 'A' and 'B', the internal
-   * counter for messages received for the data buffer should only increase after 'A' was received (even if B arrived
-   * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
-   * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
-   *
    * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
@@ -119,19 +115,25 @@ class Channel
    * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
    * popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
+   * \param[in] capacity The maximum number of tokens that will be held by this channel
+   *
+   * \internal For this implementation of channels to work correctly, the underlying backend should guarantee that
+   * messages (one per token) should arrive in order. That is, if the producer sends tokens 'A' and 'B', the internal
+   * counter for messages received for the data buffer should only increase after 'A' was received (even if B arrived
+   * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
+   * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
   Channel(Backend *backend,
-    Backend::memorySlotId_t tokenBuffer,
-    Backend::memorySlotId_t coordinationBuffer,
-    const size_t tokenSize,
-    const size_t capacity) :
-  _backend(backend),
-  _tokenBuffer(tokenBuffer),
-  _coordinationBuffer(coordinationBuffer),
-  // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
-  _poppedTokensSlot(backend->registerLocalMemorySlot(&_poppedTokens, sizeof(size_t))),
-  _tokenSize(tokenSize),
-  _capacity(capacity)
+          Backend::memorySlotId_t tokenBuffer,
+          Backend::memorySlotId_t coordinationBuffer,
+          const size_t tokenSize,
+          const size_t capacity) : _backend(backend),
+                                   _tokenBuffer(tokenBuffer),
+                                   _coordinationBuffer(coordinationBuffer),
+                                   // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
+                                   _poppedTokensSlot(backend->registerLocalMemorySlot(&_poppedTokens, sizeof(size_t))),
+                                   _tokenSize(tokenSize),
+                                   _capacity(capacity)
   {
     if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
     if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
@@ -149,8 +151,8 @@ class Channel
 
   ~Channel()
   {
-   // Unregistering memory slot corresponding to popped token count
-   _backend->deregisterLocalMemorySlot(_poppedTokensSlot);
+    // Unregistering memory slot corresponding to popped token count
+    _backend->deregisterLocalMemorySlot(_poppedTokensSlot);
   }
 
   /**
@@ -210,14 +212,14 @@ class Channel
    */
   __USED__ inline void advanceHead(const size_t n = 1)
   {
-   // Calculating new depth
-  const auto newDepth = _depth + n;
+    // Calculating new depth
+    const auto newDepth = _depth + n;
 
-   // Sanity check
-   if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", _depth, n, newDepth, _capacity);
+    // Sanity check
+    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", _depth, n, newDepth, _capacity);
 
     // Storing new depth
-   _depth = newDepth;
+    _depth = newDepth;
   }
 
   /**

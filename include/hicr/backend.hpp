@@ -36,25 +36,25 @@ class Backend
 {
   public:
 
- /**
-  * Type definition for a generic memory space identifier
-  */
- typedef uint64_t memorySpaceId_t;
+  /**
+   * Type definition for a generic memory space identifier
+   */
+  typedef uint64_t memorySpaceId_t;
 
- /**
-  * Type definition for a generic memory slot identifier
-  */
- typedef uint64_t memorySlotId_t;
+  /**
+   * Type definition for a generic memory slot identifier
+   */
+  typedef uint64_t memorySlotId_t;
 
- /**
-  * Type definition for a global key (for exchanging global memory slots)
-  */
- typedef uint64_t globalKey_t;
+  /**
+   * Type definition for a global key (for exchanging global memory slots)
+   */
+  typedef uint64_t globalKey_t;
 
- /**
-  * Type definition for a comunication tag
-  */
- typedef uint64_t tag_t;
+  /**
+   * Type definition for a comunication tag
+   */
+  typedef uint64_t tag_t;
 
   /**
    * Enumeration to determine how the memory slot has been created
@@ -135,7 +135,6 @@ class Backend
     size_t messagesSent = 0;
   };
 
-
   /**
    * Common definition of a collection of compute resources
    */
@@ -165,7 +164,6 @@ class Backend
    * Type definition for a tag/key map of global variables
    */
   typedef parallelHashMap_t<tag_t, std::map<globalKey_t, std::vector<memorySlotId_t>>> globalMemorySlotTagKeyMap_t;
-
 
   virtual ~Backend() = default;
 
@@ -396,11 +394,10 @@ class Backend
 
     // Creating new memory slot structure
     auto newMemSlot = memorySlotStruct_t{
-     .pointer = ptr,
-     .size = size,
-     .creationType = memorySlotCreationType_t::registered,
-     .localityType = memorySlotLocalityType_t::local
-    };
+      .pointer = ptr,
+      .size = size,
+      .creationType = memorySlotCreationType_t::registered,
+      .localityType = memorySlotLocalityType_t::local};
 
     // Adding created memory slot to the set
     _memorySlotMap[newMemorySlotId] = newMemSlot;
@@ -412,6 +409,9 @@ class Backend
   /**
    * Registers a global memory slot from a given address
    *
+   * \param[in] tag Represents the subgroup of HiCR instances that will share the global reference
+   * \param[in] key Represents the a subset of memory slots that will be grouped together.
+   *                 They will be sorted by this value, which allows for recognizing which slots came from which instance.
    * \param[in] ptr Pointer to the start of the memory slot
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
@@ -423,12 +423,12 @@ class Backend
 
     // Creating new memory slot structure
     auto newMemSlot = memorySlotStruct_t{
-     .pointer = ptr,
-     .size = size,
-     .creationType = memorySlotCreationType_t::registered,
-     .localityType = memorySlotLocalityType_t::global,
-     .globalTag = tag,
-     .globalKey = key };
+      .pointer = ptr,
+      .size = size,
+      .creationType = memorySlotCreationType_t::registered,
+      .localityType = memorySlotLocalityType_t::global,
+      .globalTag = tag,
+      .globalKey = key};
 
     // Adding created memory slot to the set
     _memorySlotMap[newMemorySlotId] = newMemSlot;
@@ -484,17 +484,16 @@ class Backend
    * \param[in] tag Identifies a particular subset of global memory slots, and returns it
    * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
-   * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
   __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
-   // Checking whether all slots have been allocated/registered with this backend
-   for (auto memorySlotId : localMemorySlotIds)
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    // Checking whether all slots have been allocated/registered with this backend
+    for (auto memorySlotId : localMemorySlotIds)
+      if (_memorySlotMap.contains(memorySlotId) == false)
+        HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
 
-   // Calling internal implementation
-   exchangeGlobalMemorySlotsImpl(tag, globalKey, localMemorySlotIds);
+    // Calling internal implementation
+    exchangeGlobalMemorySlotsImpl(tag, globalKey, localMemorySlotIds);
   }
 
   /**
@@ -666,6 +665,8 @@ class Backend
   /**
    * Backend-internal implementation of the fence function
    *
+   * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
+   *
    */
   virtual void fenceImpl(const tag_t tag) = 0;
 
@@ -722,7 +723,6 @@ class Backend
    * \param[in] tag Identifies a particular subset of global memory slots, and returns it
    * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
    * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
-   * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
   virtual void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds) = 0;
 

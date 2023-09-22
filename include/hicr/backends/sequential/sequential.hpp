@@ -16,9 +16,9 @@
 #include <future>
 #include <stdio.h>
 
-#include <hicr/common/definitions.hpp>
 #include <hicr/backend.hpp>
 #include <hicr/backends/sequential/process.hpp>
+#include <hicr/common/definitions.hpp>
 
 namespace HiCR
 {
@@ -36,19 +36,19 @@ namespace sequential
  */
 class Sequential final : public Backend
 {
-public:
+  public:
 
- /**
-  * Common definition of a collection of memory slots
-  */
- typedef parallelHashMap_t<tag_t, size_t> fenceCountTagMap_t;
+  /**
+   * Common definition of a collection of memory slots
+   */
+  typedef parallelHashMap_t<tag_t, size_t> fenceCountTagMap_t;
 
- /**
-  * Constructor for the sequential backend.
-  *
-  * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
-  */
-  Sequential(const size_t fenceCount = 1) : Backend(), _fenceCount(fenceCount) { }
+  /**
+   * Constructor for the sequential backend.
+   *
+   * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
+   */
+  Sequential(const size_t fenceCount = 1) : Backend(), _fenceCount(fenceCount) {}
   ~Sequential() = default;
 
   private:
@@ -63,11 +63,10 @@ public:
    */
   fenceCountTagMap_t _fenceCountTagMap;
 
-   /**
-    * This set remembers which of the registered memory slots are actually global
-    */
-   parallelHashMap_t<memorySlotId_t, memorySlotStruct_t*> _globalRegisteredMemorySlots;
-
+  /**
+   * This set remembers which of the registered memory slots are actually global
+   */
+  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t *> _globalRegisteredMemorySlots;
 
   /**
    * This stores the total system memory to check that allocations do not exceed it
@@ -126,7 +125,7 @@ public:
   __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size) override
   {
     // Getting pointer for the corresponding slots
-    const auto srcSlot = _globalRegisteredMemorySlots.contains(source)      == false ? &_memorySlotMap.at(source)      : _globalRegisteredMemorySlots.at(source);
+    const auto srcSlot = _globalRegisteredMemorySlots.contains(source) == false ? &_memorySlotMap.at(source) : _globalRegisteredMemorySlots.at(source);
     const auto dstSlot = _globalRegisteredMemorySlots.contains(destination) == false ? &_memorySlotMap.at(destination) : _globalRegisteredMemorySlots.at(destination);
 
     // Getting slot pointers
@@ -155,15 +154,15 @@ public:
   __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
   {
     // If the given memory slot is a global one, the message exchanged counters need to be updated with the local copy information
-   if (_globalRegisteredMemorySlots.contains(memorySlotId) == true)
-   {
-    const auto globalSlot = _globalRegisteredMemorySlots.at(memorySlotId);
-    const auto localSlot  = &_memorySlotMap.at(memorySlotId);
+    if (_globalRegisteredMemorySlots.contains(memorySlotId) == true)
+    {
+      const auto globalSlot = _globalRegisteredMemorySlots.at(memorySlotId);
+      const auto localSlot = &_memorySlotMap.at(memorySlotId);
 
-    // Updating message counts
-    localSlot->messagesRecv = globalSlot->messagesRecv;
-    localSlot->messagesSent = globalSlot->messagesSent;
-   }
+      // Updating message counts
+      localSlot->messagesRecv = globalSlot->messagesRecv;
+      localSlot->messagesSent = globalSlot->messagesSent;
+    }
   }
 
   /**
@@ -173,11 +172,12 @@ public:
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
-   // Increasing the counter for the fence corresponding to the tag
-   _fenceCountTagMap[tag]++;
+    // Increasing the counter for the fence corresponding to the tag
+    _fenceCountTagMap[tag]++;
 
-   // Until we reached the required count, wait on it
-   while(_fenceCountTagMap[tag] < _fenceCount);
+    // Until we reached the required count, wait on it
+    while (_fenceCountTagMap[tag] < _fenceCount)
+      ;
   }
 
   /**
@@ -227,14 +227,14 @@ public:
    *
    * \param[in] tag Identifies a particular subset of global memory slots, and returns it
    * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
-   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
+   * \param[in] key The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
    * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
    */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t key, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
-   // Adding local memory slots to the global map
-   for (const auto memorySlotId : localMemorySlotIds)
-    registerGlobalMemorySlot(tag, key, getLocalMemorySlotPointer(memorySlotId), getMemorySlotSize(memorySlotId));
+    // Adding local memory slots to the global map
+    for (const auto memorySlotId : localMemorySlotIds)
+      registerGlobalMemorySlot(tag, key, getLocalMemorySlotPointer(memorySlotId), getMemorySlotSize(memorySlotId));
   }
 
   /**
@@ -270,7 +270,6 @@ public:
     // Otherwise it is ok
     return true;
   }
-
 };
 
 } // namespace sequential
