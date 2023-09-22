@@ -43,6 +43,7 @@ class ProducerChannel final : public Channel
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
    * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
    * \param[in] tokenSize The size of each token.
+   * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   ProducerChannel(Backend *backend,
                   const Backend::memorySlotId_t tokenBuffer,
@@ -148,8 +149,6 @@ class ProducerChannel final : public Channel
   /**
    * Checks whether the receiver has freed up space in the receiver buffer
    * and reports how many tokens were popped.
-   *
-   * \return The number of newly popped tokens in the receiver side
    *
    * \internal This function needs to be re-callable without side-effects
    * since it will be called repeatedly to check whether a pending operation
