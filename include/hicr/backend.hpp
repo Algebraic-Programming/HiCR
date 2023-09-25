@@ -138,22 +138,22 @@ class Backend
   /**
    * Common definition of a collection of compute resources
    */
-  typedef parallelHashSet_t<computeResourceId_t> computeResourceList_t;
+  typedef std::set<computeResourceId_t> computeResourceList_t;
 
   /**
    * Common definition of a collection of memory spaces
    */
-  typedef parallelHashSet_t<memorySpaceId_t> memorySpaceList_t;
+  typedef std::set<memorySpaceId_t> memorySpaceList_t;
 
   /**
    * Common definition of a collection of memory slots
    */
-  typedef parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> memorySlotList_t;
+  typedef std::map<memorySlotId_t, memorySlotStruct_t> memorySlotList_t;
 
   /**
    * Common definition of a map that links key ids with memory slot id arrays (for global exchange)
    */
-  typedef parallelHashMap_t<globalKey_t, std::vector<memorySlotId_t>> memorySlotIdArrayMap_t;
+  typedef std::map<globalKey_t, std::vector<memorySlotId_t>> memorySlotIdArrayMap_t;
 
   /**
    * Type definition for reporting the number of inbound/outbound messages exchanged
@@ -163,7 +163,7 @@ class Backend
   /**
    * Type definition for a tag/key map of global variables
    */
-  typedef parallelHashMap_t<tag_t, std::map<globalKey_t, std::vector<memorySlotId_t>>> globalMemorySlotTagKeyMap_t;
+  typedef std::map<tag_t, std::map<globalKey_t, std::vector<memorySlotId_t>>> globalMemorySlotTagKeyMap_t;
 
   virtual ~Backend() = default;
 
@@ -176,11 +176,17 @@ class Backend
    */
   __USED__ inline void queryComputeResources()
   {
+    // Lock Thread-safety mutex
+    _mutex.lock();
+
     // Clearing existing compute resources
     _computeResourceList.clear();
 
     // Calling backend-internal implementation
     _computeResourceList = queryComputeResourcesImpl();
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
   }
 
   /**
@@ -192,11 +198,17 @@ class Backend
    */
   __USED__ inline void queryMemorySpaces()
   {
+    // Lock Thread-safety mutex
+    _mutex.lock();
+
     // Clearing existing memory space entries
     _memorySpaceList.clear();
 
     // Calling backend-internal implementation
     _memorySpaceList = queryMemorySpacesImpl();
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
   }
 
   /**
@@ -206,7 +218,19 @@ class Backend
    *
    * @return The list of compute resources, as detected the last time \a queryResources was executed.
    */
-  __USED__ inline const computeResourceList_t &getComputeResourceList() { return _computeResourceList; }
+  __USED__ inline const computeResourceList_t getComputeResourceList()
+   {
+     // Lock Thread-safety mutex
+     _mutex.lock();
+
+     // Getting value by copy
+     const auto value = _computeResourceList;
+
+     // Release Thread-safety mutex
+     _mutex.unlock();
+
+     return value;
+   }
 
   /**
    * This function returns the list of queried memory spaces, as visible by the backend.
@@ -215,7 +239,19 @@ class Backend
    *
    * @return The list of memory spaces, as detected the last time \a queryResources was executed.
    */
-  __USED__ inline const memorySpaceList_t &getMemorySpaceList() { return _memorySpaceList; }
+  __USED__ inline const memorySpaceList_t getMemorySpaceList()
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+   // Getting value by copy
+   const auto value = _memorySpaceList;
+
+   // Release Thread-safety mutex
+   _mutex.unlock();
+
+   return value;
+  }
 
   /**
    * This function returns the available allocatable size provided by the given memory space
@@ -223,13 +259,29 @@ class Backend
    * @param[in] memorySpace The memory space to query
    * @return The allocatable size within that memory space
    */
-  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace) const
+  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace)
   {
+    // Lock Thread-safety mutex
+    _mutex.lock();
+
     // Checking whether the referenced memory space actually exists
-    if (_memorySpaceList.contains(memorySpace) == false) HICR_THROW_RUNTIME("Attempting to get size from memory space that does not exist (%lu) in this backend", memorySpace);
+    if (_memorySpaceList.contains(memorySpace) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_RUNTIME("Attempting to get size from memory space that does not exist (%lu) in this backend", memorySpace);
+    }
+
+    // Getting value by copy
+    const auto value = getMemorySpaceSizeImpl(memorySpace);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
 
     // Calling internal implementation
-    return getMemorySpaceSizeImpl(memorySpace);
+    return value;
   }
 
   /**
@@ -239,13 +291,29 @@ class Backend
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource) const
+  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource)
   {
+    // Lock Thread-safety mutex
+    _mutex.lock();
+
     // Checking whether the referenced compute resource actually exists
-    if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
+    if (_computeResourceList.contains(resource) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
+    }
+
+    // Getting value by copy
+    auto value = createProcessingUnitImpl(resource);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
 
     // Calling internal implementation
-    return createProcessingUnitImpl(resource);
+    return value;
   }
 
   /**
@@ -303,19 +371,47 @@ class Backend
    */
   __USED__ inline void memcpy(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size)
   {
-    // Making sure the memory slots exist and is not null
+    // Making sure the memory slots exist and is not null. This operation is thread-safe
     if (isMemorySlotValid(source) == false) HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or is invalid", source);
     if (isMemorySlotValid(destination) == false) HICR_THROW_RUNTIME("Invalid destination memory slot(s) (%lu) provided. It either does not exist or is invalid", destination);
 
-    // Getting slot sizes
+    // Getting slot sizes. This operation is thread-safe
     const auto srcSize = getMemorySlotSize(source);
     const auto dstSize = getMemorySlotSize(destination);
+
+    // Lock Thread-safety mutex
+    _mutex.lock();
 
     // Making sure the memory slots exist and is not null
     const auto actualSrcSize = size + src_offset;
     const auto actualDstSize = size + dst_offset;
-    if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).", size, src_offset, actualSrcSize, source, srcSize);
-    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
+
+    // Checking size doesn't exceed slot size
+    if (actualSrcSize > srcSize)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).", size, src_offset, actualSrcSize, source, srcSize);
+    }
+
+    // Checking size doesn't exceed slot size
+    if (actualDstSize > dstSize)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
+    }
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
+    // To enable concurrent memcpy operations, the implementation is executed outside the mutex zone
+    // This means that the developer needs to make sure that the implementation is concurrency-safe,
+    // and try not to access any of the internal Backend class fields without proper mutex locking
 
     // Now calling internal memcpy function to give us a function that satisfies the operation
     memcpyImpl(destination, dst_offset, source, src_offset, size);
@@ -344,6 +440,10 @@ class Backend
    */
   __USED__ inline void fence(const tag_t tag)
   {
+    // To enable concurrent fence operations, the implementation is executed outside the mutex zone
+    // This means that the developer needs to make sure that the implementation is concurrency-safe,
+    // and try not to access any of the internal Backend class fields without proper mutex locking
+
     // Now call the proper fence, as implemented by the backend
     fenceImpl(tag);
   }
@@ -357,14 +457,27 @@ class Backend
    */
   __USED__ inline memorySlotId_t allocateLocalMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)
   {
-    // Checks whether the size requested exceeds the memory space size
+    // Checks whether the size requested exceeds the memory space size. This is a thread-safe operation
     auto maxSize = getMemorySpaceSize(memorySpaceId);
-    if (size > maxSize) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
+
+    // Lock Thread-safety mutex
+    _mutex.lock();
+
+    // Checking size doesn't exceed slot size
+    if (size > maxSize)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
+    }
 
     // Increase + swap memory slot for thread-safety
     auto newMemorySlotId = _currentMemorySlotId++;
 
-    // Calling internal implementation
+    // Calling internal implementation. This is done inside the mutex zone because it is meant to be an
+    // infrequent and fast operation, and ensuring concurrency safety is much more important than parallelism in this case
     auto ptr = allocateLocalMemorySlotImpl(memorySpaceId, size, newMemorySlotId);
 
     // Creating new memory slot structure
@@ -372,6 +485,9 @@ class Backend
 
     // Adding allocated memory slot to the set
     _memorySlotMap[newMemorySlotId] = newMemSlot;
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
 
     // Returning the id of the new memory slot
     return newMemorySlotId;
@@ -386,10 +502,14 @@ class Backend
    */
   virtual memorySlotId_t registerLocalMemorySlot(void *const ptr, const size_t size)
   {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
     // Increase + swap memory slot for thread-safety
     auto newMemorySlotId = _currentMemorySlotId++;
 
-    // Calling internal implementation
+    // Calling internal implementation. This is done inside the mutex zone because it is meant to be an
+        // infrequent and fast operation, and ensuring concurrency safety is much more important than parallelism in this case
     registerLocalMemorySlotImpl(ptr, size, newMemorySlotId);
 
     // Creating new memory slot structure
@@ -402,12 +522,357 @@ class Backend
     // Adding created memory slot to the set
     _memorySlotMap[newMemorySlotId] = newMemSlot;
 
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
     // Returning the id of the new memory slot
     return newMemorySlotId;
   }
 
   /**
-   * Registers a global memory slot from a given address
+   * Retrieves the map of globally registered slots
+   *
+   * \return The map of registered global memory slots, filtered by tag and mapped by key
+   */
+  __USED__ inline globalMemorySlotTagKeyMap_t getGlobalMemorySlots()
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+   // Getting value by copy
+   const auto value = _globalMemorySlotTagKeyMap;
+
+   // Release Thread-safety mutex
+   _mutex.unlock();
+
+    return value;
+  }
+
+  /**
+   * De-registers a previously registered memory slot
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   */
+  __USED__ inline void deregisterLocalMemorySlot(memorySlotId_t memorySlotId)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether the slot has been associated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+
+    // Checking whether the slot is local
+    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not local to this backend", memorySlotId);
+    }
+
+    // Checking whether the slot has been registered
+    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::registered)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that was not manually registered to this backend", memorySlotId);
+    }
+
+    // Calling internal implementation
+    deregisterLocalMemorySlotImpl(memorySlotId);
+
+    // Removing memory slot from the set
+    _memorySlotMap.erase(memorySlotId);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
+  }
+
+  /**
+   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
+   *
+   * This is a collective function that will block until the user-specified expected slot count is found.
+   *
+   * \param[in] tag Identifies a particular subset of global memory slots, and returns it
+   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
+   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
+   */
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether all slots have been allocated/registered with this backend
+    for (auto memorySlotId : localMemorySlotIds)
+      if (_memorySlotMap.contains(memorySlotId) == false)
+      {
+       // Release mutex before triggering the exception
+       _mutex.unlock();
+
+       // Triggering exception
+       HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
+      }
+
+    // Calling internal implementation
+    exchangeGlobalMemorySlotsImpl(tag, globalKey, localMemorySlotIds);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+  }
+
+  /**
+   * Frees up a memory slot reserved from this memory space
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   */
+  __USED__ inline void freeLocalMemorySlot(memorySlotId_t memorySlotId)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether the slot has been allocated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+    // Checking whether the slot is local
+    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not local to this backend", memorySlotId);
+    }
+
+    // Checking whether the slot has been allocated with this backend
+    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::allocated)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that was not allocated with this backend", memorySlotId);
+    }
+
+    // Actually freeing up slot
+    freeLocalMemorySlotImpl(memorySlotId);
+
+    // Removing entry from the set
+    _memorySlotMap.erase(memorySlotId);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+  }
+
+  /**
+   * Queries the backend to update the internal state of the memory slot.
+   * One main use case of this function is to update the number of messages received and sent to/from this slot.
+   * This is a non-blocking, non-collective function.
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to query for updates.
+   */
+  __USED__ inline void queryMemorySlotUpdates(const memorySlotId_t memorySlotId)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether the slot has been associated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to query updates for a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+    // Getting value by copy
+    queryMemorySlotUpdatesImpl(memorySlotId);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+  }
+
+  /**
+   * Obtains the local pointer from a given memory slot.
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
+   * \return The local memory pointer, if applicable. NULL, otherwise.
+   */
+  __USED__ inline void *getLocalMemorySlotPointer(const memorySlotId_t memorySlotId)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether the slot has been associated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to get the pointer of a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+    // Getting value by copy
+    const auto value = _memorySlotMap.at(memorySlotId).pointer;
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
+    // Returning memory slot pointer
+    return value;
+  }
+
+  /**
+   * Obtains the size of the memory slot
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the size.
+   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
+   */
+  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether the slot has been associated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to get the size a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+    // Getting value by copy
+    const auto value = _memorySlotMap.at(memorySlotId).size;
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
+    // Returning memory slot size
+    return value;
+  }
+
+  /**
+   * Obtains the number of fully received messages in this slot, from its creation
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the size.
+   * \return The non-negative number of fully received messages into the slot
+   */
+  __USED__ inline size_t getMemorySlotReceivedMessages(const memorySlotId_t memorySlotId)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether the slot has been associated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to get the query the number of received messages for a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+    // Getting value by copy
+    const auto value = _memorySlotMap.at(memorySlotId).messagesRecv;
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
+    // Returning value
+    return value;
+  }
+
+  /**
+   * Obtains the number of fully sent messages from this slot, from its creation
+   *
+   * \param[in] memorySlotId Identifier of the slot from where to source the size.
+   * \return The non-negative number of fully sent messages from this slot
+   */
+  __USED__ inline size_t getMemorySlotSentMessages(const memorySlotId_t memorySlotId)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether the slot has been associated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to get the query the number of sent messages for a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+    // Getting value by copy
+    const auto value = _memorySlotMap.at(memorySlotId).messagesSent;
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
+    // Calling backend-specific function
+    return value;
+  }
+
+  /**
+   * Checks whether the memory slot id exists and is a valid slot (e.g., the pointer is not NULL)
+   *
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
+   */
+  __USED__ inline bool isMemorySlotValid(const memorySlotId_t memorySlotId)
+  {
+   // Lock Thread-safety mutex
+   _mutex.lock();
+
+    // Checking whether the slot has been associated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false)
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to get the size a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+    // Getting value by copy
+    const auto value = isMemorySlotValidImpl(memorySlotId);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
+    // Running the implementation function
+    return value;
+  }
+
+  protected:
+
+  /**
+   * Registers a global memory slot from a given address.
+   *
+   * \internal This function is only meant to be called internally as part of theand must be done within the
+   * a mutex zone.
    *
    * \param[in] tag Represents the subgroup of HiCR instances that will share the global reference
    * \param[in] key Represents the a subset of memory slots that will be grouped together.
@@ -439,187 +904,6 @@ class Backend
     // Returning the id of the new memory slot
     return newMemorySlotId;
   }
-
-  /**
-   * Retrieves the map of globally registered slots
-   *
-   * \return The map of registered global memory slots, filtered by tag and mapped by key
-   */
-  __USED__ inline globalMemorySlotTagKeyMap_t getGlobalMemorySlots()
-  {
-    return _globalMemorySlotTagKeyMap;
-  }
-
-  /**
-   * De-registers a previously registered memory slot
-   *
-   * \param[in] memorySlotId Identifier of the memory slot to deregister.
-   */
-  __USED__ inline void deregisterLocalMemorySlot(memorySlotId_t memorySlotId)
-  {
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Checking whether the slot is local
-    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local)
-      HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not local to this backend", memorySlotId);
-
-    // Checking whether the slot has been registered
-    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::registered)
-      HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that was not manually registered to this backend", memorySlotId);
-
-    // Calling internal implementation
-    deregisterLocalMemorySlotImpl(memorySlotId);
-
-    // Removing memory slot from the set
-    _memorySlotMap.erase(memorySlotId);
-  }
-
-  /**
-   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
-   *
-   * This is a collective function that will block until the user-specified expected slot count is found.
-   *
-   * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
-   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
-   */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
-  {
-    // Checking whether all slots have been allocated/registered with this backend
-    for (auto memorySlotId : localMemorySlotIds)
-      if (_memorySlotMap.contains(memorySlotId) == false)
-        HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Calling internal implementation
-    exchangeGlobalMemorySlotsImpl(tag, globalKey, localMemorySlotIds);
-  }
-
-  /**
-   * Frees up a memory slot reserved from this memory space
-   *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
-   */
-  __USED__ inline void freeLocalMemorySlot(memorySlotId_t memorySlotId)
-  {
-    // Checking whether the slot has been allocated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Checking whether the slot is local
-    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local)
-      HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not local to this backend", memorySlotId);
-
-    // Checking whether the slot has been allocated with this backend
-    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::allocated)
-      HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that was not allocated with this backend", memorySlotId);
-
-    // Actually freeing up slot
-    freeLocalMemorySlotImpl(memorySlotId);
-
-    // Removing entry from the set
-    _memorySlotMap.erase(memorySlotId);
-  }
-
-  /**
-   * Queries the backend to update the internal state of the memory slot.
-   * One main use case of this function is to update the number of messages received and sent to/from this slot.
-   * This is a non-blocking, non-collective function.
-   *
-   * \param[in] memorySlotId Identifier of the memory slot to query for updates.
-   */
-  __USED__ inline void queryMemorySlotUpdates(const memorySlotId_t memorySlotId)
-  {
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to query updates for a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Calling backend-specific function
-    return queryMemorySlotUpdatesImpl(memorySlotId);
-  }
-
-  /**
-   * Obtains the local pointer from a given memory slot.
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
-   * \return The local memory pointer, if applicable. NULL, otherwise.
-   */
-  __USED__ inline void *getLocalMemorySlotPointer(const memorySlotId_t memorySlotId) const
-  {
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to get the pointer of a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Returning memory slot pointer
-    return _memorySlotMap.at(memorySlotId).pointer;
-  }
-
-  /**
-   * Obtains the size of the memory slot
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the size.
-   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
-   */
-  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const
-  {
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to get the size a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Calling backend-specific function
-    return _memorySlotMap.at(memorySlotId).size;
-  }
-
-  /**
-   * Obtains the number of fully received messages in this slot, from its creation
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the size.
-   * \return The non-negative number of fully received messages into the slot
-   */
-  __USED__ inline size_t getMemorySlotReceivedMessages(const memorySlotId_t memorySlotId) const
-  {
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to get the query the number of received messages for a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Calling backend-specific function
-    return _memorySlotMap.at(memorySlotId).messagesRecv;
-  }
-
-  /**
-   * Obtains the number of fully sent messages from this slot, from its creation
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the size.
-   * \return The non-negative number of fully sent messages from this slot
-   */
-  __USED__ inline size_t getMemorySlotSentMessages(const memorySlotId_t memorySlotId) const
-  {
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to get the query the number of sent messages for a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Calling backend-specific function
-    return _memorySlotMap.at(memorySlotId).messagesSent;
-  }
-
-  /**
-   * Checks whether the memory slot id exists and is a valid slot (e.g., the pointer is not NULL)
-   *
-   * \param[in] memorySlotId Identifier of the slot to check
-   * \return True, if the referenced memory slot exists and is valid; false, otherwise
-   */
-  __USED__ inline bool isMemorySlotValid(const memorySlotId_t memorySlotId) const
-  {
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
-      HICR_THROW_LOGIC("Attempting to get the size a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Running the implementation function
-    return isMemorySlotValidImpl(memorySlotId);
-  }
-
-  protected:
 
   /**
    * Stores the map of created memory slots
@@ -734,6 +1018,11 @@ class Backend
   virtual void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) = 0;
 
   private:
+
+  /**
+   * Mutual exclusion mechanism for thread safety
+   */
+  std::mutex _mutex;
 
   /**
    * The internal container for the queried compute resources.

@@ -234,7 +234,7 @@ class Sequential final : public Backend
   {
     // Adding local memory slots to the global map
     for (const auto memorySlotId : localMemorySlotIds)
-      registerGlobalMemorySlot(tag, key, getLocalMemorySlotPointer(memorySlotId), getMemorySlotSize(memorySlotId));
+      registerGlobalMemorySlot(tag, key, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
   }
 
   /**

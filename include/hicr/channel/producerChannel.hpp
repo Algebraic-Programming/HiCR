@@ -75,7 +75,7 @@ class ProducerChannel final : public Channel
    *
    * \return Size (bytes) of the coordination buffer
    */
-  __USED__ static inline void initializeCoordinationBuffer(const Backend* backend, const Backend::memorySlotId_t coordinationBuffer) noexcept
+  __USED__ static inline void initializeCoordinationBuffer(Backend* backend, const Backend::memorySlotId_t coordinationBuffer) noexcept
   {
    // Getting actual buffer of the coordination buffer
    auto buffer = backend->getLocalMemorySlotPointer(coordinationBuffer);
