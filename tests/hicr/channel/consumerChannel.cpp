@@ -31,8 +31,8 @@ TEST(ConsumerChannel, Construction)
   const auto channelCapacity = 16;
 
   // Getting required buffer sizes
-  auto tokenBufferSize        = HiCR::Channel::getTokenBufferSize(tokenSize, channelCapacity);
-  auto coordinationBufferSize = HiCR::Channel::getCoordinationBufferSize();
+  auto tokenBufferSize        = HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity);
+  auto coordinationBufferSize = HiCR::ProducerChannel::getCoordinationBufferSize();
 
   // Allocating bad memory slots
   auto badDataBuffer         = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
@@ -46,9 +46,9 @@ TEST(ConsumerChannel, Construction)
   EXPECT_THROW(new HiCR::ConsumerChannel(&backend, correctDataBuffer, correctCoordinationBuffer, 0, channelCapacity), HiCR::common::LogicException);
   EXPECT_THROW(new HiCR::ConsumerChannel(&backend, correctDataBuffer, correctCoordinationBuffer, tokenSize, 0), HiCR::common::LogicException);
   EXPECT_THROW(new HiCR::ConsumerChannel(&backend, badDataBuffer, correctCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
-  EXPECT_THROW(new HiCR::ConsumerChannel(&backend, correctDataBuffer, badCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
 
   // Creating with correct parametes
+  EXPECT_NO_THROW(new HiCR::ConsumerChannel(&backend, correctDataBuffer, badCoordinationBuffer, tokenSize, channelCapacity));
   EXPECT_NO_THROW(new HiCR::ConsumerChannel(&backend, correctDataBuffer, correctCoordinationBuffer, tokenSize, channelCapacity));
 }
 
@@ -68,8 +68,11 @@ TEST(ConsumerChannel, PeekPop)
   const auto channelCapacity = 16;
 
   // Allocating correct memory slots
-  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::Channel::getTokenBufferSize(tokenSize, channelCapacity));
-  auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::Channel::getCoordinationBufferSize());
+  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
+  auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ProducerChannel::getCoordinationBufferSize());
+
+  // Initializing coordination buffer (sets to zero the counters)
+  HiCR::ProducerChannel::initializeCoordinationBuffer(&backend, coordinationBuffer);
 
   // Creating producer and Consumer channels
   HiCR::ProducerChannel producer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
@@ -80,54 +83,108 @@ TEST(ConsumerChannel, PeekPop)
   auto sendBufferSize = sendBufferCapacity * tokenSize;
   auto sendBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
+  // Attempting pop and peek
+  EXPECT_NO_THROW(consumer.pop());
+  EXPECT_NO_THROW(consumer.peek());
+
+  // Attempting to pop/peek more than capacity
+  EXPECT_THROW(consumer.pop(channelCapacity + 1), HiCR::common::LogicException);
+  EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::common::LogicException);
+
   // Attempting to pop on an empty channel
-  bool result = true;
-  EXPECT_NO_THROW(result = consumer.pop());
-  EXPECT_FALSE(result);
+  EXPECT_FALSE(consumer.pop());
+  EXPECT_TRUE(consumer.peek().empty());
 
   // Pushing zero tokens and attempting pop again
-  result = true;
   producer.push(sendBuffer, 0);
-  EXPECT_NO_THROW(result = consumer.pop());
-  EXPECT_FALSE(result);
+  EXPECT_FALSE(consumer.pop());
+  EXPECT_TRUE(consumer.peek().empty());
 
   // Pushing one token and attempting pop again
-  result = false;
   producer.push(sendBuffer, 1);
-  EXPECT_NO_THROW(result = consumer.pop());
-  EXPECT_TRUE(result);
+  EXPECT_FALSE(consumer.peek().empty());
+  EXPECT_TRUE(consumer.peek(2).empty());
+  EXPECT_TRUE(consumer.pop());
+  EXPECT_TRUE(consumer.peek().empty());
 
+  // Attempting to pop again
+  EXPECT_FALSE(consumer.pop());
+  EXPECT_TRUE(consumer.peek().empty());
+}
 
-//  // Attempting to push more tokens than buffer size (should throw exception)
-//  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity + 1), HiCR::common::LogicException);
-//
-//  // Trying to push more tokens than capacity (should return false)
-//  bool result = true;
-//  EXPECT_NO_THROW(result = producer.push(sendBuffer, sendBufferCapacity));
-//  EXPECT_FALSE(result);
-//
-//  // Trying to push one token
-//  result = false;
-//  EXPECT_NO_THROW(result = producer.push(sendBuffer, 1));
-//  EXPECT_TRUE(result);
-//
-//  // Trying to push capacity, but after having pushed one, should fail
-//  result = false;
-//  EXPECT_NO_THROW(result = producer.push(sendBuffer, channelCapacity));
-//  EXPECT_FALSE(result);
-//
-//  // Trying to push to capacity, should't fail
-//  result = false;
-//  EXPECT_NO_THROW(result = producer.push(sendBuffer, channelCapacity - 1));
-//  EXPECT_TRUE(result);
-//
-//  // Channel is full but trying to push zero should't fail
-//  result = false;
-//  EXPECT_NO_THROW(result = producer.push(sendBuffer, 0));
-//  EXPECT_TRUE(result);
-//
-//  // Channel is full and trying to push one more should fail
-//  result = false;
-//  EXPECT_NO_THROW(result = producer.push(sendBuffer, 1));
-//  EXPECT_FALSE(result);
+TEST(ConsumerChannel, PeekWait)
+{
+  // Instantiating backend
+  HiCR::backend::sequential::Sequential backend;
+
+  // Asking backend to check the available resources
+  backend.queryMemorySpaces();
+
+  // Obtaining memory spaces
+  auto memSpaces = backend.getMemorySpaceList();
+
+  // Channel configuration
+  const auto tokenSize = sizeof(size_t);
+  const auto channelCapacity = 1;
+
+  // Allocating correct memory slots
+  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
+  auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ProducerChannel::getCoordinationBufferSize());
+
+  // Initializing coordination buffer (sets to zero the counters)
+  HiCR::ProducerChannel::initializeCoordinationBuffer(&backend, coordinationBuffer);
+
+  // Calculating pointer to the value
+  auto recvBuffer = (size_t*)backend.getLocalMemorySlotPointer(tokenBuffer);
+
+  // Creating channel
+  HiCR::ProducerChannel producer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
+  HiCR::ConsumerChannel consumer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
+
+  // Attempting to push more tokens than channel size (should throw exception)
+  EXPECT_THROW(consumer.peekWait(channelCapacity + 1), HiCR::common::LogicException);
+
+  // Producer function
+  const size_t expectedValue = 42;
+  bool hasStarted = false;
+  bool hasConsumed = false;
+  size_t readValue = 0;
+  auto consumerFc = [&consumer, &hasStarted, &hasConsumed, &readValue, &recvBuffer]()
+  {
+   hasStarted = true;
+   auto posVector = consumer.peekWait(1);
+   hasConsumed = true;
+   readValue = recvBuffer[posVector[0]];
+   EXPECT_TRUE(consumer.pop());
+  };
+
+  // Running producer thread that tries to pushWait one token and enters suspension
+  std::thread consumerThread(consumerFc);
+
+  // Waiting a bit to make sure the consumer thread has started
+  while (hasStarted == false);
+
+  // The consumer flag should still be false
+  sched_yield();
+  usleep(50000);
+  sched_yield();
+
+  // Creating send buffer
+  auto sendBufferCapacity = channelCapacity + 1;
+  auto sendBufferSize = sendBufferCapacity * tokenSize;
+  auto sendBufferSlot = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
+  auto sendBuffer = (size_t*)backend.getLocalMemorySlotPointer(sendBufferSlot);
+  *sendBuffer = expectedValue;
+
+  // Pushing message
+  EXPECT_FALSE(hasConsumed);
+  producer.push(sendBufferSlot, 1);
+
+  // Wait for producer
+  consumerThread.join();
+
+  // Check passed value is correct
+  EXPECT_TRUE(hasConsumed);
+  EXPECT_EQ(readValue, expectedValue);
+  EXPECT_FALSE(consumer.pop());
 }

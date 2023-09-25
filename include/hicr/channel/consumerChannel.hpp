@@ -50,8 +50,27 @@ class ConsumerChannel final : public Channel
                   const Backend::memorySlotId_t tokenBuffer,
                   const Backend::memorySlotId_t coordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity) {}
+                  const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
+  {
+   // Checking that the provided token exchange  buffer has the right size
+   auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
+   auto providedTokenBufferSize = _backend->getMemorySlotSize(_tokenBuffer);
+   if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
+  }
   ~ConsumerChannel() = default;
+
+  /**
+   * This function can be used to check the minimum size of the token buffer that needs to be provided
+   * to the consumer channel.
+   *
+   * \param[in] tokenSize The expected size of the tokens to use in the channel
+   * \param[in] capacity The expected capacity (in token count) to use in the channel
+   * \return Minimum size (bytes) required of the token buffer
+   */
+  __USED__ static inline size_t getTokenBufferSize(const size_t tokenSize, const size_t capacity) noexcept
+  {
+    return tokenSize * capacity;
+  }
 
   /**
    * Peeks in the local received queue and returns a pointer to the current
@@ -75,26 +94,18 @@ class ConsumerChannel final : public Channel
    */
   __USED__ inline std::vector<size_t> peek(const size_t n = 1)
   {
-    // We check only once for incoming messages (non-blocking operation)
-    checkReceivedTokens();
+    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to peek for (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
 
-    // Creating vector to store the token positions
-    std::vector<size_t> positions;
+    // Obtaining lock for thread safety
+    _mutex.lock();
 
-    // If the exchange buffer does not have n tokens pushed, reject operation
-    if (getDepth() < n) return positions;
+    // Executing the peek operation
+    const auto positions = peekImpl(n);
 
-    // Assigning the pointer to each token requested
-    for (size_t i = 0; i < n; i++)
-    {
-      // Calculating buffer position
-      size_t bufferPos = (getTailPosition() + i) % getCapacity();
+    // Releasing the lock
+    _mutex.unlock();
 
-      // Assigning offset to the output buffer
-      positions.push_back(bufferPos);
-    }
-
-    // Succeeded in pushing the token(s)
+    // Returning position of the elements
     return positions;
   }
 
@@ -118,11 +129,22 @@ class ConsumerChannel final : public Channel
    */
   __USED__ inline std::vector<size_t> peekWait(const size_t n = 1)
   {
+    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to peek wait for (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
+
+    // Obtaining lock for thread safety
+    _mutex.lock();
+
     // While the number of tokens in the buffer is less than the desired number, wait for it
     while (getDepth() < n) checkReceivedTokens();
 
-    // Now do the peek, as designed above
-    return peek(n);
+    // Executing the peek operation
+    const auto result = peekImpl(n);
+
+    // Releasing the lock
+    _mutex.unlock();
+
+    // Now returning value
+    return result;
   }
 
   /**
@@ -143,6 +165,52 @@ class ConsumerChannel final : public Channel
    */
   __USED__ inline bool pop(const size_t n = 1)
   {
+    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
+
+    // Obtaining lock for thread safety
+    _mutex.lock();
+
+    // Calling actual implementation
+    auto result = popImpl(n);
+
+    // Releasing the lock
+    _mutex.unlock();
+
+    // Returning result
+    return result;
+  }
+
+  private:
+
+  __USED__ inline std::vector<size_t> peekImpl(const size_t n)
+  {
+    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to peek for (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
+
+    // We check only once for incoming messages (non-blocking operation)
+    checkReceivedTokens();
+
+    // Creating vector to store the token positions
+    std::vector<size_t> positions;
+
+    // If the exchange buffer does not have n tokens pushed, reject operation
+    if (getDepth() < n) return positions;
+
+    // Assigning the pointer to each token requested
+    for (size_t i = 0; i < n; i++)
+    {
+      // Calculating buffer position
+      size_t bufferPos = (getTailPosition() + i) % getCapacity();
+
+      // Assigning offset to the output buffer
+      positions.push_back(bufferPos);
+    }
+
+    // Succeeded in pushing the token(s)
+    return positions;
+  }
+
+  __USED__ inline bool popImpl(const size_t n)
+  {
     // We check only once for incoming messages (non-blocking operation)
     checkReceivedTokens();
 
@@ -161,8 +229,6 @@ class ConsumerChannel final : public Channel
     // If we reached this point, then the operation was successful
     return true;
   }
-
-  private:
 
   /**
    * This is a non-blocking non-collective function that requests the channel (and its underlying backend)

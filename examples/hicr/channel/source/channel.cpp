@@ -14,10 +14,13 @@ void producerFc(HiCR::Backend* backend)
  auto memSpaces = backend->getMemorySpaceList();
 
  // Getting required buffer sizes
- auto coordinationBufferSize = HiCR::Channel::getCoordinationBufferSize();
+ auto coordinationBufferSize = HiCR::ProducerChannel::getCoordinationBufferSize();
 
  // Allocating memory slot for the coordination buffer (required at the producer side)
  auto coordinationBuffer = backend->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
+
+ // Initializing coordination buffer (sets to zero the counters)
+ HiCR::ProducerChannel::initializeCoordinationBuffer(backend, coordinationBuffer);
 
  // Registering buffers globally for them to be used by remote actors
  backend->exchangeGlobalMemorySlots(CHANNEL_TAG, PRODUCER_KEY, {coordinationBuffer});
@@ -55,7 +58,7 @@ void consumerFc(HiCR::Backend* backend)
  auto memSpaces = backend->getMemorySpaceList();
 
  // Getting required buffer sizes
- auto tokenBufferSize = HiCR::Channel::getTokenBufferSize(sizeof(ELEMENT_TYPE), CAPACITY);
+ auto tokenBufferSize = HiCR::ConsumerChannel::getTokenBufferSize(sizeof(ELEMENT_TYPE), CAPACITY);
 
  // Allocating memory slot for the token buffer (required at the consumer side)
  auto tokenBuffer = backend->allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);

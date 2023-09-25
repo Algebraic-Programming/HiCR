@@ -12,7 +12,7 @@
  */
 
 #pragma once
-
+#include <mutex>
 #include <hicr/backend.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -52,6 +52,8 @@ class Channel
    *
    * This is a one-sided blocking call that need not be made collectively.
    *
+   * \note This is not a thread-safe call
+   *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
    * This function when called on a valid channel instance will never fail.
@@ -75,30 +77,6 @@ class Channel
   __USED__ inline size_t getTokenSize() const noexcept
   {
     return _tokenSize;
-  }
-
-  /**
-   * This function can be used to check the minimum size of the token buffer that needs to be provided
-   * to the channel.
-   *
-   * \param[in] tokenSize The expected size of the tokens to use in the channel
-   * \param[in] capacity The expected capacity (in token count) to use in the channel
-   * \return Minimum size (bytes) required of the token buffer
-   */
-  __USED__ static inline size_t getTokenBufferSize(const size_t tokenSize, const size_t capacity) noexcept
-  {
-    return tokenSize * capacity;
-  }
-
-  /**
-   * This function can be used to check the size of the coordination buffer that needs to be provided
-   * in the creation of the channel
-   *
-   * \return Size (bytes) of the coordination buffer
-   */
-  __USED__ static inline size_t getCoordinationBufferSize() noexcept
-  {
-    return sizeof(size_t);
   }
 
   protected:
@@ -137,16 +115,6 @@ class Channel
   {
     if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
     if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
-
-    // Checking that the provided token exchange  buffer has the right size
-    auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
-    auto providedTokenBufferSize = _backend->getMemorySlotSize(_tokenBuffer);
-    if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
-
-    // Checking that the provided coordination buffer has the right size
-    auto requiredCoordinationBufferSize = getCoordinationBufferSize();
-    auto providedCoordinationBufferSize = _backend->getMemorySlotSize(_coordinationBuffer);
-    if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
   }
 
   ~Channel()
@@ -188,6 +156,12 @@ class Channel
   }
 
   protected:
+
+  /**
+   * Mutex for thread-safety
+   */
+  std::mutex _mutex;
+
 
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
@@ -255,8 +229,6 @@ class Channel
    */
   size_t _pushedTokens = 0;
 
-  private:
-
   /**
    * Token size
    */
@@ -266,6 +238,9 @@ class Channel
    * How many tokens fit in the buffer
    */
   const size_t _capacity;
+
+
+  private:
 
   /**
    * Buffer position at the head

@@ -49,8 +49,40 @@ class ProducerChannel final : public Channel
                   const Backend::memorySlotId_t tokenBuffer,
                   const Backend::memorySlotId_t coordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity) {}
+                  const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
+  {
+   // Checking that the provided coordination buffer has the right size
+   auto requiredCoordinationBufferSize = getCoordinationBufferSize();
+   auto providedCoordinationBufferSize = _backend->getMemorySlotSize(_coordinationBuffer);
+   if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
+  }
   ~ProducerChannel() = default;
+
+  /**
+   * This function can be used to check the size of the coordination buffer that needs to be provided
+   * in the creation of the producer channel
+   *
+   * \return Size (bytes) of the coordination buffer
+   */
+  __USED__ static inline size_t getCoordinationBufferSize() noexcept
+  {
+    return sizeof(size_t);
+  }
+
+  /**
+   * This function can be used to check the size of the coordination buffer that needs to be provided
+   * in the creation of the producer channel
+   *
+   * \return Size (bytes) of the coordination buffer
+   */
+  __USED__ static inline void initializeCoordinationBuffer(const Backend* backend, const Backend::memorySlotId_t coordinationBuffer) noexcept
+  {
+   // Getting actual buffer of the coordination buffer
+   auto buffer = backend->getLocalMemorySlotPointer(coordinationBuffer);
+
+   // Resetting all its values to zero
+   memset(buffer, 0, getCoordinationBufferSize());
+  }
 
   /**
    * Puts new token(s) unto the channel.
@@ -71,31 +103,24 @@ class ProducerChannel final : public Channel
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline bool push(Backend::memorySlotId_t sourceSlot, const size_t n = 1)
+  __USED__ inline bool push(const Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
     auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
-    // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + n > getCapacity()) return false;
+    // Obtaining lock for thread safety
+    _mutex.lock();
 
-    // Copy tokens
-    for (size_t i = 0; i < n; i++)
-    {
-      // Copying with source increasing offset per token
-      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+    // Getting result from calling pus
+    const auto result = pushImpl(sourceSlot, n);
 
-      // Advance head, as we have added a new element
-      advanceHead(1);
-    }
-
-    // Increasing the number of pushed tokens
-    _pushedTokens += n;
+    // Releasing lock
+    _mutex.unlock();
 
     // Succeeded in pushing the token(s)
-    return true;
+    return result;
   }
 
   /**
@@ -122,28 +147,21 @@ class ProducerChannel final : public Channel
    * A call to this function throws an exception if:
    *  -# the \a slot, \a offset, \a size combination exceeds the memory region of \a slot.
    */
-  __USED__ inline void pushWait(Backend::memorySlotId_t sourceSlot, const size_t n = 1)
+  __USED__ inline void pushWait(const Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
     auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
-    // Copy tokens
-    for (size_t i = 0; i < n; i++)
-    {
-      // If the exchange buffer is full, the task needs to be suspended until it's freed
-      while (getDepth() == getCapacity()) checkReceiverPops();
+    // Obtaining lock for thread safety
+    _mutex.lock();
 
-      // Copying with source increasing offset per token
-      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+    // Calling actual implementation
+    pushWaitImpl(sourceSlot, n);
 
-      // Advance head, as we have added a new element
-      advanceHead(1);
-    }
-
-    // Increasing the number of pushed tokens
-    _pushedTokens += n;
+    // Releasing lock
+    _mutex.unlock();
   }
 
   /**
@@ -162,17 +180,72 @@ class ProducerChannel final : public Channel
    */
   __USED__ inline void checkReceiverPops()
   {
+   // Obtaining lock for thread safety
+   _mutex.lock();
+
+   // Calling actual implementation
+   checkReceiverPopsImpl();
+
+   // Releasing lock
+   _mutex.unlock();
+  }
+
+  private:
+
+  __USED__ inline void checkReceiverPopsImpl()
+  {
     // Getting current tail position
-    size_t currentPoppedElements = _poppedTokens;
+    size_t currentPoppedTokens = _poppedTokens;
 
     // Updating local value of the tail until it changes
     _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
 
     // Calculating difference between previous and new tail position
-    size_t n = _poppedTokens - currentPoppedElements;
+    size_t n = _poppedTokens - currentPoppedTokens;
 
     // Adjusting depth
     advanceTail(n);
+  }
+
+  __USED__ inline bool pushImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
+  {
+    // If the exchange buffer does not have n free slots, reject the operation
+    if (getDepth() + n > getCapacity()) return false;
+
+    // Copy tokens
+    for (size_t i = 0; i < n; i++)
+    {
+      // Copying with source increasing offset per token
+      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+
+      // Advance head, as we have added a new element
+      advanceHead(1);
+    }
+
+    // Increasing the number of pushed tokens
+    _pushedTokens += n;
+
+    // Succeeded in pushing the token(s)
+    return true;
+  }
+
+  __USED__ inline void pushWaitImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
+  {
+    // Copy tokens
+    for (size_t i = 0; i < n; i++)
+    {
+      // If the exchange buffer is full, the task needs to be suspended until it's freed
+      while (getDepth() == getCapacity()) checkReceiverPopsImpl();
+
+      // Copying with source increasing offset per token
+      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+
+      // Advance head, as we have added a new element
+      advanceHead(1);
+    }
+
+    // Increasing the number of pushed tokens
+    _pushedTokens += n;
   }
 };
 
