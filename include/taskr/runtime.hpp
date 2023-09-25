@@ -300,7 +300,7 @@ class Runtime
    *
    * \param [in] computeResourceList Is the list of compute resources corresponding to the backend define during initialization. Taskr will create one processing unit from each of these resources and assign one of them to each worker.
    */
-  __USED__ inline void run(const HiCR::computeResourceList_t &computeResourceList)
+  __USED__ inline void run(const HiCR::Backend::computeResourceList_t &computeResourceList)
   {
     _dispatcher = new HiCR::Dispatcher([this]()
                                        { return checkWaitingTasks(); });

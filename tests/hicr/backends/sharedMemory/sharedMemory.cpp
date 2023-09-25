@@ -4,7 +4,7 @@
  */
 
 /**
- * @file worker.cpp
+ * @file sharedMemory.cpp
  * @brief Unit tests for the HiCR shared memory backend class
  * @author S. M. Martin
  * @date 13/9/2023
@@ -33,7 +33,7 @@ TEST(SharedMemory, Memory)
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  HiCR::memorySpaceList_t mList;
+  HiCR::Backend::memorySpaceList_t mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
   EXPECT_GT(mList.size(), 0);
 
@@ -52,26 +52,26 @@ TEST(SharedMemory, Memory)
   EXPECT_GE(totalMem, testMemAllocSize);
 
   // Trying to allocate more than allowed
-  EXPECT_THROW(b.allocateMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
+  EXPECT_THROW(b.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
 
   // Allocating memory correctly now
-  HiCR::memorySlotId_t s1 = 0;
-  EXPECT_NO_THROW(s1 = b.allocateMemorySlot(r, testMemAllocSize));
+  HiCR::Backend::memorySlotId_t s1 = 0;
+  EXPECT_NO_THROW(s1 = b.allocateLocalMemorySlot(r, testMemAllocSize));
   EXPECT_EQ(b.getMemorySlotSize(s1), testMemAllocSize);
 
   // Getting local pointer from allocation
   void *s1LocalPtr = NULL;
-  EXPECT_NO_THROW(s1LocalPtr = b.getMemorySlotLocalPointer(s1));
+  EXPECT_NO_THROW(s1LocalPtr = b.getLocalMemorySlotPointer(s1));
   memset(s1LocalPtr, 0, testMemAllocSize);
 
   // Creating memory slot from a previous allocation
-  HiCR::memorySlotId_t s2 = 0;
-  EXPECT_NO_THROW(s2 = b.createMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
+  HiCR::Backend::memorySlotId_t s2 = 0;
+  EXPECT_NO_THROW(s2 = b.registerLocalMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(b.getMemorySlotSize(s2), testMemAllocSize);
 
   // Getting local pointer from allocation
   void *s2LocalPtr = NULL;
-  EXPECT_NO_THROW(s2LocalPtr = b.getMemorySlotLocalPointer(s2));
+  EXPECT_NO_THROW(s2LocalPtr = b.getLocalMemorySlotPointer(s2));
   memset(s2LocalPtr, 0, testMemAllocSize);
 
   // Creating message to transmit
@@ -79,11 +79,10 @@ TEST(SharedMemory, Memory)
   memcpy(s1LocalPtr, testMessage.data(), testMessage.size());
 
   // Copying message from one slot to the other
-  HiCR::tagId_t tag = 0;
-  EXPECT_NO_THROW(b.memcpy(s2, 0, s1, 0, testMessage.size(), tag));
+  EXPECT_NO_THROW(b.memcpy(s2, 0, s1, 0, testMessage.size()));
 
   // Force memcpy operation to finish
-  EXPECT_NO_THROW(b.fence(tag));
+  EXPECT_NO_THROW(b.fence(0));
 
   // Making sure the message was received
   bool sameStrings = true;
@@ -92,6 +91,6 @@ TEST(SharedMemory, Memory)
   EXPECT_TRUE(sameStrings);
 
   // Freeing memory slots
-  EXPECT_NO_THROW(b.freeMemorySlot(s1));
-  EXPECT_NO_THROW(b.freeMemorySlot(s2));
+  EXPECT_NO_THROW(b.freeLocalMemorySlot(s1));
+  EXPECT_NO_THROW(b.deregisterLocalMemorySlot(s2));
 }

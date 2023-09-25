@@ -108,99 +108,6 @@ class SharedMemory final : public Backend
     for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
   }
 
-  /**
-   * Associates a pointer allocated somewhere else and creates a memory slot with it
-   * \param[in] addr Address in local memory that will be represented by the slot
-   * \param[in] size Size of the memory slot to create
-   * \return The id of the memory slot that represents the given pointer
-   */
-  __USED__ inline memorySlotId_t createMemorySlot(void *const addr, const size_t size) override
-  {
-    // Incrementing memory slot id to prevent index re-use
-    auto slotId = _currentMemorySlotId++;
-
-    // Inserting passed address into the memory slot map
-    _memorySlotMap[slotId] = memorySlotStruct_t{.pointer = addr, .size = size};
-
-    // Return the id of the just created slot
-    return slotId;
-  }
-
-  /**
-   * Frees up a memory slot reserved from this memory space
-   *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
-   */
-  __USED__ inline void freeMemorySlot(memorySlotId_t memorySlotId)
-  {
-    // Getting memory slot entry from the map
-    const auto &slot = _memorySlotMap.at(memorySlotId);
-
-    // Making sure the memory slot exists and is not null
-    if (slot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exist or represents a NULL pointer.", memorySlotId);
-
-    // If using strict binding, use hwloc_free to properly unmap the memory binding
-    if (slot.bindingType == binding_type::strict_binding)
-    {
-      // Freeing memory slot
-      auto status = hwloc_free(_topology, slot.pointer, slot.size);
-
-      // Error checking
-      if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot (%lu).", memorySlotId);
-    }
-
-    // If using strict non binding, use system's free
-    if (slot.bindingType == binding_type::strict_non_binding)
-    {
-      free(slot.pointer);
-    }
-
-    // Erasing memory slot from the map
-    _memorySlotMap.erase(memorySlotId);
-  }
-
-  /**
-   * Obtains the local pointer from a given memory slot.
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the pointer.
-   * \return The local memory pointer, if applicable. NULL, otherwise.
-   */
-  __USED__ inline void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const override
-  {
-    return _memorySlotMap.at(memorySlotId).pointer;
-  }
-
-  /**
-   * Obtains the size of the memory slot
-   *
-   * \param[in] memorySlotId Identifier of the slot from where to source the size.
-   * \return The non-negative size of the memory slot, if applicable. Zero, otherwise.
-   */
-  __USED__ inline size_t getMemorySlotSize(const memorySlotId_t memorySlotId) const override
-  {
-    return _memorySlotMap.at(memorySlotId).size;
-  }
-
-  /**
-   * Checks whether the memory slot id exists and is valid.
-   *
-   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
-   *
-   * \param[in] memorySlotId Identifier of the slot to check
-   * \return True, if the referenced memory slot exists and is valid; false, otherwise
-   */
-  __USED__ bool isMemorySlotValid(const memorySlotId_t memorySlotId) const override
-  {
-    // Getting pointer for the corresponding slot
-    const auto slot = _memorySlotMap.at(memorySlotId);
-
-    // If it is NULL, it means it was never created
-    if (slot.pointer == NULL) return false;
-
-    // Otherwise it is ok
-    return true;
-  }
-
   private:
 
   /**
@@ -241,19 +148,23 @@ class SharedMemory final : public Backend
   };
 
   /**
+   * Implementation of the fence operation for the shared memory backend. In this case, nothing needs to be done, as
+   * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
+   * ensures its completion.
+   */
+  __USED__ inline void fenceImpl(const tag_t tag) override
+  {
+  }
+
+  /**
    * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
    */
   binding_type _hwlocBindingRequested = binding_type::strict_binding;
 
   /**
-   * Currently available tag id to be assigned. It should increment as each tag is assigned
-   */
-  memorySlotId_t _currentMemorySlotId = 0;
-
-  /**
    * Thread-safe map that stores all allocated or created memory slots associated to this backend
    */
-  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t> _memorySlotMap;
+  parallelHashMap_t<memorySlotId_t, binding_type> _memorySlotBindingMap;
 
   /**
    * Thread-safe map that stores all detected memory spaces HWLoC objects associated to this backend
@@ -264,6 +175,26 @@ class SharedMemory final : public Backend
    * Local processor and memory hierarchy topology, as detected by Hwloc
    */
   hwloc_topology_t _topology;
+
+  /**
+   * Checks whether the memory slot id exists and is valid.
+   *
+   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
+   *
+   * \param[in] memorySlotId Identifier of the slot to check
+   * \return True, if the referenced memory slot exists and is valid; false, otherwise
+   */
+  __USED__ bool isMemorySlotValidImpl(const memorySlotId_t memorySlotId) const override
+  {
+    // Getting pointer for the corresponding slot
+    const auto slot = _memorySlotMap.at(memorySlotId);
+
+    // If it is NULL, it means it was never created
+    if (slot.pointer == NULL) return false;
+
+    // Otherwise it is ok
+    return true;
+  }
 
   /**
    * Pthread implementation of the Backend queryResources() function. This will add one compute resource object per Thread / Processing Unit (PU) found
@@ -335,7 +266,7 @@ class SharedMemory final : public Backend
     return std::move(std::make_unique<Thread>(resource));
   }
 
-  __USED__ inline deferredFunction_t memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size, const tagId_t &tag) override
+  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size) override
   {
     // Getting pointer for the corresponding slots
     const auto srcSlot = _memorySlotMap.at(source);
@@ -349,21 +280,24 @@ class SharedMemory final : public Backend
     const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
     const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
 
-    // Creating function that satisfies the request (memcpy)
-    return [actualDstPtr, actualSrcPtr, size]()
-    { std::memcpy(actualDstPtr, actualSrcPtr, size); };
+    // Running the requested operation
+    std::memcpy(actualDstPtr, actualSrcPtr, size);
+
+    // Increasing message received/sent counters for memory slots
+    _memorySlotMap[source].messagesSent++;
+    _memorySlotMap[destination].messagesRecv++;
   }
 
   /**
-   * Allocates memory in the current memory space (NUMA domain)
+   * Allocates a local memory slot in the current memory space (NUMA domain)
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
-   * \return A newly allocated memory slot in this memory space
+   * \param[in] memSlotId The identifier for the new local memory slot
    *
-   * TO-DO: This all should be threading safe
+   * \internal This all should be threading safe
    */
-  __USED__ inline memorySlotId_t allocateMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
   {
     // Recovering memory space from the map
     auto &memSpace = _memorySpaceMap.at(memorySpace);
@@ -379,14 +313,90 @@ class SharedMemory final : public Backend
     // Error checking
     if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpace);
 
-    // Incrementing memory slot id to prevent index re-use
-    auto slotId = _currentMemorySlotId++;
+    // Remembering binding support for the current memory slot
+    _memorySlotBindingMap[memSlotId] = memSpace.bindingSupport;
 
     // Assinging new entry in the memory slot map
-    _memorySlotMap[slotId] = memorySlotStruct_t{.pointer = ptr, .size = size, .bindingType = memSpace.bindingSupport};
+    return ptr;
+  }
 
-    // Return the id of the just created slot
-    return slotId;
+  /**
+   * Associates a local pointer allocated somewhere else and creates a local memory slot with it
+   * \param[in] addr Address in local memory that will be represented by the slot
+   * \param[in] size Size of the memory slot to create
+   * \param[in] memorySlotId The identifier for the local new memory slot
+   */
+  __USED__ inline void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memorySlotId) override
+  {
+    // Nothing to do here
+  }
+
+  /**
+   * De-registers a memory slot previously registered
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   */
+  __USED__ inline void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
+  {
+    // Nothing to do here
+  }
+
+  /**
+   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
+   *
+   * This is a collective function that will block until the user-specified expected slot count is found.
+   *
+   * \param[in] tag Identifies a particular subset of global memory slots, and returns it
+   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
+   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
+   * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
+   */
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  {
+    // TO-DO
+    HICR_THROW_RUNTIME("Not implemented yet");
+  }
+
+  /**
+   * Frees up a local memory slot reserved from this memory space
+   *
+   * \param[in] memorySlotId Identifier of the locally allocated memory slot to free up. It becomes unusable after freeing.
+   */
+  __USED__ inline void freeLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
+  {
+    // Getting memory slot entry from the map
+    const auto &slot = _memorySlotMap.at(memorySlotId);
+
+    // If using strict binding, use hwloc_free to properly unmap the memory binding
+    if (_memorySlotBindingMap.at(memorySlotId) == binding_type::strict_binding)
+    {
+      // Freeing memory slot
+      auto status = hwloc_free(_topology, slot.pointer, slot.size);
+
+      // Error checking
+      if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot (%lu).", memorySlotId);
+    }
+
+    // If using strict non binding, use system's free
+    if (_memorySlotBindingMap.at(memorySlotId) == binding_type::strict_non_binding)
+    {
+      free(slot.pointer);
+    }
+
+    // Erasing memory slot from the binding information map
+    _memorySlotBindingMap.erase(memorySlotId);
+  }
+
+  /**
+   * Queries the backend to update the internal state of the memory slot.
+   * One main use case of this function is to update the number of messages received and sent to/from this slot.
+   * This is a non-blocking, non-collective function.
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to query for updates.
+   */
+  __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
+  {
+    // This function should check and update the abstract class for completed memcpy operations
   }
 
   /**

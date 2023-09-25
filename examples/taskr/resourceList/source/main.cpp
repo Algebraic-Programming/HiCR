@@ -16,7 +16,7 @@ int main(int argc, char **argv)
   taskr::initialize(t);
 
   // Getting the core subset from the argument list (could be from a file too)
-  HiCR::computeResourceList_t coreSubset;
+  HiCR::Backend::computeResourceList_t coreSubset;
   for (int i = 1; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
 
   // Adding multiple compute tasks
