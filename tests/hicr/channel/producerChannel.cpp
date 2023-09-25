@@ -31,11 +31,11 @@ TEST(ProducerChannel, Construction)
   const auto channelCapacity = 16;
 
   // Getting required buffer sizes
-  auto tokenBufferSize        = HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity);
+  auto tokenBufferSize = HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity);
   auto coordinationBufferSize = HiCR::ProducerChannel::getCoordinationBufferSize();
 
   // Allocating bad memory slots
-  auto badDataBuffer         = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
+  auto badDataBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
   auto badCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize - 1);
 
   // Allocating correct memory slots
@@ -68,7 +68,7 @@ TEST(ProducerChannel, Push)
   const auto channelCapacity = 16;
 
   // Allocating correct memory slots
-  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
+  auto tokenBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
   auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ProducerChannel::getCoordinationBufferSize());
 
   // Initializing coordination buffer (sets to zero the counters)
@@ -135,7 +135,7 @@ TEST(ProducerChannel, PushWait)
   const auto channelCapacity = 2;
 
   // Allocating correct memory slots
-  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
+  auto tokenBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
   auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ProducerChannel::getCoordinationBufferSize());
 
   // Initializing coordination buffer (sets to zero the counters)
@@ -166,7 +166,8 @@ TEST(ProducerChannel, PushWait)
   HiCR::ConsumerChannel consumer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
 
   // Popping one element to liberate thread
-  while (consumer.pop() == false);
+  while (consumer.pop() == false)
+    ;
 
   // Wait for producer
   producerThread.join();

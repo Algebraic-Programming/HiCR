@@ -52,10 +52,10 @@ class ConsumerChannel final : public Channel
                   const size_t tokenSize,
                   const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
-   // Checking that the provided token exchange  buffer has the right size
-   auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
-   auto providedTokenBufferSize = _backend->getMemorySlotSize(_tokenBuffer);
-   if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
+    // Checking that the provided token exchange  buffer has the right size
+    auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
+    auto providedTokenBufferSize = _backend->getMemorySlotSize(_tokenBuffer);
+    if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
   }
   ~ConsumerChannel() = default;
 

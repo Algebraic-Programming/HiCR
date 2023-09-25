@@ -31,11 +31,11 @@ TEST(ConsumerChannel, Construction)
   const auto channelCapacity = 16;
 
   // Getting required buffer sizes
-  auto tokenBufferSize        = HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity);
+  auto tokenBufferSize = HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity);
   auto coordinationBufferSize = HiCR::ProducerChannel::getCoordinationBufferSize();
 
   // Allocating bad memory slots
-  auto badDataBuffer         = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
+  auto badDataBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
   auto badCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize - 1);
 
   // Allocating correct memory slots
@@ -68,7 +68,7 @@ TEST(ConsumerChannel, PeekPop)
   const auto channelCapacity = 16;
 
   // Allocating correct memory slots
-  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
+  auto tokenBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
   auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ProducerChannel::getCoordinationBufferSize());
 
   // Initializing coordination buffer (sets to zero the counters)
@@ -128,14 +128,14 @@ TEST(ConsumerChannel, PeekWait)
   const auto channelCapacity = 1;
 
   // Allocating correct memory slots
-  auto tokenBuffer        = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
+  auto tokenBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ConsumerChannel::getTokenBufferSize(tokenSize, channelCapacity));
   auto coordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::ProducerChannel::getCoordinationBufferSize());
 
   // Initializing coordination buffer (sets to zero the counters)
   HiCR::ProducerChannel::initializeCoordinationBuffer(&backend, coordinationBuffer);
 
   // Calculating pointer to the value
-  auto recvBuffer = (size_t*)backend.getLocalMemorySlotPointer(tokenBuffer);
+  auto recvBuffer = (size_t *)backend.getLocalMemorySlotPointer(tokenBuffer);
 
   // Creating channel
   HiCR::ProducerChannel producer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
@@ -151,18 +151,19 @@ TEST(ConsumerChannel, PeekWait)
   size_t readValue = 0;
   auto consumerFc = [&consumer, &hasStarted, &hasConsumed, &readValue, &recvBuffer]()
   {
-   hasStarted = true;
-   auto posVector = consumer.peekWait(1);
-   hasConsumed = true;
-   readValue = recvBuffer[posVector[0]];
-   EXPECT_TRUE(consumer.pop());
+    hasStarted = true;
+    auto posVector = consumer.peekWait(1);
+    hasConsumed = true;
+    readValue = recvBuffer[posVector[0]];
+    EXPECT_TRUE(consumer.pop());
   };
 
   // Running producer thread that tries to pushWait one token and enters suspension
   std::thread consumerThread(consumerFc);
 
   // Waiting a bit to make sure the consumer thread has started
-  while (hasStarted == false);
+  while (hasStarted == false)
+    ;
 
   // The consumer flag should still be false
   sched_yield();
@@ -173,7 +174,7 @@ TEST(ConsumerChannel, PeekWait)
   auto sendBufferCapacity = channelCapacity + 1;
   auto sendBufferSize = sendBufferCapacity * tokenSize;
   auto sendBufferSlot = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
-  auto sendBuffer = (size_t*)backend.getLocalMemorySlotPointer(sendBufferSlot);
+  auto sendBuffer = (size_t *)backend.getLocalMemorySlotPointer(sendBufferSlot);
   *sendBuffer = expectedValue;
 
   // Pushing message

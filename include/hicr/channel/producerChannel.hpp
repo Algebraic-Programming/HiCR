@@ -51,10 +51,10 @@ class ProducerChannel final : public Channel
                   const size_t tokenSize,
                   const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
-   // Checking that the provided coordination buffer has the right size
-   auto requiredCoordinationBufferSize = getCoordinationBufferSize();
-   auto providedCoordinationBufferSize = _backend->getMemorySlotSize(_coordinationBuffer);
-   if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
+    // Checking that the provided coordination buffer has the right size
+    auto requiredCoordinationBufferSize = getCoordinationBufferSize();
+    auto providedCoordinationBufferSize = _backend->getMemorySlotSize(_coordinationBuffer);
+    if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
   }
   ~ProducerChannel() = default;
 
@@ -73,15 +73,16 @@ class ProducerChannel final : public Channel
    * This function can be used to check the size of the coordination buffer that needs to be provided
    * in the creation of the producer channel
    *
-   * \return Size (bytes) of the coordination buffer
+   * \param[in] backend The backend to perform the initialization operation with
+   * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __USED__ static inline void initializeCoordinationBuffer(Backend* backend, const Backend::memorySlotId_t coordinationBuffer) noexcept
+  __USED__ static inline void initializeCoordinationBuffer(Backend *backend, const Backend::memorySlotId_t coordinationBuffer) noexcept
   {
-   // Getting actual buffer of the coordination buffer
-   auto buffer = backend->getLocalMemorySlotPointer(coordinationBuffer);
+    // Getting actual buffer of the coordination buffer
+    auto buffer = backend->getLocalMemorySlotPointer(coordinationBuffer);
 
-   // Resetting all its values to zero
-   memset(buffer, 0, getCoordinationBufferSize());
+    // Resetting all its values to zero
+    memset(buffer, 0, getCoordinationBufferSize());
   }
 
   /**
@@ -180,14 +181,14 @@ class ProducerChannel final : public Channel
    */
   __USED__ inline void checkReceiverPops()
   {
-   // Obtaining lock for thread safety
-   _mutex.lock();
+    // Obtaining lock for thread safety
+    _mutex.lock();
 
-   // Calling actual implementation
-   checkReceiverPopsImpl();
+    // Calling actual implementation
+    checkReceiverPopsImpl();
 
-   // Releasing lock
-   _mutex.unlock();
+    // Releasing lock
+    _mutex.unlock();
   }
 
   private:

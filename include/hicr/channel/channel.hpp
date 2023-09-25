@@ -12,10 +12,10 @@
  */
 
 #pragma once
-#include <mutex>
 #include <hicr/backend.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <mutex>
 
 namespace HiCR
 {
@@ -162,7 +162,6 @@ class Channel
    */
   std::mutex _mutex;
 
-
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
@@ -238,7 +237,6 @@ class Channel
    * How many tokens fit in the buffer
    */
   const size_t _capacity;
-
 
   private:
 
