@@ -163,10 +163,6 @@ class MPI final : public Backend
     // Calculating source pointer (with offset)
     auto sourcePointer = (void*) (((uint8_t*)_memorySlotMap.at(source).pointer) + src_offset);
 
-    printf("Source Pointer: 0x%lX\n", (uint64_t)sourcePointer);
-    printf("Size: %lu\n", size);
-    printf("Dst Offset: %lu\n", dst_offset);
-
     // Executing the get operation
     auto status = MPI_Put(
       sourcePointer,
@@ -195,12 +191,18 @@ class MPI final : public Backend
   }
 
   /**
-   * Implementation of the fence operation for the mpi backend. In this case, nothing needs to be done, as
-   * the memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
-   * ensures its completion.
+   * Implementation of the fence operation for the mpi backend. For every single window corresponding
+   * to a memory slot associated with the tag, a fence needs to be executed
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
+   // Getting all key-valued subsets within this tag
+   const auto& globalMemorySlotSubset = _globalMemorySlotTagKeyMap.at(tag);
+
+   // For every key-valued subset, and its elements, execute a fence
+   for (const auto& keyVector : globalMemorySlotSubset)
+    for (const auto& slot : keyVector.second)
+     MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[slot].window);
   }
 
   /**

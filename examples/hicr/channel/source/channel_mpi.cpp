@@ -44,10 +44,15 @@ void producerFc(HiCR::Backend* MPIbackend)
  // Obtaining the globally exchanged memory slots
  auto globalBuffers = MPIbackend->getGlobalMemorySlots()[CHANNEL_TAG];
 
+ ((uint64_t*)coordinationBufferPtr)[0] = 42;
+
+ printf("Producer Value: %lu\n", *(uint64_t*)coordinationBufferPtr);
+
  // Test memcpy
  MPIbackend->memcpy(globalBuffers[CONSUMER_KEY][0], 0, globalBuffers[PRODUCER_KEY][0], 0, coordinationBufferSize);
 
- while(true);
+ // Fence
+ MPIbackend->fence(CHANNEL_TAG);
 }
 
 void consumerFc(HiCR::Backend* MPIbackend)
@@ -76,7 +81,14 @@ void consumerFc(HiCR::Backend* MPIbackend)
  // Registering buffers globally for them to be used by remote actors
  MPIbackend->exchangeGlobalMemorySlots(CHANNEL_TAG, CONSUMER_KEY, {tokenBuffer});
 
- while(true);
+ // Fence
+ MPIbackend->fence(CHANNEL_TAG);
+
+ // Fence
+ MPIbackend->fence(CHANNEL_TAG);
+
+ // Printing value
+ printf("Consumer Value: %lu\n", *(uint64_t*)tokenBufferPtr);
 }
 
 int main(int argc, char **argv)
