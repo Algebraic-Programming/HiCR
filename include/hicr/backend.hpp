@@ -904,11 +904,6 @@ class Backend
   }
 
   /**
-   * Stores the map of created memory slots
-   */
-  memorySlotList_t _memorySlotMap;
-
-  /**
    * Backend-internal implementation of the isMemorySlotValid function
    *
    * \param[in] memorySlotId Identifier of the slot to check
@@ -1014,6 +1009,11 @@ class Backend
    * \param[in] memorySlotId Identifier of the memory slot to query for updates.
    */
   virtual void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) = 0;
+
+  /**
+   * Stores the map of created memory slots
+   */
+  memorySlotList_t _memorySlotMap;
 
   /**
    * Storage for global tag/key associated global memory slot exchange

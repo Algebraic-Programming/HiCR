@@ -113,7 +113,7 @@ void consumerFc(HiCR::Backend* MPIbackend)
  consumer.pop();
 
  // Freeing up memory
- MPIbackend->freeLocalMemorySlot(tokenBuffer);
+ sequentialBackend.freeLocalMemorySlot(tokenBuffer);
 }
 
 int main(int argc, char **argv)

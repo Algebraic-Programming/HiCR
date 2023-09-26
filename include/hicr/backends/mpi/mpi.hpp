@@ -63,9 +63,14 @@ class MPI final : public Backend
    int rank;
 
    /**
-    * Stores the MPI window to use with this slot
+    * Stores the MPI window to use with this slot to move the actual data
     */
-   MPI_Win* window;
+   MPI_Win* dataWindow;
+
+   /**
+    * Stores the MPI window to use with this slot to update received message count
+    */
+   MPI_Win* recvMessageCountWindow;
   };
 
   /**
@@ -152,7 +157,7 @@ class MPI final : public Backend
       src_offset,
       size,
       MPI_BYTE,
-      *_globalMemorySlotMPIWindowMap[source].window);
+      *_globalMemorySlotMPIWindowMap[source].dataWindow);
 
     // Checking execution status
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get (Slots %lu -> %lu)", source, destination);
@@ -173,14 +178,38 @@ class MPI final : public Backend
       dst_offset,
       size,
       MPI_BYTE,
-      *_globalMemorySlotMPIWindowMap[destination].window);
+      *_globalMemorySlotMPIWindowMap[destination].dataWindow);
+
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put (Slots %lu -> %lu)", source, destination);
+
+    // Increasing and updating remote slot received message count
+    _memorySlotMap.at(destination).messagesRecv++;
+
+    // Executing the get operation
+    status = MPI_Put(
+      &_memorySlotMap.at(destination).messagesRecv,
+      1,
+      MPI_UNSIGNED_LONG,
+      _globalMemorySlotMPIWindowMap[destination].rank,
+      0,
+      1,
+      MPI_UNSIGNED_LONG,
+      *_globalMemorySlotMPIWindowMap[destination].recvMessageCountWindow);
 
     // Checking execution status
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Put (Slots %lu -> %lu)", source, destination);
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run received message count MPI_Put (Slots %lu -> %lu)", source, destination);
    }
 
    // If both elements are local, then use memcpy directly
-   if (isSourceRemote == false && isDestinationRemote == false) ::memcpy(destinationPointer, sourcePointer, size);
+   if (isSourceRemote == false && isDestinationRemote == false)
+   {
+    // Increasing and updating local slot received message count
+    _memorySlotMap.at(source).messagesSent++;
+    _memorySlotMap.at(destination).messagesRecv++;
+
+    // Performing actual mem copy
+    ::memcpy(destinationPointer, sourcePointer, size);
+   }
   }
 
   /**
@@ -208,7 +237,13 @@ class MPI final : public Backend
     for (const auto& slot : keyVector.second)
     {
      // Attempting fence
-     auto status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[slot].window);
+     auto status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[slot].dataWindow);
+
+     // Check for possible errors
+     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu.", tag);
+
+     // Attempting fence
+     status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[slot].recvMessageCountWindow);
 
      // Check for possible errors
      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu.", tag);
@@ -326,31 +361,33 @@ class MPI final : public Backend
       globalSlotSizes[i]);
 
     // Creating new entry in the MPI Window map
-    _globalMemorySlotMPIWindowMap[globalSlotId] = globalMPISlot_t { .rank = globalSlotProcessId[i], .window = new MPI_Win };
+    _globalMemorySlotMPIWindowMap[globalSlotId] = globalMPISlot_t { .rank = globalSlotProcessId[i], .dataWindow = new MPI_Win, .recvMessageCountWindow = new MPI_Win};
 
     // Debug info
-    printf("Rank: %u, Pos %lu, GlobalSlot %lu, Key: %lu, Size: %lu, LocalPtr: 0x%lX, %s\n", _rank, i, globalSlotId, globalSlotKeys[i], globalSlotSizes[i], (uint64_t)globalSlotPointers[i], globalSlotProcessId[i] == _rank ? "x" : "");
+    //printf("Rank: %u, Pos %lu, GlobalSlot %lu, Key: %lu, Size: %lu, LocalPtr: 0x%lX, %s\n", _rank, i, globalSlotId, globalSlotKeys[i], globalSlotSizes[i], (uint64_t)globalSlotPointers[i], globalSlotProcessId[i] == _rank ? "x" : "");
 
-    // Creating MPI window
-    int status = MPI_Win_create(
+    // Creating MPI window for data transferring
+    auto status = MPI_Win_create(
       globalSlotPointers[i],
       globalSlotProcessId[i] == _rank ? globalSlotSizes[i] : 0,
       1,
       MPI_INFO_NULL,
       _comm,
-      _globalMemorySlotMPIWindowMap[globalSlotId].window);
+      _globalMemorySlotMPIWindowMap[globalSlotId].dataWindow);
 
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI window on exchange global memory slots.");
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
 
-    // Fencing on window creationg
-    status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[globalSlotId].window);
+    // Creating MPI window for message received count transferring
+    status = MPI_Win_create(
+      globalSlotProcessId[i] == _rank ? &_memorySlotMap[globalSlotId].messagesRecv : NULL,
+      globalSlotProcessId[i] == _rank ? globalSlotSizes[i] : 0,
+      1,
+      MPI_INFO_NULL,
+      _comm,
+      _globalMemorySlotMPIWindowMap[globalSlotId].recvMessageCountWindow);
 
-    // Checking for error on fence
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window creation on exchange global memory slots.");
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
    }
-
-
-
   }
 
   /**
