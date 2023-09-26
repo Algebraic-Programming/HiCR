@@ -124,24 +124,25 @@ class MPI final : public Backend
 
   __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size) override
   {
-   // Sanity checks
-   if (_globalMemorySlotMPIWindowMap.contains(source)      == false) HICR_THROW_LOGIC("Trying to use MPI backend to with a source slot(%lu) that has not been registered as global.", source);
-   if (_globalMemorySlotMPIWindowMap.contains(destination) == false) HICR_THROW_LOGIC("Trying to use MPI backend to with a destination slot(%lu) that has not been registered as global.", destination);
+
+   bool isSourceGlobalSlot      = _globalMemorySlotMPIWindowMap.contains(source);
+   bool isDestinationGlobalSlot = _globalMemorySlotMPIWindowMap.contains(destination);
 
    // Checking whether source and/or remote are remote
-   bool isSourceRemote      = _globalMemorySlotMPIWindowMap[source].rank      != _rank;
-   bool isDestinationRemote = _globalMemorySlotMPIWindowMap[destination].rank != _rank;
+   bool isSourceRemote      = isSourceGlobalSlot      ? _globalMemorySlotMPIWindowMap[source].rank      != _rank : false;
+   bool isDestinationRemote = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap[destination].rank != _rank : false;
 
-   // MPI backend should be used for local<->remote communications to determine whether Put or get should be used. This can be relaxed in the future, but for now we keep this in mind
-   if (isSourceRemote == false && isDestinationRemote == false) HICR_THROW_LOGIC("Trying to use MPI backend perform a local to local copy between slots (%lu -> %lu)", source, destination);
+   // Sanity checks
+   if (isSourceRemote      && isDestinationGlobalSlot == false) HICR_THROW_LOGIC("Trying to use MPI backend in remote operation to with a destination slot(%lu) that has not been registered as global.", destination);
    if (isSourceRemote == true  && isDestinationRemote == true)  HICR_THROW_LOGIC("Trying to use MPI backend perform a remote to remote copy between slots (%lu -> %lu)", source, destination);
+
+   // Calculating pointers
+   auto destinationPointer = (void*) (((uint8_t*)_memorySlotMap.at(destination).pointer) + dst_offset);
+   auto sourcePointer      = (void*) (((uint8_t*)_memorySlotMap.at(source).pointer) + src_offset);
 
    // Perform a get if the source is remote and destination is local
    if (isSourceRemote == true && isDestinationRemote == false)
    {
-    // Calculating source pointer (with offset)
-    auto destinationPointer = (void*) (((uint8_t*)_memorySlotMap.at(destination).pointer) + dst_offset);
-
     // Executing the get operation
     auto status = MPI_Get(
       destinationPointer,
@@ -177,6 +178,9 @@ class MPI final : public Backend
     // Checking execution status
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Put (Slots %lu -> %lu)", source, destination);
    }
+
+   // If both elements are local, then use memcpy directly
+   if (isSourceRemote == false && isDestinationRemote == false) ::memcpy(destinationPointer, sourcePointer, size);
   }
 
   /**
@@ -209,7 +213,6 @@ class MPI final : public Backend
      // Check for possible errors
      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu.", tag);
     }
-
   }
 
   /**

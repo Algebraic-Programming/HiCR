@@ -44,15 +44,25 @@ void producerFc(HiCR::Backend* MPIbackend)
  // Obtaining the globally exchanged memory slots
  auto globalBuffers = MPIbackend->getGlobalMemorySlots()[CHANNEL_TAG];
 
- ((uint64_t*)coordinationBufferPtr)[0] = 42;
+ // Creating producer and consumer channels
+ auto producer = HiCR::ProducerChannel(MPIbackend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
 
- printf("Producer Value: %lu\n", *(uint64_t*)coordinationBufferPtr);
+ // Allocating a send slot to put the values we want to communicate
+ ELEMENT_TYPE sendBuffer = 42;
+ auto sendBufferPtr = &sendBuffer;
+ auto sendSlot = MPIbackend->registerLocalMemorySlot(sendBufferPtr, sizeof(ELEMENT_TYPE));
 
- // Test memcpy
- MPIbackend->memcpy(globalBuffers[CONSUMER_KEY][0], 0, globalBuffers[PRODUCER_KEY][0], 0, coordinationBufferSize);
+ // Pushing value to the channel
+ producer.push(sendSlot);
 
- // Fence
- MPIbackend->fence(CHANNEL_TAG);
+ // Printing values
+ printf("Sent Value:     %u\n", *sendBufferPtr);
+
+ // Make sure the consumer got the message before exiting
+ while(producer.getDepth() > 0) producer.checkReceiverPops();
+
+ // Freeing up memory
+ MPIbackend->deregisterLocalMemorySlot(sendSlot);
 }
 
 void consumerFc(HiCR::Backend* MPIbackend)
@@ -81,14 +91,29 @@ void consumerFc(HiCR::Backend* MPIbackend)
  // Registering buffers globally for them to be used by remote actors
  MPIbackend->exchangeGlobalMemorySlots(CHANNEL_TAG, CONSUMER_KEY, {tokenBuffer});
 
- // Fence
+ // Synchronizing so that all actors have finished registering their memory slots
  MPIbackend->fence(CHANNEL_TAG);
 
- // Fence
- MPIbackend->fence(CHANNEL_TAG);
+ // Obtaining the globally exchanged memory slots
+ auto globalBuffers = MPIbackend->getGlobalMemorySlots()[CHANNEL_TAG];
 
- // Printing value
- printf("Consumer Value: %lu\n", *(uint64_t*)tokenBufferPtr);
+ // Creating producer and consumer channels
+ auto consumer = HiCR::ConsumerChannel(MPIbackend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
+
+ // Getting the value from the channel
+ auto recvSlot = consumer.peekWait();
+
+ // Calculating pointer to the value
+ auto recvBuffer = (ELEMENT_TYPE*)MPIbackend->getLocalMemorySlotPointer(tokenBuffer);
+
+ // Printing values
+ printf("Received Value: %u\n", recvBuffer[recvSlot[0]]);
+
+ // Popping received value to free up channel
+ consumer.pop();
+
+ // Freeing up memory
+ MPIbackend->freeLocalMemorySlot(tokenBuffer);
 }
 
 int main(int argc, char **argv)
