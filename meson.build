@@ -9,7 +9,8 @@ project('HiCR', [ 'cpp' ],
 subdir('include/hicr')
 subdir('include/taskr')
 subdir('include/hicr/backends/sequential')    
-subdir('include/hicr/backends/sharedMemory')    
+subdir('include/hicr/backends/sharedMemory')
+subdir('include/hicr/backends/mpi')    
     
 # Build example targets
 subdir('examples')
