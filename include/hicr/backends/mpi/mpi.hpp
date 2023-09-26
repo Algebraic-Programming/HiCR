@@ -202,7 +202,14 @@ class MPI final : public Backend
    // For every key-valued subset, and its elements, execute a fence
    for (const auto& keyVector : globalMemorySlotSubset)
     for (const auto& slot : keyVector.second)
-     MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[slot].window);
+    {
+     // Attempting fence
+     auto status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[slot].window);
+
+     // Check for possible errors
+     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu.", tag);
+    }
+
   }
 
   /**
