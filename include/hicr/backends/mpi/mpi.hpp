@@ -151,7 +151,7 @@ class MPI final : public Backend
       src_offset,
       size,
       MPI_BYTE,
-      *_globalMemorySlotMPIWindowMap[destination].window);
+      *_globalMemorySlotMPIWindowMap[source].window);
 
     // Checking execution status
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get (Slots %lu -> %lu)", source, destination);
@@ -161,7 +161,11 @@ class MPI final : public Backend
    if (isSourceRemote == false && isDestinationRemote == true)
    {
     // Calculating source pointer (with offset)
-    auto sourcePointer = (void*) (((uint8_t*)_memorySlotMap.at(destination).pointer) + src_offset);
+    auto sourcePointer = (void*) (((uint8_t*)_memorySlotMap.at(source).pointer) + src_offset);
+
+    printf("Source Pointer: 0x%lX\n", (uint64_t)sourcePointer);
+    printf("Size: %lu\n", size);
+    printf("Dst Offset: %lu\n", dst_offset);
 
     // Executing the get operation
     auto status = MPI_Put(
@@ -172,7 +176,7 @@ class MPI final : public Backend
       dst_offset,
       size,
       MPI_BYTE,
-      *_globalMemorySlotMPIWindowMap[source].window);
+      *_globalMemorySlotMPIWindowMap[destination].window);
 
     // Checking execution status
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Put (Slots %lu -> %lu)", source, destination);
@@ -274,6 +278,16 @@ class MPI final : public Backend
    // Exchanging global sizes
    MPI_Allgatherv(localSlotSizes.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotSizes.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
 
+   // Allocating storage for local and global memory slot keys
+   std::vector<globalKey_t> localSlotKeys(localSlotCount);
+   std::vector<globalKey_t> globalSlotKeys(globalSlotCount);
+
+   // Filling in the local size storage
+   for (size_t i = 0; i < localSlotKeys.size(); i++) localSlotKeys[i] = key;
+
+   // Exchanging global sizes
+   MPI_Allgatherv(localSlotKeys.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotKeys.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
+
    // Allocating storage for local and global slot<->rank identification. Needed to know which owns the window
    std::vector<int> localSlotProcessId(localSlotCount);
    std::vector<int> globalSlotProcessId(globalSlotCount);
@@ -289,21 +303,21 @@ class MPI final : public Backend
    size_t localPointerPos = 0;
    for (size_t i = 0; i < globalSlotPointers.size(); i++) globalSlotPointers[i] = globalSlotProcessId[i] == _rank ? _memorySlotMap.at(localPointerPos++).pointer : NULL;
 
-   // Debug info
-   //for (size_t i = 0; i < globalSlotSizes.size(); i++) printf("Rank: %u, GlobalSlot %lu, Size: %lu, LocalPtr: 0x%lX, %s\n", _rank, i, globalSlotSizes[i], (uint64_t)globalSlotPointers[i], globalSlotProcessId[i] == _rank ? "x" : "");
-
    // Now creating global slots and their MPI windows
    for (size_t i = 0; i < globalSlotProcessId.size(); i++)
    {
     // Registering global slot
     auto globalSlotId = registerGlobalMemorySlot(
       tag,
-      key,
+      globalSlotKeys[i],
       globalSlotPointers[i],
       globalSlotSizes[i]);
 
     // Creating new entry in the MPI Window map
     _globalMemorySlotMPIWindowMap[globalSlotId] = globalMPISlot_t { .rank = globalSlotProcessId[i], .window = new MPI_Win };
+
+    // Debug info
+    printf("Rank: %u, Pos %lu, GlobalSlot %lu, Key: %lu, Size: %lu, LocalPtr: 0x%lX, %s\n", _rank, i, globalSlotId, globalSlotKeys[i], globalSlotSizes[i], (uint64_t)globalSlotPointers[i], globalSlotProcessId[i] == _rank ? "x" : "");
 
     // Creating MPI window
     int status = MPI_Win_create(
@@ -315,7 +329,15 @@ class MPI final : public Backend
       _globalMemorySlotMPIWindowMap[globalSlotId].window);
 
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI window on exchange global memory slots.");
+
+    // Fencing on window creationg
+    status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[globalSlotId].window);
+
+    // Checking for error on fence
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window creation on exchange global memory slots.");
    }
+
+
 
   }
 

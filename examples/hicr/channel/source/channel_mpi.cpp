@@ -40,6 +40,14 @@ void producerFc(HiCR::Backend* MPIbackend)
 
  // Synchronizing so that all actors have finished registering their memory slots
  MPIbackend->fence(CHANNEL_TAG);
+
+ // Obtaining the globally exchanged memory slots
+ auto globalBuffers = MPIbackend->getGlobalMemorySlots()[CHANNEL_TAG];
+
+ // Test memcpy
+ MPIbackend->memcpy(globalBuffers[CONSUMER_KEY][0], 0, globalBuffers[PRODUCER_KEY][0], 0, coordinationBufferSize);
+
+ while(true);
 }
 
 void consumerFc(HiCR::Backend* MPIbackend)
@@ -67,6 +75,8 @@ void consumerFc(HiCR::Backend* MPIbackend)
 
  // Registering buffers globally for them to be used by remote actors
  MPIbackend->exchangeGlobalMemorySlots(CHANNEL_TAG, CONSUMER_KEY, {tokenBuffer});
+
+ while(true);
 }
 
 int main(int argc, char **argv)
