@@ -19,7 +19,7 @@ namespace backend = HiCR::backend::mpi;
 TEST(MPI, Construction)
 {
   int argc = 0;
-  char** argv = NULL;
+  char **argv = NULL;
 
   MPI_Init(&argc, &argv);
   backend::MPI *b = NULL;
