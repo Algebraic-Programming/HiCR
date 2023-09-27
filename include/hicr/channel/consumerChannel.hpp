@@ -226,6 +226,10 @@ class ConsumerChannel final : public Channel
     // Notifying producer(s) of buffer liberation
     _backend->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
 
+    // Re-syncing token and coordination buffers
+    _backend->queryMemorySlotUpdates(_coordinationBuffer);
+    _backend->queryMemorySlotUpdates(_tokenBuffer);
+
     // If we reached this point, then the operation was successful
     return true;
   }
@@ -238,7 +242,8 @@ class ConsumerChannel final : public Channel
    */
   __USED__ inline size_t checkReceivedTokens()
   {
-    // Perform a non-blocking check of the token buffer, to see if there are new messages
+    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
+    _backend->queryMemorySlotUpdates(_coordinationBuffer);
     _backend->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count

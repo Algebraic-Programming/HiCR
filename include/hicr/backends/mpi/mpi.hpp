@@ -169,8 +169,18 @@ class MPI final : public Backend
     // Calculating source pointer (with offset)
     auto sourcePointer = (void*) (((uint8_t*)_memorySlotMap.at(source).pointer) + src_offset);
 
+    // Locking MPI window to ensure both messages arrive in order
+    auto status = MPI_Win_lock(
+      MPI_LOCK_EXCLUSIVE,
+      _globalMemorySlotMPIWindowMap[destination].rank,
+      0,
+      *_globalMemorySlotMPIWindowMap[destination].dataWindow);
+
+    // Checking correct locking
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI window on MPI_Put (Slots %lu -> %lu)", source, destination);
+
     // Executing the get operation
-    auto status = MPI_Put(
+    status = MPI_Put(
       sourcePointer,
       size,
       MPI_BYTE,
@@ -181,6 +191,14 @@ class MPI final : public Backend
       *_globalMemorySlotMPIWindowMap[destination].dataWindow);
 
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put (Slots %lu -> %lu)", source, destination);
+
+    // Unlocking window after copy is completed
+    status = MPI_Win_unlock(
+      _globalMemorySlotMPIWindowMap[destination].rank,
+      *_globalMemorySlotMPIWindowMap[destination].dataWindow);
+
+    // Checking correct locking
+     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI window on MPI_Put (Slots %lu -> %lu)", source, destination);
 
     // Increasing and updating remote slot received message count
     _memorySlotMap.at(destination).messagesRecv++;
@@ -215,7 +233,7 @@ class MPI final : public Backend
   /**
    * Queries the backend to update the internal state of the memory slot.
    * One main use case of this function is to update the number of messages received and sent to/from this slot.
-   * This is a non-blocking, non-collective function.
+   * This is a collective function
    *
    * \param[in] memorySlotId Identifier of the memory slot to query for updates.
    */

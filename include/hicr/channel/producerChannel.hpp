@@ -195,6 +195,10 @@ class ProducerChannel final : public Channel
 
   __USED__ inline void checkReceiverPopsImpl()
   {
+    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
+    _backend->queryMemorySlotUpdates(_coordinationBuffer);
+    _backend->queryMemorySlotUpdates(_tokenBuffer);
+
     // Getting current tail position
     size_t currentPoppedTokens = _poppedTokens;
 
