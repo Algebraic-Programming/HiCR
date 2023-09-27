@@ -176,7 +176,7 @@ class Sequential final : public Backend
     _fenceCountTagMap[tag]++;
 
     // Until we reached the required count, wait on it
-    while (_fenceCountTagMap[tag] < _fenceCount)
+    while (_fenceCountTagMap[tag] % _fenceCount != 0)
       ;
   }
 

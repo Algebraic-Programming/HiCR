@@ -165,6 +165,8 @@ class ProducerChannel final : public Channel
     _mutex.unlock();
   }
 
+  private:
+
   /**
    * Checks whether the receiver has freed up space in the receiver buffer
    * and reports how many tokens were popped.
@@ -180,20 +182,6 @@ class ProducerChannel final : public Channel
    *
    */
   __USED__ inline void checkReceiverPops()
-  {
-    // Obtaining lock for thread safety
-    _mutex.lock();
-
-    // Calling actual implementation
-    checkReceiverPopsImpl();
-
-    // Releasing lock
-    _mutex.unlock();
-  }
-
-  private:
-
-  __USED__ inline void checkReceiverPopsImpl()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
     _backend->queryMemorySlotUpdates(_coordinationBuffer);
@@ -240,7 +228,7 @@ class ProducerChannel final : public Channel
     for (size_t i = 0; i < n; i++)
     {
       // If the exchange buffer is full, the task needs to be suspended until it's freed
-      while (getDepth() == getCapacity()) checkReceiverPopsImpl();
+      while (getDepth() == getCapacity()) checkReceiverPops();
 
       // Copying with source increasing offset per token
       _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());

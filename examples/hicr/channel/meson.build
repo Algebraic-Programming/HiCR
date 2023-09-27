@@ -1,5 +1,5 @@
-executable('channel',
-  [ 'source/channel.cpp'],
+executable('channel_sequential',
+  [ 'source/channel_sequential.cpp'],
   dependencies: [ hicrBuildDep, hicrSequentialBackendDep ]
 )
 
