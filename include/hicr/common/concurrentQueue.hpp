@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <hicr/common/atomic_queue/atomic_queue.h>
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
@@ -22,12 +21,6 @@ class Task;
 
 namespace common
 {
-
-/**
- * Internal datatype for lock-free queue entries
- */
-template <class T, unsigned int N>
-using lockFreeQueue_t = atomic_queue::AtomicQueue<T, N, (T)NULL>;
 
 /**
  * @brief Generic class type for concurrent queues
@@ -41,13 +34,6 @@ using lockFreeQueue_t = atomic_queue::AtomicQueue<T, N, (T)NULL>;
 template <class P, size_t N>
 class ConcurrentQueue
 {
-  private:
-
-  /**
-   * Internal implementation of the concurrent queue
-   */
-  lockFreeQueue_t<P, N> _queue;
-
   public:
 
   /**
@@ -75,6 +61,13 @@ class ConcurrentQueue
     // If we did not find an object in the queue, then return a NULL pointer
     return obj;
   }
+
+  private:
+
+  /**
+   * Internal implementation of the concurrent queue
+   */
+  lockFreeQueue_t<P, N> _queue;
 };
 
 } // namespace common

@@ -13,53 +13,40 @@
 #pragma once
 
 #include <hicr/common/definitions.hpp>
-#include <hicr/computeResource.hpp>
+#include <hicr/common/exceptions.hpp>
 #include <hicr/dispatcher.hpp>
+#include <hicr/processingUnit.hpp>
 #include <hicr/task.hpp>
+#include <memory>
+#include <unistd.h>
 
 namespace HiCR
 {
 
-namespace worker
-{
+/**
+ * Type definition for a generic memory space identifier
+ */
+typedef std::vector<std::unique_ptr<ProcessingUnit>> processingUnitList_t;
 
 /**
- * Complete state set that a worker can be in
+ * Type definition for the set of dispatchers a worker is subscribed to
  */
-enum state_t
-{
-  /**
-   * The worker object has been instantiated but not initialized
-   */
-  uninitialized,
+typedef std::set<Dispatcher *> dispatcherSet_t;
 
-  /**
-   * The worker has been ininitalized (or is back from executing) and can currently run
-   */
-  ready,
+class Worker;
 
-  /**
-   * The worker has started executing
-   */
-  running,
+/**
+ * Static storage for remembering the executing worker
+ *
+ * \note Be mindful of possible destructive interactions between this thread local storage and coroutines.
+ *       If this fails at some point, it might be necessary to come back to a pthread_self() mechanism
+ */
+thread_local Worker *_currentWorker;
 
-  /**
-   * The worker has started executing
-   */
-  suspended,
-
-  /**
-   * The worker has been issued for termination (but still running)
-   */
-  terminating,
-
-  /**
-   * The worker has terminated
-   */
-  terminated
-};
-
-} // namespace worker
+/**
+ * Function to return a pointer to the currently executing worker from a global context
+ */
+__USED__ static inline Worker *getCurrentWorker() { return _currentWorker; }
 
 /**
  * Defines the worker class, which is in charge of executing tasks.
@@ -70,65 +57,69 @@ enum state_t
  */
 class Worker
 {
-  private:
-
-  /**
-   * Represents the internal state of the worker. Uninitialized upon construction.
-   */
-  worker::state_t _state = worker::uninitialized;
-
-  /**
-   * Dispatchers that this resource is subscribed to
-   */
-  std::set<Dispatcher *> _dispatchers;
-
-  /**
-   * Group of resources the worker can freely use
-   */
-  std::vector<ComputeResource *> _computeResources;
-
-  /**
-   * Internal loop of the worker in which it searchers constantly for tasks to run
-   */
-  __USED__ inline void mainLoop()
-  {
-    while (_state == worker::running)
-    {
-      for (auto dispatcher : _dispatchers)
-      {
-        // Attempt to both pop and pull from dispatcher
-        auto task = dispatcher->pull(this);
-
-        // If a task was returned, then execute it
-        if (task != NULL) task->run(this);
-
-        // If worker has been suspended, handle it now
-        if (_state == worker::suspended) _computeResources[0]->suspend();
-      }
-    }
-  }
-
   public:
 
-  Worker() = default;
-  ~Worker() = default;
+  /**
+   * Complete state set that a worker can be in
+   */
+  enum state_t
+  {
+    /**
+     * The worker object has been instantiated but not initialized
+     */
+    uninitialized,
+
+    /**
+     * The worker has been ininitalized (or is back from executing) and can currently run
+     */
+    ready,
+
+    /**
+     * The worker has started executing
+     */
+    running,
+
+    /**
+     * The worker has started executing
+     */
+    suspended,
+
+    /**
+     * The worker has been issued for termination (but still running)
+     */
+    terminating,
+
+    /**
+     * The worker has terminated
+     */
+    terminated
+  };
+
+  /**
+   * Queries the worker's internal state.
+   *
+   * @return The worker's internal state
+   *
+   * \internal This is not a thread safe operation.
+   */
+  __USED__ inline const state_t getState() { return _state; }
 
   /**
    * Initializes the worker and its resources
    */
   __USED__ inline void initialize()
   {
-    // Checking state
-    if (_state != worker::uninitialized) LOG_ERROR("Attempting to initialize already initialized worker");
-
     // Checking we have at least one assigned resource
-    if (_computeResources.empty()) LOG_ERROR("Attempting to initialize worker without any assigned resources");
+    if (_processingUnits.empty()) HICR_THROW_LOGIC("Attempting to initialize worker without any assigned resources");
+
+    // Checking state
+    if (_state != state_t::uninitialized && _state != state_t::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
 
     // Initializing all resources
-    for (auto r : _computeResources) r->initialize();
+    for (auto &r : _processingUnits) r->initialize();
 
     // Transitioning state
-    _state = worker::ready;
+    _state = state_t::ready;
   }
 
   /**
@@ -137,17 +128,14 @@ class Worker
   __USED__ inline void start()
   {
     // Checking state
-    if (_state != worker::ready) LOG_ERROR("Attempting to start worker that is not in the 'initialized' state");
-
-    // Checking we have at least one assigned resource
-    if (_computeResources.empty()) LOG_ERROR("Attempting to start worker without any assigned resources");
+    if (_state != state_t::ready) HICR_THROW_RUNTIME("Attempting to start worker that is not in the 'initialized' state");
 
     // Transitioning state
-    _state = worker::running;
+    _state = state_t::running;
 
     // Launching worker in the lead resource (first one to be added)
-    _computeResources[0]->run([this]()
-                              { this->mainLoop(); });
+    _processingUnits[0]->start([this]()
+                               { this->mainLoop(); });
   }
 
   /**
@@ -156,10 +144,13 @@ class Worker
   __USED__ inline void suspend()
   {
     // Checking state
-    if (_state != worker::running) LOG_ERROR("Attempting to suspend worker that is not in the 'running' state");
+    if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to suspend worker that is not in the 'running' state");
 
     // Transitioning state
-    _state = worker::suspended;
+    _state = state_t::suspended;
+
+    // Suspending processing units
+    for (auto &p : _processingUnits) p->suspend();
   }
 
   /**
@@ -168,13 +159,13 @@ class Worker
   __USED__ inline void resume()
   {
     // Checking state
-    if (_state != worker::suspended) LOG_ERROR("Attempting to resume worker that is not in the 'suspended' state");
+    if (_state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state");
 
     // Transitioning state
-    _state = worker::running;
+    _state = state_t::running;
 
     // Suspending resources
-    for (auto &r : _computeResources) r->resume();
+    for (auto &p : _processingUnits) p->resume();
   }
 
   /**
@@ -183,10 +174,13 @@ class Worker
   __USED__ inline void terminate()
   {
     // Checking state
-    if (_state != worker::running) LOG_ERROR("Attempting to stop worker that is not in the 'running' state");
+    if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to stop worker that is not in the 'running' state");
+
+    // Requesting processing units to terminate as soon as possible
+    for (auto &p : _processingUnits) p->terminate();
 
     // Transitioning state
-    _state = worker::terminating;
+    _state = state_t::terminating;
   }
 
   /**
@@ -194,14 +188,14 @@ class Worker
    */
   __USED__ inline void await()
   {
-    // Checking state
-    if (_state != worker::terminating && _state != worker::running && _state != worker::suspended) LOG_ERROR("Attempting to wait for a worker that is not in the 'terminated', 'suspended' or 'running' state");
+    if (_state != state_t::terminating && _state != state_t::running && _state != state_t::suspended)
+      HICR_THROW_RUNTIME("Attempting to wait for a worker that has not yet started or has already terminated");
 
-    // Wait for the resource to free up
-    _computeResources[0]->await();
+    // Wait for the resources to free up
+    for (auto &p : _processingUnits) p->await();
 
     // Transitioning state
-    _state = worker::terminated;
+    _state = state_t::terminated;
   }
 
   /**
@@ -212,25 +206,66 @@ class Worker
   __USED__ inline void subscribe(Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
 
   /**
-   * Adds a computational resource to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
+   * Adds a processing unit to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
    *
-   * @param[in] resource Resource to add to the worker
+   * @param[in] pu Processing unit to assign to the worker
    */
-  __USED__ inline void addResource(ComputeResource *resource) { _computeResources.push_back(resource); }
+  __USED__ inline void addProcessingUnit(std::unique_ptr<ProcessingUnit> &pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
-   * Gets a reference to the workers assigned resources.
+   * Gets a reference to the workers assigned processing units.
    *
    * @return A container with the worker's resources
    */
-  __USED__ inline std::vector<ComputeResource *> &getResources() { return _computeResources; }
+  __USED__ inline processingUnitList_t &getProcessingUnits() { return _processingUnits; }
 
   /**
    * Gets a reference to the dispatchers the worker has been subscribed to
    *
    * @return A container with the worker's subscribed dispatchers
    */
-  __USED__ inline std::set<Dispatcher *> &getDispatchers() { return _dispatchers; }
+  __USED__ inline dispatcherSet_t &getDispatchers() { return _dispatchers; }
+
+  private:
+
+  /**
+   * Represents the internal state of the worker. Uninitialized upon construction.
+   */
+  state_t _state = state_t::uninitialized;
+
+  /**
+   * Dispatchers that this resource is subscribed to
+   */
+  dispatcherSet_t _dispatchers;
+
+  /**
+   * Group of resources the worker can freely use
+   */
+  processingUnitList_t _processingUnits;
+
+  /**
+   * Internal loop of the worker in which it searchers constantly for tasks to run
+   */
+  __USED__ inline void mainLoop()
+  {
+    // Setting the pointer to the current worker into the thread local storage
+    _currentWorker = this;
+
+    while (_state == state_t::running)
+    {
+      for (auto dispatcher : _dispatchers)
+      {
+        // Attempt to both pop and pull from dispatcher
+        auto task = dispatcher->pull();
+
+        // If a task was returned, then execute it
+        if (task != NULL) task->run();
+
+        // If worker has been suspended, handle it now
+        if (_state == state_t::suspended) _processingUnits[0]->suspend();
+      }
+    }
+  }
 };
 
 } // namespace HiCR

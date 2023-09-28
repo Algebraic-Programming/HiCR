@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright Huawei Technologies Switzerland AG
  * All rights reserved.
@@ -12,20 +10,17 @@
  * @date 7/7/2023
  */
 
+#pragma once
+
 #include <boost/context/continuation.hpp>
 #include <functional> // std::function
-#include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
 
-/**
- * Defines the type accepted by the coroutine function as execution unit.
- *
- * \internal The question as to whether std::function entails too much overhead needs to evaluated, and perhaps deprecate it in favor of static function references. For the time being, this seems adequate enough.
- *
- */
-typedef std::function<void(void *)> coroutineFc_t;
+namespace common
+{
 
 /**
  * Abstracts the basic functionality of a coroutine execution
@@ -37,15 +32,27 @@ class Coroutine
 {
   public:
 
-  Coroutine() = default;
-  ~Coroutine() = default;
+  /**
+   * Defines the type accepted by the coroutine function as execution unit.
+   *
+   * \internal The question as to whether std::function entails too much overhead needs to evaluated, and perhaps deprecate it in favor of static function references. For the time being, this seems adequate enough.
+   *
+   */
+  typedef std::function<void(void *)> coroutineFc_t;
 
   /**
    * Resumes the execution of the coroutine. The coroutine needs to have been started before this, otherwise undefined behavior is to be expected.
    */
   __USED__ inline void resume()
   {
-    _contextSource = _contextSource.resume();
+    if (_hasFinished == true) HICR_THROW_RUNTIME("Attempting to resume a coroutine that has already finished");
+    if (_runningContext == true) HICR_THROW_RUNTIME("Attempting to resume a coroutine that is already running");
+
+    // Setting coroutine to have entered the running context
+    _runningContext = true;
+
+    // Resuming
+    _context = _context.resume();
   }
 
   /**
@@ -53,7 +60,14 @@ class Coroutine
    */
   __USED__ inline void yield()
   {
-    _contextSink = _contextSink.resume();
+    if (_hasFinished == true) HICR_THROW_RUNTIME("Attempting to suspend a coroutine that has already finished");
+    if (_runningContext == false) HICR_THROW_RUNTIME("Attempting to suspend a coroutine that is not running");
+
+    // Setting coroutine to have exited the running context
+    _runningContext = false;
+
+    // Yielding
+    _context = _context.resume();
   }
 
   /**
@@ -64,31 +78,51 @@ class Coroutine
    * \param[in] fc Function to run by the coroutine
    * \param[in] arg Argument to pass to the function
    */
-  __USED__ inline void start(coroutineFc_t &fc, void *arg)
+  __USED__ inline void start(coroutineFc_t fc, void *arg)
   {
-    auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
+    const auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
     {
-      _contextSink = std::move(sink);
+      // Storing caller context
+      _context = std::move(sink);
+
+      // Executing coroutine function
       fc(arg);
-      yield();
-      return std::move(sink);
+
+      // Setting the coroutine as finished
+      _hasFinished = true;
+
+      // Setting coroutine to have exited the running context
+      _runningContext = false;
+
+      // Returning to caller context
+      return std::move(_context);
     };
 
+    // Setting coroutine to have entered the running context
+    _runningContext = true;
+
     // Creating new context
-    _contextSource = boost::context::callcc(coroutineFc);
+    _context = boost::context::callcc(coroutineFc);
   }
 
   private:
 
   /**
-   * CPU execution context of the coroutine. This is the target context for the resume() function.
+   * This variable serves as safeguard in case the function has finished but the user wants to resume it
    */
-  boost::context::continuation _contextSource;
+  bool _hasFinished = false;
 
   /**
-   * CPU execution context of the resume() caller. This is the return context for the yield() function.
+   * This variable serves as safeguard to prevent double resume/yield
    */
-  boost::context::continuation _contextSink;
+  bool _runningContext = false;
+
+  /**
+   * CPU execution context of the coroutine. This is the target context for the resume() function.
+   */
+  boost::context::continuation _context;
 };
+
+} // namespace common
 
 } // namespace HiCR
