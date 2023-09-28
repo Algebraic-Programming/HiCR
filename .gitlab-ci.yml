@@ -9,10 +9,7 @@ docs:
   - .build-tools/style/check-style.sh check tests
   - echo "Building code documentation..."
   - make -j1 -C docs
-  artifacts:
-    paths:
-    - public
-  only:
+  only: 
   - master
   - develop
   - merge_requests

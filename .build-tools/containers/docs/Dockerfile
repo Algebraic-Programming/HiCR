@@ -1,16 +1,4 @@
-FROM docker.io/python:3.11-alpine
-
-RUN apk update
-
-RUN apk add build-base
-RUN apk add doxygen
-RUN apk add graphviz
-RUN apk add ttf-freefont
-RUN apk add texlive
-RUN apk add texmf-dist-latexextra
-RUN apk add texlive-dvi
-RUN apk add texmf-dist-fontsextra
-RUN apk add libffi-dev
+FROM python:3.8
 
 RUN pip install --upgrade pip
 RUN pip install sphinx
@@ -30,8 +18,19 @@ RUN pip install sphinx_toolbox
 RUN pip install sphinx-theme
 RUN pip install sphinx-book-theme
 
-RUN apk add git
-RUN apk add bash
-RUN apk add openssh-client
-RUN apk add clang-extra-tools
+RUN apt update
+RUN apt install -y build-essential
+RUN apt install -y doxygen
+RUN apt install -y graphviz
+RUN apt install -y fonts-freefont-ttf
+RUN apt install -y texlive
+RUN apt install -y texlive-latex-extra
+RUN apt install -y texlive-fonts-extra
+RUN apt install -y libffi-dev
+RUN apt install -y clang-format
+RUN apt install -y ghostscript
+RUN apt install -y texlive-extra-utils
+RUN apt install -y texlive-font-utils
+
+
 
