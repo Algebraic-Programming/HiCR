@@ -154,7 +154,8 @@ TEST(ConsumerChannel, PeekWait)
     hasStarted = true;
 
     // Wait until the producer pushes a message
-    while (consumer.queryDepth() < 1);
+    while (consumer.queryDepth() < 1)
+      ;
 
     // Now do the peeking
     auto posVector = consumer.peek(1);

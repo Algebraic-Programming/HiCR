@@ -214,7 +214,6 @@ class MPI final : public Backend
       // Increasing and updating remote slot received message count
       _memorySlotMap.at(destination).messagesRecv++;
 
-
       // Locking MPI window to ensure both messages arrive in order
       status = MPI_Win_lock(
         MPI_LOCK_EXCLUSIVE,

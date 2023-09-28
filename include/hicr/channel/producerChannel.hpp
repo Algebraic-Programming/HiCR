@@ -185,7 +185,7 @@ class ProducerChannel final : public Channel
    */
   __USED__ inline void updateDepth() override
   {
-   checkReceiverPops();
+    checkReceiverPops();
   }
 };
 

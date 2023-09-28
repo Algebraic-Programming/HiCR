@@ -217,7 +217,7 @@ class ConsumerChannel final : public Channel
    */
   __USED__ inline void updateDepth() override
   {
-   checkReceivedTokens();
+    checkReceivedTokens();
   }
 };
 

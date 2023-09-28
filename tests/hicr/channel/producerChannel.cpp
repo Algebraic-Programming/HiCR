@@ -158,11 +158,12 @@ TEST(ProducerChannel, PushWait)
   // Producer function
   auto producerFc = [&producer, &sendBuffer]()
   {
-   // Wait until the channel gets freed up
-   while(producer.queryDepth() == channelCapacity);
+    // Wait until the channel gets freed up
+    while (producer.queryDepth() == channelCapacity)
+      ;
 
-   // Now do push message
-   producer.push(sendBuffer, 1);
+    // Now do push message
+    producer.push(sendBuffer, 1);
   };
 
   // Running producer thread that tries to push one token and enters suspension
