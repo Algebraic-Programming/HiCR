@@ -142,7 +142,7 @@ TEST(ConsumerChannel, PeekWait)
   HiCR::ConsumerChannel consumer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
 
   // Attempting to push more tokens than channel size (should throw exception)
-  EXPECT_THROW(consumer.peekWait(channelCapacity + 1), HiCR::common::LogicException);
+  EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::common::LogicException);
 
   // Producer function
   const size_t expectedValue = 42;
@@ -152,10 +152,20 @@ TEST(ConsumerChannel, PeekWait)
   auto consumerFc = [&consumer, &hasStarted, &hasConsumed, &readValue, &recvBuffer]()
   {
     hasStarted = true;
-    auto posVector = consumer.peekWait(1);
+
+    // Wait until the producer pushes a message
+    while (consumer.queryDepth() < 1)
+      ;
+
+    // Now do the peeking
+    auto posVector = consumer.peek(1);
+
+    // Raise consumed flag and read actual value
     hasConsumed = true;
     readValue = recvBuffer[posVector[0]];
-    EXPECT_TRUE(consumer.pop());
+
+    // Pop message
+    consumer.pop();
   };
 
   // Running producer thread that tries to pushWait one token and enters suspension

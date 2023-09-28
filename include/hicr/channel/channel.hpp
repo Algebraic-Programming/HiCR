@@ -43,7 +43,7 @@ class Channel
   }
 
   /**
-   * @returns The number of tokens in this channel.
+   * Updates and returns the current channel depth.
    *
    * If the current channel is a consumer, it corresponds to how many tokens
    * may yet be consumed. If the current channel is a producer, it corresponds
@@ -56,10 +56,16 @@ class Channel
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
+   * @returns The number of tokens in this channel.
+   *
    * This function when called on a valid channel instance will never fail.
    */
-  __USED__ inline size_t getDepth() const noexcept
+  __USED__ inline size_t queryDepth() noexcept
   {
+    // Calling channel-type specific fnction to update the current depth.
+    updateDepth();
+
+    // Returning new depth value
     return _depth;
   }
 
@@ -87,11 +93,11 @@ class Channel
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
    * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
-   * \param[in] tokenBuffer The memory slot pertaining to the data exchange buffer. The producer will push new
-   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
-   * token.
-   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
-   * popped. It may also be used for other coordination signals.
+   * \param[in] tokenBuffer The memory slot pertaining to the data exchange buffer. This buffer needs to be allocated
+   *            at the consumer side. The producer will push new tokens into this buffer, while there is enough space.
+   *            This buffer should be big enough to hold the required capacity * tokenSize.
+   * \param[in] coordinationBuffer This is a small buffer that needs to be allocated at the producer side.
+   *            enables the consumer to signal how many tokens it has popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    *
@@ -176,6 +182,11 @@ class Channel
    * Memory slot that enables coordination communication from the consumer to the producer
    */
   Backend::memorySlotId_t _coordinationBuffer;
+
+  /**
+   * This function updates the internal value of the channel depth
+   */
+  virtual void updateDepth() = 0;
 
   /**
    * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.

@@ -1,4 +1,4 @@
 executable('abcTasks',
   [ 'source/main.cpp'],
-  dependencies: [ taskrBuildDep, hicrPthreadsBackendDep]
+  dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep]
 )

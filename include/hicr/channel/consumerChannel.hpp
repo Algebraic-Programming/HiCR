@@ -87,7 +87,7 @@ class ConsumerChannel final : public Channel
    * This function has one side-effect: it detects pending incoming messages and,
    * if there are, it updates the internal circular buffer with them.
    *
-   * @see getDepth to determine whether the channel has an item to pop.
+   * @see queryDepth to determine whether the channel has an item to pop.
    *
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
@@ -110,44 +110,6 @@ class ConsumerChannel final : public Channel
   }
 
   /**
-   * Similar to peek, but if the channel is empty, will wait until a new token
-   * arrives.
-   *
-   * This is a one-sided blocking call that need not be made collectively.
-   *
-   * @param[in] n The number of tokens to peek.
-   * @returns If successful, a vector of size n with the relative positions within the token buffer of the received elements.
-   *
-   * \warning This function may take an arbitrary amount of time and may, with
-   *          incorrect usage, even result in deadlock. Always make sure to use
-   *          this function in conjuction with e.g. SDF analysis to ensure no
-   *          deadlock may occur. This type of analysis typically produces a
-   *          minimum required channel capacity.
-   *
-   * \todo A preferred mechanism to wait for messages to have flushed may be
-   *       the event-based API described below in this header file.
-   */
-  __USED__ inline std::vector<size_t> peekWait(const size_t n = 1)
-  {
-    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to peek wait for (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
-
-    // Obtaining lock for thread safety
-    _mutex.lock();
-
-    // While the number of tokens in the buffer is less than the desired number, wait for it
-    while (getDepth() < n) checkReceivedTokens();
-
-    // Executing the peek operation
-    const auto result = peekImpl(n);
-
-    // Releasing the lock
-    _mutex.unlock();
-
-    // Now returning value
-    return result;
-  }
-
-  /**
    * Removes the current token from the channel, and moves to the next token
    * (or to an empty channel state).
    *
@@ -160,7 +122,7 @@ class ConsumerChannel final : public Channel
    *
    * In case there are less than n tokens in the channel, no tokens will be popped.
    *
-   * @see getDepth to determine whether the channel has an item to pop before calling
+   * @see queryDepth to determine whether the channel has an item to pop before calling
    * this function.
    */
   __USED__ inline bool pop(const size_t n = 1)
@@ -186,14 +148,11 @@ class ConsumerChannel final : public Channel
   {
     if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to peek for (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
 
-    // We check only once for incoming messages (non-blocking operation)
-    checkReceivedTokens();
-
     // Creating vector to store the token positions
     std::vector<size_t> positions;
 
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (getDepth() < n) return positions;
+    if (queryDepth() < n) return positions;
 
     // Assigning the pointer to each token requested
     for (size_t i = 0; i < n; i++)
@@ -211,11 +170,8 @@ class ConsumerChannel final : public Channel
 
   __USED__ inline bool popImpl(const size_t n)
   {
-    // We check only once for incoming messages (non-blocking operation)
-    checkReceivedTokens();
-
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (getDepth() < n) return false;
+    if (queryDepth() < n) return false;
 
     // Advancing tail (removes elements from the circular buffer)
     advanceTail(n);
@@ -226,6 +182,10 @@ class ConsumerChannel final : public Channel
     // Notifying producer(s) of buffer liberation
     _backend->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
 
+    // Re-syncing token and coordination buffers
+    _backend->queryMemorySlotUpdates(_coordinationBuffer);
+    _backend->queryMemorySlotUpdates(_tokenBuffer);
+
     // If we reached this point, then the operation was successful
     return true;
   }
@@ -233,12 +193,10 @@ class ConsumerChannel final : public Channel
   /**
    * This is a non-blocking non-collective function that requests the channel (and its underlying backend)
    * to check for the arrival of new messages. If this function is not called, then updates are not registered.
-   *
-   * @return The number of newly received tokens.
    */
-  __USED__ inline size_t checkReceivedTokens()
+  __USED__ inline void checkReceivedTokens()
   {
-    // Perform a non-blocking check of the token buffer, to see if there are new messages
+    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
     _backend->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count
@@ -252,9 +210,14 @@ class ConsumerChannel final : public Channel
 
     // Update the number of pushed tokens
     _pushedTokens = newPushedTokens;
+  }
 
-    // Returning the number of received tokens
-    return receivedTokens;
+  /**
+   * This function updates the internal value of the channel depth
+   */
+  __USED__ inline void updateDepth() override
+  {
+    checkReceivedTokens();
   }
 };
 

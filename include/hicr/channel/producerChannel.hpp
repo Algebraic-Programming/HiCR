@@ -124,94 +124,12 @@ class ProducerChannel final : public Channel
     return result;
   }
 
-  /**
-   * Similar to push, but if the channel is full, will wait until outgoing
-   * buffer space frees up.
-   *
-   * This is a one-sided blocking call that need not be made collectively.
-   *
-   * This function can only be called from the context of a running HiCR::Task,
-   * because it is the only element in HiCR that can be freely suspended.
-   *
-   * @param[in] sourceSlot Memory slot from whence n tokens will be read and pushed into the channel
-   * @param[in] n The number of n tokens to push into the channel
-   *
-   * \warning This function may take an arbitrary amount of time and may, with
-   *          incorrect usage, even result in deadlock. Always make sure to use
-   *          this function in conjuction with e.g. SDF analysis to ensure no
-   *          deadlock may occur. This type of analysis typically produces a
-   *          minimum required channel capacity.
-   *
-   * \todo A preferred mechanism to wait for messages to have flushed may be
-   *       the event-based API described below in this header file.
-   *
-   * A call to this function throws an exception if:
-   *  -# the \a slot, \a offset, \a size combination exceeds the memory region of \a slot.
-   */
-  __USED__ inline void pushWait(const Backend::memorySlotId_t sourceSlot, const size_t n = 1)
-  {
-    // Make sure source slot is beg enough to satisfy the operation
-    auto requiredBufferSize = getTokenSize() * n;
-    auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
-    if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
-
-    // Obtaining lock for thread safety
-    _mutex.lock();
-
-    // Calling actual implementation
-    pushWaitImpl(sourceSlot, n);
-
-    // Releasing lock
-    _mutex.unlock();
-  }
-
-  /**
-   * Checks whether the receiver has freed up space in the receiver buffer
-   * and reports how many tokens were popped.
-   *
-   * \internal This function needs to be re-callable without side-effects
-   * since it will be called repeatedly to check whether a pending operation
-   * has finished.
-   *
-   * \internal This function relies on HiCR's one-sided communication semantics.
-   * If the update of the popped tokens value required some kind of function call
-   * in the backend, this will deadlock. To enable synchronized communication,
-   * a call to Backend::queryMemorySlotUpdates should be added here.
-   *
-   */
-  __USED__ inline void checkReceiverPops()
-  {
-    // Obtaining lock for thread safety
-    _mutex.lock();
-
-    // Calling actual implementation
-    checkReceiverPopsImpl();
-
-    // Releasing lock
-    _mutex.unlock();
-  }
-
   private:
-
-  __USED__ inline void checkReceiverPopsImpl()
-  {
-    // Getting current tail position
-    size_t currentPoppedTokens = _poppedTokens;
-
-    // Updating local value of the tail until it changes
-    _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
-
-    // Calculating difference between previous and new tail position
-    size_t n = _poppedTokens - currentPoppedTokens;
-
-    // Adjusting depth
-    advanceTail(n);
-  }
 
   __USED__ inline bool pushImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
   {
     // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + n > getCapacity()) return false;
+    if (queryDepth() + n > getCapacity()) return false;
 
     // Copy tokens
     for (size_t i = 0; i < n; i++)
@@ -230,23 +148,44 @@ class ProducerChannel final : public Channel
     return true;
   }
 
-  __USED__ inline void pushWaitImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
+  /**
+   * Checks whether the receiver has freed up space in the receiver buffer
+   * and reports how many tokens were popped.
+   *
+   * \internal This function needs to be re-callable without side-effects
+   * since it will be called repeatedly to check whether a pending operation
+   * has finished.
+   *
+   * \internal This function relies on HiCR's one-sided communication semantics.
+   * If the update of the popped tokens value required some kind of function call
+   * in the backend, this will deadlock. To enable synchronized communication,
+   * a call to Backend::queryMemorySlotUpdates should be added here.
+   *
+   */
+  __USED__ inline void checkReceiverPops()
   {
-    // Copy tokens
-    for (size_t i = 0; i < n; i++)
-    {
-      // If the exchange buffer is full, the task needs to be suspended until it's freed
-      while (getDepth() == getCapacity()) checkReceiverPopsImpl();
+    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
+    _backend->queryMemorySlotUpdates(_coordinationBuffer);
 
-      // Copying with source increasing offset per token
-      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+    // Getting current tail position
+    size_t currentPoppedTokens = _poppedTokens;
 
-      // Advance head, as we have added a new element
-      advanceHead(1);
-    }
+    // Updating local value of the tail until it changes
+    _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
 
-    // Increasing the number of pushed tokens
-    _pushedTokens += n;
+    // Calculating difference between previous and new tail position
+    size_t n = _poppedTokens - currentPoppedTokens;
+
+    // Adjusting depth
+    advanceTail(n);
+  }
+
+  /**
+   * This function updates the internal value of the channel depth
+   */
+  __USED__ inline void updateDepth() override
+  {
+    checkReceiverPops();
   }
 };
 

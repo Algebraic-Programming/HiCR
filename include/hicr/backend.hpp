@@ -904,11 +904,6 @@ class Backend
   }
 
   /**
-   * Stores the map of created memory slots
-   */
-  memorySlotList_t _memorySlotMap;
-
-  /**
    * Backend-internal implementation of the isMemorySlotValid function
    *
    * \param[in] memorySlotId Identifier of the slot to check
@@ -1015,6 +1010,16 @@ class Backend
    */
   virtual void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) = 0;
 
+  /**
+   * Stores the map of created memory slots
+   */
+  memorySlotList_t _memorySlotMap;
+
+  /**
+   * Storage for global tag/key associated global memory slot exchange
+   */
+  globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
+
   private:
 
   /**
@@ -1036,11 +1041,6 @@ class Backend
    * Currently available slot id to be assigned. It should atomically increment as each slot is assigned
    */
   std::atomic<memorySlotId_t> _currentMemorySlotId = 0;
-
-  /**
-   * Storage for global tag/key associated global memory slot exchange
-   */
-  globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
 };
 
 } // namespace HiCR

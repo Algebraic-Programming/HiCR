@@ -18,3 +18,4 @@ RUN apk add cmake
 RUN apk add lapack-dev
 RUN apk add curl
 RUN apk add jq
+RUN apk add openmpi-dev

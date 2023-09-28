@@ -1,5 +1,5 @@
 executable('resourceList',
   [ 'source/main.cpp'],
-  dependencies: [ taskrBuildDep, hicrPthreadsBackendDep],
+  dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep],
   include_directories: include_directories(['source'])
 )
