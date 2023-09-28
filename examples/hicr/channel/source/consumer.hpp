@@ -3,10 +3,10 @@
 #include <hicr.hpp>
 #include <source/common.hpp>
 
-void consumerFc(HiCR::Backend* backend)
+void consumerFc(HiCR::Backend* backend, const size_t channelCapacity)
 {
  // Getting required buffer sizes
- auto tokenBufferSize = HiCR::ConsumerChannel::getTokenBufferSize(sizeof(ELEMENT_TYPE), CAPACITY);
+ auto tokenBufferSize = HiCR::ConsumerChannel::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Getting local pointer of token buffer
  auto tokenBuffer = (ELEMENT_TYPE*) malloc(tokenBufferSize);
@@ -24,7 +24,7 @@ void consumerFc(HiCR::Backend* backend)
  auto globalBuffers = backend->getGlobalMemorySlots()[CHANNEL_TAG];
 
  // Creating producer and consumer channels
- auto consumer = HiCR::ConsumerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
+ auto consumer = HiCR::ConsumerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Getting a single value from the channel
  while (consumer.queryDepth() < 1);

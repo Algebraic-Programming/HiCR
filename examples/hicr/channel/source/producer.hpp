@@ -3,7 +3,7 @@
 #include <hicr.hpp>
 #include <source/common.hpp>
 
-void producerFc(HiCR::Backend* backend)
+void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
 {
  // Getting required buffer size
  auto coordinationBufferSize = HiCR::ProducerChannel::getCoordinationBufferSize();
@@ -27,7 +27,7 @@ void producerFc(HiCR::Backend* backend)
  auto globalBuffers = backend->getGlobalMemorySlots()[CHANNEL_TAG];
 
  // Creating producer and consumer channels
- auto producer = HiCR::ProducerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
+ auto producer = HiCR::ProducerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Allocating a send slot to put the values we want to communicate
  ELEMENT_TYPE sendBuffer = 0;

@@ -22,6 +22,23 @@ int main(int argc, char **argv)
   return MPI_Finalize();
  }
 
+ // Checking arguments
+ if (argc != 2)
+ {
+   if(rankId == 0) fprintf(stderr, "Error: Must provide the channel capacity as argument.\n");
+   return MPI_Finalize();
+ }
+
+ // Reading argument
+ auto channelCapacity = std::atoi(argv[1]);
+
+ // Capacity must be larger than zero
+ if (channelCapacity == 0)
+ {
+   if(rankId == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
+   return MPI_Finalize();
+ }
+
  // Creating communicator that includes only the producer and the consumer
  // This is not necessary in this example because only two processes run and MPI_COMM_WORLD suffices
  // However, in a real world scenario, this is might be required for preventing involving other ranks in its creation and use
@@ -37,8 +54,8 @@ int main(int argc, char **argv)
  auto backend = new HiCR::backend::mpi::MPI(channelCommunicator);
 
  // Rank 0 is producer, Rank 1 is consumer
- if (rankId == 0) producerFc(backend);
- if (rankId == 1) consumerFc(backend);
+ if (rankId == 0) producerFc(backend, channelCapacity);
+ if (rankId == 1) consumerFc(backend, channelCapacity);
 
  // Freeing memory
  delete backend;
