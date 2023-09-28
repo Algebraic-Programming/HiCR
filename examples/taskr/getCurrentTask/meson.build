@@ -1,4 +1,4 @@
 executable('getCurrentTask',
   [ 'source/main.cpp'],
-  dependencies: [ taskrBuildDep, hicrPthreadsBackendDep]
+  dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep]
 )

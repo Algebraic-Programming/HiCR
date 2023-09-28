@@ -1,12 +1,12 @@
-# HiCR Pthreads Backend Configuration
+# HiCR SharedMemory Backend Configuration
 
-hicrPthreadsBackendDeps = [
+hicrSharedMemoryBackendDeps = [
     dependency('hwloc', required: true),
     dependency('threads', required: true),
    ]
     
-hicrPthreadsBackendDep = declare_dependency(
-    dependencies:  hicrPthreadsBackendDeps
+hicrSharedMemoryBackendDep = declare_dependency(
+    dependencies:  hicrSharedMemoryBackendDeps
     )    
     
 

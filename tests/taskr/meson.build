@@ -1,1 +1,1 @@
-test('runtime',  executable('runtime',   'runtime.cpp',  dependencies: [  testDeps, hicrPthreadsBackendDep ] ), protocol: 'gtest', suite: [ 'taskr' ] )
+test('runtime',  executable('runtime',   'runtime.cpp',  dependencies: [  testDeps, hicrSharedMemoryBackendDep ] ), protocol: 'gtest', suite: [ 'taskr' ] )
