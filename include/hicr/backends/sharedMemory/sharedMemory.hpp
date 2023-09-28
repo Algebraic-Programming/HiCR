@@ -39,32 +39,31 @@ class SharedMemory final : public Backend
 {
   public:
 
- /**
-  * The constructor is employed to reserve memory required for hwloc
-  *
-  * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
-  */
- SharedMemory(const size_t fenceCount = 1) : Backend()
- {
-   // Reserving memory for hwloc
-   hwloc_topology_init(&_topology);
+  /**
+   * The constructor is employed to reserve memory required for hwloc
+   *
+   * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
+   */
+  SharedMemory(const size_t fenceCount = 1) : Backend()
+  {
+    // Reserving memory for hwloc
+    hwloc_topology_init(&_topology);
 
-   // Initializing barrier for fence operation
-   pthread_barrier_init(&_fenceBarrier, NULL, fenceCount);
- }
+    // Initializing barrier for fence operation
+    pthread_barrier_init(&_fenceBarrier, NULL, fenceCount);
+  }
 
- /**
-  * The constructor is employed to free memory required for hwloc
-  */
- ~SharedMemory()
- {
-   // Freeing Reserved memory for hwloc
-   hwloc_topology_destroy(_topology);
+  /**
+   * The constructor is employed to free memory required for hwloc
+   */
+  ~SharedMemory()
+  {
+    // Freeing Reserved memory for hwloc
+    hwloc_topology_destroy(_topology);
 
-   // Freeing barrier memory
-   pthread_barrier_destroy(&_fenceBarrier);
- }
-
+    // Freeing barrier memory
+    pthread_barrier_destroy(&_fenceBarrier);
+  }
 
   /**
    * Enumeration to determine whether HWLoc supports strict binding and what the user prefers (similar to MPI_Threading_level)
@@ -122,7 +121,7 @@ class SharedMemory final : public Backend
   /**
    * Stores a barrier object to check on a fence operation
    */
-  pthread_barrier_t  _fenceBarrier;
+  pthread_barrier_t _fenceBarrier;
 
   /**
    * Structure representing a shared memory backend memory space
@@ -168,7 +167,7 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
-   pthread_barrier_wait(&_fenceBarrier);
+    pthread_barrier_wait(&_fenceBarrier);
   }
 
   /**
@@ -368,9 +367,9 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
   {
-   // Adding local memory slots to the global map
-   for (const auto memorySlotId : localMemorySlotIds)
-     registerGlobalMemorySlot(tag, globalKey, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
+    // Adding local memory slots to the global map
+    for (const auto memorySlotId : localMemorySlotIds)
+      registerGlobalMemorySlot(tag, globalKey, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
   }
 
   /**

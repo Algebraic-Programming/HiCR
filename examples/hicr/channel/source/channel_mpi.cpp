@@ -18,7 +18,7 @@ int main(int argc, char **argv)
  // Sanity Check
  if (rankCount != 2)
  {
-  if(rankId == 0) fprintf(stderr, "Launch error: MPI process count must be 2\n");
+  if(rankId == 0) fprintf(stderr, "Launch error: MPI process count must be equal to 2\n");
   return MPI_Finalize();
  }
 
@@ -34,12 +34,18 @@ int main(int argc, char **argv)
  MPI_Comm_create_group(MPI_COMM_WORLD, channelGroup, 0, &channelCommunicator);
 
  // Instantiating backend
- HiCR::backend::mpi::MPI backend(channelCommunicator);
+ auto backend = new HiCR::backend::mpi::MPI(channelCommunicator);
 
  // Rank 0 is producer, Rank 1 is consumer
- if (rankId == 0) producerFc(&backend);
- if (rankId == 1) consumerFc(&backend);
+ if (rankId == 0) producerFc(backend);
+ if (rankId == 1) consumerFc(backend);
 
- return MPI_Finalize();
+ // Freeing memory
+ delete backend;
+
+ // Finalizing MPI
+ MPI_Finalize();
+
+ return 0;
 }
 
