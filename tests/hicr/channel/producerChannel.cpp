@@ -150,16 +150,22 @@ TEST(ProducerChannel, PushWait)
   auto sendBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
   // Attempting to push more tokens than buffer size (should throw exception)
-  EXPECT_THROW(producer.pushWait(sendBuffer, sendBufferCapacity + 1), HiCR::common::LogicException);
+  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity + 1), HiCR::common::LogicException);
 
   // Trying to fill send buffer (shouldn't wait)
-  EXPECT_NO_THROW(producer.pushWait(sendBuffer, channelCapacity));
+  EXPECT_NO_THROW(producer.push(sendBuffer, channelCapacity));
 
   // Producer function
   auto producerFc = [&producer, &sendBuffer]()
-  { producer.pushWait(sendBuffer, 1); };
+  {
+   // Wait until the channel gets freed up
+   while(producer.queryDepth() == channelCapacity);
 
-  // Running producer thread that tries to pushWait one token and enters suspension
+   // Now do push message
+   producer.push(sendBuffer, 1);
+  };
+
+  // Running producer thread that tries to push one token and enters suspension
   std::thread producerThread(producerFc);
 
   // Creating consumer channel

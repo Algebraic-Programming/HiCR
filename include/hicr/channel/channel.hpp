@@ -43,7 +43,7 @@ class Channel
   }
 
   /**
-   * @returns The number of tokens in this channel.
+   * Updates and returns the current channel depth.
    *
    * If the current channel is a consumer, it corresponds to how many tokens
    * may yet be consumed. If the current channel is a producer, it corresponds
@@ -56,10 +56,16 @@ class Channel
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
+   * @returns The number of tokens in this channel.
+   *
    * This function when called on a valid channel instance will never fail.
    */
-  __USED__ inline size_t getDepth() const noexcept
+  __USED__ inline size_t queryDepth() noexcept
   {
+    // Calling channel-type specific fnction to update the current depth.
+    updateDepth();
+
+    // Returning new depth value
     return _depth;
   }
 
@@ -176,6 +182,11 @@ class Channel
    * Memory slot that enables coordination communication from the consumer to the producer
    */
   Backend::memorySlotId_t _coordinationBuffer;
+
+  /**
+   * This function updates the internal value of the channel depth
+   */
+  virtual void updateDepth() = 0;
 
   /**
    * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.

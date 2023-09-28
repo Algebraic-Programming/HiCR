@@ -124,47 +124,6 @@ class ProducerChannel final : public Channel
     return result;
   }
 
-  /**
-   * Similar to push, but if the channel is full, will wait until outgoing
-   * buffer space frees up.
-   *
-   * This is a one-sided blocking call that need not be made collectively.
-   *
-   * This function can only be called from the context of a running HiCR::Task,
-   * because it is the only element in HiCR that can be freely suspended.
-   *
-   * @param[in] sourceSlot Memory slot from whence n tokens will be read and pushed into the channel
-   * @param[in] n The number of n tokens to push into the channel
-   *
-   * \warning This function may take an arbitrary amount of time and may, with
-   *          incorrect usage, even result in deadlock. Always make sure to use
-   *          this function in conjuction with e.g. SDF analysis to ensure no
-   *          deadlock may occur. This type of analysis typically produces a
-   *          minimum required channel capacity.
-   *
-   * \todo A preferred mechanism to wait for messages to have flushed may be
-   *       the event-based API described below in this header file.
-   *
-   * A call to this function throws an exception if:
-   *  -# the \a slot, \a offset, \a size combination exceeds the memory region of \a slot.
-   */
-  __USED__ inline void pushWait(const Backend::memorySlotId_t sourceSlot, const size_t n = 1)
-  {
-    // Make sure source slot is beg enough to satisfy the operation
-    auto requiredBufferSize = getTokenSize() * n;
-    auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
-    if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
-
-    // Obtaining lock for thread safety
-    _mutex.lock();
-
-    // Calling actual implementation
-    pushWaitImpl(sourceSlot, n);
-
-    // Releasing lock
-    _mutex.unlock();
-  }
-
   private:
 
   /**
@@ -203,7 +162,7 @@ class ProducerChannel final : public Channel
   __USED__ inline bool pushImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
   {
     // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + n > getCapacity()) return false;
+    if (queryDepth() + n > getCapacity()) return false;
 
     // Copy tokens
     for (size_t i = 0; i < n; i++)
@@ -222,23 +181,12 @@ class ProducerChannel final : public Channel
     return true;
   }
 
-  __USED__ inline void pushWaitImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
+  /**
+   * This function updates the internal value of the channel depth
+   */
+  __USED__ inline void updateDepth() override
   {
-    // Copy tokens
-    for (size_t i = 0; i < n; i++)
-    {
-      // If the exchange buffer is full, the task needs to be suspended until it's freed
-      while (getDepth() == getCapacity()) checkReceiverPops();
-
-      // Copying with source increasing offset per token
-      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
-
-      // Advance head, as we have added a new element
-      advanceHead(1);
-    }
-
-    // Increasing the number of pushed tokens
-    _pushedTokens += n;
+   checkReceiverPops();
   }
 };
 

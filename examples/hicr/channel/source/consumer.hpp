@@ -27,14 +27,14 @@ void consumerFc(HiCR::Backend* backend)
  auto consumer = HiCR::ConsumerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), CAPACITY);
 
  // Getting a single value from the channel
- auto recvSlot = consumer.peekWait();
- printf("Received Value: %u\n", tokenBuffer[recvSlot[0]]);
+ while (consumer.queryDepth() < 1);
+ printf("Received Value: %u\n", tokenBuffer[consumer.peek()[0]]);
  consumer.pop();
 
  // Getting two values from the channel at once
- recvSlot = consumer.peekWait(2);
- printf("Received Value: %u\n", tokenBuffer[recvSlot[0]]);
- printf("Received Value: %u\n", tokenBuffer[recvSlot[1]]);
+ while (consumer.queryDepth() < 2);
+ printf("Received Value: %u\n", tokenBuffer[consumer.peek(2)[0]]);
+ printf("Received Value: %u\n", tokenBuffer[consumer.peek(2)[1]]);
  consumer.pop(2);
 
  // Synchronizing before deleting the channel and freeing up memory
