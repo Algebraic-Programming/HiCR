@@ -9,12 +9,30 @@ docs:
   - .build-tools/style/check-style.sh check tests
   - echo "Building code documentation..."
   - make -j1 -C docs
+  artifacts:
+    paths:
+    - public
   only:
   - master
   - develop
   - merge_requests
   - tags
 
+pages:
+  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
+  tags:
+  - docker
+  - tiny 
+  script:
+  - echo "Building code documentation..."
+  - make -j1 -C docs
+  - mv docs/build/html public
+  artifacts:
+    paths:
+    - public
+  only:
+  - master
+  
 build:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv:latest
   tags:
