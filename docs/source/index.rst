@@ -2,7 +2,7 @@
 HiSilicon Common Runtime (HiCR) User Manual
 ============================================
 
-Lorem Ipsum
+A full user manual will be written soon. For the time being, only the C++ API reference is available.
 
 .. toctree::
    :caption: Using HiCR
