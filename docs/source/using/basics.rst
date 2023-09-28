@@ -4,5 +4,5 @@
 HiCR Basics
 ***********************
 
-Text goes here
+(To be written)
    
