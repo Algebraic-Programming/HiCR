@@ -188,9 +188,9 @@ class MPI final : public Backend
         *_globalMemorySlotMPIWindowMap[destination].dataWindow);
 
       // Checking correct locking
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI window on MPI_Put (Slots %lu -> %lu)", source, destination);
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window on MPI_Put (Slots %lu -> %lu)", source, destination);
 
-      // Executing the get operation
+      // Executing the put operation
       status = MPI_Put(
         sourcePointer,
         size,
@@ -209,12 +209,23 @@ class MPI final : public Backend
         *_globalMemorySlotMPIWindowMap[destination].dataWindow);
 
       // Checking correct locking
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI window on MPI_Put (Slots %lu -> %lu)", source, destination);
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI data window on MPI_Put (Slots %lu -> %lu)", source, destination);
 
       // Increasing and updating remote slot received message count
       _memorySlotMap.at(destination).messagesRecv++;
 
-      // Executing the get operation
+
+      // Locking MPI window to ensure both messages arrive in order
+      status = MPI_Win_lock(
+        MPI_LOCK_EXCLUSIVE,
+        _globalMemorySlotMPIWindowMap[destination].rank,
+        0,
+        *_globalMemorySlotMPIWindowMap[destination].recvMessageCountWindow);
+
+      // Checking correct locking
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI recv message window on MPI_Put (Slots %lu -> %lu)", source, destination);
+
+      // Executing the put operation
       status = MPI_Put(
         &_memorySlotMap.at(destination).messagesRecv,
         1,
@@ -227,6 +238,17 @@ class MPI final : public Backend
 
       // Checking execution status
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run received message count MPI_Put (Slots %lu -> %lu)", source, destination);
+
+      // Unlocking window after copy is completed
+      status = MPI_Win_unlock(
+        _globalMemorySlotMPIWindowMap[destination].rank,
+        *_globalMemorySlotMPIWindowMap[destination].recvMessageCountWindow);
+
+      // Checking correct locking
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI received message count window on MPI_Put (Slots %lu -> %lu)", source, destination);
+
+      // Updating local source sent message count
+      _memorySlotMap.at(source).messagesSent++;
     }
 
     // If both elements are local, then use memcpy directly
@@ -409,7 +431,7 @@ class MPI final : public Backend
       // Creating MPI window for message received count transferring
       status = MPI_Win_create(
         globalSlotProcessId[i] == _rank ? &_memorySlotMap[globalSlotId].messagesRecv : NULL,
-        globalSlotProcessId[i] == _rank ? globalSlotSizes[i] : 0,
+        globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
         1,
         MPI_INFO_NULL,
         _comm,

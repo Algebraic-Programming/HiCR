@@ -34,15 +34,17 @@ void producerFc(HiCR::Backend* backend)
  auto sendBufferPtr = &sendBuffer;
  auto sendSlot = backend->registerLocalMemorySlot(sendBufferPtr, sizeof(ELEMENT_TYPE));
 
- // Pushing value to the channel
+ // Pushing values to the channel, one by one, suspending when/if the channel is full
  sendBuffer = 42;
- producer.push(sendSlot);
+ while(producer.push(sendSlot) == false);
  printf("Sent Value:     %u\n", *sendBufferPtr);
+
  sendBuffer = 43;
- producer.push(sendSlot);
+ while(producer.push(sendSlot) == false);
  printf("Sent Value:     %u\n", *sendBufferPtr);
+
  sendBuffer = 44;
- producer.push(sendSlot);
+ while(producer.push(sendSlot) == false);
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
  // Synchronizing before deleting the channel and freeing up memory

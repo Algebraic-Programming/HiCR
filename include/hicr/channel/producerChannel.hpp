@@ -126,39 +126,6 @@ class ProducerChannel final : public Channel
 
   private:
 
-  /**
-   * Checks whether the receiver has freed up space in the receiver buffer
-   * and reports how many tokens were popped.
-   *
-   * \internal This function needs to be re-callable without side-effects
-   * since it will be called repeatedly to check whether a pending operation
-   * has finished.
-   *
-   * \internal This function relies on HiCR's one-sided communication semantics.
-   * If the update of the popped tokens value required some kind of function call
-   * in the backend, this will deadlock. To enable synchronized communication,
-   * a call to Backend::queryMemorySlotUpdates should be added here.
-   *
-   */
-  __USED__ inline void checkReceiverPops()
-  {
-    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _backend->queryMemorySlotUpdates(_coordinationBuffer);
-    _backend->queryMemorySlotUpdates(_tokenBuffer);
-
-    // Getting current tail position
-    size_t currentPoppedTokens = _poppedTokens;
-
-    // Updating local value of the tail until it changes
-    _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
-
-    // Calculating difference between previous and new tail position
-    size_t n = _poppedTokens - currentPoppedTokens;
-
-    // Adjusting depth
-    advanceTail(n);
-  }
-
   __USED__ inline bool pushImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
   {
     // If the exchange buffer does not have n free slots, reject the operation
@@ -179,6 +146,38 @@ class ProducerChannel final : public Channel
 
     // Succeeded in pushing the token(s)
     return true;
+  }
+
+  /**
+   * Checks whether the receiver has freed up space in the receiver buffer
+   * and reports how many tokens were popped.
+   *
+   * \internal This function needs to be re-callable without side-effects
+   * since it will be called repeatedly to check whether a pending operation
+   * has finished.
+   *
+   * \internal This function relies on HiCR's one-sided communication semantics.
+   * If the update of the popped tokens value required some kind of function call
+   * in the backend, this will deadlock. To enable synchronized communication,
+   * a call to Backend::queryMemorySlotUpdates should be added here.
+   *
+   */
+  __USED__ inline void checkReceiverPops()
+  {
+    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
+    _backend->queryMemorySlotUpdates(_coordinationBuffer);
+
+    // Getting current tail position
+    size_t currentPoppedTokens = _poppedTokens;
+
+    // Updating local value of the tail until it changes
+    _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
+
+    // Calculating difference between previous and new tail position
+    size_t n = _poppedTokens - currentPoppedTokens;
+
+    // Adjusting depth
+    advanceTail(n);
   }
 
   /**
