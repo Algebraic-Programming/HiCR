@@ -12,6 +12,9 @@ int main(int argc, char **argv)
   // Initializing Pthreads backend to run in parallel
   auto t = new HiCR::backend::sharedMemory::SharedMemory();
 
+  // Initializing compute resources
+  t->queryComputeResources();
+
   // Initializing taskr
   taskr::initialize(t);
 
