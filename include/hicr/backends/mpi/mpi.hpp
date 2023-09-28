@@ -51,15 +51,15 @@ class MPI final : public Backend
 
   ~MPI()
   {
-   // Freeing all MPI windows created
-   for (auto& slot : _globalMemorySlotMPIWindowMap)
-   {
-    auto status = MPI_Win_free(slot.second.dataWindow);
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI data window for slot %lu", slot.first);
+    // Freeing all MPI windows created
+    for (auto &slot : _globalMemorySlotMPIWindowMap)
+    {
+      auto status = MPI_Win_free(slot.second.dataWindow);
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI data window for slot %lu", slot.first);
 
-    status = MPI_Win_free(slot.second.recvMessageCountWindow);
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI recv message count window for slot %lu", slot.first);
-   }
+      status = MPI_Win_free(slot.second.recvMessageCountWindow);
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI recv message count window for slot %lu", slot.first);
+    }
   }
 
   private:
