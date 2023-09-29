@@ -27,7 +27,7 @@ void consumerFc(HiCR::Backend* backend, const size_t channelCapacity)
  auto consumer = HiCR::ConsumerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Getting a single value from the channel
- while (consumer.queryDepth() < 1);
+ while (consumer.isEmpty());
  printf("Received Value: %u\n", tokenBuffer[consumer.peek()]);
  consumer.pop();
 

@@ -40,7 +40,7 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
  // If channel is full, wait until it frees up
- while(producer.queryDepth() == producer.getCapacity());
+ while(producer.isFull());
 
  // Sending second value
  sendBuffer = 43;
@@ -48,7 +48,7 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
  // If channel is full, wait until it frees up
- while(producer.queryDepth() == producer.getCapacity());
+ while(producer.isFull());
 
  // Sending third value
  sendBuffer = 44;
