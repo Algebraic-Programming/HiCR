@@ -79,7 +79,7 @@ class Channel
    */
   __USED__ inline bool isFull()
   {
-   return queryDepth() == getCapacity();
+    return queryDepth() == getCapacity();
   }
 
   /**
@@ -92,7 +92,7 @@ class Channel
    */
   __USED__ inline bool isEmpty()
   {
-   return queryDepth() == 0;
+    return queryDepth() == 0;
   }
 
   /**

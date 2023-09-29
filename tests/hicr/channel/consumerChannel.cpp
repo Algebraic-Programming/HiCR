@@ -154,7 +154,8 @@ TEST(ConsumerChannel, PeekWait)
     hasStarted = true;
 
     // Wait until the producer pushes a message
-    while (consumer.queryDepth() < 1);
+    while (consumer.queryDepth() < 1)
+      ;
 
     // Raise consumed flag and read actual value
     hasConsumed = true;
