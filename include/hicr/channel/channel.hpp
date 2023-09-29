@@ -164,11 +164,6 @@ class Channel
   protected:
 
   /**
-   * Mutex for thread-safety
-   */
-  std::mutex _mutex;
-
-  /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
   Backend *const _backend;
@@ -248,8 +243,6 @@ class Channel
    * How many tokens fit in the buffer
    */
   const size_t _capacity;
-
-  private:
 
   /**
    * Buffer position at the head

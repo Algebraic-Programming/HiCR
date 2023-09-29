@@ -111,23 +111,6 @@ class ProducerChannel final : public Channel
     auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
-    // Obtaining lock for thread safety
-    _mutex.lock();
-
-    // Getting result from calling pus
-    const auto result = pushImpl(sourceSlot, n);
-
-    // Releasing lock
-    _mutex.unlock();
-
-    // Succeeded in pushing the token(s)
-    return result;
-  }
-
-  private:
-
-  __USED__ inline bool pushImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
-  {
     // If the exchange buffer does not have n free slots, reject the operation
     if (queryDepth() + n > getCapacity()) return false;
 
@@ -147,6 +130,8 @@ class ProducerChannel final : public Channel
     // Succeeded in pushing the token(s)
     return true;
   }
+
+  private:
 
   /**
    * Checks whether the receiver has freed up space in the receiver buffer

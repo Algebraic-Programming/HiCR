@@ -84,32 +84,32 @@ TEST(ConsumerChannel, PeekPop)
   auto sendBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
   // Attempting pop and peek
-  EXPECT_NO_THROW(consumer.pop());
-  EXPECT_NO_THROW(consumer.peek());
+  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
 
   // Attempting to pop/peek more than capacity
   EXPECT_THROW(consumer.pop(channelCapacity + 1), HiCR::common::LogicException);
   EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::common::LogicException);
 
   // Attempting to pop on an empty channel
-  EXPECT_FALSE(consumer.pop());
-  EXPECT_TRUE(consumer.peek().empty());
+  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
 
   // Pushing zero tokens and attempting pop again
   producer.push(sendBuffer, 0);
-  EXPECT_FALSE(consumer.pop());
-  EXPECT_TRUE(consumer.peek().empty());
+  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
 
   // Pushing one token and attempting pop again
   producer.push(sendBuffer, 1);
-  EXPECT_FALSE(consumer.peek().empty());
-  EXPECT_TRUE(consumer.peek(2).empty());
-  EXPECT_TRUE(consumer.pop());
-  EXPECT_TRUE(consumer.peek().empty());
+  EXPECT_NO_THROW(consumer.peek());
+  EXPECT_THROW(consumer.peek(2), HiCR::common::RuntimeException);
+  EXPECT_NO_THROW(consumer.pop());
+  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
 
   // Attempting to pop again
-  EXPECT_FALSE(consumer.pop());
-  EXPECT_TRUE(consumer.peek().empty());
+  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
 }
 
 TEST(ConsumerChannel, PeekWait)
@@ -154,15 +154,11 @@ TEST(ConsumerChannel, PeekWait)
     hasStarted = true;
 
     // Wait until the producer pushes a message
-    while (consumer.queryDepth() < 1)
-      ;
-
-    // Now do the peeking
-    auto posVector = consumer.peek(1);
+    while (consumer.queryDepth() < 1);
 
     // Raise consumed flag and read actual value
     hasConsumed = true;
-    readValue = recvBuffer[posVector[0]];
+    readValue = recvBuffer[consumer.peek(0)];
 
     // Pop message
     consumer.pop();
@@ -197,5 +193,5 @@ TEST(ConsumerChannel, PeekWait)
   // Check passed value is correct
   EXPECT_TRUE(hasConsumed);
   EXPECT_EQ(readValue, expectedValue);
-  EXPECT_FALSE(consumer.pop());
+  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
 }

@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <expected>
 #include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
@@ -78,35 +79,36 @@ class ConsumerChannel final : public Channel
    *
    * This is a one-sided blocking call that need not be made collectively.
    *
-   * @param[in] n The number of tokens to peek.
+   * @param[in] pos The token position required. pos = 0 indicates earliest token that
+   *                is currently present in the buffer. pos = getDepth()-1 indicates
+   *                the latest token to have arrived.
    *
-   * @returns If successful, a vector of size n with the relative positions within the token buffer of the received elements.
-   * @returns If not successful, an empty vector
+   * @returns A value representing the relative position within the token buffer where
+   *         the required element can be found.
    *
-   * This is a getter function that should complete in \f$ \Theta(n) \f$ time.
-   * This function has one side-effect: it detects pending incoming messages and,
-   * if there are, it updates the internal circular buffer with them.
+   * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
+   * This function has no side-effects.
+   *
+   * An exception will occur if you do attempt to peek and no
    *
    * @see queryDepth to determine whether the channel has an item to pop.
    *
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
    */
-  __USED__ inline std::vector<size_t> peek(const size_t n = 1)
+  __USED__ inline size_t peek(const size_t pos = 0)
   {
-    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to peek for (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
+    // Check if the requested position exceeds the capacity of the channel
+    if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, getCapacity());
 
-    // Obtaining lock for thread safety
-    _mutex.lock();
+    // Check if there are enough tokens in the buffer to satisfy the request
+    if (pos >= queryDepth()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, _depth);
 
-    // Executing the peek operation
-    const auto positions = peekImpl(n);
+    // Calculating buffer position
+    const size_t bufferPos = (getTailPosition() + pos) % getCapacity();
 
-    // Releasing the lock
-    _mutex.unlock();
-
-    // Returning position of the elements
-    return positions;
+    // Succeeded in pushing the token(s)
+    return bufferPos;
   }
 
   /**
@@ -117,61 +119,17 @@ class ConsumerChannel final : public Channel
    *
    * @param[in] n How many tokens to pop. Optional; default is one.
    *
-   * @returns <tt>true</tt>, if there were at least n tokens in the channel.
-   * @returns <tt>false</tt>, otherwise.
-   *
    * In case there are less than n tokens in the channel, no tokens will be popped.
    *
    * @see queryDepth to determine whether the channel has an item to pop before calling
    * this function.
    */
-  __USED__ inline bool pop(const size_t n = 1)
+  __USED__ inline void pop(const size_t n = 1)
   {
     if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
 
-    // Obtaining lock for thread safety
-    _mutex.lock();
-
-    // Calling actual implementation
-    auto result = popImpl(n);
-
-    // Releasing the lock
-    _mutex.unlock();
-
-    // Returning result
-    return result;
-  }
-
-  private:
-
-  __USED__ inline std::vector<size_t> peekImpl(const size_t n)
-  {
-    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to peek for (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
-
-    // Creating vector to store the token positions
-    std::vector<size_t> positions;
-
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (queryDepth() < n) return positions;
-
-    // Assigning the pointer to each token requested
-    for (size_t i = 0; i < n; i++)
-    {
-      // Calculating buffer position
-      size_t bufferPos = (getTailPosition() + i) % getCapacity();
-
-      // Assigning offset to the output buffer
-      positions.push_back(bufferPos);
-    }
-
-    // Succeeded in pushing the token(s)
-    return positions;
-  }
-
-  __USED__ inline bool popImpl(const size_t n)
-  {
-    // If the exchange buffer does not have n tokens pushed, reject operation
-    if (queryDepth() < n) return false;
+    if (n > queryDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _depth);
 
     // Advancing tail (removes elements from the circular buffer)
     advanceTail(n);
@@ -185,10 +143,9 @@ class ConsumerChannel final : public Channel
     // Re-syncing token and coordination buffers
     _backend->queryMemorySlotUpdates(_coordinationBuffer);
     _backend->queryMemorySlotUpdates(_tokenBuffer);
-
-    // If we reached this point, then the operation was successful
-    return true;
   }
+
+  private:
 
   /**
    * This is a non-blocking non-collective function that requests the channel (and its underlying backend)

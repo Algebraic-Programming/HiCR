@@ -172,9 +172,11 @@ TEST(ProducerChannel, PushWait)
   // Creating consumer channel
   HiCR::ConsumerChannel consumer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
 
+  // Waiting until consumer gets the message
+  while (consumer.queryDepth() == 0);
+
   // Popping one element to liberate thread
-  while (consumer.pop() == false)
-    ;
+  consumer.pop();
 
   // Wait for producer
   producerThread.join();
