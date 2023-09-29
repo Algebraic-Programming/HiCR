@@ -36,15 +36,23 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
 
  // Pushing values to the channel, one by one, suspending when/if the channel is full
  sendBuffer = 42;
- while(producer.push(sendSlot) == false);
+ producer.push(sendSlot);
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
+ // If channel is full, wait until it frees up
+ while(producer.isFull());
+
+ // Sending second value
  sendBuffer = 43;
- while(producer.push(sendSlot) == false);
+ producer.push(sendSlot);
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
+ // If channel is full, wait until it frees up
+ while(producer.isFull());
+
+ // Sending third value
  sendBuffer = 44;
- while(producer.push(sendSlot) == false);
+ producer.push(sendSlot);
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
  // Synchronizing before deleting the channel and freeing up memory

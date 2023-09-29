@@ -93,43 +93,24 @@ class ProducerChannel final : public Channel
    * @param[in] sourceSlot  Source slot (buffer) from whence to read the token(s)
    * @param[in] n  Number of tokens to read from the buffer
    *
-   * @returns <tt>true</tt>  If the channel had sufficient capacity for pushing
-   *                         the token
-   * @returns <tt>false</tt> If the channel did not have sufficient capacity.
-   *                         In this case, the state of this channel shall be as
-   *                         though this call to push had never occurred.
+   * This operation will fail with an exception if:
+   *  - The source buffer is smaller than required
+   *  - The operation would exceed the buffer size
    *
    * A call to this function throws an exception if:
    *  -# the channel at this locality is a consumer.
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline bool push(const Backend::memorySlotId_t sourceSlot, const size_t n = 1)
+  __USED__ inline void push(const Backend::memorySlotId_t sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
     auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
-    // Obtaining lock for thread safety
-    _mutex.lock();
-
-    // Getting result from calling pus
-    const auto result = pushImpl(sourceSlot, n);
-
-    // Releasing lock
-    _mutex.unlock();
-
-    // Succeeded in pushing the token(s)
-    return result;
-  }
-
-  private:
-
-  __USED__ inline bool pushImpl(const Backend::memorySlotId_t sourceSlot, const size_t n)
-  {
     // If the exchange buffer does not have n free slots, reject the operation
-    if (queryDepth() + n > getCapacity()) return false;
+    if (queryDepth() + n > getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, _depth, getCapacity());
 
     // Copy tokens
     for (size_t i = 0; i < n; i++)
@@ -143,10 +124,9 @@ class ProducerChannel final : public Channel
 
     // Increasing the number of pushed tokens
     _pushedTokens += n;
-
-    // Succeeded in pushing the token(s)
-    return true;
   }
+
+  private:
 
   /**
    * Checks whether the receiver has freed up space in the receiver buffer

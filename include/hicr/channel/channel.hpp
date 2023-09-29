@@ -70,6 +70,32 @@ class Channel
   }
 
   /**
+   * This function can be used to quickly check whether the channel is full.
+   *
+   * It affects the internal state of the channel because it detects any updates in the internal state of the buffers
+   *
+   * \returns true, if the buffer is full
+   * \returns false, if the buffer is not full
+   */
+  __USED__ inline bool isFull()
+  {
+    return queryDepth() == getCapacity();
+  }
+
+  /**
+   * This function can be used to quickly check whether the channel is empty.
+   *
+   * It affects the internal state of the channel because it detects any updates in the internal state of the buffers
+   *
+   * \returns true, if the buffer is empty
+   * \returns false, if the buffer is not empty
+   */
+  __USED__ inline bool isEmpty()
+  {
+    return queryDepth() == 0;
+  }
+
+  /**
    * @returns The size of the tokens in this channel.
    *
    * Returns simply the size per token. All tokens have the same size.
@@ -164,11 +190,6 @@ class Channel
   protected:
 
   /**
-   * Mutex for thread-safety
-   */
-  std::mutex _mutex;
-
-  /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
   Backend *const _backend;
@@ -248,8 +269,6 @@ class Channel
    * How many tokens fit in the buffer
    */
   const size_t _capacity;
-
-  private:
 
   /**
    * Buffer position at the head
