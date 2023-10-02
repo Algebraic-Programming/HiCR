@@ -7,8 +7,6 @@ RUN apk add build-base
 RUN apk add git
 RUN apk add bash
 RUN apk add gtest-dev
-RUN apk add meson
-RUN apk add ninja
 RUN apk add boost-dev
 RUN apk add hwloc-dev
 RUN apk add gcovr
@@ -19,3 +17,7 @@ RUN apk add lapack-dev
 RUN apk add curl
 RUN apk add jq
 RUN apk add openmpi-dev
+RUN apk add py3-pip
+
+RUN python3 -m pip install 'meson>=1.2'
+RUN python3 -m pip install 'ninja>=1.10'

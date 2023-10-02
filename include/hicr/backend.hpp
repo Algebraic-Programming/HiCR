@@ -161,6 +161,11 @@ class Backend
   typedef std::pair<size_t, size_t> exchangedMessages_t;
 
   /**
+   * Type definition for pending local to global memory slot promotions
+   */
+  typedef std::map<tag_t, std::vector<std::pair<globalKey_t, memorySlotId_t>>> localToGlobalPromotionArray_t;
+
+  /**
    * Type definition for a tag/key map of global variables
    */
   typedef std::map<tag_t, std::map<globalKey_t, std::vector<memorySlotId_t>>> globalMemorySlotTagKeyMap_t;
@@ -425,6 +430,9 @@ class Backend
    * all outgoing memory movement has left the local interface (and is guaranteed
    * to arrive at the remote memory space, modulo any fatal exception).
    *
+   * This function also finishes all pending local to global memory slot promotions,
+   * only for the specified tag.
+   *
    * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    * Exceptions are thrown in the following cases:
    *  -# One of the remote address spaces no longer has an active communication
@@ -440,6 +448,18 @@ class Backend
    */
   __USED__ inline void fence(const tag_t tag)
   {
+    // Lock Thread-safety mutex
+    _mutex.lock();
+
+    // Performing all pending local to global memory slot promotions now
+    exchangeGlobalMemorySlots(tag);
+
+    // Clearing exchanged slot from the pending list
+    _pendingLocalToGlobalPromotions.erase(tag);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+
     // To enable concurrent fence operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
     // and try not to access any of the internal Backend class fields without proper mutex locking
@@ -530,6 +550,37 @@ class Backend
   }
 
   /**
+   * Promotes a local memory slot into a global memory slot
+   *
+   * \param[in] tag Groups a particular subset of global memory slots. Useful to separate global memory slot exchange for different independent purposes
+   * \param[in] globalKey The key to sort the global slots within a given tag, so that the ordering is deterministic if all different keys are passed.
+   * \param[in] localSlotId Local slot id to promote to global
+   *
+   * For this operation to take effect, it is required to run a fence operation afterwards.
+   */
+  virtual void promoteMemorySlotToGlobal(const tag_t tag, const globalKey_t globalKey, const memorySlotId_t localSlotId)
+  {
+    // Lock Thread-safety mutex
+    _mutex.lock();
+
+    // Checking if the memory slot actually exists
+    if (_memorySlotMap.contains(localSlotId) == false)
+    {
+      // Release mutex before triggering the exception
+      _mutex.unlock();
+
+      // Triggering exception
+      HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", localSlotId);
+    }
+
+    // Calling internal implementation of this function
+    _pendingLocalToGlobalPromotions[tag].push_back(std::make_pair(globalKey, localSlotId));
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+  }
+
+  /**
    * Retrieves the map of globally registered slots
    *
    * \return The map of registered global memory slots, filtered by tag and mapped by key
@@ -593,38 +644,6 @@ class Backend
 
     // Removing memory slot from the set
     _memorySlotMap.erase(memorySlotId);
-
-    // Release Thread-safety mutex
-    _mutex.unlock();
-  }
-
-  /**
-   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
-   *
-   * This is a collective function that will block until the user-specified expected slot count is found.
-   *
-   * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
-   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
-   */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
-  {
-    // Lock Thread-safety mutex
-    _mutex.lock();
-
-    // Checking whether all slots have been allocated/registered with this backend
-    for (auto memorySlotId : localMemorySlotIds)
-      if (_memorySlotMap.contains(memorySlotId) == false)
-      {
-        // Release mutex before triggering the exception
-        _mutex.unlock();
-
-        // Triggering exception
-        HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
-      }
-
-    // Calling internal implementation
-    exchangeGlobalMemorySlotsImpl(tag, globalKey, localMemorySlotIds);
 
     // Release Thread-safety mutex
     _mutex.unlock();
@@ -869,7 +888,6 @@ class Backend
   /**
    * Registers a global memory slot from a given address.
    *
-   *
    * \param[in] tag Represents the subgroup of HiCR instances that will share the global reference
    * \param[in] key Represents the a subset of memory slots that will be grouped together.
    *                 They will be sorted by this value, which allows for recognizing which slots came from which instance.
@@ -995,13 +1013,11 @@ class Backend
   virtual void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
 
   /**
-   * Backend-internal implementation of the exchangeGlobalMemorySlots function
+   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
-   * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
-   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
+   * \param[in] tag Identifies a particular subset of global memory slots
    */
-  virtual void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds) = 0;
+  virtual void exchangeGlobalMemorySlots(const tag_t tag) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
@@ -1019,6 +1035,11 @@ class Backend
    * Storage for global tag/key associated global memory slot exchange
    */
   globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
+
+  /**
+   * Array for temporarily holding pending local to global memory slot promotions
+   */
+  localToGlobalPromotionArray_t _pendingLocalToGlobalPromotions;
 
   private:
 
@@ -1041,6 +1062,7 @@ class Backend
    * Currently available slot id to be assigned. It should atomically increment as each slot is assigned
    */
   std::atomic<memorySlotId_t> _currentMemorySlotId = 0;
+
 };
 
 } // namespace HiCR

@@ -336,17 +336,12 @@ class MPI final : public Backend
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
-   * This is a collective function that will block until the user-specified expected slot count is found.
-   *
-   * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
-   * \param[in] key The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
-   * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
+   * \param[in] tag Identifies a particular subset of global memory slots
    */
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t key, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag)
   {
     // Obtaining local slots to exchange
-    int localSlotCount = (int)localMemorySlotIds.size();
+    int localSlotCount = (int)_pendingLocalToGlobalPromotions[tag].size();
 
     // Obtaining the local slots to exchange per process in the communicator
     std::vector<int> perProcessSlotCount(_size);
@@ -370,7 +365,11 @@ class MPI final : public Backend
     std::vector<size_t> globalSlotSizes(globalSlotCount);
 
     // Filling in the local size storage
-    for (size_t i = 0; i < localSlotSizes.size(); i++) localSlotSizes[i] = _memorySlotMap.at(localMemorySlotIds[i]).size;
+    for (size_t i = 0; i < _pendingLocalToGlobalPromotions[tag].size(); i++)
+    {
+     const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][i].second;
+     localSlotSizes[i] = _memorySlotMap.at(memorySlotId).size;
+    }
 
     // Exchanging global sizes
     MPI_Allgatherv(localSlotSizes.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotSizes.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
@@ -380,7 +379,11 @@ class MPI final : public Backend
     std::vector<globalKey_t> globalSlotKeys(globalSlotCount);
 
     // Filling in the local size storage
-    for (size_t i = 0; i < localSlotKeys.size(); i++) localSlotKeys[i] = key;
+    for (size_t i = 0; i < _pendingLocalToGlobalPromotions[tag].size(); i++)
+    {
+     const auto key = _pendingLocalToGlobalPromotions[tag][i].first;
+     localSlotKeys[i] = key;
+    }
 
     // Exchanging global sizes
     MPI_Allgatherv(localSlotKeys.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotKeys.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
@@ -398,7 +401,16 @@ class MPI final : public Backend
     // Now also creating pointer vector for convenience
     std::vector<void *> globalSlotPointers(globalSlotCount);
     size_t localPointerPos = 0;
-    for (size_t i = 0; i < globalSlotPointers.size(); i++) globalSlotPointers[i] = globalSlotProcessId[i] == _rank ? _memorySlotMap.at(localPointerPos++).pointer : NULL;
+    for (size_t i = 0; i < globalSlotPointers.size(); i++)
+    {
+     // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
+     if (globalSlotProcessId[i] != _rank) globalSlotPointers[i] = NULL;
+     else
+     {
+      const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][localPointerPos++].second;
+      globalSlotPointers[i] = _memorySlotMap.at(memorySlotId).pointer;
+     }
+    }
 
     // Now creating global slots and their MPI windows
     for (size_t i = 0; i < globalSlotProcessId.size(); i++)
