@@ -259,10 +259,12 @@ class Worker
         auto task = dispatcher->pull();
 
         // If a task was returned, then execute it
-        if (task != NULL) task->run();
+        if (task != NULL) [[likely]]
+          task->run();
 
         // If worker has been suspended, handle it now
-        if (_state == state_t::suspended) _processingUnits[0]->suspend();
+        if (_state == state_t::suspended) [[unlikely]]
+          _processingUnits[0]->suspend();
       }
     }
   }
