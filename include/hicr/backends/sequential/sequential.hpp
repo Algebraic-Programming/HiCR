@@ -228,11 +228,11 @@ class Sequential final : public Backend
   __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag)
   {
     // Simply adding local memory slots to the global map
-    for (const auto& memorySlot : _pendingLocalToGlobalPromotions[tag])
+    for (const auto &memorySlot : _pendingLocalToGlobalPromotions[tag])
     {
-     const auto key = memorySlot.first;
-     const auto memorySlotId = memorySlot.second;
-     registerGlobalMemorySlot(tag, key, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
+      const auto key = memorySlot.first;
+      const auto memorySlotId = memorySlot.second;
+      registerGlobalMemorySlot(tag, key, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
     }
   }
 

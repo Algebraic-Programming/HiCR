@@ -1062,7 +1062,6 @@ class Backend
    * Currently available slot id to be assigned. It should atomically increment as each slot is assigned
    */
   std::atomic<memorySlotId_t> _currentMemorySlotId = 0;
-
 };
 
 } // namespace HiCR

@@ -159,15 +159,15 @@ class MPI final : public Backend
     // Perform a get if the source is remote and destination is local
     if (isSourceRemote == true && isDestinationRemote == false)
     {
-     // Locking MPI window to ensure the messages arrives before returning
-     auto status = MPI_Win_lock(
-       MPI_LOCK_EXCLUSIVE,
-       _globalMemorySlotMPIWindowMap[source].rank,
-       0,
-       *_globalMemorySlotMPIWindowMap[source].dataWindow);
+      // Locking MPI window to ensure the messages arrives before returning
+      auto status = MPI_Win_lock(
+        MPI_LOCK_EXCLUSIVE,
+        _globalMemorySlotMPIWindowMap[source].rank,
+        0,
+        *_globalMemorySlotMPIWindowMap[source].dataWindow);
 
-     // Checking correct locking
-     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window on MPI_Put (Slots %lu -> %lu)", source, destination);
+      // Checking correct locking
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window on MPI_Put (Slots %lu -> %lu)", source, destination);
 
       // Executing the get operation
       status = MPI_Get(
@@ -392,11 +392,11 @@ class MPI final : public Backend
     // Filling in the local size and keys storage
     for (size_t i = 0; i < _pendingLocalToGlobalPromotions[tag].size(); i++)
     {
-     const auto key = _pendingLocalToGlobalPromotions[tag][i].first;
-     const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][i].second;
-     localSlotSizes[i] = _memorySlotMap.at(memorySlotId).size;
-     localSlotKeys[i] = key;
-     localSlotProcessId[i] = _rank;
+      const auto key = _pendingLocalToGlobalPromotions[tag][i].first;
+      const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][i].second;
+      localSlotSizes[i] = _memorySlotMap.at(memorySlotId).size;
+      localSlotKeys[i] = key;
+      localSlotProcessId[i] = _rank;
     }
 
     // Exchanging global sizes, keys and process ids
@@ -409,13 +409,14 @@ class MPI final : public Backend
     size_t localPointerPos = 0;
     for (size_t i = 0; i < globalSlotPointers.size(); i++)
     {
-     // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
-     if (globalSlotProcessId[i] != _rank) globalSlotPointers[i] = NULL;
-     else
-     {
-      const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][localPointerPos++].second;
-      globalSlotPointers[i] = _memorySlotMap.at(memorySlotId).pointer;
-     }
+      // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
+      if (globalSlotProcessId[i] != _rank)
+        globalSlotPointers[i] = NULL;
+      else
+      {
+        const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][localPointerPos++].second;
+        globalSlotPointers[i] = _memorySlotMap.at(memorySlotId).pointer;
+      }
     }
 
     // Now creating global slots and their MPI windows
