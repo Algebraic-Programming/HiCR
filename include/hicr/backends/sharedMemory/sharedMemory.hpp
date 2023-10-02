@@ -358,18 +358,17 @@ class SharedMemory final : public Backend
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
-   * This is a collective function that will block until the user-specified expected slot count is found.
-   *
-   * \param[in] tag Identifies a particular subset of global memory slots, and returns it
-   * \param[in] localMemorySlotIds Provides the local slots to be promoted to global and exchanged by this HiCR instance
-   * \param[in] globalKey The key to use for the provided memory slots. This key will be used to sort the global slots, so that the ordering is deterministic if all different keys are passed.
-   * \returns A map of global memory slot arrays identified with the tag passed and mapped by key.
+   * \param[in] tag Identifies a particular subset of global memory slots
    */
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const globalKey_t globalKey, const std::vector<memorySlotId_t> localMemorySlotIds)
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag)
   {
-    // Adding local memory slots to the global map
-    for (const auto memorySlotId : localMemorySlotIds)
-      registerGlobalMemorySlot(tag, globalKey, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
+    // Simply adding local memory slots to the global map
+    for (const auto &memorySlot : _pendingLocalToGlobalPromotions[tag])
+    {
+      const auto key = memorySlot.first;
+      const auto memorySlotId = memorySlot.second;
+      registerGlobalMemorySlot(tag, key, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
+    }
   }
 
   /**

@@ -15,9 +15,9 @@ void consumerFc(HiCR::Backend* backend, const size_t channelCapacity)
  auto tokenBufferSlot = backend->registerLocalMemorySlot(tokenBuffer, tokenBufferSize);
 
  // Registering buffers globally for them to be used by remote actors
- backend->exchangeGlobalMemorySlots(CHANNEL_TAG, CONSUMER_KEY, {tokenBufferSlot});
+ backend->promoteMemorySlotToGlobal(CHANNEL_TAG, CONSUMER_KEY, tokenBufferSlot);
 
- // Synchronizing so that all actors have finished registering their memory slots
+ // Synchronizing so that all actors have finished registering their global memory slots
  backend->fence(CHANNEL_TAG);
 
  // Obtaining the globally exchanged memory slots
