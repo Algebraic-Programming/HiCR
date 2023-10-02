@@ -159,8 +159,18 @@ class MPI final : public Backend
     // Perform a get if the source is remote and destination is local
     if (isSourceRemote == true && isDestinationRemote == false)
     {
+     // Locking MPI window to ensure the messages arrives before returning
+     auto status = MPI_Win_lock(
+       MPI_LOCK_EXCLUSIVE,
+       _globalMemorySlotMPIWindowMap[source].rank,
+       0,
+       *_globalMemorySlotMPIWindowMap[source].dataWindow);
+
+     // Checking correct locking
+     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window on MPI_Put (Slots %lu -> %lu)", source, destination);
+
       // Executing the get operation
-      auto status = MPI_Get(
+      status = MPI_Get(
         destinationPointer,
         size,
         MPI_BYTE,
@@ -172,6 +182,17 @@ class MPI final : public Backend
 
       // Checking execution status
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get (Slots %lu -> %lu)", source, destination);
+
+      // Unlocking window after copy is completed
+      status = MPI_Win_unlock(
+        _globalMemorySlotMPIWindowMap[destination].rank,
+        *_globalMemorySlotMPIWindowMap[destination].recvMessageCountWindow);
+
+      // Checking correct locking
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI data window on MPI_Put (Slots %lu -> %lu)", source, destination);
+
+      // Increasing and updating remote slot received message count
+      _memorySlotMap.at(destination).messagesRecv++;
     }
 
     // Perform a put if source is local and destination is remote
@@ -360,45 +381,30 @@ class MPI final : public Backend
     int globalSlotCount = 0;
     for (const auto count : perProcessSlotCount) globalSlotCount += count;
 
-    // Allocating storage for local and global memory slot sizes
+    // Allocating storage for local and global memory slot sizes, keys and process id
     std::vector<size_t> localSlotSizes(localSlotCount);
     std::vector<size_t> globalSlotSizes(globalSlotCount);
-
-    // Filling in the local size storage
-    for (size_t i = 0; i < _pendingLocalToGlobalPromotions[tag].size(); i++)
-    {
-     const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][i].second;
-     localSlotSizes[i] = _memorySlotMap.at(memorySlotId).size;
-    }
-
-    // Exchanging global sizes
-    MPI_Allgatherv(localSlotSizes.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotSizes.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
-
-    // Allocating storage for local and global memory slot keys
     std::vector<globalKey_t> localSlotKeys(localSlotCount);
     std::vector<globalKey_t> globalSlotKeys(globalSlotCount);
-
-    // Filling in the local size storage
-    for (size_t i = 0; i < _pendingLocalToGlobalPromotions[tag].size(); i++)
-    {
-     const auto key = _pendingLocalToGlobalPromotions[tag][i].first;
-     localSlotKeys[i] = key;
-    }
-
-    // Exchanging global sizes
-    MPI_Allgatherv(localSlotKeys.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotKeys.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
-
-    // Allocating storage for local and global slot<->rank identification. Needed to know which owns the window
     std::vector<int> localSlotProcessId(localSlotCount);
     std::vector<int> globalSlotProcessId(globalSlotCount);
 
-    // Filling in the local size storage
-    for (size_t i = 0; i < localSlotProcessId.size(); i++) localSlotProcessId[i] = _rank;
+    // Filling in the local size and keys storage
+    for (size_t i = 0; i < _pendingLocalToGlobalPromotions[tag].size(); i++)
+    {
+     const auto key = _pendingLocalToGlobalPromotions[tag][i].first;
+     const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][i].second;
+     localSlotSizes[i] = _memorySlotMap.at(memorySlotId).size;
+     localSlotKeys[i] = key;
+     localSlotProcessId[i] = _rank;
+    }
 
-    // Exchanging global slot process ids
+    // Exchanging global sizes, keys and process ids
+    MPI_Allgatherv(localSlotSizes.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotSizes.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
+    MPI_Allgatherv(localSlotKeys.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotKeys.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
     MPI_Allgatherv(localSlotProcessId.data(), localSlotCount, MPI_INT, globalSlotProcessId.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_INT, _comm);
 
-    // Now also creating pointer vector for convenience
+    // Now also creating pointer vector to remember local pointers, when required for memcpys
     std::vector<void *> globalSlotPointers(globalSlotCount);
     size_t localPointerPos = 0;
     for (size_t i = 0; i < globalSlotPointers.size(); i++)
