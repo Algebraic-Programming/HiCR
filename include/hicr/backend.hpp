@@ -270,7 +270,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the referenced memory space actually exists
-    if (_memorySpaceList.contains(memorySpace) == false)
+    if (_memorySpaceList.contains(memorySpace) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -302,7 +302,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the referenced compute resource actually exists
-    if (_computeResourceList.contains(resource) == false)
+    if (_computeResourceList.contains(resource) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -392,7 +392,7 @@ class Backend
     const auto actualDstSize = size + dst_offset;
 
     // Checking size doesn't exceed slot size
-    if (actualSrcSize > srcSize)
+    if (actualSrcSize > srcSize) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -402,7 +402,7 @@ class Backend
     }
 
     // Checking size doesn't exceed slot size
-    if (actualDstSize > dstSize)
+    if (actualDstSize > dstSize) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -484,7 +484,7 @@ class Backend
     _mutex.lock();
 
     // Checking size doesn't exceed slot size
-    if (size > maxSize)
+    if (size > maxSize) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -564,7 +564,7 @@ class Backend
     _mutex.lock();
 
     // Checking if the memory slot actually exists
-    if (_memorySlotMap.contains(localSlotId) == false)
+    if (_memorySlotMap.contains(localSlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -610,7 +610,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -620,7 +620,7 @@ class Backend
     }
 
     // Checking whether the slot is local
-    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local)
+    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -630,7 +630,7 @@ class Backend
     }
 
     // Checking whether the slot has been registered
-    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::registered)
+    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::registered) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -660,7 +660,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the slot has been allocated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -670,7 +670,7 @@ class Backend
     }
 
     // Checking whether the slot is local
-    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local)
+    if (_memorySlotMap.at(memorySlotId).localityType != memorySlotLocalityType_t::local) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -680,7 +680,7 @@ class Backend
     }
 
     // Checking whether the slot has been allocated with this backend
-    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::allocated)
+    if (_memorySlotMap.at(memorySlotId).creationType != memorySlotCreationType_t::allocated) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -712,7 +712,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -740,7 +740,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -771,7 +771,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -802,7 +802,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -833,7 +833,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
@@ -864,7 +864,7 @@ class Backend
     _mutex.lock();
 
     // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false)
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
     {
       // Release mutex before triggering the exception
       _mutex.unlock();
