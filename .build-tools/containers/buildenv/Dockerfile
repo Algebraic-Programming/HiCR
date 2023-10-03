@@ -1,23 +1,24 @@
-FROM alpine:3.18.3
+FROM python:3.8
 
-RUN apk update
+RUN apt update
 
 # Build tools
-RUN apk add build-base
-RUN apk add git
-RUN apk add bash
-RUN apk add gtest-dev
-RUN apk add boost-dev
-RUN apk add hwloc-dev
-RUN apk add gcovr
-RUN apk add openssh-client
-RUN apk add openblas-dev
-RUN apk add cmake
-RUN apk add lapack-dev
-RUN apk add curl
-RUN apk add jq
-RUN apk add openmpi-dev
-RUN apk add py3-pip
+RUN apt install -y build-essential
+RUN apt install -y git
+RUN apt install -y bash
+RUN apt install -y libgtest-dev
+RUN apt install -y libboost-all-dev
+RUN apt install -y libhwloc-dev
+RUN apt install -y gcovr
+RUN apt install -y openssh-client
+RUN apt install -y libopenblas-dev
+RUN apt install -y cmake
+RUN apt install -y liblapack-dev
+RUN apt install -y liblapacke-dev
+RUN apt install -y curl
+RUN apt install -y jq 
+RUN apt install -y libopenmpi-dev
+RUN apt install -y python3-pip
 
 RUN python3 -m pip install 'meson>=1.2'
 RUN python3 -m pip install 'ninja>=1.10'
