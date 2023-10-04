@@ -165,7 +165,7 @@ class SharedMemory final : public Backend
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl(const tag_t tag) override
+  __USED__ inline void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t& globalSlots) override
   {
     pthread_barrier_wait(&_fenceBarrier);
   }
@@ -198,13 +198,9 @@ class SharedMemory final : public Backend
    * \param[in] memorySlotId Identifier of the slot to check
    * \return True, if the referenced memory slot exists and is valid; false, otherwise
    */
-  __USED__ bool isMemorySlotValidImpl(const memorySlotId_t memorySlotId) const override
+  __USED__ bool isMemorySlotValidImpl(const MemorySlot* memorySlot) const override
   {
-    // Getting pointer for the corresponding slot
-    const auto slot = _memorySlotMap.at(memorySlotId);
-
-    // If it is NULL, it means it was never created
-    if (slot.pointer == NULL) return false;
+    if (memorySlot->getPointer() == NULL) return false;
 
     // Otherwise it is ok
     return true;
@@ -280,15 +276,11 @@ class SharedMemory final : public Backend
     return std::move(std::make_unique<Thread>(resource));
   }
 
-  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t src_offset, const size_t size) override
   {
-    // Getting pointer for the corresponding slots
-    const auto srcSlot = _memorySlotMap.at(source);
-    const auto dstSlot = _memorySlotMap.at(destination);
-
     // Getting slot pointers
-    const auto srcPtr = srcSlot.pointer;
-    const auto dstPtr = dstSlot.pointer;
+    const auto srcPtr = source->getPointer();
+    const auto dstPtr = destination->getPointer();
 
     // Calculating actual offsets
     const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
@@ -298,8 +290,8 @@ class SharedMemory final : public Backend
     std::memcpy(actualDstPtr, actualSrcPtr, size);
 
     // Increasing message received/sent counters for memory slots
-    _memorySlotMap[source].messagesSent++;
-    _memorySlotMap[destination].messagesRecv++;
+    source->increaseMessagesSent();
+    destination->increaseMessagesRecv();
   }
 
   /**
@@ -350,7 +342,7 @@ class SharedMemory final : public Backend
    *
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(MemorySlot* const memorySlot) override
   {
     // Nothing to do here
   }
@@ -360,14 +352,14 @@ class SharedMemory final : public Backend
    *
    * \param[in] tag Identifies a particular subset of global memory slots
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag)
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots)
   {
     // Simply adding local memory slots to the global map
-    for (const auto &memorySlot : _pendingLocalToGlobalPromotions[tag])
+    for (const auto &entry : memorySlots)
     {
-      const auto key = memorySlot.first;
-      const auto memorySlotId = memorySlot.second;
-      registerGlobalMemorySlot(tag, key, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
+      const auto key = entry.first;
+      const auto memorySlot = entry.second;
+      registerGlobalMemorySlot(tag, key, memorySlot->getPointer(), memorySlot->getSize());
     }
   }
 
@@ -376,16 +368,16 @@ class SharedMemory final : public Backend
    *
    * \param[in] memorySlotId Identifier of the locally allocated memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
+  __USED__ inline void freeLocalMemorySlotImpl(MemorySlot* memorySlot) override
   {
-    // Getting memory slot entry from the map
-    const auto &slot = _memorySlotMap.at(memorySlotId);
+    // Getting memory slot Id
+    const auto memorySlotId = memorySlot->getId();
 
     // If using strict binding, use hwloc_free to properly unmap the memory binding
     if (_memorySlotBindingMap.at(memorySlotId) == binding_type::strict_binding)
     {
       // Freeing memory slot
-      auto status = hwloc_free(_topology, slot.pointer, slot.size);
+      auto status = hwloc_free(_topology, memorySlot->getPointer(), memorySlot->getSize());
 
       // Error checking
       if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot (%lu).", memorySlotId);
@@ -394,7 +386,7 @@ class SharedMemory final : public Backend
     // If using strict non binding, use system's free
     if (_memorySlotBindingMap.at(memorySlotId) == binding_type::strict_non_binding)
     {
-      free(slot.pointer);
+      free(memorySlot->getPointer());
     }
 
     // Erasing memory slot from the binding information map
@@ -408,7 +400,7 @@ class SharedMemory final : public Backend
    *
    * \param[in] memorySlotId Identifier of the memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(const MemorySlot* memorySlot) override
   {
     // This function should check and update the abstract class for completed memcpy operations
   }

@@ -14,6 +14,7 @@
 #pragma once
 
 #include <expected>
+#include <hicr/memorySlot.hpp>
 #include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
@@ -48,14 +49,14 @@ class ConsumerChannel final : public Channel
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   ConsumerChannel(Backend *backend,
-                  const Backend::memorySlotId_t tokenBuffer,
-                  const Backend::memorySlotId_t coordinationBuffer,
+                  MemorySlot* const tokenBuffer,
+                  MemorySlot* const coordinationBuffer,
                   const size_t tokenSize,
                   const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided token exchange  buffer has the right size
     auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
-    auto providedTokenBufferSize = _backend->getMemorySlotSize(_tokenBuffer);
+    auto providedTokenBufferSize = _tokenBuffer->getSize();
     if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
   }
   ~ConsumerChannel() = default;
@@ -157,7 +158,7 @@ class ConsumerChannel final : public Channel
     _backend->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count
-    auto newPushedTokens = _backend->getMemorySlotReceivedMessages(_tokenBuffer);
+    auto newPushedTokens = _tokenBuffer->getMessagesRecv();
 
     // The number of received tokens is the difference between the currently pushed tokens and the previous one
     auto receivedTokens = newPushedTokens - _pushedTokens;

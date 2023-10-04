@@ -46,14 +46,14 @@ class ProducerChannel final : public Channel
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   ProducerChannel(Backend *backend,
-                  const Backend::memorySlotId_t tokenBuffer,
-                  const Backend::memorySlotId_t coordinationBuffer,
+                  MemorySlot* const tokenBuffer,
+                  MemorySlot* const coordinationBuffer,
                   const size_t tokenSize,
                   const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided coordination buffer has the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
-    auto providedCoordinationBufferSize = _backend->getMemorySlotSize(_coordinationBuffer);
+    auto providedCoordinationBufferSize = _coordinationBuffer->getSize();
     if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
   }
   ~ProducerChannel() = default;
@@ -76,13 +76,18 @@ class ProducerChannel final : public Channel
    * \param[in] backend The backend to perform the initialization operation with
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __USED__ static inline void initializeCoordinationBuffer(Backend *backend, const Backend::memorySlotId_t coordinationBuffer) noexcept
+  __USED__ static inline void initializeCoordinationBuffer(Backend *backend, MemorySlot* coordinationBuffer)
   {
+    // Checking for correct size
+    auto requiredSize = getCoordinationBufferSize();
+    auto size = coordinationBuffer->getSize();
+    if (size < requiredSize) HICR_THROW_LOGIC("Attempting to initialize coordination buffer size on a memory slot (%lu) smaller than the required size (%lu).\n", size, requiredSize);
+
     // Getting actual buffer of the coordination buffer
-    auto buffer = backend->getLocalMemorySlotPointer(coordinationBuffer);
+    auto bufferPtr = coordinationBuffer->getPointer();
 
     // Resetting all its values to zero
-    memset(buffer, 0, getCoordinationBufferSize());
+    memset(bufferPtr, 0, getCoordinationBufferSize());
   }
 
   /**
@@ -102,11 +107,11 @@ class ProducerChannel final : public Channel
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline void push(const Backend::memorySlotId_t sourceSlot, const size_t n = 1)
+  __USED__ inline void push(MemorySlot* sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
-    auto providedBufferSize = _backend->getMemorySlotSize(sourceSlot);
+    auto providedBufferSize = sourceSlot->getSize();
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
     // If the exchange buffer does not have n free slots, reject the operation

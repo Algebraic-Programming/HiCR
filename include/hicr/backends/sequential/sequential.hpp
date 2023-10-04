@@ -41,7 +41,7 @@ class Sequential final : public Backend
   /**
    * Common definition of a collection of memory slots
    */
-  typedef parallelHashMap_t<tag_t, size_t> fenceCountTagMap_t;
+  typedef std::map<tag_t, size_t> fenceCountTagMap_t;
 
   /**
    * Constructor for the sequential backend.
@@ -62,11 +62,6 @@ class Sequential final : public Backend
    * Counter for calls to fence, filtered per tag
    */
   fenceCountTagMap_t _fenceCountTagMap;
-
-  /**
-   * This set remembers which of the registered memory slots are actually global
-   */
-  parallelHashMap_t<memorySlotId_t, memorySlotStruct_t *> _globalRegisteredMemorySlots;
 
   /**
    * This stores the total system memory to check that allocations do not exceed it
@@ -122,15 +117,11 @@ class Sequential final : public Backend
     return std::move(std::make_unique<Process>(resource));
   }
 
-  __USED__ inline void memcpyImpl(memorySlotId_t destination, const size_t dst_offset, const memorySlotId_t source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t src_offset, const size_t size) override
   {
-    // Getting pointer for the corresponding slots
-    const auto srcSlot = _globalRegisteredMemorySlots.contains(source) == false ? &_memorySlotMap.at(source) : _globalRegisteredMemorySlots.at(source);
-    const auto dstSlot = _globalRegisteredMemorySlots.contains(destination) == false ? &_memorySlotMap.at(destination) : _globalRegisteredMemorySlots.at(destination);
-
     // Getting slot pointers
-    const auto srcPtr = srcSlot->pointer;
-    const auto dstPtr = dstSlot->pointer;
+    const auto srcPtr = source->getPointer();
+    const auto dstPtr = destination->getPointer();
 
     // Calculating actual offsets
     const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
@@ -140,8 +131,8 @@ class Sequential final : public Backend
     std::memcpy(actualDstPtr, actualSrcPtr, size);
 
     // Increasing message received/sent counters for memory slots
-    srcSlot->messagesSent++;
-    dstSlot->messagesRecv++;
+    source->increaseMessagesSent();
+    destination->increaseMessagesRecv();
   }
 
   /**
@@ -151,18 +142,8 @@ class Sequential final : public Backend
    *
    * \param[in] memorySlotId Identifier of the memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(const MemorySlot* memorySlot) override
   {
-    // If the given memory slot is a global one, the message exchanged counters need to be updated with the local copy information
-    if (_globalRegisteredMemorySlots.contains(memorySlotId) == true)
-    {
-      const auto globalSlot = _globalRegisteredMemorySlots.at(memorySlotId);
-      const auto localSlot = &_memorySlotMap.at(memorySlotId);
-
-      // Updating message counts
-      localSlot->messagesRecv = globalSlot->messagesRecv;
-      localSlot->messagesSent = globalSlot->messagesSent;
-    }
   }
 
   /**
@@ -170,7 +151,7 @@ class Sequential final : public Backend
    * the memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl(const tag_t tag) override
+  __USED__ inline void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t& globalSlots) override
   {
     // Increasing the counter for the fence corresponding to the tag
     _fenceCountTagMap[tag]++;
@@ -215,7 +196,7 @@ class Sequential final : public Backend
    *
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(MemorySlot* memorySlot) override
   {
     // Nothing to do here for this backend
   }
@@ -225,14 +206,14 @@ class Sequential final : public Backend
    *
    * \param[in] tag Identifies a particular subset of global memory slots
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag)
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots)
   {
     // Simply adding local memory slots to the global map
-    for (const auto &memorySlot : _pendingLocalToGlobalPromotions[tag])
+    for (const auto &entry : memorySlots)
     {
-      const auto key = memorySlot.first;
-      const auto memorySlotId = memorySlot.second;
-      registerGlobalMemorySlot(tag, key, _memorySlotMap.at(memorySlotId).pointer, _memorySlotMap.at(memorySlotId).size);
+      const auto key = entry.first;
+      const auto memorySlot = entry.second;
+      registerGlobalMemorySlot(tag, key, memorySlot->getPointer(), memorySlot->getSize());
     }
   }
 
@@ -241,13 +222,11 @@ class Sequential final : public Backend
    *
    * \param[in] memorySlotId Identifier of the local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(memorySlotId_t memorySlotId) override
+  __USED__ inline void freeLocalMemorySlotImpl(MemorySlot* memorySlot) override
   {
-    const auto &memSlot = _memorySlotMap.at(memorySlotId);
+    if (memorySlot->getPointer() == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlot->getId());
 
-    if (memSlot.pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlotId);
-
-    free(memSlot.pointer);
+    free(memorySlot->getPointer());
   }
 
   /**
@@ -258,13 +237,10 @@ class Sequential final : public Backend
    * \param[in] memorySlotId Identifier of the slot to check
    * \return True, if the referenced memory slot exists and is valid; false, otherwise
    */
-  __USED__ bool isMemorySlotValidImpl(const memorySlotId_t memorySlotId) const override
+  __USED__ bool isMemorySlotValidImpl(const MemorySlot* memorySlot) const override
   {
-    // Getting pointer for the corresponding slot
-    const auto slot = _globalRegisteredMemorySlots.contains(memorySlotId) == false ? &_memorySlotMap.at(memorySlotId) : _globalRegisteredMemorySlots.at(memorySlotId);
-
     // If it is NULL, it means it was never created
-    if (slot->pointer == NULL) return false;
+    if (memorySlot->getPointer() == NULL) return false;
 
     // Otherwise it is ok
     return true;
