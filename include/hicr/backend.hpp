@@ -55,17 +55,12 @@ class Backend
   /**
    * Common definition of a collection of memory slots
    */
-  typedef std::map<memorySlotId_t, MemorySlot*> memorySlotList_t;
+  typedef std::map<memorySlotId_t, MemorySlot*> memorySlotMap_t;
 
   /**
    * Common definition of a map that links key ids with memory slot id arrays (for global exchange)
    */
   typedef std::map<globalKey_t, std::vector<MemorySlot*>> memorySlotIdArrayMap_t;
-
-  /**
-   * Type definition for reporting the number of inbound/outbound messages exchanged
-   */
-  typedef std::pair<size_t, size_t> exchangedMessages_t;
 
   /**
    * Type definition for a global key / memory slot pair
@@ -858,7 +853,7 @@ class Backend
   /**
    * Stores the map of created memory slots
    */
-  memorySlotList_t _memorySlotMap;
+  memorySlotMap_t _memorySlotMap;
 
   /**
    * The internal container for the queried compute resources.

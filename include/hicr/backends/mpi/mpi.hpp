@@ -139,12 +139,30 @@ class MPI final : public Backend
     HICR_THROW_RUNTIME("This backend provides no support for processing units");
   }
 
-  __USED__ inline void memcpyImpl(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t src_offset, const size_t size) override
+  __USED__ inline void lockMPIWindow(const int rank, MPI_Win* window)
+  {
+   // Locking MPI window to ensure the messages arrives before returning
+   auto status = MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, *window);
+
+   // Checking correct locking
+   if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
+  }
+
+  __USED__ inline void unlockMPIWindow(const int rank, MPI_Win* window)
+  {
+   // Unlocking window after copy is completed
+   auto status = MPI_Win_unlock(rank, *window);
+
+   // Checking correct unlocking
+   if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
+  }
+
+  __USED__ inline void memcpyImpl(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t sourceOffset, const size_t size) override
   {
     const auto sourceId = source->getId();
     const auto destinationId = destination->getId();
 
-    bool isSourceGlobalSlot = _globalMemorySlotMPIWindowMap.contains(sourceId);
+    bool isSourceGlobalSlot      = _globalMemorySlotMPIWindowMap.contains(sourceId);
     bool isDestinationGlobalSlot = _globalMemorySlotMPIWindowMap.contains(destinationId);
 
     // Checking whether source and/or remote are remote
@@ -152,47 +170,39 @@ class MPI final : public Backend
     bool isDestinationRemote = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap[destinationId].rank != _rank : false;
 
     // Sanity checks
-    if (isSourceRemote && isDestinationGlobalSlot == false) HICR_THROW_LOGIC("Trying to use MPI backend in remote operation to with a destination slot(%lu) that has not been registered as global.", destination);
-    if (isSourceRemote == true && isDestinationRemote == true) HICR_THROW_LOGIC("Trying to use MPI backend perform a remote to remote copy between slots (%lu -> %lu)", source, destination);
+    if (isSourceRemote && isDestinationGlobalSlot == false) HICR_THROW_LOGIC("Trying to use MPI backend in remote operation to with a destination slot (%lu) that has not been registered as global.", destinationId);
+    if (isSourceRemote == true && isDestinationRemote == true) HICR_THROW_LOGIC("Trying to use MPI backend perform a remote to remote copy between slots (%lu -> %lu)", sourceId, destinationId);
 
     // Calculating pointers
     auto destinationPointer = (void *)(((uint8_t *)destination->getPointer()) + dst_offset);
-    auto sourcePointer      = (void *)(((uint8_t *)source->getPointer())      + src_offset);
+    auto sourcePointer      = (void *)(((uint8_t *)source->getPointer())      + sourceOffset);
+
+    // Getting ranks for the involved processes
+    auto sourceRank      = isSourceGlobalSlot      ? _globalMemorySlotMPIWindowMap.at(sourceId).rank      : _rank;
+    auto destinationRank = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).rank : _rank;
+
+    // Getting data windows for the involved processes (if necessary)
+    auto sourceDataWindow      = isSourceGlobalSlot      ? _globalMemorySlotMPIWindowMap.at(sourceId).dataWindow      : NULL;
+    auto destinationDataWindow = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).dataWindow : NULL;
+
+    // Getting recv message count windows for the involved processes (if necessary)
+    //auto sourceRecvMessageWindow     = isSourceGlobalSlot      ? _globalMemorySlotMPIWindowMap.at(sourceId).recvMessageCountWindow : NULL;
+    auto destinationRecvMessageWindow  = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).recvMessageCountWindow : NULL;
 
     // Perform a get if the source is remote and destination is local
     if (isSourceRemote == true && isDestinationRemote == false)
     {
       // Locking MPI window to ensure the messages arrives before returning
-      auto status = MPI_Win_lock(
-        MPI_LOCK_EXCLUSIVE,
-        _globalMemorySlotMPIWindowMap[sourceId].rank,
-        0,
-        *_globalMemorySlotMPIWindowMap[sourceId].dataWindow);
-
-      // Checking correct locking
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window on MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
+     lockMPIWindow(sourceRank, _globalMemorySlotMPIWindowMap[sourceId].dataWindow);
 
       // Executing the get operation
-      status = MPI_Get(
-        destinationPointer,
-        size,
-        MPI_BYTE,
-        _globalMemorySlotMPIWindowMap[sourceId].rank,
-        src_offset,
-        size,
-        MPI_BYTE,
-        *_globalMemorySlotMPIWindowMap[sourceId].dataWindow);
+     auto status = MPI_Get(destinationPointer, size, MPI_BYTE, sourceRank, sourceOffset, size, MPI_BYTE, *sourceDataWindow);
 
       // Checking execution status
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get (Slots %lu -> %lu)", sourceId, destinationId);
 
       // Unlocking window after copy is completed
-      status = MPI_Win_unlock(
-        _globalMemorySlotMPIWindowMap[destinationId].rank,
-        *_globalMemorySlotMPIWindowMap[destinationId].recvMessageCountWindow);
-
-      // Checking correct locking
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI data window on MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
+      unlockMPIWindow(sourceRank, _globalMemorySlotMPIWindowMap[sourceId].dataWindow);
 
       // Increasing and updating remote slot received message count
       destination->increaseMessagesRecv();
@@ -201,43 +211,19 @@ class MPI final : public Backend
     // Perform a put if source is local and destination is remote
     if (isSourceRemote == false && isDestinationRemote == true)
     {
-      // Locking MPI window to ensure both messages arrive in order
-      auto status = MPI_Win_lock(
-        MPI_LOCK_EXCLUSIVE,
-        _globalMemorySlotMPIWindowMap[destinationId].rank,
-        0,
-        *_globalMemorySlotMPIWindowMap[destinationId].dataWindow);
-
-      // Checking correct locking
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window on MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
+     // Locking MPI window to ensure the messages arrives before returning
+      lockMPIWindow(destinationRank, _globalMemorySlotMPIWindowMap[destinationId].dataWindow);
 
       // Executing the put operation
-      status = MPI_Put(
-        sourcePointer,
-        size,
-        MPI_BYTE,
-        _globalMemorySlotMPIWindowMap[destinationId].rank,
-        dst_offset,
-        size,
-        MPI_BYTE,
-        *_globalMemorySlotMPIWindowMap[destinationId].dataWindow);
+      auto status = MPI_Put(sourcePointer, size, MPI_BYTE, destinationRank, dst_offset, size, MPI_BYTE, *destinationDataWindow);
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
 
       // Unlocking window after copy is completed
-      status = MPI_Win_unlock(
-        _globalMemorySlotMPIWindowMap[destinationId].rank,
-        *_globalMemorySlotMPIWindowMap[destinationId].dataWindow);
+      unlockMPIWindow(destinationRank, destinationDataWindow);
 
-      // Checking correct locking
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI data window on MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
-
-      // Locking MPI window to ensure both messages arrive in order
-      status = MPI_Win_lock(
-        MPI_LOCK_EXCLUSIVE,
-        _globalMemorySlotMPIWindowMap[destinationId].rank,
-        0,
-        *_globalMemorySlotMPIWindowMap[destinationId].recvMessageCountWindow);
+      // Locking MPI window to ensure the messages arrives before returning
+      lockMPIWindow(destinationRank, destinationRecvMessageWindow);
 
       // Checking correct locking
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI recv message window on MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
@@ -246,29 +232,15 @@ class MPI final : public Backend
       destination->increaseMessagesRecv();
 
       // Executing the put operation
-      status = MPI_Put(
-        destination->getMessagesRecvPointer(),
-        1,
-        MPI_UNSIGNED_LONG,
-        _globalMemorySlotMPIWindowMap[destinationId].rank,
-        0,
-        1,
-        MPI_UNSIGNED_LONG,
-        *_globalMemorySlotMPIWindowMap[destinationId].recvMessageCountWindow);
+      status = MPI_Put(destination->getMessagesRecvPointer(), 1, MPI_UNSIGNED_LONG, destinationRank, 0, 1, MPI_UNSIGNED_LONG, *destinationRecvMessageWindow);
 
       // Checking execution status
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run received message count MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
 
       // Unlocking window after copy is completed
-      status = MPI_Win_unlock(
-        _globalMemorySlotMPIWindowMap[destinationId].rank,
-        *_globalMemorySlotMPIWindowMap[destinationId].recvMessageCountWindow);
-
-      // Checking correct locking
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI received message count window on MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
+      unlockMPIWindow(destinationRank, destinationRecvMessageWindow);
 
       // Updating local source sent message count
-      destination->increaseMessagesRecv();
       source->increaseMessagesSent();
     }
 
