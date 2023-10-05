@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <expected>
 #include <hicr/memorySlot.hpp>
 #include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
