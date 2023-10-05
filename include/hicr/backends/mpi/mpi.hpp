@@ -49,21 +49,7 @@ class MPI final : public Backend
     MPI_Comm_rank(_comm, &_rank);
   }
 
-  ~MPI()
-  {
-    // Freeing all MPI windows created
-    for (auto &slot : _globalMemorySlotMPIWindowMap)
-    {
-      auto status = MPI_Win_free(slot.second.dataWindow);
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI data window for slot %lu", slot.first);
-
-      status = MPI_Win_free(slot.second.recvMessageCountWindow);
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI recv message count window for slot %lu", slot.first);
-
-      status = MPI_Win_free(slot.second.sentMessageCountWindow);
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI sent message count window for slot %lu", slot.first);
-    }
-  }
+  ~MPI() = default;
 
   private:
 
@@ -241,7 +227,7 @@ class MPI final : public Backend
       // Unlocking window after copy is completed
       unlockMPIWindow(sourceRank, _globalMemorySlotMPIWindowMap[sourceId].dataWindow);
 
-      // Increasing the remote sent message counter
+      // Increasing the remote sent message counter and local destination received message counter
       increaseWindowCounter(sourceRank, sourceSentMessageWindow);
       destination->increaseMessagesRecv();
     }
@@ -260,7 +246,7 @@ class MPI final : public Backend
       // Unlocking window after copy is completed
       unlockMPIWindow(destinationRank, destinationDataWindow);
 
-      // Increasing the remote received message counter
+      // Increasing the remote received message counter and local sent message counter
       increaseWindowCounter(destinationRank, destinationRecvMessageWindow);
       source->increaseMessagesSent();
     }
@@ -296,11 +282,8 @@ class MPI final : public Backend
   {
     // For every key-valued subset, and its elements, execute a fence
     for (const auto &keyVector : globalSlots)
-      for (const auto &memorySlot : keyVector.second)
+      for (const auto &memorySlotId : keyVector.second)
       {
-        // Getting memory slot id
-        const auto memorySlotId = memorySlot->getId();
-
         // Attempting fence
         auto status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].dataWindow);
 
@@ -328,7 +311,7 @@ class MPI final : public Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] memSlotId The identifier of the new local memory slot
    */
-  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
     HICR_THROW_RUNTIME("This backend provides no support for memory allocation");
   }
@@ -339,7 +322,7 @@ class MPI final : public Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] memSlotId The identifier for the new local memory slot
    */
-  __USED__ inline void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot* memorySlot) override
   {
     // Nothing to do here for this backend
   }
@@ -353,6 +336,29 @@ class MPI final : public Backend
   {
     // Nothing to do here for this backend
   }
+
+  __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot* memorySlot) override
+  {
+   // Getting memory slot id
+   const auto memorySlotId = memorySlot->getId();
+
+   // Checking if the memory slot is really global
+   if (_globalMemorySlotMPIWindowMap.contains(memorySlotId) == false)
+    HICR_THROW_FATAL("On global slot deregistration, could not find its global memory information. This is probably a bug in HiCR MPI backend");
+
+   // Freeing all MPI windows created for the memory slot
+   const auto& globalSlot = _globalMemorySlotMPIWindowMap.at(memorySlotId);
+
+   auto status = MPI_Win_free(globalSlot.dataWindow);
+   if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI data window for slot %lu", memorySlotId);
+
+   status = MPI_Win_free(globalSlot.recvMessageCountWindow);
+   if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI recv message count window for slot %lu", memorySlotId);
+
+   status = MPI_Win_free(globalSlot.sentMessageCountWindow);
+   if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI sent message count window for slot %lu", memorySlotId);
+  }
+
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication

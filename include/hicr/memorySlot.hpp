@@ -11,6 +11,9 @@
  */
 #pragma once
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
@@ -19,7 +22,7 @@ namespace HiCR
 /**
  * Type definition for a generic memory slot identifier
  */
-typedef uint64_t memorySlotId_t;
+typedef boost::uuids::uuid memorySlotId_t;
 
 /**
  * Type definition for a global key (for exchanging global memory slots)
@@ -74,14 +77,13 @@ class MemorySlot
  };
 
  MemorySlot(
-   memorySlotId_t id,
    void* const pointer,
    const size_t size,
    const creationType_t creationType,
    const localityType_t localityType,
    const tag_t globalTag = 0,
    const globalKey_t globalKey = 0
-   ) : _id(id), _pointer(pointer), _size(size), _creationType(creationType), _localityType(localityType), _globalTag(globalTag), _globalKey(globalKey)
+   ) : _id(boost::uuids::random_generator()()), _pointer(pointer), _size(size), _creationType(creationType), _localityType(localityType), _globalTag(globalTag), _globalKey(globalKey)
  {
 
  }

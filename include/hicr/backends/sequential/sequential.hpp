@@ -168,7 +168,7 @@ class Sequential final : public Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] memSlotId The identifier of the new local memory slot
    */
-  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
     // Atempting to allocate the new memory slot
     auto ptr = malloc(size);
@@ -186,7 +186,7 @@ class Sequential final : public Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] memSlotId The identifier for the new local memory slot
    */
-  __USED__ inline void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot* memorySlot) override
   {
     // Nothing to do here for this backend
   }
@@ -201,12 +201,18 @@ class Sequential final : public Backend
     // Nothing to do here for this backend
   }
 
+  __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot* memorySlot) override
+  {
+   // Nothing to do here
+  }
+
+
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
    * \param[in] tag Identifies a particular subset of global memory slots
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots)
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots) override
   {
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)

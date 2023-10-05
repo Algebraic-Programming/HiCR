@@ -178,7 +178,7 @@ class SharedMemory final : public Backend
   /**
    * Thread-safe map that stores all allocated or created memory slots associated to this backend
    */
-  parallelHashMap_t<memorySlotId_t, binding_type> _memorySlotBindingMap;
+  parallelHashMap_t<void*, binding_type> _memorySlotBindingMap;
 
   /**
    * Thread-safe map that stores all detected memory spaces HWLoC objects associated to this backend
@@ -303,7 +303,7 @@ class SharedMemory final : public Backend
    *
    * \internal This all should be threading safe
    */
-  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size, const memorySlotId_t memSlotId) override
+  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
     // Recovering memory space from the map
     auto &memSpace = _memorySpaceMap.at(memorySpace);
@@ -320,7 +320,7 @@ class SharedMemory final : public Backend
     if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpace);
 
     // Remembering binding support for the current memory slot
-    _memorySlotBindingMap[memSlotId] = memSpace.bindingSupport;
+    _memorySlotBindingMap[ptr] = memSpace.bindingSupport;
 
     // Assinging new entry in the memory slot map
     return ptr;
@@ -332,7 +332,7 @@ class SharedMemory final : public Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] memorySlotId The identifier for the local new memory slot
    */
-  __USED__ inline void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memorySlotId) override
+  __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot* memorySlot) override
   {
     // Nothing to do here
   }
@@ -347,12 +347,17 @@ class SharedMemory final : public Backend
     // Nothing to do here
   }
 
+  __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot* memorySlot) override
+  {
+   // Nothing to do here
+  }
+
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
    * \param[in] tag Identifies a particular subset of global memory slots
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots)
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots) override
   {
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
@@ -370,27 +375,29 @@ class SharedMemory final : public Backend
    */
   __USED__ inline void freeLocalMemorySlotImpl(MemorySlot* memorySlot) override
   {
-    // Getting memory slot Id
+    // Getting memory slot info
     const auto memorySlotId = memorySlot->getId();
+    const auto memorySlotPointer = memorySlot->getPointer();
+    const auto memorySlotSize = memorySlot->getSize();
 
     // If using strict binding, use hwloc_free to properly unmap the memory binding
-    if (_memorySlotBindingMap.at(memorySlotId) == binding_type::strict_binding)
+    if (_memorySlotBindingMap.at(memorySlotPointer) == binding_type::strict_binding)
     {
       // Freeing memory slot
-      auto status = hwloc_free(_topology, memorySlot->getPointer(), memorySlot->getSize());
+      auto status = hwloc_free(_topology, memorySlotPointer, memorySlotSize);
 
       // Error checking
       if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot (%lu).", memorySlotId);
     }
 
     // If using strict non binding, use system's free
-    if (_memorySlotBindingMap.at(memorySlotId) == binding_type::strict_non_binding)
+    if (_memorySlotBindingMap.at(memorySlotPointer) == binding_type::strict_non_binding)
     {
-      free(memorySlot->getPointer());
+      free(memorySlotPointer);
     }
 
     // Erasing memory slot from the binding information map
-    _memorySlotBindingMap.erase(memorySlotId);
+    _memorySlotBindingMap.erase(memorySlotPointer);
   }
 
   /**

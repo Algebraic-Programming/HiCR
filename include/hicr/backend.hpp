@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <future>
 #include <mutex>
 #include <set>
 
@@ -73,9 +71,9 @@ class Backend
   typedef std::map<tag_t, std::vector<globalKeyMemorySlotPair_t>> localToGlobalPromotionArray_t;
 
   /**
-   * Type definition for an array that stores arrays of memory slots, separated by global key
+   * Type definition for an array that stores sets of memory slots, separated by global key
    */
-  typedef std::map<globalKey_t, std::vector<MemorySlot*>> globalKeyToMemorySlotArrayMap_t;
+  typedef std::map<globalKey_t, std::set<memorySlotId_t>> globalKeyToMemorySlotArrayMap_t;
 
   /**
    * Type definition for a tag-mapped set of key-mapped memory slot arrays
@@ -405,20 +403,19 @@ class Backend
       HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
     }
 
-    // Increase + swap memory slot for thread-safety
-    auto newMemorySlotId = _currentMemorySlotId++;
-
     // Calling internal implementation. This is done inside the mutex zone because it is meant to be an
     // infrequent and fast operation, and ensuring concurrency safety is much more important than parallelism in this case
-    auto ptr = allocateLocalMemorySlotImpl(memorySpaceId, size, newMemorySlotId);
+    auto ptr = allocateLocalMemorySlotImpl(memorySpaceId, size);
 
     // Creating new memory slot structure
     auto newMemSlot = new MemorySlot(
-      newMemorySlotId,
       ptr,
       size,
       MemorySlot::creationType_t::allocated,
       MemorySlot::localityType_t::local);
+
+    // Getting memory slot id
+    const auto newMemorySlotId = newMemSlot->getId();
 
     // Adding allocated memory slot to the set
     _memorySlotMap.insert(std::make_pair(newMemorySlotId, newMemSlot));
@@ -442,23 +439,22 @@ class Backend
     // Lock Thread-safety mutex
     _mutex.lock();
 
-    // Increase + swap memory slot for thread-safety
-    auto newMemorySlotId = _currentMemorySlotId++;
-
-    // Calling internal implementation. This is done inside the mutex zone because it is meant to be an
-    // infrequent and fast operation, and ensuring concurrency safety is much more important than parallelism in this case
-    registerLocalMemorySlotImpl(ptr, size, newMemorySlotId);
-
     // Creating new memory slot structure
     auto newMemSlot = new MemorySlot(
-      newMemorySlotId,
       ptr,
       size,
       MemorySlot::creationType_t::registered,
       MemorySlot::localityType_t::local);
 
+    // Getting memory slot id
+    const auto newMemorySlotId = newMemSlot->getId();
+
     // Adding created memory slot to the set
     _memorySlotMap.insert(std::make_pair(newMemorySlotId, newMemSlot));
+
+    // Calling internal implementation. This is done inside the mutex zone because it is meant to be an
+    // infrequent and fast operation, and ensuring concurrency safety is much more important than parallelism in this case
+    registerLocalMemorySlotImpl(newMemSlot);
 
     // Release Thread-safety mutex
     _mutex.unlock();
@@ -506,22 +502,29 @@ class Backend
    *
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  __USED__ inline globalMemorySlotTagKeyMap_t getGlobalMemorySlots()
+  __USED__ inline std::vector<MemorySlot*> getGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
 
+    // Making a plain storage copy for the requested global memory slots
+    std::vector<MemorySlot*> globalSlots;
+
+    // If the requested tag and key are not found, return empty storage
+    if (_globalMemorySlotTagKeyMap.contains(tag) == false) return globalSlots;
+    if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false) return globalSlots;
+
     // Getting value by copy
-    const auto value = _globalMemorySlotTagKeyMap;
+    for (const auto slot : _globalMemorySlotTagKeyMap.at(tag).at(globalKey)) globalSlots.push_back(_memorySlotMap.at(slot));
 
     // Release Thread-safety mutex
     _mutex.unlock();
 
-    return value;
+    return globalSlots;
   }
 
   /**
-   * De-registers a previously registered memory slot
+   * De-registers a previously registered local memory slot
    *
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
@@ -567,6 +570,86 @@ class Backend
     deregisterLocalMemorySlotImpl(memorySlot);
 
     // Removing memory slot from the set
+    _memorySlotMap.erase(memorySlotId);
+
+    // Release Thread-safety mutex
+    _mutex.unlock();
+  }
+
+  /**
+   * De-registers a previously registered global memory slot
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   */
+  __USED__ inline void deregisterGlobalMemorySlot(MemorySlot* const memorySlot)
+  {
+    // Lock Thread-safety mutex
+    _mutex.lock();
+
+    // Getting memory slot Id
+    const auto memorySlotId = memorySlot->getId();
+
+    // Checking whether the slot has been associated with this backend
+    if (_memorySlotMap.contains(memorySlotId) == false) [[unlikely]]
+    {
+      // Release mutex before triggering the exception
+      _mutex.unlock();
+
+      // Triggering exception
+      HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
+    }
+
+    // Checking whether the slot is local
+    if (_memorySlotMap.at(memorySlotId)->getLocalityType() != MemorySlot::localityType_t::global) [[unlikely]]
+    {
+      // Release mutex before triggering the exception
+      _mutex.unlock();
+
+      // Triggering exception
+      HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not global", memorySlotId);
+    }
+
+    // Checking whether the slot has been registered
+    if (_memorySlotMap.at(memorySlotId)->getCreationType() != MemorySlot::creationType_t::registered) [[unlikely]]
+    {
+      // Release mutex before triggering the exception
+      _mutex.unlock();
+
+      // Triggering exception
+      HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that was not manually registered to this backend", memorySlotId);
+    }
+
+    // Getting memory slot global information
+    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
+
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) [[unlikely]]
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag is not registered in this backend");
+    }
+
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) [[unlikely]]
+    {
+     // Release mutex before triggering the exception
+     _mutex.unlock();
+
+     // Triggering exception
+     HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag / global key pair is not registered in this backend");
+    }
+
+    // Calling internal implementation
+    deregisterGlobalMemorySlotImpl(memorySlot);
+
+    // Removing memory slot from the global memory slot map
+    _globalMemorySlotTagKeyMap.at(memorySlotTag).at(memorySlotGlobalKey).erase(memorySlotId);
+
+    // Removing memory slot from the memory slot set
     _memorySlotMap.erase(memorySlotId);
 
     // Release Thread-safety mutex
@@ -705,12 +788,8 @@ class Backend
    */
   virtual MemorySlot* registerGlobalMemorySlot(tag_t tag, globalKey_t key, void *const ptr, const size_t size)
   {
-    // Increase + swap memory slot for thread-safety
-    auto newMemorySlotId = _currentMemorySlotId++;
-
     // Creating new memory slot structure
     auto newMemorySlot = new MemorySlot(
-      newMemorySlotId,
       ptr,
       size,
       MemorySlot::creationType_t::registered,
@@ -718,11 +797,14 @@ class Backend
       tag,
       key);
 
+    // Getting memory slot id
+    const auto newMemorySlotId = newMemorySlot->getId();
+
     // Adding created memory slot to the set
     _memorySlotMap.insert(std::make_pair(newMemorySlotId, newMemorySlot));
 
     // Adding memory slot to the global map (based on tag and key)
-    _globalMemorySlotTagKeyMap[tag][key].push_back(newMemorySlot);
+    _globalMemorySlotTagKeyMap[tag][key].insert(newMemorySlotId);
 
     // Returning the id of the new memory slot
     return newMemorySlot;
@@ -791,10 +873,9 @@ class Backend
    *
    * \param[in] memorySpaceId Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier for the new local memory slot
    * \return The internal pointer associated to the local memory slot
    */
-  virtual void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size, const memorySlotId_t memSlotId) = 0;
+  virtual void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
@@ -803,7 +884,7 @@ class Backend
    * \param[in] size Size of the memory slot to create
    * \param[in] memSlotId The identifier for the new local memory slot
    */
-  virtual void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) = 0;
+  virtual void registerLocalMemorySlotImpl(const MemorySlot* memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function
@@ -818,6 +899,13 @@ class Backend
    * \param[in] memorySlotId Identifier of the memory slot to deregister.
    */
   virtual void deregisterLocalMemorySlotImpl(MemorySlot* memorySlot) = 0;
+
+  /**
+   * Backend-internal implementation of the deregisterGlobalMemorySlotImpl function
+   *
+   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   */
+  virtual void deregisterGlobalMemorySlotImpl(MemorySlot* memorySlot) = 0;
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
@@ -864,11 +952,6 @@ class Backend
    * The internal container for the queried memory spaces.
    */
   memorySpaceList_t _memorySpaceList;
-
-  /**
-   * Currently available slot id to be assigned. It should atomically increment as each slot is assigned
-   */
-  std::atomic<memorySlotId_t> _currentMemorySlotId = 0;
 };
 
 } // namespace HiCR

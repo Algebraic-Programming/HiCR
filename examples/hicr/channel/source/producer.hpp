@@ -24,10 +24,11 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
  backend->fence(CHANNEL_TAG);
 
  // Obtaining the globally exchanged memory slots
- auto globalBuffers = backend->getGlobalMemorySlots()[CHANNEL_TAG];
+ auto consumerBuffer = backend->getGlobalMemorySlots(CHANNEL_TAG, CONSUMER_KEY)[0];
+ auto producerBuffer = backend->getGlobalMemorySlots(CHANNEL_TAG, PRODUCER_KEY)[0];
 
  // Creating producer and consumer channels
- auto producer = HiCR::ProducerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), channelCapacity);
+ auto producer = HiCR::ProducerChannel(backend, consumerBuffer, producerBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Allocating a send slot to put the values we want to communicate
  ELEMENT_TYPE sendBuffer = 0;
@@ -60,6 +61,8 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
 
  // De-registering local slots
  backend->deregisterLocalMemorySlot(coordinationBufferSlot);
+ backend->deregisterGlobalMemorySlot(consumerBuffer);
+ backend->deregisterGlobalMemorySlot(producerBuffer);
 
  // Freeing up memory
  free(coordinationBuffer);
