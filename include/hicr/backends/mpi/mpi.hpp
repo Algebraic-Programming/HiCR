@@ -59,6 +59,9 @@ class MPI final : public Backend
 
       status = MPI_Win_free(slot.second.recvMessageCountWindow);
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI recv message count window for slot %lu", slot.first);
+
+      status = MPI_Win_free(slot.second.sentMessageCountWindow);
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On MPI backend destructor, could not free MPI sent message count window for slot %lu", slot.first);
     }
   }
 
@@ -83,6 +86,11 @@ class MPI final : public Backend
      * Stores the MPI window to use with this slot to update received message count
      */
     MPI_Win *recvMessageCountWindow;
+
+    /**
+     * Stores the MPI window to use with this slot to update sent message count
+     */
+    MPI_Win *sentMessageCountWindow;
   };
 
   /**
@@ -157,6 +165,35 @@ class MPI final : public Backend
    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
   }
 
+  __USED__ inline void increaseWindowCounter(const int rank, MPI_Win* window)
+  {
+   // This operation should be possible to do in one go with MPI_Accumulate or MPI_Fetch_and_op. However, the current implementation of openMPI deadlocks
+   // on these operations, so I rather do the whole thing manually.
+
+   // Locking MPI window to ensure the messages arrives before returning
+   lockMPIWindow(rank, window);
+
+   // Getting remote counter into the local conter
+   size_t accumulatorBuffer = 0;
+   auto status = MPI_Get(&accumulatorBuffer, 1, MPI_UNSIGNED_LONG, rank, 0, 1, MPI_UNSIGNED_LONG, *window);
+   if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Get) for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
+
+   // Waiting for the get operation to finish
+   MPI_Win_flush(rank, *window);
+
+   // Adding one to the local counter
+   accumulatorBuffer++;
+
+   // Replacing the remote counter with the local counter
+   status = MPI_Put(&accumulatorBuffer, 1, MPI_UNSIGNED_LONG, rank, 0, 1, MPI_UNSIGNED_LONG, *window);
+
+   // Checking execution status
+   if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Put) for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
+
+   // Unlocking window after copy is completed
+   unlockMPIWindow(rank, window);
+  }
+
   __USED__ inline void memcpyImpl(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t sourceOffset, const size_t size) override
   {
     const auto sourceId = source->getId();
@@ -186,7 +223,7 @@ class MPI final : public Backend
     auto destinationDataWindow = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).dataWindow : NULL;
 
     // Getting recv message count windows for the involved processes (if necessary)
-    //auto sourceRecvMessageWindow     = isSourceGlobalSlot      ? _globalMemorySlotMPIWindowMap.at(sourceId).recvMessageCountWindow : NULL;
+    auto sourceSentMessageWindow       = isSourceGlobalSlot      ? _globalMemorySlotMPIWindowMap.at(sourceId).sentMessageCountWindow : NULL;
     auto destinationRecvMessageWindow  = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).recvMessageCountWindow : NULL;
 
     // Perform a get if the source is remote and destination is local
@@ -204,7 +241,8 @@ class MPI final : public Backend
       // Unlocking window after copy is completed
       unlockMPIWindow(sourceRank, _globalMemorySlotMPIWindowMap[sourceId].dataWindow);
 
-      // Increasing and updating remote slot received message count
+      // Increasing the remote sent message counter
+      increaseWindowCounter(sourceRank, sourceSentMessageWindow);
       destination->increaseMessagesRecv();
     }
 
@@ -222,36 +260,20 @@ class MPI final : public Backend
       // Unlocking window after copy is completed
       unlockMPIWindow(destinationRank, destinationDataWindow);
 
-      // Locking MPI window to ensure the messages arrives before returning
-      lockMPIWindow(destinationRank, destinationRecvMessageWindow);
-
-      // Checking correct locking
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI recv message window on MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
-
-      // Increasing message received counter by one and storing into a send buffer
-      destination->increaseMessagesRecv();
-
-      // Executing the put operation
-      status = MPI_Put(destination->getMessagesRecvPointer(), 1, MPI_UNSIGNED_LONG, destinationRank, 0, 1, MPI_UNSIGNED_LONG, *destinationRecvMessageWindow);
-
-      // Checking execution status
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run received message count MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
-
-      // Unlocking window after copy is completed
-      unlockMPIWindow(destinationRank, destinationRecvMessageWindow);
-
-      // Updating local source sent message count
+      // Increasing the remote received message counter
+      increaseWindowCounter(destinationRank, destinationRecvMessageWindow);
       source->increaseMessagesSent();
     }
 
     // If both elements are local, then use memcpy directly
     if (isSourceRemote == false && isDestinationRemote == false)
     {
-      // Increasing and updating local slot received message count
-      source->increaseMessagesSent();
-
       // Performing actual mem copy
       ::memcpy(destinationPointer, sourcePointer, size);
+
+      // Increasing message send/received counters
+      destination->increaseMessagesRecv();
+      source->increaseMessagesSent();
     }
   }
 
@@ -287,6 +309,12 @@ class MPI final : public Backend
 
         // Attempting fence
         status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].recvMessageCountWindow);
+
+        // Check for possible errors
+        if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu and memory slot %lu.", tag, memorySlotId);
+
+        // Attempting fence
+        status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].sentMessageCountWindow);
 
         // Check for possible errors
         if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu and memory slot %lu.", tag, memorySlotId);
@@ -405,7 +433,7 @@ class MPI final : public Backend
       auto globalSlotId = globalSlot->getId();
 
       // Creating new entry in the MPI Window map
-      _globalMemorySlotMPIWindowMap[globalSlotId] = globalMPISlot_t{.rank = globalSlotProcessId[i], .dataWindow = new MPI_Win, .recvMessageCountWindow = new MPI_Win};
+      _globalMemorySlotMPIWindowMap[globalSlotId] = globalMPISlot_t{.rank = globalSlotProcessId[i], .dataWindow = new MPI_Win, .recvMessageCountWindow = new MPI_Win, .sentMessageCountWindow = new MPI_Win};
 
       // Debug info
       // printf("Rank: %u, Pos %lu, GlobalSlot %lu, Key: %lu, Size: %lu, LocalPtr: 0x%lX, %s\n", _rank, i, globalSlotId, globalSlotKeys[i], globalSlotSizes[i], (uint64_t)globalSlotPointers[i], globalSlotProcessId[i] == _rank ? "x" : "");
@@ -431,6 +459,17 @@ class MPI final : public Backend
         _globalMemorySlotMPIWindowMap[globalSlotId].recvMessageCountWindow);
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
+
+      // Creating MPI window for message sent count transferring
+      status = MPI_Win_create(
+        globalSlotProcessId[i] == _rank ? globalSlot->getMessagesSentPointer() : NULL,
+        globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
+        1,
+        MPI_INFO_NULL,
+        _comm,
+        _globalMemorySlotMPIWindowMap[globalSlotId].sentMessageCountWindow);
+
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI sent message count window on exchange global memory slots.");
     }
   }
 
