@@ -14,6 +14,7 @@
 #include <hicr/backends/sequential/sequential.hpp>
 #include <hicr/channel/consumerChannel.hpp>
 #include <hicr/channel/producerChannel.hpp>
+#include <thread>
 
 TEST(ConsumerChannel, Construction)
 {

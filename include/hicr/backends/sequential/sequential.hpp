@@ -12,13 +12,10 @@
 
 #pragma once
 
-#include <cstring>
-#include <future>
-#include <stdio.h>
-
+#include <hicr/common/definitions.hpp>
 #include <hicr/backend.hpp>
 #include <hicr/backends/sequential/process.hpp>
-#include <hicr/common/definitions.hpp>
+
 
 namespace HiCR
 {

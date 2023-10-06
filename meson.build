@@ -11,6 +11,7 @@ subdir('include/taskr')
 subdir('include/hicr/backends/sequential')    
 subdir('include/hicr/backends/sharedMemory')
 subdir('include/hicr/backends/mpi')    
+subdir('include/hicr/backends/ascend')    
     
 # Build example targets
 subdir('examples')

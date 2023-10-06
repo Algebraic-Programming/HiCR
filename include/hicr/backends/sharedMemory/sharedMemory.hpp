@@ -12,12 +12,7 @@
 
 #pragma once
 
-#include <cstring>
-#include <errno.h>
-#include <memory>
-
 #include "hwloc.h"
-
 #include <hicr/backend.hpp>
 #include <hicr/backends/sharedMemory/thread.hpp>
 
