@@ -46,8 +46,8 @@ class ProducerChannel final : public Channel
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   ProducerChannel(Backend *backend,
-                  MemorySlot* const tokenBuffer,
-                  MemorySlot* const coordinationBuffer,
+                  MemorySlot *const tokenBuffer,
+                  MemorySlot *const coordinationBuffer,
                   const size_t tokenSize,
                   const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
@@ -76,7 +76,7 @@ class ProducerChannel final : public Channel
    * \param[in] backend The backend to perform the initialization operation with
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __USED__ static inline void initializeCoordinationBuffer(Backend *backend, MemorySlot* coordinationBuffer)
+  __USED__ static inline void initializeCoordinationBuffer(Backend *backend, MemorySlot *coordinationBuffer)
   {
     // Checking for correct size
     auto requiredSize = getCoordinationBufferSize();
@@ -107,7 +107,7 @@ class ProducerChannel final : public Channel
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline void push(MemorySlot* sourceSlot, const size_t n = 1)
+  __USED__ inline void push(MemorySlot *sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;

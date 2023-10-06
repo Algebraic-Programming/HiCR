@@ -11,13 +11,13 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
  // Getting local allocation of coordination buffer
  auto coordinationBuffer = malloc(coordinationBufferSize);
 
- // Registering coordination buffer as MPI memory slot
+ // Registering coordination buffer as a local memory slot
  auto coordinationBufferSlot = backend->registerLocalMemorySlot(coordinationBuffer, coordinationBufferSize);
 
  // Initializing coordination buffer (sets to zero the counters)
  HiCR::ProducerChannel::initializeCoordinationBuffer(backend, coordinationBufferSlot);
 
- // Registering buffers globally for them to be used by remote actors
+ // Promoting local memory slots to global for them to be used by the remote end
  backend->promoteMemorySlotToGlobal(CHANNEL_TAG, PRODUCER_KEY, coordinationBufferSlot);
 
  // Synchronizing so that all actors have finished registering their global memory slots

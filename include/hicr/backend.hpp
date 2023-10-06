@@ -17,8 +17,8 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/processingUnit.hpp>
 #include <hicr/memorySlot.hpp>
+#include <hicr/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -53,17 +53,17 @@ class Backend
   /**
    * Common definition of a collection of memory slots
    */
-  typedef std::map<memorySlotId_t, MemorySlot*> memorySlotMap_t;
+  typedef std::map<memorySlotId_t, MemorySlot *> memorySlotMap_t;
 
   /**
    * Common definition of a map that links key ids with memory slot id arrays (for global exchange)
    */
-  typedef std::map<globalKey_t, std::vector<MemorySlot*>> memorySlotIdArrayMap_t;
+  typedef std::map<globalKey_t, std::vector<MemorySlot *>> memorySlotIdArrayMap_t;
 
   /**
    * Type definition for a global key / memory slot pair
    */
-  typedef std::pair<globalKey_t, MemorySlot*> globalKeyMemorySlotPair_t;
+  typedef std::pair<globalKey_t, MemorySlot *> globalKeyMemorySlotPair_t;
 
   /**
    * Type definition for pending local to global memory slot promotions
@@ -284,7 +284,7 @@ class Backend
    * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
    *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
    */
-  __USED__ inline void memcpy(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t src_offset, const size_t size)
+  __USED__ inline void memcpy(MemorySlot *destination, const size_t dst_offset, MemorySlot *source, const size_t src_offset, const size_t size)
   {
     // Making sure the memory slots exist and is not null. This operation is thread-safe
     if (isMemorySlotValid(source) == false) HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or is invalid", source);
@@ -385,7 +385,7 @@ class Backend
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in the specified memory space
    */
-  __USED__ inline MemorySlot* allocateLocalMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)
+  __USED__ inline MemorySlot *allocateLocalMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)
   {
     // Checks whether the size requested exceeds the memory space size. This is a thread-safe operation
     auto maxSize = getMemorySpaceSize(memorySpaceId);
@@ -434,7 +434,7 @@ class Backend
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual MemorySlot* registerLocalMemorySlot(void *const ptr, const size_t size)
+  virtual MemorySlot *registerLocalMemorySlot(void *const ptr, const size_t size)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
@@ -468,11 +468,11 @@ class Backend
    *
    * \param[in] tag Groups a particular subset of global memory slots. Useful to separate global memory slot exchange for different independent purposes
    * \param[in] globalKey The key to sort the global slots within a given tag, so that the ordering is deterministic if all different keys are passed.
-   * \param[in] localSlotId Local slot id to promote to global
+   * \param[in] memorySlot The local memory slot to promote to global
    *
    * For this operation to take effect, it is required to run a fence operation afterwards.
    */
-  virtual void promoteMemorySlotToGlobal(const tag_t tag, const globalKey_t globalKey, MemorySlot* memorySlot)
+  virtual void promoteMemorySlotToGlobal(const tag_t tag, const globalKey_t globalKey, MemorySlot *memorySlot)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
@@ -500,15 +500,17 @@ class Backend
   /**
    * Retrieves the map of globally registered slots
    *
+   * \param[in] tag Tag that identifies a subset of all global memory slots
+   * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  __USED__ inline std::vector<MemorySlot*> getGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey)
+  __USED__ inline std::vector<MemorySlot *> getGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
 
     // Making a plain storage copy for the requested global memory slots
-    std::vector<MemorySlot*> globalSlots;
+    std::vector<MemorySlot *> globalSlots;
 
     // If the requested tag and key are not found, return empty storage
     if (_globalMemorySlotTagKeyMap.contains(tag) == false) return globalSlots;
@@ -526,9 +528,9 @@ class Backend
   /**
    * De-registers a previously registered local memory slot
    *
-   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlot(MemorySlot* const memorySlot)
+  __USED__ inline void deregisterLocalMemorySlot(MemorySlot *const memorySlot)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
@@ -579,9 +581,9 @@ class Backend
   /**
    * De-registers a previously registered global memory slot
    *
-   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterGlobalMemorySlot(MemorySlot* const memorySlot)
+  __USED__ inline void deregisterGlobalMemorySlot(MemorySlot *const memorySlot)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
@@ -626,21 +628,21 @@ class Backend
     // Checking whether the memory slot is correctly registered as global
     if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) [[unlikely]]
     {
-     // Release mutex before triggering the exception
-     _mutex.unlock();
+      // Release mutex before triggering the exception
+      _mutex.unlock();
 
-     // Triggering exception
-     HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag is not registered in this backend");
+      // Triggering exception
+      HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag is not registered in this backend");
     }
 
     // Checking whether the memory slot is correctly registered as global
     if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) [[unlikely]]
     {
-     // Release mutex before triggering the exception
-     _mutex.unlock();
+      // Release mutex before triggering the exception
+      _mutex.unlock();
 
-     // Triggering exception
-     HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag / global key pair is not registered in this backend");
+      // Triggering exception
+      HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag / global key pair is not registered in this backend");
     }
 
     // Calling internal implementation
@@ -659,9 +661,9 @@ class Backend
   /**
    * Frees up a memory slot reserved from this memory space
    *
-   * \param[in] memorySlotId Identifier of the memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlot Memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlot(MemorySlot* memorySlot)
+  __USED__ inline void freeLocalMemorySlot(MemorySlot *memorySlot)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
@@ -714,9 +716,9 @@ class Backend
    * One main use case of this function is to update the number of messages received and sent to/from this slot.
    * This is a non-blocking, non-collective function.
    *
-   * \param[in] memorySlotId Identifier of the memory slot to query for updates.
+   * \param[in] memorySlot Identifier of the memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdates(const MemorySlot* memorySlot)
+  __USED__ inline void queryMemorySlotUpdates(const MemorySlot *memorySlot)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
@@ -744,10 +746,10 @@ class Backend
   /**
    * Checks whether the memory slot id exists and is a valid slot (e.g., the pointer is not NULL)
    *
-   * \param[in] memorySlotId Identifier of the slot to check
+   * \param[in] memorySlot Memory slot to check
    * \return True, if the referenced memory slot exists and is valid; false, otherwise
    */
-  __USED__ inline bool isMemorySlotValid(const MemorySlot* memorySlot)
+  __USED__ inline bool isMemorySlotValid(const MemorySlot *memorySlot)
   {
     // Lock Thread-safety mutex
     _mutex.lock();
@@ -786,7 +788,7 @@ class Backend
    *
    * \internal This function is only meant to be called internally and must be done within the a mutex zone.
    */
-  virtual MemorySlot* registerGlobalMemorySlot(tag_t tag, globalKey_t key, void *const ptr, const size_t size)
+  virtual MemorySlot *registerGlobalMemorySlot(tag_t tag, globalKey_t key, void *const ptr, const size_t size)
   {
     // Creating new memory slot structure
     auto newMemorySlot = new MemorySlot(
@@ -816,7 +818,7 @@ class Backend
    * \param[in] memorySlotId Identifier of the slot to check
    * \return True, if the referenced memory slot exists and is valid; false, otherwise
    */
-  virtual bool isMemorySlotValidImpl(const MemorySlot* memorySlotId) const = 0;
+  virtual bool isMemorySlotValidImpl(const MemorySlot *memorySlotId) const = 0;
 
   /**
    * Backend-internal implementation of the getMemorySpaceSize function
@@ -844,15 +846,16 @@ class Backend
    * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t src_offset, const size_t size) = 0;
+  virtual void memcpyImpl(MemorySlot *destination, const size_t dst_offset, MemorySlot *source, const size_t src_offset, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the fence function
    *
    * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
+   * \param[in] globalSlots The global slots involved in the execution of the fence operation
    *
    */
-  virtual void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t& globalSlots) = 0;
+  virtual void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t &globalSlots) = 0;
 
   /**
    * Backend-internal implementation of the queryComputeResources function
@@ -880,46 +883,45 @@ class Backend
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
    *
-   * \param[in] addr Pointer to the start of the memory slot
-   * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier for the new local memory slot
+   * \param[in] memorySlot The new local memory slot to register
    */
-  virtual void registerLocalMemorySlotImpl(const MemorySlot* memorySlot) = 0;
+  virtual void registerLocalMemorySlotImpl(const MemorySlot *memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function
    *
-   * \param[in] memorySlotId Identifier of the local memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  virtual void freeLocalMemorySlotImpl(MemorySlot* memorySlot) = 0;
+  virtual void freeLocalMemorySlotImpl(MemorySlot *memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the deregisterMemorySlot function
    *
-   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   * \param[in] memorySlot Memory slot to deregister.
    */
-  virtual void deregisterLocalMemorySlotImpl(MemorySlot* memorySlot) = 0;
+  virtual void deregisterLocalMemorySlotImpl(MemorySlot *memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the deregisterGlobalMemorySlotImpl function
    *
-   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   * \param[in] memorySlot Memory slot to deregister.
    */
-  virtual void deregisterGlobalMemorySlotImpl(MemorySlot* memorySlot) = 0;
+  virtual void deregisterGlobalMemorySlotImpl(MemorySlot *memorySlot) = 0;
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
    * \param[in] tag Identifies a particular subset of global memory slots
+   * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  virtual void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots) = 0;
+  virtual void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
    *
-   * \param[in] memorySlotId Identifier of the memory slot to query for updates.
+   * \param[in] memorySlot Memory slot to query updates for.
    */
-  virtual void queryMemorySlotUpdatesImpl(const MemorySlot* memorySlot) = 0;
+  virtual void queryMemorySlotUpdatesImpl(const MemorySlot *memorySlot) = 0;
 
   private:
 

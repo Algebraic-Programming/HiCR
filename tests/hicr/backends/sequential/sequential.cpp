@@ -52,7 +52,7 @@ TEST(Sequential, Memory)
   EXPECT_THROW(b.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
 
   // Allocating memory correctly now
-  HiCR::MemorySlot* s1 = NULL;
+  HiCR::MemorySlot *s1 = NULL;
   EXPECT_NO_THROW(s1 = b.allocateLocalMemorySlot(r, testMemAllocSize));
   EXPECT_EQ(s1->getSize(), testMemAllocSize);
 
@@ -62,7 +62,7 @@ TEST(Sequential, Memory)
   memset(s1LocalPtr, 0, testMemAllocSize);
 
   // Creating memory slot from a previous allocation
-  HiCR::MemorySlot* s2 = NULL;
+  HiCR::MemorySlot *s2 = NULL;
   EXPECT_NO_THROW(s2 = b.registerLocalMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(s2->getSize(), testMemAllocSize);
 

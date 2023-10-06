@@ -11,10 +11,10 @@ void consumerFc(HiCR::Backend* backend, const size_t channelCapacity)
  // Getting local pointer of token buffer
  auto tokenBuffer = (ELEMENT_TYPE*) malloc(tokenBufferSize);
 
- // Registering token buffer as MPI memory slot
+ // Registering token buffer as a local memory slot
  auto tokenBufferSlot = backend->registerLocalMemorySlot(tokenBuffer, tokenBufferSize);
 
- // Registering buffers globally for them to be used by remote actors
+ // Promoting local memory slots to global for them to be used by the remote end
  backend->promoteMemorySlotToGlobal(CHANNEL_TAG, CONSUMER_KEY, tokenBufferSlot);
 
  // Synchronizing so that all actors have finished registering their global memory slots

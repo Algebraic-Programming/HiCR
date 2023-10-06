@@ -165,7 +165,7 @@ class SharedMemory final : public Backend
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t& globalSlots) override
+  __USED__ inline void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t &globalSlots) override
   {
     pthread_barrier_wait(&_fenceBarrier);
   }
@@ -178,7 +178,7 @@ class SharedMemory final : public Backend
   /**
    * Thread-safe map that stores all allocated or created memory slots associated to this backend
    */
-  parallelHashMap_t<void*, binding_type> _memorySlotBindingMap;
+  parallelHashMap_t<void *, binding_type> _memorySlotBindingMap;
 
   /**
    * Thread-safe map that stores all detected memory spaces HWLoC objects associated to this backend
@@ -191,14 +191,12 @@ class SharedMemory final : public Backend
   hwloc_topology_t _topology;
 
   /**
-   * Checks whether the memory slot id exists and is valid.
+   * Backend-internal implementation of the isMemorySlotValid function
    *
-   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
-   *
-   * \param[in] memorySlotId Identifier of the slot to check
+   * \param[in] memorySlot Memory slot to check
    * \return True, if the referenced memory slot exists and is valid; false, otherwise
    */
-  __USED__ bool isMemorySlotValidImpl(const MemorySlot* memorySlot) const override
+  __USED__ bool isMemorySlotValidImpl(const MemorySlot *memorySlot) const override
   {
     if (memorySlot->getPointer() == NULL) return false;
 
@@ -276,7 +274,7 @@ class SharedMemory final : public Backend
     return std::move(std::make_unique<Thread>(resource));
   }
 
-  __USED__ inline void memcpyImpl(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(MemorySlot *destination, const size_t dst_offset, MemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting slot pointers
     const auto srcPtr = source->getPointer();
@@ -295,18 +293,16 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Allocates a local memory slot in the current memory space (NUMA domain)
+   * Backend-internal implementation of the queryLocalMemorySlot function
    *
-   * \param[in] memorySpace Memory space in which to perform the allocation.
+   * \param[in] memorySpaceId Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier for the new local memory slot
-   *
-   * \internal This all should be threading safe
+   * \return The internal pointer associated to the local memory slot
    */
-  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
   {
     // Recovering memory space from the map
-    auto &memSpace = _memorySpaceMap.at(memorySpace);
+    auto &memSpace = _memorySpaceMap.at(memorySpaceId);
 
     // Checking whether the operation requested is supported by the HWLoc on this memory space
     if (_hwlocBindingRequested > memSpace.bindingSupport) HICR_THROW_LOGIC("Requesting an allocation binding support level (%u) not supported by the operating system (HWLoc max support: %u)", _hwlocBindingRequested, memSpace.bindingSupport);
@@ -317,7 +313,7 @@ class SharedMemory final : public Backend
     if (memSpace.bindingSupport == binding_type::strict_non_binding) ptr = malloc(size);
 
     // Error checking
-    if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpace);
+    if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpaceId);
 
     // Remembering binding support for the current memory slot
     _memorySlotBindingMap[ptr] = memSpace.bindingSupport;
@@ -327,37 +323,37 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Associates a local pointer allocated somewhere else and creates a local memory slot with it
-   * \param[in] addr Address in local memory that will be represented by the slot
-   * \param[in] size Size of the memory slot to create
-   * \param[in] memorySlotId The identifier for the local new memory slot
+   * Backend-internal implementation of the registerLocalMemorySlot function
+   *
+   * \param[in] memorySlot The new local memory slot to register
    */
-  __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot* memorySlot) override
+  __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot *memorySlot) override
   {
     // Nothing to do here
   }
 
   /**
-   * De-registers a memory slot previously registered
+   * Backend-internal implementation of the deregisterMemorySlot function
    *
-   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(MemorySlot* const memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(MemorySlot *const memorySlot) override
   {
     // Nothing to do here
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot* memorySlot) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot *memorySlot) override
   {
-   // Nothing to do here
+    // Nothing to do here
   }
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
    * \param[in] tag Identifies a particular subset of global memory slots
+   * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots) override
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
@@ -369,11 +365,11 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Frees up a local memory slot reserved from this memory space
+   * Backend-internal implementation of the freeLocalMemorySlot function
    *
-   * \param[in] memorySlotId Identifier of the locally allocated memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(MemorySlot* memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(MemorySlot *memorySlot) override
   {
     // Getting memory slot info
     const auto memorySlotId = memorySlot->getId();
@@ -401,13 +397,11 @@ class SharedMemory final : public Backend
   }
 
   /**
-   * Queries the backend to update the internal state of the memory slot.
-   * One main use case of this function is to update the number of messages received and sent to/from this slot.
-   * This is a non-blocking, non-collective function.
+   * Backend-internal implementation of the queryMemorySlotUpdates function
    *
-   * \param[in] memorySlotId Identifier of the memory slot to query for updates.
+   * \param[in] memorySlot Memory slot to query updates for.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(const MemorySlot* memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(const MemorySlot *memorySlot) override
   {
     // This function should check and update the abstract class for completed memcpy operations
   }

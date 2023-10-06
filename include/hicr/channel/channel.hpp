@@ -12,10 +12,10 @@
  */
 
 #pragma once
-#include <hicr/memorySlot.hpp>
 #include <hicr/backend.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/memorySlot.hpp>
 #include <mutex>
 
 namespace HiCR
@@ -135,8 +135,8 @@ class Channel
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
   Channel(Backend *backend,
-          MemorySlot* const tokenBuffer,
-          MemorySlot* const coordinationBuffer,
+          MemorySlot *const tokenBuffer,
+          MemorySlot *const coordinationBuffer,
           const size_t tokenSize,
           const size_t capacity) : _backend(backend),
                                    _tokenBuffer(tokenBuffer),
@@ -198,12 +198,12 @@ class Channel
   /**
    * Memory slot that represents the token buffer that producer sends data to
    */
-  MemorySlot* const _tokenBuffer;
+  MemorySlot *const _tokenBuffer;
 
   /**
    * Memory slot that enables coordination communication from the consumer to the producer
    */
-  MemorySlot* const _coordinationBuffer;
+  MemorySlot *const _coordinationBuffer;
 
   /**
    * This function updates the internal value of the channel depth
@@ -249,7 +249,7 @@ class Channel
   /**
    * Local memory slot to update the tail position
    */
-  MemorySlot* const _poppedTokensSlot;
+  MemorySlot *const _poppedTokensSlot;
 
   /**
    * The number of popped tokens

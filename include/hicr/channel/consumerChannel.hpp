@@ -13,11 +13,11 @@
 
 #pragma once
 
-#include <hicr/memorySlot.hpp>
 #include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/memorySlot.hpp>
 #include <hicr/task.hpp>
 
 namespace HiCR
@@ -48,8 +48,8 @@ class ConsumerChannel final : public Channel
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   ConsumerChannel(Backend *backend,
-                  MemorySlot* const tokenBuffer,
-                  MemorySlot* const coordinationBuffer,
+                  MemorySlot *const tokenBuffer,
+                  MemorySlot *const coordinationBuffer,
                   const size_t tokenSize,
                   const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {

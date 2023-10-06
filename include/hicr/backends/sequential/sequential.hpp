@@ -117,7 +117,7 @@ class Sequential final : public Backend
     return std::move(std::make_unique<Process>(resource));
   }
 
-  __USED__ inline void memcpyImpl(MemorySlot* destination, const size_t dst_offset, MemorySlot* source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(MemorySlot *destination, const size_t dst_offset, MemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting slot pointers
     const auto srcPtr = source->getPointer();
@@ -140,9 +140,9 @@ class Sequential final : public Backend
    * One main use case of this function is to update the number of messages received and sent to/from this slot.
    * This is a non-blocking, non-collective function.
    *
-   * \param[in] memorySlotId Identifier of the memory slot to query for updates.
+   * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(const MemorySlot* memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(const MemorySlot *memorySlot) override
   {
   }
 
@@ -151,7 +151,7 @@ class Sequential final : public Backend
    * the memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t& globalSlots) override
+  __USED__ inline void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t &globalSlots) override
   {
     // Increasing the counter for the fence corresponding to the tag
     _fenceCountTagMap[tag]++;
@@ -166,7 +166,7 @@ class Sequential final : public Backend
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier of the new local memory slot
+   * \returns The pointer of the newly allocated memory slot
    */
   __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
@@ -182,11 +182,9 @@ class Sequential final : public Backend
 
   /**
    * Associates a pointer locally-allocated manually and creates a local memory slot with it
-   * \param[in] addr Address in local memory that will be represented by the slot
-   * \param[in] size Size of the memory slot to create
-   * \param[in] memSlotId The identifier for the new local memory slot
+   * \param[in] memorySlot The new local memory slot to register
    */
-  __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot* memorySlot) override
+  __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot *memorySlot) override
   {
     // Nothing to do here for this backend
   }
@@ -194,25 +192,25 @@ class Sequential final : public Backend
   /**
    * De-registers a memory slot previously registered
    *
-   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(MemorySlot* memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(MemorySlot *memorySlot) override
   {
     // Nothing to do here for this backend
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot* memorySlot) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot *memorySlot) override
   {
-   // Nothing to do here
+    // Nothing to do here
   }
-
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
    * \param[in] tag Identifies a particular subset of global memory slots
+   * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t>& memorySlots) override
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
@@ -224,11 +222,11 @@ class Sequential final : public Backend
   }
 
   /**
-   * Frees up a local memory slot reserved from this memory space
+   * Backend-internal implementation of the freeLocalMemorySlot function
    *
-   * \param[in] memorySlotId Identifier of the local memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(MemorySlot* memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(MemorySlot *memorySlot) override
   {
     if (memorySlot->getPointer() == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlot->getId());
 
@@ -236,14 +234,12 @@ class Sequential final : public Backend
   }
 
   /**
-   * Checks whether the memory slot id exists and is valid.
+   * Backend-internal implementation of the isMemorySlotValid function
    *
-   * In this backend, this means that the memory slot was either allocated or created and it contains a non-NULL pointer.
-   *
-   * \param[in] memorySlotId Identifier of the slot to check
+   * \param[in] memorySlot Memory slot to check
    * \return True, if the referenced memory slot exists and is valid; false, otherwise
    */
-  __USED__ bool isMemorySlotValidImpl(const MemorySlot* memorySlot) const override
+  __USED__ bool isMemorySlotValidImpl(const MemorySlot *memorySlot) const override
   {
     // If it is NULL, it means it was never created
     if (memorySlot->getPointer() == NULL) return false;
