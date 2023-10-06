@@ -11,23 +11,24 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
  // Getting local allocation of coordination buffer
  auto coordinationBuffer = malloc(coordinationBufferSize);
 
- // Registering coordination buffer as MPI memory slot
+ // Registering coordination buffer as a local memory slot
  auto coordinationBufferSlot = backend->registerLocalMemorySlot(coordinationBuffer, coordinationBufferSize);
 
  // Initializing coordination buffer (sets to zero the counters)
  HiCR::ProducerChannel::initializeCoordinationBuffer(backend, coordinationBufferSlot);
 
- // Registering buffers globally for them to be used by remote actors
+ // Promoting local memory slots to global for them to be used by the remote end
  backend->promoteMemorySlotToGlobal(CHANNEL_TAG, PRODUCER_KEY, coordinationBufferSlot);
 
  // Synchronizing so that all actors have finished registering their global memory slots
  backend->fence(CHANNEL_TAG);
 
  // Obtaining the globally exchanged memory slots
- auto globalBuffers = backend->getGlobalMemorySlots()[CHANNEL_TAG];
+ auto consumerBuffer = backend->getGlobalMemorySlots(CHANNEL_TAG, CONSUMER_KEY)[0];
+ auto producerBuffer = backend->getGlobalMemorySlots(CHANNEL_TAG, PRODUCER_KEY)[0];
 
  // Creating producer and consumer channels
- auto producer = HiCR::ProducerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), channelCapacity);
+ auto producer = HiCR::ProducerChannel(backend, consumerBuffer, producerBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Allocating a send slot to put the values we want to communicate
  ELEMENT_TYPE sendBuffer = 0;
@@ -60,6 +61,8 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
 
  // De-registering local slots
  backend->deregisterLocalMemorySlot(coordinationBufferSlot);
+ backend->deregisterGlobalMemorySlot(consumerBuffer);
+ backend->deregisterGlobalMemorySlot(producerBuffer);
 
  // Freeing up memory
  free(coordinationBuffer);

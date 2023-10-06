@@ -1,6 +1,6 @@
 executable('channel_sequential',
   [ 'source/channel_sequential.cpp'],
-  dependencies: [ hicrBuildDep, hicrSequentialBackendDep ]
+  dependencies: [ hicrBuildDep, hicrSequentialBackendDep, dependency('threads', required: true)]
 )
 
 executable('channel_mpi',

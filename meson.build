@@ -1,6 +1,6 @@
 project('HiCR', [ 'cpp' ],
   default_options : [
-  'cpp_std=c++23',
+  'cpp_std=c++20',
   'buildtype=release',
   ]
 )

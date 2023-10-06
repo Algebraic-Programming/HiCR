@@ -55,23 +55,23 @@ TEST(SharedMemory, Memory)
   EXPECT_THROW(b.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
 
   // Allocating memory correctly now
-  HiCR::Backend::memorySlotId_t s1 = 0;
+  HiCR::MemorySlot *s1 = NULL;
   EXPECT_NO_THROW(s1 = b.allocateLocalMemorySlot(r, testMemAllocSize));
-  EXPECT_EQ(b.getMemorySlotSize(s1), testMemAllocSize);
+  EXPECT_EQ(s1->getSize(), testMemAllocSize);
 
   // Getting local pointer from allocation
   void *s1LocalPtr = NULL;
-  EXPECT_NO_THROW(s1LocalPtr = b.getLocalMemorySlotPointer(s1));
+  EXPECT_NO_THROW(s1LocalPtr = s1->getPointer());
   memset(s1LocalPtr, 0, testMemAllocSize);
 
   // Creating memory slot from a previous allocation
-  HiCR::Backend::memorySlotId_t s2 = 0;
+  HiCR::MemorySlot *s2 = NULL;
   EXPECT_NO_THROW(s2 = b.registerLocalMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
-  EXPECT_EQ(b.getMemorySlotSize(s2), testMemAllocSize);
+  EXPECT_EQ(s2->getSize(), testMemAllocSize);
 
   // Getting local pointer from allocation
   void *s2LocalPtr = NULL;
-  EXPECT_NO_THROW(s2LocalPtr = b.getLocalMemorySlotPointer(s2));
+  EXPECT_NO_THROW(s2LocalPtr = s2->getPointer());
   memset(s2LocalPtr, 0, testMemAllocSize);
 
   // Creating message to transmit

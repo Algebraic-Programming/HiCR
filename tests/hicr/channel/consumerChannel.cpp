@@ -135,7 +135,7 @@ TEST(ConsumerChannel, PeekWait)
   HiCR::ProducerChannel::initializeCoordinationBuffer(&backend, coordinationBuffer);
 
   // Calculating pointer to the value
-  auto recvBuffer = (size_t *)backend.getLocalMemorySlotPointer(tokenBuffer);
+  auto recvBuffer = (size_t *)tokenBuffer->getPointer();
 
   // Creating channel
   HiCR::ProducerChannel producer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
@@ -181,7 +181,7 @@ TEST(ConsumerChannel, PeekWait)
   auto sendBufferCapacity = channelCapacity + 1;
   auto sendBufferSize = sendBufferCapacity * tokenSize;
   auto sendBufferSlot = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
-  auto sendBuffer = (size_t *)backend.getLocalMemorySlotPointer(sendBufferSlot);
+  auto sendBuffer = (size_t *)sendBufferSlot->getPointer();
   *sendBuffer = expectedValue;
 
   // Pushing message

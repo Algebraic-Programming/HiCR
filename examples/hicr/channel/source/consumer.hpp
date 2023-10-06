@@ -11,20 +11,21 @@ void consumerFc(HiCR::Backend* backend, const size_t channelCapacity)
  // Getting local pointer of token buffer
  auto tokenBuffer = (ELEMENT_TYPE*) malloc(tokenBufferSize);
 
- // Registering token buffer as MPI memory slot
+ // Registering token buffer as a local memory slot
  auto tokenBufferSlot = backend->registerLocalMemorySlot(tokenBuffer, tokenBufferSize);
 
- // Registering buffers globally for them to be used by remote actors
+ // Promoting local memory slots to global for them to be used by the remote end
  backend->promoteMemorySlotToGlobal(CHANNEL_TAG, CONSUMER_KEY, tokenBufferSlot);
 
  // Synchronizing so that all actors have finished registering their global memory slots
  backend->fence(CHANNEL_TAG);
 
  // Obtaining the globally exchanged memory slots
- auto globalBuffers = backend->getGlobalMemorySlots()[CHANNEL_TAG];
+ auto consumerBuffer = backend->getGlobalMemorySlots(CHANNEL_TAG, CONSUMER_KEY)[0];
+ auto producerBuffer = backend->getGlobalMemorySlots(CHANNEL_TAG, PRODUCER_KEY)[0];
 
  // Creating producer and consumer channels
- auto consumer = HiCR::ConsumerChannel(backend, globalBuffers[CONSUMER_KEY][0], globalBuffers[PRODUCER_KEY][0], sizeof(ELEMENT_TYPE), channelCapacity);
+ auto consumer = HiCR::ConsumerChannel(backend, consumerBuffer, producerBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Getting a single value from the channel
  while (consumer.isEmpty());
@@ -42,6 +43,8 @@ void consumerFc(HiCR::Backend* backend, const size_t channelCapacity)
 
  // De-registering local slots
  backend->deregisterLocalMemorySlot(tokenBufferSlot);
+ backend->deregisterGlobalMemorySlot(consumerBuffer);
+ backend->deregisterGlobalMemorySlot(producerBuffer);
 
  // Freeing up memory
  free(tokenBuffer);

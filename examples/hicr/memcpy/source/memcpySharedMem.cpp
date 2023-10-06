@@ -21,7 +21,7 @@ int main(int argc, char **argv)
  auto slot2 = backend.allocateLocalMemorySlot(*memSpaces.end() - 1, BUFFER_SIZE); // Last NUMA Domain
 
  // Initializing values in memory slot 1
- sprintf((char*)backend.getLocalMemorySlotPointer(slot1), "Hello, HiCR user!\n");
+ sprintf((char*)slot1->getPointer(), "Hello, HiCR user!\n");
 
  // Performing the copy
  backend.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE);
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
  backend.fence(0);
 
  // Checking whether the copy was successful
- printf("%s", (const char*)backend.getLocalMemorySlotPointer(slot2));
+ printf("%s", (const char*)slot2->getPointer());
 
  return 0;
 }
