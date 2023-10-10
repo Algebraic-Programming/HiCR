@@ -1,11 +1,11 @@
 # HiCR MPI Backend Configuration
 
-mpiDep = dependency('mpi', language: 'cpp', required: false)
+# Try to get MPICH, which is a special case
+mpiDep = dependency('mpich', required: false)
     
-# If a canonical version of MPI is not found, try to get MPICH, which is a special case
 # If also not found, then trigger a failure
 if mpiDep.found() == false
-    mpiDep = dependency('mpich', required: true)
+  mpiDep = dependency('mpi', language: 'cpp', required: true)
 endif
 
 hicrMPIBackendDeps = [ mpiDep  ]

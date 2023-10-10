@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <atomic>
 #include <future>
 #include <mutex>
@@ -522,6 +523,7 @@ class Backend
    */
   virtual memorySlotId_t registerLocalMemorySlot(void *const ptr, const size_t size)
   {
+      std::cout << "Call registerLocalMemorySlot\n";
     // Lock Thread-safety mutex
     _mutex.lock();
 
@@ -790,6 +792,10 @@ class Backend
     return value;
   }
 
+
+  __USED__ virtual size_t getRecvMsgCount(const memorySlotId_t memorySlotId) {
+      return 0;
+  }
   /**
    * Obtains the number of fully received messages in this slot, from its creation
    *

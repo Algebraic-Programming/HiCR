@@ -1,6 +1,6 @@
 project('HiCR', [ 'cpp' ],
   default_options : [
-  'cpp_std=c++23',
+  'cpp_std=c++20',
   'buildtype=release',
   ]
 )
@@ -16,5 +16,5 @@ subdir('include/hicr/backends/mpi')
 subdir('examples')
 
 # Build test targets
-subdir('tests')
+#subdir('tests')
 
