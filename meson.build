@@ -8,10 +8,26 @@ project('HiCR', [ 'cpp' ],
 # Including dependencies
 subdir('include/hicr')
 subdir('include/taskr')
-subdir('include/hicr/backends/sequential')    
-subdir('include/hicr/backends/sharedMemory')
-subdir('include/hicr/backends/mpi')    
-subdir('include/hicr/backends/ascend')    
+
+# Getting selected backends
+enabledBackends = get_option('backends')
+
+# Including selected backends
+if 'sequential' in enabledBackends
+ subdir('include/hicr/backends/sequential')
+endif
+    
+if 'sharedMemory' in enabledBackends
+  subdir('include/hicr/backends/sharedMemory')
+endif
+
+if 'mpi' in enabledBackends
+  subdir('include/hicr/backends/mpi')
+endif
+
+if 'ascend' in enabledBackends    
+  subdir('include/hicr/backends/ascend')
+endif    
     
 # Build example targets
 subdir('examples')

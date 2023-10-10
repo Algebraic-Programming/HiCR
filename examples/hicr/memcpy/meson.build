@@ -1,9 +1,13 @@
-executable('memcpySharedMem',
-  [ 'source/memcpySharedMem.cpp'],
-  dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep]
-)
+if 'sharedMemory' in enabledBackends
+	executable('memcpySharedMem',
+	  [ 'source/memcpySharedMem.cpp'],
+	  dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep]
+	)
+endif
 
-executable('memcpyAscend',
-  [ 'source/memcpyAscend.cpp'],
-  dependencies: [ hicrBuildDep, hicrAscendBackendDep]
-)
+if 'ascend' in enabledBackends 
+	executable('memcpyAscend',
+	  [ 'source/memcpyAscend.cpp'],
+	  dependencies: [ hicrBuildDep, hicrAscendBackendDep]
+	)
+endif

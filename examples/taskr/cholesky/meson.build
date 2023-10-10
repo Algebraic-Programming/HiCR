@@ -23,13 +23,15 @@ executable('cholesky_blocked_omp_threads',
 )
 
 # Building TaskR variants
-executable('cholesky_blocked_taskr_static',
-  [ 'source/main.cpp', 'source/variants/blocked_taskr_static.cpp' ],
-  dependencies: [ choleskyDep, taskrBuildDep, hicrSharedMemoryBackendDep ],
-)
-
-executable('cholesky_blocked_taskr_dynamic',
-  [ 'source/main.cpp', 'source/variants/blocked_taskr_dynamic.cpp' ],
-  dependencies: [ choleskyDep, taskrBuildDep, hicrSharedMemoryBackendDep ],
-)
+if 'sharedMemory' in enabledBackends
+	executable('cholesky_blocked_taskr_static',
+	  [ 'source/main.cpp', 'source/variants/blocked_taskr_static.cpp' ],
+	  dependencies: [ choleskyDep, taskrBuildDep, hicrSharedMemoryBackendDep ],
+	)
+	
+	executable('cholesky_blocked_taskr_dynamic',
+	  [ 'source/main.cpp', 'source/variants/blocked_taskr_dynamic.cpp' ],
+	  dependencies: [ choleskyDep, taskrBuildDep, hicrSharedMemoryBackendDep ],
+	)
+endif
 

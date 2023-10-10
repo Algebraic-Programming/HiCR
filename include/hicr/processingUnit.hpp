@@ -16,6 +16,7 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/dispatcher.hpp>
+#include <hicr/computeUnit.hpp>
 
 namespace HiCR
 {
@@ -124,6 +125,23 @@ class ProcessingUnit
   }
 
   /**
+   * Starts running the resource and execute a compute unit object
+   *
+   * @param[in] fc The compute unit to execute by the resource
+   */
+  __USED__ inline void start(ComputeUnit* computeUnit)
+  {
+    // Checking internal state
+    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'initialized' state");
+
+    // Transitioning state
+    _state = ProcessingUnit::running;
+
+    // Running internal implementation of the start function
+    startImpl(computeUnit);
+  }
+
+  /**
    * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
    */
   __USED__ inline void suspend()
@@ -204,6 +222,13 @@ class ProcessingUnit
    * @param[in] fc The function to execute by the resource
    */
   virtual void startImpl(processingUnitFc_t fc) = 0;
+
+  /**
+   * Internal implmentation of the start function
+   *
+   * @param[in] computeUnit The compute unit to execute
+   */
+  virtual void startImpl(ComputeUnit* computeUnit) = 0;
 
   /**
    * Internal implementation of the suspend function

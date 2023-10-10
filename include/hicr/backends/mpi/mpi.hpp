@@ -195,20 +195,20 @@ class MPI final : public Backend
     if (isSourceRemote == true && isDestinationRemote == true) HICR_THROW_LOGIC("Trying to use MPI backend perform a remote to remote copy between slots (%lu -> %lu)", sourceId, destinationId);
 
     // Calculating pointers
-    auto destinationPointer = (void *)(((uint8_t *)destination->getPointer()) + dst_offset);
-    auto sourcePointer = (void *)(((uint8_t *)source->getPointer()) + sourceOffset);
+    [[maybe_unused]] auto destinationPointer = (void *)(((uint8_t *)destination->getPointer()) + dst_offset);
+    [[maybe_unused]] auto sourcePointer = (void *)(((uint8_t *)source->getPointer()) + sourceOffset);
 
     // Getting ranks for the involved processes
-    auto sourceRank = isSourceGlobalSlot ? _globalMemorySlotMPIWindowMap.at(sourceId).rank : _rank;
-    auto destinationRank = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).rank : _rank;
+    [[maybe_unused]] auto sourceRank = isSourceGlobalSlot ? _globalMemorySlotMPIWindowMap.at(sourceId).rank : _rank;
+    [[maybe_unused]] auto destinationRank = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).rank : _rank;
 
     // Getting data windows for the involved processes (if necessary)
-    auto sourceDataWindow = isSourceGlobalSlot ? _globalMemorySlotMPIWindowMap.at(sourceId).dataWindow : NULL;
-    auto destinationDataWindow = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).dataWindow : NULL;
+    [[maybe_unused]] auto sourceDataWindow = isSourceGlobalSlot ? _globalMemorySlotMPIWindowMap.at(sourceId).dataWindow : NULL;
+    [[maybe_unused]] auto destinationDataWindow = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).dataWindow : NULL;
 
     // Getting recv message count windows for the involved processes (if necessary)
-    auto sourceSentMessageWindow = isSourceGlobalSlot ? _globalMemorySlotMPIWindowMap.at(sourceId).sentMessageCountWindow : NULL;
-    auto destinationRecvMessageWindow = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).recvMessageCountWindow : NULL;
+    [[maybe_unused]] auto sourceSentMessageWindow = isSourceGlobalSlot ? _globalMemorySlotMPIWindowMap.at(sourceId).sentMessageCountWindow : NULL;
+    [[maybe_unused]] auto destinationRecvMessageWindow = isDestinationGlobalSlot ? _globalMemorySlotMPIWindowMap.at(destinationId).recvMessageCountWindow : NULL;
 
     // Perform a get if the source is remote and destination is local
     if (isSourceRemote == true && isDestinationRemote == false)

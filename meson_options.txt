@@ -1,0 +1,3 @@
+option('backends', type : 'array', choices : ['sequential', 'sharedMemory', 'mpi', 'ascend'], value : [ 'sequential' ],
+       description : 'Specifies which backends to enable for compilation with HiCR')
+       

@@ -231,6 +231,7 @@ class Backend
     return value;
   }
 
+
   /**
    * Instructs the backend to perform an asynchronous memory copy from
    * within a source area, to within a destination area.
@@ -788,7 +789,7 @@ class Backend
    *
    * \internal This function is only meant to be called internally and must be done within the a mutex zone.
    */
-  virtual MemorySlot *registerGlobalMemorySlot(tag_t tag, globalKey_t key, void *const ptr, const size_t size)
+  __USED__ inline MemorySlot *registerGlobalMemorySlot(tag_t tag, globalKey_t key, void *const ptr, const size_t size)
   {
     // Creating new memory slot structure
     auto newMemorySlot = new MemorySlot(

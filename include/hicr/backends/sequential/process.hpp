@@ -15,6 +15,7 @@
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
+#include <hicr/backends/sequential/function.hpp>
 
 namespace HiCR
 {
@@ -75,6 +76,19 @@ class Process final : public ProcessingUnit
                       { fc(); },
                       NULL);
   }
+
+  __USED__ inline void startImpl(ComputeUnit* computeUnit)
+  {
+   // The passed compute unit must be of type sequential Function
+   auto functionPtr = dynamic_cast<Function*>(computeUnit);
+
+   // If the cast wasn't successful, then this fails the execution
+   if (functionPtr == NULL)  HICR_THROW_LOGIC("The provided compute unit (%lu) is not supported by this backend", computeUnit->getId());
+
+   // Run function
+   startImpl([functionPtr]() { functionPtr->getFunction()(NULL); });
+  }
+
 
   __USED__ inline void terminateImpl() override
   {
