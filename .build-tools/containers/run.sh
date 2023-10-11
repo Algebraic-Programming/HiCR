@@ -6,4 +6,5 @@ if [[ $# -ne 1 ]]; then
 fi
 folder=${1}
 
-docker run -it "registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/${folder}:latest" bash 
+build_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+$build_dir/$folder/run.sh $folder
