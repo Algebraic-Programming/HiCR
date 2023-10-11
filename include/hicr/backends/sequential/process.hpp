@@ -27,9 +27,7 @@ namespace sequential
 {
 
 /**
- * Implementation of a kernel-level thread as processing unit for the shared memory backend.
- *
- * This implementation uses PThreads as backend for the creation and management of OS threads..
+ * Implementation of a procesing unit (a non-parallel process) for the sequential backend
  */
 class Process final : public ProcessingUnit
 {

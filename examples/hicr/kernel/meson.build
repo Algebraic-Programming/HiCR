@@ -4,3 +4,10 @@ if 'sequential' in enabledBackends
 	  dependencies: [ hicrBuildDep, hicrSequentialBackendDep]
 	)
 endif
+
+if 'ascend' in enabledBackends
+	executable('kernelAscend',
+	  [ 'source/kernelAscend.cpp'],
+	  dependencies: [ hicrBuildDep, hicrAscendBackendDep]
+	)
+endif
