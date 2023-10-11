@@ -77,13 +77,13 @@ class Process final : public ProcessingUnit
                       NULL);
   }
 
-  __USED__ inline void startImpl(ComputeUnit* computeUnit)
+  __USED__ inline void startImpl(ExecutionUnit* executionUnit)
   {
    // The passed compute unit must be of type sequential Function
-   auto functionPtr = dynamic_cast<Function*>(computeUnit);
+   auto functionPtr = dynamic_cast<Function*>(executionUnit);
 
    // If the cast wasn't successful, then this fails the execution
-   if (functionPtr == NULL)  HICR_THROW_LOGIC("The provided compute unit (%lu) is not supported by this backend", computeUnit->getId());
+   if (functionPtr == NULL)  HICR_THROW_LOGIC("The provided compute unit of type (%s) is not supported by this backend", executionUnit->identifyExecutionUnitType());
 
    // Run function
    startImpl([functionPtr]() { functionPtr->getFunction()(NULL); });
