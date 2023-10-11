@@ -13,8 +13,8 @@
 #pragma once
 
 // this values are simple wild guesses
-#define DEFAULT_MEMSLOTS 3+_size
-#define DEFAULT_MSGSLOTS 2*_size
+#define DEFAULT_MEMSLOTS 10+_size
+#define DEFAULT_MSGSLOTS 10*_size
 
 #include <cstring>
 #include <errno.h>
@@ -49,27 +49,25 @@ namespace backend
 namespace lpf
 {
 
-/**
- * Internal representation of a memory slot for the shared memory backend
- */
 
-struct LpfMemSlot : public HiCR::Backend::memorySlotStruct_t
-{
+  struct LpfMemSlot
+  {
     // LPF slot handle
     lpf_memslot_t lpfSlot;
     size_t size;
     // pointer to the buffer 
-     void * buffer; 
+    void * pointer; 
     // only needed if this slot gets
     // promoted to global for memcpy
     size_t targetRank;
-};
+  };
 
 class LpfBackend final : public Backend
 {
 
   private:
-  memorySlotId_t _currentTagId = 0;
+  std::map<memorySlotId_t, LpfMemSlot> _lpfLocalSlots;
+  //memorySlotId_t _currentTagId = 0;
   const size_t _size;
   const size_t _rank;
   const lpf_t _lpf;
@@ -94,11 +92,11 @@ class LpfBackend final : public Backend
   /**
    * Thread-safe map that stores all allocated or created local memory slots associated to this backend
    */
-  parallelHashMap_t<memorySlotId_t, LpfMemSlot> _localSlotMap;
+  //parallelHashMap_t<memorySlotId_t, globalLPFSlot_t> _localSlotMap;
   /**
    * Thread-safe map that stores all global memory slots promoted from previous local slots
    */
-  parallelHashMap_t<memorySlotId_t, LpfMemSlot> _globalSlotMap;
+  std::map<memorySlotId_t, LpfMemSlot> _globalSlotMap;
   std::map<memorySlotId_t, lpf_memslot_t> hicr2LpfSlotMap;
 
   /**
@@ -149,12 +147,12 @@ class LpfBackend final : public Backend
  }
 
  ~LpfBackend() {
-     for (auto i : _localSlotMap) {
-         lpf_deregister(_lpf, i.second.lpfSlot);
-     }
-     for (auto i : _globalSlotMap) {
-         lpf_deregister(_lpf, i.second.lpfSlot);
-     }
+//     for (auto i : _localSlotMap) {
+//         lpf_deregister(_lpf, i.second.lpfSlot);
+     //}
+   //  for (auto i : _globalSlotMap) {
+   //      lpf_deregister(_lpf, i.second.lpfSlot);
+   //  }
  }
 
   std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const {
@@ -169,6 +167,7 @@ class LpfBackend final : public Backend
 
   void exchangeGlobalMemorySlots(const tag_t tag) {
 
+    std::cout << "Rank " << _rank << " entering exchange\n";
 
       // Obtaining local slots to exchange
     size_t localSlotCount = (int)_pendingLocalToGlobalPromotions[tag].size();
@@ -186,14 +185,18 @@ class LpfBackend final : public Backend
     //std::vector<memorySlotId_t> globalSlotIds;
     lpf_coll_t coll;
     lpf_err_t rc;
-    size_t *globalSlotCounts  = (size_t *) malloc(sizeof(size_t) * _size);
+    std::vector<size_t> globalSlotCounts(_size);
     for (size_t i=0; i<_size; i++) globalSlotCounts[i] = 0;
     lpf_memslot_t src_slot = LPF_INVALID_MEMSLOT;
     lpf_memslot_t dst_slot = LPF_INVALID_MEMSLOT;
+    lpf_memslot_t slot_local_sizes = LPF_INVALID_MEMSLOT;
+    lpf_memslot_t slot_local_keys = LPF_INVALID_MEMSLOT;
+    lpf_memslot_t slot_global_sizes = LPF_INVALID_MEMSLOT;
+    lpf_memslot_t slot_global_keys = LPF_INVALID_MEMSLOT;
 
     rc = lpf_register_global( _lpf, &localSlotCount, sizeof(size_t), &src_slot);
     EXPECT_EQ( "%d", LPF_SUCCESS, rc );
-    rc = lpf_register_global( _lpf, globalSlotCounts, sizeof(size_t) * _size, &dst_slot );
+    rc = lpf_register_global( _lpf, globalSlotCounts.data(), sizeof(size_t) * _size, &dst_slot );
     EXPECT_EQ( "%d", LPF_SUCCESS, rc );
     rc = lpf_collectives_init( _lpf, _rank, _size, 1, 0, sizeof(size_t) * _size, &coll );
     EXPECT_EQ( "%d", LPF_SUCCESS, rc );
@@ -211,145 +214,190 @@ class LpfBackend final : public Backend
     EXPECT_EQ( "%d", LPF_SUCCESS, rc );
     // end allgather block
 
+
     size_t globalSlotCount = 0;
     for (size_t i=0; i < _size; i++) { 
       globalSlotCount += globalSlotCounts[i];
       std::cout << "Rank " << _rank << "globalSlotCount[" << i << "] = " << globalSlotCounts[i] << std::endl;
     }
     std::cout << "Global slot count = " << globalSlotCount << std::endl;
+    std::vector<size_t> globalSlotCountsInBytes(globalSlotCount); // only used for lpf_allgatherv
+    for (size_t i=0; i<globalSlotCount; i++) globalSlotCountsInBytes[i] = globalSlotCounts[i] * sizeof(size_t);
 
-    // globalSizes will hold exactly the union of all slot sizes at 
+    // globalSlotSizes will hold exactly the union of all slot sizes at 
     // each process (zero or more) to become global.
     // That is, allgatherv is implemented here
 
     //start allgatherv for GlobalSizes
-    size_t * globalSizes = static_cast<size_t *>(malloc(globalSlotCount * sizeof(size_t)));
-    size_t * localSizes = (localSlotCount > 0) ? static_cast<size_t *>(malloc(localSlotCount * sizeof(size_t))) : nullptr;
-    lpf_memslot_t slot_allgatherv_sizes = LPF_INVALID_MEMSLOT;
-    rc = lpf_register_global( _lpf, globalSizes, globalSlotCount * sizeof(size_t), &slot_allgatherv_sizes);
-    lpf_sync(_lpf, LPF_SYNC_DEFAULT);
+    std::vector<size_t> localSlotSizes(localSlotCount);
+    std::vector<size_t> localSlotKeys(localSlotCount);
+    std::vector<size_t> globalSlotSizes(globalSlotCount);
+    std::vector<size_t> globalSlotKeys(globalSlotCount);
+    for (size_t i = 0; i < localSlotCount; i++) {
+        auto key = _pendingLocalToGlobalPromotions[tag][i].first;
+        localSlotKeys[i] = key;
+        auto memorySlotId = _pendingLocalToGlobalPromotions[tag][i].second;
+        auto promotedSlot =  _memorySlotMap.at(memorySlotId);
+        localSlotSizes[i] = promotedSlot.size;
+        std::cout << "Rank " << _rank << " local slot size[" << i << "] = " << localSlotSizes[i] << std::endl;
+    }
+    rc = lpf_register_local( _lpf, localSlotSizes.data(), localSlotCount * sizeof(size_t), &slot_local_sizes);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_register_global( _lpf, globalSlotSizes.data(), globalSlotCount * sizeof(size_t), &slot_global_sizes);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_sync(_lpf, LPF_SYNC_DEFAULT);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    std::cout << "Collectives init max = " << sizeof(size_t) * globalSlotCount << std::endl;
+    rc = lpf_collectives_init( _lpf, _rank, _size, 1/* will call gatherv 2 times */, 0, sizeof(size_t) * globalSlotCount, &coll );
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_allgatherv( coll, slot_local_sizes, slot_global_sizes, globalSlotCountsInBytes.data(), false/*exclude myself*/);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_sync(_lpf, LPF_SYNC_DEFAULT);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+
+    for (size_t i=0; i<globalSlotCount; i++) {
+        std::cout << "GlobalSlotSizes[" << i << "] = " << globalSlotSizes[i] << std::endl;
+    }
+
+
+    rc = lpf_collectives_destroy(coll);
+    lpf_deregister(_lpf, slot_local_sizes);
+    lpf_deregister(_lpf, slot_global_sizes);
+
+
+    rc = lpf_register_local(_lpf, localSlotKeys.data(), localSlotCount * sizeof(size_t), &slot_local_keys);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_register_global( _lpf, globalSlotKeys.data(), globalSlotCount * sizeof(size_t), &slot_global_keys);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_sync(_lpf, LPF_SYNC_DEFAULT);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+
+    rc = lpf_collectives_init( _lpf, _rank, _size, 1/* will call gatherv 2 times */, 0, sizeof(size_t) * globalSlotCount, &coll );
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_allgatherv( coll, slot_local_keys, slot_global_keys, globalSlotCountsInBytes.data(), false/*exclude myself*/);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_sync(_lpf, LPF_SYNC_DEFAULT);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+    rc = lpf_collectives_destroy(coll);
+    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+
+
+
+    std::vector<void *> globalSlotPointers(globalSlotCount);
+    std::vector<size_t> globalSlotProcessId(globalSlotCount);
+
+
+    // it should be okay do deduce from the allgat way the slot process IDs
+    // (Sergio's implementation uses another allgatherv for this)
+    for (size_t i=0, currentRank=0, ind=0; i<globalSlotCount ; i++, currentRank++) {
+        for (size_t j=0; j<globalSlotCounts[j]; j++, ind++) {
+            globalSlotProcessId[ind] = currentRank;
+        }
+    }
+
+    size_t localPointerPos = 0;
+    for (size_t i = 0; i < globalSlotPointers.size(); i++)
+    {
+      // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
+      if (globalSlotProcessId[i] != _rank)
+        globalSlotPointers[i] = NULL;
+      else
+      {
+        const auto memorySlotId = _pendingLocalToGlobalPromotions[tag][localPointerPos++].second;
+        globalSlotPointers[i] = _memorySlotMap.at(memorySlotId).pointer;
+      }
+    }
 
     for (size_t i = 0; i < localSlotCount; i++) {
-        //    for (size_t i=0, index = 0; i<_size; i++) {
-        //      for (size_t j=0; j<globalSlotCounts[i]; j++,index++) {
-        //if (i == _rank) {
-        auto aLocalSlot = _pendingLocalToGlobalPromotions[tag][i].second;
-        std::cout << "aLocalSlot = " << aLocalSlot << " from local slot i = " << i <<  std::endl;
-        if (_localSlotMap.find(aLocalSlot) == _localSlotMap.end()) {
+        if (_pendingLocalToGlobalPromotions.find(i) == _pendingLocalToGlobalPromotions.end()) {
+            std::cerr << "Error looking for entry in pendingLocalToGlobalPromotions!\n";
+            std::abort();
+        }
+        auto memorySlotId = _pendingLocalToGlobalPromotions[tag][i].second;
+        std::cout << "aLocalSlot = " << memorySlotId << " from local slot i = " << i <<  std::endl;
+        if (_memorySlotMap.find(memorySlotId) == _memorySlotMap.end()) {
             std::cerr << "Error looking for locally registered slot!\n";
             std::abort();
         }
-        LpfMemSlot promotedSlot =  _localSlotMap[aLocalSlot];
-        localSizes[i] = promotedSlot.size;
-        std::cout << "Setting slot size = " << i << " = " << localSizes[i] << std::endl;
-        //}
-        //}
-        ////}
+        auto promotedSlot =  _memorySlotMap[memorySlotId];
+        localSlotSizes[i] = promotedSlot.size;
+        std::cout << "Rank " << _rank << " Setting slot size = " << i << " = " << localSlotSizes[i] << std::endl;
     }
 
     for (size_t i=0; i<localSlotCount; i++) {
-        std::cout << "RANK " << _rank << " ->  localSizes[" << i << "] = " << localSizes[i] << std::endl;
+        std::cout << "RANK " << _rank << " ->  localSlotSizes[" << i << "] = " << localSlotSizes[i] << std::endl;
     }
 
-    /**
-     * Copy my data data sizes to global array globalSizes
-     */
-    size_t allgatherv_start_addresses[_size];
-    size_t allgatherv_lengths[_size];
 
-    for (size_t i=0; i<_size; i++) allgatherv_start_addresses[i] = 0;
-    for (size_t i=0; i<_size; i++) allgatherv_lengths[i] = 0;
-
-    allgatherv_start_addresses[0] = 0;
-    // the localSizes array already in bytes from register function!
-    allgatherv_lengths[0] = localSizes[0];
-    for (size_t i=1; i<_size; i++) {
-        allgatherv_start_addresses[i] = allgatherv_start_addresses[i-1]+allgatherv_lengths[i-1];
-        allgatherv_lengths[i] = localSizes[i];
-    }
-
-    for (size_t i=0; i<_size; i++) {
-        std::cout << "RANK " << _rank << " ->  allgatherv_lengths[" << i << "] = " << allgatherv_lengths[i] << std::endl;
-        std::cout << "RANK " << _rank << " ->  allgatherv_start_addresses[" << i << "] = " << allgatherv_start_addresses[i] << std::endl;
-    }
-
-    std::memcpy(&globalSizes[allgatherv_start_addresses[_rank]], localSizes, allgatherv_lengths[_rank]*sizeof(size_t));
-
-    /**
-     * ToDo: Use lpf_get variant whenever you fix 
-     * lpf_get/sync combination
-     *
-     if (_rank != i) {
-     lpf_get( _lpf, i, dst_slot2, index*sizeof(size_t), dst_slot2, index*sizeof(size_t), sizeof(size_t), LPF_MSG_DEFAULT);
-     }
-     */
-    for (size_t i=0; i<_size; i++) {
-        if ((i != _rank) && allgatherv_lengths[_rank] > 0) {
-            std::cout << "Will put with size = " << allgatherv_lengths[_rank] << std::endl;
-            lpf_put( _lpf, slot_allgatherv_sizes, allgatherv_start_addresses[_rank] /* offset */, i, slot_allgatherv_sizes, allgatherv_start_addresses[_rank], allgatherv_lengths[_rank], LPF_MSG_DEFAULT);
-        }
-    }
-    lpf_sync(_lpf, LPF_SYNC_DEFAULT);
-    //end allgatherv for globalSizes
-    
-    lpf_deregister(_lpf, slot_allgatherv_sizes);
-
-    for (size_t i=0; i<globalSlotCount; i++) {
-        std::cout << "RANK " << _rank << " ->  globalSizes[" << i << "] = " << globalSizes[i] << std::endl;
-    }
 
     //for (size_t i=0, index=0; i<_size; i++) {
         // Make local slots of rank i global !!!
-    for (size_t i=0; i<_size; i++) {
+    //for (size_t i=0, gsIndex = 0; i<_size; i++) {
+    for (size_t i=0, ind=0; i<globalSlotCount; i++) {
 
-        for (size_t j=allgatherv_start_addresses[i]; j<allgatherv_start_addresses[i]+allgatherv_lengths[i]; j++) {
-            lpf_memslot_t newSlot = LPF_INVALID_MEMSLOT;
-            void * newBuffer = nullptr;
-            size_t newSize = globalSizes[j];
-            /**
-             * only allocate local buffers where needed
-             * that is: where the rank is promoting its local
-             * slot to a global slot
-             */
-            if (i == _rank) {
-                auto aLocalSlot = _pendingLocalToGlobalPromotions[tag][j-allgatherv_start_addresses[j]].second;
-                if (_localSlotMap.find(aLocalSlot) == _localSlotMap.end()) {
-                    std::cout << "FIRST: " << _pendingLocalToGlobalPromotions[tag][j-allgatherv_start_addresses[j]].first << std::endl;
-                    std::cout << "SECOND: " <<_pendingLocalToGlobalPromotions[tag][j-allgatherv_start_addresses[j]].second << std::endl;
-                    std::cerr << "Could not find a locally registered slot, exiting\n";
-                    std::abort();
-                }
-                LpfMemSlot promotedSlot = _localSlotMap[aLocalSlot];
-                newBuffer = promotedSlot.buffer;
-                // local memslot can be locally deregistered
-                std::cout << "Rank " << _rank << " Try to deregister slot with key " << aLocalSlot << std::endl;
-                rc = lpf_deregister(_lpf, promotedSlot.lpfSlot);
-                EXPECT_EQ( "%d", LPF_SUCCESS, rc );
-                // remove local slot from local slot hash table
-                _localSlotMap.erase(aLocalSlot);
-            }
-            else {
-                newBuffer = malloc(newSize);
-            }
+        std::cout << "Register global slot " << i << " with size = " << globalSlotSizes[i] << std::endl;
+      auto globalSlotId = registerGlobalMemorySlot(
+        tag,
+        globalSlotKeys[i],
+        globalSlotPointers[i],
+        globalSlotSizes[i]);
 
-            std::cout << "Rank " << _rank << " Will register globally a slot of size " << newSize << std::endl;
-            rc = lpf_register_global(_lpf, newBuffer, newSize, &newSlot);
-            lpf_sync(_lpf, LPF_SYNC_DEFAULT);
+      std::cout << "Rank " << _rank << " globalSlotId = " << globalSlotId << std::endl;
+        lpf_memslot_t newSlot = LPF_INVALID_MEMSLOT;
+        memorySlotId_t memorySlotId;
+        void * newBuffer = nullptr;
+        size_t newSize = globalSlotSizes[i];
+        std::cout << "newSize = " << globalSlotSizes[i] << " for i = " << i << std::endl;
+        /**
+         * only allocate local buffers where needed
+         * that is: where the rank is promoting its local
+         * slot to a global slot
+         */
+        if (globalSlotProcessId[i] == _rank) {
+            if (_pendingLocalToGlobalPromotions[tag].size() <  ind + 1) {
+                std::cerr << "Running out of bounds of pending map with pending size for this tag = " << _pendingLocalToGlobalPromotions[tag].size() << std::endl;
+                std::abort();
+            }
+            memorySlotId = _pendingLocalToGlobalPromotions[tag][ind].second;
+            if (_lpfLocalSlots.find(memorySlotId) == _lpfLocalSlots.end()) {
+                std::cout << "aLocalSlot: " << memorySlotId << std::endl;
+                std::cout << "FIRST: " << _pendingLocalToGlobalPromotions[tag][ind].first << std::endl;
+                std::cout << "SECOND: " <<_pendingLocalToGlobalPromotions[tag][ind].second << std::endl;
+                std::cerr << "Could not find a locally registered slot, exiting\n";
+                std::abort();
+            }
+            auto promotedSlot = _lpfLocalSlots[memorySlotId];
+            newBuffer = promotedSlot.pointer;
+            // local memslot can be locally deregistered
+            std::cout << "Rank " << _rank << " Try to deregister slot with key " << memorySlotId << std::endl;
+            rc = lpf_deregister(_lpf, _lpfLocalSlots[memorySlotId].lpfSlot);
             EXPECT_EQ( "%d", LPF_SUCCESS, rc );
-            auto tag = _currentTagId++;
-            /**
-             * It is essential to record who this memory slot
-             * belongs to (process i). Without this record, future data
-             * movement calls will not work. This is recorded in the
-             * targetRank of the destination slot.
-             */
-            size_t remote = i;
-            _globalSlotMap[tag] = LpfMemSlot {.lpfSlot = newSlot, .size = newSize, .buffer = newBuffer, .targetRank = remote};
-            //globalSlotIds.push_back(tag);
-            hicr2LpfSlotMap[tag] = newSlot;
-        } 
-    }
-    //}
+            // remove local slot from local slot hash table
+            _lpfLocalSlots.erase(memorySlotId);
+            ind++;
+        }
+        else {
+            newBuffer = malloc(newSize);
+        }
+
+        std::cout << "Rank " << _rank << " Will register globally a slot of size " << newSize << std::endl;
+        rc = lpf_register_global(_lpf, newBuffer, newSize, &newSlot);
+        lpf_sync(_lpf, LPF_SYNC_DEFAULT);
+        EXPECT_EQ( "%d", LPF_SUCCESS, rc );
+        //auto tag = _currentTagId++;
+        /**
+         * It is essential to record who this memory slot
+         * belongs to (process i). Without this record, future data
+         * movement calls will not work. This is recorded in the
+         * targetRank of the destination slot.
+         */
+        size_t remote = globalSlotProcessId[i];
+      // Registering global slot
+
+        _globalSlotMap[globalSlotId] = LpfMemSlot {.lpfSlot = newSlot, .size = newSize, .pointer = newBuffer, .targetRank = remote};
+        //globalSlotIds.push_back(tag);
+        hicr2LpfSlotMap[globalSlotId] = newSlot;
+    } 
 
     size_t msg_cnt;
     for (auto i : _globalSlotMap) {
@@ -357,9 +405,7 @@ class LpfBackend final : public Backend
         hicrSlotId2MsgCnt[i.first] = msg_cnt;
     }
 
-    free(globalSlotCounts);
-    free(globalSizes);
-    //return globalSlotIds;
+    std::cout << "Rank " << _rank << " leaving exchange\n";
     }
 
   void memcpyImpl(
@@ -376,6 +422,7 @@ class LpfBackend final : public Backend
      * -> These principles determine the search in the hash maps
      *  and the error handling
      */
+    std::cout << "Rank " << _rank << " in memcpyImpl with dest slot id = " << destination << std::endl;
     if ( _globalSlotMap.find(destination) == _globalSlotMap.end()) {
       std::cerr << "Destination slot: Cannot find entry in global slot map\n";
       std::abort();
@@ -386,12 +433,12 @@ class LpfBackend final : public Backend
 
     LpfMemSlot srcSlot;
     if (_globalSlotMap.find(source) == _globalSlotMap.end()) {
-      if (_localSlotMap.find(source) == _localSlotMap.end()) {
+      if (_lpfLocalSlots.find(source) == _lpfLocalSlots.end()) {
         std::cerr << "Source slot: Cannot find entry in local or global slot Map\n";
         std::abort();
       }
       else {
-        srcSlot = _localSlotMap[source];
+        srcSlot = _lpfLocalSlots[source];
       }
     }
     else {
@@ -410,6 +457,7 @@ class LpfBackend final : public Backend
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
+      std::cout << "ENTER FENCEIMPL\n";
 
       lpf_sync(_lpf, LPF_SYNC_DEFAULT);
 
@@ -474,12 +522,11 @@ class LpfBackend final : public Backend
           std::cerr << "lpf_register_local failed\n";
           std::abort();
         }
-        _localSlotMap[memorySlotId] = LpfMemSlot {.lpfSlot = lpfSlot, .size = size, .buffer = addr};
-        std::cout << "Rank " << _rank << " registered a slot with slotId " << memorySlotId << std::endl;
+        _lpfLocalSlots[memorySlotId] = LpfMemSlot {.lpfSlot = lpfSlot, .size = size, .pointer = addr};
+
     }
 
     void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const {return nullptr;}
-
 
     size_t getRecvMsgCount(const memorySlotId_t memorySlotId) override {
         size_t msg_cnt;
