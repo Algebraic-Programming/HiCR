@@ -188,6 +188,11 @@ class Thread final : public ProcessingUnit
     pthread_barrier_destroy(&initializationBarrier);
   }
 
+  __USED__ inline void startImpl(ExecutionUnit* executionUnit) override
+  {
+    HICR_THROW_LOGIC("Function not yet implemented\n");
+  }
+
   __USED__ inline void terminateImpl() override
   {
     // Killing threads directly
