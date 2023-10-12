@@ -38,7 +38,7 @@ class Coroutine
    * \internal The question as to whether std::function entails too much overhead needs to evaluated, and perhaps deprecate it in favor of static function references. For the time being, this seems adequate enough.
    *
    */
-  typedef std::function<void(void *)> coroutineFc_t;
+  typedef std::function<void()> coroutineFc_t;
 
   /**
    * Resumes the execution of the coroutine. The coroutine needs to have been started before this, otherwise undefined behavior is to be expected.
@@ -78,15 +78,15 @@ class Coroutine
    * \param[in] fc Function to run by the coroutine
    * \param[in] arg Argument to pass to the function
    */
-  __USED__ inline void start(coroutineFc_t fc, void *arg)
+  __USED__ inline void start(coroutineFc_t fc)
   {
-    const auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink)
+    const auto coroutineFc = [this, fc](boost::context::continuation &&sink)
     {
       // Storing caller context
       _context = std::move(sink);
 
       // Executing coroutine function
-      fc(arg);
+      fc();
 
       // Setting the coroutine as finished
       _hasFinished = true;

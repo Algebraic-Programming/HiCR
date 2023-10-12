@@ -127,24 +127,9 @@ class Task
    * Constructor that sets the function that the task will execute and its argument.
    *
    * @param[in] fc Specifies the function to execute.
-   * @param[in] argument Specifies the argument to pass to the function.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(taskFunction_t fc, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _argument(argument), _fc(fc), _eventMap(eventMap){};
-
-  /**
-   * Sets the single argument (pointer) to the the task function
-   *
-   * @param[in] argument A pointer representing the function's argument
-   */
-  __USED__ inline void setArgument(void *argument) { _argument = argument; }
-
-  /**
-   * Queries the task's function argument.
-   *
-   * @return A pointer user-defined task argument, if defined; A NULL pointer, if not.
-   */
-  __USED__ inline void *getArgument() { return _argument; }
+  __USED__ Task(taskFunction_t fc, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _fc(fc), _eventMap(eventMap){};
 
   /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
@@ -229,7 +214,7 @@ class Task
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
 
     // If this is the first time we execute this task, we create the new coroutine, otherwise resume the already created one
-    hasExecuted ? _coroutine.resume() : _coroutine.start(_fc, _argument);
+    hasExecuted ? _coroutine.resume() : _coroutine.start(_fc);
 
     // If the task is suspended and event map is defined, trigger the corresponding event.
     if (_state == state_t::suspended)
@@ -272,11 +257,6 @@ class Task
    * Current execution state of the task. Will change based on runtime scheduling events
    */
   state_t _state = state_t::initialized;
-
-  /**
-   *   Argument to execute the task with
-   */
-  void *_argument;
 
   /**
    *  Main function that the task will execute

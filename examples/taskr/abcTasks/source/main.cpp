@@ -40,7 +40,6 @@ int main(int argc, char **argv)
     _taskr->addProcessingUnit(processingUnit);
   }
 
-
   HiCR::backend::sharedMemory::ExecutionUnit e([]() { printf("Task C\n"); });
 
   // Now creating tasks and their dependency graph
