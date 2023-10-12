@@ -11,9 +11,7 @@
  */
 #pragma once
 
-#include <memory>
 #include <set>
-
 #include <hicr/common/definitions.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/executionUnit.hpp>
@@ -262,5 +260,11 @@ class ProcessingUnit
    */
   computeResourceId_t _computeResourceId;
 };
+
+/**
+ * Type definition for a generic memory space identifier
+ */
+typedef std::vector<ProcessingUnit*> processingUnitList_t;
+
 
 } // namespace HiCR

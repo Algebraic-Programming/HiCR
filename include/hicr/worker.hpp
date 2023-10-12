@@ -24,11 +24,6 @@ namespace HiCR
 {
 
 /**
- * Type definition for a generic memory space identifier
- */
-typedef std::vector<std::unique_ptr<ProcessingUnit>> processingUnitList_t;
-
-/**
  * Type definition for the set of dispatchers a worker is subscribed to
  */
 typedef std::set<Dispatcher *> dispatcherSet_t;
@@ -210,7 +205,7 @@ class Worker
    *
    * @param[in] pu Processing unit to assign to the worker
    */
-  __USED__ inline void addProcessingUnit(std::unique_ptr<ProcessingUnit> &pu) { _processingUnits.push_back(std::move(pu)); }
+  __USED__ inline void addProcessingUnit(ProcessingUnit* pu) { _processingUnits.push_back(pu); }
 
   /**
    * Gets a reference to the workers assigned processing units.

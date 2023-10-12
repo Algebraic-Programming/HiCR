@@ -13,7 +13,6 @@
 #pragma once
 #include <atomic>
 #include <hicr.hpp>
-#include <hicr/common/exceptions.hpp>
 #include <map>
 #include <mutex>
 #include <taskr/common.hpp>
@@ -91,9 +90,10 @@ class Runtime
   HiCR::lockFreeQueue_t<HiCR::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
 
   /**
-   * Backend to extract compute resources from
+   * The processing units assigned to taskr to run workers from
    */
-  HiCR::Backend *_backend;
+  HiCR::processingUnitList_t _processingUnits;
+
 
   /**
    * This function checks whether a given task is ready to go (i.e., all its dependencies have been satisfied)
@@ -178,11 +178,16 @@ class Runtime
   public:
 
   /**
-   * Constructor of the TaskR Runtime. It requires the user to provide a backend from where to source compute resources.
+   * Constructor of the TaskR Runtime. It requires the user to provide a computeManager from where to source compute resources.
    *
-   * \param[in] backend The backend from where to source compute resources
+   * \param[in] computeManager The computeManager from where to source compute resources
    */
-  Runtime(HiCR::Backend *backend) : _backend(backend){};
+  Runtime() = default;
+
+  __USED__ inline void addProcessingUnit(HiCR::ProcessingUnit* pu)
+  {
+   _processingUnits.push_back(pu);
+  }
 
   /**
    * Sets the maximum active worker count. If the current number of active workers exceeds this maximu, TaskR will put as many
@@ -295,10 +300,10 @@ class Runtime
 
   /**
    * Starts the execution of the TaskR runtime.
-   * Creates a set of HiCR workers, based on the provided backend, and subscribes them to a dispatcher queue.
+   * Creates a set of HiCR workers, based on the provided computeManager, and subscribes them to a dispatcher queue.
    * After creating the workers, it starts them and suspends the current context until they're back (all tasks have finished).
    *
-   * \param [in] computeResourceList Is the list of compute resources corresponding to the backend define during initialization. Taskr will create one processing unit from each of these resources and assign one of them to each worker.
+   * \param [in] computeResourceList Is the list of compute resources corresponding to the computeManager define during initialization. Taskr will create one processing unit from each of these resources and assign one of them to each worker.
    */
   __USED__ inline void run(const HiCR::Backend::computeResourceList_t &computeResourceList)
   {
@@ -310,30 +315,14 @@ class Runtime
     _eventMap->setEvent(HiCR::Task::event_t::onTaskFinish, [this](HiCR::Task *task)
                         { onTaskFinish(task); });
 
-    // Making a local copy of the compute resource list, so that in case it is empty, we query it from the backend
-    auto actualComputeResourceList = computeResourceList;
-
-    // In case no resources were provided by the user, using all of the available resources from the backend
-    if (computeResourceList.empty() == true)
-    {
-      // Querying computational resources
-      _backend->queryComputeResources();
-
-      // Updating the compute resource list
-      actualComputeResourceList = _backend->getComputeResourceList();
-    }
-
     // Creating one worker per processung unit in the list
-    for (auto &resource : actualComputeResourceList)
+    for (auto &pu : _processingUnits)
     {
       // Creating new worker
       auto worker = new HiCR::Worker();
 
-      // Creating a processing unit out of the computational resource
-      auto processingUnit = _backend->createProcessingUnit(resource);
-
       // Assigning resource to the thread
-      worker->addProcessingUnit(processingUnit);
+      worker->addProcessingUnit(pu);
 
       // Assigning worker to the common dispatcher
       worker->subscribe(_dispatcher);

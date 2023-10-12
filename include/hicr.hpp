@@ -8,6 +8,9 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/backends/computeManager.hpp>
+#include <hicr/backends/dataMover.hpp>
+#include <hicr/backends/memoryManager.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/processingUnit.hpp>
 #include <hicr/task.hpp>
