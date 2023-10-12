@@ -302,10 +302,8 @@ class Runtime
    * Starts the execution of the TaskR runtime.
    * Creates a set of HiCR workers, based on the provided computeManager, and subscribes them to a dispatcher queue.
    * After creating the workers, it starts them and suspends the current context until they're back (all tasks have finished).
-   *
-   * \param [in] computeResourceList Is the list of compute resources corresponding to the computeManager define during initialization. Taskr will create one processing unit from each of these resources and assign one of them to each worker.
    */
-  __USED__ inline void run(const HiCR::Backend::computeResourceList_t &computeResourceList)
+  __USED__ inline void run()
   {
     _dispatcher = new HiCR::Dispatcher([this]()
                                        { return checkWaitingTasks(); });

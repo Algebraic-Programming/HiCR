@@ -1,9 +1,13 @@
 #include <cstdio>
 #include <cstring>
+#include <hwloc.h>
 #include <taskr.hpp>
-#include <hicr/backends/sharedMemory/sharedMemory.hpp>
+#include <hicr/backends/sharedMemory/computeManager.hpp>
 
 #define WORK_TASK_COUNT 1000
+
+// Singleton access for the taskr runtime
+taskr::Runtime* _taskr;
 
 void work()
 {
@@ -19,7 +23,7 @@ void work()
 void wait()
 {
   // Reducing maximum active workers to 1
-  taskr::setMaximumActiveWorkers(1);
+  _taskr->setMaximumActiveWorkers(1);
 
   printf("Starting long task...\n");
   fflush(stdout);
@@ -28,16 +32,38 @@ void wait()
   fflush(stdout);
 
   // Increasing maximum active workers
-  taskr::setMaximumActiveWorkers(1024);
+  _taskr->setMaximumActiveWorkers(1024);
 }
 
 int main(int argc, char **argv)
 {
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
   // Initializing Pthreads backend to run in parallel
-  auto t = new HiCR::backend::sharedMemory::SharedMemory();
+  HiCR::backend::sharedMemory::ComputeManager computeManager(&topology);
+
+  // Querying computational resources
+  computeManager.queryComputeResources();
+
+  // Updating the compute resource list
+  auto computeResources = computeManager.getComputeResourceList();
 
   // Initializing taskr
-  taskr::initialize(t);
+  _taskr = new taskr::Runtime();
+
+  // Create processing units from the detected compute resource list and giving them to taskr
+  for (auto &resource : computeResources)
+  {
+    // Creating a processing unit out of the computational resource
+    auto processingUnit = computeManager.createProcessingUnit(resource);
+
+    // Assigning resource to the taskr
+    _taskr->addProcessingUnit(processingUnit);
+  }
 
   printf("Starting many work tasks...\n");
   fflush(stdout);
@@ -45,28 +71,31 @@ int main(int argc, char **argv)
   for (size_t i = 0; i < WORK_TASK_COUNT; i++)
   {
     auto workTask = new taskr::Task(i, &work);
-    taskr::addTask(workTask);
+    _taskr->addTask(workTask);
   }
 
   auto waitTask = new taskr::Task(WORK_TASK_COUNT + 1, wait);
   for (size_t i = 0; i < WORK_TASK_COUNT; i++) waitTask->addTaskDependency(i);
-  taskr::addTask(waitTask);
+  _taskr->addTask(waitTask);
 
   for (size_t i = 0; i < WORK_TASK_COUNT; i++)
   {
     auto workTask = new taskr::Task(WORK_TASK_COUNT + i + 1, &work);
     workTask->addTaskDependency(WORK_TASK_COUNT + 1);
-    taskr::addTask(workTask);
+    _taskr->addTask(workTask);
   }
 
   // Running taskr
-  taskr::run();
-
-  // Finalizing taskr
-  taskr::finalize();
+  _taskr->run();
 
   printf("Finished all tasks.\n");
   fflush(stdout);
+
+  // Finalizing taskr
+  delete _taskr;
+
+  // Freeing up memory
+  hwloc_topology_destroy(topology);
 
   return 0;
 }

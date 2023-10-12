@@ -3,6 +3,7 @@
 #include <hwloc.h>
 #include <taskr.hpp>
 #include <hicr/backends/sharedMemory/computeManager.hpp>
+#include <hicr/backends/sharedMemory/executionUnit.hpp>
 
 #define ITERATIONS 100
 
@@ -18,13 +19,13 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing Pthreads backend to run in parallel
-  auto computeManager = new HiCR::backend::sharedMemory::ComputeManager(&topology);
+  HiCR::backend::sharedMemory::ComputeManager computeManager(&topology);
 
   // Querying computational resources
-  computeManager->queryComputeResources();
+  computeManager.queryComputeResources();
 
   // Updating the compute resource list
-  auto computeResources = computeManager->getComputeResourceList();
+  auto computeResources = computeManager.getComputeResourceList();
 
   // Initializing taskr
   _taskr = new taskr::Runtime();
@@ -33,11 +34,14 @@ int main(int argc, char **argv)
   for (auto &resource : computeResources)
   {
     // Creating a processing unit out of the computational resource
-    auto processingUnit = computeManager->createProcessingUnit(resource);
+    auto processingUnit = computeManager.createProcessingUnit(resource);
 
     // Assigning resource to the taskr
     _taskr->addProcessingUnit(processingUnit);
   }
+
+
+  HiCR::backend::sharedMemory::ExecutionUnit e([]() { printf("Task C\n"); });
 
   // Now creating tasks and their dependency graph
   for (size_t i = 0; i < ITERATIONS; i++)
@@ -62,10 +66,13 @@ int main(int argc, char **argv)
   }
 
   // Running taskr
-  _taskr->run(HiCR::Backend::computeResourceList_t());
+  _taskr->run();
 
   // Finalizing taskr
   delete _taskr;
+
+  // Freeing up memory
+  hwloc_topology_destroy(topology);
 
   return 0;
 }
