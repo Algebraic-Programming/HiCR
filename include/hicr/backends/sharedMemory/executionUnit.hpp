@@ -13,7 +13,6 @@
 #pragma once
 
 #include <functional>
-#include <hicr/common/coroutine.hpp>
 #include <hicr/executionUnit.hpp>
 
 namespace HiCR
@@ -51,15 +50,15 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
  ExecutionUnit() = delete;
   ~ExecutionUnit() = default;
 
-  __USED__ inline std::string identifyExecutionUnitType() override { return "C++ Function"; }
-  __USED__ inline const function_t& getFunction() { return _fc; }
+  __USED__ inline std::string getType() const override { return "C++ Function"; }
+  __USED__ inline const function_t& getFunction() const { return _fc; }
 
   private:
 
   const function_t _fc;
 };
 
-} // end namespace sequential
+} // namespace sharedMemory
 
 } // namespace backend
 

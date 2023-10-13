@@ -85,6 +85,9 @@ class Coroutine
       // Storing caller context
       _context = std::move(sink);
 
+      // First yield allows the creation of a coroutine without running the function
+      yield();
+
       // Executing coroutine function
       fc();
 

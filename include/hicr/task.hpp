@@ -213,8 +213,11 @@ class Task
     // Triggering execution event, if defined
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
 
-    // If this is the first time we execute this task, we create the new coroutine, otherwise resume the already created one
-    hasExecuted ? _coroutine.resume() : _coroutine.start(_fc);
+    // If this is the first time we execute this task, we create the new coroutine
+    if (hasExecuted == false) _coroutine.start(_fc);
+
+    // Now resuming the task's execution
+    _coroutine.resume();
 
     // If the task is suspended and event map is defined, trigger the corresponding event.
     if (_state == state_t::suspended)

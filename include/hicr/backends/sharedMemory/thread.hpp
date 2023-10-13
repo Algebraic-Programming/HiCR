@@ -12,14 +12,15 @@
 
 #pragma once
 
-#include <csignal>
 #include <fcntl.h>
-#include <hicr/common/exceptions.hpp>
-#include <hicr/processingUnit.hpp>
 #include <pthread.h>
-#include <set>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <csignal>
+#include <set>
+#include <hicr/common/exceptions.hpp>
+#include <hicr/processingUnit.hpp>
+#include <hicr/backends/sharedMemory/executionState.hpp>
 
 namespace HiCR
 {
@@ -188,7 +189,7 @@ class Thread final : public ProcessingUnit
     pthread_barrier_destroy(&initializationBarrier);
   }
 
-  __USED__ inline void startImpl(ExecutionUnit* executionUnit) override
+  __USED__ inline void startImpl(HiCR::ExecutionUnit* executionUnit) override
   {
     HICR_THROW_LOGIC("Function not yet implemented\n");
   }

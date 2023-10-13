@@ -23,7 +23,7 @@ class ExecutionUnit
 {
   public:
 
-  virtual std::string identifyExecutionUnitType() = 0;
+  virtual std::string getType() const = 0;
 
   protected:
 
