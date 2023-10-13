@@ -1,3 +1,6 @@
 option('backends', type : 'array', choices : ['sequential', 'sharedMemory', 'mpi', 'ascend'], value : [ 'sequential' ],
        description : 'Specifies which backends to enable for compilation with HiCR')
-       
+      
+option('buildTests', type : 'boolean', value : false)
+
+option('buildExamples', type : 'boolean', value : false)

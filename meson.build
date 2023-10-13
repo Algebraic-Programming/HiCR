@@ -30,8 +30,12 @@ if 'ascend' in enabledBackends
 endif    
     
 # Build example targets
-subdir('examples')
+if get_option('buildExamples')
+ subdir('examples')
+endif
 
 # Build test targets
-subdir('tests')
+if get_option('buildTests')
+ subdir('tests')
+endif
 
