@@ -40,26 +40,27 @@ int main(int argc, char **argv)
     _taskr->addProcessingUnit(processingUnit);
   }
 
-  HiCR::backend::sharedMemory::ExecutionUnit e([]() { printf("Task C\n"); });
-
   // Now creating tasks and their dependency graph
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto cTask = new taskr::Task(i * 3 + 2, [i]() { printf("Task C%lu\n", i); });
+    auto fc = new HiCR::backend::sharedMemory::ExecutionUnit([i]() { printf("Task C%lu\n", i); });
+    auto cTask = new taskr::Task(i * 3 + 2, fc);
     cTask->addTaskDependency(i * 3 + 1);
     _taskr->addTask(cTask);
   }
 
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto bTask = new taskr::Task(i * 3 + 1, [i]() { printf("Task B%lu\n", i); });
+    auto fc = new HiCR::backend::sharedMemory::ExecutionUnit([i]() { printf("Task B%lu\n", i); });
+    auto bTask = new taskr::Task(i * 3 + 1, fc);
     bTask->addTaskDependency(i * 3 + 0);
     _taskr->addTask(bTask);
   }
 
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto aTask = new taskr::Task(i * 3 + 0, [i]() { printf("Task A%lu\n", i); });
+    auto fc = new HiCR::backend::sharedMemory::ExecutionUnit([i]() { printf("Task A%lu\n", i); });
+    auto aTask = new taskr::Task(i * 3 + 0, fc);
     if (i > 0) aTask->addTaskDependency(i * 3 - 1);
     _taskr->addTask(aTask);
   }

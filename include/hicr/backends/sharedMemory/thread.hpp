@@ -20,6 +20,7 @@
 #include <set>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
+#include <hicr/backends/sharedMemory/executionUnit.hpp>
 #include <hicr/backends/sharedMemory/executionState.hpp>
 
 namespace HiCR
@@ -204,6 +205,18 @@ class Thread final : public ProcessingUnit
   {
     // Waiting for thread after execution
     pthread_join(_pthreadId, NULL);
+  }
+
+  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(const HiCR::ExecutionUnit* executionUnit) override
+  {
+   // Getting up-casted pointer for the execution unit
+   auto e = dynamic_cast<const ExecutionUnit*>(executionUnit);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (e == NULL) HICR_THROW_FATAL("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
+
+   // Creating and returning new execution state
+   return std::make_unique<ExecutionState>(e);
   }
 };
 

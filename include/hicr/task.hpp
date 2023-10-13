@@ -12,11 +12,15 @@
 
 #pragma once
 
+#include <queue>
+#include <memory>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <queue>
+#include <hicr/executionUnit.hpp>
+#include <hicr/executionState.hpp>
+
 
 namespace HiCR
 {
@@ -78,7 +82,12 @@ class Task
   enum state_t
   {
     /**
-     * Ready to run -- set automatically upon creation
+     * Internal state not yet allocated -- set automatically upon creation
+     */
+    uninitialized,
+
+    /**
+     * Ready to run (internal state created)
      */
     initialized,
 
@@ -129,7 +138,7 @@ class Task
    * @param[in] fc Specifies the function to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(taskFunction_t fc, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _fc(fc), _eventMap(eventMap){};
+  __USED__ Task(const ExecutionUnit* executionUnit, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap){};
 
   /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
@@ -153,6 +162,9 @@ class Task
    * \internal This is not a thread safe operation.
    */
   __USED__ inline const state_t getState() { return _state; }
+
+
+  __USED__ inline const ExecutionUnit* getExecutionUnit() { return _executionUnit; }
 
   /**
    * Registers an operation that has been started by the task but has not yet finished
@@ -192,6 +204,17 @@ class Task
     return true;
   }
 
+  __USED__ inline void initialize(std::unique_ptr<ExecutionState> executionState)
+  {
+    if (_state != state_t::uninitialized) HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", _state);
+
+    // Getting execution state as a unique pointer (to prevent sharing the same state among different tasks)
+    _executionState = std::move(executionState);
+
+    // Setting state as initialized
+    _state = state_t::initialized;
+  }
+
   /**
    * This function starts running a task. It needs to be performed by a worker, by passing a pointer to itself.
    *
@@ -204,20 +227,14 @@ class Task
     // Also map task pointer to the running thread it into static storage for global access.
     _currentTask = this;
 
-    // Checking whether the function has executed before
-    bool hasExecuted = _state != state_t::initialized;
-
     // Setting state to running while we execute
     _state = state_t::running;
 
     // Triggering execution event, if defined
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
 
-    // If this is the first time we execute this task, we create the new coroutine
-    if (hasExecuted == false) _coroutine.start(_fc);
-
     // Now resuming the task's execution
-    _coroutine.resume();
+    _executionState->resume();
 
     // If the task is suspended and event map is defined, trigger the corresponding event.
     if (_state == state_t::suspended)
@@ -251,7 +268,7 @@ class Task
     _state = state_t::suspended;
 
     // Yielding execution back to worker
-    _coroutine.yield();
+    _executionState->yield();
   }
 
   private:
@@ -259,17 +276,9 @@ class Task
   /**
    * Current execution state of the task. Will change based on runtime scheduling events
    */
-  state_t _state = state_t::initialized;
+  state_t _state = state_t::uninitialized;
 
-  /**
-   *  Main function that the task will execute
-   */
-  taskFunction_t _fc;
-
-  /**
-   *  Task context preserved as a coroutine
-   */
-  common::Coroutine _coroutine;
+  const ExecutionUnit* const _executionUnit;
 
   /**
    *  Map of events to trigger
@@ -280,6 +289,8 @@ class Task
    * List of pending operations initiated by the task but not yet finished
    */
   pendingOperationFunctionQueue_t _pendingOperations;
+
+  std::unique_ptr<ExecutionState> _executionState;
 };
 
 } // namespace HiCR

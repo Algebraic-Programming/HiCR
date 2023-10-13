@@ -20,16 +20,17 @@ class ExecutionState
 {
   public:
 
+ virtual void resume() = 0;
+ virtual void yield() = 0;
+
+   ~ExecutionState() = default;
+
   protected:
 
   ExecutionState(const ExecutionUnit* executionUnit)
   {
 
   };
-  ~ExecutionState() = default;
-
-  virtual void resume() = 0;
-  virtual void yield() = 0;
 
   private:
 

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <hicr/task.hpp>
+#include <hicr/executionUnit.hpp>
 #include <taskr/common.hpp>
 #include <vector>
 
@@ -52,7 +53,7 @@ class Task
    * \param[in] label A user-defined unique identifier for the task. It is required for dependency management
    * \param[in] fc A user-defined function to run
    */
-  __USED__ inline Task(const taskLabel_t label, const callback_t &fc) : _hicrTask(HiCR::Task([fc](){ fc(); })), _label(label) {}
+  __USED__ inline Task(const taskLabel_t label, const HiCR::ExecutionUnit* executionUnit) : _hicrTask(executionUnit), _label(label) {}
 
   /**
    * Returns the underlying HiCR task

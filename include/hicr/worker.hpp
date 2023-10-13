@@ -253,9 +253,23 @@ class Worker
         // Attempt to both pop and pull from dispatcher
         auto task = dispatcher->pull();
 
-        // If a task was returned, then execute it
+        // If a task was returned, then start or execute it
         if (task != NULL) [[likely]]
-          task->run();
+        {
+           // If the task hasn't been initialized yet, we need to do it now
+           if (task->getState() == Task::state_t::uninitialized)
+           {
+            // First, create new execution state for the processing unit
+            auto executionState = _processingUnits[0]->createExecutionState(task->getExecutionUnit());
+
+            // Then initialize the task with the new execution state
+            task->initialize(std::move(executionState));
+           }
+
+           // Now actually run the task
+           task->run();
+        }
+
 
         // If worker has been suspended, handle it now
         if (_state == state_t::suspended) [[unlikely]]
