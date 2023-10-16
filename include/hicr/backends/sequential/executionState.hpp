@@ -5,7 +5,7 @@
 
 /**
  * @file function.hpp
- * @brief Implements the execution unit (function) class for the shared memory backend.
+ * @brief Implements the execution unit (function) class for the sequential backend.
  * @author S. M. Martin
  * @date 9/10/2023
  */
@@ -15,7 +15,7 @@
 #include <functional>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/executionState.hpp>
-#include <hicr/backends/sharedMemory/executionUnit.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -23,7 +23,7 @@ namespace HiCR
 namespace backend
 {
 
-namespace sharedMemory
+namespace sequential
 {
 
 class ExecutionState final : public HiCR::ExecutionState
@@ -67,7 +67,7 @@ class ExecutionState final : public HiCR::ExecutionState
  common::Coroutine _coroutine;
 };
 
-} // end namespace sharedMemory
+} // end namespace sequential
 
 } // namespace backend
 

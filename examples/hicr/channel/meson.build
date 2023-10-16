@@ -1,9 +1,7 @@
-if 'sequential' in enabledBackends
-	executable('channel_sequential',
-	  [ 'source/channel_sequential.cpp'],
-	  dependencies: [ hicrBuildDep, hicrSequentialBackendDep, dependency('threads', required: true)]
-	)
-endif
+executable('channel_sequential',
+  [ 'source/channel_sequential.cpp'],
+  dependencies: [ hicrBuildDep, hicrSequentialBackendDep, dependency('threads', required: true)]
+)
 
 if 'mpi' in enabledBackends
 	executable('channel_mpi',

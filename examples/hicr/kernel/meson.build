@@ -1,9 +1,7 @@
-if 'sequential' in enabledBackends
-	executable('kernelSequential',
-	  [ 'source/kernelSequential.cpp'],
-	  dependencies: [ hicrBuildDep, hicrSequentialBackendDep]
-	)
-endif
+executable('kernelSequential',
+  [ 'source/kernelSequential.cpp'],
+  dependencies: [ hicrBuildDep, hicrSequentialBackendDep]
+)
 
 if 'ascend' in enabledBackends
 	executable('kernelAscend',

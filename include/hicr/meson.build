@@ -1,7 +1,7 @@
 # Define HiCR dependencies
 
 hicrBuildDeps = [
-    dependency('boost',  modules : ['context'],  required : true)
+   
    ]
 
 hicrBuildCppArgs = [

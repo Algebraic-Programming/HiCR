@@ -34,10 +34,6 @@ class ExecutionState
 
   private:
 
-  /**
-   *  Task context preserved as a coroutine
-   */
-  common::Coroutine _coroutine;
 };
 
 } // namespace HiCR

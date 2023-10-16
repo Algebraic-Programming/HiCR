@@ -270,7 +270,6 @@ class Worker
            task->run();
         }
 
-
         // If worker has been suspended, handle it now
         if (_state == state_t::suspended) [[unlikely]]
           _processingUnits[0]->suspend();

@@ -21,13 +21,6 @@
 namespace taskr
 {
 
-class Runtime;
-
-/**
- * Static pointer to the TaskR runtime singleton
- */
-inline Runtime *_runtime;
-
 /**
  * Implementation of the TaskR Runtime singleton class
  *
@@ -203,7 +196,7 @@ class Runtime
   __USED__ inline void setMaximumActiveWorkers(const size_t max)
   {
     // Storing new maximum active worker count
-    _runtime->_maximumActiveWorkers = max;
+    _maximumActiveWorkers = max;
   }
 
   /**
@@ -357,6 +350,8 @@ class Runtime
     delete _dispatcher;
     delete _eventMap;
   }
+
+  __USED__ inline Task *getCurrentTask() { return _hicrToTaskrTaskMap[HiCR::getCurrentTask()]; }
 
 }; // class Runtime
 

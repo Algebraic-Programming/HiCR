@@ -20,8 +20,8 @@
 #include <set>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <hicr/backends/sharedMemory/executionUnit.hpp>
-#include <hicr/backends/sharedMemory/executionState.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
+#include <hicr/backends/sequential/executionState.hpp>
 
 namespace HiCR
 {
@@ -42,7 +42,7 @@ namespace sharedMemory
  *
  * This implementation uses PThreads as backend for the creation and management of OS threads..
  */
-class Thread final : public ProcessingUnit
+class ProcessingUnit final : public HiCR::ProcessingUnit
 {
   public:
 
@@ -76,11 +76,11 @@ class Thread final : public ProcessingUnit
   }
 
   /**
-   * Constructor for the Thread class
+   * Constructor for the ProcessingUnit class
    *
    * \param core Represents the core affinity to associate this processing unit to
    */
-  __USED__ inline Thread(computeResourceId_t core) : ProcessingUnit(core){};
+  __USED__ inline ProcessingUnit(computeResourceId_t core) : HiCR::ProcessingUnit(core){};
 
   private:
 
@@ -102,15 +102,15 @@ class Thread final : public ProcessingUnit
   /**
    * Static wrapper function to setup affinity and run the thread's function
    *
-   * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
+   * \param[in] p Pointer to a ProcessingUnit class to recover the calling instance from inside wrapper
    */
   __USED__ inline static void *launchWrapper(void *p)
   {
     // Gathering thread object
-    auto thread = (Thread *)p;
+    auto thread = (ProcessingUnit *)p;
 
     // Setting signal to hear for suspend/resume
-    signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
+    signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
 
     // Setting thread as cancelable
     int oldValue;
@@ -152,7 +152,7 @@ class Thread final : public ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
 
     // Re-set next signal listening before exiting
-    signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
+    signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
   }
 
   __USED__ inline void initializeImpl() override
@@ -190,7 +190,7 @@ class Thread final : public ProcessingUnit
     pthread_barrier_destroy(&initializationBarrier);
   }
 
-  __USED__ inline void startImpl(HiCR::ExecutionUnit* executionUnit) override
+  __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
   {
     HICR_THROW_LOGIC("Function not yet implemented\n");
   }
@@ -210,13 +210,13 @@ class Thread final : public ProcessingUnit
   __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(const HiCR::ExecutionUnit* executionUnit) override
   {
    // Getting up-casted pointer for the execution unit
-   auto e = dynamic_cast<const ExecutionUnit*>(executionUnit);
+   auto e = dynamic_cast<const sequential::ExecutionUnit*>(executionUnit);
 
    // Checking whether the execution unit passed is compatible with this backend
    if (e == NULL) HICR_THROW_FATAL("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
 
    // Creating and returning new execution state
-   return std::make_unique<ExecutionState>(e);
+   return std::make_unique<sequential::ExecutionState>(e);
   }
 };
 

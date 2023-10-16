@@ -14,7 +14,7 @@
 
 #include <mutex>
 #include <set>
-
+#include <map>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/memorySlot.hpp>

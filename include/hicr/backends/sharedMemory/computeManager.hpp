@@ -14,7 +14,8 @@
 
 #include "hwloc.h"
 #include <hicr/backends/computeManager.hpp>
-#include <hicr/backends/sharedMemory/thread.hpp>
+#include <hicr/backends/sharedMemory/processingUnit.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -30,19 +31,25 @@ namespace sharedMemory
  *
  * It detects and returns the processing units detected by the HWLoc library
  */
-class ComputeManager final : public backend::ComputeManager
+class ComputeManager final : public backend::ComputeManager<sequential::ExecutionUnit::function_t>
 {
   public:
 
    /**
    * The constructor is employed to reserve memory required for hwloc
    */
-  ComputeManager(hwloc_topology_t * topology) : backend::ComputeManager(), _topology { topology } { }
+  ComputeManager(hwloc_topology_t * topology) : backend::ComputeManager<sequential::ExecutionUnit::function_t>(), _topology { topology } { }
 
   /**
    * The constructor is employed to free memory required for hwloc
    */
   ~ComputeManager() = default;
+
+  __USED__ inline ExecutionUnit* createExecutionUnit(sequential::ExecutionUnit::function_t executionUnit) override
+  {
+   return new sequential::ExecutionUnit(executionUnit);
+  }
+
 
   /**
    * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
@@ -82,7 +89,7 @@ class ComputeManager final : public backend::ComputeManager
 
   __USED__ inline ProcessingUnit* createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-    return new Thread(resource);
+    return new ProcessingUnit(resource);
   }
 
   /**

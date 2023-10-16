@@ -25,6 +25,7 @@ namespace HiCR
 namespace backend
 {
 
+template <typename T>
 class ComputeManager
 {
   public:
@@ -35,6 +36,8 @@ class ComputeManager
   typedef std::set<computeResourceId_t> computeResourceList_t;
 
   virtual ~ComputeManager() = default;
+
+  virtual ExecutionUnit* createExecutionUnit(T executionUnit) = 0;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.

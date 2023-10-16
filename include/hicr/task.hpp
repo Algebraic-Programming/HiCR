@@ -20,7 +20,7 @@
 #include <hicr/common/exceptions.hpp>
 #include <hicr/executionUnit.hpp>
 #include <hicr/executionState.hpp>
-
+#include <hicr/processingUnit.hpp>
 
 namespace HiCR
 {

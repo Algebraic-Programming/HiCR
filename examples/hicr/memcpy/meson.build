@@ -1,3 +1,9 @@
+executable('memcpySequential',
+  [ 'source/memcpySequential.cpp'],
+  dependencies: [ hicrBuildDep, hicrSequentialBackendDep]
+)
+
+
 if 'sharedMemory' in enabledBackends
 	executable('memcpySharedMem',
 	  [ 'source/memcpySharedMem.cpp'],

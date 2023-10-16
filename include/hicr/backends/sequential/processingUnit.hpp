@@ -15,7 +15,7 @@
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <hicr/backends/sequential/function.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -29,7 +29,7 @@ namespace sequential
 /**
  * Implementation of a procesing unit (a non-parallel process) for the sequential backend
  */
-class Process final : public ProcessingUnit
+class ProcessingUnit final : public HiCR::ProcessingUnit
 {
   public:
 
@@ -38,7 +38,7 @@ class Process final : public ProcessingUnit
    *
    * \param process An id for the process (should be zero)
    */
-  __USED__ inline Process(computeResourceId_t process) : ProcessingUnit(process){};
+  __USED__ inline ProcessingUnit(computeResourceId_t process) : ProcessingUnit(process){};
 
   private:
 

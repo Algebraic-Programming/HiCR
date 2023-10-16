@@ -13,8 +13,8 @@
 
 #include <set>
 #include <hicr/common/definitions.hpp>
-#include <hicr/dispatcher.hpp>
 #include <hicr/executionUnit.hpp>
+#include <hicr/executionState.hpp>
 
 namespace HiCR
 {
@@ -127,16 +127,16 @@ class ProcessingUnit
    *
    * @param[in] fc The compute unit to execute by the resource
    */
-  __USED__ inline void start(ExecutionUnit* ExecutionUnit)
+  __USED__ inline void start(std::unique_ptr<HiCR::ExecutionState> executionState)
   {
     // Checking internal state
-    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'initialized' state");
+    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'ready' state");
 
     // Transitioning state
     _state = ProcessingUnit::running;
 
     // Running internal implementation of the start function
-    startImpl(ExecutionUnit);
+    startImpl(std::move(executionState));
   }
 
   /**
@@ -228,7 +228,7 @@ class ProcessingUnit
    *
    * @param[in] ExecutionUnit The execution unit to run
    */
-  virtual void startImpl(ExecutionUnit* ExecutionUnit) = 0;
+  virtual void startImpl(std::unique_ptr<ExecutionState> executionState) = 0;
 
   /**
    * Internal implementation of the suspend function

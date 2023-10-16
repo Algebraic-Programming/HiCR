@@ -5,7 +5,7 @@
 
 /**
  * @file function.hpp
- * @brief Implements the execution unit (function) class for the shared memory backend.
+ * @brief Implements the execution unit (function) class for the sequential backend.
  * @author S. M. Martin
  * @date 9/10/2023
  */
@@ -21,14 +21,9 @@ namespace HiCR
 namespace backend
 {
 
-namespace sharedMemory
+namespace sequential
 {
 
-/**
- * Implementation of a kernel-level thread as processing unit for the shared memory backend.
- *
- * This implementation uses PThreads as backend for the creation and management of OS threads..
- */
 class ExecutionUnit final : public HiCR::ExecutionUnit
 {
   public:
@@ -58,7 +53,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   const function_t _fc;
 };
 
-} // namespace sharedMemory
+} // namespace sequential
 
 } // namespace backend
 

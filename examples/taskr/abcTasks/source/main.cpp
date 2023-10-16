@@ -3,12 +3,8 @@
 #include <hwloc.h>
 #include <taskr.hpp>
 #include <hicr/backends/sharedMemory/computeManager.hpp>
-#include <hicr/backends/sharedMemory/executionUnit.hpp>
 
 #define ITERATIONS 100
-
-// Singleton access for the taskr runtime
-taskr::Runtime* _taskr;
 
 int main(int argc, char **argv)
 {
@@ -28,7 +24,7 @@ int main(int argc, char **argv)
   auto computeResources = computeManager.getComputeResourceList();
 
   // Initializing taskr
-  _taskr = new taskr::Runtime();
+  auto _taskr = new taskr::Runtime();
 
   // Create processing units from the detected compute resource list and giving them to taskr
   for (auto &resource : computeResources)
@@ -40,27 +36,29 @@ int main(int argc, char **argv)
     _taskr->addProcessingUnit(processingUnit);
   }
 
+  // Creating task functions
+  auto taskAfc = computeManager.createExecutionUnit([_taskr]() { printf("Task A %lu\n", _taskr->getCurrentTask()->getLabel()); });
+  auto taskBfc = computeManager.createExecutionUnit([_taskr]() { printf("Task B %lu\n", _taskr->getCurrentTask()->getLabel()); });
+  auto taskCfc = computeManager.createExecutionUnit([_taskr]() { printf("Task C %lu\n", _taskr->getCurrentTask()->getLabel()); });
+
   // Now creating tasks and their dependency graph
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto fc = new HiCR::backend::sharedMemory::ExecutionUnit([i]() { printf("Task C%lu\n", i); });
-    auto cTask = new taskr::Task(i * 3 + 2, fc);
+    auto cTask = new taskr::Task(i * 3 + 2, taskCfc);
     cTask->addTaskDependency(i * 3 + 1);
     _taskr->addTask(cTask);
   }
 
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto fc = new HiCR::backend::sharedMemory::ExecutionUnit([i]() { printf("Task B%lu\n", i); });
-    auto bTask = new taskr::Task(i * 3 + 1, fc);
+    auto bTask = new taskr::Task(i * 3 + 1, taskBfc);
     bTask->addTaskDependency(i * 3 + 0);
     _taskr->addTask(bTask);
   }
 
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto fc = new HiCR::backend::sharedMemory::ExecutionUnit([i]() { printf("Task A%lu\n", i); });
-    auto aTask = new taskr::Task(i * 3 + 0, fc);
+    auto aTask = new taskr::Task(i * 3 + 0, taskAfc);
     if (i > 0) aTask->addTaskDependency(i * 3 - 1);
     _taskr->addTask(aTask);
   }
