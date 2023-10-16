@@ -173,6 +173,8 @@ class Backend
 
   virtual ~Backend() = default;
 
+  virtual void syncReceivedMessages(memorySlotId_t memorySlotId) = 0;
+
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.
    *
@@ -452,11 +454,6 @@ class Backend
     // Lock Thread-safety mutex
     _mutex.lock();
 
-    // Performing all pending local to global memory slot promotions now
-    exchangeGlobalMemorySlots(tag);
-
-    // Clearing exchanged slot from the pending list
-    _pendingLocalToGlobalPromotions.erase(tag);
 
     // Release Thread-safety mutex
     _mutex.unlock();
@@ -523,7 +520,6 @@ class Backend
    */
   virtual memorySlotId_t registerLocalMemorySlot(void *const ptr, const size_t size)
   {
-      std::cout << "Call registerLocalMemorySlot\n";
     // Lock Thread-safety mutex
     _mutex.lock();
 
@@ -581,6 +577,12 @@ class Backend
     // Release Thread-safety mutex
     _mutex.unlock();
   }
+  /**
+   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
+   *
+   * \param[in] tag Identifies a particular subset of global memory slots
+   */
+  virtual void exchangeGlobalMemorySlots(const tag_t tag) = 0;
 
   /**
    * Retrieves the map of globally registered slots
@@ -817,6 +819,7 @@ class Backend
       HICR_THROW_LOGIC("Attempting to get the query the number of received messages for a memory slot (%lu) that is not associated to this backend", memorySlotId);
     }
 
+    syncReceivedMessages(memorySlotId);
     // Getting value by copy
     const auto value = _memorySlotMap.at(memorySlotId).messagesRecv;
 
@@ -1018,12 +1021,6 @@ class Backend
    */
   virtual void deregisterLocalMemorySlotImpl(memorySlotId_t memorySlotId) = 0;
 
-  /**
-   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
-   *
-   * \param[in] tag Identifies a particular subset of global memory slots
-   */
-  virtual void exchangeGlobalMemorySlots(const tag_t tag) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
