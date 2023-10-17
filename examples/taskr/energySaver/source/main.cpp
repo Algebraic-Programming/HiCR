@@ -6,33 +6,30 @@
 
 #define WORK_TASK_COUNT 1000
 
-// Singleton access for the taskr runtime
-taskr::Runtime* _taskr;
-
-void work()
+void workFc()
 {
-  __volatile__ double value = 2.0;
-  for (size_t i = 0; i < 5000; i++)
-    for (size_t j = 0; j < 5000; j++)
-    {
-      value = sqrt(value + i);
-      value = value * value;
-    }
+ __volatile__ double value = 2.0;
+ for (size_t i = 0; i < 5000; i++)
+  for (size_t j = 0; j < 5000; j++)
+  {
+    value = sqrt(value + i);
+    value = value * value;
+  }
 }
 
-void wait()
+void waitFc(taskr::Runtime* taskr)
 {
-  // Reducing maximum active workers to 1
-  _taskr->setMaximumActiveWorkers(1);
+ // Reducing maximum active workers to 1
+ taskr->setMaximumActiveWorkers(1);
 
-  printf("Starting long task...\n");
-  fflush(stdout);
-  sleep(5.0);
-  printf("Finished long task...\n");
-  fflush(stdout);
+ printf("Starting long task...\n");
+ fflush(stdout);
+ sleep(5.0);
+ printf("Finished long task...\n");
+ fflush(stdout);
 
-  // Increasing maximum active workers
-  _taskr->setMaximumActiveWorkers(1024);
+ // Increasing maximum active workers
+ taskr->setMaximumActiveWorkers(1024);
 }
 
 int main(int argc, char **argv)
@@ -53,7 +50,13 @@ int main(int argc, char **argv)
   auto computeResources = computeManager.getComputeResourceList();
 
   // Initializing taskr
-  _taskr = new taskr::Runtime();
+  taskr::Runtime taskr;
+
+  // Creating task work execution unit
+  auto workExecutionUnit = computeManager.createExecutionUnit([]() { workFc(); });
+
+  // Creating task wait execution unit
+  auto waitExecutionUnit = computeManager.createExecutionUnit([&taskr]() { waitFc(&taskr); });
 
   // Create processing units from the detected compute resource list and giving them to taskr
   for (auto &resource : computeResources)
@@ -62,37 +65,36 @@ int main(int argc, char **argv)
     auto processingUnit = computeManager.createProcessingUnit(resource);
 
     // Assigning resource to the taskr
-    _taskr->addProcessingUnit(processingUnit);
+    taskr.addProcessingUnit(processingUnit);
   }
 
   printf("Starting many work tasks...\n");
   fflush(stdout);
 
+  // Building task graph. First a lot of pure work tasks.
   for (size_t i = 0; i < WORK_TASK_COUNT; i++)
   {
-    auto workTask = new taskr::Task(i, &work);
-    _taskr->addTask(workTask);
+    auto workTask = new taskr::Task(i, workExecutionUnit);
+    taskr.addTask(workTask);
   }
 
-  auto waitTask = new taskr::Task(WORK_TASK_COUNT + 1, wait);
+  // Then creating a single wait task that suspends all workers except for one
+  auto waitTask = new taskr::Task(WORK_TASK_COUNT + 1, waitExecutionUnit);
   for (size_t i = 0; i < WORK_TASK_COUNT; i++) waitTask->addTaskDependency(i);
-  _taskr->addTask(waitTask);
+  taskr.addTask(waitTask);
 
+  // Then creating another batch of work tasks
   for (size_t i = 0; i < WORK_TASK_COUNT; i++)
   {
-    auto workTask = new taskr::Task(WORK_TASK_COUNT + i + 1, &work);
+    auto workTask = new taskr::Task(WORK_TASK_COUNT + i + 1, workExecutionUnit);
     workTask->addTaskDependency(WORK_TASK_COUNT + 1);
-    _taskr->addTask(workTask);
+    taskr.addTask(workTask);
   }
 
   // Running taskr
-  _taskr->run();
+  taskr.run(&computeManager);
 
   printf("Finished all tasks.\n");
-  fflush(stdout);
-
-  // Finalizing taskr
-  delete _taskr;
 
   // Freeing up memory
   hwloc_topology_destroy(topology);
