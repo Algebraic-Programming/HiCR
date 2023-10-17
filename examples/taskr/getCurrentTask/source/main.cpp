@@ -4,8 +4,7 @@
 #include <taskr.hpp>
 #include <hicr/backends/sharedMemory/computeManager.hpp>
 
-// Singleton access for the taskr runtime
-taskr::Runtime* _taskr;
+#define TASK_LABEL 42
 
 int main(int argc, char **argv)
 {
@@ -25,7 +24,7 @@ int main(int argc, char **argv)
   auto computeResources = computeManager.getComputeResourceList();
 
   // Initializing taskr
-  _taskr = new taskr::Runtime();
+  taskr::Runtime taskr;
 
   // Create processing units from the detected compute resource list and giving them to taskr
   for (auto &resource : computeResources)
@@ -34,24 +33,25 @@ int main(int argc, char **argv)
     auto processingUnit = computeManager.createProcessingUnit(resource);
 
     // Assigning resource to the taskr
-    _taskr->addProcessingUnit(processingUnit);
+    taskr.addProcessingUnit(processingUnit);
   }
 
-  // Single task printing the pointer to
-  _taskr->addTask(new taskr::Task(0, []()
-    {
-     auto hicrTask   = HiCR::getCurrentTask();
-     auto hicrWorker = HiCR::getCurrentWorker();
-     printf("Current HiCR Task pointer:   0x%lX\n", (uint64_t)hicrTask);
-     printf("Current HiCR Worker pointer: 0x%lX\n", (uint64_t)hicrWorker);
-    }
-  ));
+  // Creating task  execution unit
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr]()
+  {
+   const auto hicrTask   = HiCR::getCurrentTask();
+   const auto hicrWorker = HiCR::getCurrentWorker();
+   const auto taskrLabel = taskr.getCurrentTask()->getLabel();
+   printf("Current HiCR  Task   pointer:  0x%lX\n", (uint64_t)hicrTask);
+   printf("Current HiCR  Worker pointer:  0x%lX\n", (uint64_t)hicrWorker);
+   printf("Current TaskR Task   label:    %lu\n", taskrLabel);
+  });
+
+  // Creating a single task to print the internal references
+  taskr.addTask(new taskr::Task(TASK_LABEL, taskExecutionUnit));
 
   // Running taskr
-  _taskr->run();
-
-  // Finalizing taskr
-  delete _taskr;
+  taskr.run(&computeManager);
 
   // Freeing up memory
   hwloc_topology_destroy(topology);
