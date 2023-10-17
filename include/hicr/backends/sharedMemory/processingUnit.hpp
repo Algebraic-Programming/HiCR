@@ -90,9 +90,9 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   pthread_t _pthreadId;
 
   /**
-   * Copy of the function to be ran by the thread
+   * Internal state of execution
    */
-  processingUnitFc_t _fc;
+  std::unique_ptr<ExecutionState> _executionState;
 
   /**
    * Barrier to synchronize thread initialization
@@ -112,11 +112,6 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     // Setting signal to hear for suspend/resume
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
 
-    // Setting thread as cancelable
-    int oldValue;
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldValue);
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldValue);
-
     // Setting initial thread affinity
     thread->updateAffinity(std::set<int>({(int)thread->getComputeResourceId()}));
 
@@ -127,7 +122,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     pthread_barrier_wait(&thread->initializationBarrier);
 
     // Calling main loop
-    thread->_fc();
+    thread->_executionState->resume();
 
     // No returns
     return NULL;
@@ -171,34 +166,29 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void startImpl(processingUnitFc_t fc) override
-  {
-    // Initializing barrier
-    pthread_barrier_init(&initializationBarrier, NULL, 2);
-
-    // Making a copy of the function
-    _fc = fc;
-
-    // Launching thread function wrapper
-    auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
-    if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
-
-    // Waiting for proper initialization of the thread
-    pthread_barrier_wait(&initializationBarrier);
-
-    // Destroying barrier
-    pthread_barrier_destroy(&initializationBarrier);
-  }
-
   __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
   {
-    HICR_THROW_LOGIC("Function not yet implemented\n");
+   // Initializing barrier
+   pthread_barrier_init(&initializationBarrier, NULL, 2);
+
+   // Obtaining execution state
+  _executionState = std::move(executionState);
+
+   // Launching thread function wrapper
+   auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
+   if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
+
+   // Waiting for proper initialization of the thread
+   pthread_barrier_wait(&initializationBarrier);
+
+   // Destroying barrier
+   pthread_barrier_destroy(&initializationBarrier);
   }
 
   __USED__ inline void terminateImpl() override
   {
-    // Killing threads directly
-    pthread_cancel(_pthreadId);
+    // Yielding current execution state
+    _executionState->yield();
   }
 
   __USED__ inline void awaitImpl() override

@@ -16,6 +16,7 @@
 #include <hicr/backends/computeManager.hpp>
 #include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/backends/sequential/executionState.hpp>
+#include <hicr/backends/sequential/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -31,11 +32,11 @@ namespace sequential
  *
  * It detects and returns the processing units detected by the HWLoc library
  */
-class ComputeManager final : public backend::ComputeManager<function_t>
+class ComputeManager final : public backend::ComputeManager
 {
   public:
 
-  __USED__ inline ExecutionUnit* createExecutionUnit(function_t executionUnit) override
+  __USED__ inline ExecutionUnit* createExecutionUnit(ExecutionUnit::function_t executionUnit) override
   {
    return new ExecutionUnit(executionUnit);
   }
@@ -61,9 +62,9 @@ class ComputeManager final : public backend::ComputeManager<function_t>
     return computeResourceList_t({0});
   }
 
-  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline HiCR::ProcessingUnit* createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-    return std::move(std::make_unique<ProcessingUnit>(resource));
+    return new ProcessingUnit(resource);
   }
 };
 

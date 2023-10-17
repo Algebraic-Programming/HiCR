@@ -306,7 +306,7 @@ class Runtime
    * Creates a set of HiCR workers, based on the provided computeManager, and subscribes them to a dispatcher queue.
    * After creating the workers, it starts them and suspends the current context until they're back (all tasks have finished).
    */
-  __USED__ inline void run()
+  __USED__ inline void run(HiCR::backend::ComputeManager* computeManager)
   {
     _dispatcher = new HiCR::Dispatcher([this]()
                                        { return checkWaitingTasks(); });
@@ -320,7 +320,7 @@ class Runtime
     for (auto &pu : _processingUnits)
     {
       // Creating new worker
-      auto worker = new HiCR::Worker();
+      auto worker = new HiCR::Worker(computeManager);
 
       // Assigning resource to the thread
       worker->addProcessingUnit(pu);

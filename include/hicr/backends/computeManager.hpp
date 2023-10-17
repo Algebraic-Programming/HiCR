@@ -18,6 +18,7 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
+#include <hicr/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -25,7 +26,6 @@ namespace HiCR
 namespace backend
 {
 
-template <typename T>
 class ComputeManager
 {
   public:
@@ -37,7 +37,7 @@ class ComputeManager
 
   virtual ~ComputeManager() = default;
 
-  virtual ExecutionUnit* createExecutionUnit(T executionUnit) = 0;
+  virtual ExecutionUnit* createExecutionUnit(ExecutionUnit::function_t executionUnit) = 0;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.

@@ -28,14 +28,6 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
 {
   public:
 
- /**
-  * Defines the type accepted by the coroutine function as execution unit.
-  *
-  * \internal The question as to whether std::function entails too much overhead needs to evaluated, and perhaps deprecate it in favor of static function references.
-  *           For the time being, this seems adequate enough.
-  */
- typedef std::function<void()> function_t;
-
   /**
    * Constructor for the Process class
    *

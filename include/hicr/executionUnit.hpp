@@ -23,12 +23,18 @@ class ExecutionUnit
 {
   public:
 
+ /**
+  * Defines the default function type to be accepted by most compute managers, when possible.
+  */
+ typedef std::function<void()> function_t;
+
   virtual std::string getType() const = 0;
+
+  virtual ~ExecutionUnit() = default;
 
   protected:
 
   ExecutionUnit() = default;
-  ~ExecutionUnit() = default;
 };
 
 } // namespace HiCR

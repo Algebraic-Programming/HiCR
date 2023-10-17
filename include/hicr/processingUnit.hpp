@@ -25,11 +25,6 @@ namespace HiCR
 typedef uint64_t computeResourceId_t;
 
 /**
- * Definition for function to run at resource
- */
-typedef std::function<void(void)> processingUnitFc_t;
-
-/**
  * This class represents an abstract definition for a Processing Unit resource in HiCR that:
  *
  * - Represents a single computational resource that has been instantiated for execution (as opposed of those who shall remain unused or unassigned).
@@ -103,23 +98,6 @@ class ProcessingUnit
 
     // Transitioning state
     _state = ProcessingUnit::ready;
-  }
-
-  /**
-   * Starts running the resource and execute a user-defined function
-   *
-   * @param[in] fc The function to execute by the resource
-   */
-  __USED__ inline void start(processingUnitFc_t fc)
-  {
-    // Checking internal state
-    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'initialized' state");
-
-    // Transitioning state
-    _state = ProcessingUnit::running;
-
-    // Running internal implementation of the start function
-    startImpl(fc);
   }
 
   /**
@@ -215,13 +193,6 @@ class ProcessingUnit
    * Internal implementation of the initialize routine
    */
   virtual void initializeImpl() = 0;
-
-  /**
-   * Internal implmentation of the start function
-   *
-   * @param[in] fc The function to execute by the resource
-   */
-  virtual void startImpl(processingUnitFc_t fc) = 0;
 
   /**
    * Internal implmentation of the start function

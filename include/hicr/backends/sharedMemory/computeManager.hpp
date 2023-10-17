@@ -31,14 +31,14 @@ namespace sharedMemory
  *
  * It detects and returns the processing units detected by the HWLoc library
  */
-class ComputeManager final : public backend::ComputeManager<sequential::ExecutionUnit::function_t>
+class ComputeManager final : public backend::ComputeManager
 {
   public:
 
    /**
    * The constructor is employed to reserve memory required for hwloc
    */
-  ComputeManager(hwloc_topology_t * topology) : backend::ComputeManager<sequential::ExecutionUnit::function_t>(), _topology { topology } { }
+  ComputeManager(hwloc_topology_t * topology) : backend::ComputeManager(), _topology { topology } { }
 
   /**
    * The constructor is employed to free memory required for hwloc

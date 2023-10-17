@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <hicr/backends/computeManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/dispatcher.hpp>
@@ -53,6 +54,9 @@ __USED__ static inline Worker *getCurrentWorker() { return _currentWorker; }
 class Worker
 {
   public:
+
+  Worker(HiCR::backend::ComputeManager* computeManager) : _computeManager(computeManager) {}
+  ~Worker() = default;
 
   /**
    * Complete state set that a worker can be in
@@ -128,9 +132,17 @@ class Worker
     // Transitioning state
     _state = state_t::running;
 
+    // Creating new execution unit (the processing unit must support an execution unit of 'sequential' type)
+    auto executionUnit = _computeManager->createExecutionUnit([this](){ this->mainLoop(); });
+
+    // Creating worker's execution state
+    auto executionState = _processingUnits[0]->createExecutionState(executionUnit);
+
     // Launching worker in the lead resource (first one to be added)
-    _processingUnits[0]->start([this]()
-                               { this->mainLoop(); });
+    _processingUnits[0]->start(std::move(executionState));
+
+    // Free up memory
+    delete executionUnit;
   }
 
   /**
@@ -170,9 +182,6 @@ class Worker
   {
     // Checking state
     if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to stop worker that is not in the 'running' state");
-
-    // Requesting processing units to terminate as soon as possible
-    for (auto &p : _processingUnits) p->terminate();
 
     // Transitioning state
     _state = state_t::terminating;
@@ -239,6 +248,11 @@ class Worker
   processingUnitList_t _processingUnits;
 
   /**
+   * Compute manager to use to instantiate and manage the worker's and task execution states
+   */
+  HiCR::backend::ComputeManager* const _computeManager;
+
+  /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
    */
   __USED__ inline void mainLoop()
@@ -272,7 +286,11 @@ class Worker
 
         // If worker has been suspended, handle it now
         if (_state == state_t::suspended) [[unlikely]]
-          _processingUnits[0]->suspend();
+          for (auto &p : _processingUnits) p->suspend();
+
+        // Requesting processing units to terminate as soon as possible
+        if (_state == state_t::terminating) [[unlikely]]
+         for (auto &p : _processingUnits) p->terminate();
       }
     }
   }
