@@ -8,9 +8,6 @@
 
 #define WORK_TASK_COUNT 100
 
-// Singleton access for the taskr runtime
-taskr::Runtime* _taskr;
-
 int main(int argc, char **argv)
 {
   // Creating HWloc topology object
@@ -26,11 +23,14 @@ int main(int argc, char **argv)
   computeManager.queryComputeResources();
 
   // Initializing taskr
-  _taskr = new taskr::Runtime();
+  taskr::Runtime taskr;
 
   // Getting the core subset from the argument list (could be from a file too)
   HiCR::Backend::computeResourceList_t coreSubset;
   for (int i = 1; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
+
+  // Sanity check
+  if (coreSubset.empty()) { fprintf(stderr, "Launch error: no compute resources provided\n"); exit(-1); }
 
   // Create processing units from the detected compute resource list and giving them to taskr
   for (auto &coreId : coreSubset)
@@ -39,23 +39,23 @@ int main(int argc, char **argv)
     auto processingUnit = computeManager.createProcessingUnit(coreId);
 
     // Assigning resource to the taskr
-    _taskr->addProcessingUnit(processingUnit);
+    taskr.addProcessingUnit(processingUnit);
   }
 
+  // Creating task  execution unit
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr](){work();});
+
   // Adding multiple compute tasks
-  printf("Running %u work tasks with %lu cores...\n", WORK_TASK_COUNT, coreSubset.size());
-  for (size_t i = 0; i < WORK_TASK_COUNT; i++) _taskr->addTask(new taskr::Task(i, &work));
+  printf("Running %u work tasks with %lu processing units...\n", WORK_TASK_COUNT, coreSubset.size());
+  for (size_t i = 0; i < WORK_TASK_COUNT; i++) taskr.addTask(new taskr::Task(i, taskExecutionUnit));
 
   // Running taskr only on the core subset
   auto t0 = std::chrono::high_resolution_clock::now();
-  _taskr->run();
+  taskr.run(&computeManager);
   auto tf = std::chrono::high_resolution_clock::now();
 
   auto dt = std::chrono::duration_cast<std::chrono::nanoseconds>(tf - t0).count();
   printf("Finished in %.3f seconds.\n", (double)dt * 1.0e-9);
-
-  // Finalizing taskr
-  delete _taskr;
 
   // Freeing up memory
   hwloc_topology_destroy(topology);
