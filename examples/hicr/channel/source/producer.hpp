@@ -17,7 +17,7 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  // Initializing coordination buffer (sets to zero the counters)
  HiCR::ProducerChannel::initializeCoordinationBuffer(backend, coordinationBufferSlot);
 
- // Promoting local memory slots to global for them to be used by the remote end
+ // Exchanging local memory slots to become global for them to be used by the remote end
  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, { { PRODUCER_KEY, coordinationBufferSlot } });
 
  // Obtaining the globally exchanged memory slots

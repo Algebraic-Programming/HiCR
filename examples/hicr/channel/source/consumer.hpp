@@ -14,7 +14,7 @@ void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  // Registering token buffer as a local memory slot
  auto tokenBufferSlot = memoryManager->registerLocalMemorySlot(tokenBuffer, tokenBufferSize);
 
- // Promoting local memory slots to global for them to be used by the remote end
+ // Exchanging local memory slots to become global for them to be used by the remote end
  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, { { CONSUMER_KEY, tokenBufferSlot } });
 
  // Obtaining the globally exchanged memory slots
