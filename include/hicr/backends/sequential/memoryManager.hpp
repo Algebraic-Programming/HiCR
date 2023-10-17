@@ -136,7 +136,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     * \param[in] tag Identifies a particular subset of global memory slots
     * \param[in] memorySlots Array of local memory slots to make globally accessible
     */
-   __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+   __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
    {
      // Simply adding local memory slots to the global map
      for (const auto &entry : memorySlots)

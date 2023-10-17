@@ -1,6 +1,6 @@
 #include <thread>
 #include <hicr.hpp>
-#include <hicr/backends/sequential/sequential.hpp>
+#include <hicr/backends/sequential/memoryManager.hpp>
 #include <source/consumer.hpp>
 #include <source/producer.hpp>
 
@@ -9,7 +9,7 @@
 int main(int argc, char **argv)
 {
  // Instantiating backend
- HiCR::backend::sequential::Sequential backend(CONCURRENT_THREADS);
+ HiCR::backend::sequential::MemoryManager memoryManager;
 
  // Checking arguments
  if (argc != 2)
@@ -29,8 +29,8 @@ int main(int argc, char **argv)
  }
 
  // Creating new threads (one for consumer, one for produer)
- auto consumerThread = std::thread(consumerFc, &backend, channelCapacity);
- auto producerThread = std::thread(producerFc, &backend, channelCapacity);
+ auto consumerThread = std::thread(consumerFc, &memoryManager, channelCapacity);
+ auto producerThread = std::thread(producerFc, &memoryManager, channelCapacity);
 
  // Waiting on threads
  consumerThread.join();

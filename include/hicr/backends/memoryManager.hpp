@@ -63,19 +63,14 @@ class MemoryManager
   typedef std::pair<globalKey_t, MemorySlot *> globalKeyMemorySlotPair_t;
 
   /**
-   * Type definition for pending local to global memory slot promotions
-   */
-  typedef std::map<tag_t, std::vector<globalKeyMemorySlotPair_t>> localToGlobalPromotionArray_t;
-
-  /**
    * Type definition for an array that stores sets of memory slots, separated by global key
    */
-  typedef std::map<globalKey_t, std::set<memorySlotId_t>> globalKeyToMemorySlotArrayMap_t;
+  typedef std::map<globalKey_t, MemorySlot *> globalKeyToMemorySlotMap_t;
 
   /**
    * Type definition for a tag-mapped set of key-mapped memory slot arrays
    */
-  typedef std::map<tag_t, globalKeyToMemorySlotArrayMap_t> globalMemorySlotTagKeyMap_t;
+  typedef std::map<tag_t, globalKeyToMemorySlotMap_t> globalMemorySlotTagKeyMap_t;
 
   virtual ~MemoryManager() = default;
 
@@ -195,24 +190,25 @@ class MemoryManager
   }
 
   /**
-   * Promotes a local memory slot into a global memory slot
+   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
-   * \param[in] tag Groups a particular subset of global memory slots. Useful to separate global memory slot exchange for different independent purposes
-   * \param[in] globalKey The key to sort the global slots within a given tag, so that the ordering is deterministic if all different keys are passed.
-   * \param[in] memorySlot The local memory slot to promote to global
-   *
-   * For this operation to take effect, it is required to run a fence operation afterwards.
+   * \param[in] tag Identifies a particular subset of global memory slots
+   * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  virtual void promoteMemorySlotToGlobal(const tag_t tag, const globalKey_t globalKey, MemorySlot *memorySlot)
+  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
   {
+   // Checking the validity of all memory slots to be exchanged
+   for (const auto& entry : memorySlots)
+   {
     // Getting memory slot Id
-    const auto memorySlotId = memorySlot->getId();
+    const auto memorySlotId = entry.second->getId();
 
     // Checking if the memory slot actually exists
     if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
+   }
 
-    // Calling internal implementation of this function
-    _pendingLocalToGlobalPromotions[tag].push_back(std::make_pair(globalKey, memorySlot));
+   // Calling internal implementation of this function
+   exchangeGlobalMemorySlotsImpl(tag, memorySlots);
   }
 
   /**
@@ -222,19 +218,14 @@ class MemoryManager
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  __USED__ inline std::vector<MemorySlot *> getGlobalMemorySlots(const tag_t tag, const globalKey_t globalKey)
+  __USED__ inline MemorySlot*  getGlobalMemorySlot(const tag_t tag, const globalKey_t globalKey)
   {
-    // Making a plain storage copy for the requested global memory slots
-    std::vector<MemorySlot *> globalSlots;
-
     // If the requested tag and key are not found, return empty storage
-    if (_globalMemorySlotTagKeyMap.contains(tag) == false) return globalSlots;
-    if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false) return globalSlots;
+    if (_globalMemorySlotTagKeyMap.contains(tag) == false) return NULL;
+    if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false) return NULL;
 
-    // Getting value by copy
-    for (const auto slot : _globalMemorySlotTagKeyMap.at(tag).at(globalKey)) globalSlots.push_back(_memorySlotMap.at(slot));
-
-    return globalSlots;
+    // Getting requested memory slot
+    return _globalMemorySlotTagKeyMap.at(tag).at(globalKey);
   }
 
   /**
@@ -296,10 +287,7 @@ class MemoryManager
     deregisterGlobalMemorySlotImpl(memorySlot);
 
     // Removing memory slot from the global memory slot map
-    _globalMemorySlotTagKeyMap.at(memorySlotTag).at(memorySlotGlobalKey).erase(memorySlotId);
-
-    // Removing memory slot from the memory slot set
-    _memorySlotMap.erase(memorySlotId);
+    _globalMemorySlotTagKeyMap.at(memorySlotTag).erase(memorySlotGlobalKey);
   }
 
   /**
@@ -371,7 +359,7 @@ class MemoryManager
    * Registers a global memory slot from a given address.
    *
    * \param[in] tag Represents the subgroup of HiCR instances that will share the global reference
-   * \param[in] key Represents the a subset of memory slots that will be grouped together.
+   * \param[in] globalKey Represents the a subset of memory slots that will be grouped together.
    *                 They will be sorted by this value, which allows for recognizing which slots came from which instance.
    * \param[in] ptr Pointer to the start of the memory slot
    * \param[in] size Size of the memory slot to create
@@ -379,8 +367,11 @@ class MemoryManager
    *
    * \internal This function is only meant to be called internally and must be done within the a mutex zone.
    */
-  __USED__ inline MemorySlot *registerGlobalMemorySlot(tag_t tag, globalKey_t key, void *const ptr, const size_t size)
+  __USED__ inline MemorySlot *registerGlobalMemorySlot(tag_t tag, globalKey_t globalKey, void *const ptr, const size_t size)
   {
+    // Sanity check: tag/globalkey collision
+    if (_globalMemorySlotTagKeyMap.contains(tag) && _globalMemorySlotTagKeyMap.at(tag).contains(globalKey))  HICR_THROW_RUNTIME("Detected collision on global slots tag/globalKey (%lu/%lu). Another global slot was registered with that pair before.", tag, globalKey);
+
     // Creating new memory slot structure
     auto newMemorySlot = new MemorySlot(
       ptr,
@@ -388,16 +379,15 @@ class MemoryManager
       MemorySlot::creationType_t::registered,
       MemorySlot::localityType_t::global,
       tag,
-      key);
+      globalKey);
 
     // Getting memory slot id
     const auto newMemorySlotId = newMemorySlot->getId();
 
-    // Adding created memory slot to the set
     _memorySlotMap.insert(std::make_pair(newMemorySlotId, newMemorySlot));
 
     // Adding memory slot to the global map (based on tag and key)
-    _globalMemorySlotTagKeyMap[tag][key].insert(newMemorySlotId);
+    _globalMemorySlotTagKeyMap[tag][globalKey] = newMemorySlot;
 
     // Returning the id of the new memory slot
     return newMemorySlot;
@@ -469,7 +459,7 @@ class MemoryManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  virtual void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
+  virtual void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
@@ -484,11 +474,6 @@ class MemoryManager
    * Storage for global tag/key associated global memory slot exchange
    */
   globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
-
-  /**
-   * Array for temporarily holding pending local to global memory slot promotions
-   */
-  localToGlobalPromotionArray_t _pendingLocalToGlobalPromotions;
 
   /**
    * Stores the map of created memory slots

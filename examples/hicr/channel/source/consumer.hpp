@@ -3,7 +3,7 @@
 #include <hicr.hpp>
 #include <source/common.hpp>
 
-void consumerFc(HiCR::Backend* backend, const size_t channelCapacity)
+void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity)
 {
  // Getting required buffer sizes
  auto tokenBufferSize = HiCR::ConsumerChannel::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
@@ -12,17 +12,14 @@ void consumerFc(HiCR::Backend* backend, const size_t channelCapacity)
  auto tokenBuffer = (ELEMENT_TYPE*) malloc(tokenBufferSize);
 
  // Registering token buffer as a local memory slot
- auto tokenBufferSlot = backend->registerLocalMemorySlot(tokenBuffer, tokenBufferSize);
+ auto tokenBufferSlot = memoryManager->registerLocalMemorySlot(tokenBuffer, tokenBufferSize);
 
  // Promoting local memory slots to global for them to be used by the remote end
- backend->promoteMemorySlotToGlobal(CHANNEL_TAG, CONSUMER_KEY, tokenBufferSlot);
-
- // Synchronizing so that all actors have finished registering their global memory slots
- backend->fence(CHANNEL_TAG);
+ memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, { { CONSUMER_KEY, tokenBufferSlot } });
 
  // Obtaining the globally exchanged memory slots
- auto consumerBuffer = backend->getGlobalMemorySlots(CHANNEL_TAG, CONSUMER_KEY)[0];
- auto producerBuffer = backend->getGlobalMemorySlots(CHANNEL_TAG, PRODUCER_KEY)[0];
+ auto consumerBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_KEY);
+ auto producerBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_KEY);
 
  // Creating producer and consumer channels
  auto consumer = HiCR::ConsumerChannel(backend, consumerBuffer, producerBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
