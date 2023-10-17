@@ -4,7 +4,7 @@
 
 int main(int argc, char **argv)
 {
-  // Initializing Pthreads backend to run in parallel
+  // Initializing sequential backend
   HiCR::backend::sequential::ComputeManager computeManager;
 
   // Running ABCtasks example
