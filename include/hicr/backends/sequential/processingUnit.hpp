@@ -40,6 +40,18 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline ProcessingUnit(computeResourceId_t process) : HiCR::ProcessingUnit(process){};
 
+  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(const HiCR::ExecutionUnit* executionUnit) override
+  {
+   // Getting up-casted pointer for the execution unit
+   auto e = dynamic_cast<const sequential::ExecutionUnit*>(executionUnit);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (e == NULL) HICR_THROW_FATAL("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
+
+   // Creating and returning new execution state
+   return std::make_unique<sequential::ExecutionState>(e);
+  }
+
   private:
 
   /**
@@ -88,18 +100,6 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     delete _coroutine;
 
     return;
-  }
-
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(const HiCR::ExecutionUnit* executionUnit) override
-  {
-   // Getting up-casted pointer for the execution unit
-   auto e = dynamic_cast<const sequential::ExecutionUnit*>(executionUnit);
-
-   // Checking whether the execution unit passed is compatible with this backend
-   if (e == NULL) HICR_THROW_FATAL("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
-
-   // Creating and returning new execution state
-   return std::make_unique<sequential::ExecutionState>(e);
   }
 };
 

@@ -1,6 +1,4 @@
-if 'sequential' in enabledBackends
-  subdir('sequential')
-endif
+subdir('sequential')
 
 if 'sharedMemory' in enabledBackends
   subdir('sharedMemory')

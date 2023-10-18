@@ -82,6 +82,18 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline ProcessingUnit(computeResourceId_t core) : HiCR::ProcessingUnit(core){};
 
+  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(const HiCR::ExecutionUnit* executionUnit) override
+  {
+   // Getting up-casted pointer for the execution unit
+   auto e = dynamic_cast<const sequential::ExecutionUnit*>(executionUnit);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (e == NULL) HICR_THROW_FATAL("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
+
+   // Creating and returning new execution state
+   return std::make_unique<sequential::ExecutionState>(e);
+  }
+
   private:
 
   /**
@@ -187,8 +199,8 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
   __USED__ inline void terminateImpl() override
   {
-    // Yielding current execution state
-    _executionState->yield();
+    // Here would be ideal to have a function that immediately kills the pthread.
+    // pthread_cancel could be the one
   }
 
   __USED__ inline void awaitImpl() override
@@ -197,17 +209,6 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     pthread_join(_pthreadId, NULL);
   }
 
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(const HiCR::ExecutionUnit* executionUnit) override
-  {
-   // Getting up-casted pointer for the execution unit
-   auto e = dynamic_cast<const sequential::ExecutionUnit*>(executionUnit);
-
-   // Checking whether the execution unit passed is compatible with this backend
-   if (e == NULL) HICR_THROW_FATAL("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
-
-   // Creating and returning new execution state
-   return std::make_unique<sequential::ExecutionState>(e);
-  }
 };
 
 } // end namespace sharedMemory

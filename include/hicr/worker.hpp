@@ -286,11 +286,26 @@ class Worker
 
         // If worker has been suspended, handle it now
         if (_state == state_t::suspended) [[unlikely]]
-          for (auto &p : _processingUnits) p->suspend();
+        {
+         // Suspend secondary processing units first
+         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
+
+         // Then suspend current processing unit
+         _processingUnits[0]->suspend();
+        }
 
         // Requesting processing units to terminate as soon as possible
         if (_state == state_t::terminating) [[unlikely]]
-         for (auto &p : _processingUnits) p->terminate();
+        {
+         // Terminate secondary processing units first
+         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
+
+         // Then terminate current processing unit
+         _processingUnits[0]->terminate();
+
+         // Return immediately
+         return;
+        }
       }
     }
   }
