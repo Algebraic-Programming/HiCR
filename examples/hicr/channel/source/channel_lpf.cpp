@@ -1,65 +1,87 @@
 #include <hicr.hpp>
 #include <lpf/core.h>
+#include <lpf/mpi.h>
+#include <mpi.h>
 #include <hicr/backends/lpf/lpf.hpp>
 #include <source/consumer.hpp>
 #include <source/producer.hpp>
 
+
+//pasted from a utils.h header
+#define CHECK(f...)                                                   \
+{                                                                     \
+    const lpf_err_t __r = f;                                          \
+    if (__r != LPF_SUCCESS) {                                         \
+        printf("Error: '%s' [%s:%i]: %i\n",#f,__FILE__,__LINE__,__r); \
+        exit(EXIT_FAILURE);                                           \
+    }                                                                 \
+}
+
+// flag needed when using MPI to launch
+const int LPF_MPI_AUTO_INITIALIZE = 0;
+
 void spmd( lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args )
 {
 
-  int channelCapacity =  2; //* (int *) args.input;
+    // Capacity must be larger than zero
+    int channelCapacity = (* (int *)args.input);
+    if (channelCapacity == 0)
+    {
+        if(pid == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
+    }
 
-  auto backend = new  HiCR::backend::lpf::LpfBackend(nprocs, pid, lpf);
-  backend->queryResources();
+    auto backend = new  HiCR::backend::lpf::LpfBackend(nprocs, pid, lpf);
+    backend->queryResources();
 
+    // Rank 0 is producer, Rank 1 is consumer
+    if (pid == 0) producerFc(backend, channelCapacity);
+    if (pid == 1) consumerFc(backend, channelCapacity);
 
- // Sanity Check
- if (nprocs != 2)
- {
-  if(pid == 0) fprintf(stderr, "Launch error: MPI process count must be equal to 2\n");
- }
-
- // Reading argument
- //std::cout << "Channel capacity = " << channelCapacity << std::endl;
-
- // Capacity must be larger than zero
- if (channelCapacity == 0)
- {
-   if(pid == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
- }
-
- // Rank 0 is producer, Rank 1 is consumer
- if (pid == 0) producerFc(backend, channelCapacity);
- if (pid == 1) consumerFc(backend, channelCapacity);
-
- // Freeing memory
- delete backend;
+    // Freeing memory
+    delete backend;
 
 }
 
 int main(int argc, char **argv)
 {
 
- // Checking arguments
- if (argc != 2)
- {
-   fprintf(stderr, "Error: Must provide the channel capacity as argument.\n");
-   std::abort();
- }
+    MPI_Init(&argc, &argv);
 
-  lpf_args_t args;
-  memset(&args, 0, sizeof(lpf_args_t));
-  int capacity = atoi(argv[1]);
-  std::cout << "Capacity: " << capacity << std::endl;
-  args.input = &capacity;
-  args.input_size = sizeof(int);
-  args.output = nullptr;
-  args.output_size = 0;
-  args.f_size = 0;
-  args.f_symbols = nullptr;
-  lpf_err_t rc = lpf_exec( LPF_ROOT, LPF_MAX_P, &spmd, args);
-  EXPECT_EQ("%d", LPF_SUCCESS, rc);
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    int capacity;
+    if (rank == 0) {
+        if (size != 2)
+        {
+            fprintf(stderr, "Error: Must use 2 processes\n");
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
+        // Checking arguments
+        if (argc != 2)
+        {
+            fprintf(stderr, "Error: Must provide the channel capacity as argument.\n");
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
+        // For portability, only read STDIN from process 0
+        capacity = atoi(argv[1]);
+    }
+    MPI_Bcast(&capacity, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  return 0;
+    lpf_args_t args;
+    memset(&args, 0, sizeof(lpf_args_t));
+    args.input = &capacity;
+    args.input_size = sizeof(int);
+    args.output = nullptr;
+    args.output_size = 0;
+    args.f_size = 0;
+    args.f_symbols = nullptr;
+    lpf_init_t init;
+    CHECK(lpf_mpi_initialize_with_mpicomm(MPI_COMM_WORLD, &init));
+    CHECK(lpf_hook(init, &spmd, args));
+    CHECK(lpf_mpi_finalize(init));
+    MPI_Finalize();
+
+    return 0;
 }
 

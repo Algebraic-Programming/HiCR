@@ -1,3 +1,4 @@
-subdir('memcpy')
+#subdir('memcpy')
+#subdir('memcpyWithRecvCount')
 subdir('channel')
 

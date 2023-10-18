@@ -19,6 +19,8 @@ void producerFc(HiCR::Backend* backend, const size_t channelCapacity)
 
  // Registering buffers globally for them to be used by remote actors
  backend->promoteMemorySlotToGlobal(CHANNEL_TAG, PRODUCER_KEY, coordinationBufferSlot);
+ // Performing all pending local to global memory slot promotions now
+ backend->exchangeGlobalMemorySlots(CHANNEL_TAG);
 
  // Synchronizing so that all actors have finished registering their global memory slots
  backend->fence(CHANNEL_TAG);

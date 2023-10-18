@@ -269,6 +269,9 @@ class Sequential final : public Backend
     // Otherwise it is ok
     return true;
   }
+
+  void syncReceivedMessages(memorySlotId_t memorySlotId) {
+  }
 };
 
 } // namespace sequential
