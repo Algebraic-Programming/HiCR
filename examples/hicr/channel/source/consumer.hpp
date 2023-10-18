@@ -17,12 +17,15 @@ void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  // Exchanging local memory slots to become global for them to be used by the remote end
  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, { { CONSUMER_KEY, tokenBufferSlot } });
 
+ // Synchronizing so that all actors have finished registering their global memory slots
+ memoryManager->fence(CHANNEL_TAG);
+
  // Obtaining the globally exchanged memory slots
  auto consumerBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_KEY);
  auto producerBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_KEY);
 
  // Creating producer and consumer channels
- auto consumer = HiCR::ConsumerChannel(backend, consumerBuffer, producerBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+ auto consumer = HiCR::ConsumerChannel(memoryManager, consumerBuffer, producerBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Getting a single value from the channel
  while (consumer.isEmpty());
@@ -35,13 +38,13 @@ void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  printf("Received Value: %u\n", tokenBuffer[consumer.peek(1)]);
  consumer.pop(2);
 
- // Synchronizing before deleting the channel and freeing up memory
- backend->fence(CHANNEL_TAG);
+ // Synchronizing so that all actors have finished registering their global memory slots
+ memoryManager->fence(CHANNEL_TAG);
 
  // De-registering local slots
- backend->deregisterLocalMemorySlot(tokenBufferSlot);
- backend->deregisterGlobalMemorySlot(consumerBuffer);
- backend->deregisterGlobalMemorySlot(producerBuffer);
+ memoryManager->deregisterLocalMemorySlot(tokenBufferSlot);
+ memoryManager->deregisterGlobalMemorySlot(consumerBuffer);
+ memoryManager->deregisterGlobalMemorySlot(producerBuffer);
 
  // Freeing up memory
  free(tokenBuffer);

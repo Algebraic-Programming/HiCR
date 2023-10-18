@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -45,11 +44,11 @@ class ProducerChannel final : public Channel
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  ProducerChannel(Backend *backend,
+  ProducerChannel(backend::MemoryManager  *memoryManager,
                   MemorySlot *const tokenBuffer,
                   MemorySlot *const coordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
+                  const size_t capacity) : Channel(memoryManager, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided coordination buffer has the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
@@ -76,7 +75,7 @@ class ProducerChannel final : public Channel
    * \param[in] backend The backend to perform the initialization operation with
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __USED__ static inline void initializeCoordinationBuffer(Backend *backend, MemorySlot *coordinationBuffer)
+  __USED__ static inline void initializeCoordinationBuffer(MemorySlot *coordinationBuffer)
   {
     // Checking for correct size
     auto requiredSize = getCoordinationBufferSize();
@@ -121,7 +120,7 @@ class ProducerChannel final : public Channel
     for (size_t i = 0; i < n; i++)
     {
       // Copying with source increasing offset per token
-      _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+     _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
       // Advance head, as we have added a new element
       advanceHead(1);
@@ -150,13 +149,13 @@ class ProducerChannel final : public Channel
   __USED__ inline void checkReceiverPops()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _backend->queryMemorySlotUpdates(_coordinationBuffer);
+   _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
 
     // Getting current tail position
     size_t currentPoppedTokens = _poppedTokens;
 
     // Updating local value of the tail until it changes
-    _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
+    _memoryManager->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
 
     // Calculating difference between previous and new tail position
     size_t n = _poppedTokens - currentPoppedTokens;

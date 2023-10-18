@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -47,11 +46,11 @@ class ConsumerChannel final : public Channel
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  ConsumerChannel(Backend *backend,
+  ConsumerChannel(backend::MemoryManager  *memoryManager,
                   MemorySlot *const tokenBuffer,
                   MemorySlot *const coordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
+                  const size_t capacity) : Channel(memoryManager, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided token exchange  buffer has the right size
     auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
@@ -138,11 +137,11 @@ class ConsumerChannel final : public Channel
     _poppedTokens += n;
 
     // Notifying producer(s) of buffer liberation
-    _backend->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
+    _memoryManager->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
 
     // Re-syncing token and coordination buffers
-    _backend->queryMemorySlotUpdates(_coordinationBuffer);
-    _backend->queryMemorySlotUpdates(_tokenBuffer);
+    _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
+    _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
   }
 
   private:
@@ -154,7 +153,7 @@ class ConsumerChannel final : public Channel
   __USED__ inline void checkReceivedTokens()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _backend->queryMemorySlotUpdates(_tokenBuffer);
+   _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count
     auto newPushedTokens = _tokenBuffer->getMessagesRecv();

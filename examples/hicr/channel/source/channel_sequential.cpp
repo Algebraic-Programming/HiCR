@@ -9,7 +9,7 @@
 int main(int argc, char **argv)
 {
  // Instantiating backend
- HiCR::backend::sequential::MemoryManager memoryManager;
+ HiCR::backend::sequential::MemoryManager memoryManager(CONCURRENT_THREADS);
 
  // Checking arguments
  if (argc != 2)

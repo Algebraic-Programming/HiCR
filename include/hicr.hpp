@@ -1,5 +1,4 @@
 #pragma once
-#include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
 #include <hicr/channel/consumerChannel.hpp>
 #include <hicr/channel/producerChannel.hpp>
@@ -9,7 +8,6 @@
 #include <hicr/common/eventMap.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/backends/computeManager.hpp>
-#include <hicr/backends/dataMover.hpp>
 #include <hicr/backends/memoryManager.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/processingUnit.hpp>

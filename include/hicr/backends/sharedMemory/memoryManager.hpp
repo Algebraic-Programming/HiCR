@@ -13,6 +13,7 @@
 #pragma once
 
 #include "hwloc.h"
+#include "pthread.h"
 #include <hicr/backends/memoryManager.hpp>
 
 namespace HiCR
@@ -36,12 +37,20 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
-  MemoryManager(const hwloc_topology_t * topology) : backend::MemoryManager(), _topology { topology } { }
+  MemoryManager(const hwloc_topology_t * topology, const size_t fenceCount = 1) : backend::MemoryManager(), _topology { topology }
+  {
+    // Initializing barrier for fence operation
+    pthread_barrier_init(&_fenceBarrier, NULL, fenceCount);
+  }
 
   /**
    * The constructor is employed to free memory required for hwloc
    */
-  ~MemoryManager() = default;
+  ~MemoryManager()
+  {
+    // Freeing barrier memory
+    pthread_barrier_destroy(&_fenceBarrier);
+  }
 
   /**
    * Enumeration to determine whether HWLoc supports strict binding and what the user prefers (similar to MPI_Threading_level)
@@ -81,6 +90,12 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   private:
+
+  /**
+   * Stores a barrier object to check on a fence operation
+   */
+  pthread_barrier_t _fenceBarrier;
+
 
   /**
    * Structure representing a shared memory backend memory space
@@ -326,6 +341,34 @@ class MemoryManager final : public backend::MemoryManager
     // Returning entry corresponding to the memory size
     return memSpace.obj->attr->cache.size;
   }
+
+  /**
+     * Implementation of the fence operation for the shared memory backend. In this case, nothing needs to be done, as
+     * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
+     * ensures its completion.
+     */
+    __USED__ inline void fenceImpl(const tag_t tag) override
+    {
+      pthread_barrier_wait(&_fenceBarrier);
+    }
+
+    __USED__ inline void memcpyImpl(MemorySlot *destination, const size_t dst_offset, MemorySlot *source, const size_t src_offset, const size_t size) override
+    {
+      // Getting slot pointers
+      const auto srcPtr = source->getPointer();
+      const auto dstPtr = destination->getPointer();
+
+      // Calculating actual offsets
+      const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
+      const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
+
+      // Running the requested operation
+      std::memcpy(actualDstPtr, actualSrcPtr, size);
+
+      // Increasing message received/sent counters for memory slots
+      source->increaseMessagesSent();
+      destination->increaseMessagesRecv();
+    }
 };
 
 } // namespace sharedMemory
