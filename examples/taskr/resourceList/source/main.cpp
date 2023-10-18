@@ -26,7 +26,7 @@ int main(int argc, char **argv)
   taskr::Runtime taskr;
 
   // Getting the core subset from the argument list (could be from a file too)
-  HiCR::Backend::computeResourceList_t coreSubset;
+  std::set<int> coreSubset;
   for (int i = 1; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
 
   // Sanity check
@@ -58,6 +58,7 @@ int main(int argc, char **argv)
   printf("Finished in %.3f seconds.\n", (double)dt * 1.0e-9);
 
   // Freeing up memory
+  delete taskExecutionUnit;
   hwloc_topology_destroy(topology);
 
   return 0;

@@ -1,5 +1,4 @@
 #include <hicr/backends/sharedMemory/memoryManager.hpp>
-#include <hicr/backends/sharedMemory/dataMover.hpp>
 #include <hicr.hpp>
 
 #define BUFFER_SIZE 256
@@ -15,7 +14,6 @@ int main(int argc, char **argv)
  hwloc_topology_init(&topology);
 
  // Instantiating Shared Memory backend
- HiCR::backend::sharedMemory::DataMover d;
  HiCR::backend::sharedMemory::MemoryManager m(&topology);
 
  // Asking backend to check the available resources
@@ -32,10 +30,10 @@ int main(int argc, char **argv)
  sprintf((char*)slot1->getPointer(), "Hello, HiCR user!\n");
 
  // Performing the copy
- d.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE);
+ m.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE);
 
  // Waiting on the operation to have finished
- d.fence(0);
+ m.fence(0);
 
  // Checking whether the copy was successful
  printf("%s", (const char*)slot2->getPointer());
