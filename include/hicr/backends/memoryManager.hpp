@@ -595,12 +595,12 @@ class MemoryManager
    */
   virtual void fenceImpl(const tag_t tag) = 0;
 
-  private:
-
   /**
    * Storage for global tag/key associated global memory slot exchange
    */
   globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
+
+  private:
 
   /**
    * Stores the map of created memory slots

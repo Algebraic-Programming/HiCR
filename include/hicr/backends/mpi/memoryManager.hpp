@@ -14,7 +14,7 @@
 
 #include <mpi.h>
 #include <hicr/common/definitions.hpp>
-#include <hicr/backend.hpp>
+#include <hicr/backends/memoryManager.hpp>
 
 
 namespace HiCR
@@ -31,7 +31,7 @@ namespace mpi
  *
  * This backend is very useful for testing other HiCR modules in isolation (unit tests) without involving the use of threading, which might incur side-effects
  */
-class MPI final : public Backend
+class MemoryManager final : public HiCR::backend::MemoryManager
 {
   public:
 
@@ -41,13 +41,13 @@ class MPI final : public Backend
    * \param[in] comm The MPI subcommunicator to use in the communication operations in this backend.
    * If not specified, it will use MPI_COMM_WORLD
    */
-  MPI(MPI_Comm comm = MPI_COMM_WORLD) : Backend(), _comm(comm)
+ MemoryManager(MPI_Comm comm = MPI_COMM_WORLD) : HiCR::backend::MemoryManager(), _comm(comm)
   {
     MPI_Comm_size(_comm, &_size);
     MPI_Comm_rank(_comm, &_rank);
   }
 
-  ~MPI() = default;
+  ~MemoryManager() = default;
 
   private:
 
@@ -111,24 +111,10 @@ class MPI final : public Backend
   /**
    * The MPI backend offers no memory spaces
    */
-  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
-  {
-    // No compute resources are offered by the MPI backend
-    return computeResourceList_t({});
-  }
-
-  /**
-   * The MPI backend offers no memory spaces
-   */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
     // No memory spaces are provided by this backend
     return memorySpaceList_t({});
-  }
-
-  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
-  {
-    HICR_THROW_RUNTIME("This backend provides no support for processing units");
   }
 
   __USED__ inline void lockMPIWindow(const int rank, MPI_Win *window)
@@ -276,30 +262,32 @@ class MPI final : public Backend
    * Implementation of the fence operation for the mpi backend. For every single window corresponding
    * to a memory slot associated with the tag, a fence needs to be executed
    */
-  __USED__ inline void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t &globalSlots) override
+  __USED__ inline void fenceImpl(const tag_t tag) override
   {
     // For every key-valued subset, and its elements, execute a fence
-    for (const auto &keyVector : globalSlots)
-      for (const auto &memorySlotId : keyVector.second)
-      {
-        // Attempting fence
-        auto status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].dataWindow);
+    for (const auto& entry : _globalMemorySlotTagKeyMap[tag])
+    {
+      // Getting memory slot id
+      auto memorySlotId = entry.second->getId();
 
-        // Check for possible errors
-        if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu and memory slot %lu.", tag, memorySlotId);
+      // Attempting fence
+      auto status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].dataWindow);
 
-        // Attempting fence
-        status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].recvMessageCountWindow);
+      // Check for possible errors
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu and memory slot %lu.", tag, memorySlotId);
 
-        // Check for possible errors
-        if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu and memory slot %lu.", tag, memorySlotId);
+      // Attempting fence
+      status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].recvMessageCountWindow);
 
-        // Attempting fence
-        status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].sentMessageCountWindow);
+      // Check for possible errors
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu and memory slot %lu.", tag, memorySlotId);
 
-        // Check for possible errors
-        if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu and memory slot %lu.", tag, memorySlotId);
-      }
+      // Attempting fence
+      status = MPI_Win_fence(0, *_globalMemorySlotMPIWindowMap[memorySlotId].sentMessageCountWindow);
+
+      // Check for possible errors
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu and memory slot %lu.", tag, memorySlotId);
+    }
   }
 
   /**
@@ -361,7 +349,7 @@ class MPI final : public Backend
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange
     int localSlotCount = (int)memorySlots.size();

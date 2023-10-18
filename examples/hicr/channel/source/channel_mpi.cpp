@@ -1,6 +1,6 @@
 #include <mpi.h>
 #include <hicr.hpp>
-#include <hicr/backends/mpi/mpi.hpp>
+#include <hicr/backends/mpi/memoryManager.hpp>
 #include <source/consumer.hpp>
 #include <source/producer.hpp>
 
@@ -51,14 +51,11 @@ int main(int argc, char **argv)
  MPI_Comm_create_group(MPI_COMM_WORLD, channelGroup, 0, &channelCommunicator);
 
  // Instantiating backend
- auto backend = new HiCR::backend::mpi::MPI(channelCommunicator);
+ HiCR::backend::mpi::MemoryManager m(channelCommunicator);
 
  // Rank 0 is producer, Rank 1 is consumer
- if (rankId == 0) producerFc(backend, channelCapacity);
- if (rankId == 1) consumerFc(backend, channelCapacity);
-
- // Freeing memory
- delete backend;
+ if (rankId == 0) producerFc(&m, channelCapacity);
+ if (rankId == 1) consumerFc(&m, channelCapacity);
 
  // Finalizing MPI
  MPI_Finalize();
