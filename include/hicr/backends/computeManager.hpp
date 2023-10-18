@@ -89,6 +89,11 @@ class ComputeManager
     return value;
   }
 
+  __USED__ inline std::unique_ptr<ExecutionState> createExecutionState()
+  {
+   return std::move(createExecutionStateImpl());
+  }
+
   protected:
 
   /**
@@ -99,6 +104,9 @@ class ComputeManager
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
   virtual ProcessingUnit* createProcessingUnitImpl(computeResourceId_t resource) const = 0;
+
+
+  virtual std::unique_ptr<ExecutionState> createExecutionStateImpl() = 0;
 
   /**
    * Backend-internal implementation of the queryComputeResources function

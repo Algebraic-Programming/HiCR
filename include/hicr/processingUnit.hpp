@@ -193,8 +193,6 @@ class ProcessingUnit
    */
   __USED__ inline computeResourceId_t getComputeResourceId() { return _computeResourceId; }
 
-  virtual std::unique_ptr<ExecutionState> createExecutionState(const ExecutionUnit* executionUnit) = 0;
-
   protected:
 
   /**

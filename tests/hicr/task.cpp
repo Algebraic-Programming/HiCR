@@ -57,20 +57,11 @@ TEST(Task, Run)
     if (HiCR::getCurrentTask() == t) hasCorrectTaskPointer = true;
 
     // Yielding as many times as necessary
-    t->yield();
+    t->suspend();
   };
 
   // Instantiating default compute manager
   HiCR::backend::sequential::ComputeManager m;
-
-  // Querying compute resources
-  m.queryComputeResources();
-
-  // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
-
-  // Creating processing unit from the compute resource
-  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 
   // Creating execution unit
   auto u = m.createExecutionUnit(f);
@@ -79,7 +70,7 @@ TEST(Task, Run)
   t = new HiCR::Task(u);
 
   // First, creating processing unit
-  auto executionState = processingUnit->createExecutionState(t->getExecutionUnit());
+  auto executionState = m.createExecutionState();
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -135,20 +126,11 @@ TEST(Task, Events)
     if (onExecuteHasRun == true) onExecuteUpdated = true;
 
     // Yielding as many times as necessary
-    t->yield();
+    t->suspend();
   };
 
   // Instantiating default compute manager
   HiCR::backend::sequential::ComputeManager m;
-
-  // Querying compute resources
-  m.queryComputeResources();
-
-  // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
-
-  // Creating processing unit from the compute resource
-  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 
   // Creating execution unit
   auto u = m.createExecutionUnit(f);
@@ -157,7 +139,7 @@ TEST(Task, Events)
   t = new HiCR::Task(u);
 
   // First, creating processing unit
-  auto executionState = processingUnit->createExecutionState(t->getExecutionUnit());
+  auto executionState = m.createExecutionState();
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -180,7 +162,7 @@ TEST(Task, Events)
   t = new HiCR::Task(u);
 
   // First, creating processing unit
-  executionState = processingUnit->createExecutionState(t->getExecutionUnit());
+  executionState = m.createExecutionState();
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));

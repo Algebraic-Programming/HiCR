@@ -123,11 +123,11 @@ TEST(Worker, LifeCycle)
 
     // suspending worker and yielding task
     w->suspend();
-    t->yield();
+    t->suspend();
 
     // Terminating worker and yielding task
     w->terminate();
-    t->yield();
+    t->suspend();
   };
 
   // Creating execution unit
@@ -145,7 +145,7 @@ TEST(Worker, LifeCycle)
 
   // Starting worker
   EXPECT_FALSE(runningStateFound);
-  EXPECT_NO_THROW(w.start());
+  ASSERT_NO_THROW(w.start());
   EXPECT_TRUE(runningStateFound);
 
   // Checking the worker is suspended

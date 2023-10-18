@@ -41,66 +41,45 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline ProcessingUnit(computeResourceId_t process) : HiCR::ProcessingUnit(process){};
 
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(const HiCR::ExecutionUnit* executionUnit) override
-  {
-   // Getting up-casted pointer for the execution unit
-   auto e = dynamic_cast<const sequential::ExecutionUnit*>(executionUnit);
-
-   // Checking whether the execution unit passed is compatible with this backend
-   if (e == NULL) HICR_THROW_FATAL("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
-
-   // Creating and returning new execution state
-   return std::make_unique<sequential::ExecutionState>(e);
-  }
-
   private:
 
   /**
-   * Coroutine to handle suspend/resume functionality
+   * Variable to hold the execution state to run
    */
-  common::Coroutine *_coroutine;
+  std::unique_ptr<HiCR::ExecutionState> _executionState;
 
   __USED__ inline void initializeImpl() override
   {
-    // Creating new coroutine to run
-    _coroutine = new common::Coroutine();
-
-    return;
   }
 
   __USED__ inline void suspendImpl() override
   {
     // Yielding execution
-    _coroutine->yield();
+   _executionState->suspend();
   }
 
   __USED__ inline void resumeImpl() override
   {
     // Resume coroutine
-    _coroutine->resume();
+   _executionState->resume();
   }
 
   __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
   {
-     // Calling function in the context of a suspendable coroutine
-     _coroutine->start([&executionState](){ executionState->resume(); });
+   // Storing execution state internally
+   _executionState = std::move(executionState);
 
-     _coroutine->resume();
+   // And starting to run it
+   _executionState->resume();
   }
 
 
   __USED__ inline void terminateImpl() override
   {
-    // Nothing to do for terminate
-    return;
   }
 
   __USED__ inline void awaitImpl() override
   {
-    // Deleting allocated coroutine
-    delete _coroutine;
-
-    return;
   }
 };
 

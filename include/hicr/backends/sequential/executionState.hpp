@@ -28,12 +28,12 @@ namespace sequential
 
 class ExecutionState final : public HiCR::ExecutionState
 {
- public:
+ protected:
 
- ExecutionState(const HiCR::ExecutionUnit* executionUnit) : HiCR::ExecutionState(executionUnit)
+ __USED__ inline void initializeImpl(const HiCR::ExecutionUnit* executionUnit) override
  {
   // Getting up-casted pointer for the execution unit
-  auto e = dynamic_cast<const ExecutionUnit*>(_executionUnit);
+  auto e = dynamic_cast<const ExecutionUnit*>(executionUnit);
 
   // Checking whether the execution unit passed is compatible with this backend
   if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
@@ -43,21 +43,22 @@ class ExecutionState final : public HiCR::ExecutionState
 
   // Starting coroutine containing the function
   _coroutine.start(fc);
- };
+ }
 
- ExecutionState() = delete;
- ~ExecutionState() = default;
+ __USED__ inline void resumeImpl() override
+ {
+  _coroutine.resume();
+ }
 
- __USED__ inline void resume() override
-  {
-   _coroutine.resume();
-  }
+ __USED__ inline void suspendImpl()
+ {
+  _coroutine.yield();
+ }
 
-  __USED__ inline void yield() override
-  {
-   _coroutine.yield();
-  }
-
+ __USED__ inline bool checkFinalizationImpl() override
+ {
+  return _coroutine.hasFinished();
+ }
 
  private:
 

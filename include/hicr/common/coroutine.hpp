@@ -108,6 +108,8 @@ class Coroutine
     _context = boost::context::callcc(coroutineFc);
   }
 
+  __USED__ inline bool hasFinished() { return _hasFinished; }
+
   private:
 
   /**

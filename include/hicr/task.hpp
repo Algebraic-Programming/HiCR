@@ -206,6 +206,9 @@ class Task
     // Getting execution state as a unique pointer (to prevent sharing the same state among different tasks)
     _executionState = std::move(executionState);
 
+    // Initializing execution state
+    _executionState->initialize(_executionUnit);
+
     // Setting state as initialized
     _state = state_t::initialized;
   }
@@ -231,12 +234,15 @@ class Task
     // Now resuming the task's execution
     _executionState->resume();
 
+    // Checking execution state finalization
+    _executionState->checkFinalization();
+
     // If the task is suspended and event map is defined, trigger the corresponding event.
-    if (_state == state_t::suspended)
+    if (_executionState->getState() == ExecutionState::state_t::suspended)
       if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskSuspend);
 
     // If the task is still running (no suspension), then the task has fully finished executing
-    if (_state == state_t::running)
+    if (_executionState->getState() == ExecutionState::state_t::finished)
     {
       // Setting state as finished
       _state = state_t::finished;
@@ -252,7 +258,7 @@ class Task
   /**
    * This function yields the execution of the task, and returns to the worker's context.
    */
-  __USED__ inline void yield()
+  __USED__ inline void suspend()
   {
     if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", _state);
 
@@ -263,7 +269,7 @@ class Task
     _state = state_t::suspended;
 
     // Yielding execution back to worker
-    _executionState->yield();
+    _executionState->suspend();
   }
 
   private:
@@ -285,7 +291,7 @@ class Task
    */
   pendingOperationFunctionQueue_t _pendingOperations;
 
-  std::unique_ptr<ExecutionState> _executionState = NULL;
+  std::unique_ptr<ExecutionState> _executionState;
 };
 
 } // namespace HiCR
