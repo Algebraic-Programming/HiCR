@@ -113,11 +113,6 @@ class Task
   typedef common::EventMap<Task, event_t> taskEventMap_t;
 
   /**
-   * Definition for a task function that supports lambda functions
-   */
-  typedef common::Coroutine::coroutineFc_t taskFunction_t;
-
-  /**
    * Definition for a task function that register operations that have been started by the task but not yet finalized
    *
    * Running the function must return True, if the operation has finished, and; False, if the operation finished
