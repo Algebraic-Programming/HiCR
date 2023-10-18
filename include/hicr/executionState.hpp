@@ -27,12 +27,9 @@ class ExecutionState
 
   protected:
 
-  ExecutionState(const ExecutionUnit* executionUnit)
-  {
+  ExecutionState(const ExecutionUnit* executionUnit) : _executionUnit (executionUnit) {};
 
-  };
-
-  private:
+  const ExecutionUnit* const _executionUnit;
 
 };
 

@@ -33,7 +33,7 @@ class ExecutionState final : public HiCR::ExecutionState
  ExecutionState(const HiCR::ExecutionUnit* executionUnit) : HiCR::ExecutionState(executionUnit)
  {
   // Getting up-casted pointer for the execution unit
-  auto e = dynamic_cast<const ExecutionUnit*>(executionUnit);
+  auto e = dynamic_cast<const ExecutionUnit*>(_executionUnit);
 
   // Checking whether the execution unit passed is compatible with this backend
   if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
