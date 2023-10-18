@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   auto hostSlot1 = backend.allocateLocalMemorySlot(*memSpaces.end() - 1, BUFFER_SIZE);   // initial local host allocation  
   auto ascendSlot1Device0 = backend.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE);   // first allocation on Ascend device 0 
   auto ascendSlot2Device0 = backend.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE);   // second allocation on Ascend device 0 
-  // auto ascendSlot1Device7 = backend.allocateLocalMemorySlot(*memSpaces.end() - 2, BUFFER_SIZE); // first allocation on Ascend device 7
+  auto ascendSlot1Device7 = backend.allocateLocalMemorySlot(*memSpaces.end() - 2, BUFFER_SIZE); // first allocation on Ascend device 7
   auto hostSlot2 = backend.allocateLocalMemorySlot(*memSpaces.end() - 1, BUFFER_SIZE);   // final local host allocation
 
   // populate starting host slot
@@ -30,9 +30,8 @@ int main(int argc, char **argv)
 
   backend.memcpy(ascendSlot1Device0, DST_OFFSET, hostSlot1, SRC_OFFSET, BUFFER_SIZE);
   backend.memcpy(ascendSlot2Device0, DST_OFFSET, ascendSlot1Device0, SRC_OFFSET, BUFFER_SIZE);
-  // backend.memcpy(ascendSlot1Device7, DST_OFFSET, ascendSlot2Device0, SRC_OFFSET, BUFFER_SIZE);
-  // backend.memcpy(hostSlot2, DST_OFFSET, ascendSlot1Device7, SRC_OFFSET, BUFFER_SIZE);
-  backend.memcpy(hostSlot2, DST_OFFSET, ascendSlot2Device0, SRC_OFFSET, BUFFER_SIZE);
+  backend.memcpy(ascendSlot1Device7, DST_OFFSET, ascendSlot2Device0, SRC_OFFSET, BUFFER_SIZE);
+  backend.memcpy(hostSlot2, DST_OFFSET, ascendSlot1Device7, SRC_OFFSET, BUFFER_SIZE);
 
   // Checking whether the copy was successful
   printf("start: %s\n", (const char *)hostSlot1->getPointer());
@@ -43,7 +42,7 @@ int main(int argc, char **argv)
   backend.freeLocalMemorySlot(hostSlot2);   
   backend.freeLocalMemorySlot(ascendSlot1Device0); 
   backend.freeLocalMemorySlot(ascendSlot2Device0); 
-  // backend.freeLocalMemorySlot(ascendSlot1Device7); 
+  backend.freeLocalMemorySlot(ascendSlot1Device7); 
 
 
   // Waiting on the operation to have finished
