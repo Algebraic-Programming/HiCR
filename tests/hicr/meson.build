@@ -10,9 +10,6 @@ subdir('channel')
 subdir('common')
 
 # Registering tests
-if 'sequential' in enabledBackends
-	test('task',       executable('task',       'task.cpp',       dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'hicr' ] )
-	test('worker',     executable('worker',     'worker.cpp',     dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'hicr' ] )
-	test('dispatcher', executable('dispatcher', 'dispatcher.cpp', dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'hicr' ] )
-endif
-
+test('task',       executable('task',       'task.cpp',       dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'hicr' ] )
+test('worker',     executable('worker',     'worker.cpp',     dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'hicr' ] )
+test('dispatcher', executable('dispatcher', 'dispatcher.cpp', dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'hicr' ] )

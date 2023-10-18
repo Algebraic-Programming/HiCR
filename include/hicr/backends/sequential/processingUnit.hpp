@@ -16,6 +16,7 @@
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
 #include <hicr/backends/sequential/executionUnit.hpp>
+#include <hicr/backends/sequential/executionState.hpp>
 
 namespace HiCR
 {

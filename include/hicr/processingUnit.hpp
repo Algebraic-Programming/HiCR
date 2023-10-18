@@ -86,6 +86,14 @@ class ProcessingUnit
   virtual ~ProcessingUnit() = default;
 
   /**
+   * Function to obtain the processing unit's state
+   */
+  __USED__ inline ProcessingUnit::state_t getState() const
+  {
+   return _state;
+  }
+
+  /**
    * Initializes the resource and leaves it ready to execute work
    */
   __USED__ inline void initialize()

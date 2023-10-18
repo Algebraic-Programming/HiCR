@@ -35,7 +35,14 @@ namespace sharedMemory
 /**
  * Signal to use to suspend thread (might need to be adapted to each system)
  */
-#define HICR_SUSPEND_RESUME_SIGNAL SIGUSR1
+#define HICR_SUSPEND_RESUME_TERMINATE_SIGNAL SIGUSR1
+
+class ProcessingUnit;
+
+/**
+ * Thread local pointer to remember who is the current thread
+ */
+thread_local ProcessingUnit* _currentThread;
 
 /**
  * Implementation of a kernel-level thread as processing unit for the shared memory backend.
@@ -121,8 +128,11 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     // Gathering thread object
     auto thread = (ProcessingUnit *)p;
 
+    // Storing current thread pointer
+    _currentThread = thread;
+
     // Setting signal to hear for suspend/resume
-    signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
+    signal(HICR_SUSPEND_RESUME_TERMINATE_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
 
     // Setting initial thread affinity
     thread->updateAffinity(std::set<int>({(int)thread->getComputeResourceId()}));
@@ -147,19 +157,25 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline static void catchSuspendResumeSignal(int sig)
   {
+    // Getting current thread pointer
+    auto thread = _currentThread;
+
+    // If thread is assigned for termination, terminate now
+    if (thread->getState() == HiCR::ProcessingUnit::state_t::terminating) thread->_executionState->yield();
+
     int status = 0;
     int signalSet;
     sigset_t suspendSet;
 
     // Waiting for that signal to arrive
-    status = sigaddset(&suspendSet, HICR_SUSPEND_RESUME_SIGNAL);
+    status = sigaddset(&suspendSet, HICR_SUSPEND_RESUME_TERMINATE_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
 
     status = sigwait(&suspendSet, &signalSet);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
 
     // Re-set next signal listening before exiting
-    signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
+    signal(HICR_SUSPEND_RESUME_TERMINATE_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
   }
 
   __USED__ inline void initializeImpl() override
@@ -168,13 +184,13 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
   __USED__ inline void suspendImpl() override
   {
-    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
+    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_TERMINATE_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
   }
 
   __USED__ inline void resumeImpl() override
   {
-    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
+    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_TERMINATE_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
@@ -199,8 +215,8 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
   __USED__ inline void terminateImpl() override
   {
-    // Here would be ideal to have a function that immediately kills the pthread.
-    // pthread_cancel could be the one
+   auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_TERMINATE_SIGNAL);
+   if (status != 0) HICR_THROW_RUNTIME("Could not terminate thread %lu\n", _pthreadId);
   }
 
   __USED__ inline void awaitImpl() override

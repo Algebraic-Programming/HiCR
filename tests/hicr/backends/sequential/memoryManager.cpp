@@ -4,36 +4,36 @@
  */
 
 /**
- * @file sequential.cpp
- * @brief Unit tests for the sequential backend class
+ * @file memorymanager.cpp
+ * @brief Unit tests for the sequential backend memory manager class
  * @author S. M. Martin
  * @date 11/9/2023
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sequential/sequential.hpp>
+#include <hicr/backends/sequential/memoryManager.hpp>
 #include <limits>
 
 namespace backend = HiCR::backend::sequential;
 
-TEST(Sequential, Construction)
+TEST(MemoryManager, Construction)
 {
-  backend::Sequential *b = NULL;
+  backend::MemoryManager *b = NULL;
 
-  EXPECT_NO_THROW(b = new backend::Sequential());
+  EXPECT_NO_THROW(b = new backend::MemoryManager());
   EXPECT_FALSE(b == nullptr);
   delete b;
 }
 
-TEST(Sequential, Memory)
+TEST(MemoryManager, Memory)
 {
-  backend::Sequential b;
+  backend::MemoryManager b;
 
   // Querying resources
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  HiCR::Backend::memorySpaceList_t mList;
+  HiCR::backend::MemoryManager::memorySpaceList_t mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
   EXPECT_EQ(mList.size(), 1);
 
