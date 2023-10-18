@@ -13,9 +13,11 @@
 #pragma once
 
 #include <acl/acl.h>
+#include <chrono>
+#include <hccl/hccl.h>
 #include <hicr/backend.hpp>
 #include <hicr/common/definitions.hpp>
-// #include <hccl.h>
+#include <thread>
 
 namespace HiCR
 {
@@ -48,6 +50,12 @@ class Ascend final : public Backend
 
   ~Ascend()
   {
+    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
+    {
+      (void)HcclCommDestroy(comms[deviceId]);
+    }
+    free(comms);
+
     for (const auto memAscendData : _memoryAscendMap)
     {
       if (memAscendData.second.deviceId == _deviceStatusMap.size() - 1)
@@ -85,6 +93,13 @@ class Ascend final : public Backend
   private:
 
   typedef uint64_t deviceIdentifier_t;
+
+  /**
+   * Keeps track of how many devices are connected to the host
+   */
+  uint32_t deviceCount;
+
+  HcclComm *comms;
 
   struct globalAscendSlot_t
   {
@@ -129,7 +144,7 @@ class Ascend final : public Backend
   /**
    * Keep track of the hccl connectors between two ascend cards.
    */
-  // parallelHashMap_t<memorySpaceId_t, parallelHashMap_t<memorySpaceId_t, HcclComm>> _deviceHcclConnectorsMap;
+  parallelHashMap_t<memorySpaceId_t, parallelHashMap_t<memorySpaceId_t, HcclComm>> _deviceHcclConnectorsMap;
 
   /**
    *  Keep track of which devices contains a memory slot
@@ -140,8 +155,6 @@ class Ascend final : public Backend
    * Needed only for executing kernels. probably not necessary for memcpy
    */
   std::map<const void *, aclDataBuffer *> _memoryDataBufferMap;
-
-
 
   __USED__ inline void selectDevice(const memorySpaceId_t memorySpace)
   {
@@ -178,15 +191,28 @@ class Ascend final : public Backend
    */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
-    const auto memorySpaceList = createMemorySpacesContexts();
+    const auto memorySpaceList = createMemorySpacesListAndSetupContexts();
 
+    printf("prepare hccl\n");
+    // Setup a single-process multiple card communication
+    HcclResult err;
+    int32_t devices[deviceCount];
+    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
+    {
+      devices[deviceId] = deviceId;
+    }
+
+    comms = (HcclComm *)malloc(deviceCount * sizeof(HcclComm));
+    err = HcclCommInitAll(deviceCount, devices, comms);
+    if (err != HCCL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize HCCL. Error %d", err);
+    printf("prepared hccl\n");
     return memorySpaceList;
   }
 
   /**
    * Ascend backend implementation that returns a single memory space representing the entire RAM device memory.
    */
-  __USED__ inline memorySpaceList_t createMemorySpacesContexts()
+  __USED__ inline memorySpaceList_t createMemorySpacesListAndSetupContexts()
   {
     // Clearing existing memory space map
     _deviceStatusMap.clear();
@@ -196,7 +222,6 @@ class Ascend final : public Backend
 
     // Ask ACL for available devices
     aclError err;
-    uint32_t deviceCount;
     err = aclrtGetDeviceCount(&deviceCount);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
 
@@ -311,39 +336,150 @@ class Ascend final : public Backend
     // src = deviceX dst = deviceY
     else if (srcDeviceId < _deviceStatusMap.size() - 1 && dstDeviceId < _deviceStatusMap.size() - 1 && dstDeviceId != srcDeviceId)
     {
+      aclrtStream dstStream;
+      aclError err;
+      HcclResult hcclErr;
       // TODO: setup HCCL instead?
       printf("copying from device to device\n");
-      // If anything goes wron at acl or result level we should be able to revert to a 3-step strategy (ascend1->host->ascend2)
-      int32_t canAccessPeer;
-      err = aclrtDeviceCanAccessPeer(&canAccessPeer, srcDeviceId, dstDeviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine if ascend device %d can reach device %d. Err %d", srcDeviceId, dstDeviceId, err);
+      selectDevice(srcDeviceId);
+      uint32_t srcRankId, srcRankSize;
+      hcclErr = HcclGetRankId(comms[srcDeviceId], &srcRankId);
+      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get source rank id in communication. Error %d", hcclErr);
+      hcclErr = HcclGetRankSize(comms[srcDeviceId], &srcRankSize);
+      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get source rank size in communication. Error %d", hcclErr);
+      printf("src dev id %ld rank id %d rank size %d\n", srcDeviceId, srcRankId, srcRankSize);
 
-      // if p2p not supported
-      if (canAccessPeer == 0)
-      {
-        HICR_THROW_RUNTIME("p2p not supporte between ascend device %d and device %d.", srcDeviceId, dstDeviceId);
-      }
-      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
-      printf("e\n");
       selectDevice(dstDeviceId);
-      err = aclrtDeviceEnablePeerAccess(srcDeviceId, 0);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable p2p communication between ascend device %d and device %d. Err %d", srcDeviceId, dstDeviceId, err);
+      uint32_t dstRankId, dstRankSize;
+      hcclErr = HcclGetRankId(comms[dstDeviceId], &dstRankId);
+      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get dest rank id in communication. Error %d", hcclErr);
+      hcclErr = HcclGetRankSize(comms[dstDeviceId], &dstRankSize);
+      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get dest rank size in communication. Error %d", hcclErr);
+
+      printf("dst dev id %ld rank id %d rank size %d\n", dstDeviceId, dstRankId, dstRankSize);
+
+      std::mutex _mutex;
+      auto srcThread = std::thread(&Ascend::sendDataHccl, this, srcRankId, actualSrcPtr, size, dstRankId, std::ref(_mutex));
+      // auto dstThread = std::thread(&Ascend::recvDataHccl, this, dstDeviceId, actualDstPtr, size, srcDeviceId);
+
+      // srcThread.join();
+      // dstThread.join();
+
+      // selectDevice(srcDeviceId  );
+
+      // err = aclrtCreateStream(&srcStream);
+      // if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create src stream. Error %d", err);
+
+      // printf("sending data \n");
+      // hcclErr = HcclSend(actualSrcPtr, size, HCCL_DATA_TYPE_INT8, dstDeviceId, comms[0], srcStream);
+      // if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to send data via hccl. Error %d", hcclErr);
+      // // printf("sync stream send\n");
+      // // err = aclrtSynchronizeStream(srcStream);
+      // // if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync stream on send data via hccl. Error %d", err);
+      // printf("data sent\n");
+
+      // // err = aclrtDestroyStream(stream);
+      // // if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in send data hccl. Error %d", err);
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      _mutex.lock();
+
+      printf("locekd recv\n");
+      selectDevice(dstDeviceId);
+
+      err = aclrtCreateStream(&dstStream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create dst stream. Error %d", err);
+
+      printf("receiving data\n");
+      // TODO: not sure about data type
+      hcclErr = HcclRecv(actualDstPtr, size, HCCL_DATA_TYPE_INT8, srcRankId, comms[dstRankId], dstStream);
+      printf("unlocekd recv\n");
+
+      _mutex.unlock();
+      printf("sync stream recv\n");
+
+      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to receive data. Error %d", hcclErr);
+      err = aclrtSynchronizeStream(dstStream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync on receive data via hccl. Error %d", err);
+      printf("data received\n");
+
+      err = aclrtDestroyStream(dstStream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in receive data hccl. Error %d", err);
+
+      srcThread.join();
+
+      source->increaseMessagesSent();
+      destination->increaseMessagesRecv();
+
+      return;
     }
 
     err = aclrtMemcpy(actualDstPtr, size, actualSrcPtr, size, memcpyKind);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not copy memory from device. Error %d", err);
 
-    // if (srcDeviceId < _deviceStatusMap.size() - 1 && dstDeviceId < _deviceStatusMap.size() - 1 && dstDeviceId != srcDeviceId)
-    // {
-    //   printf("a\n");
-    //   // release resources on source device
-    //   selectDevice(srcDeviceId);
-    //   err = aclrtResetDevice(srcDeviceId);
-    //   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not release resources on ascend device %d for copy with device %d. Err %d", srcDeviceId, dstDeviceId, err);
-    // }
-
     source->increaseMessagesSent();
     destination->increaseMessagesRecv();
+  }
+
+  __USED__ static inline void sendDataHccl(HiCR::backend::ascend::Ascend *backend, deviceIdentifier_t srcId, void *ptr, size_t size, deviceIdentifier_t dstId, std::reference_wrapper<std::mutex> _mutex)
+  {
+    aclrtStream stream;
+    aclError err;
+    HcclResult hcclErr;
+
+    // backend->selectDevice(srcId);
+    // uint32_t srcRankId, srcRankSize;
+    // hcclErr = HcclGetRankId(backend->comms[srcId], &srcRankId);
+    // if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get source rank id in communication. Error %d", hcclErr);
+    // hcclErr = HcclGetRankSize(backend->comms[srcId], &srcRankSize);
+    // if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get source rank size in communication. Error %d", hcclErr);
+    // printf("src dev id %ld rank id %d rank size %d\n", srcId, srcRankId, srcRankSize);
+
+    _mutex.get().lock();
+    printf("locekd send\n");
+
+    backend->selectDevice(srcId);
+    printf("ehi %d\n", backend->deviceCount);
+
+    err = aclrtCreateStream(&stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create src stream. Error %d", err);
+
+    printf("sending data %ld %ld %ld\n", srcId, dstId, size);
+    _mutex.get().unlock();
+    hcclErr = HcclSend(ptr, size, HCCL_DATA_TYPE_INT8, dstId, backend->comms[srcId], stream);
+    if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to send data via hccl. Error %d", hcclErr);
+    printf("unlocekd send\n");
+    printf("sync stream send\n");
+    err = aclrtSynchronizeStream(stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync stream on send data via hccl. Error %d", err);
+    printf("data sent\n");
+
+    err = aclrtDestroyStream(stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in send data hccl. Error %d", err);
+  }
+
+  __USED__ static inline void recvDataHccl(HiCR::backend::ascend::Ascend *backend, deviceIdentifier_t dstId, void *ptr, size_t size, deviceIdentifier_t srcId)
+  {
+    aclrtStream stream;
+    aclError err;
+    HcclResult hcclErr;
+
+    backend->selectDevice(dstId);
+
+    err = aclrtCreateStream(&stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create dst stream. Error %d", err);
+
+    printf("receiving data\n");
+    // TODO: not sure about data type
+    hcclErr = HcclRecv(ptr, size, HCCL_DATA_TYPE_INT8, srcId, backend->comms[0], stream);
+    printf("sync stream recv\n");
+
+    if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to receive data. Error %d", hcclErr);
+    err = aclrtSynchronizeStream(stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync on receive data via hccl. Error %d", err);
+    printf("data received\n");
+
+    err = aclrtDestroyStream(stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in receive data hccl. Error %d", err);
   }
 
   /**
