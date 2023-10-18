@@ -285,7 +285,7 @@ class Task
    */
   pendingOperationFunctionQueue_t _pendingOperations;
 
-  std::unique_ptr<ExecutionState> _executionState;
+  std::unique_ptr<ExecutionState> _executionState = NULL;
 };
 
 } // namespace HiCR
