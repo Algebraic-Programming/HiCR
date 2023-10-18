@@ -7,7 +7,7 @@ aclIncludes = include_directories([
 
 aclLinkArgs = [
    '-L/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64/stub',
-  '-lascendcl',
+   '-lascendcl',
 ]
 
 aclDep = declare_dependency(
