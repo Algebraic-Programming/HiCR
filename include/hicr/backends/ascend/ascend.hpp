@@ -85,7 +85,6 @@ class Ascend final : public Backend
     }
 
     _deviceStatusMap.clear();
-    printf("Ascend backend destroyed\n");
 
     (void)aclFinalize();
   }
@@ -193,7 +192,13 @@ class Ascend final : public Backend
   {
     const auto memorySpaceList = createMemorySpacesListAndSetupContexts();
 
-    printf("prepare hccl\n");
+    setupHccl();
+
+    return memorySpaceList;
+  }
+
+  __USED__ inline void setupHccl()
+  {
     // Setup a single-process multiple card communication
     HcclResult err;
     int32_t devices[deviceCount];
@@ -205,8 +210,6 @@ class Ascend final : public Backend
     comms = (HcclComm *)malloc(deviceCount * sizeof(HcclComm));
     err = HcclCommInitAll(deviceCount, devices, comms);
     if (err != HCCL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize HCCL. Error %d", err);
-    printf("prepared hccl\n");
-    return memorySpaceList;
   }
 
   /**
@@ -308,104 +311,34 @@ class Ascend final : public Backend
     // src = host dst = host
     if (srcDeviceId == _deviceStatusMap.size() - 1 && dstDeviceId == _deviceStatusMap.size() - 1)
     {
-      printf("copying from host to host\n");
       memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
     }
     // src = host dst = device
     else if (srcDeviceId == _deviceStatusMap.size() - 1 && dstDeviceId < _deviceStatusMap.size() - 1)
     {
-      printf("copying from host to device\n");
       selectDevice(dstDeviceId);
       memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
     }
     // src = device dst = host
     else if (srcDeviceId < _deviceStatusMap.size() - 1 && dstDeviceId == _deviceStatusMap.size() - 1)
     {
-      printf("copying from device to host\n");
       selectDevice(srcDeviceId);
       memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
     }
     // src = deviceX dst = deviceX
     else if (srcDeviceId < _deviceStatusMap.size() - 1 && dstDeviceId == srcDeviceId)
     {
-      // TODO: setup HCCL instead?
-      printf("copying from device to same device\n");
       selectDevice(srcDeviceId);
       memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
     }
     // src = deviceX dst = deviceY
     else if (srcDeviceId < _deviceStatusMap.size() - 1 && dstDeviceId < _deviceStatusMap.size() - 1 && dstDeviceId != srcDeviceId)
     {
-      aclrtStream dstStream;
-      aclError err;
-      HcclResult hcclErr;
-      // TODO: setup HCCL instead?
-      printf("copying from device to device\n");
-      selectDevice(srcDeviceId);
-      uint32_t srcRankId, srcRankSize;
-      hcclErr = HcclGetRankId(comms[srcDeviceId], &srcRankId);
-      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get source rank id in communication. Error %d", hcclErr);
-      hcclErr = HcclGetRankSize(comms[srcDeviceId], &srcRankSize);
-      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get source rank size in communication. Error %d", hcclErr);
-      printf("src dev id %ld rank id %d rank size %d\n", srcDeviceId, srcRankId, srcRankSize);
-
-      selectDevice(dstDeviceId);
-      uint32_t dstRankId, dstRankSize;
-      hcclErr = HcclGetRankId(comms[dstDeviceId], &dstRankId);
-      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get dest rank id in communication. Error %d", hcclErr);
-      hcclErr = HcclGetRankSize(comms[dstDeviceId], &dstRankSize);
-      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get dest rank size in communication. Error %d", hcclErr);
-
-      printf("dst dev id %ld rank id %d rank size %d\n", dstDeviceId, dstRankId, dstRankSize);
-
-      std::mutex _mutex;
-      auto srcThread = std::thread(&Ascend::sendDataHccl, this, srcRankId, actualSrcPtr, size, dstRankId, std::ref(_mutex));
-      // auto dstThread = std::thread(&Ascend::recvDataHccl, this, dstDeviceId, actualDstPtr, size, srcDeviceId);
-
-      // srcThread.join();
-      // dstThread.join();
-
-      // selectDevice(srcDeviceId  );
-
-      // err = aclrtCreateStream(&srcStream);
-      // if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create src stream. Error %d", err);
-
-      // printf("sending data \n");
-      // hcclErr = HcclSend(actualSrcPtr, size, HCCL_DATA_TYPE_INT8, dstDeviceId, comms[0], srcStream);
-      // if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to send data via hccl. Error %d", hcclErr);
-      // // printf("sync stream send\n");
-      // // err = aclrtSynchronizeStream(srcStream);
-      // // if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync stream on send data via hccl. Error %d", err);
-      // printf("data sent\n");
-
-      // // err = aclrtDestroyStream(stream);
-      // // if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in send data hccl. Error %d", err);
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      _mutex.lock();
-
-      printf("locekd recv\n");
-      selectDevice(dstDeviceId);
-
-      err = aclrtCreateStream(&dstStream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create dst stream. Error %d", err);
-
-      printf("receiving data\n");
-      // TODO: not sure about data type
-      hcclErr = HcclRecv(actualDstPtr, size, HCCL_DATA_TYPE_INT8, srcRankId, comms[dstRankId], dstStream);
-      printf("unlocekd recv\n");
-
-      _mutex.unlock();
-      printf("sync stream recv\n");
-
-      if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to receive data. Error %d", hcclErr);
-      err = aclrtSynchronizeStream(dstStream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync on receive data via hccl. Error %d", err);
-      printf("data received\n");
-
-      err = aclrtDestroyStream(dstStream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in receive data hccl. Error %d", err);
+      auto srcThread = std::thread(&Ascend::sendDataHccl, this, srcDeviceId, actualSrcPtr, size, dstDeviceId);
+      auto dstThread = std::thread(&Ascend::recvDataHccl, this, dstDeviceId, actualDstPtr, size, srcDeviceId);
 
       srcThread.join();
+      dstThread.join();
 
       source->increaseMessagesSent();
       destination->increaseMessagesRecv();
@@ -420,38 +353,22 @@ class Ascend final : public Backend
     destination->increaseMessagesRecv();
   }
 
-  __USED__ static inline void sendDataHccl(HiCR::backend::ascend::Ascend *backend, deviceIdentifier_t srcId, void *ptr, size_t size, deviceIdentifier_t dstId, std::reference_wrapper<std::mutex> _mutex)
+  __USED__ static inline void sendDataHccl(HiCR::backend::ascend::Ascend *backend, deviceIdentifier_t srcId, void *ptr, size_t size, deviceIdentifier_t dstId)
   {
     aclrtStream stream;
     aclError err;
     HcclResult hcclErr;
 
-    // backend->selectDevice(srcId);
-    // uint32_t srcRankId, srcRankSize;
-    // hcclErr = HcclGetRankId(backend->comms[srcId], &srcRankId);
-    // if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get source rank id in communication. Error %d", hcclErr);
-    // hcclErr = HcclGetRankSize(backend->comms[srcId], &srcRankSize);
-    // if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Can not get source rank size in communication. Error %d", hcclErr);
-    // printf("src dev id %ld rank id %d rank size %d\n", srcId, srcRankId, srcRankSize);
-
-    _mutex.get().lock();
-    printf("locekd send\n");
-
     backend->selectDevice(srcId);
-    printf("ehi %d\n", backend->deviceCount);
 
     err = aclrtCreateStream(&stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create src stream. Error %d", err);
 
-    printf("sending data %ld %ld %ld\n", srcId, dstId, size);
-    _mutex.get().unlock();
     hcclErr = HcclSend(ptr, size, HCCL_DATA_TYPE_INT8, dstId, backend->comms[srcId], stream);
     if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to send data via hccl. Error %d", hcclErr);
-    printf("unlocekd send\n");
-    printf("sync stream send\n");
+
     err = aclrtSynchronizeStream(stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync stream on send data via hccl. Error %d", err);
-    printf("data sent\n");
 
     err = aclrtDestroyStream(stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in send data hccl. Error %d", err);
@@ -468,15 +385,11 @@ class Ascend final : public Backend
     err = aclrtCreateStream(&stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create dst stream. Error %d", err);
 
-    printf("receiving data\n");
-    // TODO: not sure about data type
-    hcclErr = HcclRecv(ptr, size, HCCL_DATA_TYPE_INT8, srcId, backend->comms[0], stream);
-    printf("sync stream recv\n");
-
+    hcclErr = HcclRecv(ptr, size, HCCL_DATA_TYPE_INT8, srcId, backend->comms[dstId], stream);
     if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to receive data. Error %d", hcclErr);
+
     err = aclrtSynchronizeStream(stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync on receive data via hccl. Error %d", err);
-    printf("data received\n");
 
     err = aclrtDestroyStream(stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in receive data hccl. Error %d", err);
