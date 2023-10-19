@@ -347,27 +347,10 @@ class Ascend final : public Backend
 
     // TODO: check if there is enough space?
 
-    // Handle device-to-device communication via HCCL
-    if (srcdeviceType_t == deviceType_t::Npu && dstdeviceType_t == deviceType_t::Npu && dstDeviceId != srcDeviceId)
-    {
-      // The HcclSend and HcclRecv form a synchronous API (they should be called at the same time). Because of this
-      // they are launched in two different threads.
-      auto srcThread = std::thread(&Ascend::sendDataHccl, this, srcDeviceId, actualSrcPtr, size, dstDeviceId);
-      auto dstThread = std::thread(&Ascend::recvDataHccl, this, dstDeviceId, actualDstPtr, size, srcDeviceId);
-
-      srcThread.join();
-      dstThread.join();
-
-      source->increaseMessagesSent();
-      destination->increaseMessagesRecv();
-
-      return;
-    }
-
-    // To handle all the other cases, ACL suffices 
     // TODO: different default
     aclrtMemcpyKind memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
 
+    // handle the different memcpy cases
     if (srcdeviceType_t == deviceType_t::Host && dstdeviceType_t == deviceType_t::Host)
     {
       memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
@@ -387,82 +370,32 @@ class Ascend final : public Backend
       selectDevice(srcDeviceId);
       memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
     }
+    else if (srcdeviceType_t == deviceType_t::Npu && dstdeviceType_t == deviceType_t::Npu && dstDeviceId != srcDeviceId)
+    {
+      int32_t canAccessPeer = 0;
+      aclError err;
+      // Query whether memory copy is supported between Device 0 and Device 1
+
+      err = aclrtDeviceCanAccessPeer(&canAccessPeer, srcDeviceId, dstDeviceId);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine peer accessibility. Error %d", err);
+
+      if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dstDeviceId, srcDeviceId, err);
+
+      selectDevice(dstDeviceId);
+      // TODO: shall we enable it by default in initialization?
+      // TODO: shall we turn it off when not needed?
+      err = aclrtDeviceEnablePeerAccess(srcDeviceId, 0);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable peer access from device %ld to device %ld. Error %d", dstDeviceId, srcDeviceId, err);
+
+      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
+    }
 
     err = aclrtMemcpy(actualDstPtr, size, actualSrcPtr, size, memcpyKind);
+
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not copy memory from device. Error %d", err);
 
     source->increaseMessagesSent();
     destination->increaseMessagesRecv();
-  }
-
-  /**
-   * Send data from one Ascend to another via HCCL 
-   * 
-   * \param[in] backend the Ascend backend
-   * \param[in] srcId the device id in which data resides
-   * \param[in] ptr pointer to the data
-   * \param[in] size data size
-   * \param[in] dstId the device id in which data needs to be copied
-  */
-  __USED__ static inline void sendDataHccl(HiCR::backend::ascend::Ascend *backend, deviceIdentifier_t srcId, void *ptr, size_t size, deviceIdentifier_t dstId)
-  {
-    aclrtStream stream;
-    aclError err;
-    HcclResult hcclErr;
-
-    // set the sender device
-    backend->selectDevice(srcId);
-
-    // create a stream
-    err = aclrtCreateStream(&stream);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create src stream. Error %d", err);
-
-    // send data
-    hcclErr = HcclSend(ptr, size, HCCL_DATA_TYPE_INT8, dstId, backend->hcclComms[srcId], stream);
-    if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to send data via hccl. Error %d", hcclErr);
-
-    // wait for the operation to finish
-    err = aclrtSynchronizeStream(stream);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync stream on send data via hccl. Error %d", err);
-
-    // destroy the stream
-    err = aclrtDestroyStream(stream);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in send data hccl. Error %d", err);
-  }
-
-   /**
-   * Receive data from one Ascend to another via HCCL 
-   * 
-   * \param[in] backend the Ascend backend
-   * \param[in] dstId the device id in which data needs to be received 
-   * \param[in] ptr pointer to the data
-   * \param[in] size data size
-   * \param[in] srcId the device id in which data resides
-  */
- __USED__ static inline void recvDataHccl(HiCR::backend::ascend::Ascend *backend, deviceIdentifier_t dstId, void *ptr, size_t size, deviceIdentifier_t srcId)
-  {
-    aclrtStream stream;
-    aclError err;
-    HcclResult hcclErr;
-
-    // set the receiver device
-    backend->selectDevice(dstId);
-
-    // create a stream
-    err = aclrtCreateStream(&stream);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to create dst stream. Error %d", err);
-
-    // receive the data
-    hcclErr = HcclRecv(ptr, size, HCCL_DATA_TYPE_INT8, srcId, backend->hcclComms[dstId], stream);
-    if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("failed to receive data. Error %d", hcclErr);
-
-    // wait for the operation to finish
-    err = aclrtSynchronizeStream(stream);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to sync on receive data via hccl. Error %d", err);
-
-    // destroy the stream
-    err = aclrtDestroyStream(stream);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to destroy stream in receive data hccl. Error %d", err);
   }
 
   /**
@@ -496,7 +429,6 @@ class Ascend final : public Backend
    */
   __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
-
     void *ptr = NULL;
     if (_deviceStatusMap.at(memorySpace).device == deviceType_t::Host)
     {
@@ -506,7 +438,7 @@ class Ascend final : public Backend
     {
       ptr = deviceAlloc(memorySpace, size);
     }
-    
+
     // keep track of the mapping between unique identifier and pointer + deviceId
     // TODO: change with unique memorySlotId
     if (_memoryAscendMap.count(ptr) != 0) HICR_THROW_RUNTIME("Pointer already allocated on host.");
@@ -531,7 +463,6 @@ class Ascend final : public Backend
 
     return ptr;
   }
-
 
   /**
    * Allocate memory on the Ascend memory through Ascend-dedicated functions.
