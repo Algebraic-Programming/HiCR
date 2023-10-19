@@ -143,11 +143,7 @@ class MemoryManager
     auto ptr = allocateLocalMemorySlotImpl(memorySpaceId, size);
 
     // Creating new memory slot structure
-    auto newMemSlot = new MemorySlot(
-      ptr,
-      size,
-      MemorySlot::creationType_t::allocated,
-      MemorySlot::localityType_t::local);
+    auto newMemSlot = new MemorySlot(ptr, size);
 
     // Getting memory slot id
     const auto newMemorySlotId = newMemSlot->getId();
@@ -169,11 +165,7 @@ class MemoryManager
   virtual MemorySlot *registerLocalMemorySlot(void *const ptr, const size_t size)
   {
     // Creating new memory slot structure
-    auto newMemSlot = new MemorySlot(
-      ptr,
-      size,
-      MemorySlot::creationType_t::registered,
-      MemorySlot::localityType_t::local);
+    auto newMemSlot = new MemorySlot(ptr, size);
 
     // Getting memory slot id
     const auto newMemorySlotId = newMemSlot->getId();
@@ -241,12 +233,6 @@ class MemoryManager
     // Checking whether the slot has been associated with this backend
     if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
 
-    // Checking whether the slot is local
-    if (_memorySlotMap.at(memorySlotId)->getLocalityType() != MemorySlot::localityType_t::local) HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not local to this backend", memorySlotId);
-
-    // Checking whether the slot has been registered
-    if (_memorySlotMap.at(memorySlotId)->getCreationType() != MemorySlot::creationType_t::registered) HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that was not manually registered to this backend", memorySlotId);
-
     // Calling internal implementation
     deregisterLocalMemorySlotImpl(memorySlot);
 
@@ -266,12 +252,6 @@ class MemoryManager
 
     // Checking whether the slot has been associated with this backend
     if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Checking whether the slot is local
-    if (_memorySlotMap.at(memorySlotId)->getLocalityType() != MemorySlot::localityType_t::global) HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not global", memorySlotId);
-
-    // Checking whether the slot has been registered
-    if (_memorySlotMap.at(memorySlotId)->getCreationType() != MemorySlot::creationType_t::registered) HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that was not manually registered to this backend", memorySlotId);
 
     // Getting memory slot global information
     const auto memorySlotTag = memorySlot->getGlobalTag();
@@ -299,12 +279,6 @@ class MemoryManager
 
     // Checking whether the slot has been allocated with this backend
     if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
-    // Checking whether the slot is local
-    if (_memorySlotMap.at(memorySlotId)->getLocalityType() != MemorySlot::localityType_t::local) HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not local to this backend", memorySlotId);
-
-    // Checking whether the slot has been allocated with this backend
-    if (_memorySlotMap.at(memorySlotId)->getCreationType() != MemorySlot::creationType_t::allocated) HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that was not allocated with this backend", memorySlotId);
 
     // Actually freeing up slot
     freeLocalMemorySlotImpl(memorySlot);
@@ -484,8 +458,6 @@ class MemoryManager
     auto newMemorySlot = new MemorySlot(
       ptr,
       size,
-      MemorySlot::creationType_t::registered,
-      MemorySlot::localityType_t::global,
       tag,
       globalKey);
 

@@ -43,61 +43,6 @@ class MemorySlot
   public:
 
   /**
-   * Enumeration to determine how the memory slot has been created
-   */
-  enum creationType_t
-  {
-    /**
-     * When a memory slot is allocated, it uses the backend's own allocator. Its internal pointer may not be changed, and requires the use of the backend free operation
-     */
-    allocated,
-
-    /**
-     * When a memory slot is manually registered, it is assigned to the backend having been allocated elsewhere or is global
-     */
-    registered
-  };
-
-  /**
-   * Enumeration to determine whether the memory slot is local or global
-   */
-  enum localityType_t
-  {
-    /**
-     * When a memory slot is local, it was created by the current backend and can be freed and accessed directly
-     */
-    local,
-
-    /**
-     * When a memory slot is global, it was exchanged with other backends (possibly remote)
-     */
-    global
-  };
-
-  /**
-   * Default constructor for a MemorySlot class
-   *
-   * \param[in] pointer The pointer corresponding to an address in a given memory space
-   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
-   * \param[in] creationType Indicates the way in which the memory slot was created (e.g., registered manually or allocated)
-   * \param[in] localityType Indicates whether this is a local or global memory slot
-   * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
-   * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
-   */
-
-  MemorySlot(
-    void *const pointer,
-    const size_t size,
-    const creationType_t creationType,
-    const localityType_t localityType,
-    const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : _id(boost::uuids::random_generator()()), _pointer(pointer), _size(size), _creationType(creationType), _localityType(localityType), _globalTag(globalTag), _globalKey(globalKey)
-  {
-  }
-
-  ~MemorySlot() = default;
-
-  /**
    * Getter function for the memory slot's id
    * \returns The memory slot's unique id
    */
@@ -114,18 +59,6 @@ class MemorySlot
    * \returns The memory slot's size
    */
   __USED__ inline size_t getSize() const noexcept { return _size; }
-
-  /**
-   * Getter function for the memory slot's creation type
-   * \returns The memory slot's creation type
-   */
-  __USED__ inline creationType_t getCreationType() const noexcept { return _creationType; }
-
-  /**
-   * Getter function for the memory slot's locality type
-   * \returns The memory slot's locality type
-   */
-  __USED__ inline localityType_t getLocalityType() const noexcept { return _localityType; }
 
   /**
    * Getter function for the memory slot's global tag
@@ -173,6 +106,28 @@ class MemorySlot
    */
   __USED__ inline size_t *getMessagesSentPointer() noexcept { return &_messagesSent; }
 
+    /**
+   * Default constructor for a MemorySlot class
+   *
+   * \param[in] pointer The pointer corresponding to an address in a given memory space
+   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
+   * \param[in] creationType Indicates the way in which the memory slot was created (e.g., registered manually or allocated)
+   * \param[in] localityType Indicates whether this is a local or global memory slot
+   * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
+   * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   */
+
+  MemorySlot(
+    void *const pointer,
+    const size_t size,
+    const tag_t globalTag = 0,
+    const globalKey_t globalKey = 0) : _id(boost::uuids::random_generator()()), _pointer(pointer), _size(size), _globalTag(globalTag), _globalKey(globalKey)
+  {
+  }
+
+  ~MemorySlot() = default;
+
+
   private:
 
   /**
@@ -189,16 +144,6 @@ class MemorySlot
    * Size of the memory slot
    */
   const size_t _size;
-
-  /**
-   * Stores how the memory slot was created
-   */
-  const creationType_t _creationType;
-
-  /**
-   * Stores the locality of the memory slot
-   */
-  const localityType_t _localityType;
 
   /**
    * Only for global slots - identifies to which global memory slot subset this one belongs to
