@@ -77,37 +77,6 @@ class Task
   };
 
   /**
-   * Complete state set that a task can be in
-   */
-  enum state_t
-  {
-    /**
-     * Internal state not yet allocated -- set automatically upon creation
-     */
-    uninitialized,
-
-    /**
-     * Ready to run (internal state created)
-     */
-    initialized,
-
-    /**
-     * Indicates that the task is currently running
-     */
-    running,
-
-    /**
-     * Set by the task if it suspends for an asynchronous operation
-     */
-    suspended,
-
-    /**
-     * Set by the task upon complete termination
-     */
-    finished
-  };
-
-  /**
    * Type definition for the task's event map
    */
   typedef common::EventMap<Task, event_t> taskEventMap_t;
@@ -156,7 +125,14 @@ class Task
    *
    * \internal This is not a thread safe operation.
    */
-  __USED__ inline const state_t getState() { return _state; }
+  __USED__ inline const ExecutionState::state_t getState()
+  {
+   // If the execution state has not been initialized then return the value expliclitly
+   if (_executionState == NULL) return ExecutionState::state_t::uninitialized;
+
+   // Otherwise just query the initial execution state
+   return _executionState->getState();
+  }
 
 
   __USED__ inline const ExecutionUnit* getExecutionUnit() { return _executionUnit; }
@@ -201,16 +177,13 @@ class Task
 
   __USED__ inline void initialize(std::unique_ptr<ExecutionState> executionState)
   {
-    if (_state != state_t::uninitialized) HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", _state);
+    if (getState() != ExecutionState::state_t::uninitialized) HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", getState());
 
     // Getting execution state as a unique pointer (to prevent sharing the same state among different tasks)
     _executionState = std::move(executionState);
 
     // Initializing execution state
     _executionState->initialize(_executionUnit);
-
-    // Setting state as initialized
-    _state = state_t::initialized;
   }
 
   /**
@@ -220,13 +193,10 @@ class Task
    */
   __USED__ inline void run()
   {
-    if (_state != state_t::initialized && _state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", _state);
+    if (getState() != ExecutionState::state_t::initialized && getState() != ExecutionState::state_t::suspended) HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", getState());
 
     // Also map task pointer to the running thread it into static storage for global access.
     _currentTask = this;
-
-    // Setting state to running while we execute
-    _state = state_t::running;
 
     // Triggering execution event, if defined
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
@@ -238,18 +208,14 @@ class Task
     _executionState->checkFinalization();
 
     // If the task is suspended and event map is defined, trigger the corresponding event.
-    if (_executionState->getState() == ExecutionState::state_t::suspended)
+    if (getState() == ExecutionState::state_t::suspended)
       if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskSuspend);
 
-    // If the task is still running (no suspension), then the task has fully finished executing
-    if (_executionState->getState() == ExecutionState::state_t::finished)
-    {
-      // Setting state as finished
-      _state = state_t::finished;
-
-      // Trigger the corresponding event, if the event map is defined. It is important that this function is called from outside the context of a task to allow the upper layer to free its memory upon finishing
+    // If the task is still running (no suspension), then the task has fully finished executing. If so,
+    // trigger the corresponding event, if the event map is defined. It is important that this function
+    // is called from outside the context of a task to allow the upper layer to free its memory upon finishing
+    if (getState() == ExecutionState::state_t::finished)
       if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskFinish);
-    }
 
     // Relenting current task pointer
     _currentTask = NULL;
@@ -260,24 +226,16 @@ class Task
    */
   __USED__ inline void suspend()
   {
-    if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", _state);
+    if (getState() != ExecutionState::state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", getState());
 
     // Since this function is public, it can be called from anywhere in the code. However, we need to make sure on rutime that the context belongs to the task itself.
     if (getCurrentTask() != this) HICR_THROW_RUNTIME("Attempting to yield a task from a context that is not its own.\n");
-
-    // Change our state to yielded so that we can be reinserted into the pool
-    _state = state_t::suspended;
 
     // Yielding execution back to worker
     _executionState->suspend();
   }
 
   private:
-
-  /**
-   * Current execution state of the task. Will change based on runtime scheduling events
-   */
-  state_t _state = state_t::uninitialized;
 
   const ExecutionUnit* const _executionUnit;
 
@@ -291,7 +249,10 @@ class Task
    */
   pendingOperationFunctionQueue_t _pendingOperations;
 
-  std::unique_ptr<ExecutionState> _executionState;
+  /**
+   * Internal execution state of the task. Will change based on runtime scheduling events
+   */
+  std::unique_ptr<ExecutionState> _executionState = NULL;
 };
 
 } // namespace HiCR

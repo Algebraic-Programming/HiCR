@@ -33,9 +33,9 @@ TEST(Task, SetterAndGetters)
   EXPECT_NO_THROW(t.setEventMap(&e));
   EXPECT_EQ(t.getEventMap(), &e);
 
-  HiCR::Task::state_t state;
+  HiCR::ExecutionState::state_t state;
   EXPECT_NO_THROW(state = t.getState());
-  EXPECT_EQ(state, HiCR::Task::state_t::uninitialized);
+  EXPECT_EQ(state, HiCR::ExecutionState::state_t::uninitialized);
 }
 
 TEST(Task, Run)
@@ -51,7 +51,7 @@ TEST(Task, Run)
   auto f = [&t, &hasRunningState, &hasCorrectTaskPointer]()
   {
     // Checking whether the state is correctly assigned
-    if (t->getState() == HiCR::Task::state_t::running) hasRunningState = true;
+    if (t->getState() == HiCR::ExecutionState::state_t::running) hasRunningState = true;
 
     // Checking whether the current task pointer is the correct one
     if (HiCR::getCurrentTask() == t) hasCorrectTaskPointer = true;
@@ -76,17 +76,17 @@ TEST(Task, Run)
   t->initialize(std::move(executionState));
 
   // A first run should start the task
-  EXPECT_EQ(t->getState(), HiCR::Task::state_t::initialized);
+  EXPECT_EQ(t->getState(), HiCR::ExecutionState::state_t::initialized);
   EXPECT_NO_THROW(t->run());
   EXPECT_TRUE(hasRunningState);
   EXPECT_TRUE(hasCorrectTaskPointer);
-  EXPECT_EQ(t->getState(), HiCR::Task::state_t::suspended);
+  EXPECT_EQ(t->getState(), HiCR::ExecutionState::state_t::suspended);
   EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task *)NULL);
 
   // A second run should resume the task
   EXPECT_NO_THROW(t->run());
   EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task *)NULL);
-  EXPECT_EQ(t->getState(), HiCR::Task::state_t::finished);
+  EXPECT_EQ(t->getState(), HiCR::ExecutionState::state_t::finished);
 
   // The task has now finished, so a third run should fail
   EXPECT_THROW(t->run(), HiCR::common::RuntimeException);

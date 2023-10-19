@@ -274,7 +274,7 @@ class Worker
         if (task != NULL) [[likely]]
         {
            // If the task hasn't been initialized yet, we need to do it now
-           if (task->getState() == Task::state_t::uninitialized)
+           if (task->getState() == ExecutionState::state_t::uninitialized)
            {
             // First, create new execution state for the processing unit
             auto executionState = _computeManager->createExecutionState();
