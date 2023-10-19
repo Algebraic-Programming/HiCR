@@ -97,12 +97,12 @@ class MemoryManager
    *
    * @return The list of memory spaces, as detected the last time \a queryResources was executed.
    */
-  __USED__ inline const memorySpaceList_t getMemorySpaceList()
+  __USED__ inline const std::set<memorySpaceId_t> getMemorySpaceList()
   {
     // Getting value by copy
-    const auto value = _memorySpaceList;
+    const std::set<memorySpaceId_t> list(_memorySpaceList.begin(), _memorySpaceList.end()) ;
 
-    return value;
+    return list;
   }
 
   /**
@@ -138,12 +138,8 @@ class MemoryManager
     // Checking size doesn't exceed slot size
     if (size > maxSize) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
 
-    // Calling internal implementation. This is done inside the mutex zone because it is meant to be an
-    // infrequent and fast operation, and ensuring concurrency safety is much more important than parallelism in this case
-    auto ptr = allocateLocalMemorySlotImpl(memorySpaceId, size);
-
     // Creating new memory slot structure
-    auto newMemSlot = new MemorySlot(ptr, size);
+    auto newMemSlot = allocateLocalMemorySlotImpl(memorySpaceId, size);
 
     // Getting memory slot id
     const auto newMemorySlotId = newMemSlot->getId();
@@ -165,17 +161,13 @@ class MemoryManager
   virtual MemorySlot *registerLocalMemorySlot(void *const ptr, const size_t size)
   {
     // Creating new memory slot structure
-    auto newMemSlot = new MemorySlot(ptr, size);
+    auto newMemSlot = registerLocalMemorySlotImpl(ptr, size);
 
     // Getting memory slot id
     const auto newMemorySlotId = newMemSlot->getId();
 
     // Adding created memory slot to the set
     _memorySlotMap.insert(std::make_pair(newMemorySlotId, newMemSlot));
-
-    // Calling internal implementation. This is done inside the mutex zone because it is meant to be an
-    // infrequent and fast operation, and ensuring concurrency safety is much more important than parallelism in this case
-    registerLocalMemorySlotImpl(newMemSlot);
 
     // Returning the id of the new memory slot
     return newMemSlot;
@@ -307,24 +299,6 @@ class MemoryManager
   }
 
   /**
-   * Checks whether the memory slot id exists and is a valid slot (e.g., the pointer is not NULL)
-   *
-   * \param[in] memorySlot Memory slot to check
-   * \return True, if the referenced memory slot exists and is valid; false, otherwise
-   */
-  __USED__ inline bool isMemorySlotValid(const MemorySlot *memorySlot)
-  {
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlot->getId()) == false) HICR_THROW_LOGIC("Attempting to get the size a memory slot (%lu) that is not associated to this backend", memorySlot->getId());
-
-    // Getting value by copy
-    const auto value = isMemorySlotValidImpl(memorySlot);
-
-    // Running the implementation function
-    return value;
-  }
-
-  /**
    * Instructs the backend to perform an asynchronous memory copy from
    * within a source area, to within a destination area.
    *
@@ -449,37 +423,21 @@ class MemoryManager
    *
    * \internal This function is only meant to be called internally and must be done within the a mutex zone.
    */
-  __USED__ inline MemorySlot *registerGlobalMemorySlot(tag_t tag, globalKey_t globalKey, void *const ptr, const size_t size)
+  __USED__ inline void registerGlobalMemorySlot(MemorySlot* memorySlot)
   {
+    // Getting memory slot information
+    const auto id = memorySlot->getId();
+    const auto tag = memorySlot->getGlobalTag();
+    const auto globalKey = memorySlot->getGlobalKey();
+
     // Sanity check: tag/globalkey collision
     if (_globalMemorySlotTagKeyMap.contains(tag) && _globalMemorySlotTagKeyMap.at(tag).contains(globalKey))  HICR_THROW_RUNTIME("Detected collision on global slots tag/globalKey (%lu/%lu). Another global slot was registered with that pair before.", tag, globalKey);
 
-    // Creating new memory slot structure
-    auto newMemorySlot = new MemorySlot(
-      ptr,
-      size,
-      tag,
-      globalKey);
-
-    // Getting memory slot id
-    const auto newMemorySlotId = newMemorySlot->getId();
-
-    _memorySlotMap.insert(std::make_pair(newMemorySlotId, newMemorySlot));
+    _memorySlotMap.insert(std::make_pair(id, memorySlot));
 
     // Adding memory slot to the global map (based on tag and key)
-    _globalMemorySlotTagKeyMap[tag][globalKey] = newMemorySlot;
-
-    // Returning the id of the new memory slot
-    return newMemorySlot;
+    _globalMemorySlotTagKeyMap[tag][globalKey] = memorySlot;
   }
-
-  /**
-   * Backend-internal implementation of the isMemorySlotValid function
-   *
-   * \param[in] memorySlotId Identifier of the slot to check
-   * \return True, if the referenced memory slot exists and is valid; false, otherwise
-   */
-  virtual bool isMemorySlotValidImpl(const MemorySlot *memorySlotId) const = 0;
 
   /**
    * Backend-internal implementation of the getMemorySpaceSize function
@@ -503,14 +461,14 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  virtual void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
+  virtual MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
    *
    * \param[in] memorySlot The new local memory slot to register
    */
-  virtual void registerLocalMemorySlotImpl(const MemorySlot *memorySlot) = 0;
+  virtual MemorySlot* registerLocalMemorySlotImpl(void* const ptr, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function

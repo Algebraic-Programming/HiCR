@@ -87,7 +87,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     *
     * \param[in] memorySlot Memory slot to query for updates.
     */
-   __USED__ inline void queryMemorySlotUpdatesImpl(const MemorySlot *memorySlot) override
+   __USED__ inline void queryMemorySlotUpdatesImpl(const HiCR::MemorySlot *memorySlot) override
    {
    }
 
@@ -98,7 +98,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     * \param[in] size Size of the memory slot to create
     * \returns The pointer of the newly allocated memory slot
     */
-   __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+   __USED__ inline HiCR::MemorySlot* allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
    {
      // Atempting to allocate the new memory slot
      auto ptr = malloc(size);
@@ -106,17 +106,21 @@ class MemoryManager final : public HiCR::backend::MemoryManager
      // Check whether it was successful
      if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
 
-     // Now returning pointer
-     return ptr;
+     // Creating and returning new memory slot
+     return registerLocalMemorySlotImpl(ptr, size);
    }
 
    /**
     * Associates a pointer locally-allocated manually and creates a local memory slot with it
     * \param[in] memorySlot The new local memory slot to register
     */
-   __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot *memorySlot) override
+   __USED__ inline HiCR::MemorySlot* registerLocalMemorySlotImpl(void* const ptr, const size_t size) override
    {
-     // Nothing to do here for this backend
+     // Creating new memory slot object
+     auto memorySlot = new MemorySlot(ptr, size);
+
+     // Returning new memory slot pointer
+     return memorySlot;
    }
 
    /**
@@ -124,12 +128,12 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     *
     * \param[in] memorySlot Memory slot to deregister.
     */
-   __USED__ inline void deregisterLocalMemorySlotImpl(MemorySlot *memorySlot) override
+   __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
    {
      // Nothing to do here for this backend
    }
 
-   __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot *memorySlot) override
+   __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
    {
      // Nothing to do here
    }
@@ -145,9 +149,17 @@ class MemoryManager final : public HiCR::backend::MemoryManager
      // Simply adding local memory slots to the global map
      for (const auto &entry : memorySlots)
      {
-       const auto key = entry.first;
-       const auto memorySlot = entry.second;
-       registerGlobalMemorySlot(tag, key, memorySlot->getPointer(), memorySlot->getSize());
+      // Getting global key
+      auto globalKey = entry.first;
+
+      // Getting local memory slot to promot
+      auto memorySlot =  entry.second;
+
+      // Creating new memory slot
+      auto globalMemorySlot = new MemorySlot(memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
+
+      // Registering memory slot
+      registerGlobalMemorySlot(globalMemorySlot);
      }
    }
 
@@ -156,26 +168,11 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     *
     * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
     */
-   __USED__ inline void freeLocalMemorySlotImpl(MemorySlot *memorySlot) override
+   __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
    {
      if (memorySlot->getPointer() == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlot->getId());
 
      free(memorySlot->getPointer());
-   }
-
-   /**
-    * Backend-internal implementation of the isMemorySlotValid function
-    *
-    * \param[in] memorySlot Memory slot to check
-    * \return True, if the referenced memory slot exists and is valid; false, otherwise
-    */
-   __USED__ bool isMemorySlotValidImpl(const MemorySlot *memorySlot) const override
-   {
-     // If it is NULL, it means it was never created
-     if (memorySlot->getPointer() == NULL) return false;
-
-     // Otherwise it is ok
-     return true;
    }
 
    /**
@@ -208,7 +205,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
        ;
     }
 
-    __USED__ inline void memcpyImpl(MemorySlot *destination, const size_t dst_offset, MemorySlot *source, const size_t src_offset, const size_t size) override
+    __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
     {
      // Getting slot pointers
      const auto srcPtr = source->getPointer();

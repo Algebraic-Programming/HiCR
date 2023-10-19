@@ -45,7 +45,7 @@ TEST(MemoryManager, Memory)
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  HiCR::backend::MemoryManager::memorySpaceList_t mList;
+  std::set<HiCR::backend::MemoryManager::memorySpaceId_t> mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
   EXPECT_GT(mList.size(), 0);
 
