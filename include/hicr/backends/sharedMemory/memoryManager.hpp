@@ -257,7 +257,6 @@ class MemoryManager final : public backend::MemoryManager
 
     // Getting memory slot info
     const auto memorySlotBindingType = m->getBindingType();
-    const auto memorySlotId = m->getId();
     const auto memorySlotPointer = m->getPointer();
     const auto memorySlotSize = m->getSize();
 
@@ -268,7 +267,7 @@ class MemoryManager final : public backend::MemoryManager
       auto status = hwloc_free(*_topology, memorySlotPointer, memorySlotSize);
 
       // Error checking
-      if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot (%lu).", memorySlotId);
+      if (status != 0) HICR_THROW_RUNTIME("Could not free bound memory slot.");
     }
 
     // If using strict non binding, use system's free

@@ -170,7 +170,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     */
    __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
    {
-     if (memorySlot->getPointer() == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) (%lu) provided. It either does not exit or represents a NULL pointer.", memorySlot->getId());
+     if (memorySlot->getPointer() == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exit or represents a NULL pointer.");
 
      free(memorySlot->getPointer());
    }

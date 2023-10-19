@@ -148,9 +148,6 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // Checking whether the execution unit passed is compatible with this backend
     if (source == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
 
-    const auto sourceId        = source->getId();
-    const auto destinationId   = destination->getId();
-
     // Getting ranks for the involved processes
     const auto sourceRank      = source->getRank();
     const auto destinationRank = destination->getRank();
@@ -160,7 +157,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     bool isDestinationRemote =  destinationRank != _rank;
 
     // Sanity checks
-    if (isSourceRemote == true && isDestinationRemote == true) HICR_THROW_LOGIC("Trying to use MPI backend perform a remote to remote copy between slots (%lu -> %lu)", sourceId, destinationId);
+    if (isSourceRemote == true && isDestinationRemote == true) HICR_THROW_LOGIC("Trying to use MPI backend perform a remote to remote copy between slots");
 
     // Calculating pointers
     [[maybe_unused]] auto destinationPointer = (void *)(((uint8_t *)destination->getPointer()) + dst_offset);
@@ -184,7 +181,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       auto status = MPI_Get(destinationPointer, size, MPI_BYTE, sourceRank, sourceOffset, size, MPI_BYTE, *sourceDataWindow);
 
       // Checking execution status
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get (Slots %lu -> %lu)", sourceId, destinationId);
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get");
 
       // Unlocking window after copy is completed
       unlockMPIWindow(sourceRank, sourceDataWindow);
@@ -203,7 +200,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       // Executing the put operation
       auto status = MPI_Put(sourcePointer, size, MPI_BYTE, destinationRank, dst_offset, size, MPI_BYTE, *destinationDataWindow);
 
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put (Slots %lu -> %lu)", sourceId, destinationId);
+      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put");
 
       // Unlocking window after copy is completed
       unlockMPIWindow(destinationRank, destinationDataWindow);

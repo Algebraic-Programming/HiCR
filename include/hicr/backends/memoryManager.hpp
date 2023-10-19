@@ -48,11 +48,6 @@ class MemoryManager
   typedef parallelHashSet_t<memorySpaceId_t> memorySpaceList_t;
 
   /**
-   * Common definition of a collection of memory slots
-   */
-  typedef parallelHashMap_t<memorySlotId_t, MemorySlot *> memorySlotMap_t;
-
-  /**
    * Common definition of a map that links key ids with memory slot id arrays (for global exchange)
    */
   typedef parallelHashMap_t<globalKey_t, std::vector<MemorySlot *>> memorySlotIdArrayMap_t;
@@ -141,12 +136,6 @@ class MemoryManager
     // Creating new memory slot structure
     auto newMemSlot = allocateLocalMemorySlotImpl(memorySpaceId, size);
 
-    // Getting memory slot id
-    const auto newMemorySlotId = newMemSlot->getId();
-
-    // Adding allocated memory slot to the set
-    _memorySlotMap.insert(std::make_pair(newMemorySlotId, newMemSlot));
-
     // Returning the id of the new memory slot
     return newMemSlot;
   }
@@ -163,12 +152,6 @@ class MemoryManager
     // Creating new memory slot structure
     auto newMemSlot = registerLocalMemorySlotImpl(ptr, size);
 
-    // Getting memory slot id
-    const auto newMemorySlotId = newMemSlot->getId();
-
-    // Adding created memory slot to the set
-    _memorySlotMap.insert(std::make_pair(newMemorySlotId, newMemSlot));
-
     // Returning the id of the new memory slot
     return newMemSlot;
   }
@@ -181,16 +164,6 @@ class MemoryManager
    */
   __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
   {
-   // Checking the validity of all memory slots to be exchanged
-   for (const auto& entry : memorySlots)
-   {
-    // Getting memory slot Id
-    const auto memorySlotId = entry.second->getId();
-
-    // Checking if the memory slot actually exists
-    if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to promote to global a local a memory slot (%lu) that is not associated to this backend", memorySlotId);
-   }
-
    // Calling internal implementation of this function
    exchangeGlobalMemorySlotsImpl(tag, memorySlots);
   }
@@ -219,17 +192,8 @@ class MemoryManager
    */
   __USED__ inline void deregisterLocalMemorySlot(MemorySlot *const memorySlot)
   {
-    // Getting memory slot Id
-    const auto memorySlotId = memorySlot->getId();
-
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
     // Calling internal implementation
     deregisterLocalMemorySlotImpl(memorySlot);
-
-    // Removing memory slot from the set
-    _memorySlotMap.erase(memorySlotId);
   }
 
   /**
@@ -239,12 +203,6 @@ class MemoryManager
    */
   __USED__ inline void deregisterGlobalMemorySlot(MemorySlot *const memorySlot)
   {
-    // Getting memory slot Id
-    const auto memorySlotId = memorySlot->getId();
-
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to de-register a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
     // Getting memory slot global information
     const auto memorySlotTag = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
@@ -266,17 +224,8 @@ class MemoryManager
    */
   __USED__ inline void freeLocalMemorySlot(MemorySlot *memorySlot)
   {
-    // Getting memory slot Id
-    const auto memorySlotId = memorySlot->getId();
-
-    // Checking whether the slot has been allocated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to free a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
     // Actually freeing up slot
     freeLocalMemorySlotImpl(memorySlot);
-
-    // Removing entry from the set
-    _memorySlotMap.erase(memorySlotId);
   }
 
   /**
@@ -288,12 +237,6 @@ class MemoryManager
    */
   __USED__ inline void queryMemorySlotUpdates(const MemorySlot *memorySlot)
   {
-    // Getting memory slot Id
-    const auto memorySlotId = memorySlot->getId();
-
-    // Checking whether the slot has been associated with this backend
-    if (_memorySlotMap.contains(memorySlotId) == false) HICR_THROW_LOGIC("Attempting to query updates for a memory slot (%lu) that is not associated to this backend", memorySlotId);
-
     // Getting value by copy
     queryMemorySlotUpdatesImpl(memorySlot);
   }
@@ -426,14 +369,11 @@ class MemoryManager
   __USED__ inline void registerGlobalMemorySlot(MemorySlot* memorySlot)
   {
     // Getting memory slot information
-    const auto id = memorySlot->getId();
     const auto tag = memorySlot->getGlobalTag();
     const auto globalKey = memorySlot->getGlobalKey();
 
     // Sanity check: tag/globalkey collision
     if (_globalMemorySlotTagKeyMap.contains(tag) && _globalMemorySlotTagKeyMap.at(tag).contains(globalKey))  HICR_THROW_RUNTIME("Detected collision on global slots tag/globalKey (%lu/%lu). Another global slot was registered with that pair before.", tag, globalKey);
-
-    _memorySlotMap.insert(std::make_pair(id, memorySlot));
 
     // Adding memory slot to the global map (based on tag and key)
     _globalMemorySlotTagKeyMap[tag][globalKey] = memorySlot;
@@ -531,11 +471,6 @@ class MemoryManager
   globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
 
   private:
-
-  /**
-   * Stores the map of created memory slots
-   */
-  memorySlotMap_t _memorySlotMap;
 
   /**
    * The internal container for the queried memory spaces.
