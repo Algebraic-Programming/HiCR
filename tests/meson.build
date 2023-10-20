@@ -6,4 +6,3 @@ subdir('hicr')
 
 # Registering taskr backend tests
 subdir('taskr')
-

@@ -1,6 +1,7 @@
+testSuite = [ 'examples', 'hicr', 'energySaver' ]
+
 if 'sharedMemory' in enabledBackends
-	executable('energySaver',
-	  [ 'source/main.cpp'],
-	  dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep]
-	)
+	energySaver = executable('energySaver', [ 'source/main.cpp'], dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep])
+	get_option('buildTests') ? test('energySaver', energySaver, args : [ '1', '0' ], suite: testSuite) :
 endif
+

@@ -4,9 +4,7 @@
 #include <hwloc.h>
 #include <taskr.hpp>
 #include <hicr/backends/sharedMemory/computeManager.hpp>
-#include <workTask.hpp>
-
-#define WORK_TASK_COUNT 100
+#include <source/workTask.hpp>
 
 int main(int argc, char **argv)
 {
@@ -25,9 +23,13 @@ int main(int argc, char **argv)
   // Initializing taskr
   taskr::Runtime taskr;
 
+  // Getting work task count
+  size_t workTaskCount = 100;
+  if (argc > 1) workTaskCount = std::atoi(argv[1]);
+
   // Getting the core subset from the argument list (could be from a file too)
   std::set<int> coreSubset;
-  for (int i = 1; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
+  for (int i = 2; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
 
   // Sanity check
   if (coreSubset.empty()) { fprintf(stderr, "Launch error: no compute resources provided\n"); exit(-1); }
@@ -46,8 +48,8 @@ int main(int argc, char **argv)
   auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr](){work();});
 
   // Adding multiple compute tasks
-  printf("Running %u work tasks with %lu processing units...\n", WORK_TASK_COUNT, coreSubset.size());
-  for (size_t i = 0; i < WORK_TASK_COUNT; i++) taskr.addTask(new taskr::Task(i, taskExecutionUnit));
+  printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());
+  for (size_t i = 0; i < workTaskCount; i++) taskr.addTask(new taskr::Task(i, taskExecutionUnit));
 
   // Running taskr only on the core subset
   auto t0 = std::chrono::high_resolution_clock::now();

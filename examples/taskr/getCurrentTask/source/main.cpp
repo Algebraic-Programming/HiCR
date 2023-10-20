@@ -1,21 +1,14 @@
 #include <cstdio>
 #include <cstring>
-#include <hwloc.h>
 #include <taskr.hpp>
-#include <hicr/backends/sharedMemory/computeManager.hpp>
+#include <hicr/backends/sequential/computeManager.hpp>
 
 #define TASK_LABEL 42
 
 int main(int argc, char **argv)
 {
-  // Creating HWloc topology object
-  hwloc_topology_t topology;
-
-  // Reserving memory for hwloc
-  hwloc_topology_init(&topology);
-
   // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::ComputeManager computeManager(&topology);
+  HiCR::backend::sequential::ComputeManager computeManager;
 
   // Querying computational resources
   computeManager.queryComputeResources();
@@ -52,9 +45,6 @@ int main(int argc, char **argv)
 
   // Running taskr
   taskr.run(&computeManager);
-
-  // Freeing up memory
-  hwloc_topology_destroy(topology);
 
   return 0;
 }

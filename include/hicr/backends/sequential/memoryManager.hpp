@@ -13,7 +13,9 @@
 #pragma once
 
 #include <hicr/backends/memoryManager.hpp>
+#include <hicr/common/definitions.hpp>
 #include <unistd.h>
+#include <atomic>
 
 namespace HiCR
 {
@@ -181,12 +183,12 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   /**
    * Specifies how many times a fence has to be called for it to release callers
    */
-  const size_t _fenceCount;
+  const std::atomic<size_t> _fenceCount;
 
   /**
    * Common definition of a collection of memory slots
    */
-  typedef std::map<tag_t, size_t> fenceCountTagMap_t;
+  typedef parallelHashMap_t<tag_t, size_t> fenceCountTagMap_t;
 
   /**
    * Counter for calls to fence, filtered per tag
