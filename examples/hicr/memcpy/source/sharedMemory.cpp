@@ -22,6 +22,9 @@ int main(int argc, char **argv)
  // Obtaining memory spaces
  auto memSpaces = m.getMemorySpaceList();
 
+ // Specific to the shared memory backend: Adjusting memory binding support to the system's
+ m.setRequestedBindingType(m.getSupportedBindingType(*memSpaces.begin()));
+
  // Allocating memory slots in different NUMA domains
  auto slot1 = m.allocateLocalMemorySlot(*memSpaces.begin(),  BUFFER_SIZE); // First NUMA Domain
  auto slot2 = m.allocateLocalMemorySlot(*memSpaces.rbegin(), BUFFER_SIZE); // Last NUMA Domain
