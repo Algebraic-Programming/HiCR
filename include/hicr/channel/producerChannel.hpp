@@ -117,6 +117,7 @@ class ProducerChannel final : public Channel
     {
       // Copying with source increasing offset per token
       _backend->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      _backend->flush();
 
       // Advance head, as we have added a new element
       advanceHead(1);

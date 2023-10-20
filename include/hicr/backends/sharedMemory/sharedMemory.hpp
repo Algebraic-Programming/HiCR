@@ -210,8 +210,6 @@ class SharedMemory final : public Backend
     return true;
   }
 
-  void syncReceivedMessages(memorySlotId_t memorySlotId) override {}
-
   /**
    * Pthread implementation of the Backend queryResources() function. This will add one compute resource object per Thread / Processing Unit (PU) found
    */

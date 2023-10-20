@@ -173,7 +173,7 @@ class Backend
 
   virtual ~Backend() = default;
 
-  virtual void syncReceivedMessages(memorySlotId_t memorySlotId) = 0;
+  virtual void syncReceivedMessages(memorySlotId_t memorySlotId) {}
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.
@@ -794,6 +794,16 @@ class Backend
     return value;
   }
 
+
+  /**
+   * flush is a local operation to guarantee that all pending
+   * message sends are completed, so that the send buffer can
+   * be reused.
+   * The implementation is backend-dependent.
+   * For IB verbs, such an implementation is possible - other 
+   * backends might not implement this.
+   */
+  virtual void flush() {}
 
   __USED__ virtual size_t getRecvMsgCount(const memorySlotId_t memorySlotId) {
       return 0;

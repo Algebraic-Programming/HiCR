@@ -481,16 +481,20 @@ class LpfBackend final : public Backend
 
     void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const {return nullptr;}
 
-  void syncReceivedMessages(memorySlotId_t memorySlotId) override {
-      size_t recvMsgCount = getRecvMsgCount(memorySlotId);
-      _memorySlotMap.at(memorySlotId).messagesRecv  = recvMsgCount;
-  }
+    void syncReceivedMessages(memorySlotId_t memorySlotId) override {
+        size_t recvMsgCount = getRecvMsgCount(memorySlotId);
+        _memorySlotMap.at(memorySlotId).messagesRecv  = recvMsgCount;
+    }
 
     size_t getRecvMsgCount(const memorySlotId_t memorySlotId) override {
         size_t msg_cnt;
         lpf_memslot_t lpfSlotId = _globalSlotMap.at(memorySlotId).lpfSlot; //hicr2LpfSlotMap[memorySlotId];
         lpf_get_rcvd_msg_count_per_slot(_lpf, &msg_cnt, lpfSlotId);
         return msg_cnt - hicrSlotId2MsgCnt[lpfSlotId];
+    }
+
+    void flush() override {
+        lpf_flush(_lpf);
     }
 
 };
