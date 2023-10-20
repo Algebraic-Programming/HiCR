@@ -1,7 +1,7 @@
 testSuite = [ 'examples', 'hicr', 'memcpy' ]
 
 sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: [ hicrBuildDep, hicrSequentialBackendDep])
-get_option('buildTests') ? test('sequential', sequential, args : [ ], suite: testSuite ) :
+get_option('buildTests') ? test('sequential', sequential, args : [ ], suite: testSuite ) : 
 
 
 if 'sharedMemory' in enabledBackends
@@ -11,5 +11,5 @@ endif
 
 if 'ascend' in enabledBackends 
 	ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: [ hicrBuildDep, hicrAscendBackendDep])
-	get_option('buildTests') ? test('ascend', sharedMemory, args : [ ], suite: testSuite ) :
+	get_option('buildTests') ? test('ascend', ascend, args : [ ], suite: testSuite ) :
 endif
