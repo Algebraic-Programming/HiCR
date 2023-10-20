@@ -38,7 +38,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
-  MemoryManager(const hwloc_topology_t * topology, const size_t fenceCount = 1) : backend::MemoryManager(), _topology { topology }
+  MemoryManager(const hwloc_topology_t *topology, const size_t fenceCount = 1) : backend::MemoryManager(), _topology{topology}
   {
     // Initializing barrier for fence operation
     pthread_barrier_init(&_fenceBarrier, NULL, fenceCount);
@@ -81,7 +81,6 @@ class MemoryManager final : public backend::MemoryManager
    */
   pthread_barrier_t _fenceBarrier;
 
-
   /**
    * Structure representing a shared memory backend memory space
    */
@@ -111,7 +110,7 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
    */
-  const hwloc_topology_t* const _topology;
+  const hwloc_topology_t *const _topology;
 
   /**
    * Pthread implementation of the Backend queryResources() function. This will add one memory space object per NUMA domain found
@@ -165,7 +164,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  __USED__ inline HiCR::MemorySlot* allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
+  __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
   {
     // Recovering memory space from the map
     auto &memSpace = _memorySpaceMap.at(memorySpaceId);
@@ -193,13 +192,13 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] memorySlot The new local memory slot to register
    */
-  __USED__ inline HiCR::MemorySlot* registerLocalMemorySlotImpl(void* const ptr, const size_t size) override
+  __USED__ inline HiCR::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
-   // Creating new memory slot object
-   auto memorySlot = new MemorySlot(MemorySlot::binding_type::strict_non_binding, ptr, size);
+    // Creating new memory slot object
+    auto memorySlot = new MemorySlot(MemorySlot::binding_type::strict_non_binding, ptr, size);
 
-   // Returning new memory slot pointer
-   return memorySlot;
+    // Returning new memory slot pointer
+    return memorySlot;
   }
 
   /**
@@ -225,21 +224,21 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
-   // Simply adding local memory slots to the global map
-   for (const auto &entry : memorySlots)
-   {
-    // Getting global key
-    auto globalKey = entry.first;
+    // Simply adding local memory slots to the global map
+    for (const auto &entry : memorySlots)
+    {
+      // Getting global key
+      auto globalKey = entry.first;
 
-    // Getting local memory slot to promot
-    auto memorySlot = entry.second;
+      // Getting local memory slot to promot
+      auto memorySlot = entry.second;
 
-    // Creating new memory slot
-    auto globalMemorySlot = new MemorySlot(MemorySlot::binding_type::strict_non_binding, memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
+      // Creating new memory slot
+      auto globalMemorySlot = new MemorySlot(MemorySlot::binding_type::strict_non_binding, memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
 
-    // Registering memory slot
-    registerGlobalMemorySlot(globalMemorySlot);
-   }
+      // Registering memory slot
+      registerGlobalMemorySlot(globalMemorySlot);
+    }
   }
 
   /**
@@ -250,7 +249,7 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<MemorySlot*>(memorySlot);
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -303,32 +302,32 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-     * Implementation of the fence operation for the shared memory backend. In this case, nothing needs to be done, as
-     * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
-     * ensures its completion.
-     */
-    __USED__ inline void fenceImpl(const tag_t tag) override
-    {
-      pthread_barrier_wait(&_fenceBarrier);
-    }
+   * Implementation of the fence operation for the shared memory backend. In this case, nothing needs to be done, as
+   * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
+   * ensures its completion.
+   */
+  __USED__ inline void fenceImpl(const tag_t tag) override
+  {
+    pthread_barrier_wait(&_fenceBarrier);
+  }
 
-    __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
-    {
-      // Getting slot pointers
-      const auto srcPtr = source->getPointer();
-      const auto dstPtr = destination->getPointer();
+  __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
+  {
+    // Getting slot pointers
+    const auto srcPtr = source->getPointer();
+    const auto dstPtr = destination->getPointer();
 
-      // Calculating actual offsets
-      const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
-      const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
+    // Calculating actual offsets
+    const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
+    const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
 
-      // Running the requested operation
-      std::memcpy(actualDstPtr, actualSrcPtr, size);
+    // Running the requested operation
+    std::memcpy(actualDstPtr, actualSrcPtr, size);
 
-      // Increasing message received/sent counters for memory slots
-      source->increaseMessagesSent();
-      destination->increaseMessagesRecv();
-    }
+    // Increasing message received/sent counters for memory slots
+    source->increaseMessagesSent();
+    destination->increaseMessagesRecv();
+  }
 };
 
 } // namespace sharedMemory

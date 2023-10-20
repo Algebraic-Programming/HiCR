@@ -12,11 +12,11 @@
 
 #pragma once
 
+#include <hicr/backends/sequential/executionState.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
-#include <hicr/backends/sequential/executionState.hpp>
 
 namespace HiCR
 {
@@ -55,24 +55,23 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   __USED__ inline void suspendImpl() override
   {
     // Yielding execution
-   _executionState->suspend();
+    _executionState->suspend();
   }
 
   __USED__ inline void resumeImpl() override
   {
     // Resume coroutine
-   _executionState->resume();
+    _executionState->resume();
   }
 
   __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
   {
-   // Storing execution state internally
-   _executionState = std::move(executionState);
+    // Storing execution state internally
+    _executionState = std::move(executionState);
 
-   // And starting to run it
-   _executionState->resume();
+    // And starting to run it
+    _executionState->resume();
   }
-
 
   __USED__ inline void terminateImpl() override
   {

@@ -14,8 +14,8 @@
 
 #include "hwloc.h"
 #include <hicr/backends/computeManager.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/backends/sequential/executionState.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/backends/sequential/processingUnit.hpp>
 
 namespace HiCR
@@ -36,15 +36,15 @@ class ComputeManager final : public backend::ComputeManager
 {
   public:
 
-  __USED__ inline ExecutionUnit* createExecutionUnit(ExecutionUnit::function_t executionUnit) override
+  __USED__ inline ExecutionUnit *createExecutionUnit(ExecutionUnit::function_t executionUnit) override
   {
-   return new ExecutionUnit(executionUnit);
+    return new ExecutionUnit(executionUnit);
   }
 
-   /**
+  /**
    * The constructor is employed to reserve memory required for hwloc
    */
-  ComputeManager() : backend::ComputeManager() { }
+  ComputeManager() : backend::ComputeManager() {}
 
   /**
    * The constructor is employed to free memory required for hwloc
@@ -55,8 +55,8 @@ class ComputeManager final : public backend::ComputeManager
 
   __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
   {
-   // Creating and returning new execution state
-   return std::make_unique<sequential::ExecutionState>();
+    // Creating and returning new execution state
+    return std::make_unique<sequential::ExecutionState>();
   }
 
   private:
@@ -70,7 +70,7 @@ class ComputeManager final : public backend::ComputeManager
     return computeResourceList_t({0});
   }
 
-  __USED__ inline HiCR::ProcessingUnit* createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline HiCR::ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const override
   {
     return new ProcessingUnit(resource);
   }

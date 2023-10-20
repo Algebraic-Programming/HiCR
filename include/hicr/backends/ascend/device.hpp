@@ -12,10 +12,10 @@
 
 #pragma once
 
+#include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
 
 namespace HiCR
 {
@@ -41,38 +41,37 @@ class Device final : public ProcessingUnit
 
   __USED__ inline void initializeImpl() override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   __USED__ inline void suspendImpl() override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   __USED__ inline void resumeImpl() override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   __USED__ inline void startImpl(processingUnitFc_t fc) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
-  __USED__ inline void startImpl(ExecutionUnit* executionUnit)
+  __USED__ inline void startImpl(ExecutionUnit *executionUnit)
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
-
 
   __USED__ inline void terminateImpl() override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   __USED__ inline void awaitImpl() override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 };
 

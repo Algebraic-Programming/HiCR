@@ -11,10 +11,10 @@
  */
 #pragma once
 
-#include <set>
 #include <hicr/common/definitions.hpp>
-#include <hicr/executionUnit.hpp>
 #include <hicr/executionState.hpp>
+#include <hicr/executionUnit.hpp>
+#include <set>
 
 namespace HiCR
 {
@@ -90,7 +90,7 @@ class ProcessingUnit
    */
   __USED__ inline ProcessingUnit::state_t getState() const
   {
-   return _state;
+    return _state;
   }
 
   /**
@@ -243,7 +243,6 @@ class ProcessingUnit
 /**
  * Type definition for a generic memory space identifier
  */
-typedef std::vector<ProcessingUnit*> processingUnitList_t;
-
+typedef std::vector<ProcessingUnit *> processingUnitList_t;
 
 } // namespace HiCR

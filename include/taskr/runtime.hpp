@@ -90,7 +90,7 @@ class Runtime
   /*
    * This map links HiCR tasks to Taskr tasks
    */
-  HiCR::parallelHashMap_t<HiCR::Task*, Task*> _hicrToTaskrTaskMap;
+  HiCR::parallelHashMap_t<HiCR::Task *, Task *> _hicrToTaskrTaskMap;
 
   /**
    * This function checks whether a given task is ready to go (i.e., all its dependencies have been satisfied)
@@ -181,9 +181,9 @@ class Runtime
    */
   Runtime() = default;
 
-  __USED__ inline void addProcessingUnit(HiCR::ProcessingUnit* pu)
+  __USED__ inline void addProcessingUnit(HiCR::ProcessingUnit *pu)
   {
-   _processingUnits.push_back(pu);
+    _processingUnits.push_back(pu);
   }
 
   /**
@@ -306,7 +306,7 @@ class Runtime
    * Creates a set of HiCR workers, based on the provided computeManager, and subscribes them to a dispatcher queue.
    * After creating the workers, it starts them and suspends the current context until they're back (all tasks have finished).
    */
-  __USED__ inline void run(HiCR::backend::ComputeManager* computeManager)
+  __USED__ inline void run(HiCR::backend::ComputeManager *computeManager)
   {
     _dispatcher = new HiCR::Dispatcher([this]()
                                        { return checkWaitingTasks(); });

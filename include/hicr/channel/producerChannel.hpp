@@ -44,7 +44,7 @@ class ProducerChannel final : public Channel
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  ProducerChannel(backend::MemoryManager  *memoryManager,
+  ProducerChannel(backend::MemoryManager *memoryManager,
                   MemorySlot *const tokenBuffer,
                   MemorySlot *const coordinationBuffer,
                   const size_t tokenSize,
@@ -120,7 +120,7 @@ class ProducerChannel final : public Channel
     for (size_t i = 0; i < n; i++)
     {
       // Copying with source increasing offset per token
-     _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
       // Advance head, as we have added a new element
       advanceHead(1);
@@ -149,7 +149,7 @@ class ProducerChannel final : public Channel
   __USED__ inline void checkReceiverPops()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-   _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
+    _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
 
     // Getting current tail position
     size_t currentPoppedTokens = _poppedTokens;

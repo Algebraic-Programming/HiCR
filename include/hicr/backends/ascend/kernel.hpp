@@ -33,12 +33,12 @@ class Kernel final : public ExecutionUnit
    *
    * \param process An id for the process (should be zero)
    */
-  Kernel(const std::string& kernelFilePath) : ExecutionUnit(), _kernelFilePath(kernelFilePath) {};
+  Kernel(const std::string &kernelFilePath) : ExecutionUnit(), _kernelFilePath(kernelFilePath){};
   Kernel() = delete;
   ~Kernel() = default;
 
   __USED__ inline std::string identifyExecutionUnitType() override { return "Ascend Kernel"; }
-  __USED__ inline const std::string& getKernel() { return _kernelFilePath; }
+  __USED__ inline const std::string &getKernel() { return _kernelFilePath; }
 
   private:
 

@@ -33,12 +33,12 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
    *
    * \param process An id for the process (should be zero)
    */
- ExecutionUnit(function_t fc) : HiCR::ExecutionUnit(), _fc (fc) {};
- ExecutionUnit() = delete;
+  ExecutionUnit(function_t fc) : HiCR::ExecutionUnit(), _fc(fc){};
+  ExecutionUnit() = delete;
   ~ExecutionUnit() = default;
 
   __USED__ inline std::string getType() const override { return "C++ Function"; }
-  __USED__ inline const function_t& getFunction() const { return _fc; }
+  __USED__ inline const function_t &getFunction() const { return _fc; }
 
   private:
 

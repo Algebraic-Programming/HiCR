@@ -13,9 +13,9 @@
 #pragma once
 
 #include <functional>
+#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/executionState.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -28,44 +28,44 @@ namespace sequential
 
 class ExecutionState final : public HiCR::ExecutionState
 {
- protected:
+  protected:
 
- __USED__ inline void initializeImpl(const HiCR::ExecutionUnit* executionUnit) override
- {
-  // Getting up-casted pointer for the execution unit
-  auto e = dynamic_cast<const ExecutionUnit*>(executionUnit);
+  __USED__ inline void initializeImpl(const HiCR::ExecutionUnit *executionUnit) override
+  {
+    // Getting up-casted pointer for the execution unit
+    auto e = dynamic_cast<const ExecutionUnit *>(executionUnit);
 
-  // Checking whether the execution unit passed is compatible with this backend
-  if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
+    // Checking whether the execution unit passed is compatible with this backend
+    if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
 
-  // Getting function to execution from the execution unit
-  const auto& fc = e->getFunction();
+    // Getting function to execution from the execution unit
+    const auto &fc = e->getFunction();
 
-  // Starting coroutine containing the function
-  _coroutine.start(fc);
- }
+    // Starting coroutine containing the function
+    _coroutine.start(fc);
+  }
 
- __USED__ inline void resumeImpl() override
- {
-  _coroutine.resume();
- }
+  __USED__ inline void resumeImpl() override
+  {
+    _coroutine.resume();
+  }
 
- __USED__ inline void suspendImpl()
- {
-  _coroutine.yield();
- }
+  __USED__ inline void suspendImpl()
+  {
+    _coroutine.yield();
+  }
 
- __USED__ inline bool checkFinalizationImpl() override
- {
-  return _coroutine.hasFinished();
- }
+  __USED__ inline bool checkFinalizationImpl() override
+  {
+    return _coroutine.hasFinished();
+  }
 
- private:
+  private:
 
- /**
-  *  Task context preserved as a coroutine
-  */
- common::Coroutine _coroutine;
+  /**
+   *  Task context preserved as a coroutine
+   */
+  common::Coroutine _coroutine;
 };
 
 } // end namespace sequential

@@ -102,7 +102,8 @@ TEST(Coroutine, TLS)
   };
 
   // Starting coroutines
-  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, coroutines, fc](){fc(coroutines[i]);});
+  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, coroutines, fc]()
+                                                                    { fc(coroutines[i]); });
 
   // Initializing barrier
   pthread_barrier_init(&_barrier, NULL, THREAD_COUNT);

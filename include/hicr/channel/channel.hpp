@@ -153,7 +153,7 @@ class Channel
   ~Channel()
   {
     // Unregistering memory slot corresponding to popped token count
-   _memoryManager->deregisterLocalMemorySlot(_poppedTokensSlot);
+    _memoryManager->deregisterLocalMemorySlot(_poppedTokensSlot);
   }
 
   /**
@@ -193,7 +193,7 @@ class Channel
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  backend::MemoryManager  *const _memoryManager;
+  backend::MemoryManager *const _memoryManager;
 
   /**
    * Memory slot that represents the token buffer that producer sends data to

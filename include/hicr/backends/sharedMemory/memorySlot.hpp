@@ -31,32 +31,29 @@ class MemorySlot final : public HiCR::MemorySlot
 {
   public:
 
+  /**
+   * Enumeration to determine whether HWLoc supports strict binding and what the user prefers (similar to MPI_Threading_level)
+   */
+  enum binding_type
+  {
+    /**
+     * With strict binding, the memory is allocated strictly in the specified memory space
+     */
+    strict_binding = 1,
 
- /**
-  * Enumeration to determine whether HWLoc supports strict binding and what the user prefers (similar to MPI_Threading_level)
-  */
- enum binding_type
- {
-   /**
-    * With strict binding, the memory is allocated strictly in the specified memory space
-    */
-   strict_binding = 1,
-
-   /**
-    * With strict non-binding, the memory is given by the system allocator. In this case, the binding is most likely setup by the first thread that touches the reserved pages (first touch policy)
-    */
-   strict_non_binding = 0
- };
-
+    /**
+     * With strict non-binding, the memory is given by the system allocator. In this case, the binding is most likely setup by the first thread that touches the reserved pages (first touch policy)
+     */
+    strict_non_binding = 0
+  };
 
   MemorySlot(
     binding_type bindingType,
     void *const pointer,
     const size_t size,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) :
-     HiCR::MemorySlot(pointer, size, globalTag, globalKey),
-     _bindingType(bindingType)
+    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey),
+                                       _bindingType(bindingType)
   {
   }
 
@@ -77,4 +74,3 @@ class MemorySlot final : public HiCR::MemorySlot
 } // namespace backend
 
 } // namespace HiCR
-

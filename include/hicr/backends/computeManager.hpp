@@ -17,8 +17,8 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/processingUnit.hpp>
 #include <hicr/executionUnit.hpp>
+#include <hicr/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -37,7 +37,7 @@ class ComputeManager
 
   virtual ~ComputeManager() = default;
 
-  virtual ExecutionUnit* createExecutionUnit(ExecutionUnit::function_t executionUnit) = 0;
+  virtual ExecutionUnit *createExecutionUnit(ExecutionUnit::function_t executionUnit) = 0;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.
@@ -77,7 +77,7 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  __USED__ inline ProcessingUnit* createProcessingUnit(computeResourceId_t resource)
+  __USED__ inline ProcessingUnit *createProcessingUnit(computeResourceId_t resource)
   {
     // Checking whether the referenced compute resource actually exists
     if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
@@ -91,7 +91,7 @@ class ComputeManager
 
   __USED__ inline std::unique_ptr<ExecutionState> createExecutionState()
   {
-   return std::move(createExecutionStateImpl());
+    return std::move(createExecutionStateImpl());
   }
 
   protected:
@@ -103,8 +103,7 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual ProcessingUnit* createProcessingUnitImpl(computeResourceId_t resource) const = 0;
-
+  virtual ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const = 0;
 
   virtual std::unique_ptr<ExecutionState> createExecutionStateImpl() = 0;
 
@@ -121,7 +120,6 @@ class ComputeManager
    * The internal container for the queried compute resources.
    */
   computeResourceList_t _computeResourceList;
-
 };
 
 } // namespace backend

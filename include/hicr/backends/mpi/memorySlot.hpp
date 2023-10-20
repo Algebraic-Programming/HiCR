@@ -31,24 +31,22 @@ class MemorySlot final : public HiCR::MemorySlot
 {
   public:
 
-
   MemorySlot(
     int rank,
     void *const pointer,
     const size_t size,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) :
-     HiCR::MemorySlot(pointer, size, globalTag, globalKey),
-     _rank(rank)
+    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey),
+                                       _rank(rank)
   {
   }
 
   ~MemorySlot() = default;
 
   int getRank() { return _rank; }
-  MPI_Win*& getDataWindow() { return _dataWindow; }
-  MPI_Win*& getRecvMessageCountWindow() { return _recvMessageCountWindow; }
-  MPI_Win*& getSentMessageCountWindow() { return _sentMessageCountWindow; }
+  MPI_Win *&getDataWindow() { return _dataWindow; }
+  MPI_Win *&getRecvMessageCountWindow() { return _recvMessageCountWindow; }
+  MPI_Win *&getSentMessageCountWindow() { return _sentMessageCountWindow; }
 
   private:
 
@@ -78,4 +76,3 @@ class MemorySlot final : public HiCR::MemorySlot
 } // namespace backend
 
 } // namespace HiCR
-

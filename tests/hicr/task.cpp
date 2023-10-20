@@ -11,13 +11,13 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/task.hpp>
 #include <hicr/backends/sequential/computeManager.hpp>
+#include <hicr/task.hpp>
 
 TEST(Task, Construction)
 {
   HiCR::Task *t = NULL;
-  HiCR::ExecutionUnit* u = NULL;
+  HiCR::ExecutionUnit *u = NULL;
 
   EXPECT_NO_THROW(t = new HiCR::Task(u, NULL));
   EXPECT_FALSE(t == nullptr);
@@ -26,7 +26,7 @@ TEST(Task, Construction)
 
 TEST(Task, SetterAndGetters)
 {
-  HiCR::ExecutionUnit* u = NULL;
+  HiCR::ExecutionUnit *u = NULL;
   HiCR::Task t(u, NULL);
 
   HiCR::Task::taskEventMap_t e;
@@ -45,7 +45,7 @@ TEST(Task, Run)
   bool hasCorrectTaskPointer = false;
 
   // Pointer for the task to create
-  HiCR::Task* t = NULL;
+  HiCR::Task *t = NULL;
 
   // Creating task function
   auto f = [&t, &hasRunningState, &hasCorrectTaskPointer]()
@@ -117,7 +117,7 @@ TEST(Task, Events)
   eventMap.setEvent(HiCR::Task::event_t::onTaskFinish, onFinishCallback);
 
   // Declaring task pointer
-  HiCR::Task* t = NULL;
+  HiCR::Task *t = NULL;
 
   // Creating task function
   auto f = [&t, &onExecuteHasRun, &onExecuteUpdated]()

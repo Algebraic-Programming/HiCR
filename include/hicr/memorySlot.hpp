@@ -35,28 +35,26 @@ class MemorySlot
 {
   public:
 
-
   /**
-  * Default constructor for a MemorySlot class
-  *
-  * \param[in] pointer The pointer corresponding to an address in a given memory space
-  * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
-  * \param[in] creationType Indicates the way in which the memory slot was created (e.g., registered manually or allocated)
-  * \param[in] localityType Indicates whether this is a local or global memory slot
-  * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
-  * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
-  */
+   * Default constructor for a MemorySlot class
+   *
+   * \param[in] pointer The pointer corresponding to an address in a given memory space
+   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
+   * \param[in] creationType Indicates the way in which the memory slot was created (e.g., registered manually or allocated)
+   * \param[in] localityType Indicates whether this is a local or global memory slot
+   * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
+   * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   */
 
   MemorySlot(
-   void *const pointer,
-   const size_t size,
-   const tag_t globalTag = 0,
-   const globalKey_t globalKey = 0) : _pointer(pointer), _size(size), _globalTag(globalTag), _globalKey(globalKey)
+    void *const pointer,
+    const size_t size,
+    const tag_t globalTag = 0,
+    const globalKey_t globalKey = 0) : _pointer(pointer), _size(size), _globalTag(globalTag), _globalKey(globalKey)
   {
   }
 
   virtual ~MemorySlot() = default;
-
 
   /**
    * Getter function for the memory slot's pointer

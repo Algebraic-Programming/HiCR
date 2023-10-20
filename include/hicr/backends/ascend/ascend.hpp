@@ -12,9 +12,8 @@
 
 #pragma once
 
-#include <hicr/common/definitions.hpp>
 #include <hicr/backend.hpp>
-
+#include <hicr/common/definitions.hpp>
 
 namespace HiCR
 {
@@ -49,7 +48,7 @@ class Ascend final : public Backend
    */
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -57,7 +56,7 @@ class Ascend final : public Backend
    */
   __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -65,17 +64,17 @@ class Ascend final : public Backend
    */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   __USED__ inline void memcpyImpl(MemorySlot *destination, const size_t dst_offset, MemorySlot *source, const size_t src_offset, const size_t size) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -87,7 +86,7 @@ class Ascend final : public Backend
    */
   __USED__ inline void queryMemorySlotUpdatesImpl(const MemorySlot *memorySlot) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -97,7 +96,7 @@ class Ascend final : public Backend
    */
   __USED__ inline void fenceImpl(const tag_t tag, const globalKeyToMemorySlotArrayMap_t &globalSlots) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -109,7 +108,7 @@ class Ascend final : public Backend
    */
   __USED__ inline void *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -118,7 +117,7 @@ class Ascend final : public Backend
    */
   __USED__ inline void registerLocalMemorySlotImpl(const MemorySlot *memorySlot) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -128,12 +127,12 @@ class Ascend final : public Backend
    */
   __USED__ inline void deregisterLocalMemorySlotImpl(MemorySlot *memorySlot) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   __USED__ inline void deregisterGlobalMemorySlotImpl(MemorySlot *memorySlot) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -144,7 +143,7 @@ class Ascend final : public Backend
    */
   __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -154,7 +153,7 @@ class Ascend final : public Backend
    */
   __USED__ inline void freeLocalMemorySlotImpl(MemorySlot *memorySlot) override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 
   /**
@@ -165,7 +164,7 @@ class Ascend final : public Backend
    */
   __USED__ bool isMemorySlotValidImpl(const MemorySlot *memorySlot) const override
   {
-   HICR_THROW_LOGIC("This function has not been implemented yet");
+    HICR_THROW_LOGIC("This function has not been implemented yet");
   }
 };
 

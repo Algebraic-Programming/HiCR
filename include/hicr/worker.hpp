@@ -55,7 +55,7 @@ class Worker
 {
   public:
 
-  Worker(HiCR::backend::ComputeManager* computeManager) : _computeManager(computeManager) {}
+  Worker(HiCR::backend::ComputeManager *computeManager) : _computeManager(computeManager) {}
   ~Worker() = default;
 
   /**
@@ -133,7 +133,8 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'sequential' type)
-    auto executionUnit = _computeManager->createExecutionUnit([this](){ this->mainLoop(); });
+    auto executionUnit = _computeManager->createExecutionUnit([this]()
+                                                              { this->mainLoop(); });
 
     // Creating worker's execution state
     auto executionState = _computeManager->createExecutionState();
@@ -217,7 +218,7 @@ class Worker
    *
    * @param[in] pu Processing unit to assign to the worker
    */
-  __USED__ inline void addProcessingUnit(ProcessingUnit* pu) { _processingUnits.push_back(pu); }
+  __USED__ inline void addProcessingUnit(ProcessingUnit *pu) { _processingUnits.push_back(pu); }
 
   /**
    * Gets a reference to the workers assigned processing units.
@@ -253,7 +254,7 @@ class Worker
   /**
    * Compute manager to use to instantiate and manage the worker's and task execution states
    */
-  HiCR::backend::ComputeManager* const _computeManager;
+  HiCR::backend::ComputeManager *const _computeManager;
 
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
@@ -273,41 +274,41 @@ class Worker
         // If a task was returned, then start or execute it
         if (task != NULL) [[likely]]
         {
-           // If the task hasn't been initialized yet, we need to do it now
-           if (task->getState() == ExecutionState::state_t::uninitialized)
-           {
+          // If the task hasn't been initialized yet, we need to do it now
+          if (task->getState() == ExecutionState::state_t::uninitialized)
+          {
             // First, create new execution state for the processing unit
             auto executionState = _computeManager->createExecutionState();
 
             // Then initialize the task with the new execution state
             task->initialize(std::move(executionState));
-           }
+          }
 
-           // Now actually run the task
-           task->run();
+          // Now actually run the task
+          task->run();
         }
 
         // If worker has been suspended, handle it now
         if (_state == state_t::suspended) [[unlikely]]
         {
-         // Suspend secondary processing units first
-         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
+          // Suspend secondary processing units first
+          for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
 
-         // Then suspend current processing unit
-         _processingUnits[0]->suspend();
+          // Then suspend current processing unit
+          _processingUnits[0]->suspend();
         }
 
         // Requesting processing units to terminate as soon as possible
         if (_state == state_t::terminating) [[unlikely]]
         {
-         // Terminate secondary processing units first
-         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
+          // Terminate secondary processing units first
+          for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
 
-         // Then terminate current processing unit
-         _processingUnits[0]->terminate();
+          // Then terminate current processing unit
+          _processingUnits[0]->terminate();
 
-         // Return immediately
-         return;
+          // Return immediately
+          return;
         }
       }
     }

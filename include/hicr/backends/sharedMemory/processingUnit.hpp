@@ -12,16 +12,16 @@
 
 #pragma once
 
-#include <fcntl.h>
-#include <pthread.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
 #include <csignal>
-#include <set>
+#include <fcntl.h>
+#include <hicr/backends/sequential/executionState.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
-#include <hicr/backends/sequential/executionState.hpp>
+#include <pthread.h>
+#include <set>
+#include <sys/mman.h>
+#include <sys/stat.h>
 
 namespace HiCR
 {
@@ -42,7 +42,7 @@ class ProcessingUnit;
 /**
  * Thread local pointer to remember who is the current thread
  */
-thread_local ProcessingUnit* _currentThread;
+thread_local ProcessingUnit *_currentThread;
 
 /**
  * Implementation of a kernel-level thread as processing unit for the shared memory backend.
@@ -178,21 +178,21 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
   __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
   {
-   // Initializing barrier
-   pthread_barrier_init(&initializationBarrier, NULL, 2);
+    // Initializing barrier
+    pthread_barrier_init(&initializationBarrier, NULL, 2);
 
-   // Obtaining execution state
-  _executionState = std::move(executionState);
+    // Obtaining execution state
+    _executionState = std::move(executionState);
 
-   // Launching thread function wrapper
-   auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
-   if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
+    // Launching thread function wrapper
+    auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
+    if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
 
-   // Waiting for proper initialization of the thread
-   pthread_barrier_wait(&initializationBarrier);
+    // Waiting for proper initialization of the thread
+    pthread_barrier_wait(&initializationBarrier);
 
-   // Destroying barrier
-   pthread_barrier_destroy(&initializationBarrier);
+    // Destroying barrier
+    pthread_barrier_destroy(&initializationBarrier);
   }
 
   __USED__ inline void terminateImpl() override
@@ -204,7 +204,6 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     // Waiting for thread after execution
     pthread_join(_pthreadId, NULL);
   }
-
 };
 
 } // end namespace sharedMemory

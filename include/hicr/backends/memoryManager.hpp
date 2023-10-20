@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <set>
 #include <map>
+#include <set>
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -95,7 +95,7 @@ class MemoryManager
   __USED__ inline const std::set<memorySpaceId_t> getMemorySpaceList()
   {
     // Getting value by copy
-    const std::set<memorySpaceId_t> list(_memorySpaceList.begin(), _memorySpaceList.end()) ;
+    const std::set<memorySpaceId_t> list(_memorySpaceList.begin(), _memorySpaceList.end());
 
     return list;
   }
@@ -164,8 +164,8 @@ class MemoryManager
    */
   __USED__ inline void exchangeGlobalMemorySlots(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
   {
-   // Calling internal implementation of this function
-   exchangeGlobalMemorySlotsImpl(tag, memorySlots);
+    // Calling internal implementation of this function
+    exchangeGlobalMemorySlotsImpl(tag, memorySlots);
   }
 
   /**
@@ -175,7 +175,7 @@ class MemoryManager
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  __USED__ inline MemorySlot*  getGlobalMemorySlot(const tag_t tag, const globalKey_t globalKey)
+  __USED__ inline MemorySlot *getGlobalMemorySlot(const tag_t tag, const globalKey_t globalKey)
   {
     // If the requested tag and key are not found, return empty storage
     if (_globalMemorySlotTagKeyMap.contains(tag) == false) HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
@@ -366,14 +366,14 @@ class MemoryManager
    *
    * \internal This function is only meant to be called internally and must be done within the a mutex zone.
    */
-  __USED__ inline void registerGlobalMemorySlot(MemorySlot* memorySlot)
+  __USED__ inline void registerGlobalMemorySlot(MemorySlot *memorySlot)
   {
     // Getting memory slot information
     const auto tag = memorySlot->getGlobalTag();
     const auto globalKey = memorySlot->getGlobalKey();
 
     // Sanity check: tag/globalkey collision
-    if (_globalMemorySlotTagKeyMap.contains(tag) && _globalMemorySlotTagKeyMap.at(tag).contains(globalKey))  HICR_THROW_RUNTIME("Detected collision on global slots tag/globalKey (%lu/%lu). Another global slot was registered with that pair before.", tag, globalKey);
+    if (_globalMemorySlotTagKeyMap.contains(tag) && _globalMemorySlotTagKeyMap.at(tag).contains(globalKey)) HICR_THROW_RUNTIME("Detected collision on global slots tag/globalKey (%lu/%lu). Another global slot was registered with that pair before.", tag, globalKey);
 
     // Adding memory slot to the global map (based on tag and key)
     _globalMemorySlotTagKeyMap[tag][globalKey] = memorySlot;
@@ -408,7 +408,7 @@ class MemoryManager
    *
    * \param[in] memorySlot The new local memory slot to register
    */
-  virtual MemorySlot* registerLocalMemorySlotImpl(void* const ptr, const size_t size) = 0;
+  virtual MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function

@@ -12,11 +12,10 @@
 
 #pragma once
 
-#include <mpi.h>
-#include <hicr/common/definitions.hpp>
 #include <hicr/backends/memoryManager.hpp>
 #include <hicr/backends/mpi/memorySlot.hpp>
-
+#include <hicr/common/definitions.hpp>
+#include <mpi.h>
 
 namespace HiCR
 {
@@ -42,7 +41,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] comm The MPI subcommunicator to use in the communication operations in this backend.
    * If not specified, it will use MPI_COMM_WORLD
    */
- MemoryManager(MPI_Comm comm = MPI_COMM_WORLD) : HiCR::backend::MemoryManager(), _comm(comm)
+  MemoryManager(MPI_Comm comm = MPI_COMM_WORLD) : HiCR::backend::MemoryManager(), _comm(comm)
   {
     MPI_Comm_size(_comm, &_size);
     MPI_Comm_rank(_comm, &_rank);
@@ -137,38 +136,38 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   __USED__ inline void memcpyImpl(HiCR::MemorySlot *destinationSlotPtr, const size_t dst_offset, HiCR::MemorySlot *sourceSlotPtr, const size_t sourceOffset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
-    auto destination = dynamic_cast<MemorySlot*>(destinationSlotPtr);
+    auto destination = dynamic_cast<MemorySlot *>(destinationSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (destination == NULL) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
 
     // Getting up-casted pointer for the execution unit
-    auto source = dynamic_cast<MemorySlot*>(sourceSlotPtr);
+    auto source = dynamic_cast<MemorySlot *>(sourceSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (source == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
 
     // Getting ranks for the involved processes
-    const auto sourceRank      = source->getRank();
+    const auto sourceRank = source->getRank();
     const auto destinationRank = destination->getRank();
 
     // Checking whether source and/or remote are remote
-    bool isSourceRemote      =  sourceRank      != _rank;
-    bool isDestinationRemote =  destinationRank != _rank;
+    bool isSourceRemote = sourceRank != _rank;
+    bool isDestinationRemote = destinationRank != _rank;
 
     // Sanity checks
     if (isSourceRemote == true && isDestinationRemote == true) HICR_THROW_LOGIC("Trying to use MPI backend perform a remote to remote copy between slots");
 
     // Calculating pointers
     [[maybe_unused]] auto destinationPointer = (void *)(((uint8_t *)destination->getPointer()) + dst_offset);
-    [[maybe_unused]] auto sourcePointer      = (void *)(((uint8_t *)source->getPointer()) + sourceOffset);
+    [[maybe_unused]] auto sourcePointer = (void *)(((uint8_t *)source->getPointer()) + sourceOffset);
 
     // Getting data windows for the involved processes (if necessary)
-    [[maybe_unused]] auto sourceDataWindow      = source->getDataWindow();
+    [[maybe_unused]] auto sourceDataWindow = source->getDataWindow();
     [[maybe_unused]] auto destinationDataWindow = destination->getDataWindow();
 
     // Getting recv message count windows for the involved processes (if necessary)
-    [[maybe_unused]] auto sourceSentMessageWindow      = source->getSentMessageCountWindow();
+    [[maybe_unused]] auto sourceSentMessageWindow = source->getSentMessageCountWindow();
     [[maybe_unused]] auto destinationRecvMessageWindow = destination->getRecvMessageCountWindow();
 
     // Perform a get if the source is remote and destination is local
@@ -240,13 +239,13 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
     // For every key-valued subset, and its elements, execute a fence
-    for (const auto& entry : _globalMemorySlotTagKeyMap[tag])
+    for (const auto &entry : _globalMemorySlotTagKeyMap[tag])
     {
       // Getting memory slot id
       auto memorySlotPtr = entry.second;
 
       // Getting up-casted pointer for the execution unit
-      auto memorySlot = dynamic_cast<MemorySlot*>(memorySlotPtr);
+      auto memorySlot = dynamic_cast<MemorySlot *>(memorySlotPtr);
 
       // Checking whether the execution unit passed is compatible with this backend
       if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
@@ -278,7 +277,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The address of the newly allocated memory slot
    */
-  __USED__ inline HiCR::MemorySlot* allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
     HICR_THROW_RUNTIME("This backend provides no support for memory allocation");
   }
@@ -287,13 +286,13 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * Associates a pointer locally-allocated manually and creates a local memory slot with it
    * \param[in] memorySlot The new local memory slot to register
    */
-  __USED__ inline MemorySlot* registerLocalMemorySlotImpl(void* const ptr, const size_t size) override
+  __USED__ inline MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
-   // Creating new memory slot object
-   auto memorySlot = new MemorySlot(_rank, ptr, size);
+    // Creating new memory slot object
+    auto memorySlot = new MemorySlot(_rank, ptr, size);
 
-   // Returning new memory slot pointer
-   return memorySlot;
+    // Returning new memory slot pointer
+    return memorySlot;
   }
 
   /**
@@ -309,7 +308,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlotPtr) override
   {
     // Getting up-casted pointer for the execution unit
-    auto memorySlot = dynamic_cast<MemorySlot*>(memorySlotPtr);
+    auto memorySlot = dynamic_cast<MemorySlot *>(memorySlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
@@ -456,7 +455,6 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   {
     HICR_THROW_RUNTIME("This backend provides no support for memory freeing");
   }
-
 };
 
 } // namespace mpi

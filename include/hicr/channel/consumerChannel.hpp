@@ -46,7 +46,7 @@ class ConsumerChannel final : public Channel
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  ConsumerChannel(backend::MemoryManager  *memoryManager,
+  ConsumerChannel(backend::MemoryManager *memoryManager,
                   MemorySlot *const tokenBuffer,
                   MemorySlot *const coordinationBuffer,
                   const size_t tokenSize,
@@ -153,7 +153,7 @@ class ConsumerChannel final : public Channel
   __USED__ inline void checkReceivedTokens()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-   _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
+    _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count
     auto newPushedTokens = _tokenBuffer->getMessagesRecv();

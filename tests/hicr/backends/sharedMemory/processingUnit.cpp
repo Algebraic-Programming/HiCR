@@ -102,7 +102,6 @@ TEST(ProcessingUnit, ThreadAffinity)
   EXPECT_NO_THROW(p.await());
 }
 
-
 TEST(ProcessingUnit, LifeCycle)
 {
   HiCR::computeResourceId_t pId = 0;
@@ -307,4 +306,3 @@ TEST(ProcessingUnit, LifeCycle)
   // Re-awaiting
   EXPECT_NO_THROW(p.await());
 }
-

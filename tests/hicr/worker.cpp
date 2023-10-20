@@ -18,7 +18,7 @@
 TEST(Worker, Construction)
 {
   HiCR::Worker *w = NULL;
-  HiCR::backend::ComputeManager* m = NULL;
+  HiCR::backend::ComputeManager *m = NULL;
 
   EXPECT_NO_THROW(w = new HiCR::Worker(m));
   EXPECT_FALSE(w == nullptr);
@@ -62,8 +62,8 @@ TEST(Task, SetterAndGetters)
 
 TEST(Worker, LifeCycle)
 {
- // Instantiating default compute manager
- HiCR::backend::sequential::ComputeManager m;
+  // Instantiating default compute manager
+  HiCR::backend::sequential::ComputeManager m;
 
   HiCR::Worker w(&m);
 

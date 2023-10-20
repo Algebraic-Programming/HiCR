@@ -12,15 +12,15 @@
 
 #pragma once
 
-#include <queue>
-#include <memory>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/eventMap.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/executionUnit.hpp>
 #include <hicr/executionState.hpp>
+#include <hicr/executionUnit.hpp>
 #include <hicr/processingUnit.hpp>
+#include <memory>
+#include <queue>
 
 namespace HiCR
 {
@@ -102,7 +102,7 @@ class Task
    * @param[in] fc Specifies the function to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(const ExecutionUnit* executionUnit, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap){};
+  __USED__ Task(const ExecutionUnit *executionUnit, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap){};
 
   /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
@@ -127,15 +127,14 @@ class Task
    */
   __USED__ inline const ExecutionState::state_t getState()
   {
-   // If the execution state has not been initialized then return the value expliclitly
-   if (_executionState == NULL) return ExecutionState::state_t::uninitialized;
+    // If the execution state has not been initialized then return the value expliclitly
+    if (_executionState == NULL) return ExecutionState::state_t::uninitialized;
 
-   // Otherwise just query the initial execution state
-   return _executionState->getState();
+    // Otherwise just query the initial execution state
+    return _executionState->getState();
   }
 
-
-  __USED__ inline const ExecutionUnit* getExecutionUnit() { return _executionUnit; }
+  __USED__ inline const ExecutionUnit *getExecutionUnit() { return _executionUnit; }
 
   /**
    * Registers an operation that has been started by the task but has not yet finished
@@ -237,7 +236,7 @@ class Task
 
   private:
 
-  const ExecutionUnit* const _executionUnit;
+  const ExecutionUnit *const _executionUnit;
 
   /**
    *  Map of events to trigger
