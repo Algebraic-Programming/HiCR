@@ -73,15 +73,14 @@ class MemorySlot final : public HiCR::MemorySlot
    *
    * \return The binding type used to allocate/register this memory slot
    */
-  __USED__ inline binding_type getBindingType() { return _bindingType; }
-  const
+  __USED__ inline binding_type getBindingType() const { return _bindingType; }
 
-    private :
+  private:
 
-    /**
-     * Store whether a bound memory allocation has performed
-     */
-    binding_type _bindingType;
+  /**
+   * Store whether a bound memory allocation has performed
+   */
+  binding_type _bindingType;
 };
 
 } // namespace sharedMemory
