@@ -8,7 +8,7 @@ lib_lpfcore = cc.find_library('lpf_core_univ_ibverbs_generic', dirs: [join_paths
 lib_lpfhl = cc.find_library('lpf_hl', dirs: [join_paths(lpf_dir,'lib')])
 inc_lpf = include_directories('../../../../subprojects/LPF/build/local/include')
 hicrLpfBackendDeps = declare_dependency( 
-include_directories: [inc_lpf],
+compile_args: ['-I'+join_paths(lpf_dir,'include')],
 dependencies: [lib_lpfcore,lib_lpfhl, mpiDep]
  )    
     

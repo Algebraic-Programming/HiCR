@@ -151,7 +151,7 @@ class ProducerChannel final : public Channel
     size_t currentPoppedTokens = _poppedTokens;
 
     // Updating local value of the tail until it changes
-    _backend->memcpy(_poppedTokensSlot, 0, _coordinationBuffer, 0, sizeof(size_t));
+    ::memcpy(_backend->getLocalMemorySlotPointer(_poppedTokensSlot), _backend->getLocalMemorySlotPointer(_coordinationBuffer), sizeof(size_t));
 
     // Calculating difference between previous and new tail position
     size_t n = _poppedTokens - currentPoppedTokens;
