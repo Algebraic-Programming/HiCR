@@ -464,7 +464,6 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline bool isMemorySlotValid(const MemorySlot *memorySlot) const
   {
-    // TODO: change with memory slot id
     const auto memorySlotId = memorySlot->getId();
 
     if (_memoryAscendMap.count(memorySlotId) == 0) return false;
@@ -518,7 +517,7 @@ class MemoryManager final : public backend::MemoryManager
     // TODO: check if there is enough space?
 
     // TODO: different default
-    aclrtMemcpyKind memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
+    aclrtMemcpyKind memcpyKind;
 
     // handle the different memcpy cases
     if (srcdeviceType_t == deviceType_t::Host && dstdeviceType_t == deviceType_t::Host)
@@ -540,8 +539,8 @@ class MemoryManager final : public backend::MemoryManager
       selectDevice(srcDeviceId);
       memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
     }
-    else if (srcdeviceType_t == deviceType_t::Npu && dstdeviceType_t == deviceType_t::Npu && dstDeviceId != srcDeviceId)
-    {
+    // else if (srcdeviceType_t == deviceType_t::Npu && dstdeviceType_t == deviceType_t::Npu && dstDeviceId != srcDeviceId)
+    else {
       int32_t canAccessPeer = 0;
       aclError err;
       // Query whether memory copy is supported between Device 0 and Device 1
@@ -576,7 +575,6 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
-    HICR_THROW_RUNTIME("Not implemented for this backend");
   }
 };
 } // namespace ascend

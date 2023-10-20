@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 
 
   // Waiting on the operation to have finished
-  // m.fence(0);
+  m.fence(0);
 
   return 0;
 }
