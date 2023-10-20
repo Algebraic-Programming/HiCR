@@ -4,44 +4,41 @@
  */
 
 /**
- * @file sharedMemory.cpp
- * @brief Unit tests for the HiCR shared memory backend class
+ * @file memorymanager.cpp
+ * @brief Unit tests for the sequential backend memory manager class
  * @author S. M. Martin
- * @date 13/9/2023
+ * @date 11/9/2023
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/sharedMemory.hpp>
+#include <hicr/backends/sequential/memoryManager.hpp>
 #include <limits>
 
-namespace backend = HiCR::backend::sharedMemory;
+namespace backend = HiCR::backend::sequential;
 
-TEST(SharedMemory, Construction)
+TEST(MemoryManager, Construction)
 {
-  backend::SharedMemory *b = NULL;
+  backend::MemoryManager *b = NULL;
 
-  EXPECT_NO_THROW(b = new backend::SharedMemory());
+  EXPECT_NO_THROW(b = new backend::MemoryManager());
   EXPECT_FALSE(b == nullptr);
   delete b;
 }
 
-TEST(SharedMemory, Memory)
+TEST(MemoryManager, Memory)
 {
-  backend::SharedMemory b;
+  backend::MemoryManager b;
 
   // Querying resources
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  HiCR::Backend::memorySpaceList_t mList;
+  std::set<HiCR::backend::MemoryManager::memorySpaceId_t> mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
-  EXPECT_GT(mList.size(), 0);
+  EXPECT_EQ(mList.size(), 1);
 
   // Getting memory resource
   auto &r = *mList.begin();
-
-  // Adjusting memory binding support to the system's
-  EXPECT_NO_THROW(b.setRequestedBindingType(b.getSupportedBindingType(r)));
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;
@@ -90,7 +87,7 @@ TEST(SharedMemory, Memory)
     if (((const char *)s1LocalPtr)[i] != ((const char *)s2LocalPtr)[i]) sameStrings = false;
   EXPECT_TRUE(sameStrings);
 
-  // Freeing memory slots
+  // Freeing and reregistering memory slots
   EXPECT_NO_THROW(b.freeLocalMemorySlot(s1));
   EXPECT_NO_THROW(b.deregisterLocalMemorySlot(s2));
 }

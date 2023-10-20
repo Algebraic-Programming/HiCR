@@ -4,7 +4,7 @@
  */
 
 /**
- * @file thread.hpp
+ * @file processingUnit.hpp
  * @brief Implements the processing unit class for the sequential backend.
  * @author S. M. Martin
  * @date 11/9/2023
@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <hicr/backends/sequential/executionState.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
@@ -26,11 +28,9 @@ namespace sequential
 {
 
 /**
- * Implementation of a kernel-level thread as processing unit for the shared memory backend.
- *
- * This implementation uses PThreads as backend for the creation and management of OS threads..
+ * Implementation of a procesing unit (a non-parallel process) for the sequential backend
  */
-class Process final : public ProcessingUnit
+class ProcessingUnit final : public HiCR::ProcessingUnit
 {
   public:
 
@@ -39,55 +39,46 @@ class Process final : public ProcessingUnit
    *
    * \param process An id for the process (should be zero)
    */
-  __USED__ inline Process(computeResourceId_t process) : ProcessingUnit(process){};
+  __USED__ inline ProcessingUnit(computeResourceId_t process) : HiCR::ProcessingUnit(process){};
 
   private:
 
   /**
-   * Coroutine to handle suspend/resume functionality
+   * Variable to hold the execution state to run
    */
-  common::Coroutine *_coroutine;
+  std::unique_ptr<HiCR::ExecutionState> _executionState;
 
   __USED__ inline void initializeImpl() override
   {
-    // Creating new coroutine to run
-    _coroutine = new common::Coroutine();
-
-    return;
   }
 
   __USED__ inline void suspendImpl() override
   {
     // Yielding execution
-    _coroutine->yield();
+    _executionState->suspend();
   }
 
   __USED__ inline void resumeImpl() override
   {
     // Resume coroutine
-    _coroutine->resume();
+    _executionState->resume();
   }
 
-  __USED__ inline void startImpl(processingUnitFc_t fc) override
+  __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
   {
-    // Calling function in the context of a suspendable coroutine
-    _coroutine->start([fc](void *arg)
-                      { fc(); },
-                      NULL);
+    // Storing execution state internally
+    _executionState = std::move(executionState);
+
+    // And starting to run it
+    _executionState->resume();
   }
 
   __USED__ inline void terminateImpl() override
   {
-    // Nothing to do for terminate
-    return;
   }
 
   __USED__ inline void awaitImpl() override
   {
-    // Deleting allocated coroutine
-    delete _coroutine;
-
-    return;
   }
 };
 

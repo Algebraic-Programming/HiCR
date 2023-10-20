@@ -4,41 +4,56 @@
  */
 
 /**
- * @file sequential.cpp
- * @brief Unit tests for the sequential backend class
+ * @file memoryManager.cpp
+ * @brief Unit tests for the HiCR shared memory memory manager backend class
  * @author S. M. Martin
- * @date 11/9/2023
+ * @date 13/9/2023
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sequential/sequential.hpp>
+#include <hicr/backends/sharedMemory/memoryManager.hpp>
 #include <limits>
 
-namespace backend = HiCR::backend::sequential;
+namespace backend = HiCR::backend::sharedMemory;
 
-TEST(Sequential, Construction)
+TEST(MemoryManager, Construction)
 {
-  backend::Sequential *b = NULL;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
 
-  EXPECT_NO_THROW(b = new backend::Sequential());
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  backend::MemoryManager *b = NULL;
+
+  EXPECT_NO_THROW(b = new backend::MemoryManager(&topology));
   EXPECT_FALSE(b == nullptr);
   delete b;
 }
 
-TEST(Sequential, Memory)
+TEST(MemoryManager, Memory)
 {
-  backend::Sequential b;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  backend::MemoryManager b(&topology);
 
   // Querying resources
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  HiCR::Backend::memorySpaceList_t mList;
+  std::set<HiCR::backend::MemoryManager::memorySpaceId_t> mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
-  EXPECT_EQ(mList.size(), 1);
+  EXPECT_GT(mList.size(), 0);
 
   // Getting memory resource
   auto &r = *mList.begin();
+
+  // Adjusting memory binding support to the system's
+  EXPECT_NO_THROW(b.setRequestedBindingType(b.getSupportedBindingType(r)));
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;
@@ -87,7 +102,7 @@ TEST(Sequential, Memory)
     if (((const char *)s1LocalPtr)[i] != ((const char *)s2LocalPtr)[i]) sameStrings = false;
   EXPECT_TRUE(sameStrings);
 
-  // Freeing and reregistering memory slots
+  // Freeing memory slots
   EXPECT_NO_THROW(b.freeLocalMemorySlot(s1));
   EXPECT_NO_THROW(b.deregisterLocalMemorySlot(s2));
 }

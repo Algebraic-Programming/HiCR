@@ -3,12 +3,16 @@ executable('channel_sequential',
   dependencies: [ hicrBuildDep, hicrSequentialBackendDep, dependency('threads', required: true)]
 )
 
-executable('channel_mpi',
-  [ 'source/channel_mpi.cpp'],
-  dependencies: [ hicrBuildDep, hicrMPIBackendDep ]
-)
+if 'mpi' in enabledBackends
+	executable('channel_mpi',
+	  [ 'source/channel_mpi.cpp'],
+	  dependencies: [ hicrBuildDep, hicrMPIBackendDep ]
+	)
+endif
 
-executable('channel_sharedMemory',
-  [ 'source/channel_sharedMemory.cpp'],
-  dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep ]
-)
+if 'sharedMemory' in enabledBackends
+	executable('channel_sharedMemory',
+	  [ 'source/channel_sharedMemory.cpp'],
+	  dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep ]
+	)
+endif

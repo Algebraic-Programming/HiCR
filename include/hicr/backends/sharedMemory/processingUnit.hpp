@@ -4,7 +4,7 @@
  */
 
 /**
- * @file thread.hpp
+ * @file processingUnit.hpp
  * @brief Implements the processing unit class for the shared memory backend.
  * @author S. M. Martin
  * @date 14/8/2023
@@ -14,6 +14,8 @@
 
 #include <csignal>
 #include <fcntl.h>
+#include <hicr/backends/sequential/executionState.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
 #include <pthread.h>
@@ -35,12 +37,19 @@ namespace sharedMemory
  */
 #define HICR_SUSPEND_RESUME_SIGNAL SIGUSR1
 
+class ProcessingUnit;
+
+/**
+ * Thread local pointer to remember who is the current thread
+ */
+thread_local ProcessingUnit *_currentThread;
+
 /**
  * Implementation of a kernel-level thread as processing unit for the shared memory backend.
  *
  * This implementation uses PThreads as backend for the creation and management of OS threads..
  */
-class Thread final : public ProcessingUnit
+class ProcessingUnit final : public HiCR::ProcessingUnit
 {
   public:
 
@@ -74,11 +83,11 @@ class Thread final : public ProcessingUnit
   }
 
   /**
-   * Constructor for the Thread class
+   * Constructor for the ProcessingUnit class
    *
    * \param core Represents the core affinity to associate this processing unit to
    */
-  __USED__ inline Thread(computeResourceId_t core) : ProcessingUnit(core){};
+  __USED__ inline ProcessingUnit(computeResourceId_t core) : HiCR::ProcessingUnit(core){};
 
   private:
 
@@ -88,9 +97,9 @@ class Thread final : public ProcessingUnit
   pthread_t _pthreadId;
 
   /**
-   * Copy of the function to be ran by the thread
+   * Internal state of execution
    */
-  processingUnitFc_t _fc;
+  std::unique_ptr<ExecutionState> _executionState;
 
   /**
    * Barrier to synchronize thread initialization
@@ -100,20 +109,18 @@ class Thread final : public ProcessingUnit
   /**
    * Static wrapper function to setup affinity and run the thread's function
    *
-   * \param[in] p Pointer to a Thread class to recover the calling instance from inside wrapper
+   * \param[in] p Pointer to a ProcessingUnit class to recover the calling instance from inside wrapper
    */
   __USED__ inline static void *launchWrapper(void *p)
   {
     // Gathering thread object
-    auto thread = (Thread *)p;
+    auto thread = (ProcessingUnit *)p;
+
+    // Storing current thread pointer
+    _currentThread = thread;
 
     // Setting signal to hear for suspend/resume
-    signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
-
-    // Setting thread as cancelable
-    int oldValue;
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldValue);
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldValue);
+    signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
 
     // Setting initial thread affinity
     thread->updateAffinity(std::set<int>({(int)thread->getComputeResourceId()}));
@@ -125,7 +132,7 @@ class Thread final : public ProcessingUnit
     pthread_barrier_wait(&thread->initializationBarrier);
 
     // Calling main loop
-    thread->_fc();
+    thread->_executionState->resume();
 
     // No returns
     return NULL;
@@ -150,7 +157,7 @@ class Thread final : public ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
 
     // Re-set next signal listening before exiting
-    signal(HICR_SUSPEND_RESUME_SIGNAL, Thread::catchSuspendResumeSignal);
+    signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
   }
 
   __USED__ inline void initializeImpl() override
@@ -169,13 +176,13 @@ class Thread final : public ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void startImpl(processingUnitFc_t fc) override
+  __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
   {
     // Initializing barrier
     pthread_barrier_init(&initializationBarrier, NULL, 2);
 
-    // Making a copy of the function
-    _fc = fc;
+    // Obtaining execution state
+    _executionState = std::move(executionState);
 
     // Launching thread function wrapper
     auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
@@ -190,8 +197,6 @@ class Thread final : public ProcessingUnit
 
   __USED__ inline void terminateImpl() override
   {
-    // Killing threads directly
-    pthread_cancel(_pthreadId);
   }
 
   __USED__ inline void awaitImpl() override

@@ -11,12 +11,10 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/sharedMemory.hpp>
 #include <taskr/runtime.hpp>
 
 TEST(Runtime, Construction)
 {
-  auto t = new HiCR::backend::sharedMemory::SharedMemory();
-  auto r = new taskr::Runtime(t);
+  auto r = new taskr::Runtime();
   EXPECT_FALSE(r == nullptr);
 }

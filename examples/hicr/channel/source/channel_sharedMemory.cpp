@@ -1,6 +1,6 @@
 #include <thread>
 #include <hicr.hpp>
-#include <hicr/backends/sharedMemory/sharedMemory.hpp>
+#include <hicr/backends/sharedMemory/memoryManager.hpp>
 #include <source/consumer.hpp>
 #include <source/producer.hpp>
 
@@ -8,8 +8,14 @@
 
 int main(int argc, char **argv)
 {
- // Instantiating backend
- HiCR::backend::sharedMemory::SharedMemory backend(CONCURRENT_THREADS);
+ // Creating HWloc topology object
+ hwloc_topology_t topology;
+
+ // Reserving memory for hwloc
+ hwloc_topology_init(&topology);
+
+ // Instantiating Shared Memory backend
+ HiCR::backend::sharedMemory::MemoryManager m(&topology, CONCURRENT_THREADS);
 
  // Checking arguments
  if (argc != 2)
@@ -29,8 +35,8 @@ int main(int argc, char **argv)
  }
 
  // Creating new threads (one for consumer, one for produer)
- auto consumerThread = std::thread(consumerFc, &backend, channelCapacity);
- auto producerThread = std::thread(producerFc, &backend, channelCapacity);
+ auto consumerThread = std::thread(consumerFc, &m, channelCapacity);
+ auto producerThread = std::thread(producerFc, &m, channelCapacity);
 
  // Waiting on threads
  consumerThread.join();

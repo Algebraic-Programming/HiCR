@@ -1,5 +1,6 @@
 #pragma once
-#include <hicr/backend.hpp>
+#include <hicr/backends/computeManager.hpp>
+#include <hicr/backends/memoryManager.hpp>
 #include <hicr/channel/channel.hpp>
 #include <hicr/channel/consumerChannel.hpp>
 #include <hicr/channel/producerChannel.hpp>
