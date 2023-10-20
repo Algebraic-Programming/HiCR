@@ -55,6 +55,11 @@ class Worker
 {
   public:
 
+  /**
+   * Constructor for the worker class.
+   *
+   * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
+   */
   Worker(HiCR::backend::ComputeManager *computeManager) : _computeManager(computeManager) {}
   ~Worker() = default;
 

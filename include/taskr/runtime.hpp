@@ -175,12 +175,15 @@ class Runtime
   public:
 
   /**
-   * Constructor of the TaskR Runtime. It requires the user to provide a computeManager from where to source compute resources.
-   *
-   * \param[in] computeManager The computeManager from where to source compute resources
+   * Constructor of the TaskR Runtime.
    */
   Runtime() = default;
 
+  /**
+   * This function adds a processing unit to be used by TaskR in the execution of tasks
+   *
+   * \param[in] pu The processing unit to add
+   */
   __USED__ inline void addProcessingUnit(HiCR::ProcessingUnit *pu)
   {
     _processingUnits.push_back(pu);
@@ -305,6 +308,8 @@ class Runtime
    * Starts the execution of the TaskR runtime.
    * Creates a set of HiCR workers, based on the provided computeManager, and subscribes them to a dispatcher queue.
    * After creating the workers, it starts them and suspends the current context until they're back (all tasks have finished).
+   *
+   * \param[in] computeManager The compute manager to use to coordinate the execution of processing units and tasks
    */
   __USED__ inline void run(HiCR::backend::ComputeManager *computeManager)
   {
@@ -351,6 +356,11 @@ class Runtime
     delete _eventMap;
   }
 
+  /**
+   * Returns the currently executing TaskR task
+   *
+   * \return A pointer to the currently executing TaskR task
+   */
   __USED__ inline Task *getCurrentTask() { return _hicrToTaskrTaskMap[HiCR::getCurrentTask()]; }
 
 }; // class Runtime

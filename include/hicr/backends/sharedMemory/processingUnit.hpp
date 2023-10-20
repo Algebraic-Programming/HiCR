@@ -4,7 +4,7 @@
  */
 
 /**
- * @file thread.hpp
+ * @file processingUnit.hpp
  * @brief Implements the processing unit class for the shared memory backend.
  * @author S. M. Martin
  * @date 14/8/2023

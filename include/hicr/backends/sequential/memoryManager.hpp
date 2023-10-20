@@ -4,8 +4,8 @@
  */
 
 /**
- * @file sharedMemory.hpp
- * @brief This is a minimal memory manager for the sequential backend
+ * @file memoryManager.hpp
+ * @brief This file implements the memory manager support for the sequential backend
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -112,7 +112,9 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
   /**
    * Associates a pointer locally-allocated manually and creates a local memory slot with it
-   * \param[in] memorySlot The new local memory slot to register
+   * \param[in] ptr Pointer to the local memory space
+   * \param[in] size Size of the memory slot to register
+   * \return A newly created memory slot
    */
   __USED__ inline HiCR::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {

@@ -99,10 +99,10 @@ class Task
   /**
    * Constructor that sets the function that the task will execute and its argument.
    *
-   * @param[in] fc Specifies the function to execute.
+   * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(const ExecutionUnit *executionUnit, void *argument = NULL, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap){};
+  __USED__ Task(const ExecutionUnit *executionUnit, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap){};
 
   /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
@@ -134,6 +134,11 @@ class Task
     return _executionState->getState();
   }
 
+  /**
+   * Returns the execution unit assigned to this task
+   *
+   * \return The execution unit assigned to this task
+   */
   __USED__ inline const ExecutionUnit *getExecutionUnit() { return _executionUnit; }
 
   /**
@@ -174,6 +179,11 @@ class Task
     return true;
   }
 
+  /**
+   * Implements the initialization routine of a task, that stores and initializes the execution state to run to completion
+   *
+   * \param[in] executionState A previously initialized execution state
+   */
   __USED__ inline void initialize(std::unique_ptr<ExecutionState> executionState)
   {
     if (getState() != ExecutionState::state_t::uninitialized) HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", getState());

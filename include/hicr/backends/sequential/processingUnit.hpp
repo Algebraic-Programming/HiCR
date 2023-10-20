@@ -4,7 +4,7 @@
  */
 
 /**
- * @file thread.hpp
+ * @file processingUnit.hpp
  * @brief Implements the processing unit class for the sequential backend.
  * @author S. M. Martin
  * @date 11/9/2023

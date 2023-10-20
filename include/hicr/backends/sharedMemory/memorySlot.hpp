@@ -5,7 +5,7 @@
 
 /**
  * @file memorySlot.hpp
- * @brief Provides a definition for the memory slot class for the shared Memory backend
+ * @brief Provides a definition for the memory slot class for the shared memory backend
  * @author S. M. Martin
  * @date 19/10/2023
  */
@@ -47,6 +47,15 @@ class MemorySlot final : public HiCR::MemorySlot
     strict_non_binding = 0
   };
 
+  /**
+   * Constructor for a MemorySlot class for the MPI backend
+   *
+   * \param[in] bindingType The binding type requested (and employed) for this memory slot
+   * \param[in] pointer If this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
+   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
+   * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
+   * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   */
   MemorySlot(
     binding_type bindingType,
     void *const pointer,
@@ -59,14 +68,20 @@ class MemorySlot final : public HiCR::MemorySlot
 
   ~MemorySlot() = default;
 
-  __USED__ inline binding_type getBindingType() { return _bindingType; }
-
-  private:
-
   /**
-   * Store whether a bound memory allocation has performed
+   * Returns the binding type used to allocate/register this memory slot
+   *
+   * \return The binding type used to allocate/register this memory slot
    */
-  binding_type _bindingType;
+  __USED__ inline binding_type getBindingType() { return _bindingType; }
+  const
+
+    private :
+
+    /**
+     * Store whether a bound memory allocation has performed
+     */
+    binding_type _bindingType;
 };
 
 } // namespace sharedMemory

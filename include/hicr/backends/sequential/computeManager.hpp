@@ -5,7 +5,7 @@
 
 /**
  * @file computeManager.hpp
- * @brief This is a minimal backend for compute management of (multi-threaded) shared memory systems
+ * @brief This file implements support for compute management of single processor systems
  * @author S. M. Martin
  * @date 10/12/2023
  */

@@ -4,8 +4,8 @@
  */
 
 /**
- * @file sharedMemory.hpp
- * @brief This is a minimal backend for shared memory system support based on HWLoc
+ * @file memoryManager.hpp
+ * @brief This file implements the memory manager support for the shared memory backend
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -34,8 +34,9 @@ class MemoryManager final : public backend::MemoryManager
   public:
 
   /**
-   * The constructor is employed to reserve memory required for hwloc
+   * Constructor for the memory manager class for the shared memory backend
    *
+   * \param[in] topology An HWloc topology object that can be used to query the available memory resources
    * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
   MemoryManager(const hwloc_topology_t *topology, const size_t fenceCount = 1) : backend::MemoryManager(), _topology{topology}
@@ -190,7 +191,9 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
    *
-   * \param[in] memorySlot The new local memory slot to register
+   * \param[in] ptr Pointer to the local memory space
+   * \param[in] size Size of the memory slot to register
+   * \return A newly created memory slot
    */
   __USED__ inline HiCR::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {

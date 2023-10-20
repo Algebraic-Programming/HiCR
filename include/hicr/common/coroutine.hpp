@@ -76,7 +76,6 @@ class Coroutine
    * This is separate from the class constructor to allow Just-in-time allocation of the stack. This enables the creation of many instances of this class, whereas only a few need to have an allocated stack at any given moment.
    *
    * \param[in] fc Function to run by the coroutine
-   * \param[in] arg Argument to pass to the function
    */
   __USED__ inline void start(coroutineFc_t fc)
   {
@@ -108,6 +107,11 @@ class Coroutine
     _context = boost::context::callcc(coroutineFc);
   }
 
+  /**
+   * A function to check whether the coroutine has finished execution completely
+   *
+   * \return True, if the coroutine has finished; False, otherwise.
+   */
   __USED__ inline bool hasFinished() { return _hasFinished; }
 
   private:

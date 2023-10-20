@@ -87,6 +87,8 @@ class ProcessingUnit
 
   /**
    * Function to obtain the processing unit's state
+   *
+   * \return Retruns the current state
    */
   __USED__ inline ProcessingUnit::state_t getState() const
   {
@@ -109,9 +111,9 @@ class ProcessingUnit
   }
 
   /**
-   * Starts running the resource and execute a compute unit object
+   * Starts running the resource and execute a previously initialized executionState object
    *
-   * @param[in] fc The compute unit to execute by the resource
+   * @param[in] executionState The execution state to start running with this processing  unit
    */
   __USED__ inline void start(std::unique_ptr<HiCR::ExecutionState> executionState)
   {
@@ -203,7 +205,7 @@ class ProcessingUnit
   /**
    * Internal implmentation of the start function
    *
-   * @param[in] ExecutionUnit The execution unit to run
+   * @param[in] executionState The execution state to start running with this processing unit
    */
   virtual void startImpl(std::unique_ptr<ExecutionState> executionState) = 0;
 

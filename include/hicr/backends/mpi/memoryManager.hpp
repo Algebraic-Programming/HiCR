@@ -4,8 +4,8 @@
  */
 
 /**
- * @file mpi.hpp
- * @brief This is a minimal backend for MPI support
+ * @file memoryManager.hpp
+ * @brief This file implements the memory manager class for the MPI backend
  * @author S. M. Martin
  * @date 11/9/2023
  */
@@ -284,7 +284,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
   /**
    * Associates a pointer locally-allocated manually and creates a local memory slot with it
-   * \param[in] memorySlot The new local memory slot to register
+   *
+   * \param[in] ptr Pointer to the local memory space
+   * \param[in] size Size of the memory slot to register
+   * \return A newly created memory slot
    */
   __USED__ inline MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
@@ -298,7 +301,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   /**
    * De-registers a memory slot previously registered
    *
-   * \param[in] memorySlotId Identifier of the memory slot to deregister.
+   * \param[in] memorySlot Pointer to the memory slot to deregister.
    */
   __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {

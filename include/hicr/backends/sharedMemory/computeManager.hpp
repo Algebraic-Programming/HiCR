@@ -36,7 +36,9 @@ class ComputeManager final : public backend::ComputeManager
   public:
 
   /**
-   * The constructor is employed to reserve memory required for hwloc
+   * Constructor for the compute manager class for the shared memory backend
+   *
+   * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
   ComputeManager(hwloc_topology_t *topology) : backend::ComputeManager(), _topology{topology} {}
 

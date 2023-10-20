@@ -67,6 +67,9 @@ class MemoryManager
    */
   typedef parallelHashMap_t<tag_t, globalKeyToMemorySlotMap_t> globalMemorySlotTagKeyMap_t;
 
+  /**
+   * Default destructor
+   */
   virtual ~MemoryManager() = default;
 
   /**
@@ -357,14 +360,9 @@ class MemoryManager
   /**
    * Registers a global memory slot from a given address.
    *
-   * \param[in] tag Represents the subgroup of HiCR instances that will share the global reference
-   * \param[in] globalKey Represents the a subset of memory slots that will be grouped together.
-   *                 They will be sorted by this value, which allows for recognizing which slots came from which instance.
-   * \param[in] ptr Pointer to the start of the memory slot
-   * \param[in] size Size of the memory slot to create
-   * \return A newly created memory slot
+   * \param[in] memorySlot Newly created global memory slot to register
    *
-   * \internal This function is only meant to be called internally and must be done within the a mutex zone.
+   * \internal This function is only meant to be called internally
    */
   __USED__ inline void registerGlobalMemorySlot(MemorySlot *memorySlot)
   {
@@ -406,7 +404,9 @@ class MemoryManager
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
    *
-   * \param[in] memorySlot The new local memory slot to register
+   * \param[in] ptr Pointer to the start of the memory slot
+   * \param[in] size Size of the memory slot to create
+   * \return A newly created memory slot
    */
   virtual MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) = 0;
 

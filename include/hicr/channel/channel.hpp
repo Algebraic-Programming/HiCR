@@ -119,7 +119,7 @@ class Channel
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
+   * \param[in] memoryManager The backend's memory manager to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the data exchange buffer. This buffer needs to be allocated
    *            at the consumer side. The producer will push new tokens into this buffer, while there is enough space.
    *            This buffer should be big enough to hold the required capacity * tokenSize.

@@ -4,8 +4,8 @@
  */
 
 /**
- * @file backend.hpp
- * @brief Provides a definition for the base backend compute manager class.
+ * @file computeManager.hpp
+ * @brief Provides a definition for the abstract compute manager class
  * @author S. M. Martin
  * @date 27/6/2023
  */
@@ -26,17 +26,34 @@ namespace HiCR
 namespace backend
 {
 
+/**
+ * This class represents an abstract definition of a compute manager. That is, the set of functions to be implemented by a given backend that allows
+ * the discovery of compute resources, the definition of replicable execution units (functions or kernels to run), and the instantiation of
+ * execution states, that represent the execution lifetime of an execution unit.
+ */
 class ComputeManager
 {
   public:
 
   /**
-   * Common definition of a collection of compute resources
+   * Common type for a collection of compute resources
    */
   typedef std::set<computeResourceId_t> computeResourceList_t;
 
+  /**
+   * Default destructor
+   */
   virtual ~ComputeManager() = default;
 
+  /**
+   * This function enables the creation of an execution unit.
+   *
+   * Its default constructor takes a simple function (supported by most backends), but this method can be overriden to support the execution
+   * of other replicable heterogeneous kernels (e.g., GPU, NPU, etc).
+   *
+   * \param[in] executionUnit The replicable function to execute
+   * \return Returns a pointer to the newly created execution unit. The user needs to delete it to free up its allocated memory.
+   */
   virtual ExecutionUnit *createExecutionUnit(ExecutionUnit::function_t executionUnit) = 0;
 
   /**
@@ -89,6 +106,13 @@ class ComputeManager
     return value;
   }
 
+  /**
+   * This function enables the creation of an empty execution state object.
+   *
+   * The instantiation of its internal memory structures is delayed until explicit initialization to reduce memory usage when, for example, scheduling many tasks that do not need to execute at the same time.
+   *
+   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
+   */
   __USED__ inline std::unique_ptr<ExecutionState> createExecutionState()
   {
     return std::move(createExecutionStateImpl());
@@ -105,6 +129,11 @@ class ComputeManager
    */
   virtual ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const = 0;
 
+  /**
+   * Backend-specific implementation of the createExecutionState function
+   *
+   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
+   */
   virtual std::unique_ptr<ExecutionState> createExecutionStateImpl() = 0;
 
   /**

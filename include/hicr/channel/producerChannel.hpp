@@ -36,11 +36,11 @@ class ProducerChannel final : public Channel
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
-   * popped. It may also be used for other coordination signals.
+   * \param[in] memoryManager The backend to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
-   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
+   *            tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
    * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
+   *            popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
@@ -72,7 +72,6 @@ class ProducerChannel final : public Channel
    * This function can be used to check the size of the coordination buffer that needs to be provided
    * in the creation of the producer channel
    *
-   * \param[in] backend The backend to perform the initialization operation with
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
   __USED__ static inline void initializeCoordinationBuffer(MemorySlot *coordinationBuffer)

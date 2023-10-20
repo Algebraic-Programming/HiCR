@@ -4,8 +4,8 @@
  */
 
 /**
- * @file function.hpp
- * @brief Implements the execution unit (function) class for the sequential backend.
+ * @file executionState.hpp
+ * @brief This file implements the execution state class for the sequential backend
  * @author S. M. Martin
  * @date 9/10/2023
  */
@@ -26,6 +26,10 @@ namespace backend
 namespace sequential
 {
 
+/**
+ * This class represents the execution state of a resumable function for the sequential (and shared memory) backends.
+ * It uses a coroutine object to enable suspend/resume functionality.
+ */
 class ExecutionState final : public HiCR::ExecutionState
 {
   protected:
