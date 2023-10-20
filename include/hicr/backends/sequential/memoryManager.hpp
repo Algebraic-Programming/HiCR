@@ -13,6 +13,7 @@
 #pragma once
 
 #include <hicr/backends/memoryManager.hpp>
+#include <unistd.h>
 
 namespace HiCR
 {
