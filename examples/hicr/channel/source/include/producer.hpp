@@ -1,7 +1,7 @@
 #pragma once
 
 #include <hicr.hpp>
-#include <source/common.hpp>
+#include <source/include/common.hpp>
 
 void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity)
 {

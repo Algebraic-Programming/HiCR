@@ -4,8 +4,6 @@
 #include <taskr.hpp>
 #include <hicr/backends/sharedMemory/computeManager.hpp>
 
-#define WORK_TASK_COUNT 1000
-
 void workFc()
 {
  __volatile__ double value = 2.0;
@@ -17,14 +15,14 @@ void workFc()
   }
 }
 
-void waitFc(taskr::Runtime* taskr)
+void waitFc(taskr::Runtime* taskr, size_t secondsDelay)
 {
  // Reducing maximum active workers to 1
  taskr->setMaximumActiveWorkers(1);
 
  printf("Starting long task...\n");
  fflush(stdout);
- sleep(5.0);
+ sleep(secondsDelay);
  printf("Finished long task...\n");
  fflush(stdout);
 
@@ -34,6 +32,12 @@ void waitFc(taskr::Runtime* taskr)
 
 int main(int argc, char **argv)
 {
+  // Getting arguments, if provided
+  size_t workTaskCount = 1000;
+  size_t secondsDelay = 5;
+  if (argc > 1) workTaskCount = std::atoi(argv[1]);
+  if (argc > 2) secondsDelay = std::atoi(argv[2]);
+
   // Creating HWloc topology object
   hwloc_topology_t topology;
 
@@ -56,7 +60,7 @@ int main(int argc, char **argv)
   auto workExecutionUnit = computeManager.createExecutionUnit([]() { workFc(); });
 
   // Creating task wait execution unit
-  auto waitExecutionUnit = computeManager.createExecutionUnit([&taskr]() { waitFc(&taskr); });
+  auto waitExecutionUnit = computeManager.createExecutionUnit([&taskr, &secondsDelay]() { waitFc(&taskr, secondsDelay); });
 
   // Create processing units from the detected compute resource list and giving them to taskr
   for (auto &resource : computeResources)
@@ -72,22 +76,22 @@ int main(int argc, char **argv)
   fflush(stdout);
 
   // Building task graph. First a lot of pure work tasks.
-  for (size_t i = 0; i < WORK_TASK_COUNT; i++)
+  for (size_t i = 0; i < workTaskCount; i++)
   {
     auto workTask = new taskr::Task(i, workExecutionUnit);
     taskr.addTask(workTask);
   }
 
   // Then creating a single wait task that suspends all workers except for one
-  auto waitTask = new taskr::Task(WORK_TASK_COUNT + 1, waitExecutionUnit);
-  for (size_t i = 0; i < WORK_TASK_COUNT; i++) waitTask->addTaskDependency(i);
+  auto waitTask = new taskr::Task(workTaskCount + 1, waitExecutionUnit);
+  for (size_t i = 0; i < workTaskCount; i++) waitTask->addTaskDependency(i);
   taskr.addTask(waitTask);
 
   // Then creating another batch of work tasks
-  for (size_t i = 0; i < WORK_TASK_COUNT; i++)
+  for (size_t i = 0; i < workTaskCount; i++)
   {
-    auto workTask = new taskr::Task(WORK_TASK_COUNT + i + 1, workExecutionUnit);
-    workTask->addTaskDependency(WORK_TASK_COUNT + 1);
+    auto workTask = new taskr::Task(workTaskCount + i + 1, workExecutionUnit);
+    workTask->addTaskDependency(workTaskCount + 1);
     taskr.addTask(workTask);
   }
 

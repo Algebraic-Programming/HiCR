@@ -1,8 +1,8 @@
 #include <mpi.h>
 #include <hicr.hpp>
 #include <hicr/backends/mpi/memoryManager.hpp>
-#include <source/consumer.hpp>
-#include <source/producer.hpp>
+#include <source/include/consumer.hpp>
+#include <source/include/producer.hpp>
 
 int main(int argc, char **argv)
 {
