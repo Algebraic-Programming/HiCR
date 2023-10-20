@@ -12,10 +12,10 @@
 
 #pragma once
 
+#include <atomic>
 #include <hicr/backends/memoryManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <unistd.h>
-#include <atomic>
 
 namespace HiCR
 {
