@@ -12,11 +12,10 @@ subdir('include/taskr')
 # Getting selected backends
 enabledBackends = get_option('backends')
 
-# Including selected backends
-if 'sequential' in enabledBackends
- subdir('include/hicr/backends/sequential')
-endif
-    
+# The sequential backend is the default for HiCR
+subdir('include/hicr/backends/sequential')
+
+# Including selected optional backends
 if 'sharedMemory' in enabledBackends
   subdir('include/hicr/backends/sharedMemory')
 endif
@@ -30,8 +29,12 @@ if 'ascend' in enabledBackends
 endif    
     
 # Build example targets
-subdir('examples')
+if get_option('buildExamples')
+ subdir('examples')
+endif
 
 # Build test targets
-subdir('tests')
+if get_option('buildTests')
+ subdir('tests')
+endif
 
