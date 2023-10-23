@@ -18,18 +18,9 @@
 #define DEFAULT_MSGSLOTS 10*_size
 
 #include <cstring>
-#include <errno.h>
-#include <future>
-#include <memory>
-#include <iostream>
-
 #include <lpf/core.h>
 #include <lpf/collectives.h>
-
-#include "hwloc.h"
-
-#include <hicr/backend.hpp>
-//#include <hicr/common/logger.hpp>
+#include <hicr/backends/memoryManager.hpp>
 
 #define EXPECT_EQ( format, expected, actual ) \
     do {  \
@@ -63,11 +54,11 @@ namespace lpf
     size_t targetRank;
   };
 
-class LpfBackend final : public Backend
+class MemoryManager final : public HiCR::backend::Memorymanager
 {
 
   private:
-  std::map<memorySlotId_t, LpfMemSlot> _lpfLocalSlots;
+
   //memorySlotId_t _currentTagId = 0;
   const size_t _size;
   const size_t _rank;
@@ -81,10 +72,6 @@ class LpfBackend final : public Backend
    */
 
   public:
-
-  bool isMemorySlotValidImpl(const memorySlotId_t memorySlotId) const override {
-      return true;
-  }
 
   size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const {
     HICR_THROW_RUNTIME("This backend provides no support for memory spaces");
@@ -115,7 +102,8 @@ class LpfBackend final : public Backend
    * On the other hand, the resize message queue could also be locally
    * made, and placed elsewhere.
    */
- LpfBackend(size_t size, size_t rank, lpf_t lpf) : _size(size), _rank(rank), _lpf(lpf) {
+ LpfBackend(size_t size, size_t rank, lpf_t lpf) : _size(size), _rank(rank), _lpf(lpf) : HiCR::MemoryManager()
+  {
 
     lpf_err_t rc;
     const size_t msgslots = DEFAULT_MSGSLOTS;
@@ -131,40 +119,7 @@ class LpfBackend final : public Backend
     EXPECT_EQ( "%d", LPF_SUCCESS, rc );
 
  }
-
- LpfBackend(size_t size, size_t rank, lpf_t lpf, size_t msgslots, size_t memslots) : _size(size), _rank(rank), _lpf(lpf) {
-
-    lpf_err_t rc;
-    // at the moment, the number to register is a wild guess
-    rc = lpf_resize_message_queue( _lpf, msgslots);
-    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
-    // at the moment, the number to register is a wild guess
-    rc = lpf_resize_memory_register( _lpf, memslots);
-    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
-
-    rc = lpf_sync( _lpf, LPF_SYNC_DEFAULT );
-    EXPECT_EQ( "%d", LPF_SUCCESS, rc );
-
- }
-
- ~LpfBackend() {
-    // for (auto i : _lpfLocalSlots) {
-    //     lpf_deregister(_lpf, i.second.lpfSlot);
-    // }
-    // for (auto i : _globalSlotMap) {
-    //     lpf_deregister(_lpf, i.second.lpfSlot);
-    // }
- }
-
-  std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const {
-      HICR_THROW_RUNTIME("This backend provides no support for processing units");
-  }
-
   void queryResources() {}
-
-  size_t getProcessId() {
-    return _rank;
-  }
 
   void exchangeGlobalMemorySlots(const tag_t tag) {
 
@@ -400,10 +355,6 @@ class LpfBackend final : public Backend
     {
         lpf_put( _lpf, srcSlot.lpfSlot, src_offset, dstSlot.targetRank, dstSlot.lpfSlot, dst_offset, size, LPF_MSG_DEFAULT);
     }
-    else {
-        std::cerr << "Did not find a suitable memcpy operation\n";
-        abort();
-    }
 
   }
 
@@ -431,7 +382,10 @@ class LpfBackend final : public Backend
 
   __USED__ inline void registerLocalMemorySlotImpl(void *const addr, const size_t size, const memorySlotId_t memSlotId) override
   {
-      createMemorySlot(addr, size, memSlotId);
+   lpf_memslot_t lpfSlot = LPF_INVALID_MEMSLOT;
+   auto rc = lpf_register_local( _lpf, addr, size, &lpfSlot );
+   if (rc != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Memory Manager: lpf_register_local failed");
+   _lpfLocalSlots[memorySlotId] = LpfMemSlot {.lpfSlot = lpfSlot, .size = size/*, .pointer = addr*/};
   }
 
   __USED__ inline void queryMemorySlotUpdatesImpl(const memorySlotId_t memorySlotId) override
@@ -466,17 +420,6 @@ class LpfBackend final : public Backend
     {
         // No compute resources are offered by the LPF backend
         return computeResourceList_t({});
-    }
-
-    void createMemorySlot(void *const addr, const size_t size, memorySlotId_t memorySlotId)  {
-        lpf_memslot_t lpfSlot = LPF_INVALID_MEMSLOT;
-        auto rc = lpf_register_local( _lpf, addr, size, &lpfSlot );
-        if (rc != LPF_SUCCESS) {
-          std::cerr << "lpf_register_local failed\n";
-          std::abort();
-        }
-        _lpfLocalSlots[memorySlotId] = LpfMemSlot {.lpfSlot = lpfSlot, .size = size/*, .pointer = addr*/};
-
     }
 
     void *getMemorySlotLocalPointer(const memorySlotId_t memorySlotId) const {return nullptr;}
