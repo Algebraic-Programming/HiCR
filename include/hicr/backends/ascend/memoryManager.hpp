@@ -358,7 +358,6 @@ class MemoryManager final : public backend::MemoryManager
     {
       freeDeviceMemorySlot(memorySlotDeviceId, memorySlotPointer);
     }
-
   }
 
   /**
