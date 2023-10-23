@@ -436,7 +436,7 @@ class MemoryManager final : public HiCR::backend::Memorymanager
         return msg_cnt - hicrSlotId2MsgCnt[lpfSlotId];
     }
 
-    void flush() override {
+    __USED__ inline void flush() override {
         lpf_flush(_lpf);
     }
 
