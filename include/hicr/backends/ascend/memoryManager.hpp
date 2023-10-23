@@ -47,7 +47,6 @@ class MemoryManager final : public backend::MemoryManager
     aclError err;
     err = aclInit(config_path);
 
-    // TODO: discuss with Sergio how we should handle these errors in the constructor
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
     hcclComms = (HcclComm *)malloc(deviceCount * sizeof(HcclComm));
@@ -114,11 +113,6 @@ class MemoryManager final : public backend::MemoryManager
    * Keep track of the context for each memorySpaceId/deviceId
    */
   std::map<memorySpaceId_t, ascendState_t> _deviceStatusMap;
-
-  /**
-   *  Keep track of which devices contains a memory slot
-   */
-  std::map<memorySlotIdentifier_t, MemorySlot *> _memoryAscendMap;
 
   /**
    * Set the device on which the operations needs to be executed
@@ -252,7 +246,6 @@ class MemoryManager final : public backend::MemoryManager
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
 
       // Retrieve the memory info
-      // TODO: do we care about total memory?
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 
@@ -290,7 +283,6 @@ class MemoryManager final : public backend::MemoryManager
 
     // keep track of the mapping between unique identifier and pointer + deviceId
     auto memorySlot = new MemorySlot(memorySpaceId, ptr, size);
-    _memoryAscendMap[memorySlot->getId()] = memorySlot;
 
     return memorySlot;
   }
@@ -356,7 +348,6 @@ class MemoryManager final : public backend::MemoryManager
 
     // Getting memory slot info
     const auto memorySlotPointer = m->getPointer();
-    const auto memorySlotId = m->getId();
     const auto memorySlotDeviceId = m->getDeviceId();
 
     if (_deviceStatusMap.at(memorySlotDeviceId).deviceType == deviceType_t::Host)
@@ -368,7 +359,6 @@ class MemoryManager final : public backend::MemoryManager
       freeDeviceMemorySlot(memorySlotDeviceId, memorySlotPointer);
     }
 
-    _memoryAscendMap.erase(memorySlotId);
   }
 
   /**
@@ -440,21 +430,6 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-   * Backend-internal implementation of the isMemorySlotValid function
-   *
-   * \param[in] memorySlot Memory slot to check
-   * \return true, if the referenced memory slot exists and is valid; false, otherwise
-   */
-  __USED__ inline bool isMemorySlotValid(const MemorySlot *memorySlot) const
-  {
-    const auto memorySlotId = memorySlot->getId();
-
-    if (_memoryAscendMap.count(memorySlotId) == 0) return false;
-
-    return true;
-  }
-
-  /**
    * Backend-internal memcpy implementation.
    * Restrictions: Only memory copying between Devices in the same thread or between different threads in the same process is supported.
    * Memory copying between Devices in different processes is not supported.
@@ -474,12 +449,6 @@ class MemoryManager final : public backend::MemoryManager
     // Checking whether the execution unit passed is compatible with this backend
     if (s == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
     if (d == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
-
-    // Check if memory slots are both valid
-    if (!isMemorySlotValid(s)) HICR_THROW_RUNTIME("Invalid source memory slot(s) (%lu) provided. It either does not exist or is invalid", source);
-    if (!isMemorySlotValid(d)) HICR_THROW_RUNTIME("Invalid destination memory slot(s) (%lu) provided. It either does not exist or is invalid", destination);
-
-    // TODO: async memcpy?
 
     aclError err;
 

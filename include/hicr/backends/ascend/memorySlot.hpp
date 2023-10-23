@@ -11,8 +11,6 @@
  */
 #pragma once
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
 #include <hicr/memorySlot.hpp>
 
 namespace HiCR
@@ -28,11 +26,6 @@ namespace ascend
  * Type definition for the Ascend Device identifier
  */
 typedef uint64_t deviceIdentifier_t;
-
-/**
- * Type definition for a generic memory slot identifier
- */
-typedef boost::uuids::uuid memorySlotIdentifier_t;
 
 /**
  * This class represents an abstract definition for a Memory Slot resource in HiCR that:
@@ -57,7 +50,7 @@ class MemorySlot final : public HiCR::MemorySlot
     void *const pointer,
     size_t size,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _id(boost::uuids::random_generator()()), _deviceId(deviceId)
+    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId)
   {
   }
 
@@ -73,20 +66,7 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   __USED__ inline const deviceIdentifier_t getDeviceId() const { return _deviceId; }
 
-  /**
-   * Returns the unique id of the memory slot
-   *
-   * \return The unique id of the memory slot
-   */
-  __USED__ inline const memorySlotIdentifier_t getId() const { return _id; }
-
   private:
-
-  /**
-   * Uniquely identifier for a memory slot
-   */
-  //  TODO: can we substitute it with the pair<deviceId,ptr>
-  const memorySlotIdentifier_t _id;
 
   /**
    * The Ascend Device ID in which the memory slot is created
