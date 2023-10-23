@@ -16,6 +16,7 @@
 #include <hccl/hccl.h>
 #include <hicr/backends/ascend/memorySlot.hpp>
 #include <hicr/backends/memoryManager.hpp>
+#include <hicr/backends/sequential/memoryManager.hpp>
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
@@ -55,32 +56,6 @@ class MemoryManager final : public backend::MemoryManager
     // Destroy HCCL communicators among Ascends
     destroyHcclCommunicators();
     free(hcclComms);
-
-    void *ptr;
-    deviceIdentifier_t deviceId;
-    deviceType_t deviceType;
-
-    // Free the previous allocated memory slots
-    // TODO: check with Sergio
-    for (const auto memAscendData : _memoryAscendMap)
-    {
-      ptr = memAscendData.second->getPointer();
-      deviceId = memAscendData.second->getDeviceId();
-      deviceType = _deviceStatusMap.at(deviceId).deviceType;
-
-      if (deviceType == deviceType_t::Host)
-      {
-        (void)aclrtFreeHost(ptr);
-      }
-      else
-      {
-        // TODO: better way is to group by device id
-        (void)selectDevice(deviceId);
-        (void)aclrtFree(ptr);
-      }
-    }
-
-    _memoryAscendMap.clear();
 
     // Destroy Ascend contexts
     for (const auto memSpaceData : _deviceStatusMap)
@@ -166,6 +141,7 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
     const auto deviceState = _deviceStatusMap.at(memorySpace);
+
     return deviceState.size;
   }
 
@@ -180,10 +156,10 @@ class MemoryManager final : public backend::MemoryManager
   {
     // Discover memory spaces
     const auto memorySpaceList = createMemorySpacesListAndSetupContexts();
-
+    
     // setup HCCL communication
     setupHccl();
-
+    
     return memorySpaceList;
   }
 
@@ -199,14 +175,15 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-   * Setup HCCL. This method populates the hccl communicators.
+   * Setup HCCL. This method populates the hccl communicators and initialize the peer communication
+   * channels among ascends.
    */
   __USED__ inline void setupHccl()
   {
     // destroy previously allocated hccl communicators
     destroyHcclCommunicators();
 
-    HcclResult err;
+    HcclResult hcclErr;
 
     // instruct the HCCL api on how many devices ID are present
     int32_t devices[deviceCount];
@@ -216,8 +193,28 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     // Setup a single-process multiple card communication
-    err = HcclCommInitAll(deviceCount, devices, hcclComms);
-    if (err != HCCL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize HCCL. Error %d", err);
+    hcclErr = HcclCommInitAll(deviceCount, devices, hcclComms);
+    if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize HCCL. Error %d", hcclErr);
+
+    int32_t canAccessPeer = 0;
+    aclError err;
+    
+    // enable communication among each pair of ascend cards
+    for (uint32_t src = 0; src < deviceCount; src++)
+    {
+      for (uint32_t dst = 0; dst < deviceCount; dst++)
+      {
+        if (src == dst) continue;
+        err = aclrtDeviceCanAccessPeer(&canAccessPeer, src, dst);
+        if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine peer accessibility to device %ld from device %ld.. Error %d", dst, src, err);
+
+        if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dst, src, err);
+
+        selectDevice(dst);
+        err = aclrtDeviceEnablePeerAccess(src, 0);
+        if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable peer access from device %ld to device %ld. Error %d", dst, src, err);
+      }
+    }
   }
 
   /**
@@ -238,7 +235,7 @@ class MemoryManager final : public backend::MemoryManager
     err = aclrtGetDeviceCount(&deviceCount);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
 
-    size_t size, totalMemory;
+    size_t ascendFreeMemory, ascendMemorySize;
     aclrtContext deviceContext;
 
     // Add as many memory spaces as devices
@@ -254,33 +251,20 @@ class MemoryManager final : public backend::MemoryManager
 
       // Retrieve the memory info
       // TODO: do we care about total memory?
-      err = aclrtGetMemInfo(ACL_HBM_MEM, &size, &totalMemory);
+      err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 
       // update the internal data structure
-      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = size};
+      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = ascendMemorySize};
       memorySpaceList.insert(deviceId);
     }
 
     // init host context
-    const auto hostMemorySize = getTotalSystemMemory();
+    const auto hostMemorySize = HiCR::backend::sequential::MemoryManager::getTotalSystemMemory();
     _deviceStatusMap[deviceCount] = ascendState_t{.deviceType = deviceType_t::Host, .size = hostMemorySize};
     memorySpaceList.insert(deviceCount);
 
     return memorySpaceList;
-  }
-
-  /**
-   * This function returns the system physical memory size, which is what matters for a sequential program
-   *
-   * This is adapted from https://stackoverflow.com/a/2513561
-   */
-  // TODO: borrowed from sequential backend. make it accessible also to ascend?
-  __USED__ inline static size_t getTotalSystemMemory()
-  {
-    size_t pages = sysconf(_SC_PHYS_PAGES);
-    size_t page_size = sysconf(_SC_PAGE_SIZE);
-    return pages * page_size;
   }
 
   /**
@@ -305,8 +289,6 @@ class MemoryManager final : public backend::MemoryManager
     // keep track of the mapping between unique identifier and pointer + deviceId
     auto memorySlot = new MemorySlot(memorySpaceId, ptr, size);
     _memoryAscendMap[memorySlot->getId()] = memorySlot;
-
-    // TODO: update memory size?
 
     return memorySlot;
   }
@@ -354,7 +336,7 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
-    HICR_THROW_RUNTIME("Not implemented for this backend");
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
   /**
@@ -385,8 +367,6 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     _memoryAscendMap.erase(memorySlotId);
-
-    // TODO: update memory size?
   }
 
   /**
@@ -415,6 +395,7 @@ class MemoryManager final : public backend::MemoryManager
     err = aclrtFree((void *)ptr);
     if (err != ACL_SUCCESS) HICR_THROW_LOGIC("Error while freeing device %d memory. Error %d", deviceId, err);
   }
+  
   /**
    * Backend-internal implementation of the deregisterMemorySlot function
    *
@@ -422,7 +403,7 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {
-    HICR_THROW_RUNTIME("Not implemented for this backend");
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
   /**
@@ -432,7 +413,7 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {
-    HICR_THROW_RUNTIME("Not implemented for this backend");
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
   /**
@@ -443,7 +424,7 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
-    HICR_THROW_RUNTIME("Not implemented for this backend");
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
   /**
@@ -453,7 +434,7 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void queryMemorySlotUpdatesImpl(const HiCR::MemorySlot *memorySlot) override
   {
-    HICR_THROW_RUNTIME("Not implemented for this backend");
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
   /**
@@ -503,60 +484,24 @@ class MemoryManager final : public backend::MemoryManager
     // Get source data
     const auto srcPtr = s->getPointer();
     const auto srcDeviceId = s->getDeviceId();
-    const auto srcdeviceType_t = _deviceStatusMap.at(srcDeviceId).deviceType;
+    const auto srcdeviceType = _deviceStatusMap.at(srcDeviceId).deviceType;
 
     // Get destination data
     const auto dstPtr = d->getPointer();
     const auto dstDeviceId = d->getDeviceId();
-    const auto dstdeviceType_t = _deviceStatusMap.at(dstDeviceId).deviceType;
+    const auto dstdeviceType = _deviceStatusMap.at(dstDeviceId).deviceType;
 
     // Calculating actual offsets
     const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
     const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
 
-    // TODO: check if there is enough space?
+    aclrtMemcpyKind memcpyKind = getMemcpyKind(srcdeviceType, dstdeviceType);
 
-    // TODO: different default
-    aclrtMemcpyKind memcpyKind;
-
-    // handle the different memcpy cases
-    if (srcdeviceType_t == deviceType_t::Host && dstdeviceType_t == deviceType_t::Host)
-    {
-      memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
-    }
-    else if (srcdeviceType_t == deviceType_t::Host && dstdeviceType_t == deviceType_t::Npu)
-    {
+    if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE || (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE && dstDeviceId != srcDeviceId)) {
       selectDevice(dstDeviceId);
-      memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
     }
-    else if (srcdeviceType_t == deviceType_t::Npu && dstdeviceType_t == deviceType_t::Host)
-    {
+    else if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE || memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST) {
       selectDevice(srcDeviceId);
-      memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
-    }
-    else if (srcdeviceType_t == deviceType_t::Npu && dstDeviceId == srcDeviceId)
-    {
-      selectDevice(srcDeviceId);
-      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
-    }
-    // else if (srcdeviceType_t == deviceType_t::Npu && dstdeviceType_t == deviceType_t::Npu && dstDeviceId != srcDeviceId)
-    else {
-      int32_t canAccessPeer = 0;
-      aclError err;
-      // Query whether memory copy is supported between Device 0 and Device 1
-
-      err = aclrtDeviceCanAccessPeer(&canAccessPeer, srcDeviceId, dstDeviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine peer accessibility. Error %d", err);
-
-      if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dstDeviceId, srcDeviceId, err);
-
-      selectDevice(dstDeviceId);
-      // TODO: shall we enable it by default in initialization?
-      // TODO: shall we turn it off when not needed?
-      err = aclrtDeviceEnablePeerAccess(srcDeviceId, 0);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable peer access from device %ld to device %ld. Error %d", dstDeviceId, srcDeviceId, err);
-
-      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
     }
 
     err = aclrtMemcpy(actualDstPtr, size, actualSrcPtr, size, memcpyKind);
@@ -565,6 +510,36 @@ class MemoryManager final : public backend::MemoryManager
 
     source->increaseMessagesSent();
     destination->increaseMessagesRecv();
+  }
+
+  /**
+   * Determine the correct kind of memcpy to be used according to the source and destination device (can be either ascend or host)
+   *
+   * \param[in] src source device type
+   * \param[in] src destination device type
+   * \return the memcpy kind to be used
+   */
+  __USED__ inline aclrtMemcpyKind getMemcpyKind(deviceType_t src, deviceType_t dst) const
+  {
+    aclrtMemcpyKind memcpyKind;
+    if (src == deviceType_t::Host && dst == deviceType_t::Host)
+    {
+      memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
+    }
+    else if (src == deviceType_t::Host && dst == deviceType_t::Npu)
+    {
+      memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
+    }
+    else if (src == deviceType_t::Npu && dst == deviceType_t::Host)
+    {
+      memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
+    }
+    else
+    {
+      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
+    }
+
+    return memcpyKind;
   }
 
   /**

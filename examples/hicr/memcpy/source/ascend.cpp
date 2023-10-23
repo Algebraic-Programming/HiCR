@@ -27,7 +27,6 @@ int main(int argc, char **argv)
   sprintf((char *)hostSlot1->getPointer(), "Hello, HiCR user!\n");
 
   // perform the memcpys
-
   m.memcpy(ascendSlot1Device0, DST_OFFSET, hostSlot1, SRC_OFFSET, BUFFER_SIZE);
   m.memcpy(ascendSlot2Device0, DST_OFFSET, ascendSlot1Device0, SRC_OFFSET, BUFFER_SIZE);
   m.memcpy(ascendSlot1Device7, DST_OFFSET, ascendSlot2Device0, SRC_OFFSET, BUFFER_SIZE);

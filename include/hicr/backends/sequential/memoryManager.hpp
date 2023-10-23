@@ -40,6 +40,18 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   MemoryManager(const size_t fenceCount = 1) : backend::MemoryManager(), _fenceCount{fenceCount} {}
   ~MemoryManager() = default;
+  
+  /**
+   * This function returns the system physical memory size, which is what matters for a sequential program
+   *
+   * This is adapted from https://stackoverflow.com/a/2513561
+   */
+  __USED__ inline static size_t getTotalSystemMemory()
+  {
+    size_t pages = sysconf(_SC_PHYS_PAGES);
+    size_t page_size = sysconf(_SC_PAGE_SIZE);
+    return pages * page_size;
+  }
 
   private:
 
@@ -57,18 +69,6 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
     return _totalSystemMem;
-  }
-
-  /**
-   * This function returns the system physical memory size, which is what matters for a sequential program
-   *
-   * This is adapted from https://stackoverflow.com/a/2513561
-   */
-  __USED__ inline static size_t getTotalSystemMemory()
-  {
-    size_t pages = sysconf(_SC_PHYS_PAGES);
-    size_t page_size = sysconf(_SC_PAGE_SIZE);
-    return pages * page_size;
   }
 
   /**
