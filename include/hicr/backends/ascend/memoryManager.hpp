@@ -39,6 +39,8 @@ class MemoryManager final : public backend::MemoryManager
 
   /**
    * Constructor for the ascend backend.
+   *
+   * \param[in] config_path configuration file to initialize ACL
    */
   MemoryManager(const char *config_path = NULL) : HiCR::backend::MemoryManager()
   {
@@ -156,10 +158,10 @@ class MemoryManager final : public backend::MemoryManager
   {
     // Discover memory spaces
     const auto memorySpaceList = createMemorySpacesListAndSetupContexts();
-    
+
     // setup HCCL communication
     setupHccl();
-    
+
     return memorySpaceList;
   }
 
@@ -198,7 +200,7 @@ class MemoryManager final : public backend::MemoryManager
 
     int32_t canAccessPeer = 0;
     aclError err;
-    
+
     // enable communication among each pair of ascend cards
     for (uint32_t src = 0; src < deviceCount; src++)
     {
@@ -311,8 +313,8 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Allocate memory on the Ascend memory through Ascend-dedicated functions.
    *
-   * \param[in] deviceId Device id where memory is allocated.
-   * \param[in] ptr Local memory to free up.
+   * \param[in] memorySpace Device id where memory is allocated
+   * \param[in] size Allocation size
    */
   __USED__ inline void *deviceAlloc(const memorySpaceId_t memorySpace, const size_t size)
   {
@@ -395,7 +397,7 @@ class MemoryManager final : public backend::MemoryManager
     err = aclrtFree((void *)ptr);
     if (err != ACL_SUCCESS) HICR_THROW_LOGIC("Error while freeing device %d memory. Error %d", deviceId, err);
   }
-  
+
   /**
    * Backend-internal implementation of the deregisterMemorySlot function
    *
@@ -497,10 +499,12 @@ class MemoryManager final : public backend::MemoryManager
 
     aclrtMemcpyKind memcpyKind = getMemcpyKind(srcdeviceType, dstdeviceType);
 
-    if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE || (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE && dstDeviceId != srcDeviceId)) {
+    if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE || (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE && dstDeviceId != srcDeviceId))
+    {
       selectDevice(dstDeviceId);
     }
-    else if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE || memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST) {
+    else if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE || memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)
+    {
       selectDevice(srcDeviceId);
     }
 
@@ -516,7 +520,8 @@ class MemoryManager final : public backend::MemoryManager
    * Determine the correct kind of memcpy to be used according to the source and destination device (can be either ascend or host)
    *
    * \param[in] src source device type
-   * \param[in] src destination device type
+   * \param[in] dst destination device type
+   *
    * \return the memcpy kind to be used
    */
   __USED__ inline aclrtMemcpyKind getMemcpyKind(deviceType_t src, deviceType_t dst) const

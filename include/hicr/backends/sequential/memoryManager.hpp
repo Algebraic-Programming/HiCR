@@ -40,11 +40,13 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   MemoryManager(const size_t fenceCount = 1) : backend::MemoryManager(), _fenceCount{fenceCount} {}
   ~MemoryManager() = default;
-  
+
   /**
    * This function returns the system physical memory size, which is what matters for a sequential program
    *
    * This is adapted from https://stackoverflow.com/a/2513561
+   *
+   * \return the system physical memory size
    */
   __USED__ inline static size_t getTotalSystemMemory()
   {
