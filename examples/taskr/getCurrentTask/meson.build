@@ -1,4 +1,5 @@
-executable('getCurrentTask',
-  [ 'source/main.cpp'],
-  dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep]
-)
+testSuite = [ 'examples', 'hicr', 'getCurrentTask' ]
+
+getCurrentTask = executable('getCurrentTask', [ 'source/main.cpp'], dependencies: [ taskrBuildDep, hicrSequentialBackendDep])
+test('getCurrentTask', getCurrentTask, args : [ ], suite: testSuite)
+

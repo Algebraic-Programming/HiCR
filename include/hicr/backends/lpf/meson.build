@@ -7,7 +7,7 @@ cc = meson.get_compiler('cpp')
 lib_lpfcore = cc.find_library('lpf_core_univ_ibverbs_generic', dirs: [join_paths(lpf_dir,'lib')])
 lib_lpfhl = cc.find_library('lpf_hl', dirs: [join_paths(lpf_dir,'lib')])
 inc_lpf = include_directories('../../../../subprojects/LPF/build/local/include')
-hicrLpfBackendDeps = declare_dependency( 
+hicrLPFBackendDep = declare_dependency( 
 compile_args: ['-I'+join_paths(lpf_dir,'include')],
 dependencies: [lib_lpfcore,lib_lpfhl, mpiDep]
  )    

@@ -13,11 +13,10 @@
 
 #pragma once
 
-#include <expected>
-#include <hicr/backend.hpp>
 #include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/memorySlot.hpp>
 #include <hicr/task.hpp>
 
 namespace HiCR
@@ -38,7 +37,7 @@ class ConsumerChannel final : public Channel
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
+   * \param[in] memoryManager The backend to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
@@ -47,15 +46,15 @@ class ConsumerChannel final : public Channel
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  ConsumerChannel(Backend *backend,
-                  const Backend::memorySlotId_t tokenBuffer,
-                  const Backend::memorySlotId_t coordinationBuffer,
+  ConsumerChannel(backend::MemoryManager *memoryManager,
+                  MemorySlot *const tokenBuffer,
+                  MemorySlot *const coordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : Channel(backend, tokenBuffer, coordinationBuffer, tokenSize, capacity)
+                  const size_t capacity) : Channel(memoryManager, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided token exchange  buffer has the right size
     auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
-    auto providedTokenBufferSize = _backend->getMemorySlotSize(_tokenBuffer);
+    auto providedTokenBufferSize = _tokenBuffer->getSize();
     if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
   }
   ~ConsumerChannel() = default;
@@ -138,11 +137,11 @@ class ConsumerChannel final : public Channel
     _poppedTokens += n;
 
     // Notifying producer(s) of buffer liberation
-    _backend->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
+    _memoryManager->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
 
     // Re-syncing token and coordination buffers
-    _backend->queryMemorySlotUpdates(_coordinationBuffer);
-    _backend->queryMemorySlotUpdates(_tokenBuffer);
+    _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
+    _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
   }
 
   private:
@@ -154,10 +153,10 @@ class ConsumerChannel final : public Channel
   __USED__ inline void checkReceivedTokens()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _backend->queryMemorySlotUpdates(_tokenBuffer);
+    _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count
-    auto newPushedTokens = _backend->getMemorySlotReceivedMessages(_tokenBuffer);
+    auto newPushedTokens = _tokenBuffer->getMessagesRecv();
 
     // The number of received tokens is the difference between the currently pushed tokens and the previous one
     auto receivedTokens = newPushedTokens - _pushedTokens;

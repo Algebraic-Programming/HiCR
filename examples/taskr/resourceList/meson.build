@@ -1,5 +1,7 @@
-executable('resourceList',
-  [ 'source/main.cpp'],
-  dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep],
-  include_directories: include_directories(['source'])
-)
+testSuite = [ 'examples', 'hicr', 'resourceList' ]
+
+if 'sharedMemory' in enabledBackends
+	resourceList = executable('resourceList', [ 'source/main.cpp'], dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep ])
+	test('resourceList', resourceList, args : [ '5', '0', '1', '2', '3', '4', '5', '6', '7', '8' ], suite: testSuite)
+endif
+

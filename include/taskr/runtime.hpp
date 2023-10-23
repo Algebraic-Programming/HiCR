@@ -13,7 +13,6 @@
 #pragma once
 #include <atomic>
 #include <hicr.hpp>
-#include <hicr/common/exceptions.hpp>
 #include <map>
 #include <mutex>
 #include <taskr/common.hpp>
@@ -21,13 +20,6 @@
 
 namespace taskr
 {
-
-class Runtime;
-
-/**
- * Static pointer to the TaskR runtime singleton
- */
-inline Runtime *_runtime;
 
 /**
  * Implementation of the TaskR Runtime singleton class
@@ -91,9 +83,14 @@ class Runtime
   HiCR::lockFreeQueue_t<HiCR::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
 
   /**
-   * Backend to extract compute resources from
+   * The processing units assigned to taskr to run workers from
    */
-  HiCR::Backend *_backend;
+  HiCR::processingUnitList_t _processingUnits;
+
+  /*
+   * This map links HiCR tasks to Taskr tasks
+   */
+  HiCR::parallelHashMap_t<HiCR::Task *, Task *> _hicrToTaskrTaskMap;
 
   /**
    * This function checks whether a given task is ready to go (i.e., all its dependencies have been satisfied)
@@ -178,11 +175,19 @@ class Runtime
   public:
 
   /**
-   * Constructor of the TaskR Runtime. It requires the user to provide a backend from where to source compute resources.
-   *
-   * \param[in] backend The backend from where to source compute resources
+   * Constructor of the TaskR Runtime.
    */
-  Runtime(HiCR::Backend *backend) : _backend(backend){};
+  Runtime() = default;
+
+  /**
+   * This function adds a processing unit to be used by TaskR in the execution of tasks
+   *
+   * \param[in] pu The processing unit to add
+   */
+  __USED__ inline void addProcessingUnit(HiCR::ProcessingUnit *pu)
+  {
+    _processingUnits.push_back(pu);
+  }
 
   /**
    * Sets the maximum active worker count. If the current number of active workers exceeds this maximu, TaskR will put as many
@@ -194,7 +199,7 @@ class Runtime
   __USED__ inline void setMaximumActiveWorkers(const size_t max)
   {
     // Storing new maximum active worker count
-    _runtime->_maximumActiveWorkers = max;
+    _maximumActiveWorkers = max;
   }
 
   /**
@@ -210,6 +215,9 @@ class Runtime
     // Checking if maximum was exceeded
     if (_taskCount >= MAX_SIMULTANEOUS_TASKS) HICR_THROW_LOGIC("Maximum task size (MAX_SIMULTANEOUS_TASKS = %lu) exceeded.\n", MAX_SIMULTANEOUS_TASKS);
 
+    // Adding task to the map relating it to its own HiCR task
+    _hicrToTaskrTaskMap[task->getHiCRTask()] = task;
+
     // Adding task to the waiting lis, it will be cleared out later
     _waitingTaskQueue.push(task);
   }
@@ -223,14 +231,17 @@ class Runtime
    */
   __USED__ inline void onTaskFinish(HiCR::Task *hicrTask)
   {
-    // Getting TaskR task
-    auto task = (Task *)hicrTask->getArgument();
+    // Getting TaskR task from HiCR task
+    auto task = _hicrToTaskrTaskMap.at(hicrTask);
 
     // Decreasing overall task count
     _taskCount--;
 
     // Adding task label to finished task set
     _finishedTaskHashMap.insert(task->getLabel());
+
+    // Taking task away from the map
+    _hicrToTaskrTaskMap.erase(hicrTask);
 
     // Free task's memory to prevent leaks. Could not use unique_ptr because the
     // type is not supported by boost's lock-free queue
@@ -295,12 +306,12 @@ class Runtime
 
   /**
    * Starts the execution of the TaskR runtime.
-   * Creates a set of HiCR workers, based on the provided backend, and subscribes them to a dispatcher queue.
+   * Creates a set of HiCR workers, based on the provided computeManager, and subscribes them to a dispatcher queue.
    * After creating the workers, it starts them and suspends the current context until they're back (all tasks have finished).
    *
-   * \param [in] computeResourceList Is the list of compute resources corresponding to the backend define during initialization. Taskr will create one processing unit from each of these resources and assign one of them to each worker.
+   * \param[in] computeManager The compute manager to use to coordinate the execution of processing units and tasks
    */
-  __USED__ inline void run(const HiCR::Backend::computeResourceList_t &computeResourceList)
+  __USED__ inline void run(HiCR::backend::ComputeManager *computeManager)
   {
     _dispatcher = new HiCR::Dispatcher([this]()
                                        { return checkWaitingTasks(); });
@@ -310,30 +321,14 @@ class Runtime
     _eventMap->setEvent(HiCR::Task::event_t::onTaskFinish, [this](HiCR::Task *task)
                         { onTaskFinish(task); });
 
-    // Making a local copy of the compute resource list, so that in case it is empty, we query it from the backend
-    auto actualComputeResourceList = computeResourceList;
-
-    // In case no resources were provided by the user, using all of the available resources from the backend
-    if (computeResourceList.empty() == true)
-    {
-      // Querying computational resources
-      _backend->queryComputeResources();
-
-      // Updating the compute resource list
-      actualComputeResourceList = _backend->getComputeResourceList();
-    }
-
     // Creating one worker per processung unit in the list
-    for (auto &resource : actualComputeResourceList)
+    for (auto &pu : _processingUnits)
     {
       // Creating new worker
-      auto worker = new HiCR::Worker();
-
-      // Creating a processing unit out of the computational resource
-      auto processingUnit = _backend->createProcessingUnit(resource);
+      auto worker = new HiCR::Worker(computeManager);
 
       // Assigning resource to the thread
-      worker->addProcessingUnit(processingUnit);
+      worker->addProcessingUnit(pu);
 
       // Assigning worker to the common dispatcher
       worker->subscribe(_dispatcher);
@@ -360,6 +355,13 @@ class Runtime
     delete _dispatcher;
     delete _eventMap;
   }
+
+  /**
+   * Returns the currently executing TaskR task
+   *
+   * \return A pointer to the currently executing TaskR task
+   */
+  __USED__ inline Task *getCurrentTask() { return _hicrToTaskrTaskMap[HiCR::getCurrentTask()]; }
 
 }; // class Runtime
 
