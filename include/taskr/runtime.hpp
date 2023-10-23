@@ -87,11 +87,6 @@ class Runtime
    */
   HiCR::processingUnitList_t _processingUnits;
 
-  /*
-   * This map links HiCR tasks to Taskr tasks
-   */
-  HiCR::parallelHashMap_t<HiCR::Task *, Task *> _hicrToTaskrTaskMap;
-
   /**
    * This function checks whether a given task is ready to go (i.e., all its dependencies have been satisfied)
    *
@@ -215,9 +210,6 @@ class Runtime
     // Checking if maximum was exceeded
     if (_taskCount >= MAX_SIMULTANEOUS_TASKS) HICR_THROW_LOGIC("Maximum task size (MAX_SIMULTANEOUS_TASKS = %lu) exceeded.\n", MAX_SIMULTANEOUS_TASKS);
 
-    // Adding task to the map relating it to its own HiCR task
-    _hicrToTaskrTaskMap[task->getHiCRTask()] = task;
-
     // Adding task to the waiting lis, it will be cleared out later
     _waitingTaskQueue.push(task);
   }
@@ -232,16 +224,13 @@ class Runtime
   __USED__ inline void onTaskFinish(HiCR::Task *hicrTask)
   {
     // Getting TaskR task from HiCR task
-    auto task = _hicrToTaskrTaskMap.at(hicrTask);
+    auto task = (Task*)hicrTask->getBackwardReferencePointer();
 
     // Decreasing overall task count
     _taskCount--;
 
     // Adding task label to finished task set
     _finishedTaskHashMap.insert(task->getLabel());
-
-    // Taking task away from the map
-    _hicrToTaskrTaskMap.erase(hicrTask);
 
     // Free task's memory to prevent leaks. Could not use unique_ptr because the
     // type is not supported by boost's lock-free queue
@@ -361,7 +350,7 @@ class Runtime
    *
    * \return A pointer to the currently executing TaskR task
    */
-  __USED__ inline Task *getCurrentTask() { return _hicrToTaskrTaskMap[HiCR::getCurrentTask()]; }
+  __USED__ inline Task *getCurrentTask() { return (Task*)HiCR::getCurrentTask()->getBackwardReferencePointer(); }
 
 }; // class Runtime
 
