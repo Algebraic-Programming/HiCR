@@ -382,7 +382,6 @@ class MemoryManager
     _globalMemorySlotTagKeyMap[tag][globalKey] = memorySlot;
   }
 
-
   /**
    * Backend-internal implementation of the getMemorySpaceSize function
    *

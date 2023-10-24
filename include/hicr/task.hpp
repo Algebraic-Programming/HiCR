@@ -244,8 +244,16 @@ class Task
     _executionState->suspend();
   }
 
-  __USED__ inline void* getBackwardReferencePointer() const { return _backwardReferencePointer; }
-  __USED__ inline void  setBackwardReferencePointer(void* backwardReferencePointer) { _backwardReferencePointer = backwardReferencePointer; }
+  /**
+   * Gets a backward reference pointer
+   * @return A pointer
+   */
+  __USED__ inline void *getBackwardReferencePointer() const { return _backwardReferencePointer; }
+  /**
+   * Sets a backward reference pointer
+   * @param[in] backwardReferencePointer address to set pointer to
+   */
+  __USED__ inline void setBackwardReferencePointer(void *backwardReferencePointer) { _backwardReferencePointer = backwardReferencePointer; }
 
   private:
 
@@ -254,7 +262,7 @@ class Task
   /**
    * This is a freely usable pointer to allow runtime systems built on HiCR attach a reference to its own task object to this basic task
    */
-  void* _backwardReferencePointer = NULL;
+  void *_backwardReferencePointer = NULL;
 
   /**
    *  Map of events to trigger

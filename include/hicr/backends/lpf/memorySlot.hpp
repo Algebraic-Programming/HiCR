@@ -32,7 +32,12 @@ class MemorySlot final : public HiCR::MemorySlot
 
   /**
    * Constructor for a MemorySlot class for the LPF backend
-   
+   * @param[in] rank  Rank
+   * @param[in] lpfMemSlot LPF slot this HiCR slot is associated with
+   * @param[in] pointer Pointer to the memory address associated with this HiCR slot
+   * @param[in] size Comm size
+   * @param[in] globalTag
+   * @param[in] globalKey
    */
   MemorySlot(
     size_t rank,
@@ -56,19 +61,29 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   const size_t getRank() { return _rank; }
 
-  lpf_memslot_t getLPFSlot() const {return _lpfMemSlot;}
+  /**
+   * Get LPF slot associated with this HiCR slot
+   * @return LPF slot
+   */
+  lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
 
-  bool operator< (const MemorySlot &slot) const {
-      if (this->getGlobalTag() < slot.getGlobalTag())
-          return true;
-      else if (this->getGlobalTag() > slot.getGlobalTag())
-          return false;
-      else {
-          return (this->getGlobalKey() < slot.getGlobalKey());
-      }
-
+  /**
+   * @param[in] slot Right-hand side slot in comparison
+   * @return true if left-hand side is smaller according to (tag,key) comparison
+   * The comparison operator is provided for the hash table
+   * MemoryManager::initMsgCnt
+   */
+  bool operator<(const MemorySlot &slot) const
+  {
+    if (this->getGlobalTag() < slot.getGlobalTag())
+      return true;
+    else if (this->getGlobalTag() > slot.getGlobalTag())
+      return false;
+    else
+    {
+      return (this->getGlobalKey() < slot.getGlobalKey());
+    }
   }
-
 
   private:
 

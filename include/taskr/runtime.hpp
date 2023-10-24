@@ -224,7 +224,7 @@ class Runtime
   __USED__ inline void onTaskFinish(HiCR::Task *hicrTask)
   {
     // Getting TaskR task from HiCR task
-    auto task = (Task*)hicrTask->getBackwardReferencePointer();
+    auto task = (Task *)hicrTask->getBackwardReferencePointer();
 
     // Decreasing overall task count
     _taskCount--;
@@ -350,7 +350,7 @@ class Runtime
    *
    * \return A pointer to the currently executing TaskR task
    */
-  __USED__ inline Task *getCurrentTask() { return (Task*)HiCR::getCurrentTask()->getBackwardReferencePointer(); }
+  __USED__ inline Task *getCurrentTask() { return (Task *)HiCR::getCurrentTask()->getBackwardReferencePointer(); }
 
 }; // class Runtime
 

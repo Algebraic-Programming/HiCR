@@ -55,8 +55,8 @@ class Task
    */
   __USED__ inline Task(const taskLabel_t label, const HiCR::ExecutionUnit *executionUnit) : _hicrTask(executionUnit), _label(label)
   {
-   // Setting internal HiCR task a reference to this object
-   _hicrTask.setBackwardReferencePointer(this);
+    // Setting internal HiCR task a reference to this object
+    _hicrTask.setBackwardReferencePointer(this);
   }
 
   /**
