@@ -69,10 +69,9 @@ build-ascend:
   - ascend
   script:
   - echo "Building..."
-  - whoami
   - mkdir build
   - meson setup build -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
-  - meson compile -C build
+  - source ~/.bashrc && meson compile -C build
   - echo "Running tests..."
   - meson test -C build
   only:
