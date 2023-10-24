@@ -29,7 +29,7 @@ RUN useradd -d /home/$USER -m $USER -G root \
   && adduser $USER sudo
 
 ENV ESCAPED_LD_LIBRARY_PATH='$LD_LIBRARY_PATH'
-RUN echo "export LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:$ESCAPED_LD_LIBRARY_PATH" >> /usr/local/Ascend/ascend-toolkit/set_env.sh
+RUN echo "export LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64:/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64/stub:/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:$ESCAPED_LD_LIBRARY_PATH" >> /usr/local/Ascend/ascend-toolkit/set_env.sh
 RUN echo "source /usr/local/Ascend/ascend-toolkit/set_env.sh" >> $HOME/.bashrc
 
 RUN chown -R $USER /usr/local/lib
