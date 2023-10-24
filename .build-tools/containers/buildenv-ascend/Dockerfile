@@ -7,7 +7,6 @@ ENV TOOLKIT Ascend-cann-toolkit_7.0.RC1.alpha003_linux-aarch64.run
 
 RUN apt install -y sudo
 RUN apt install -y wget
-RUN apt install -y python3.8-venv
 
 #TODO: missing gpg verification
 RUN /bin/bash -c "mkdir /cann-toolkit \
@@ -15,7 +14,12 @@ RUN /bin/bash -c "mkdir /cann-toolkit \
   && wget -O ${TOOLKIT} https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C13SPC703/${TOOLKIT} \
   && chmod +x ./${TOOLKIT}"
 
-RUN /bin/bash -c "cd /cann-toolkit; echo 'Y' | /cann-toolkit/${TOOLKIT} --whitelist=nnrt,nnae,atc --install --install-for-all"
+RUN /bin/bash -c "cd /cann-toolkit \
+    && echo 'Y' | USER=root /cann-toolkit/${TOOLKIT} --full --install-for-all \
+    && cd .. \
+    && rm -rf /usr/local/Ascend/ascend-toolkit/7.0.RC1.alpha003/aarch64-linux/simulator \
+    && rm -rf /usr/local/Ascend/ascend-toolkit/7.0.RC1.alpha003/opp/built-in/data \
+    && rm -rf cann-toolkit"
 
 RUN useradd -d /home/$USER -m $USER -G root \
   && chown -R $USER /home/$USER  \
