@@ -31,23 +31,16 @@ class MemorySlot final : public HiCR::MemorySlot
   public:
 
   /**
-   * Constructor for a MemorySlot class for the MPI backend
-   *
-   * \param[in] rank Rank to which this memory slot belongs
-   * \param[in] pointer If this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
-   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
-   * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
-   * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   * Constructor for a MemorySlot class for the LPF backend
+   
    */
   MemorySlot(
-    int rank,
+    size_t rank,
     lpf_memslot_t lpfMemSlot,
-    lpf_ rank,
     void *const pointer,
     const size_t size,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey),
-                                       _rank(rank), _lpfMemSlot(lpfMemSlot)
+    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _rank(rank), _lpfMemSlot(lpfMemSlot)
   {
   }
 
@@ -61,9 +54,20 @@ class MemorySlot final : public HiCR::MemorySlot
    *
    * \return The rank to which this memory slot belongs
    */
-  const int getRank() { return _rank; }
+  const size_t getRank() { return _rank; }
 
+  lpf_memslot_t getLPFSlot() const {return _lpfMemSlot;}
 
+  bool operator< (const MemorySlot &slot) const {
+      if (this->getGlobalTag() < slot.getGlobalTag())
+          return true;
+      else if (this->getGlobalTag() > slot.getGlobalTag())
+          return false;
+      else {
+          return (this->getGlobalKey() < slot.getGlobalKey());
+      }
+
+  }
 
 
   private:

@@ -2,9 +2,9 @@
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <mpi.h>
-#include <hicr/backends/lpf/lpf.hpp>
-#include <source/consumer.hpp>
-#include <source/producer.hpp>
+#include <hicr/backends/lpf/memoryManager.hpp>
+#include <consumer.hpp>
+#include <producer.hpp>
 
 
 //pasted from a utils.h header
@@ -30,15 +30,11 @@ void spmd( lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args )
         if(pid == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
     }
 
-    auto backend = new  HiCR::backend::lpf::LpfBackend(nprocs, pid, lpf);
-    backend->queryResources();
+    HiCR::backend::lpf::MemoryManager m(nprocs, pid, lpf);
 
     // Rank 0 is producer, Rank 1 is consumer
-    if (pid == 0) producerFc(backend, channelCapacity);
-    if (pid == 1) consumerFc(backend, channelCapacity);
-
-    // Freeing memory
-    delete backend;
+    if (pid == 0) producerFc(&m, channelCapacity);
+    if (pid == 1) consumerFc(&m, channelCapacity);
 
 }
 

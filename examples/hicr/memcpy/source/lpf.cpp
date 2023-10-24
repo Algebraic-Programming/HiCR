@@ -1,5 +1,5 @@
 #include <hicr.hpp>
-#include <hicr/backends/lpf/lpf.hpp>
+#include <hicr/backends/lpf/memoryManager.hpp>
 
 #include <lpf/core.h>
 
@@ -16,23 +16,20 @@
 void spmd( lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args )
 {
   (void) args;  // ignore args parameter passed by lpf_exec
-  HiCR::backend::lpf::LpfBackend backend(nprocs, pid, lpf);
-  backend.queryResources();
+  HiCR::backend::lpf::MemoryManager m(nprocs, pid, lpf);
 
   char * buffer1 = new char[BUFFER_SIZE];
 
-  auto dstSlot = backend.registerLocalMemorySlot(buffer1, BUFFER_SIZE);
+  auto dstSlot = m.registerLocalMemorySlot(buffer1, BUFFER_SIZE);
 
-  // Registering buffers globally for them to be used by remote actors
-  backend.promoteMemorySlotToGlobal(CHANNEL_TAG, SENDER_PROCESS, dstSlot);
   // Performing all pending local to global memory slot promotions now
-  backend.exchangeGlobalMemorySlots(CHANNEL_TAG);
+  m.exchangeGlobalMemorySlots(CHANNEL_TAG);
 
   //sleep(15);
   // Synchronizing so that all actors have finished registering their global memory slots
-  backend.fence(CHANNEL_TAG);
+  m.fence(CHANNEL_TAG);
 
-  int myProcess = backend.getProcessId();
+  int myProcess = m.getProcessId();
   /**
    * Collective exchange of local slots to be
    * promoted to global. In this case:

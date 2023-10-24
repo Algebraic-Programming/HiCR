@@ -1,8 +1,8 @@
 #include <thread>
 #include <hicr.hpp>
 #include <hicr/backends/sequential/memoryManager.hpp>
-#include <source/include/consumer.hpp>
-#include <source/include/producer.hpp>
+#include <consumer.hpp>
+#include <producer.hpp>
 
 #define CONCURRENT_THREADS 2
 

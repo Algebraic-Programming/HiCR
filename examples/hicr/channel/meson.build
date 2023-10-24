@@ -1,16 +1,26 @@
-testSuite = [ 'examples', 'hicr', 'channel' ]
+testSuite = [ 'examples', 'hicr', 'channel']
 
-sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: [ hicrBuildDep, hicrSequentialBackendDep, dependency('threads', required: true)])
+
+exampleBuildIncludes = include_directories([
+   'include'
+  ])
+  
+sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: [ hicrBuildDep, hicrSequentialBackendDep, dependency('threads', required: true)], include_directories: [exampleBuildIncludes] )
 test('sequential', sequential, args : [ '2' ], suite: testSuite )
 test('sequential', sequential, args : [ '3' ], suite: testSuite )
 
 if 'sharedMemory' in enabledBackends
-	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep ])
+	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep], include_directories: [exampleBuildIncludes])
 	test('sharedMemory', sharedMemory, args : [ '2' ], suite: testSuite )
 	test('sharedMemory', sharedMemory, args : [ '3' ], suite: testSuite )
 endif
 
 if 'mpi' in enabledBackends
-	mpi = executable('mpi', [ 'source/mpi.cpp'], dependencies: [ hicrBuildDep, hicrMPIBackendDep ] )
+	mpi = executable('mpi', [ 'source/mpi.cpp'], dependencies: [ hicrBuildDep, hicrMPIBackendDep], include_directories: [exampleBuildIncludes])
+	#test('mpi', mpi, args : [ '3' ], suite: testSuite )
+endif
+
+if 'lpf' in enabledBackends
+	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep], include_directories: [exampleBuildIncludes] )
 	#test('mpi', mpi, args : [ '3' ], suite: testSuite )
 endif
