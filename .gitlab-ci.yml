@@ -70,8 +70,9 @@ build-ascend:
   script:
   - echo "Building..."
   - ls .
-  - ls ..
-  - echo $HOME/.bashrc
+  - ls -al ..
+  - cat $HOME/.bashrc
+  - env
   - mkdir build
   - meson setup build -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
   - meson compile -C build
