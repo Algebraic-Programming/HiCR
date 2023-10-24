@@ -69,6 +69,9 @@ build-ascend:
   - ascend
   script:
   - echo "Building..."
+  - ls .
+  - ls ..
+  - echo $HOME/.bashrc
   - mkdir build
   - meson setup build -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
   - meson compile -C build
