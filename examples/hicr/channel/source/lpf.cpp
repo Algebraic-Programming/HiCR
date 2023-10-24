@@ -7,16 +7,6 @@
 #include <producer.hpp>
 
 
-//pasted from a utils.h header
-#define CHECK(f...)                                                   \
-{                                                                     \
-    const lpf_err_t __r = f;                                          \
-    if (__r != LPF_SUCCESS) {                                         \
-        printf("Error: '%s' [%s:%i]: %i\n",#f,__FILE__,__LINE__,__r); \
-        exit(EXIT_FAILURE);                                           \
-    }                                                                 \
-}
-
 // flag needed when using MPI to launch
 const int LPF_MPI_AUTO_INITIALIZE = 0;
 

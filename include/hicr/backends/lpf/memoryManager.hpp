@@ -108,7 +108,6 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   MemoryManager(size_t size, size_t rank, lpf_t lpf) : HiCR::backend::MemoryManager(), _size(size), _rank(rank), _lpf(lpf)
   {
-    lpf_err_t rc;
     const size_t msgslots = DEFAULT_MSGSLOTS;
     const size_t memslots = DEFAULT_MEMSLOTS;
     CHECK(lpf_resize_message_queue(_lpf, msgslots));
@@ -132,7 +131,6 @@ class MemoryManager final : public HiCR::backend::MemoryManager
      */
 
     lpf_coll_t coll;
-    lpf_err_t rc;
     std::vector<size_t> globalSlotCounts(_size);
     for (size_t i = 0; i < _size; i++) globalSlotCounts[i] = 0;
     lpf_memslot_t src_slot = LPF_INVALID_MEMSLOT;
@@ -239,7 +237,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       }
 
       lpf_memslot_t newSlot = LPF_INVALID_MEMSLOT;
-      rc = lpf_register_global(_lpf, globalSlotPointers[i], globalSlotSizes[i], &newSlot);
+      CHECK(lpf_register_global(_lpf, globalSlotPointers[i], globalSlotSizes[i], &newSlot));
 
       // Creating new memory slot object
       auto memorySlot = new lpf::MemorySlot(
