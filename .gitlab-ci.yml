@@ -63,7 +63,7 @@ build:
   - tags
 
 build-ascend:
-  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-ascend:latest
+  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-ascend-arm64v8:latest
   tags:
   - docker
   - ascend

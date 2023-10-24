@@ -1,4 +1,5 @@
-FROM registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv:latest
+ARG ARCH=
+FROM registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-${ARCH}:latest
 
 ENV USER HwHiAiUser
 ENV HOME /home/$USER
@@ -9,16 +10,12 @@ RUN apt install -y wget
 RUN apt install -y python3.8-venv
 
 #TODO: missing gpg verification
-RUN mkdir /cann-toolkit \
+RUN /bin/bash -c "mkdir /cann-toolkit \
   && cd /cann-toolkit \
-  && wget -O ${TOOLKIT} https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C13SPC703/${TOOLKIT} 
+  && wget -O ${TOOLKIT} https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C13SPC703/${TOOLKIT} \
+  && chmod +x ./${TOOLKIT}"
 
-RUN /bin/bash -c "python3 -m venv /.venv && source /.venv/bin/activate \
-  && cd /cann-toolkit \ 
-  && chmod +x ./${TOOLKIT} \
-  && USER=root \
-  && echo 'Y' | /cann-toolkit/${TOOLKIT} --full --install-for-all \
-  && rm -rf /cann-toolkit rm -rf /.venv" 
+RUN /bin/bash -c "cd /cann-toolkit; echo 'Y' | /cann-toolkit/${TOOLKIT} --whitelist=nnrt,nnae,atc --install --install-for-all"
 
 RUN useradd -d /home/$USER -m $USER -G root \
   && chown -R $USER /home/$USER  \
