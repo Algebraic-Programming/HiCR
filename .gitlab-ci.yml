@@ -71,7 +71,7 @@ build-ascend:
   - echo "Building..."
   - mkdir build
   - meson setup build -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
-  - ./compile.sh
+  - meson compile -C build
   - echo "Running tests..."
   - meson test -C build
   only:
