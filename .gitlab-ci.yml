@@ -70,7 +70,7 @@ build-ascend:
   script:
   - echo "Building..."
   - mkdir build
-  - ls -al /usr/local/Ascend/ascend-toolkit/latest/lib64
+  - while true
   - meson setup build -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
   - meson compile -C build
   - echo "Running tests..."
