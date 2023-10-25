@@ -95,24 +95,24 @@ class MemorySlot
   /**
    * Increase counter function for the memory slot's received message counter
    */
-  __USED__ inline void increaseMessagesRecv() noexcept { _messagesRecv++; }
+  __USED__ inline void increaseMessagesRecv() noexcept { _messagesRecv = _messagesRecv + 1; }
 
   /**
    * Increase counter function for the memory slot's sent message counter
    */
-  __USED__ inline void increaseMessagesSent() noexcept { _messagesSent++; }
+  __USED__ inline void increaseMessagesSent() noexcept { _messagesSent = _messagesSent + 1; }
 
   /**
    * Gets the pointer for the received message counter
    * \returns The pointer to the received message counter
    */
-  __USED__ inline size_t *getMessagesRecvPointer() noexcept { return &_messagesRecv; }
+  __USED__ inline __volatile__ size_t *getMessagesRecvPointer() noexcept { return &_messagesRecv; }
 
   /**
    * Gets the pointer for the sent message counter
    * \returns The pointer to the sent message counter
    */
-  __USED__ inline size_t *getMessagesSentPointer() noexcept { return &_messagesSent; }
+  __USED__ inline __volatile__ size_t *getMessagesSentPointer() noexcept { return &_messagesSent; }
 
   private:
 
@@ -139,12 +139,12 @@ class MemorySlot
   /**
    * Messages received into this slot
    */
-  size_t _messagesRecv = 0;
+  __volatile__ size_t _messagesRecv = 0;
 
   /**
    * Messages sent from this slot
    */
-  size_t _messagesSent = 0;
+  __volatile__ size_t _messagesSent = 0;
 };
 
 } // namespace HiCR

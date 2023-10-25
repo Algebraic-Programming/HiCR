@@ -112,8 +112,11 @@ class ProducerChannel final : public Channel
     auto providedBufferSize = sourceSlot->getSize();
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
+    // Updating channel depth
+    updateDepth();
+
     // If the exchange buffer does not have n free slots, reject the operation
-    if (queryDepth() + n > getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, _depth, getCapacity());
+    if (getDepth() + n > getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, _depth, getCapacity());
 
     // Copy tokens
     for (size_t i = 0; i < n; i++)
@@ -130,6 +133,14 @@ class ProducerChannel final : public Channel
 
     // Increasing the number of pushed tokens
     _pushedTokens += n;
+  }
+
+  /**
+   * This function updates the internal value of the channel depth
+   */
+  __USED__ inline void updateDepth() override
+  {
+    checkReceiverPops();
   }
 
   private:
@@ -166,13 +177,6 @@ class ProducerChannel final : public Channel
     advanceTail(n);
   }
 
-  /**
-   * This function updates the internal value of the channel depth
-   */
-  __USED__ inline void updateDepth() override
-  {
-    checkReceiverPops();
-  }
 };
 
 }; // namespace HiCR

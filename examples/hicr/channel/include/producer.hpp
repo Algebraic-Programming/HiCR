@@ -41,7 +41,7 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
  // If channel is full, wait until it frees up
- while(producer.isFull());
+ while(producer.isFull()) producer.updateDepth();
 
  // Sending second value
  sendBuffer = 43;
@@ -49,7 +49,7 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  printf("Sent Value:     %u\n", *sendBufferPtr);
 
  // If channel is full, wait until it frees up
- while(producer.isFull());
+ while(producer.isFull()) producer.updateDepth();
 
  // Sending third value
  sendBuffer = 44;
