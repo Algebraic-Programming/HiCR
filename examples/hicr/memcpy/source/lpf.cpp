@@ -1,7 +1,10 @@
 #include <hicr.hpp>
 #include <hicr/backends/lpf/memoryManager.hpp>
+#include <hicr/memorySlot.hpp>
 
 #include <lpf/core.h>
+#include <lpf/mpi.h>
+#include <mpi.h>
 
 #include <iostream>
 
@@ -13,50 +16,50 @@
 #define SRC_OFFSET 0
 #define CHANNEL_TAG 0
 
+// flag needed when using MPI to launch
+const int LPF_MPI_AUTO_INITIALIZE = 0;
+
 void spmd( lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args )
 {
   (void) args;  // ignore args parameter passed by lpf_exec
   HiCR::backend::lpf::MemoryManager m(nprocs, pid, lpf);
+  size_t myProcess = pid;
 
   char * buffer1 = new char[BUFFER_SIZE];
 
   auto dstSlot = m.registerLocalMemorySlot(buffer1, BUFFER_SIZE);
+  std::vector<std::pair<size_t, HiCR::MemorySlot *> > promoted;
+  promoted.push_back(std::make_pair(myProcess,dstSlot));
 
   // Performing all pending local to global memory slot promotions now
-  m.exchangeGlobalMemorySlots(CHANNEL_TAG);
+  m.exchangeGlobalMemorySlots(CHANNEL_TAG, promoted);
 
-  //sleep(15);
   // Synchronizing so that all actors have finished registering their global memory slots
   m.fence(CHANNEL_TAG);
 
-  int myProcess = m.getProcessId();
-  /**
-   * Collective exchange of local slots to be
-   * promoted to global. In this case:
-   * RECEIVER_PROCESS promotes his slot to a global slot.
-   * SENDER_PROCESS does not promote any slots to global --
-   * but will allocate a local sender slot.
-   */
- // Obtaining the globally exchanged memory slots
- std::map<uint64_t, std::vector<uint64_t>> globalBuffers = backend.getGlobalMemorySlots()[CHANNEL_TAG];
+  HiCR::MemorySlot * myPromotedSlot;
 
   if (myProcess == SENDER_PROCESS)
   {
       char * buffer2 = new char[BUFFER_SIZE];
       sprintf(static_cast<char *>(buffer2), "Hello, HiCR user!\n");
-      auto srcSlot = backend.registerLocalMemorySlot(buffer2, BUFFER_SIZE);
+      auto srcSlot = m.registerLocalMemorySlot(buffer2, BUFFER_SIZE);
       //sleep(15);
-      backend.memcpy(globalBuffers[CHANNEL_TAG][1], DST_OFFSET, srcSlot, SRC_OFFSET, BUFFER_SIZE);
-      backend.fence(CHANNEL_TAG);
+      myPromotedSlot = m.getGlobalMemorySlot(CHANNEL_TAG, RECEIVER_PROCESS);
+      m.memcpy(myPromotedSlot, DST_OFFSET, srcSlot, SRC_OFFSET, BUFFER_SIZE);
+      m.fence(CHANNEL_TAG);
   }
 
   if (myProcess == RECEIVER_PROCESS)  {
-      auto recvMsgs = backend.getMemorySlotReceivedMessages(globalBuffers[CHANNEL_TAG][1]);
+      myPromotedSlot = m.getGlobalMemorySlot(CHANNEL_TAG, RECEIVER_PROCESS);
+      m.queryMemorySlotUpdates(myPromotedSlot);    
+      auto recvMsgs = myPromotedSlot->getMessagesRecv();
       std::cout << "Received messages (before fence) = " << recvMsgs << std::endl;
-      backend.fence(CHANNEL_TAG);
-      std::cout << "Received buffer = " << static_cast<const char*>(buffer1);
-      recvMsgs = backend.getMemorySlotReceivedMessages(globalBuffers[CHANNEL_TAG][1]);
-      std::cout << "Received messages = " << recvMsgs << std::endl;
+      m.fence(CHANNEL_TAG);
+      std::cout << "Received buffer = " << static_cast<const char*>(myPromotedSlot->getPointer());
+      m.queryMemorySlotUpdates(myPromotedSlot);    
+      recvMsgs = myPromotedSlot->getMessagesRecv();
+      std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
   }
   
 }
@@ -64,12 +67,12 @@ void spmd( lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args )
 int main(int argc, char **argv)
 {
 
+  MPI_Init(&argc, &argv);
+  lpf_init_t init;
   lpf_args_t args;
-  memset(&args, 0, sizeof(lpf_args_t));
-  args.input = argv;
-  args.input_size = argc;
-  lpf_err_t rc = lpf_exec( LPF_ROOT, LPF_MAX_P, &spmd, LPF_NO_ARGS);
-  EXPECT_EQ("%d", LPF_SUCCESS, rc);
-
+  CHECK(lpf_mpi_initialize_with_mpicomm(MPI_COMM_WORLD, &init));
+  CHECK(lpf_hook(init, &spmd, args));
+  CHECK(lpf_mpi_finalize(init));
+  MPI_Finalize();
   return 0;
 }
