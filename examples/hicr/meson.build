@@ -1,4 +1,4 @@
-#subdir('memcpy')
-#subdir('kernel')
+subdir('memcpy')
+subdir('kernel')
 subdir('channel')
 
