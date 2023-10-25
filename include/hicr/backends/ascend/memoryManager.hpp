@@ -49,7 +49,7 @@ class MemoryManager final : public backend::MemoryManager
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
-    hcclComms = (HcclComm *)malloc(deviceCount * sizeof(HcclComm));
+    hcclComms = (HcclComm *)calloc(deviceCount, sizeof(HcclComm));
   }
 
   ~MemoryManager()
