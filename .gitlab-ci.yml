@@ -70,10 +70,8 @@ build-lpf:
   - x86
   script:
   - echo "Getting LPF..."
-  - git clone -b hicr https://github.com/Algebraic-Programming/LPF.git lpf_hicr
-  - mkdir lpf_hicr/build
-  - cd lpf_hicr/build
-  - cmake .. -DLPFLIB_MAKE_DOC=false; make -j8; make install
+  - git clone -b hicr https://github.com/Algebraic-Programming/LPF.git
+  - mkdir LPF/build; pushd LPF/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j8; make install; popd
   - echo "Building..."
   - mkdir build
   - meson setup build -Db_coverage=true -Dbackends=lpf -DbuildTests=true -DbuildExamples=true 
