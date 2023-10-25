@@ -5,9 +5,9 @@
 
 /**
  * @file memorySlot.hpp
- * @brief Provides a definition for the memory slot class for the MPI backend
- * @author S. M. Martin
- * @date 19/10/2023
+ * @brief Provides a definition for the memory slot class for the LPF backend
+ * @author K. Dichev
+ * @date 25/10/2023
  */
 #pragma once
 
