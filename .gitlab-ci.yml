@@ -72,7 +72,7 @@ build-ascend:
   - mkdir build
   - cd build
   - meson setup .. -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
-  - meson compile -C .
+  - ninja
   - echo "Running tests..."
   - meson test -C .
   only:
