@@ -1,13 +1,16 @@
 # HiCR LPF Backend Configuration
 
-# Change according to your LPF install dir
-lpf_dir = '/home/kdichev/develop-hicr/hicr-0.0.3/subprojects/LPF/build/local'
-mpiDep = dependency('mpich', required: true)
+# Try to get MPICH, which is a special case
+mpiDep = dependency('mpich', required: false)
+    
+# If also not found, then trigger a failure
+if mpiDep.found() == false
+  mpiDep = dependency('mpi', language: 'cpp', required: true)
+endif
 cc = meson.get_compiler('cpp')
-lib_lpfcore = cc.find_library('lpf_core_univ_ibverbs_generic', dirs: [join_paths(lpf_dir,'lib')])
-lib_lpfhl = cc.find_library('lpf_hl', dirs: [join_paths(lpf_dir,'lib')])
+lib_lpfcore = cc.find_library('lpf_core_univ_ibverbs_generic')
+lib_lpfhl = cc.find_library('lpf_hl')
 hicrLPFBackendDep = declare_dependency( 
-compile_args: ['-I'+join_paths(lpf_dir,'include')],
 dependencies: [lib_lpfcore,lib_lpfhl, mpiDep]
  )    
     
