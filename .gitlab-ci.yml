@@ -71,7 +71,7 @@ build-ascend:
   - echo "Building..."
   - mkdir build
   - meson setup build -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
-  - export LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64:/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64/stub:$LD_LIBRARY_PATH && meson compile -C build
+  - ./compile.sh
   - echo "Running tests..."
   - meson test -C build
   only:
