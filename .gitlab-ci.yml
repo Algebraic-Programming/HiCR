@@ -70,7 +70,6 @@ build-ascend:
   script:
   - echo "Building..."
   - mkdir build
-  - sleep 400
   - meson setup build -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
   - meson compile -C build
   - echo "Running tests..."
