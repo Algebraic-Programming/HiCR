@@ -11,7 +11,7 @@ endif
 
 if 'lpf' in enabledBackends
 	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep])
-	test('lpf', lpf, args : [ ], suite: testSuite ) 
+	test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'ibverbs', lpf.full_path() ], suite: testSuite ) 
 endif
 
 

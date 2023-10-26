@@ -8,6 +8,8 @@ if mpiDep.found() == false
   mpiDep = dependency('mpich', required: false)
 endif
 
+mpirunExecutable = find_program('mpirun', '/usr/bin/mpirun', '/usr/local/bin/mpirun', required : true)
+
 hicrMPIBackendDeps = [ mpiDep  ]
 hicrMPIBackendDep = declare_dependency( 
     dependencies:  hicrMPIBackendDeps

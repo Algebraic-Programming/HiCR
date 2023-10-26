@@ -17,10 +17,10 @@ endif
 
 if 'mpi' in enabledBackends
 	mpi = executable('mpi', [ 'source/mpi.cpp'], dependencies: [ hicrBuildDep, hicrMPIBackendDep], include_directories: [exampleBuildIncludes])
-	#test('mpi', mpi, args : [ '3' ], suite: testSuite )
+	test('mpi', mpirunExecutable, args : [ '-n', '2', mpi.full_path(), '3' ], suite: testSuite )
 endif
 
 if 'lpf' in enabledBackends
 	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep], include_directories: [exampleBuildIncludes] )
-	#test('mpi', mpi, args : [ '3' ], suite: testSuite )
+	test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'ibverbs', lpf.full_path(), '3' ], suite: testSuite )
 endif
