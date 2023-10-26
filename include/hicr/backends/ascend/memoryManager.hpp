@@ -48,7 +48,6 @@ class MemoryManager final : public backend::MemoryManager
     err = aclInit(config_path);
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
-
   }
 
   ~MemoryManager()
