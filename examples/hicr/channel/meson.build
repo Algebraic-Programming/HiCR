@@ -17,7 +17,7 @@ endif
 
 if 'mpi' in enabledBackends
 	mpi = executable('mpi', [ 'source/mpi.cpp'], dependencies: [ hicrBuildDep, hicrMPIBackendDep], include_directories: [exampleBuildIncludes])
-	test('mpi', mpirunExecutable, args : [ '-n', '2', mpi.full_path(), '3' ], suite: testSuite )
+	test('mpi', mpirunExecutable, args : [ '--allow-run-as-root', '-n', '2', mpi.full_path(), '3' ], suite: testSuite )
 endif
 
 if 'lpf' in enabledBackends
