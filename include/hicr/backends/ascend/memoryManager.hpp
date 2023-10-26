@@ -5,7 +5,7 @@
 
 /**
  * @file memoryManager.hpp
- * @brief This file implements the memory manager class for the MPI backend
+ * @brief This file implements the memory manager class for the Ascend backend
  * @author S. M. Martin and L. Terracciano
  * @date 11/9/2023
  */
@@ -49,7 +49,6 @@ class MemoryManager final : public backend::MemoryManager
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
-    hcclComms = (HcclComm *)calloc(deviceCount, sizeof(HcclComm));
   }
 
   ~MemoryManager()
@@ -89,7 +88,7 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * MPI-like communicators to transmit data among Ascends
    */
-  HcclComm *hcclComms;
+  HcclComm *hcclComms = NULL;
 
   struct ascendState_t
   {
@@ -164,6 +163,8 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void destroyHcclCommunicators()
   {
+    if (hcclComms == NULL) return;
+
     for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
     {
       (void)HcclCommDestroy(hcclComms[deviceId]);
@@ -176,6 +177,8 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void setupHccl()
   {
+    if (hcclComms == NULL) hcclComms = new HcclComm[deviceCount]();
+
     // destroy previously allocated hccl communicators
     destroyHcclCommunicators();
 
