@@ -100,8 +100,11 @@ class ConsumerChannel final : public Channel
     // Check if the requested position exceeds the capacity of the channel
     if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, getCapacity());
 
+    // Updating channel depth
+    updateDepth();
+
     // Check if there are enough tokens in the buffer to satisfy the request
-    if (pos >= queryDepth()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, _depth);
+    if (pos >= getDepth()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, getDepth());
 
     // Calculating buffer position
     const size_t bufferPos = (getTailPosition() + pos) % getCapacity();
@@ -127,8 +130,11 @@ class ConsumerChannel final : public Channel
   {
     if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
 
+    // Updating channel depth
+    updateDepth();
+
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (n > queryDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _depth);
+    if (n > getDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, getDepth());
 
     // Advancing tail (removes elements from the circular buffer)
     advanceTail(n);
@@ -142,6 +148,14 @@ class ConsumerChannel final : public Channel
     // Re-syncing token and coordination buffers
     _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
     _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
+  }
+
+  /**
+   * This function updates the internal value of the channel depth
+   */
+  __USED__ inline void updateDepth() override
+  {
+    checkReceivedTokens();
   }
 
   private:
@@ -166,14 +180,6 @@ class ConsumerChannel final : public Channel
 
     // Update the number of pushed tokens
     _pushedTokens = newPushedTokens;
-  }
-
-  /**
-   * This function updates the internal value of the channel depth
-   */
-  __USED__ inline void updateDepth() override
-  {
-    checkReceivedTokens();
   }
 };
 

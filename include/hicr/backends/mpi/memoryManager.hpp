@@ -228,7 +228,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(const HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::MemorySlot *memorySlot) override
   {
   }
 
@@ -424,7 +424,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
       // Creating MPI window for message received count transferring
       status = MPI_Win_create(
-        globalSlotProcessId[i] == _rank ? memorySlot->getMessagesRecvPointer() : NULL,
+        globalSlotProcessId[i] == _rank ? (void *)memorySlot->getMessagesRecvPointer() : NULL,
         globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
         1,
         MPI_INFO_NULL,
@@ -435,7 +435,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
       // Creating MPI window for message sent count transferring
       status = MPI_Win_create(
-        globalSlotProcessId[i] == _rank ? memorySlot->getMessagesSentPointer() : NULL,
+        globalSlotProcessId[i] == _rank ? (void *)memorySlot->getMessagesSentPointer() : NULL,
         globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
         1,
         MPI_INFO_NULL,

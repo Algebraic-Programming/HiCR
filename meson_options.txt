@@ -1,4 +1,4 @@
-option('backends', type : 'array', choices : ['sharedMemory', 'mpi', 'ascend'], value : [ ],
+option('backends', type : 'array', choices : ['sharedMemory', 'mpi', 'lpf',  'ascend'], value : [ ],
        description : 'Specifies which backends to enable for compilation with HiCR'
        )
       

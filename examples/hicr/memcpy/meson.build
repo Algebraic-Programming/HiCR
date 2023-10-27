@@ -1,15 +1,23 @@
 testSuite = [ 'examples', 'hicr', 'memcpy' ]
 
+test_timeout = 180
+
 sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: [ hicrBuildDep, hicrSequentialBackendDep])
-get_option('buildTests') ? test('sequential', sequential, args : [ ], suite: testSuite ) :
+test('sequential', sequential, args : [ ], timeout: test_timeout, suite: testSuite ) 
 
 
 if 'sharedMemory' in enabledBackends
 	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep])
-	get_option('buildTests') ? test('sharedMemory', sharedMemory, args : [ ], suite: testSuite ) :
+	test('sharedMemory', sharedMemory, args : [ ], timeout: test_timeout, suite: testSuite )
 endif
+
+if 'lpf' in enabledBackends
+	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep])
+	test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'ibverbs', lpf.full_path() ], timeout: test_timeout, suite: testSuite ) 
+endif
+
 
 if 'ascend' in enabledBackends 
 	ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: [ hicrBuildDep, hicrAscendBackendDep])
-	get_option('buildTests') ? test('ascend', sharedMemory, args : [ ], suite: testSuite ) :
+	test('ascend', ascend, args : [ ], timeout: test_timeout, suite: testSuite ) 
 endif
