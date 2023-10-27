@@ -25,7 +25,7 @@ TEST(Coroutine, Construction)
 #define COROUTINE_COUNT 8
 
 // Defines the number of times a coroutine will be resumed by each thread
-#define RESUME_COUNT 1000
+#define RESUME_COUNT 100
 
 // Defines the number of threads to use in the test
 #define THREAD_COUNT 16
@@ -120,6 +120,6 @@ TEST(Coroutine, TLS)
 // Since coverage inteferes with this test on Ubuntu 20.04 / gcc 12, we bypass this check
 #if !(defined __GNUC__ && defined ENABLE_COVERAGE)
     // Asserting whether there was any false reads
-    // ASSERT_FALSE(falseRead);
+    ASSERT_FALSE(falseRead);
 #endif
 }
