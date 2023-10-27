@@ -34,7 +34,7 @@ TEST(Coroutine, Construction)
 thread_local pthread_t threadId;
 
 // Mutex to ensure the threads do not execute the same coroutine at the same time
-std::mutex* _mutexes[COROUTINE_COUNT];
+pthread_mutex_t _mutexes[COROUTINE_COUNT];
 
 // Flag to store whether the execution failed or not
 __volatile__ bool falseRead;
@@ -51,9 +51,9 @@ void *threadFc(void *arg)
   for (size_t i = 0; i < RESUME_COUNT; i++)
     for (size_t c = 0; c < COROUTINE_COUNT; c++)
     {
-      _mutexes[c]->lock();
+      pthread_mutex_lock(&_mutexes[c]);
       coroutines[c]->resume();
-      _mutexes[c]->unlock();
+      pthread_mutex_unlock(&_mutexes[c]);
     }
 
   return NULL;
@@ -72,7 +72,7 @@ TEST(Coroutine, TLS)
   for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::common::Coroutine();
 
   // Creating per-coroutine mutexes
-  for (size_t i = 0; i < COROUTINE_COUNT; i++) _mutexes[i] = new std::mutex;
+  for (size_t i = 0; i < COROUTINE_COUNT; i++) pthread_mutex_init(&_mutexes[i], NULL);
 
   // Creating coroutine function
   auto fc = [](void *arg)
@@ -92,7 +92,7 @@ TEST(Coroutine, TLS)
   };
 
   // Starting coroutines
-  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, coroutines, fc]()
+  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, coroutines, &fc]()
                                                                     { fc(coroutines[i]); });
   // Setting detection flag initial value
   falseRead = false;
