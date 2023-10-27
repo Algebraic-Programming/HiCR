@@ -176,7 +176,6 @@ class ProducerChannel final : public Channel
     // Adjusting depth
     advanceTail(n);
   }
-
 };
 
 }; // namespace HiCR
