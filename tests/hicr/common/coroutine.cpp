@@ -40,7 +40,7 @@ pthread_barrier_t _barrier;
 std::vector<std::mutex *> _mutexes;
 
 // Flag to store whether the execution failed or not
-bool falseRead = false;
+__volatile__ bool falseRead;
 
 void *threadFc(void *arg)
 {
@@ -104,6 +104,8 @@ TEST(Coroutine, TLS)
   // Starting coroutines
   for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, coroutines, fc]()
                                                                     { fc(coroutines[i]); });
+  // Setting detection flag initial value
+  falseRead = false;
 
   // Initializing barrier
   pthread_barrier_init(&_barrier, NULL, THREAD_COUNT);
