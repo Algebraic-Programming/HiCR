@@ -424,7 +424,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
       // Creating MPI window for message received count transferring
       status = MPI_Win_create(
-        globalSlotProcessId[i] == _rank ? (void*)memorySlot->getMessagesRecvPointer() : NULL,
+        globalSlotProcessId[i] == _rank ? (void *)memorySlot->getMessagesRecvPointer() : NULL,
         globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
         1,
         MPI_INFO_NULL,
@@ -435,7 +435,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
       // Creating MPI window for message sent count transferring
       status = MPI_Win_create(
-        globalSlotProcessId[i] == _rank ? (void*)memorySlot->getMessagesSentPointer() : NULL,
+        globalSlotProcessId[i] == _rank ? (void *)memorySlot->getMessagesSentPointer() : NULL,
         globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
         1,
         MPI_INFO_NULL,

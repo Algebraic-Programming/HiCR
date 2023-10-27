@@ -181,7 +181,6 @@ class ConsumerChannel final : public Channel
     // Update the number of pushed tokens
     _pushedTokens = newPushedTokens;
   }
-
 };
 
 }; // namespace HiCR
