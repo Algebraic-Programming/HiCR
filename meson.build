@@ -1,4 +1,4 @@
-project('HiCR', [ 'cpp' ],
+project('HiCR', [ 'cpp', 'c'],
   default_options : [
   'cpp_std=c++20',
   'buildtype=release',
@@ -24,6 +24,10 @@ if 'mpi' in enabledBackends
   subdir('include/hicr/backends/mpi')
 endif
 
+if 'lpf' in enabledBackends
+  subdir('include/hicr/backends/lpf')
+endif
+
 if 'ascend' in enabledBackends    
   subdir('include/hicr/backends/ascend')
 endif    
@@ -37,4 +41,3 @@ endif
 if get_option('buildTests')
  subdir('tests')
 endif
-

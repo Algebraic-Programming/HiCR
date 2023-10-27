@@ -238,7 +238,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Identifier of the memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdates(const MemorySlot *memorySlot)
+  __USED__ inline void queryMemorySlotUpdates(MemorySlot *memorySlot)
   {
     // Getting value by copy
     queryMemorySlotUpdatesImpl(memorySlot);
@@ -355,6 +355,11 @@ class MemoryManager
     fenceImpl(tag);
   }
 
+  /**
+   * This function flushes pending memcpy operations
+   */
+  __USED__ virtual inline void flush() {}
+
   protected:
 
   /**
@@ -444,7 +449,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to query updates for.
    */
-  virtual void queryMemorySlotUpdatesImpl(const MemorySlot *memorySlot) = 0;
+  virtual void queryMemorySlotUpdatesImpl(MemorySlot *memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the memcpy function

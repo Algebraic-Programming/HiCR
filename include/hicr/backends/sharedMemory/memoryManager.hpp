@@ -284,7 +284,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] memorySlot Memory slot to query updates for.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(const HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::MemorySlot *memorySlot) override
   {
     // This function should check and update the abstract class for completed memcpy operations
   }

@@ -44,14 +44,12 @@ class Channel
   }
 
   /**
-   * Updates and returns the current channel depth.
+   * Returns the current channel depth.
    *
    * If the current channel is a consumer, it corresponds to how many tokens
    * may yet be consumed. If the current channel is a producer, it corresponds
    * the channel capacity minus the returned value equals how many tokens may
    * still be pushed.
-   *
-   * This is a one-sided blocking call that need not be made collectively.
    *
    * \note This is not a thread-safe call
    *
@@ -61,12 +59,8 @@ class Channel
    *
    * This function when called on a valid channel instance will never fail.
    */
-  __USED__ inline size_t queryDepth() noexcept
+  __USED__ inline size_t getDepth() const noexcept
   {
-    // Calling channel-type specific fnction to update the current depth.
-    updateDepth();
-
-    // Returning new depth value
     return _depth;
   }
 
@@ -78,22 +72,22 @@ class Channel
    * \returns true, if the buffer is full
    * \returns false, if the buffer is not full
    */
-  __USED__ inline bool isFull()
+  __USED__ inline bool isFull() const noexcept
   {
-    return queryDepth() == getCapacity();
+    return _depth == _capacity;
   }
 
   /**
    * This function can be used to quickly check whether the channel is empty.
    *
-   * It affects the internal state of the channel because it detects any updates in the internal state of the buffers
+   * It does not affects the internal state of the channel
    *
    * \returns true, if the buffer is empty
    * \returns false, if the buffer is not empty
    */
-  __USED__ inline bool isEmpty()
+  __USED__ inline bool isEmpty() const noexcept
   {
-    return queryDepth() == 0;
+    return _depth == 0;
   }
 
   /**
@@ -188,6 +182,11 @@ class Channel
     return _tail;
   }
 
+  /**
+   * This function updates the internal value of the channel depth
+   */
+  virtual void updateDepth() = 0;
+
   protected:
 
   /**
@@ -204,11 +203,6 @@ class Channel
    * Memory slot that enables coordination communication from the consumer to the producer
    */
   MemorySlot *const _coordinationBuffer;
-
-  /**
-   * This function updates the internal value of the channel depth
-   */
-  virtual void updateDepth() = 0;
 
   /**
    * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.
