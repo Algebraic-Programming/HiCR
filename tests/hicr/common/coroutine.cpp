@@ -33,11 +33,8 @@ TEST(Coroutine, Construction)
 // Thread local storage to hold a unique value per thread
 thread_local pthread_t threadId;
 
-// Declaring a barrier. It is important to make sure the two threads are alive while the coroutine is being used
-pthread_barrier_t _barrier;
-
 // Mutex to ensure the threads do not execute the same coroutine at the same time
-std::vector<std::mutex *> _mutexes;
+std::mutex* _mutexes[COROUTINE_COUNT];
 
 // Flag to store whether the execution failed or not
 __volatile__ bool falseRead;
@@ -46,9 +43,6 @@ void *threadFc(void *arg)
 {
   // Storing thread-local value
   threadId = pthread_self();
-
-  // Waiting for all threads to have started
-  pthread_barrier_wait(&_barrier);
 
   // Recovering coroutine reference
   auto coroutines = (HiCR::common::Coroutine **)arg;
@@ -61,9 +55,6 @@ void *threadFc(void *arg)
       coroutines[c]->resume();
       _mutexes[c]->unlock();
     }
-
-  // Waiting for all other threads to finish
-  pthread_barrier_wait(&_barrier);
 
   return NULL;
 }
@@ -81,7 +72,6 @@ TEST(Coroutine, TLS)
   for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::common::Coroutine();
 
   // Creating per-coroutine mutexes
-  _mutexes.resize(COROUTINE_COUNT);
   for (size_t i = 0; i < COROUTINE_COUNT; i++) _mutexes[i] = new std::mutex;
 
   // Creating coroutine function
@@ -106,9 +96,6 @@ TEST(Coroutine, TLS)
                                                                     { fc(coroutines[i]); });
   // Setting detection flag initial value
   falseRead = false;
-
-  // Initializing barrier
-  pthread_barrier_init(&_barrier, NULL, THREAD_COUNT);
 
   // Storage for thread ids
   pthread_t threadIds[THREAD_COUNT];
