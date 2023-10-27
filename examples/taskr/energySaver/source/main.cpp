@@ -4,11 +4,11 @@
 #include <taskr.hpp>
 #include <hicr/backends/sharedMemory/computeManager.hpp>
 
-void workFc()
+void workFc(const size_t iterations)
 {
  __volatile__ double value = 2.0;
- for (size_t i = 0; i < 5000; i++)
-  for (size_t j = 0; j < 5000; j++)
+ for (size_t i = 0; i < iterations; i++)
+  for (size_t j = 0; j < iterations; j++)
   {
     value = sqrt(value + i);
     value = value * value;
@@ -35,8 +35,10 @@ int main(int argc, char **argv)
   // Getting arguments, if provided
   size_t workTaskCount = 1000;
   size_t secondsDelay = 5;
+  size_t iterations = 5000;
   if (argc > 1) workTaskCount = std::atoi(argv[1]);
   if (argc > 2) secondsDelay = std::atoi(argv[2]);
+  if (argc > 3) iterations = std::atoi(argv[3]);
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -57,7 +59,7 @@ int main(int argc, char **argv)
   taskr::Runtime taskr;
 
   // Creating task work execution unit
-  auto workExecutionUnit = computeManager.createExecutionUnit([]() { workFc(); });
+  auto workExecutionUnit = computeManager.createExecutionUnit([&iterations]() { workFc(iterations); });
 
   // Creating task wait execution unit
   auto waitExecutionUnit = computeManager.createExecutionUnit([&taskr, &secondsDelay]() { waitFc(&taskr, secondsDelay); });

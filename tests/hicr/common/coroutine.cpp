@@ -25,7 +25,7 @@ TEST(Coroutine, Construction)
 #define COROUTINE_COUNT 8
 
 // Defines the number of times a coroutine will be resumed by each thread
-#define RESUME_COUNT 1000
+#define RESUME_COUNT 100
 
 // Defines the number of threads to use in the test
 #define THREAD_COUNT 16

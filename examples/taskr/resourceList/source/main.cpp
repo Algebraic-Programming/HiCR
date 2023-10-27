@@ -25,11 +25,13 @@ int main(int argc, char **argv)
 
   // Getting work task count
   size_t workTaskCount = 100;
+  size_t iterations = 5000;
   if (argc > 1) workTaskCount = std::atoi(argv[1]);
+  if (argc > 2) iterations = std::atoi(argv[2]);
 
   // Getting the core subset from the argument list (could be from a file too)
   std::set<int> coreSubset;
-  for (int i = 2; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
+  for (int i = 3; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
 
   // Sanity check
   if (coreSubset.empty()) { fprintf(stderr, "Launch error: no compute resources provided\n"); exit(-1); }
@@ -45,7 +47,7 @@ int main(int argc, char **argv)
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr](){work();});
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations](){work(iterations);});
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());
