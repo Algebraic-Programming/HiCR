@@ -50,9 +50,7 @@ class MemorySlot final : public HiCR::MemorySlot
     void *const pointer,
     size_t size,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId)
-  {
-  }
+    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId){};
 
   /**
    * Default destructor
