@@ -113,10 +113,10 @@ TEST(Worker, LifeCycle)
   auto f = [&runningStateFound]()
   {
     // Getting worker pointer
-    auto w = HiCR::getCurrentWorker();
+    auto w = HiCR::Worker::getCurrentWorker();
 
     // Getting worker pointer
-    auto t = HiCR::getCurrentTask();
+    auto t = HiCR::Task::getCurrentTask();
 
     // Checking running state
     if (w->getState() == HiCR::Worker::state_t::running) runningStateFound = true;

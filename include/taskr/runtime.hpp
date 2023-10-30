@@ -115,7 +115,7 @@ class Runtime
   __USED__ inline void checkMaximumActiveWorkerCount()
   {
     // Getting a pointer to the currently executing worker
-    auto worker = HiCR::getCurrentWorker();
+    auto worker = HiCR::Worker::getCurrentWorker();
 
     // Try to get the active worker queue lock, otherwise keep going
     if (_activeWorkerQueueLock.try_lock())
@@ -254,7 +254,7 @@ class Runtime
     if (_taskCount == 0)
     {
       // Getting a pointer to the currently executing worker
-      auto worker = HiCR::getCurrentWorker();
+      auto worker = HiCR::Worker::getCurrentWorker();
 
       // Terminating worker.
       worker->terminate();
@@ -350,7 +350,7 @@ class Runtime
    *
    * \return A pointer to the currently executing TaskR task
    */
-  __USED__ inline Task *getCurrentTask() { return (Task *)HiCR::getCurrentTask()->getBackwardReferencePointer(); }
+  __USED__ inline Task *getCurrentTask() { return (Task *)HiCR::Task::getCurrentTask()->getBackwardReferencePointer(); }
 
 }; // class Runtime
 

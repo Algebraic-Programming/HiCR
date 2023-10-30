@@ -30,8 +30,9 @@ TEST(Coroutine, Construction)
 // Defines the number of threads to use in the test
 #define THREAD_COUNT 16
 
-// Thread local storage to hold a unique value per thread
-thread_local pthread_t threadId;
+// Storage for thread-local identification of running thread
+static pthread_key_t key;
+static pthread_once_t key_once = PTHREAD_ONCE_INIT;
 
 // Declaring a barrier. It is important to make sure the two threads are alive while the coroutine is being used
 pthread_barrier_t _barrier;
@@ -42,16 +43,25 @@ std::vector<std::mutex *> _mutexes;
 // Flag to store whether the execution failed or not
 bool falseRead = false;
 
+// Storage for the coroutine array
+HiCR::common::Coroutine *coroutines[COROUTINE_COUNT];
+
+static void make_key() { (void)pthread_key_create(&key, NULL); }
+
 void *threadFc(void *arg)
 {
-  // Storing thread-local value
-  threadId = pthread_self();
+  void *ptr;
+
+  pthread_once(&key_once, make_key);
+
+  if ((ptr = pthread_getspecific(key)) == NULL)
+  {
+    ptr = (void *)pthread_self();
+    pthread_setspecific(key, ptr);
+  }
 
   // Waiting for all threads to have started
   pthread_barrier_wait(&_barrier);
-
-  // Recovering coroutine reference
-  auto coroutines = (HiCR::common::Coroutine **)arg;
 
   // Resuming coroutines many times
   for (size_t i = 0; i < RESUME_COUNT; i++)
@@ -74,9 +84,6 @@ void *threadFc(void *arg)
  */
 TEST(Coroutine, TLS)
 {
-  // Storage for the coroutine array
-  HiCR::common::Coroutine *coroutines[COROUTINE_COUNT];
-
   // Creating new HiCR coroutine
   for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::common::Coroutine();
 
@@ -96,13 +103,16 @@ TEST(Coroutine, TLS)
       // Yielding
       coroutine->yield();
 
+      // Getting self reference
+      pthread_t self = (pthread_t)pthread_getspecific(key);
+
       // Making sure the TLS registers the correct thread as the one reported by the OS
-      if (threadId != pthread_self()) falseRead = true;
+      if (self != pthread_self()) falseRead = true;
     }
   };
 
   // Starting coroutines
-  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, coroutines, fc]()
+  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, fc]()
                                                                     { fc(coroutines[i]); });
 
   // Initializing barrier
@@ -112,7 +122,7 @@ TEST(Coroutine, TLS)
   pthread_t threadIds[THREAD_COUNT];
 
   // Creating threads
-  for (size_t i = 0; i < THREAD_COUNT; i++) pthread_create(&threadIds[i], NULL, threadFc, coroutines);
+  for (size_t i = 0; i < THREAD_COUNT; i++) pthread_create(&threadIds[i], NULL, threadFc, (void *)i);
 
   // Waiting for threads to finish
   for (size_t i = 0; i < THREAD_COUNT; i++) pthread_join(threadIds[i], NULL);

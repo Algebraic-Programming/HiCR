@@ -20,27 +20,26 @@
 #include <hicr/executionUnit.hpp>
 #include <hicr/processingUnit.hpp>
 #include <memory>
+#include <pthread.h>
 #include <queue>
 
 namespace HiCR
 {
 
-class Task;
+/**
+ * Key identifier for thread-local identification of currently running task
+ */
+static pthread_key_t _taskPointerKey;
 
 /**
- * Static storage for remembering the executing worker and task, based on the pthreadId
- *
- * \note Be mindful of possible destructive interactions between this thread local storage and coroutines.
- *       If this fails at some point, it might be necessary to come back to a pthread_self() mechanism
+ * Execute-once configuration for thread-local identification of currently running task
  */
-thread_local Task *_currentTask;
+static pthread_once_t _taskPointerKeyConfig = PTHREAD_ONCE_INIT;
 
 /**
- * Function to return a pointer to the currently executing task from a global context
- *
- * @return A pointer to the current HiCR task, NULL if this function is called outside the context of a task run() function
+ * Function for creating task pointer key (only once), for thread-local identification of currently running task
  */
-__USED__ inline Task *getCurrentTask() { return _currentTask; }
+static void createTaskPointerKey() { (void)pthread_key_create(&_taskPointerKey, NULL); }
 
 /**
  * This class defines the basic execution unit managed by HiCR.
@@ -54,6 +53,13 @@ __USED__ inline Task *getCurrentTask() { return _currentTask; }
 class Task
 {
   public:
+
+  /**
+   * Function to return a pointer to the currently executing task from a global context
+   *
+   * @return A pointer to the current HiCR task, NULL if this function is called outside the context of a task run() function
+   */
+  __USED__ static inline Task *getCurrentTask() { return (Task *)pthread_getspecific(_taskPointerKey); }
 
   /**
    * Enumeration of possible task-related events that can trigger a user-defined function callback
@@ -102,7 +108,11 @@ class Task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(const ExecutionUnit *executionUnit, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap){};
+  __USED__ Task(const ExecutionUnit *executionUnit, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap)
+  {
+    // Making sure the task-identifying key is created (only once) with the first created task
+    pthread_once(&_taskPointerKeyConfig, createTaskPointerKey);
+  };
 
   /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
@@ -205,7 +215,7 @@ class Task
     if (getState() != ExecutionState::state_t::initialized && getState() != ExecutionState::state_t::suspended) HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", getState());
 
     // Also map task pointer to the running thread it into static storage for global access.
-    _currentTask = this;
+    pthread_setspecific(_taskPointerKey, this);
 
     // Triggering execution event, if defined
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
@@ -227,7 +237,7 @@ class Task
       if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskFinish);
 
     // Relenting current task pointer
-    _currentTask = NULL;
+    pthread_setspecific(_taskPointerKey, NULL);
   }
 
   /**

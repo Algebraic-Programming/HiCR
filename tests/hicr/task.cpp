@@ -54,7 +54,7 @@ TEST(Task, Run)
     if (t->getState() == HiCR::ExecutionState::state_t::running) hasRunningState = true;
 
     // Checking whether the current task pointer is the correct one
-    if (HiCR::getCurrentTask() == t) hasCorrectTaskPointer = true;
+    if (HiCR::Task::getCurrentTask() == t) hasCorrectTaskPointer = true;
 
     // Yielding as many times as necessary
     t->suspend();
@@ -81,11 +81,11 @@ TEST(Task, Run)
   EXPECT_TRUE(hasRunningState);
   EXPECT_TRUE(hasCorrectTaskPointer);
   EXPECT_EQ(t->getState(), HiCR::ExecutionState::state_t::suspended);
-  EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task *)NULL);
+  EXPECT_EQ(HiCR::Task::getCurrentTask(), (HiCR::Task *)NULL);
 
   // A second run should resume the task
   EXPECT_NO_THROW(t->run());
-  EXPECT_EQ(HiCR::getCurrentTask(), (HiCR::Task *)NULL);
+  EXPECT_EQ(HiCR::Task::getCurrentTask(), (HiCR::Task *)NULL);
   EXPECT_EQ(t->getState(), HiCR::ExecutionState::state_t::finished);
 
   // The task has now finished, so a third run should fail
