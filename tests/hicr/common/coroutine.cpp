@@ -48,19 +48,6 @@ HiCR::common::Coroutine *coroutines[COROUTINE_COUNT];
 
 static void make_key() { (void) pthread_key_create(&key, NULL); }
 
-/**
- * Sets up new affinity for the thread. The thread needs to yield or be preempted for the new affinity to work.
- *
- * \param[in] affinity New affinity to use
- */
-void updateAffinity(const std::set<int> &affinity)
-{
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  for (const auto c : affinity) CPU_SET(c, &cpuset);
-  if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem assigning affinity.");
-}
-
 void *threadFc(void *arg)
 {
  void *ptr;
@@ -76,12 +63,6 @@ void *threadFc(void *arg)
 
   // Getting thread id
   size_t threadId = (size_t)arg;
-
-  // Setting initial thread affinity
-  updateAffinity(std::set<int>({(int)threadId}));
-
-  // Yielding execution to allow affinity to refresh
-  sched_yield();
 
   // Storing thread-local value
   threadId = pthread_self();
