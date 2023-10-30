@@ -61,12 +61,6 @@ void *threadFc(void *arg)
      (void) pthread_setspecific(key, ptr);
  }
 
-  // Getting thread id
-  size_t threadId = (size_t)arg;
-
-  // Storing thread-local value
-  threadId = pthread_self();
-
   // Waiting for all threads to have started
   pthread_barrier_wait(&_barrier);
 
