@@ -14,6 +14,7 @@
 #include <hicr/backends/sequential/sequential.hpp>
 #include <hicr/channel/consumerChannel.hpp>
 #include <hicr/channel/producerChannel.hpp>
+#include <thread>
 
 TEST(ProducerChannel, Construction)
 {
@@ -88,35 +89,23 @@ TEST(ProducerChannel, Push)
   // Attempting to push more tokens than buffer size (should throw exception)
   EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity + 1), HiCR::common::LogicException);
 
-  // Trying to push more tokens than capacity (should return false)
-  bool result = true;
-  EXPECT_NO_THROW(result = producer.push(sendBuffer, sendBufferCapacity));
-  EXPECT_FALSE(result);
+  // Trying to push more tokens than capacity (should fail)
+  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity), HiCR::common::RuntimeException);
 
   // Trying to push one token
-  result = false;
-  EXPECT_NO_THROW(result = producer.push(sendBuffer, 1));
-  EXPECT_TRUE(result);
+  EXPECT_NO_THROW(producer.push(sendBuffer, 1));
 
   // Trying to push capacity, but after having pushed one, should fail
-  result = false;
-  EXPECT_NO_THROW(result = producer.push(sendBuffer, channelCapacity));
-  EXPECT_FALSE(result);
+  EXPECT_THROW(producer.push(sendBuffer, channelCapacity), HiCR::common::RuntimeException);
 
   // Trying to push to capacity, should't fail
-  result = false;
-  EXPECT_NO_THROW(result = producer.push(sendBuffer, channelCapacity - 1));
-  EXPECT_TRUE(result);
+  EXPECT_NO_THROW(producer.push(sendBuffer, channelCapacity - 1));
 
   // Channel is full but trying to push zero should't fail
-  result = false;
-  EXPECT_NO_THROW(result = producer.push(sendBuffer, 0));
-  EXPECT_TRUE(result);
+  EXPECT_NO_THROW(producer.push(sendBuffer, 0));
 
   // Channel is full and trying to push one more should fail
-  result = false;
-  EXPECT_NO_THROW(result = producer.push(sendBuffer, 1));
-  EXPECT_FALSE(result);
+  EXPECT_THROW(producer.push(sendBuffer, 1), HiCR::common::RuntimeException);
 }
 
 TEST(ProducerChannel, PushWait)
@@ -172,9 +161,12 @@ TEST(ProducerChannel, PushWait)
   // Creating consumer channel
   HiCR::ConsumerChannel consumer(&backend, tokenBuffer, coordinationBuffer, tokenSize, channelCapacity);
 
-  // Popping one element to liberate thread
-  while (consumer.pop() == false)
+  // Waiting until consumer gets the message
+  while (consumer.queryDepth() == 0)
     ;
+
+  // Popping one element to liberate thread
+  consumer.pop();
 
   // Wait for producer
   producerThread.join();

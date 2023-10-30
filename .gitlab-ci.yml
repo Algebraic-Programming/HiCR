@@ -36,13 +36,17 @@ build:
   - docker
   - high-core 
   - x86
+  - infiniband
   script:
+  - echo "Getting LPF..."
+  - git clone -b hicr https://github.com/Algebraic-Programming/LPF.git
+  - mkdir LPF/build; pushd LPF/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j8; make install; popd
   - echo "Building..."
   - mkdir build
-  - meson setup build -Db_coverage=true
+  - meson setup build -Db_coverage=true -Dbackends=sharedMemory,lpf,mpi -DbuildTests=true -DbuildExamples=true 
   - meson compile -C build
   - echo "Running tests..."
-  - meson test -C build
+  - OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 meson test -C build
   - echo "Creating coverage report..."
   - ninja -C build coverage
   coverage: /^\s*lines:\s*\d+.\d+\%/
@@ -62,3 +66,22 @@ build:
   - merge_requests
   - tags
 
+build-ascend:
+  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-ascend-arm64v8:latest
+  tags:
+  - docker
+  - ascend
+  script:
+  - source /home/HwHiAiUser/.bashrc
+  - echo "Building..."
+  - mkdir build
+  - cd build
+  - meson setup .. -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
+  - meson compile -C .
+  - echo "Running tests..."
+  - meson test -C .
+  only:
+  - master
+  - develop 
+  - merge_requests
+  - tags

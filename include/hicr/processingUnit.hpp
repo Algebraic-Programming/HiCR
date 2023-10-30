@@ -11,11 +11,10 @@
  */
 #pragma once
 
-#include <memory>
-#include <set>
-
 #include <hicr/common/definitions.hpp>
-#include <hicr/dispatcher.hpp>
+#include <hicr/executionState.hpp>
+#include <hicr/executionUnit.hpp>
+#include <set>
 
 namespace HiCR
 {
@@ -24,11 +23,6 @@ namespace HiCR
  * Type definition for a generic memory space identifier
  */
 typedef uint64_t computeResourceId_t;
-
-/**
- * Definition for function to run at resource
- */
-typedef std::function<void(void)> processingUnitFc_t;
 
 /**
  * This class represents an abstract definition for a Processing Unit resource in HiCR that:
@@ -92,6 +86,16 @@ class ProcessingUnit
   virtual ~ProcessingUnit() = default;
 
   /**
+   * Function to obtain the processing unit's state
+   *
+   * \return Retruns the current state
+   */
+  __USED__ inline ProcessingUnit::state_t getState() const
+  {
+    return _state;
+  }
+
+  /**
    * Initializes the resource and leaves it ready to execute work
    */
   __USED__ inline void initialize()
@@ -107,20 +111,20 @@ class ProcessingUnit
   }
 
   /**
-   * Starts running the resource and execute a user-defined function
+   * Starts running the resource and execute a previously initialized executionState object
    *
-   * @param[in] fc The function to execute by the resource
+   * @param[in] executionState The execution state to start running with this processing  unit
    */
-  __USED__ inline void start(processingUnitFc_t fc)
+  __USED__ inline void start(std::unique_ptr<HiCR::ExecutionState> executionState)
   {
     // Checking internal state
-    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'initialized' state");
+    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'ready' state");
 
     // Transitioning state
     _state = ProcessingUnit::running;
 
     // Running internal implementation of the start function
-    startImpl(fc);
+    startImpl(std::move(executionState));
   }
 
   /**
@@ -201,9 +205,9 @@ class ProcessingUnit
   /**
    * Internal implmentation of the start function
    *
-   * @param[in] fc The function to execute by the resource
+   * @param[in] executionState The execution state to start running with this processing unit
    */
-  virtual void startImpl(processingUnitFc_t fc) = 0;
+  virtual void startImpl(std::unique_ptr<ExecutionState> executionState) = 0;
 
   /**
    * Internal implementation of the suspend function
@@ -237,5 +241,10 @@ class ProcessingUnit
    */
   computeResourceId_t _computeResourceId;
 };
+
+/**
+ * Type definition for a generic memory space identifier
+ */
+typedef std::vector<ProcessingUnit *> processingUnitList_t;
 
 } // namespace HiCR

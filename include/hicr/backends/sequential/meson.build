@@ -1,7 +1,11 @@
 # HiCR Sequential Backend Configuration
 
-hicrSequentialBackendDeps = [  ]
-hicrSequentialBackendDep = declare_dependency( )    
+hicrSequentialBackendDeps = [ 
+    dependency('boost',  modules : ['context'],  required : true),
+    dependency('threads', required: true),
+    ]
+hicrSequentialBackendDep = declare_dependency(
+  dependencies: hicrSequentialBackendDeps )    
     
 
 

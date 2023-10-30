@@ -12,41 +12,38 @@
 
 #pragma once
 
+#include <hicr/backends/computeManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/dispatcher.hpp>
 #include <hicr/processingUnit.hpp>
 #include <hicr/task.hpp>
 #include <memory>
+#include <pthread.h>
 #include <unistd.h>
 
 namespace HiCR
 {
 
 /**
- * Type definition for a generic memory space identifier
- */
-typedef std::vector<std::unique_ptr<ProcessingUnit>> processingUnitList_t;
-
-/**
  * Type definition for the set of dispatchers a worker is subscribed to
  */
 typedef std::set<Dispatcher *> dispatcherSet_t;
 
-class Worker;
+/**
+ * Key identifier for thread-local identification of currently running worker
+ */
+static pthread_key_t _workerPointerKey;
 
 /**
- * Static storage for remembering the executing worker
- *
- * \note Be mindful of possible destructive interactions between this thread local storage and coroutines.
- *       If this fails at some point, it might be necessary to come back to a pthread_self() mechanism
+ * Execute-once configuration for thread-local identification of currently running worker
  */
-thread_local Worker *_currentWorker;
+static pthread_once_t _workerPointerKeyConfig = PTHREAD_ONCE_INIT;
 
 /**
- * Function to return a pointer to the currently executing worker from a global context
+ * Function for creating task pointer key (only once), for thread-local identification of currently running task
  */
-__USED__ static inline Worker *getCurrentWorker() { return _currentWorker; }
+static void createWorkerPointerKey() { (void)pthread_key_create(&_workerPointerKey, NULL); }
 
 /**
  * Defines the worker class, which is in charge of executing tasks.
@@ -58,6 +55,26 @@ __USED__ static inline Worker *getCurrentWorker() { return _currentWorker; }
 class Worker
 {
   public:
+
+  /**
+   * Function to return a pointer to the currently executing worker from a global context
+   *
+   * @return A pointer to the current HiCR worker, NULL if this function is called outside the context of a task run() function
+   */
+  __USED__ static inline Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
+
+  /**
+   * Constructor for the worker class.
+   *
+   * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
+   */
+  Worker(HiCR::backend::ComputeManager *computeManager) : _computeManager(computeManager)
+  {
+    // Making sure the worker-identifying key is created (only once) with the first created task
+    pthread_once(&_workerPointerKeyConfig, createWorkerPointerKey);
+  }
+
+  ~Worker() = default;
 
   /**
    * Complete state set that a worker can be in
@@ -133,9 +150,21 @@ class Worker
     // Transitioning state
     _state = state_t::running;
 
+    // Creating new execution unit (the processing unit must support an execution unit of 'sequential' type)
+    auto executionUnit = _computeManager->createExecutionUnit([this]()
+                                                              { this->mainLoop(); });
+
+    // Creating worker's execution state
+    auto executionState = _computeManager->createExecutionState();
+
+    // Initializing execution state
+    executionState->initialize(executionUnit);
+
     // Launching worker in the lead resource (first one to be added)
-    _processingUnits[0]->start([this]()
-                               { this->mainLoop(); });
+    _processingUnits[0]->start(std::move(executionState));
+
+    // Free up memory
+    delete executionUnit;
   }
 
   /**
@@ -176,9 +205,6 @@ class Worker
     // Checking state
     if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to stop worker that is not in the 'running' state");
 
-    // Requesting processing units to terminate as soon as possible
-    for (auto &p : _processingUnits) p->terminate();
-
     // Transitioning state
     _state = state_t::terminating;
   }
@@ -210,7 +236,7 @@ class Worker
    *
    * @param[in] pu Processing unit to assign to the worker
    */
-  __USED__ inline void addProcessingUnit(std::unique_ptr<ProcessingUnit> &pu) { _processingUnits.push_back(std::move(pu)); }
+  __USED__ inline void addProcessingUnit(ProcessingUnit *pu) { _processingUnits.push_back(pu); }
 
   /**
    * Gets a reference to the workers assigned processing units.
@@ -244,25 +270,64 @@ class Worker
   processingUnitList_t _processingUnits;
 
   /**
+   * Compute manager to use to instantiate and manage the worker's and task execution states
+   */
+  HiCR::backend::ComputeManager *const _computeManager;
+
+  /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
    */
   __USED__ inline void mainLoop()
   {
-    // Setting the pointer to the current worker into the thread local storage
-    _currentWorker = this;
-
     while (_state == state_t::running)
     {
+      // Also map worker pointer to the running thread it into static storage for global access.
+      pthread_setspecific(_workerPointerKey, this);
+
       for (auto dispatcher : _dispatchers)
       {
         // Attempt to both pop and pull from dispatcher
         auto task = dispatcher->pull();
 
-        // If a task was returned, then execute it
-        if (task != NULL) task->run();
+        // If a task was returned, then start or execute it
+        if (task != NULL) [[likely]]
+        {
+          // If the task hasn't been initialized yet, we need to do it now
+          if (task->getState() == ExecutionState::state_t::uninitialized)
+          {
+            // First, create new execution state for the processing unit
+            auto executionState = _computeManager->createExecutionState();
+
+            // Then initialize the task with the new execution state
+            task->initialize(std::move(executionState));
+          }
+
+          // Now actually run the task
+          task->run();
+        }
 
         // If worker has been suspended, handle it now
-        if (_state == state_t::suspended) _processingUnits[0]->suspend();
+        if (_state == state_t::suspended) [[unlikely]]
+        {
+          // Suspend secondary processing units first
+          for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
+
+          // Then suspend current processing unit
+          _processingUnits[0]->suspend();
+        }
+
+        // Requesting processing units to terminate as soon as possible
+        if (_state == state_t::terminating) [[unlikely]]
+        {
+          // Terminate secondary processing units first
+          for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
+
+          // Then terminate current processing unit
+          _processingUnits[0]->terminate();
+
+          // Return immediately
+          return;
+        }
       }
     }
   }

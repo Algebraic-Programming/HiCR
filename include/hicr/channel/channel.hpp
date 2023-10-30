@@ -12,9 +12,10 @@
  */
 
 #pragma once
-#include <hicr/backend.hpp>
+#include <hicr/backends/memoryManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/memorySlot.hpp>
 #include <mutex>
 
 namespace HiCR
@@ -43,14 +44,12 @@ class Channel
   }
 
   /**
-   * Updates and returns the current channel depth.
+   * Returns the current channel depth.
    *
    * If the current channel is a consumer, it corresponds to how many tokens
    * may yet be consumed. If the current channel is a producer, it corresponds
    * the channel capacity minus the returned value equals how many tokens may
    * still be pushed.
-   *
-   * This is a one-sided blocking call that need not be made collectively.
    *
    * \note This is not a thread-safe call
    *
@@ -60,13 +59,35 @@ class Channel
    *
    * This function when called on a valid channel instance will never fail.
    */
-  __USED__ inline size_t queryDepth() noexcept
+  __USED__ inline size_t getDepth() const noexcept
   {
-    // Calling channel-type specific fnction to update the current depth.
-    updateDepth();
-
-    // Returning new depth value
     return _depth;
+  }
+
+  /**
+   * This function can be used to quickly check whether the channel is full.
+   *
+   * It affects the internal state of the channel because it detects any updates in the internal state of the buffers
+   *
+   * \returns true, if the buffer is full
+   * \returns false, if the buffer is not full
+   */
+  __USED__ inline bool isFull() const noexcept
+  {
+    return _depth == _capacity;
+  }
+
+  /**
+   * This function can be used to quickly check whether the channel is empty.
+   *
+   * It does not affects the internal state of the channel
+   *
+   * \returns true, if the buffer is empty
+   * \returns false, if the buffer is not empty
+   */
+  __USED__ inline bool isEmpty() const noexcept
+  {
+    return _depth == 0;
   }
 
   /**
@@ -92,7 +113,7 @@ class Channel
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] backend The backend that will facilitate communication between the producer and consumer sides
+   * \param[in] memoryManager The backend's memory manager to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the data exchange buffer. This buffer needs to be allocated
    *            at the consumer side. The producer will push new tokens into this buffer, while there is enough space.
    *            This buffer should be big enough to hold the required capacity * tokenSize.
@@ -107,15 +128,15 @@ class Channel
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Channel(Backend *backend,
-          Backend::memorySlotId_t tokenBuffer,
-          Backend::memorySlotId_t coordinationBuffer,
+  Channel(backend::MemoryManager *memoryManager,
+          MemorySlot *const tokenBuffer,
+          MemorySlot *const coordinationBuffer,
           const size_t tokenSize,
-          const size_t capacity) : _backend(backend),
+          const size_t capacity) : _memoryManager(memoryManager),
                                    _tokenBuffer(tokenBuffer),
                                    _coordinationBuffer(coordinationBuffer),
                                    // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
-                                   _poppedTokensSlot(backend->registerLocalMemorySlot(&_poppedTokens, sizeof(size_t))),
+                                   _poppedTokensSlot(_memoryManager->registerLocalMemorySlot(&_poppedTokens, sizeof(size_t))),
                                    _tokenSize(tokenSize),
                                    _capacity(capacity)
   {
@@ -126,7 +147,7 @@ class Channel
   ~Channel()
   {
     // Unregistering memory slot corresponding to popped token count
-    _backend->deregisterLocalMemorySlot(_poppedTokensSlot);
+    _memoryManager->deregisterLocalMemorySlot(_poppedTokensSlot);
   }
 
   /**
@@ -161,32 +182,27 @@ class Channel
     return _tail;
   }
 
-  protected:
-
-  /**
-   * Mutex for thread-safety
-   */
-  std::mutex _mutex;
-
-  /**
-   * Pointer to the backend that is in charge of executing the memory transfer operations
-   */
-  Backend *const _backend;
-
-  /**
-   * Memory slot that represents the token buffer that producer sends data to
-   */
-  Backend::memorySlotId_t _tokenBuffer;
-
-  /**
-   * Memory slot that enables coordination communication from the consumer to the producer
-   */
-  Backend::memorySlotId_t _coordinationBuffer;
-
   /**
    * This function updates the internal value of the channel depth
    */
   virtual void updateDepth() = 0;
+
+  protected:
+
+  /**
+   * Pointer to the backend that is in charge of executing the memory transfer operations
+   */
+  backend::MemoryManager *const _memoryManager;
+
+  /**
+   * Memory slot that represents the token buffer that producer sends data to
+   */
+  MemorySlot *const _tokenBuffer;
+
+  /**
+   * Memory slot that enables coordination communication from the consumer to the producer
+   */
+  MemorySlot *const _coordinationBuffer;
 
   /**
    * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.
@@ -227,7 +243,7 @@ class Channel
   /**
    * Local memory slot to update the tail position
    */
-  const Backend::memorySlotId_t _poppedTokensSlot;
+  MemorySlot *const _poppedTokensSlot;
 
   /**
    * The number of popped tokens
@@ -248,8 +264,6 @@ class Channel
    * How many tokens fit in the buffer
    */
   const size_t _capacity;
-
-  private:
 
   /**
    * Buffer position at the head

@@ -1,0 +1,11 @@
+option('backends', type : 'array', choices : ['sharedMemory', 'mpi', 'lpf',  'ascend'], value : [ ],
+       description : 'Specifies which backends to enable for compilation with HiCR'
+       )
+      
+option('buildTests', type : 'boolean', value : false,
+       description: 'Indicates whether to build tests'
+)
+
+option('buildExamples', type : 'boolean', value : false,
+       description: 'Indicates whether to build example apps'
+)

@@ -1,1 +1,3 @@
 build
+.vscode
+atlas_compile.sh

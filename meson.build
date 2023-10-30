@@ -1,4 +1,4 @@
-project('HiCR', [ 'cpp' ],
+project('HiCR', [ 'cpp', 'c'],
   default_options : [
   'cpp_std=c++20',
   'buildtype=release',
@@ -8,13 +8,36 @@ project('HiCR', [ 'cpp' ],
 # Including dependencies
 subdir('include/hicr')
 subdir('include/taskr')
-subdir('include/hicr/backends/sequential')    
-subdir('include/hicr/backends/sharedMemory')
-subdir('include/hicr/backends/mpi')    
+
+# Getting selected backends
+enabledBackends = get_option('backends')
+
+# The sequential backend is the default for HiCR
+subdir('include/hicr/backends/sequential')
+
+# Including selected optional backends
+if 'sharedMemory' in enabledBackends
+  subdir('include/hicr/backends/sharedMemory')
+endif
+
+if 'mpi' in enabledBackends
+  subdir('include/hicr/backends/mpi')
+endif
+
+if 'lpf' in enabledBackends
+  subdir('include/hicr/backends/lpf')
+endif
+
+if 'ascend' in enabledBackends    
+  subdir('include/hicr/backends/ascend')
+endif    
     
 # Build example targets
-subdir('examples')
+if get_option('buildExamples')
+ subdir('examples')
+endif
 
 # Build test targets
-subdir('tests')
-
+if get_option('buildTests')
+ subdir('tests')
+endif

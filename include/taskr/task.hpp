@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <hicr/executionUnit.hpp>
 #include <hicr/task.hpp>
 #include <taskr/common.hpp>
 #include <vector>
@@ -50,12 +51,13 @@ class Task
    * The task is considered finished when the function runs to completion.
    *
    * \param[in] label A user-defined unique identifier for the task. It is required for dependency management
-   * \param[in] fc A user-defined function to run
+   * \param[in] executionUnit A user-defined function/kernel to run
    */
-  __USED__ inline Task(const taskLabel_t label, const callback_t &fc) : _hicrTask(HiCR::Task([fc](void *arg)
-                                                                                             { fc(); },
-                                                                                             this)),
-                                                                        _label(label) {}
+  __USED__ inline Task(const taskLabel_t label, const HiCR::ExecutionUnit *executionUnit) : _hicrTask(executionUnit), _label(label)
+  {
+    // Setting internal HiCR task a reference to this object
+    _hicrTask.setBackwardReferencePointer(this);
+  }
 
   /**
    * Returns the underlying HiCR task

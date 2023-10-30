@@ -11,22 +11,26 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sequential/sequential.hpp>
+#include <hicr/backends/sequential/computeManager.hpp>
 #include <hicr/task.hpp>
 #include <hicr/worker.hpp>
 
 TEST(Worker, Construction)
 {
   HiCR::Worker *w = NULL;
+  HiCR::backend::ComputeManager *m = NULL;
 
-  EXPECT_NO_THROW(w = new HiCR::Worker());
+  EXPECT_NO_THROW(w = new HiCR::Worker(m));
   EXPECT_FALSE(w == nullptr);
   delete w;
 }
 
 TEST(Task, SetterAndGetters)
 {
-  HiCR::Worker w;
+  // Instantiating default compute manager
+  HiCR::backend::sequential::ComputeManager m;
+
+  HiCR::Worker w(&m);
 
   // Getting empty lists
   EXPECT_TRUE(w.getProcessingUnits().empty());
@@ -39,17 +43,14 @@ TEST(Task, SetterAndGetters)
   // Subscribing worker to dispatcher
   w.subscribe(&d);
 
-  // Creating sequential backend
-  HiCR::backend::sequential::Sequential backend;
-
   // Querying backend for its resources
-  backend.queryComputeResources();
+  m.queryComputeResources();
 
   // Gathering compute resources from backend
-  auto computeResources = backend.getComputeResourceList();
+  auto computeResources = m.getComputeResourceList();
 
   // Creating processing unit from resource
-  auto processingUnit = backend.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 
   // Assigning processing unit to worker
   w.addProcessingUnit(processingUnit);
@@ -61,7 +62,10 @@ TEST(Task, SetterAndGetters)
 
 TEST(Worker, LifeCycle)
 {
-  HiCR::Worker w;
+  // Instantiating default compute manager
+  HiCR::backend::sequential::ComputeManager m;
+
+  HiCR::Worker w(&m);
 
   // Worker state should in an uninitialized state first
   EXPECT_EQ(w.getState(), HiCR::Worker::state_t::uninitialized);
@@ -69,17 +73,14 @@ TEST(Worker, LifeCycle)
   // Attempting to run without any assigned resources
   EXPECT_THROW(w.initialize(), HiCR::common::LogicException);
 
-  // Creating sequential backend
-  HiCR::backend::sequential::Sequential backend;
-
   // Querying backend for its resources
-  backend.queryComputeResources();
+  m.queryComputeResources();
 
   // Gathering compute resources from backend
-  auto computeResources = backend.getComputeResourceList();
+  auto computeResources = m.getComputeResourceList();
 
   // Creating processing unit from resource
-  auto processingUnit = backend.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 
   // Assigning processing unit to worker
   w.addProcessingUnit(processingUnit);
@@ -109,28 +110,31 @@ TEST(Worker, LifeCycle)
   bool runningStateFound = false;
 
   // Creating task function
-  auto f = [&runningStateFound](void *arg)
+  auto f = [&runningStateFound]()
   {
     // Getting worker pointer
-    auto w = HiCR::getCurrentWorker();
+    auto w = HiCR::Worker::getCurrentWorker();
 
     // Getting worker pointer
-    auto t = HiCR::getCurrentTask();
+    auto t = HiCR::Task::getCurrentTask();
 
     // Checking running state
     if (w->getState() == HiCR::Worker::state_t::running) runningStateFound = true;
 
     // suspending worker and yielding task
     w->suspend();
-    t->yield();
+    t->suspend();
 
     // Terminating worker and yielding task
     w->terminate();
-    t->yield();
+    t->suspend();
   };
 
+  // Creating execution unit
+  auto u = m.createExecutionUnit(f);
+
   // Creating task to run, and setting function to run
-  HiCR::Task t(f);
+  HiCR::Task t(u);
 
   // Creating task dispatcher
   auto d = HiCR::Dispatcher([&t]()
@@ -141,7 +145,7 @@ TEST(Worker, LifeCycle)
 
   // Starting worker
   EXPECT_FALSE(runningStateFound);
-  EXPECT_NO_THROW(w.start());
+  ASSERT_NO_THROW(w.start());
   EXPECT_TRUE(runningStateFound);
 
   // Checking the worker is suspended
