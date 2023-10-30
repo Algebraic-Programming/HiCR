@@ -30,17 +30,20 @@ namespace HiCR
  */
 typedef std::set<Dispatcher *> dispatcherSet_t;
 
-class Worker;
+/**
+ * Key identifier for thread-local identification of currently running worker
+ */
+static pthread_key_t _workerPointerKey;
 
 /**
- * Static storage for remembering the executing worker
+ * Execute-once configuration for thread-local identification of currently running worker
  */
-parallelHashMap_t<pthread_t, Worker *> _currentWorkerMap;
+static pthread_once_t _workerPointerKeyConfig = PTHREAD_ONCE_INIT;
 
 /**
- * Function to return a pointer to the currently executing worker from a global context
+ * Function for creating task pointer key (only once), for thread-local identification of currently running task
  */
-__USED__ static inline Worker *getCurrentWorker() { return _currentWorkerMap[pthread_self()]; }
+static void createWorkerPointerKey() { (void)pthread_key_create(&_workerPointerKey, NULL); }
 
 /**
  * Defines the worker class, which is in charge of executing tasks.
@@ -54,11 +57,23 @@ class Worker
   public:
 
   /**
+   * Function to return a pointer to the currently executing worker from a global context
+   *
+   * @return A pointer to the current HiCR worker, NULL if this function is called outside the context of a task run() function
+   */
+  __USED__ static inline Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
+
+  /**
    * Constructor for the worker class.
    *
    * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
    */
-  Worker(HiCR::backend::ComputeManager *computeManager) : _computeManager(computeManager) {}
+  Worker(HiCR::backend::ComputeManager *computeManager) : _computeManager(computeManager)
+  {
+    // Making sure the worker-identifying key is created (only once) with the first created task
+    pthread_once(&_workerPointerKeyConfig, createWorkerPointerKey);
+  }
+
   ~Worker() = default;
 
   /**
@@ -264,11 +279,11 @@ class Worker
    */
   __USED__ inline void mainLoop()
   {
-    // Setting the pointer to the current worker into the thread local storage
-    _currentWorkerMap[pthread_self()] = this;
-
     while (_state == state_t::running)
     {
+      // Also map worker pointer to the running thread it into static storage for global access.
+      pthread_setspecific(_workerPointerKey, this);
+
       for (auto dispatcher : _dispatchers)
       {
         // Attempt to both pop and pull from dispatcher

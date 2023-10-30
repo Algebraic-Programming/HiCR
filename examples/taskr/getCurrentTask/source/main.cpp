@@ -32,11 +32,9 @@ int main(int argc, char **argv)
   // Creating task  execution unit
   auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr]()
   {
-   const auto hicrTask   = HiCR::getCurrentTask();
-   const auto hicrWorker = HiCR::getCurrentWorker();
+   const auto hicrTask   = HiCR::Task::getCurrentTask();
    const auto taskrLabel = taskr.getCurrentTask()->getLabel();
    printf("Current HiCR  Task   pointer:  0x%lX\n", (uint64_t)hicrTask);
-   printf("Current HiCR  Worker pointer:  0x%lX\n", (uint64_t)hicrWorker);
    printf("Current TaskR Task   label:    %lu\n", taskrLabel);
   });
 

@@ -46,20 +46,19 @@ bool falseRead = false;
 // Storage for the coroutine array
 HiCR::common::Coroutine *coroutines[COROUTINE_COUNT];
 
-static void make_key() { (void) pthread_key_create(&key, NULL); }
+static void make_key() { (void)pthread_key_create(&key, NULL); }
 
 void *threadFc(void *arg)
 {
- void *ptr;
+  void *ptr;
 
- pthread_once(&key_once, make_key);
+  pthread_once(&key_once, make_key);
 
- if ((ptr = pthread_getspecific(key)) == NULL)
- {
-     ptr = malloc(sizeof(pthread_t));
-     *((pthread_t*)ptr) = pthread_self();
-     (void) pthread_setspecific(key, ptr);
- }
+  if ((ptr = pthread_getspecific(key)) == NULL)
+  {
+    ptr = (void *)pthread_self();
+    pthread_setspecific(key, ptr);
+  }
 
   // Waiting for all threads to have started
   pthread_barrier_wait(&_barrier);
@@ -105,10 +104,10 @@ TEST(Coroutine, TLS)
       coroutine->yield();
 
       // Getting self reference
-      pthread_t* selfReference = (pthread_t*)pthread_getspecific(key);
+      pthread_t self = (pthread_t)pthread_getspecific(key);
 
       // Making sure the TLS registers the correct thread as the one reported by the OS
-      if (*selfReference != pthread_self()) falseRead = true;
+      if (self != pthread_self()) falseRead = true;
     }
   };
 
@@ -123,7 +122,7 @@ TEST(Coroutine, TLS)
   pthread_t threadIds[THREAD_COUNT];
 
   // Creating threads
-  for (size_t i = 0; i < THREAD_COUNT; i++) pthread_create(&threadIds[i], NULL, threadFc, (void*)i);
+  for (size_t i = 0; i < THREAD_COUNT; i++) pthread_create(&threadIds[i], NULL, threadFc, (void *)i);
 
   // Waiting for threads to finish
   for (size_t i = 0; i < THREAD_COUNT; i++) pthread_join(threadIds[i], NULL);
@@ -131,6 +130,6 @@ TEST(Coroutine, TLS)
 // Since coverage inteferes with this test on Ubuntu 20.04 / gcc 12, we bypass this check
 #if !(defined __GNUC__ && defined ENABLE_COVERAGE)
     // Asserting whether there was any false reads
-    //ASSERT_FALSE(falseRead);
+    // ASSERT_FALSE(falseRead);
 #endif
 }
