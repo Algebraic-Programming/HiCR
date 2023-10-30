@@ -20,8 +20,8 @@
 #include <hicr/executionUnit.hpp>
 #include <hicr/processingUnit.hpp>
 #include <memory>
-#include <queue>
 #include <pthread.h>
+#include <queue>
 
 namespace HiCR
 {

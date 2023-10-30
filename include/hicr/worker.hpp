@@ -19,8 +19,8 @@
 #include <hicr/processingUnit.hpp>
 #include <hicr/task.hpp>
 #include <memory>
-#include <unistd.h>
 #include <pthread.h>
+#include <unistd.h>
 
 namespace HiCR
 {
