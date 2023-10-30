@@ -30,8 +30,9 @@ TEST(Coroutine, Construction)
 // Defines the number of threads to use in the test
 #define THREAD_COUNT 16
 
-// Thread local storage to hold a unique value per thread
-thread_local pthread_t threadId;
+// Storage for thread-local identification of running thread
+static pthread_key_t key;
+static pthread_once_t key_once = PTHREAD_ONCE_INIT;
 
 // Declaring a barrier. It is important to make sure the two threads are alive while the coroutine is being used
 pthread_barrier_t _barrier;
@@ -44,6 +45,8 @@ bool falseRead = false;
 
 // Storage for the coroutine array
 HiCR::common::Coroutine *coroutines[COROUTINE_COUNT];
+
+static void make_key() { (void) pthread_key_create(&key, NULL); }
 
 /**
  * Sets up new affinity for the thread. The thread needs to yield or be preempted for the new affinity to work.
@@ -60,6 +63,17 @@ void updateAffinity(const std::set<int> &affinity)
 
 void *threadFc(void *arg)
 {
+ void *ptr;
+
+ pthread_once(&key_once, make_key);
+
+ if ((ptr = pthread_getspecific(key)) == NULL)
+ {
+     ptr = malloc(sizeof(pthread_t));
+     *((pthread_t*)ptr) = pthread_self();
+     (void) pthread_setspecific(key, ptr);
+ }
+
   // Getting thread id
   size_t threadId = (size_t)arg;
 
@@ -115,8 +129,11 @@ TEST(Coroutine, TLS)
       // Yielding
       coroutine->yield();
 
+      // Getting self reference
+      pthread_t* selfReference = (pthread_t*)pthread_getspecific(key);
+
       // Making sure the TLS registers the correct thread as the one reported by the OS
-      if (threadId != pthread_self()) falseRead = true;
+      if (*selfReference != pthread_self()) falseRead = true;
     }
   };
 
