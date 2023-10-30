@@ -31,7 +31,7 @@ TEST(Coroutine, Construction)
 #define THREAD_COUNT 16
 
 // Thread local storage to hold a unique value per thread
-thread_local pthread_t threadId;
+pthread_t threadIdsPerCoroutine[COROUTINE_COUNT];
 
 // Declaring a barrier. It is important to make sure the two threads are alive while the coroutine is being used
 pthread_barrier_t _barrier;
@@ -44,9 +44,6 @@ bool falseRead = false;
 
 void *threadFc(void *arg)
 {
-  // Storing thread-local value
-  threadId = pthread_self();
-
   // Waiting for all threads to have started
   pthread_barrier_wait(&_barrier);
 
@@ -58,6 +55,7 @@ void *threadFc(void *arg)
     for (size_t c = 0; c < COROUTINE_COUNT; c++)
     {
       _mutexes[c]->lock();
+      threadIdsPerCoroutine[c] = pthread_self();
       coroutines[c]->resume();
       _mutexes[c]->unlock();
     }
@@ -69,10 +67,10 @@ void *threadFc(void *arg)
 }
 
 /*
- *  This is a stress test that combines coroutines, thread-level storage and pthreads to make sure TLS does never get corrupted when
+ *  This is a stress test that combines coroutines, thread-level storage and pthreads to make sure references does never get corrupted when
  *  a coroutine is started and resumed by multiple different pthreads.
  */
-TEST(Coroutine, TLS)
+TEST(Coroutine, threadReference)
 {
   // Storage for the coroutine array
   HiCR::common::Coroutine *coroutines[COROUTINE_COUNT];
@@ -85,7 +83,7 @@ TEST(Coroutine, TLS)
   for (size_t i = 0; i < COROUTINE_COUNT; i++) _mutexes[i] = new std::mutex;
 
   // Creating coroutine function
-  auto fc = [](void *arg)
+  auto fc = [](void *arg, size_t coroutineId)
   {
     // Recovering a pointer to the coroutine
     auto coroutine = (HiCR::common::Coroutine *)arg;
@@ -97,14 +95,13 @@ TEST(Coroutine, TLS)
       coroutine->yield();
 
       // Making sure the TLS registers the correct thread as the one reported by the OS
-      if (threadId != pthread_self()) falseRead = true;
+      if (threadIdsPerCoroutine[coroutineId] != pthread_self()) falseRead = true;
     }
   };
 
   // Starting coroutines
   for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, coroutines, fc]()
-                                                                    { fc(coroutines[i]); });
-
+                                                                    { fc(coroutines[i], i); });
   // Initializing barrier
   pthread_barrier_init(&_barrier, NULL, THREAD_COUNT);
 
@@ -120,6 +117,6 @@ TEST(Coroutine, TLS)
 // Since coverage inteferes with this test on Ubuntu 20.04 / gcc 12, we bypass this check
 #if !(defined __GNUC__ && defined ENABLE_COVERAGE)
     // Asserting whether there was any false reads
-    // ASSERT_FALSE(falseRead);
+     ASSERT_FALSE(falseRead);
 #endif
 }

@@ -20,6 +20,7 @@
 #include <hicr/task.hpp>
 #include <memory>
 #include <unistd.h>
+#include <pthread.h>
 
 namespace HiCR
 {
@@ -33,16 +34,13 @@ class Worker;
 
 /**
  * Static storage for remembering the executing worker
- *
- * \note Be mindful of possible destructive interactions between this thread local storage and coroutines.
- *       If this fails at some point, it might be necessary to come back to a pthread_self() mechanism
  */
-thread_local Worker *_currentWorker;
+parallelHashMap_t<pthread_t, Worker *> _currentWorkerMap;
 
 /**
  * Function to return a pointer to the currently executing worker from a global context
  */
-__USED__ static inline Worker *getCurrentWorker() { return _currentWorker; }
+__USED__ static inline Worker *getCurrentWorker() { return _currentWorkerMap[pthread_self()]; }
 
 /**
  * Defines the worker class, which is in charge of executing tasks.
@@ -267,7 +265,7 @@ class Worker
   __USED__ inline void mainLoop()
   {
     // Setting the pointer to the current worker into the thread local storage
-    _currentWorker = this;
+    _currentWorkerMap[pthread_self()] = this;
 
     while (_state == state_t::running)
     {

@@ -21,6 +21,7 @@
 #include <hicr/processingUnit.hpp>
 #include <memory>
 #include <queue>
+#include <pthread.h>
 
 namespace HiCR
 {
@@ -28,19 +29,16 @@ namespace HiCR
 class Task;
 
 /**
- * Static storage for remembering the executing worker and task, based on the pthreadId
- *
- * \note Be mindful of possible destructive interactions between this thread local storage and coroutines.
- *       If this fails at some point, it might be necessary to come back to a pthread_self() mechanism
+ * Storage for remembering the executing task, based on the pthreadId
  */
-thread_local Task *_currentTask;
+parallelHashMap_t<pthread_t, Task *> _currentTaskMap;
 
 /**
  * Function to return a pointer to the currently executing task from a global context
  *
  * @return A pointer to the current HiCR task, NULL if this function is called outside the context of a task run() function
  */
-__USED__ inline Task *getCurrentTask() { return _currentTask; }
+__USED__ inline Task *getCurrentTask() { return _currentTaskMap[pthread_self()]; }
 
 /**
  * This class defines the basic execution unit managed by HiCR.
@@ -205,7 +203,7 @@ class Task
     if (getState() != ExecutionState::state_t::initialized && getState() != ExecutionState::state_t::suspended) HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", getState());
 
     // Also map task pointer to the running thread it into static storage for global access.
-    _currentTask = this;
+    _currentTaskMap[pthread_self()] = this;
 
     // Triggering execution event, if defined
     if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
@@ -227,7 +225,7 @@ class Task
       if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskFinish);
 
     // Relenting current task pointer
-    _currentTask = NULL;
+    _currentTaskMap[pthread_self()] = NULL;
   }
 
   /**
