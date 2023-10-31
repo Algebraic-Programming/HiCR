@@ -69,6 +69,11 @@ class CPU: public ComputeResource
     std::vector<Cache> _privateCaches;
 
   public:
+    CPU(computeResourceId_t id):
+        ComputeResource(id, "Core")
+    {
+    }
+
 
 }; // class CPU
 
@@ -114,10 +119,8 @@ class HostDevice: public DeviceModel
         for (auto c : _computeMan->getComputeResourceList())
         {
             computeResourceId_t tmp_id = c;
-            std::string tmp_type = "Core";
-            ComputeResource *cmp = new ComputeResource(
-                    tmp_id, /* computeResourceId_t */
-                    tmp_type /* type */
+            CPU *cmp = new CPU(
+                    tmp_id /* computeResourceId_t */
                     );
             _computeResources.insert(std::make_pair(tmp_id, cmp));
         }
