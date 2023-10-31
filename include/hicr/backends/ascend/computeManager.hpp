@@ -14,6 +14,8 @@
 
 #include <acl/acl.h>
 #include <hicr/backends/computeManager.hpp>
+#include <hicr/backends/ascend/executionUnit.hpp>
+#include <hicr/backends/ascend/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -52,13 +54,18 @@ class ComputeManager final : public backend::ComputeManager
 
   __USED__ inline ExecutionUnit *createExecutionUnit(HiCR::ExecutionUnit::function_t executionUnit) override
   {
-    HICR_THROW_RUNTIME("Not implemented yet");
+    HICR_THROW_RUNTIME("Ascend backend currently does not support this API");
+  }
+
+  __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(const char *kernelPath, const std::vector<ExecutionUnit::DataIO> inputs, const std::vector<ExecutionUnit::DataIO> outputs)
+  {
+    return new ExecutionUnit(kernelPath, inputs, outputs);
   }
 
   private:
 
   __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
-  {
+  { 
     HICR_THROW_RUNTIME("Not implemented yet");
   }
 
@@ -73,6 +80,6 @@ class ComputeManager final : public backend::ComputeManager
   }
 };
 
-} // namespace sharedMemory
+} // namespace ascend
 } // namespace backend
 } // namespace HiCR

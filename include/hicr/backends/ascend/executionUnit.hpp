@@ -28,7 +28,7 @@ namespace ascend
 {
 
 /**
- * This class represents a replicable C++ executable function for the sequential (and shared memory) backends.
+ * This class represents a replicable C++ executable function for the ascend backend.
  */
 class ExecutionUnit final : public HiCR::ExecutionUnit
 {
@@ -36,9 +36,10 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
 
   struct DataIO
   {
-    aclFormat format;
-    aclDataType DataType;
-    std::vector<int> dimensions;
+    const aclFormat format;
+    const aclDataType DataType;
+    const std::vector<int> dimensions;
+    const void *ptr;
   };
 
   /**
@@ -48,7 +49,9 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
    * \param inputs Kernel input descriptors
    * \param outputs Kernel output descriptors
    */
-  ExecutionUnit(const char *kernelPath, const std::vector<DataIO> inputs, std::vector<DataIO> outputs) : HiCR::ExecutionUnit(), _kernelPath(kernelPath), _opType(findOpType(kernelPath)), _inputs(inputs), _outputs(outputs){};
+  // ExecutionUnit(const char *kernelPath, const std::vector<DataIO> inputs, const std::vector<DataIO> outputs) : HiCR::ExecutionUnit()
+
+  ExecutionUnit(const char *kernelPath, const std::vector<DataIO> &inputs, const std::vector<DataIO> &outputs) : HiCR::ExecutionUnit(), _kernelPath(kernelPath), _opType(findOpType(kernelPath)), _inputs(inputs), _outputs(outputs){};
   ExecutionUnit() = delete;
 
   /**
