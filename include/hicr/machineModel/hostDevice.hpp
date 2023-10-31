@@ -77,7 +77,7 @@ class CPU: public ComputeResource
 
 }; // class CPU
 
-class HostDevice: public DeviceModel
+class HostDevice final: public DeviceModel
 {
   private:
     std::vector<Cache> _sharedCaches; // revisit
