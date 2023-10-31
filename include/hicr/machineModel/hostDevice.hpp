@@ -114,12 +114,10 @@ class HostDevice: public DeviceModel
         for (auto c : _computeMan->getComputeResourceList())
         {
             computeResourceId_t tmp_id = c;
-            ProcessingUnit *pUnit = _computeMan->createProcessingUnit(tmp_id);
             std::string tmp_type = "Core";
             ComputeResource *cmp = new ComputeResource(
                     tmp_id, /* computeResourceId_t */
-                    tmp_type, /* type */
-                    pUnit /* ProcessingUnit */
+                    tmp_type /* type */
                     );
             _computeResources.insert(std::make_pair(tmp_id, cmp));
         }

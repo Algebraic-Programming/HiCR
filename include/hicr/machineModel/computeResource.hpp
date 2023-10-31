@@ -54,12 +54,10 @@ class ComputeResource
 
     ComputeResource(
             computeResourceId_t id,
-            std::string type,
-            ProcessingUnit *procUnit
+            std::string type
             ):
         _id(id),
-        _type(type),
-        _procUnit(procUnit)
+        _type(type)
     {
     }
 
