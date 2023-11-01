@@ -83,8 +83,8 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     auto opType = _executionState.get()->getOpType();
     auto inputSize = _executionState.get()->getInputSize();
     auto outputSize = _executionState.get()->getOutputSize();
-    // auto inputTensorDescriptors = _executionState.get()->getInputTensorDescriptors().data();
-    // auto outputTensorDescriptors = _executionState.get()->getOutputTensorDescriptors().data();
+    auto inputTensorDescriptors = _executionState.get()->getInputTensorDescriptors();
+    auto outputTensorDescriptors = _executionState.get()->getOutputTensorDescriptors();
     auto inputDataBuffers = _executionState.get()->getInputDataBuffers();
     auto outputDataBuffers = _executionState.get()->getOutputDataBuffers();
     auto kernelAttributes = _executionState.get()->getKernelAttributes();
@@ -101,26 +101,15 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to set the directory %s where the model resides. Error %d", kernelDir.c_str(), err);
 
-    int64_t dims[] = {(int64_t)192, (int64_t)1};
-    aclTensorDesc *inputDesc1 = aclCreateTensorDesc(ACL_FLOAT16, 2, dims, ACL_FORMAT_ND);
-    aclTensorDesc *inputDesc2 = aclCreateTensorDesc(ACL_FLOAT16, 2, dims, ACL_FORMAT_ND);
-    aclTensorDesc *outputDesc = aclCreateTensorDesc(ACL_FLOAT16, 2, dims, ACL_FORMAT_ND);
-    aclTensorDesc *inputDescs[] = {inputDesc1, inputDesc2};
-    aclTensorDesc *outputDescs[] = {outputDesc};
-    // aclTensorDesc **inputDescs = &(inputDescsA);
-    // aclTensorDesc **outputDescs = &(outputDescsA);
-
-      err = aclopExecuteV2(opType.c_str(),
-                           (int)inputSize,
-                          //  (aclTensorDesc **)inputTensorDescriptors,
-                           inputDescs,
-                           (aclDataBuffer **)inputDataBuffers,
-                           (int)outputSize,
-                          //  (aclTensorDesc **)outputTensorDescriptors,
-                           outputDescs,
-                           (aclDataBuffer **)outputDataBuffers,
-                           (aclopAttr *)kernelAttributes,
-                           _stream);
+    err = aclopExecuteV2(opType.c_str(),
+                         (int)inputSize,
+                         (aclTensorDesc **)inputTensorDescriptors,
+                         (aclDataBuffer **)inputDataBuffers,
+                         (int)outputSize,
+                         (aclTensorDesc **)outputTensorDescriptors,
+                         (aclDataBuffer **)outputDataBuffers,
+                         (aclopAttr *)kernelAttributes,
+                         _stream);
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to run the kernel. Error %d", err);
     // TODO: move in await

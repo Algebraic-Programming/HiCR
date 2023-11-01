@@ -88,13 +88,13 @@ int main(int argc, char **argv)
         .memorySlot = castedInput1Device,
         .dimensions = std::vector<int64_t>{192, 1},
         .DataType = ACL_FLOAT16,
-        .format = ACL_FORMAT_NC,
+        .format = ACL_FORMAT_ND,
       },
       ascend::ExecutionUnit::tensorData_t{
         .memorySlot = castedInput2Device,
         .dimensions = std::vector<int64_t>{192, 1},
         .DataType = ACL_FLOAT16,
-        .format = ACL_FORMAT_NC,
+        .format = ACL_FORMAT_ND,
       },
     });
 
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
         .memorySlot = castedOutputDevice,
         .dimensions = std::vector<int64_t>{192, 1},
         .DataType = ACL_FLOAT16,
-        .format = ACL_FORMAT_NC,
+        .format = ACL_FORMAT_ND,
       },
     });
 

@@ -74,7 +74,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
 
   __USED__ inline std::string getType() const override { return "Ascend Kernel"; }
 
-  __USED__ inline const std::string getKernelPath() const { return _kernelPath;}
+  __USED__ inline const std::string getKernelPath() const { return _kernelPath; }
   __USED__ inline const std::string getOpType() const { return _opType; }
   __USED__ inline const std::string getKernelDirectory() const { return _kernelDir; }
   __USED__ inline const aclopAttr *getKernelAttributes() const { return _kernelAttrs; }
@@ -107,7 +107,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
       dataBuffers.push_back(data.memorySlot->getDataBuffer());
 
       // TODO: pass directly the tensor descriptors?
-      auto tensorDesc = aclCreateTensorDesc(data.DataType, data.dimensions.size(), &data.dimensions[0], data.format);
+      auto tensorDesc = aclCreateTensorDesc(data.DataType, data.dimensions.size(), data.dimensions.data(), data.format);
       if (tensorDesc == NULL) HICR_THROW_RUNTIME("Invalid call while creating descriptors for data tensors on Ascend Execution Unit");
       tensorDescriptors.push_back(tensorDesc);
     }
@@ -130,7 +130,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
     HICR_THROW_RUNTIME("Unable to get the prefix from kernel path %s", operatorName);
   }
 
-  static std::string findKernelDir(const std:: string kernelPath)
+  static std::string findKernelDir(const std::string kernelPath)
   {
     const auto kernelDirectory = kernelPath.substr(0, kernelPath.rfind("/"));
     return kernelDirectory;
