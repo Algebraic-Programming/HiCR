@@ -274,17 +274,21 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
   {
     void *ptr = NULL;
+    aclDataBuffer *dataBuffer;
     if (_deviceStatusMap.at(memorySpaceId).deviceType == deviceType_t::Host)
     {
       ptr = hostAlloc(size);
+      dataBuffer = NULL;
     }
     else
     {
       ptr = deviceAlloc(memorySpaceId, size);
+      dataBuffer = aclCreateDataBuffer(ptr, size);
+      if (dataBuffer == NULL) HICR_THROW_RUNTIME("Can not create data buffer in memory space %d", memorySpaceId);
     }
 
     // keep track of the mapping between unique identifier and pointer + deviceId
-    auto memorySlot = new MemorySlot(memorySpaceId, ptr, size);
+    auto memorySlot = new MemorySlot(memorySpaceId, ptr, size, dataBuffer);
 
     return memorySlot;
   }
@@ -359,6 +363,7 @@ class MemoryManager final : public backend::MemoryManager
     else
     {
       freeDeviceMemorySlot(memorySlotDeviceId, memorySlotPointer);
+      aclDestroyDataBuffer(m->getDataBuffer());
     }
   }
 

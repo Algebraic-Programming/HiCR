@@ -12,6 +12,7 @@
 #pragma once
 
 #include <hicr/memorySlot.hpp>
+#include <acl/acl.h>
 
 namespace HiCR
 {
@@ -49,13 +50,16 @@ class MemorySlot final : public HiCR::MemorySlot
     deviceIdentifier_t deviceId,
     void *const pointer,
     size_t size,
+    const aclDataBuffer *dataBuffer,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId){};
+    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
 
   /**
    * Default destructor
    */
-  ~MemorySlot() = default;
+  ~MemorySlot(){
+    (void)aclDestroyDataBuffer(_dataBuffer);
+  };
 
   /**
    * Returns the Ascend device id to which this memory slot belongs
@@ -64,12 +68,15 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   __USED__ inline const deviceIdentifier_t getDeviceId() const { return _deviceId; }
 
+  __USED__ inline const aclDataBuffer *getDataBuffer() const { return _dataBuffer; }
+
   private:
 
   /**
    * The Ascend Device ID in which the memory slot is created
    */
   const deviceIdentifier_t _deviceId;
+  const aclDataBuffer *_dataBuffer;
 };
 } // namespace ascend
 } // namespace backend
