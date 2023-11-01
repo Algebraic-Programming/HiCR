@@ -13,9 +13,10 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/backends/computeManager.hpp>
+#include <hicr/backends/ascend/executionState.hpp>
 #include <hicr/backends/ascend/executionUnit.hpp>
 #include <hicr/backends/ascend/processingUnit.hpp>
+#include <hicr/backends/computeManager.hpp>
 
 namespace HiCR
 {
@@ -40,43 +41,108 @@ class ComputeManager final : public backend::ComputeManager
    *
    * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
-  ComputeManager(const char *config_path = NULL) : backend::ComputeManager()
+  ComputeManager() : backend::ComputeManager(){};
+
+  ~ComputeManager()
   {
-    aclError err;
-    err = aclInit(config_path);
+    // Destroy Ascend contexts
+    for (const auto memSpaceData : _deviceStatusMap)
+    {
+      (void)aclrtDestroyContext(memSpaceData.second.context);
+    }
 
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
+    _deviceStatusMap.clear();
   }
 
-  ~ComputeManager(){
-    (void)aclFinalize();
-  }
-
-  __USED__ inline ExecutionUnit *createExecutionUnit(HiCR::ExecutionUnit::function_t executionUnit) override
+  __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(HiCR::ExecutionUnit::function_t executionUnit) override
   {
     HICR_THROW_RUNTIME("Ascend backend currently does not support this API");
   }
 
-  __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(const char *kernelPath, const std::vector<ExecutionUnit::DataIO> inputs, const std::vector<ExecutionUnit::DataIO> outputs)
+  __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(const char *kernelPath, const std::vector<ExecutionUnit::tensorData_t> &inputs, const std::vector<ExecutionUnit::tensorData_t> &outputs, const aclopAttr *kernelAttrs)
   {
-    return new ExecutionUnit(kernelPath, inputs, outputs);
+    return new ExecutionUnit(kernelPath, inputs, outputs, kernelAttrs);
   }
 
   private:
 
+  /**
+   * Keeps track of how many devices are connected to the host
+   */
+  uint32_t deviceCount;
+
+  struct ascendState_t
+  {
+    /**
+     * remember the context associated to a device
+     */
+    aclrtContext context;
+  };
+
+  /**
+   * Keep track of the context for each memorySpaceId/deviceId
+   */
+  std::map<computeResourceId_t, ascendState_t> _deviceStatusMap;
+
+  /**
+   * Set the device on which the operations needs to be executed
+   *
+   * \param[in] memorySpace the device identifier
+   */
+  __USED__ inline void selectDevice(const computeResourceId_t resource)
+  {
+    aclError err;
+
+    // select the device context on which we should allocate the memory
+    err = aclrtSetCurrentContext(_deviceStatusMap[resource].context);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not set ascend device %d. Error %d", resource, err);
+  }
+
   __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
-  { 
-    HICR_THROW_RUNTIME("Not implemented yet");
+  { // Clearing existing memory space map
+    _deviceStatusMap.clear();
+
+    // New memory space list to return
+    computeResourceList_t computeResourceList;
+
+    // Ask ACL for available devices
+    aclError err;
+    err = aclrtGetDeviceCount(&deviceCount);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
+
+    aclrtContext deviceContext;
+
+    // Add as many memory spaces as devices
+    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
+    {
+      // Create the device context
+      err = aclrtCreateContext(&deviceContext, deviceId);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
+
+      // Select the device by setting the context
+      err = aclrtSetCurrentContext(deviceContext);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
+
+      // update the internal data structure
+      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext};
+      computeResourceList.insert(deviceId);
+    }
+
+    // TODO: do we need to model the host?
+    _deviceStatusMap[deviceCount] = ascendState_t{};
+    computeResourceList.insert(deviceCount);
+
+    return computeResourceList;
   }
 
   __USED__ inline ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-    HICR_THROW_RUNTIME("Not implemented yet");
+    return new ProcessingUnit(resource, _deviceStatusMap.at(resource).context);
   }
 
   __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
   {
-    HICR_THROW_RUNTIME("Not implemented yet");
+    return std::make_unique<ascend::ExecutionState>();
   }
 };
 

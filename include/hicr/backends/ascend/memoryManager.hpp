@@ -42,13 +42,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] config_path configuration file to initialize ACL
    */
-  MemoryManager(const char *config_path = NULL) : HiCR::backend::MemoryManager()
-  {
-    aclError err;
-    err = aclInit(config_path);
-
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
-  }
+  MemoryManager() : HiCR::backend::MemoryManager(){};
 
   ~MemoryManager()
   {
@@ -63,9 +57,6 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     _deviceStatusMap.clear();
-
-    // Finalize ACL environment
-    (void)aclFinalize();
   }
 
   private:
