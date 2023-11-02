@@ -46,7 +46,7 @@ class MemoryManager final : public backend::MemoryManager
 
   ~MemoryManager()
   {
-    // Destroy HCCL communicators among Ascends
+    // Destroy HCCL communicators 
     destroyHcclCommunicators();
     delete hcclComms;
 

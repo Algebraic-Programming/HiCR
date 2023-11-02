@@ -119,10 +119,17 @@ int main(int argc, char **argv)
   // // Execute the kernel
   processingUnit->start(std::move(executionState));
 
+  // TODO: need to implement checkfinalizationImpl?
+  // processingUnit->await();
+
+  // copy the result back on the host
   memoryManager.memcpy(outputHost, 0, outputDevice, 0, size);
 
-  doPrintMatrix((const aclFloat16 *)outputHost->getPointer(), 1, 192);
+  printf("First vector contains: %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input1Host->getPointer())[0]));
+  printf("Second vector contains : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input2Host->getPointer())[0]));
+  printf("Vector sum is : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)outputHost->getPointer())[0]));
 
+  // free memory slots
   memoryManager.freeLocalMemorySlot(input1Host);
   memoryManager.freeLocalMemorySlot(input1Device);
   memoryManager.freeLocalMemorySlot(input2Host);

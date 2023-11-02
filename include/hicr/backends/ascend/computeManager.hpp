@@ -28,18 +28,17 @@ namespace ascend
 {
 
 /**
- * Implementation of the HWloc-based HiCR Shared Memory backend's compute manager.
+ * Implementation of the HiCR ascend backend's compute manager.
  *
- * It detects and returns the processing units detected by the HWLoc library
+ * It detects and returns the processing units detected by Ascend Computing Language
  */
 class ComputeManager final : public backend::ComputeManager
 {
   public:
 
   /**
-   * Constructor for the compute manager class for the shared memory backend
+   * Constructor for the compute manager class for the ascend backend
    *
-   * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
   ComputeManager() : backend::ComputeManager(){};
 
@@ -97,7 +96,7 @@ class ComputeManager final : public backend::ComputeManager
   { // Clearing existing memory space map
     _deviceStatusMap.clear();
 
-    // New memory space list to return
+    // New compute resources list to return
     computeResourceList_t computeResourceList;
 
     // Ask ACL for available devices
@@ -107,7 +106,7 @@ class ComputeManager final : public backend::ComputeManager
 
     aclrtContext deviceContext;
 
-    // Add as many memory spaces as devices
+    // Add as many computing resources as devices
     for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
     {
       // Create the device context
