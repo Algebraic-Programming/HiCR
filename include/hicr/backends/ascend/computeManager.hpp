@@ -63,7 +63,7 @@ class ComputeManager final : public backend::ComputeManager
   /**
    * Keeps track of how many devices are connected to the host
    */
-  uint32_t deviceCount;
+  uint32_t _deviceCount;
 
   struct ascendState_t
   {
@@ -101,20 +101,16 @@ class ComputeManager final : public backend::ComputeManager
 
     // Ask ACL for available devices
     aclError err;
-    err = aclrtGetDeviceCount(&deviceCount);
+    err = aclrtGetDeviceCount(&_deviceCount);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
 
     aclrtContext deviceContext;
 
     // Add as many computing resources as devices
-    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
+    for (uint32_t deviceId = 0; deviceId < _deviceCount; ++deviceId)
     {
       // Create the device context
       err = aclrtCreateContext(&deviceContext, deviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
-
-      // Select the device by setting the context
-      err = aclrtSetCurrentContext(deviceContext);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
 
       // update the internal data structure
@@ -123,8 +119,8 @@ class ComputeManager final : public backend::ComputeManager
     }
 
     // TODO: do we need to model the host?
-    _deviceStatusMap[deviceCount] = ascendState_t{};
-    computeResourceList.insert(deviceCount);
+    _deviceStatusMap[_deviceCount] = ascendState_t{};
+    computeResourceList.insert(_deviceCount);
 
     return computeResourceList;
   }
