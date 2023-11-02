@@ -92,7 +92,7 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  __USED__ inline ProcessingUnit *createProcessingUnit(computeResourceId_t resource)
+  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource)
   {
     // Checking whether the referenced compute resource actually exists
     if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
@@ -125,7 +125,7 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const = 0;
+  virtual std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const = 0;
 
   /**
    * Backend-specific implementation of the createExecutionState function

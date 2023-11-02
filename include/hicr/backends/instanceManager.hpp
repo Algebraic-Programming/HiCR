@@ -13,8 +13,11 @@
 #pragma once
 
 #include <memory>
-#include <unordered_set>
+#include <set>
+#include <map>
 #include <hicr/instance.hpp>
+#include <hicr/executionUnit.hpp>
+#include <hicr/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -33,6 +36,16 @@ class InstanceManager
   public:
 
   /**
+   * Type definition for an index to indicate the execution of a specific execution unit
+   */
+  typedef uint64_t executionUnitIndex_t;
+
+  /**
+   * Type definition for an index to indicate the use of a specific processing unit in charge of executing a execution units
+   */
+  typedef uint64_t processingUnitIndex_t;
+
+  /**
    * Default destructor
    */
   virtual ~InstanceManager() = default;
@@ -40,7 +53,17 @@ class InstanceManager
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the currently created (active or not)
    */
-  __USED__ inline const std::unordered_set<std::unique_ptr<HiCR::Instance>>& getInstances() const { return _instances; }
+  __USED__ inline const std::set<std::unique_ptr<HiCR::Instance>>& getInstances() const { return _instances; }
+
+  /**
+   * Function to add a new execution unit, assigned to a unique identifier
+   */
+  __USED__ inline void addExecutionUnit(const executionUnitIndex_t index, HiCR::ExecutionUnit* executionUnit) { _executionUnitMap[index] = executionUnit; }
+
+  /**
+   * Function to add a new processing unit, assigned to a unique identifier
+   */
+  __USED__ inline void addProcessingUnit(const processingUnitIndex_t index, std::unique_ptr<HiCR::ProcessingUnit> processingUnit) { _processingUnitMap[index] = std::move(processingUnit); }
 
   protected:
 
@@ -49,11 +72,20 @@ class InstanceManager
   */
   InstanceManager() = default;
 
-
   /**
    * Collection of instances
    */
-  std::unordered_set<std::unique_ptr<HiCR::Instance>> _instances;
+  std::set<std::unique_ptr<HiCR::Instance>> _instances;
+
+  /**
+   * Map of assigned processing units in charge of executing a execution units
+   */
+  std::map<processingUnitIndex_t, std::unique_ptr<HiCR::ProcessingUnit>> _processingUnitMap;
+
+  /**
+   * Map of execution units, representing potential RPC requests
+   */
+  std::map<executionUnitIndex_t, HiCR::ExecutionUnit*> _executionUnitMap;
 };
 
 } // namespace backend

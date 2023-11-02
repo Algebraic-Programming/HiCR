@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     auto processingUnit = computeManager.createProcessingUnit(resource);
 
     // Assigning resource to the taskr
-    taskr.addProcessingUnit(processingUnit);
+    taskr.addProcessingUnit(std::move(processingUnit));
   }
 
   printf("Starting many work tasks...\n");

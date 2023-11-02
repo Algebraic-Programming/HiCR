@@ -70,9 +70,9 @@ class ComputeManager final : public backend::ComputeManager
     return computeResourceList_t({0});
   }
 
-  __USED__ inline HiCR::ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-    return new ProcessingUnit(resource);
+    return std::make_unique<ProcessingUnit>(resource);
   }
 };
 

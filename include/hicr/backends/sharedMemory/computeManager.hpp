@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <memory>
 #include "hwloc.h"
 #include <hicr/backends/computeManager.hpp>
 #include <hicr/backends/sequential/executionUnit.hpp>
@@ -88,9 +89,9 @@ class ComputeManager final : public backend::ComputeManager
     return computeResourceList;
   }
 
-  __USED__ inline ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-    return new ProcessingUnit(resource);
+    return std::make_unique<ProcessingUnit>(resource);
   }
 
   __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override

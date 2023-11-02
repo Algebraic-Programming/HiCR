@@ -2,7 +2,7 @@ testSuite = [ 'examples', 'hicr', 'channel']
 test_timeout = 180
 
 exampleBuildIncludes = include_directories([
-   'include'
+   'source/include'
   ])
   
 sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: [ hicrBuildDep, hicrSequentialBackendDep, dependency('threads', required: true)], include_directories: [exampleBuildIncludes] )

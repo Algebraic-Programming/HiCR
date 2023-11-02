@@ -242,9 +242,4 @@ class ProcessingUnit
   computeResourceId_t _computeResourceId;
 };
 
-/**
- * Type definition for a generic memory space identifier
- */
-typedef std::vector<ProcessingUnit *> processingUnitList_t;
-
 } // namespace HiCR

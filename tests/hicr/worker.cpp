@@ -53,7 +53,7 @@ TEST(Task, SetterAndGetters)
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 
   // Assigning processing unit to worker
-  w.addProcessingUnit(processingUnit);
+  w.addProcessingUnit(std::move(processingUnit));
 
   // Getting filled lists
   EXPECT_FALSE(w.getProcessingUnits().empty());
@@ -83,7 +83,7 @@ TEST(Worker, LifeCycle)
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 
   // Assigning processing unit to worker
-  w.addProcessingUnit(processingUnit);
+  w.addProcessingUnit(std::move(processingUnit));
 
   // Fail on trying to start without initializing
   EXPECT_THROW(w.start(), HiCR::common::RuntimeException);
