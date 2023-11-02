@@ -140,5 +140,14 @@ int main(int argc, char **argv)
   printf("print result\n");
   doPrintMatrix((const aclFloat16 *)outputHost->getPointer(), 1, 192);
   printf("the end \n");
+
+  memoryManager.freeLocalMemorySlot(input1Host);
+  memoryManager.freeLocalMemorySlot(input1Device);
+  memoryManager.freeLocalMemorySlot(input2Host);
+  memoryManager.freeLocalMemorySlot(input2Device);
+  memoryManager.freeLocalMemorySlot(outputHost);
+  memoryManager.freeLocalMemorySlot(outputDevice);
+  
+  (void)aclFinalize();
   return 0;
 }

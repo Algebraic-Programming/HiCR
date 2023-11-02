@@ -115,6 +115,9 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     // TODO: move in await
     err = aclrtSynchronizeStream(_stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to synchronize on the stream during kernel execution. Error %d", err);
+
+    err = aclrtDestroyStream(_stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
   }
 
   __USED__ inline void terminateImpl() override

@@ -48,15 +48,10 @@ class MemoryManager final : public backend::MemoryManager
   {
     // Destroy HCCL communicators among Ascends
     destroyHcclCommunicators();
-    free(hcclComms);
+    delete hcclComms;
 
     // Destroy Ascend contexts
-    for (const auto memSpaceData : _deviceStatusMap)
-    {
-      (void)aclrtDestroyContext(memSpaceData.second.context);
-    }
-
-    _deviceStatusMap.clear();
+    for (const auto memSpaceData : _deviceStatusMap) (void)aclrtDestroyContext(memSpaceData.second.context);
   }
 
   private:
@@ -155,10 +150,7 @@ class MemoryManager final : public backend::MemoryManager
   {
     if (hcclComms == NULL) return;
 
-    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
-    {
-      (void)HcclCommDestroy(hcclComms[deviceId]);
-    }
+    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId) (void)HcclCommDestroy(hcclComms[deviceId]);
   }
 
   /**
@@ -354,7 +346,8 @@ class MemoryManager final : public backend::MemoryManager
     else
     {
       freeDeviceMemorySlot(memorySlotDeviceId, memorySlotPointer);
-      aclDestroyDataBuffer(m->getDataBuffer());
+      aclError err = aclDestroyDataBuffer(m->getDataBuffer());
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy data buffer. Error %d", err);
     }
   }
 
@@ -367,7 +360,7 @@ class MemoryManager final : public backend::MemoryManager
   {
     aclError err;
     err = aclrtFreeHost((void *)ptr);
-    if (err != ACL_SUCCESS) HICR_THROW_LOGIC("Error while freeing host memory. Error %d", err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while freeing host memory. Error %d", err);
   }
 
   /**
@@ -382,7 +375,7 @@ class MemoryManager final : public backend::MemoryManager
 
     aclError err;
     err = aclrtFree((void *)ptr);
-    if (err != ACL_SUCCESS) HICR_THROW_LOGIC("Error while freeing device %d memory. Error %d", deviceId, err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while freeing device %d memory. Error %d", deviceId, err);
   }
 
   /**

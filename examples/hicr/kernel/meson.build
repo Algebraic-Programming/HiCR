@@ -4,6 +4,6 @@ sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: 
 test('sequential', sequential, args : [ ], suite: testSuite )
 
 if 'ascend' in enabledBackends
-	ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: [ hicrBuildDep, hicrAscendBackendDep])
+	ascend = executable('ascend', [ 'source/ascend.cpp'], cpp_args:['-g'], dependencies: [ hicrBuildDep, hicrAscendBackendDep])
 	test('ascend', ascend, args : [ ], suite: testSuite )
 endif

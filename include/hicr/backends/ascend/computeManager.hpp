@@ -46,12 +46,7 @@ class ComputeManager final : public backend::ComputeManager
   ~ComputeManager()
   {
     // Destroy Ascend contexts
-    for (const auto memSpaceData : _deviceStatusMap)
-    {
-      (void)aclrtDestroyContext(memSpaceData.second.context);
-    }
-
-    _deviceStatusMap.clear();
+    for (const auto memSpaceData : _deviceStatusMap) (void)aclrtDestroyContext(memSpaceData.second.context);
   }
 
   __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(HiCR::ExecutionUnit::function_t executionUnit) override

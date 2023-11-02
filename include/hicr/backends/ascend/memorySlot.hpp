@@ -11,8 +11,8 @@
  */
 #pragma once
 
-#include <hicr/memorySlot.hpp>
 #include <acl/acl.h>
+#include <hicr/memorySlot.hpp>
 
 namespace HiCR
 {
@@ -57,9 +57,7 @@ class MemorySlot final : public HiCR::MemorySlot
   /**
    * Default destructor
    */
-  ~MemorySlot(){
-    (void)aclDestroyDataBuffer(_dataBuffer);
-  };
+  ~MemorySlot() = default;
 
   /**
    * Returns the Ascend device id to which this memory slot belongs

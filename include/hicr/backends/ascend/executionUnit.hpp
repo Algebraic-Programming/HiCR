@@ -30,7 +30,7 @@ namespace ascend
 {
 
 /**
- * This class represents a replicable C++ executable function for the ascend backend.
+ * This class represents a replicable kernel for the ascend backend.
  */
 class ExecutionUnit final : public HiCR::ExecutionUnit
 {
@@ -39,7 +39,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   struct tensorData_t
   {
     const MemorySlot *memorySlot;
-    // TODO: extract in different class
+    // TODO: extract in different struct
     const std::vector<int64_t> dimensions;
     const aclDataType DataType;
     const aclFormat format;
@@ -70,7 +70,12 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   /**
    * Default destructor
    */
-  ~ExecutionUnit() = default;
+  ~ExecutionUnit()
+  {
+    // TODO: check error?
+    for (const auto &t : _inputTensorDescriptors) (void)aclDestroyTensorDesc(t);
+    for (const auto &t : _outputTensorDescriptors) (void)aclDestroyTensorDesc(t);
+  }
 
   __USED__ inline std::string getType() const override { return "Ascend Kernel"; }
 
