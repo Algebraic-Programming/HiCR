@@ -59,7 +59,6 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   ExecutionUnit(const char *kernelPath, const std::vector<tensorData_t> &inputs, const std::vector<tensorData_t> &outputs, const aclopAttr *kernelAttrs) : HiCR::ExecutionUnit(),
                                                                                                                                                            _kernelPath(std::string(kernelPath)),
                                                                                                                                                            _opType(findOpType(_kernelPath)),
-                                                                                                                                                           _kernelDir(findKernelDir(_kernelPath)),
                                                                                                                                                            _inputs(inputs),
                                                                                                                                                            _outputs(outputs),
                                                                                                                                                            _kernelAttrs(kernelAttrs)
@@ -85,7 +84,6 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
 
   __USED__ inline const std::string getKernelPath() const { return _kernelPath; }
   __USED__ inline const std::string getOpType() const { return _opType; }
-  __USED__ inline const std::string getKernelDirectory() const { return _kernelDir; }
   __USED__ inline const aclopAttr *getKernelAttributes() const { return _kernelAttrs; }
   __USED__ inline const size_t getInputSize() const { return _inputs.size(); }
   __USED__ inline const size_t getOutputSize() const { return _outputs.size(); }
@@ -94,14 +92,13 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   __USED__ inline const std::vector<const aclTensorDesc *> &getOutputTensorDescriptors() const { return _outputTensorDescriptors; }
   __USED__ inline const std::vector<const aclDataBuffer *> &getInputDataBuffers() const { return _inputDataBuffers; }
   __USED__ inline const std::vector<const aclDataBuffer *> &getOutputDataBuffers() const { return _outputDataBuffers; }
-  __USED__ inline const void *getModelPtr() const {return _modelPtr;}
-  __USED__ inline const size_t getModelSize() const {return _modelSize;}
+  __USED__ inline const void *getModelPtr() const { return _modelPtr; }
+  __USED__ inline const size_t getModelSize() const { return _modelSize; }
 
   private:
 
   const std::string _kernelPath;
   const std::string _opType;
-  const std::string _kernelDir;
   const std::vector<tensorData_t> _inputs;
   const std::vector<tensorData_t> _outputs;
   const aclopAttr *_kernelAttrs;
@@ -141,12 +138,6 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
     }
 
     HICR_THROW_RUNTIME("Unable to get the prefix from kernel path %s", operatorName);
-  }
-
-  static std::string findKernelDir(const std::string kernelPath)
-  {
-    const auto kernelDirectory = kernelPath.substr(0, kernelPath.rfind("/"));
-    return kernelDirectory;
   }
 
   void loadModel(std::string kernelPath)

@@ -34,10 +34,6 @@ class ExecutionState final : public HiCR::ExecutionState
 {
   public:
 
-  __USED__ inline const std::string getKernelDirectory() const
-  {
-    return _kernelDir;
-  }
   __USED__ inline const std::string getOpType() const
   {
     return _opType;
@@ -90,7 +86,6 @@ class ExecutionState final : public HiCR::ExecutionState
     if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
 
     _opType = e->getOpType();
-    _kernelDir = e->getKernelDirectory();
     _inputSize = e->getInputSize();
     _outputSize = e->getOutputSize();
     _inputTensorDescriptors = e->getInputTensorDescriptors().data();
@@ -120,7 +115,6 @@ class ExecutionState final : public HiCR::ExecutionState
   private:
 
   std::string _opType;
-  std::string _kernelDir;
   size_t _inputSize;
   size_t _outputSize;
   const aclTensorDesc *const *_inputTensorDescriptors;
