@@ -27,18 +27,7 @@ class Instance
 {
   public:
 
-  /**
-   * Constructor for the worker class.
-   *
-   * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
-   */
-  Worker(HiCR::backend::ComputeManager *computeManager) : _computeManager(computeManager)
-  {
-    // Making sure the worker-identifying key is created (only once) with the first created task
-    pthread_once(&_workerPointerKeyConfig, createWorkerPointerKey);
-  }
-
-  ~Worker() = default;
+  ~Instance() = default;
 
   /**
    * Complete state set that a worker can be in
@@ -61,6 +50,24 @@ class Instance
     finished
   };
 
+  /**
+   * State getter
+   */
+  __USED__ inline state_t getState() const { return _state; }
+
+  /**
+   * State setter
+   */
+  __USED__ inline void setState(const state_t state) { _state = state; }
+
+  protected:
+
+  /**
+   * Protected constructor for the worker class.
+   *
+   * This is a purely abstract class
+   */
+  Instance() = default;
 
   private:
 

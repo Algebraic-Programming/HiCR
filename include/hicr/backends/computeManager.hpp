@@ -12,9 +12,7 @@
 
 #pragma once
 
-#include <mutex>
-#include <set>
-
+#include <unordered_set>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/executionUnit.hpp>
@@ -38,7 +36,7 @@ class ComputeManager
   /**
    * Common type for a collection of compute resources
    */
-  typedef std::set<computeResourceId_t> computeResourceList_t;
+  typedef std::unordered_set<computeResourceId_t> computeResourceList_t;
 
   /**
    * Default destructor

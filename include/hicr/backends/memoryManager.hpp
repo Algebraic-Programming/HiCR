@@ -122,7 +122,7 @@ class MemoryManager
   }
 
   /**
-   * Allocates a local memory slotin the specified memory space
+   * Allocates a local memory slot in the specified memory space
    *
    * \param[in] memorySpaceId Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
