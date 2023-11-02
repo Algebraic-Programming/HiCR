@@ -43,6 +43,12 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
   private:
 
+  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
+  {
+    // Creating and returning new execution state
+    return std::make_unique<sequential::ExecutionState>();
+  }
+
   /**
    * Variable to hold the execution state to run
    */

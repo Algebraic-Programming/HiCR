@@ -25,7 +25,7 @@ int main(int argc, char **argv)
  processingUnit->initialize();
 
  // Asking the processing unit to create a new execution state from the given execution unit (stateless)
- auto executionState = computeManager.createExecutionState();
+ auto executionState = processingUnit->createExecutionState();
 
  // Initializing execution state with the execution unit
  executionState->initialize(executionUnit);

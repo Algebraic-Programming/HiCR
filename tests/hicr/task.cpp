@@ -69,8 +69,20 @@ TEST(Task, Run)
   // Creating task
   t = new HiCR::Task(u);
 
+  // Querying compute resources
+  m.queryComputeResources();
+
+  // Getting compute resources
+  auto computeResources = m.getComputeResourceList();
+
+  // Creating processing unit from the compute resource
+  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
+
+  // Initializing processing unit
+  processingUnit->initialize();
+
   // First, creating processing unit
-  auto executionState = m.createExecutionState();
+  auto executionState = processingUnit->createExecutionState();
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -138,8 +150,23 @@ TEST(Task, Events)
   // Creating task
   t = new HiCR::Task(u);
 
+  // Querying compute resources
+  m.queryComputeResources();
+
+  // Getting compute resources
+  auto computeResources = m.getComputeResourceList();
+
+  // Querying compute resources
+  m.queryComputeResources();
+
+  // Creating processing unit from the compute resource
+  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
+
+  // Initializing processing unit
+  processingUnit->initialize();
+
   // First, creating processing unit
-  auto executionState = m.createExecutionState();
+  auto executionState = processingUnit->createExecutionState();
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -162,7 +189,7 @@ TEST(Task, Events)
   t = new HiCR::Task(u);
 
   // First, creating processing unit
-  executionState = m.createExecutionState();
+  executionState = processingUnit->createExecutionState();
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));

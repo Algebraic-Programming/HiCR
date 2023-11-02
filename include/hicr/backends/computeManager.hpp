@@ -106,18 +106,6 @@ class ComputeManager
     return value;
   }
 
-  /**
-   * This function enables the creation of an empty execution state object.
-   *
-   * The instantiation of its internal memory structures is delayed until explicit initialization to reduce memory usage when, for example, scheduling many tasks that do not need to execute at the same time.
-   *
-   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
-   */
-  __USED__ inline std::unique_ptr<ExecutionState> createExecutionState()
-  {
-    return std::move(createExecutionStateImpl());
-  }
-
   protected:
 
   /**
@@ -128,13 +116,6 @@ class ComputeManager
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
   virtual ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const = 0;
-
-  /**
-   * Backend-specific implementation of the createExecutionState function
-   *
-   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
-   */
-  virtual std::unique_ptr<ExecutionState> createExecutionStateImpl() = 0;
 
   /**
    * Backend-internal implementation of the queryComputeResources function

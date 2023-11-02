@@ -155,7 +155,7 @@ class Worker
                                                               { this->mainLoop(); });
 
     // Creating worker's execution state
-    auto executionState = _computeManager->createExecutionState();
+    auto executionState = _processingUnits[0]->createExecutionState();
 
     // Initializing execution state
     executionState->initialize(executionUnit);
@@ -296,7 +296,7 @@ class Worker
           if (task->getState() == ExecutionState::state_t::uninitialized)
           {
             // First, create new execution state for the processing unit
-            auto executionState = _computeManager->createExecutionState();
+            auto executionState = _processingUnits[0]->createExecutionState();
 
             // Then initialize the task with the new execution state
             task->initialize(std::move(executionState));

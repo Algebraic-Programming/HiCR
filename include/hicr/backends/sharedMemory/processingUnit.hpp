@@ -160,6 +160,12 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
   }
 
+  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
+  {
+    // Creating and returning new execution state
+    return std::make_unique<sequential::ExecutionState>();
+  }
+
   __USED__ inline void initializeImpl() override
   {
   }
