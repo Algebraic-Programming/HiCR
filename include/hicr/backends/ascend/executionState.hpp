@@ -34,35 +34,50 @@ class ExecutionState final : public HiCR::ExecutionState
 {
   public:
 
-  __USED__ inline const std::string getKernelDirectory() const 
+  __USED__ inline const std::string getKernelDirectory() const
   {
     return _kernelDir;
   }
-  __USED__ inline const std::string getOpType() const {
+  __USED__ inline const std::string getOpType() const
+  {
     return _opType;
   }
-  __USED__ inline size_t getInputSize() const {
+  __USED__ inline size_t getInputSize() const
+  {
     return _inputSize;
   }
-  __USED__ inline size_t getOutputSize() const {
+  __USED__ inline size_t getOutputSize() const
+  {
     return _outputSize;
   }
-  __USED__ inline const aclTensorDesc *const *getInputTensorDescriptors() const {
+  __USED__ inline const aclTensorDesc *const *getInputTensorDescriptors() const
+  {
     return _inputTensorDescriptors;
   }
-  __USED__ inline const aclTensorDesc *const *getOutputTensorDescriptors() const {
+  __USED__ inline const aclTensorDesc *const *getOutputTensorDescriptors() const
+  {
     return _outputTensorDescriptors;
   }
-  __USED__ inline const aclDataBuffer *const *getInputDataBuffers() const {
+  __USED__ inline const aclDataBuffer *const *getInputDataBuffers() const
+  {
     return _inputDataBuffers;
   }
-  __USED__ inline const aclDataBuffer *const *getOutputDataBuffers() const {
+  __USED__ inline const aclDataBuffer *const *getOutputDataBuffers() const
+  {
     return _outputDataBuffers;
   }
-  __USED__ inline const aclopAttr *getKernelAttributes() const {
+  __USED__ inline const aclopAttr *getKernelAttributes() const
+  {
     return _kernelAttributes;
   }
-
+  __USED__ inline const void *getModelPtr() const
+  {
+    return _modelPtr;
+  }
+  __USED__ inline const size_t getModelSize() const
+  {
+    return _modelSize;
+  }
 
   protected:
 
@@ -83,6 +98,8 @@ class ExecutionState final : public HiCR::ExecutionState
     _inputDataBuffers = e->getInputDataBuffers().data();
     _outputDataBuffers = e->getOutputDataBuffers().data();
     _kernelAttributes = e->getKernelAttributes();
+    _modelPtr = e->getModelPtr();
+    _modelSize = e->getModelSize();
   }
 
   __USED__ inline void resumeImpl() override
@@ -111,6 +128,8 @@ class ExecutionState final : public HiCR::ExecutionState
   const aclDataBuffer *const *_inputDataBuffers;
   const aclDataBuffer *const *_outputDataBuffers;
   const aclopAttr *_kernelAttributes;
+  const void *_modelPtr;
+  size_t _modelSize;
 };
 
 } // end namespace ascend

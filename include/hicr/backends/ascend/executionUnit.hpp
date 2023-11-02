@@ -13,6 +13,8 @@
 #pragma once
 
 #include <acl/acl.h>
+#include <filesystem>
+#include <fstream>
 #include <hicr/backends/ascend/memorySlot.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/executionUnit.hpp>
@@ -64,6 +66,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   {
     initializeDataBuffersAndDescriptors(_inputs, _inputTensorDescriptors, _inputDataBuffers);
     initializeDataBuffersAndDescriptors(_outputs, _outputTensorDescriptors, _outputDataBuffers);
+    loadModel(_kernelPath);
   };
   ExecutionUnit() = delete;
 
@@ -75,6 +78,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
     // TODO: check error?
     for (const auto &t : _inputTensorDescriptors) (void)aclDestroyTensorDesc(t);
     for (const auto &t : _outputTensorDescriptors) (void)aclDestroyTensorDesc(t);
+    delete _modelPtr;
   }
 
   __USED__ inline std::string getType() const override { return "Ascend Kernel"; }
@@ -90,6 +94,8 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   __USED__ inline const std::vector<const aclTensorDesc *> &getOutputTensorDescriptors() const { return _outputTensorDescriptors; }
   __USED__ inline const std::vector<const aclDataBuffer *> &getInputDataBuffers() const { return _inputDataBuffers; }
   __USED__ inline const std::vector<const aclDataBuffer *> &getOutputDataBuffers() const { return _outputDataBuffers; }
+  __USED__ inline const void *getModelPtr() const {return _modelPtr;}
+  __USED__ inline const size_t getModelSize() const {return _modelSize;}
 
   private:
 
@@ -103,6 +109,8 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   std::vector<const aclTensorDesc *> _outputTensorDescriptors;
   std::vector<const aclDataBuffer *> _inputDataBuffers;
   std::vector<const aclDataBuffer *> _outputDataBuffers;
+  const char *_modelPtr;
+  size_t _modelSize;
 
   void initializeDataBuffersAndDescriptors(const std::vector<tensorData_t> tensorData, std::vector<const aclTensorDesc *> &tensorDescriptors, std::vector<const aclDataBuffer *> &dataBuffers)
   {
@@ -139,6 +147,22 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   {
     const auto kernelDirectory = kernelPath.substr(0, kernelPath.rfind("/"));
     return kernelDirectory;
+  }
+
+  void loadModel(std::string kernelPath)
+  {
+    // Get size of file to know how much memory to allocate
+    std::uintmax_t filesize = std::filesystem::file_size(kernelPath);
+    _modelSize = filesize;
+    // Allocate buffer to hold file
+    _modelPtr = new char[_modelSize];
+    // Read file
+    std::ifstream fin(kernelPath, std::ios::binary);
+    fin.read((char *)_modelPtr, _modelSize);
+    if (!fin) HICR_THROW_RUNTIME("Error reading file could only read %d bytes", fin.gcount());
+
+    // Close file
+    fin.close();
   }
 };
 

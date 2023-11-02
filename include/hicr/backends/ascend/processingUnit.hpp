@@ -88,7 +88,9 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     auto inputDataBuffers = _executionState.get()->getInputDataBuffers();
     auto outputDataBuffers = _executionState.get()->getOutputDataBuffers();
     auto kernelAttributes = _executionState.get()->getKernelAttributes();
-    auto kernelDir = _executionState.get()->getKernelDirectory();
+    // auto kernelDir = _executionState.get()->getKernelDirectory();
+    auto modelPtr = _executionState.get()->getModelPtr();
+    auto modelSize = _executionState.get()->getModelSize();
 
     setDeviceContext();
     // TODO: Do not create here the stream
@@ -96,10 +98,12 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to create a stream on the ascend");
 
-    err = aclopSetModelDir(kernelDir.c_str());
-    printf("look in dir %s\n", kernelDir.c_str());
+    err = aclopLoad(modelPtr, modelSize);
 
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to set the directory %s where the model resides. Error %d", kernelDir.c_str(), err);
+    if(err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to load model into memory. Error %d", err);
+    // err = aclopSetModelDir(kernelDir.c_str());
+
+    // if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to set the directory %s where the model resides. Error %d", kernelDir.c_str(), err);
 
     err = aclopExecuteV2(opType.c_str(),
                          (int)inputSize,
