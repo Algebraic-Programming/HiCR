@@ -28,18 +28,17 @@ namespace ascend
 {
 
 /**
- * Implementation of the HWloc-based HiCR Shared Memory backend's compute manager.
+ * Implementation of the HiCR ascend backend's compute manager.
  *
- * It detects and returns the processing units detected by the HWLoc library
+ * It detects and returns the processing units detected by Ascend Computing Language
  */
 class ComputeManager final : public backend::ComputeManager
 {
   public:
 
   /**
-   * Constructor for the compute manager class for the shared memory backend
+   * Constructor for the compute manager class for the ascend backend
    *
-   * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
   ComputeManager() : backend::ComputeManager(){};
 
@@ -64,7 +63,7 @@ class ComputeManager final : public backend::ComputeManager
   /**
    * Keeps track of how many devices are connected to the host
    */
-  uint32_t deviceCount;
+  uint32_t _deviceCount;
 
   struct ascendState_t
   {
@@ -97,25 +96,21 @@ class ComputeManager final : public backend::ComputeManager
   { // Clearing existing memory space map
     _deviceStatusMap.clear();
 
-    // New memory space list to return
+    // New compute resources list to return
     computeResourceList_t computeResourceList;
 
     // Ask ACL for available devices
     aclError err;
-    err = aclrtGetDeviceCount(&deviceCount);
+    err = aclrtGetDeviceCount(&_deviceCount);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
 
     aclrtContext deviceContext;
 
-    // Add as many memory spaces as devices
-    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
+    // Add as many computing resources as devices
+    for (uint32_t deviceId = 0; deviceId < _deviceCount; ++deviceId)
     {
       // Create the device context
       err = aclrtCreateContext(&deviceContext, deviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
-
-      // Select the device by setting the context
-      err = aclrtSetCurrentContext(deviceContext);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
 
       // update the internal data structure
@@ -124,8 +119,8 @@ class ComputeManager final : public backend::ComputeManager
     }
 
     // TODO: do we need to model the host?
-    _deviceStatusMap[deviceCount] = ascendState_t{};
-    computeResourceList.insert(deviceCount);
+    _deviceStatusMap[_deviceCount] = ascendState_t{};
+    computeResourceList.insert(_deviceCount);
 
     return computeResourceList;
   }
