@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#include <acl/acl.h>
+#include <hicr/backends/ascend/common.hpp>
 #include <hicr/memorySlot.hpp>
 
 namespace HiCR
@@ -21,11 +23,6 @@ namespace backend
 
 namespace ascend
 {
-
-/**
- * Type definition for the Ascend Device identifier
- */
-typedef uint64_t deviceIdentifier_t;
 
 /**
  * This class represents an abstract definition for a Memory Slot resource in HiCR that:
@@ -49,10 +46,9 @@ class MemorySlot final : public HiCR::MemorySlot
     deviceIdentifier_t deviceId,
     void *const pointer,
     size_t size,
+    const aclDataBuffer *dataBuffer,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId)
-  {
-  }
+    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
 
   /**
    * Default destructor
@@ -60,11 +56,18 @@ class MemorySlot final : public HiCR::MemorySlot
   ~MemorySlot() = default;
 
   /**
-   * Returns the Ascend device id to which this memory slot belongs
+   * Return the Ascend device id to which this memory slot belongs
    *
    * \return The Ascend device id to which this memory slot belongs
    */
   __USED__ inline const deviceIdentifier_t getDeviceId() const { return _deviceId; }
+
+  /**
+   * Return the ACL data buffer associated to the memory slot
+   *
+   * \return The ACL data buffer associated to the memory slot
+   */
+  __USED__ inline const aclDataBuffer *getDataBuffer() const { return _dataBuffer; }
 
   private:
 
@@ -72,6 +75,11 @@ class MemorySlot final : public HiCR::MemorySlot
    * The Ascend Device ID in which the memory slot is created
    */
   const deviceIdentifier_t _deviceId;
+
+  /**
+   * The Ascend Data Buffer associated with the memory slot
+   */
+  const aclDataBuffer *_dataBuffer;
 };
 } // namespace ascend
 } // namespace backend

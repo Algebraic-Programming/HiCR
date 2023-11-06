@@ -32,9 +32,9 @@ namespace sequential
  */
 class ExecutionState final : public HiCR::ExecutionState
 {
-  protected:
+  public:
 
-  __USED__ inline void initializeImpl(const HiCR::ExecutionUnit *executionUnit) override
+  __USED__ inline ExecutionState(const HiCR::ExecutionUnit *executionUnit) : HiCR::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_cast<const ExecutionUnit *>(executionUnit);
@@ -48,6 +48,8 @@ class ExecutionState final : public HiCR::ExecutionState
     // Starting coroutine containing the function
     _coroutine.start(fc);
   }
+
+  protected:
 
   __USED__ inline void resumeImpl() override
   {

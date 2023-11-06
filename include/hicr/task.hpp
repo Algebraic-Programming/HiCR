@@ -108,7 +108,7 @@ class Task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(const ExecutionUnit *executionUnit, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap)
+  __USED__ Task(ExecutionUnit *executionUnit, taskEventMap_t *eventMap = NULL) : _executionUnit(executionUnit), _eventMap(eventMap)
   {
     // Making sure the task-identifying key is created (only once) with the first created task
     pthread_once(&_taskPointerKeyConfig, createTaskPointerKey);
@@ -149,7 +149,7 @@ class Task
    *
    * \return The execution unit assigned to this task
    */
-  __USED__ inline const ExecutionUnit *getExecutionUnit() { return _executionUnit; }
+  __USED__ inline ExecutionUnit *getExecutionUnit() const { return _executionUnit; }
 
   /**
    * Registers an operation that has been started by the task but has not yet finished
@@ -200,9 +200,6 @@ class Task
 
     // Getting execution state as a unique pointer (to prevent sharing the same state among different tasks)
     _executionState = std::move(executionState);
-
-    // Initializing execution state
-    _executionState->initialize(_executionUnit);
   }
 
   /**
@@ -267,7 +264,7 @@ class Task
 
   private:
 
-  const ExecutionUnit *const _executionUnit;
+  ExecutionUnit *const _executionUnit;
 
   /**
    * This is a freely usable pointer to allow runtime systems built on HiCR attach a reference to its own task object to this basic task

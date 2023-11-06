@@ -94,12 +94,6 @@ class ComputeManager final : public backend::ComputeManager
     return std::make_unique<ProcessingUnit>(resource);
   }
 
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
-  {
-    // Creating and returning new execution state
-    return std::make_unique<sequential::ExecutionState>();
-  }
-
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
    */
