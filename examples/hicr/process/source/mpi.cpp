@@ -6,14 +6,32 @@
 #define TEST_RPC_PROCESSING_UNIT_ID 0
 #define TEST_RPC_EXECUTION_UNIT_ID 0
 
-int main(int argc, char **argv)
+void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
 {
- // Initializing MPI
- MPI_Init(&argc, &argv);
+ // Querying instance list
+ auto& instances = instanceManager.getInstances();
 
- // Creating MPI-based instance manager
- HiCR::backend::mpi::InstanceManager instanceManager;
+ // Printing instance information
+ for (const auto& instance : instances)
+ {
+  // Getting instance state
+  auto state = instance->getState();
 
+  // Printing state
+  printf("Instance State: ");
+  if (state == HiCR::Instance::state_t::inactive) printf("inactive");
+  if (state == HiCR::Instance::state_t::running)  printf("running");
+  if (state == HiCR::Instance::state_t::finished) printf("finished");
+  printf("\n");
+  fflush(stdout);
+ }
+
+ // Finalizing MPI
+ MPI_Finalize();
+}
+
+void workerFc(HiCR::backend::InstanceManager& instanceManager)
+{
  // Initializing sequential backend
  HiCR::backend::sequential::ComputeManager computeManager;
 
@@ -37,26 +55,24 @@ int main(int argc, char **argv)
  // Assigning processing unit to the instance manager
  instanceManager.addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
 
- // Querying instance list
- auto& instances = instanceManager.getInstances();
-
- // Printing instance information
- for (const auto& instance : instances)
- {
-  // Getting instance state
-  auto state = instance->getState();
-
-  // Printing state
-  printf("Instance State: ");
-  if (state == HiCR::Instance::state_t::inactive) printf("inactive");
-  if (state == HiCR::Instance::state_t::running)  printf("running");
-  if (state == HiCR::Instance::state_t::finished) printf("finished");
-  printf("\n");
-  fflush(stdout);
- }
+ // Listening for requests
+ instanceManager.listen();
 
  // Finalizing MPI
  MPI_Finalize();
+}
+
+
+int main(int argc, char **argv)
+{
+ // Initializing MPI
+ MPI_Init(&argc, &argv);
+
+ // Creating MPI-based instance manager
+ HiCR::backend::mpi::InstanceManager instanceManager(MPI_COMM_WORLD);
+
+ // Differentiating between coordinator and worker functions
+ if (instanceManager.isCoordinatorInstance()) coordinatorFc(instanceManager); else workerFc(instanceManager);
 
  return 0;
 }

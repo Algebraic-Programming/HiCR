@@ -60,12 +60,40 @@ class InstanceManager final : public HiCR::backend::InstanceManager
       // Adding instance to the collection
       _instances.insert(std::move(instance));
     }
-
-    // If this is not the root rank, enter waiting state here
-    if (_rank != _HICR_MPI_ROOT_RANK) MPI_Recv(NULL, 0, MPI_BYTE, _HICR_MPI_ROOT_RANK, _HICR_MPI_COORDINATION_TAG, _comm, MPI_STATUS_IGNORE);
   }
 
   ~InstanceManager() = default;
+
+  __USED__ inline bool isCoordinatorInstance() override
+  {
+   // For the MPI backend, the coordinator instance will be set to process with rank _HICR_MPI_ROOT_RANK
+   if (_rank == _HICR_MPI_ROOT_RANK) return true;
+   return false;
+  }
+
+  __USED__ inline void listen() override
+  {
+   // We need to preserve the status to receive more information about the RPC
+   MPI_Status status;
+
+   // Storage for incoming execution unit index
+   executionUnitIndex_t executionUnitIndex = 0;
+
+   // Getting RPC execution unit index
+   MPI_Recv(&executionUnitIndex, 0, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_COORDINATION_TAG, _comm, &status);
+
+   // Getting sender rank
+   int sender = status.MPI_SOURCE;
+
+   // Storage for processing unit index to use
+   processingUnitIndex_t processingUnitIndex = 0;
+
+   // Getting RPC execution unit index
+   MPI_Recv(&processingUnitIndex, 0, MPI_UNSIGNED_LONG, sender, _HICR_MPI_COORDINATION_TAG, _comm, MPI_STATUS_IGNORE);
+
+   // Trying to run remote request
+   runRequest(processingUnitIndex, executionUnitIndex);
+  }
 
   private:
 
