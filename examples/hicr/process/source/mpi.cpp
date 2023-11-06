@@ -19,7 +19,11 @@ void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
 
   // Printing state
   printf("Instance State: ");
-  if (state == HiCR::Instance::state_t::inactive) printf("inactive");
+  if (state == HiCR::Instance::state_t::inactive)
+  {
+   printf("inactive");
+   instanceManager.invoke(instance.get(), TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
+  }
   if (state == HiCR::Instance::state_t::running)  printf("running");
   if (state == HiCR::Instance::state_t::finished) printf("finished");
   printf("\n");
@@ -48,6 +52,9 @@ void workerFc(HiCR::backend::InstanceManager& instanceManager)
 
  // Creating processing unit from the compute resource
  auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
+
+ // Initialize processing unit
+ processingUnit->initialize();
 
  // Assigning processing unit to the instance manager
  instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));

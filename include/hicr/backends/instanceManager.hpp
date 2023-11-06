@@ -75,6 +75,11 @@ class InstanceManager
    */
   virtual void listen() = 0;
 
+  /**
+   * Function to invoke the execution of a remote function in a remote HiCR instance
+   */
+  virtual void invoke(HiCR::Instance* instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) = 0;
+
   protected:
 
   __USED__ inline void runRequest(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx)
@@ -91,7 +96,7 @@ class InstanceManager
    auto s = p->createExecutionState(e);
 
    // Running execution state
-   p->start(s);
+   p->start(std::move(s));
   }
 
   /**

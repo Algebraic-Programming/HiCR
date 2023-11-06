@@ -27,7 +27,7 @@ class Instance
 {
   public:
 
-  ~Instance() = default;
+  virtual ~Instance() = default;
 
   /**
    * Complete state set that a worker can be in

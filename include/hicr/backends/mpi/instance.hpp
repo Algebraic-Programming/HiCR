@@ -41,6 +41,8 @@ class Instance final : public HiCR::Instance
    */
   ~Instance() = default;
 
+  __USED__ inline int getRank() const { return _rank; }
+
   private:
 
   /**
