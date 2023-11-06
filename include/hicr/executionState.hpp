@@ -30,7 +30,7 @@ class ExecutionState
   enum state_t
   {
     /**
-     * Internal state not yet allocated -- set automatically upon creation
+     * Internal state not yet allocated
      */
     uninitialized,
 
@@ -54,22 +54,6 @@ class ExecutionState
      */
     finished
   };
-
-  /**
-   * To save memory, the initialization of execution states (i.e., allocation of required structures) is deferred until this function is called.
-   *
-   * \param[in] executionUnit Represents a replicable executable unit (e.g., function, kernel) to execute
-   */
-  __USED__ inline void initialize(const HiCR::ExecutionUnit *executionUnit)
-  {
-    if (_state != state_t::uninitialized) HICR_THROW_LOGIC("Attempting to initialize an execution state that has already been initialized (State: %d).\n", _state);
-
-    // Calling internal implementation of the initialization routine
-    initializeImpl(executionUnit);
-
-    // Setting state as initialized
-    _state = state_t::initialized;
-  }
 
   /**
    * This function starts a newly initialized execution states or resumes a suspended one
@@ -106,8 +90,6 @@ class ExecutionState
    */
   __USED__ inline bool checkFinalization()
   {
-    if (_state == state_t::uninitialized) HICR_THROW_LOGIC("Attempting to check for finalization in an execution state that has not been initialized (State: %d).\n", _state);
-
     // Calling internal implementation of the checkFinalization routine
     auto isFinished = checkFinalizationImpl();
 
@@ -125,17 +107,17 @@ class ExecutionState
    */
   __USED__ inline state_t getState() { return _state; }
 
-  ExecutionState() = default;
+  ExecutionState() = delete;
   virtual ~ExecutionState() = default;
 
   protected:
 
   /**
-   * Backend-specific implementation of the initialize function
+   * To save memory, the initialization of execution states (i.e., allocation of required structures) is deferred until this function is called.
    *
    * \param[in] executionUnit Represents a replicable executable unit (e.g., function, kernel) to execute
    */
-  virtual void initializeImpl(const HiCR::ExecutionUnit *executionUnit) = 0;
+  ExecutionState(const HiCR::ExecutionUnit *executionUnit) {};
 
   /**
    * Backend-specific implementation of the resume function
@@ -159,7 +141,7 @@ class ExecutionState
   /**
    * Storage for the internal execution state
    */
-  state_t _state = state_t::uninitialized;
+  state_t _state = state_t::initialized;
 };
 
 } // namespace HiCR

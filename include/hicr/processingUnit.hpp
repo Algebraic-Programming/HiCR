@@ -202,19 +202,9 @@ class ProcessingUnit
    *
    * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
    */
-  __USED__ inline std::unique_ptr<ExecutionState> createExecutionState()
-  {
-    return std::move(createExecutionStateImpl());
-  }
+  virtual std::unique_ptr<ExecutionState> createExecutionState(HiCR::ExecutionUnit* executionUnit) = 0;
 
   protected:
-
-  /**
-   * Backend-specific implementation of the createExecutionState function
-   *
-   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
-   */
-  virtual std::unique_ptr<ExecutionState> createExecutionStateImpl() = 0;
 
   /**
    * Internal implementation of the initialize routine

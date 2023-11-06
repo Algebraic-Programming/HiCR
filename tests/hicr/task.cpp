@@ -82,7 +82,7 @@ TEST(Task, Run)
   processingUnit->initialize();
 
   // First, creating processing unit
-  auto executionState = processingUnit->createExecutionState();
+  auto executionState = processingUnit->createExecutionState(u);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -166,7 +166,7 @@ TEST(Task, Events)
   processingUnit->initialize();
 
   // First, creating processing unit
-  auto executionState = processingUnit->createExecutionState();
+  auto executionState = processingUnit->createExecutionState(u);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -189,7 +189,7 @@ TEST(Task, Events)
   t = new HiCR::Task(u);
 
   // First, creating processing unit
-  executionState = processingUnit->createExecutionState();
+  executionState = processingUnit->createExecutionState(t->getExecutionUnit());
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));

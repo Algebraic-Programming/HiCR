@@ -155,10 +155,7 @@ class Worker
                                                               { this->mainLoop(); });
 
     // Creating worker's execution state
-    auto executionState = _processingUnits[0]->createExecutionState();
-
-    // Initializing execution state
-    executionState->initialize(executionUnit);
+    auto executionState = _processingUnits[0]->createExecutionState(executionUnit);
 
     // Launching worker in the lead resource (first one to be added)
     _processingUnits[0]->start(std::move(executionState));
@@ -296,7 +293,7 @@ class Worker
           if (task->getState() == ExecutionState::state_t::uninitialized)
           {
             // First, create new execution state for the processing unit
-            auto executionState = _processingUnits[0]->createExecutionState();
+            auto executionState = _processingUnits[0]->createExecutionState(task->getExecutionUnit());
 
             // Then initialize the task with the new execution state
             task->initialize(std::move(executionState));

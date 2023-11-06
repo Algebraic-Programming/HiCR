@@ -82,8 +82,7 @@ TEST(ProcessingUnit, ThreadAffinity)
 
   // Creating and initializing execution state
   std::unique_ptr<HiCR::ExecutionState> executionState = NULL;
-  EXPECT_NO_THROW(executionState = std::move(p.createExecutionState()));
-  EXPECT_NO_THROW(executionState->initialize(executionUnit));
+  EXPECT_NO_THROW(executionState = std::move(p.createExecutionState(executionUnit)));
 
   // Starting execution state execution
   EXPECT_NO_THROW(p.start(std::move(executionState)));
@@ -156,7 +155,7 @@ TEST(ProcessingUnit, LifeCycle)
   auto executionUnit1 = new HiCR::backend::sequential::ExecutionUnit(fc1);
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.start(std::move(p.createExecutionState())), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit1))), HiCR::common::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
@@ -173,8 +172,7 @@ TEST(ProcessingUnit, LifeCycle)
   EXPECT_THROW(p.await(), HiCR::common::RuntimeException);
 
   // Running
-  auto executionState = p.createExecutionState();
-  EXPECT_NO_THROW(executionState->initialize(executionUnit1));
+  auto executionState = p.createExecutionState(executionUnit1);
   EXPECT_NO_THROW(p.start(std::move(executionState)));
 
   // Waiting for execution times to update
@@ -183,7 +181,7 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Testing forbidden transitions
   EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.start(std::move(p.createExecutionState())), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit1))), HiCR::common::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
 
   // Requesting the thread to suspend
@@ -194,7 +192,7 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Testing forbidden transitions
   EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.start(std::move(p.createExecutionState())), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit1))), HiCR::common::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
 
@@ -213,7 +211,7 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Testing forbidden transitions
   EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.start(std::move(p.createExecutionState())), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit1))), HiCR::common::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
 
   // Re-suspend
@@ -238,14 +236,14 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Terminate
   EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.start(std::move(p.createExecutionState())), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit1))), HiCR::common::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
 
   // Awaiting termination
   EXPECT_NO_THROW(p.await());
-  EXPECT_THROW(p.start(std::move(p.createExecutionState())), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit1))), HiCR::common::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
@@ -267,8 +265,7 @@ TEST(ProcessingUnit, LifeCycle)
   EXPECT_NO_THROW(p.initialize());
 
   // Creating and initializing execution state
-  auto executionState2 = p.createExecutionState();
-  EXPECT_NO_THROW(executionState2->initialize(executionUnit2));
+  auto executionState2 = p.createExecutionState(executionUnit2);
 
   // Re-running
   EXPECT_NO_THROW(p.start(std::move(executionState2)));
@@ -291,8 +288,7 @@ TEST(ProcessingUnit, LifeCycle)
   auto executionUnit3 = new HiCR::backend::sequential::ExecutionUnit(fc3);
 
   // Creating and initializing execution state
-  auto executionState3 = p.createExecutionState();
-  EXPECT_NO_THROW(executionState3->initialize(executionUnit3));
+  auto executionState3 = p.createExecutionState(executionUnit3);
 
   // Reinitializing
   EXPECT_NO_THROW(p.initialize());

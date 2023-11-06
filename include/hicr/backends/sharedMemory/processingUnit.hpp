@@ -89,6 +89,12 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline ProcessingUnit(computeResourceId_t core) : HiCR::ProcessingUnit(core){};
 
+  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(HiCR::ExecutionUnit* executionUnit) override
+  {
+    // Creating and returning new execution state
+    return std::make_unique<sequential::ExecutionState>(executionUnit);
+  }
+
   private:
 
   /**
@@ -158,12 +164,6 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
     // Re-set next signal listening before exiting
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
-  }
-
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
-  {
-    // Creating and returning new execution state
-    return std::make_unique<sequential::ExecutionState>();
   }
 
   __USED__ inline void initializeImpl() override

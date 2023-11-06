@@ -25,10 +25,7 @@ int main(int argc, char **argv)
  processingUnit->initialize();
 
  // Asking the processing unit to create a new execution state from the given execution unit (stateless)
- auto executionState = processingUnit->createExecutionState();
-
- // Initializing execution state with the execution unit
- executionState->initialize(executionUnit);
+ auto executionState = processingUnit->createExecutionState(executionUnit);
 
  // Running compute unit with the newly created execution state
  processingUnit->start(std::move(executionState));
