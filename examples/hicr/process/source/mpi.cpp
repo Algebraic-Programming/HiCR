@@ -14,14 +14,17 @@ void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
  // Printing instance information
  for (const auto& entry : instances)
  {
-  // Getting instance
-  auto& instance = entry.second;
+  // Getting instance index
+  auto index = entry.first;
+
+  // Getting instance pointer
+  auto instance = entry.second;
 
   // Getting instance state
-  auto state = instanceManager.getInstanceState(instance);
+  auto state = instance->getState();
 
   // Printing state
-  printf("Instance State: ");
+  printf("Instance %lu - State: ", index);
   if (state == HiCR::Instance::state_t::listening)
   {
    printf("listening");

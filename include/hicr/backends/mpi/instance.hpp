@@ -46,6 +46,7 @@ class Instance final : public HiCR::Instance
    * Constructor for a Instance class for the MPI backend
    */
   Instance(const int rank, const MPI_Comm comm, mpi::MemoryManager* const memoryManager) :
+   _memoryManager(memoryManager),
    _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
    _rank(rank),
    _comm(comm)
@@ -102,13 +103,24 @@ class Instance final : public HiCR::Instance
   /**
    * State getter
    */
-  __USED__ inline state_t getState() const override { return _state; }
+  __USED__ inline state_t getState() const override
+  {
+   // Obtaining state from the global memory slot, to handle the case where the instance is remote
+   _memoryManager->memcpy(getStateLocalMemorySlot(), 0, getStateGlobalMemorySlot(), 0, sizeof(HiCR::Instance::state_t));
+
+   return _state;
+  }
 
   __USED__ inline HiCR::MemorySlot* getStateLocalMemorySlot() const { return _stateLocalMemorySlot; }
   __USED__ inline void setStateGlobalMemorySlot(HiCR::MemorySlot* const globalSlot) { _stateGlobalMemorySlot = globalSlot; }
   __USED__ inline HiCR::MemorySlot* getStateGlobalMemorySlot() const { return _stateGlobalMemorySlot; }
 
   private:
+
+  /**
+   * Pointer to the memory manager required to obtain remote information
+   */
+  HiCR::backend::MemoryManager* const _memoryManager;
 
   /**
    * Local memory slot that represents the instance status

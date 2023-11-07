@@ -72,18 +72,6 @@ class InstanceManager final : public HiCR::backend::InstanceManager
    }
   }
 
-  /**
-   * Function to check an instance's current state
-   */
-  __USED__ inline HiCR::Instance::state_t getInstanceState(HiCR::Instance* instance)
-  {
-    auto mpiInstance = (HiCR::backend::mpi::Instance*)instance;
-
-    _memoryManager->memcpy(mpiInstance->getStateLocalMemorySlot(), 0, mpiInstance->getStateGlobalMemorySlot(), 0, sizeof(HiCR::Instance::state_t));
-
-    return mpiInstance->getState();
-  }
-
   ~InstanceManager() = default;
 
   __USED__ inline bool isCoordinatorInstance() override
