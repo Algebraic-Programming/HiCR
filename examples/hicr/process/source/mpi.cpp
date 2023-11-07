@@ -12,16 +12,19 @@ void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
  auto& instances = instanceManager.getInstances();
 
  // Printing instance information
- for (const auto& instance : instances)
+ for (const auto& entry : instances)
  {
+  // Getting instance
+  auto& instance = entry.second;
+
   // Getting instance state
-  auto state = instance->getState();
+  auto state = instanceManager.getInstanceState(instance);
 
   // Printing state
   printf("Instance State: ");
-  if (state == HiCR::Instance::state_t::inactive)
+  if (state == HiCR::Instance::state_t::listening)
   {
-   printf("inactive");
+   printf("listening");
    instance->invoke(TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
   }
   if (state == HiCR::Instance::state_t::running)  printf("running");
@@ -56,14 +59,17 @@ void workerFc(HiCR::backend::InstanceManager& instanceManager)
  // Initialize processing unit
  processingUnit->initialize();
 
- // Assigning processing unit to the instance manager
- instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
+ // Getting current instance
+ auto currentInstance = instanceManager.getCurrentInstance();
 
  // Assigning processing unit to the instance manager
- instanceManager.addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
+ currentInstance->addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
+
+ // Assigning processing unit to the instance manager
+ currentInstance->addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
 
  // Listening for requests
- instanceManager.listen();
+ currentInstance->listen();
 
  // Finalizing MPI
  MPI_Finalize();

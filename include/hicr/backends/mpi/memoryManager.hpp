@@ -49,6 +49,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
   ~MemoryManager() = default;
 
+  const MPI_Comm getComm() const { return _comm; }
+  const int getSize() const { return _size; }
+  const int getRank() const { return _rank; }
+
   private:
 
   /**
