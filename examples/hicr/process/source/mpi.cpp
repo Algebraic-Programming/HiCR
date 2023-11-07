@@ -22,7 +22,7 @@ void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
   if (state == HiCR::Instance::state_t::inactive)
   {
    printf("inactive");
-   instanceManager.invoke(instance.get(), TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
+   instance->invoke(TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
   }
   if (state == HiCR::Instance::state_t::running)  printf("running");
   if (state == HiCR::Instance::state_t::finished) printf("finished");

@@ -26,9 +26,6 @@ namespace backend
 namespace mpi
 {
 
-#define _HICR_MPI_ROOT_RANK 0
-#define _HICR_MPI_COORDINATION_TAG 4096
-
 /**
  * Implementation of the HiCR MPI Instance Manager
  */
@@ -52,10 +49,10 @@ class InstanceManager final : public HiCR::backend::InstanceManager
     for (int i = 0; i < _size; i++)
     {
       // Creating new MPI-based HiCR instance
-      auto instance = std::make_unique<HiCR::backend::mpi::Instance>(i);
+      auto instance = std::make_unique<HiCR::backend::mpi::Instance>(i, _comm);
 
       // If this is the root rank, setting it as running
-      if (i == _HICR_MPI_ROOT_RANK) instance->setState(HiCR::Instance::state_t::running);
+      if (i == _HICR_MPI_INSTANCE_ROOT_RANK) instance->setState(HiCR::Instance::state_t::running);
 
       // Adding instance to the collection
       _instances.insert(std::move(instance));
@@ -66,8 +63,8 @@ class InstanceManager final : public HiCR::backend::InstanceManager
 
   __USED__ inline bool isCoordinatorInstance() override
   {
-   // For the MPI backend, the coordinator instance will be set to process with rank _HICR_MPI_ROOT_RANK
-   if (_rank == _HICR_MPI_ROOT_RANK) return true;
+   // For the MPI backend, the coordinator instance will be set to process with rank _HICR_MPI_INSTANCE_ROOT_RANK
+   if (_rank == _HICR_MPI_INSTANCE_ROOT_RANK) return true;
    return false;
   }
 
@@ -77,41 +74,22 @@ class InstanceManager final : public HiCR::backend::InstanceManager
    MPI_Status status;
 
    // Storage for incoming execution unit index
-   executionUnitIndex_t eIdx = 0;
+   HiCR::Instance::executionUnitIndex_t eIdx = 0;
 
    // Getting RPC execution unit index
-   MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_COORDINATION_TAG, _comm, &status);
+   MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _comm, &status);
 
    // Getting sender rank
    int sender = status.MPI_SOURCE;
 
    // Storage for processing unit index to use
-   processingUnitIndex_t pIdx = 0;
+   HiCR::Instance::processingUnitIndex_t pIdx = 0;
 
    // Getting RPC execution unit index
-   MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, sender, _HICR_MPI_COORDINATION_TAG, _comm, MPI_STATUS_IGNORE);
+   MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, sender, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _comm, MPI_STATUS_IGNORE);
 
    // Trying to run remote request
    runRequest(pIdx, eIdx);
-  }
-
-  /**
-   * Function to invoke the execution of a remote function in a remote HiCR instance
-   */
-  __USED__ inline void invoke(HiCR::Instance* instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) override
-  {
-   // Getting up-casted pointer for the execution unit
-   auto MPIInstance = dynamic_cast<HiCR::backend::mpi::Instance *>(instance);
-
-   // Checking whether the execution unit passed is compatible with this backend
-   if (MPIInstance == NULL) HICR_THROW_LOGIC("The passed instance type is not supported by this backend (MPI)\n");
-
-   // Getting rank Id for the passed instance
-   const auto dest = MPIInstance->getRank();
-
-   // Sending request
-   MPI_Send(&eIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_COORDINATION_TAG, _comm);
-   MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_COORDINATION_TAG, _comm);
   }
 
   private:

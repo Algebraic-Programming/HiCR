@@ -14,6 +14,8 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/executionUnit.hpp>
+#include <hicr/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -26,6 +28,17 @@ namespace HiCR
 class Instance
 {
   public:
+
+ /**
+  * Type definition for an index to indicate the execution of a specific execution unit
+  */
+ typedef uint64_t executionUnitIndex_t;
+
+ /**
+  * Type definition for an index to indicate the use of a specific processing unit in charge of executing a execution units
+  */
+ typedef uint64_t processingUnitIndex_t;
+
 
   virtual ~Instance() = default;
 
@@ -40,6 +53,11 @@ class Instance
     inactive,
 
     /**
+     * The instance is listening for incoming RPCs
+     */
+    listening,
+
+    /**
      * The instance is currently running
      */
     running,
@@ -49,6 +67,11 @@ class Instance
      */
     finished
   };
+
+  /**
+   * Function to invoke the execution of a remote function in a remote HiCR instance
+   */
+  virtual void invoke(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) = 0;
 
   /**
    * State getter
