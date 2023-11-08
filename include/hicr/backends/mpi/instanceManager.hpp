@@ -53,22 +53,27 @@ class InstanceManager final : public HiCR::backend::InstanceManager
       // If this is the current rank, set it as current instance
       if (i == _memoryManager->getRank())  _currentInstance = instance;
 
-
      // Adding instance to the collection
-     _instances.insert(std::make_pair(i, instance));
+     _instances.insert(instance);
     }
 
+   // Getting MPI-specific current instance pointer
+   auto currentInstanceMPIPtr = (mpi::Instance*) _currentInstance;
+
    // Exchanging global slots for instance state values
-   _memoryManager->exchangeGlobalMemorySlots(_HICR_MPI_INSTANCE_MANAGER_TAG, { std::make_pair(_memoryManager->getRank(), ((mpi::Instance*)_currentInstance)->getStateLocalMemorySlot()) });
+   _memoryManager->exchangeGlobalMemorySlots(_HICR_MPI_INSTANCE_MANAGER_TAG, { std::make_pair(currentInstanceMPIPtr->getRank(), currentInstanceMPIPtr->getStateLocalMemorySlot()) });
 
    // Getting globally exchanged slots
-   for (int i = 0; i < _memoryManager->getSize(); i++)
+   for (auto instance : _instances)
    {
-     // Getting global slot pointer
-     auto globalSlot = _memoryManager->getGlobalMemorySlot(_HICR_MPI_INSTANCE_MANAGER_TAG, i);
+    // Getting MPI-specific instance pointer
+    auto instanceMPIPtr = (mpi::Instance*) instance;
 
-     // Assigning it to the corresponding instance
-     ((mpi::Instance*)_instances[i])->setStateGlobalMemorySlot(globalSlot);
+    // Getting global slot pointer
+    auto globalSlot = _memoryManager->getGlobalMemorySlot(_HICR_MPI_INSTANCE_MANAGER_TAG, instanceMPIPtr->getRank());
+
+    // Assigning it to the corresponding instance
+    instanceMPIPtr->setStateGlobalMemorySlot(globalSlot);
    }
   }
 

@@ -25,7 +25,9 @@ namespace backend
 namespace mpi
 {
 
+#ifndef _HICR_MPI_INSTANCE_ROOT_RANK
 #define _HICR_MPI_INSTANCE_ROOT_RANK 0
+#endif
 
 // The base tag can be changed if it collides with others
 #ifndef _HICR_MPI_INSTANCE_BASE_TAG
@@ -72,7 +74,7 @@ class Instance final : public HiCR::Instance
    MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _comm);
   }
 
-  __USED__ inline void listen() override
+  __USED__ inline void listenImpl() override
   {
    // Setting current state to listening
    _state = HiCR::Instance::state_t::listening;

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <map>
+#include <set>
 #include <hicr/instance.hpp>
 
 namespace HiCR
@@ -39,7 +39,7 @@ class InstanceManager
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the currently created (active or not)
    */
-  __USED__ inline const std::map<HiCR::Instance::instanceIndex_t, HiCR::Instance*>& getInstances() const { return _instances; }
+  __USED__ inline const std::set<HiCR::Instance*>& getInstances() const { return _instances; }
 
   /**
    * Function to retrieve the currently executing instance
@@ -60,7 +60,7 @@ class InstanceManager
   /**
    * Collection of instances
    */
-  std::map<HiCR::Instance::instanceIndex_t, HiCR::Instance*> _instances;
+  std::set<HiCR::Instance*> _instances;
 
   /**
    * Pointer to current instance

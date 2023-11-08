@@ -30,11 +30,6 @@ class Instance
   public:
 
  /**
-  * Type definition for an index to identify a HiCR instance
-  */
- typedef uint64_t instanceIndex_t;
-
- /**
   * Type definition for an index to indicate the execution of a specific execution unit
   */
  typedef uint64_t executionUnitIndex_t;
@@ -63,12 +58,17 @@ class Instance
   enum state_t
   {
     /**
+     * The instance is online but not listening (detached mode)
+     */
+    detached,
+
+    /**
      * The instance is currently running
      */
     running,
 
     /**
-     * The instance is listening for incoming RPCs
+     * The instance is listening for incoming RPCs (attached)
      */
     listening,
 
@@ -81,7 +81,17 @@ class Instance
   /**
    * Function to put the current instance to listen for incoming requests
    */
-  virtual void listen() = 0;
+  __USED__ inline void listen()
+  {
+   // Setting current state to listening
+   _state = state_t::listening;
+
+   // Calling the backend-specific implementation of the listen function
+   listenImpl();
+
+   // Setting current state to detached
+   _state = state_t::detached;
+  }
 
   /**
    * Function to invoke the execution of a remote function in a remote HiCR instance
@@ -93,11 +103,31 @@ class Instance
    */
   virtual state_t getState() const = 0;
 
+  /**
+   * Convenience function to print the state as a string
+   */
+  static std::string getStateString(const state_t state)
+  {
+    if (state == state_t::detached)  return std::string("Detached");
+    if (state == state_t::listening) return std::string("Listening");
+    if (state == state_t::running)   return std::string("Running");
+    if (state == state_t::finished)  return std::string("Finished");
+
+    HICR_THROW_LOGIC("Unrecognized instance state (0x%lX).\n", state);
+  }
 
   protected:
 
+  /**
+   * Backend-specific implementation of the listen function
+   */
+  virtual void listenImpl() = 0;
+
   __USED__ inline void runRequest(const HiCR::Instance::processingUnitIndex_t pIdx, const HiCR::Instance::executionUnitIndex_t eIdx)
   {
+   // Setting current state to running
+   _state = state_t::running;
+
    // Checks that the processing and execution units have been registered
    if (_processingUnitMap.contains(pIdx) == false) HICR_THROW_RUNTIME("Attempting to run an processing unit (%lu) that was not defined in this instance (0x%lX).\n", pIdx, this);
    if (_executionUnitMap.contains(eIdx) == false) HICR_THROW_RUNTIME("Attempting to run an execution unit (%lu) that was not defined in this instance (0x%lX).\n", eIdx, this);
@@ -111,6 +141,9 @@ class Instance
 
    // Running execution state
    p->start(std::move(s));
+
+   // Setting current state to detached
+   _state = state_t::detached;
   }
 
   /**
@@ -129,7 +162,7 @@ class Instance
   /**
    * Represents the internal state of the instance. Inactive upon creation.
    */
-  state_t _state = state_t::running;
+  state_t _state = state_t::detached;
 
   private:
 
