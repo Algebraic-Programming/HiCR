@@ -96,7 +96,7 @@ class Instance
   /**
    * Function to invoke the execution of a remote function in a remote HiCR instance
    */
-  virtual void invoke(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) = 0;
+  virtual void execute(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) = 0;
 
   /**
    * State getter

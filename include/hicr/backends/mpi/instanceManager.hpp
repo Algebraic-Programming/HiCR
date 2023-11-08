@@ -79,13 +79,6 @@ class InstanceManager final : public HiCR::backend::InstanceManager
 
   ~InstanceManager() = default;
 
-  __USED__ inline bool isCoordinatorInstance() override
-  {
-   // For the MPI backend, the coordinator instance will be set to process with rank _HICR_MPI_INSTANCE_ROOT_RANK
-   if (_memoryManager->getRank() == _HICR_MPI_INSTANCE_ROOT_RANK) return true;
-   return false;
-  }
-
   private:
 
   /**

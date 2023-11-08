@@ -8,11 +8,15 @@ int main(int argc, char **argv)
  // Initializing MPI
  MPI_Init(&argc, &argv);
 
+ // Getting my rank
+ int rank;
+ MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
  // Creating MPI-based instance manager
  HiCR::backend::mpi::InstanceManager instanceManager(MPI_COMM_WORLD);
 
- // Differentiating between coordinator and worker functions
- if (instanceManager.isCoordinatorInstance())
+ // Differentiating between coordinator and worker functions using the rank number
+ if (rank == 0)
   coordinatorFc(instanceManager);
  else
   workerFc(instanceManager);

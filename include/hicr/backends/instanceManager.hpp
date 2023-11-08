@@ -46,11 +46,6 @@ class InstanceManager
    */
   __USED__ inline HiCR::Instance* getCurrentInstance() const { return _currentInstance; }
 
-  /**
-   * Function to check whether the current instance is the coordinator one (or just a worker)
-   */
-  virtual bool isCoordinatorInstance() = 0;
-
 
   /**
   * Protected constructor; this is a purely abstract class

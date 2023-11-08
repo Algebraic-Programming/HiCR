@@ -20,8 +20,8 @@ void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
   // Printing state
   printf("Worker state: %s\n", HiCR::Instance::getStateString(state).c_str());
 
-  // If it is a worker instance, invoke an RPC
-  if (instance != coordinator) instance->invoke(TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
+  // If it is a worker instance, execute an RPC
+  if (instance != coordinator) instance->execute(TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
  }
 }
 

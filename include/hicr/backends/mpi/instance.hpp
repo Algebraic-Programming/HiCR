@@ -25,10 +25,6 @@ namespace backend
 namespace mpi
 {
 
-#ifndef _HICR_MPI_INSTANCE_ROOT_RANK
-#define _HICR_MPI_INSTANCE_ROOT_RANK 0
-#endif
-
 // The base tag can be changed if it collides with others
 #ifndef _HICR_MPI_INSTANCE_BASE_TAG
 #define _HICR_MPI_INSTANCE_BASE_TAG 4096
@@ -61,10 +57,7 @@ class Instance final : public HiCR::Instance
 
   __USED__ inline int getRank() const { return _rank; }
 
-  /**
-   * Function to invoke the execution of a remote function in a remote HiCR instance
-   */
-  __USED__ inline void invoke(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) override
+  __USED__ inline void execute(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) override
   {
    // Getting rank Id for the passed instance
    const auto dest = getRank();
