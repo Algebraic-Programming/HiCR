@@ -94,9 +94,41 @@ class Instance
   }
 
   /**
-   * Function to invoke the execution of a remote function in a remote HiCR instance
+   * Function to trigger the execution of a remote function in a remote HiCR instance
    */
   virtual void execute(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) = 0;
+
+  /**
+   * Function to submit a return value for the currently running RPC
+   */
+  __USED__ inline void submitReturnValue(const uint8_t* data, const size_t size)
+  {
+   if (_state != state_t::running) HICR_THROW_LOGIC("Attempting to submit a return value outside a running RPC.");
+
+   // Calling backend-specific implementation of this function
+   submitReturnValueImpl(data, size);
+  }
+
+  /**
+   * Function to get a return value from a remote instance that ran an RPC
+   */
+  __USED__ inline size_t getReturnValueSize()
+  {
+   if (getState() != state_t::running) HICR_THROW_LOGIC("Attempting to get a return value size from a non-running instance.");
+
+   // Calling backend-specific implementation of this function
+   return getReturnValueSizeImpl();
+  }
+
+  /**
+   * Backend-specific implementation of the getReturnValueData function
+   */
+  __USED__ inline void getReturnValueData(uint8_t* data, const size_t size)
+  {
+   // Calling backend-specific implementation of this function
+   return getReturnValueDataImpl(data, size);
+  }
+
 
   /**
    * State getter
@@ -117,6 +149,21 @@ class Instance
   }
 
   protected:
+
+  /**
+   * Backend-specific implementation of the getReturnValue function
+   */
+  virtual size_t getReturnValueSizeImpl() = 0;
+
+  /**
+   * Backend-specific implementation of the getReturnValueData function
+   */
+  virtual void getReturnValueDataImpl(uint8_t* data, const size_t size) = 0;
+
+  /**
+   * Backend-specific implementation of the submitReturnValue
+   */
+  virtual void submitReturnValueImpl(const uint8_t* data, const size_t size) = 0;
 
   /**
    * Backend-specific implementation of the listen function

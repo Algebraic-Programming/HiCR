@@ -9,7 +9,18 @@ void workerFc(HiCR::backend::InstanceManager& instanceManager)
  // Initializing sequential backend
  HiCR::backend::sequential::ComputeManager computeManager;
 
- auto fcLambda = []() { printf("Hello, World!\n");};
+ // Getting current instance
+ auto currentInstance = instanceManager.getCurrentInstance();
+
+ // Creating worker function
+ auto fcLambda = [currentInstance]()
+ {
+  // Creating simple message
+  auto message = std::string("Hello, I am a worker!");
+
+  // Registering return value
+  currentInstance->submitReturnValue((uint8_t*)message.data(), message.size());
+ };
 
  // Creating execution unit
  auto executionUnit = computeManager.createExecutionUnit(fcLambda);
@@ -25,9 +36,6 @@ void workerFc(HiCR::backend::InstanceManager& instanceManager)
 
  // Initialize processing unit
  processingUnit->initialize();
-
- // Getting current instance
- auto currentInstance = instanceManager.getCurrentInstance();
 
  // Assigning processing unit to the instance manager
  currentInstance->addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
