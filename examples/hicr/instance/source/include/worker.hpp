@@ -19,7 +19,7 @@ void workerFc(HiCR::backend::InstanceManager& instanceManager)
   auto message = std::string("Hello, I am a worker!");
 
   // Registering return value
-  currentInstance->submitReturnValue((uint8_t*)message.data(), message.size());
+  currentInstance->submitReturnValue((uint8_t*)message.data(), message.size()+1);
  };
 
  // Creating execution unit

@@ -114,8 +114,6 @@ class Instance
    */
   __USED__ inline size_t getReturnValueSize()
   {
-   if (getState() != state_t::running) HICR_THROW_LOGIC("Attempting to get a return value size from a non-running instance.");
-
    // Calling backend-specific implementation of this function
    return getReturnValueSizeImpl();
   }
