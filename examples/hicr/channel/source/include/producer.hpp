@@ -8,11 +8,11 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  // Getting required buffer size
  auto coordinationBufferSize = HiCR::ProducerChannel::getCoordinationBufferSize();
 
- // Getting local allocation of coordination buffer
- auto coordinationBuffer = malloc(coordinationBufferSize);
+ // Obtaining memory spaces
+ auto memSpaces = memoryManager->getMemorySpaceList();
 
- // Registering coordination buffer as a local memory slot
- auto coordinationBufferSlot = memoryManager->registerLocalMemorySlot(coordinationBuffer, coordinationBufferSize);
+ // Registering token buffer as a local memory slot
+ auto coordinationBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
 
  // Initializing coordination buffer (sets to zero the counters)
  HiCR::ProducerChannel::initializeCoordinationBuffer(coordinationBufferSlot);
@@ -59,13 +59,12 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  // Synchronizing so that all actors have finished registering their global memory slots
  memoryManager->fence(CHANNEL_TAG);
 
- // De-registering local slots
- memoryManager->deregisterLocalMemorySlot(coordinationBufferSlot);
+ // De-registering global slots
  memoryManager->deregisterGlobalMemorySlot(consumerBuffer);
  memoryManager->deregisterGlobalMemorySlot(producerBuffer);
 
- // Freeing up memory
- free(coordinationBuffer);
+ // Freeing up local memory
+ memoryManager->freeLocalMemorySlot(coordinationBufferSlot);
 }
 
 

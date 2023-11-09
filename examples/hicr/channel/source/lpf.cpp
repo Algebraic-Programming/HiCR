@@ -22,6 +22,9 @@ void spmd( lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args )
 
     HiCR::backend::lpf::MemoryManager m(nprocs, pid, lpf);
 
+    // Asking memory manager to check the available memory spaces
+    m.queryMemorySpaces();
+
     // Rank 0 is producer, Rank 1 is consumer
     if (pid == 0) producerFc(&m, channelCapacity);
     if (pid == 1) consumerFc(&m, channelCapacity);

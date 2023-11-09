@@ -8,9 +8,6 @@
 
 int main(int argc, char **argv)
 {
- // Instantiating backend
- HiCR::backend::sequential::MemoryManager memoryManager(CONCURRENT_THREADS);
-
  // Checking arguments
  if (argc != 2)
  {
@@ -28,9 +25,15 @@ int main(int argc, char **argv)
    return -1;
  }
 
+ // Instantiating backend
+ HiCR::backend::sequential::MemoryManager m(CONCURRENT_THREADS);
+
+ // Asking memory manager to check the available memory spaces
+ m.queryMemorySpaces();
+
  // Creating new threads (one for consumer, one for produer)
- auto consumerThread = std::thread(consumerFc, &memoryManager, channelCapacity);
- auto producerThread = std::thread(producerFc, &memoryManager, channelCapacity);
+ auto consumerThread = std::thread(consumerFc, &m, channelCapacity);
+ auto producerThread = std::thread(producerFc, &m, channelCapacity);
 
  // Waiting on threads
  consumerThread.join();

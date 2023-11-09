@@ -53,6 +53,9 @@ int main(int argc, char **argv)
  // Instantiating backend
  HiCR::backend::mpi::MemoryManager m(channelCommunicator);
 
+ // Asking memory manager to check the available memory spaces
+ m.queryMemorySpaces();
+
  // Rank 0 is producer, Rank 1 is consumer
  if (rankId == 0) producerFc(&m, channelCapacity);
  if (rankId == 1) consumerFc(&m, channelCapacity);
