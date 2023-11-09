@@ -26,6 +26,8 @@ namespace backend
 namespace sequential
 {
 
+#define _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID 0
+
 /**
  * Implementation of the SharedMemory/HWloc-based HiCR Shared Memory Backend.
  */
@@ -58,11 +60,6 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   private:
 
   /**
-   * This stores the total system memory to check that allocations do not exceed it
-   */
-  size_t _totalSystemMem = 0;
-
-  /**
    * This function returns the available allocatable size in the current system RAM
    *
    * @param[in] memorySpace Always zero, represents the system's RAM
@@ -70,7 +67,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
-    return _totalSystemMem;
+    if (memorySpace != _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID)
+     HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID);
+
+    return getTotalSystemMemory();
   }
 
   /**
@@ -78,11 +78,8 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
-    // Getting total system memory
-    _totalSystemMem = sequential::MemoryManager::getTotalSystemMemory();
-
     // Only a single memory space is created
-    return memorySpaceList_t({0});
+    return memorySpaceList_t({_BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID});
   }
 
   /**
@@ -105,6 +102,8 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
+   if (memorySpace != _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID) HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID);
+
     // Atempting to allocate the new memory slot
     auto ptr = malloc(size);
 
