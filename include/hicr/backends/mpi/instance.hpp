@@ -80,13 +80,13 @@ class Instance final : public HiCR::Instance
    return size;
   }
 
-  __USED__ inline void getReturnValueDataImpl(uint8_t* data, const size_t size) override
+  __USED__ inline void getReturnValueDataImpl(void* data, const size_t size) override
   {
    // Getting data directly
    MPI_Recv(data, size, MPI_BYTE, _rank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm, MPI_STATUS_IGNORE);
   }
 
-  __USED__ inline void submitReturnValueImpl(const uint8_t* data, const size_t size) override
+  __USED__ inline void submitReturnValueImpl(const void* data, const size_t size) override
   {
    // Sending message size
    MPI_Send(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);

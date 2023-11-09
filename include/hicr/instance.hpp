@@ -101,7 +101,7 @@ class Instance
   /**
    * Function to submit a return value for the currently running RPC
    */
-  __USED__ inline void submitReturnValue(const uint8_t* data, const size_t size)
+  __USED__ inline void submitReturnValue(const void* data, const size_t size)
   {
    if (_state != state_t::running) HICR_THROW_LOGIC("Attempting to submit a return value outside a running RPC.");
 
@@ -121,7 +121,7 @@ class Instance
   /**
    * Backend-specific implementation of the getReturnValueData function
    */
-  __USED__ inline void getReturnValueData(uint8_t* data, const size_t size)
+  __USED__ inline void getReturnValueData(void* data, const size_t size)
   {
    // Calling backend-specific implementation of this function
    return getReturnValueDataImpl(data, size);
@@ -156,12 +156,12 @@ class Instance
   /**
    * Backend-specific implementation of the getReturnValueData function
    */
-  virtual void getReturnValueDataImpl(uint8_t* data, const size_t size) = 0;
+  virtual void getReturnValueDataImpl(void* data, const size_t size) = 0;
 
   /**
    * Backend-specific implementation of the submitReturnValue
    */
-  virtual void submitReturnValueImpl(const uint8_t* data, const size_t size) = 0;
+  virtual void submitReturnValueImpl(const void* data, const size_t size) = 0;
 
   /**
    * Backend-specific implementation of the listen function
