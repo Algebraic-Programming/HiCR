@@ -42,16 +42,22 @@ class InstanceManager final : public HiCR::backend::InstanceManager
    * \param[in] comm The MPI subcommunicator to use in the communication operations in this backend.
    * If not specified, it will use MPI_COMM_WORLD
    */
-  InstanceManager(MPI_Comm comm = MPI_COMM_WORLD) : _memoryManager(new mpi::MemoryManager(comm))
+  InstanceManager(HiCR::backend::MemoryManager* const memoryManager) : HiCR::backend::InstanceManager(memoryManager)
   {
+   // Getting up-casted pointer for the MPI memory manager
+   auto mm = dynamic_cast<mpi::MemoryManager * const>(_memoryManager);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (mm == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");
+
     // In MPI, the initial set of processes represents all the currently available instances of HiCR
-    for (int i = 0; i < _memoryManager->getSize(); i++)
+    for (int i = 0; i < mm->getSize(); i++)
     {
       // Creating new MPI-based HiCR instance
-      auto instance = new HiCR::backend::mpi::Instance(i, comm, _memoryManager);
+      auto instance = new HiCR::backend::mpi::Instance(i, mm);
 
       // If this is the current rank, set it as current instance
-      if (i == _memoryManager->getRank())  _currentInstance = instance;
+      if (i == mm->getRank())  _currentInstance = instance;
 
      // Adding instance to the collection
      _instances.insert(instance);
@@ -61,7 +67,7 @@ class InstanceManager final : public HiCR::backend::InstanceManager
    auto currentInstanceMPIPtr = (mpi::Instance*) _currentInstance;
 
    // Exchanging global slots for instance state values
-   _memoryManager->exchangeGlobalMemorySlots(_HICR_MPI_INSTANCE_MANAGER_TAG, { std::make_pair(currentInstanceMPIPtr->getRank(), currentInstanceMPIPtr->getStateLocalMemorySlot()) });
+   mm->exchangeGlobalMemorySlots(_HICR_MPI_INSTANCE_MANAGER_TAG, { std::make_pair(currentInstanceMPIPtr->getRank(), currentInstanceMPIPtr->getStateLocalMemorySlot()) });
 
    // Getting globally exchanged slots
    for (auto instance : _instances)
@@ -70,7 +76,7 @@ class InstanceManager final : public HiCR::backend::InstanceManager
     auto instanceMPIPtr = (mpi::Instance*) instance;
 
     // Getting global slot pointer
-    auto globalSlot = _memoryManager->getGlobalMemorySlot(_HICR_MPI_INSTANCE_MANAGER_TAG, instanceMPIPtr->getRank());
+    auto globalSlot = mm->getGlobalMemorySlot(_HICR_MPI_INSTANCE_MANAGER_TAG, instanceMPIPtr->getRank());
 
     // Assigning it to the corresponding instance
     instanceMPIPtr->setStateGlobalMemorySlot(globalSlot);
@@ -79,12 +85,6 @@ class InstanceManager final : public HiCR::backend::InstanceManager
 
   ~InstanceManager() = default;
 
-  private:
-
-  /**
-   * Memory manager object for exchanging information among HiCR instances
-   */
-  mpi::MemoryManager* const _memoryManager;
 };
 
 } // namespace mpi

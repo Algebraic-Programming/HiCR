@@ -14,6 +14,7 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/memorySlot.hpp>
 #include <hicr/executionUnit.hpp>
 #include <hicr/processingUnit.hpp>
 
@@ -101,32 +102,22 @@ class Instance
   /**
    * Function to submit a return value for the currently running RPC
    */
-  __USED__ inline void submitReturnValue(const void* data, const size_t size)
+  __USED__ inline void submitReturnValue(HiCR::MemorySlot* value)
   {
    if (_state != state_t::running) HICR_THROW_LOGIC("Attempting to submit a return value outside a running RPC.");
 
    // Calling backend-specific implementation of this function
-   submitReturnValueImpl(data, size);
+   submitReturnValueImpl(value);
   }
 
   /**
    * Function to get a return value from a remote instance that ran an RPC
    */
-  __USED__ inline size_t getReturnValueSize()
+  __USED__ inline HiCR::MemorySlot* getReturnValue()
   {
    // Calling backend-specific implementation of this function
-   return getReturnValueSizeImpl();
+   return getReturnValueImpl();
   }
-
-  /**
-   * Backend-specific implementation of the getReturnValueData function
-   */
-  __USED__ inline void getReturnValueData(void* data, const size_t size)
-  {
-   // Calling backend-specific implementation of this function
-   return getReturnValueDataImpl(data, size);
-  }
-
 
   /**
    * State getter
@@ -151,17 +142,12 @@ class Instance
   /**
    * Backend-specific implementation of the getReturnValue function
    */
-  virtual size_t getReturnValueSizeImpl() = 0;
-
-  /**
-   * Backend-specific implementation of the getReturnValueData function
-   */
-  virtual void getReturnValueDataImpl(void* data, const size_t size) = 0;
+  virtual HiCR::MemorySlot* getReturnValueImpl() = 0;
 
   /**
    * Backend-specific implementation of the submitReturnValue
    */
-  virtual void submitReturnValueImpl(const void* data, const size_t size) = 0;
+  virtual void submitReturnValueImpl(HiCR::MemorySlot* value) = 0;
 
   /**
    * Backend-specific implementation of the listen function

@@ -12,8 +12,11 @@ int main(int argc, char **argv)
  int rank;
  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+ // Creating MPI-based memory manager (necessary for passing data around between instances)
+ HiCR::backend::mpi::MemoryManager memoryManager(MPI_COMM_WORLD);
+
  // Creating MPI-based instance manager
- HiCR::backend::mpi::InstanceManager instanceManager(MPI_COMM_WORLD);
+ HiCR::backend::mpi::InstanceManager instanceManager(&memoryManager);
 
  // Differentiating between coordinator and worker functions using the rank number
  if (rank == 0)

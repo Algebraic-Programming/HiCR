@@ -13,6 +13,7 @@
 #pragma once
 
 #include <set>
+#include <hicr/backends/memoryManager.hpp>
 #include <hicr/instance.hpp>
 
 namespace HiCR
@@ -31,6 +32,11 @@ class InstanceManager
 {
   public:
 
+ /**
+   * Default constructor is deleted, this class requires the passing of a memory manager
+   */
+  InstanceManager() = delete;
+
   /**
    * Default destructor
    */
@@ -46,11 +52,10 @@ class InstanceManager
    */
   __USED__ inline HiCR::Instance* getCurrentInstance() const { return _currentInstance; }
 
-
   /**
-  * Protected constructor; this is a purely abstract class
-  */
-  InstanceManager() = default;
+   * Function to retrieve the internal memory manager for this instance manager
+   */
+  __USED__ inline HiCR::backend::MemoryManager* getMemoryManager() const { return _memoryManager; }
 
   /**
    * Collection of instances
@@ -61,6 +66,22 @@ class InstanceManager
    * Pointer to current instance
    */
   HiCR::Instance* _currentInstance = NULL;
+
+  protected:
+
+  /**
+   * Constructor with proper arguments
+   */
+  InstanceManager(HiCR::backend::MemoryManager* const memoryManager) : _memoryManager(memoryManager)
+  {
+   // Querying memory spaces in the memory manager
+   _memoryManager->queryMemorySpaces();
+  };
+
+  /**
+   * Memory manager object for exchanging information among HiCR instances
+   */
+  HiCR::backend::MemoryManager* const _memoryManager;
 
 };
 

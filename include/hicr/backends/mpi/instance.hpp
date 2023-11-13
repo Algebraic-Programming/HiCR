@@ -44,11 +44,10 @@ class Instance final : public HiCR::Instance
   /**
    * Constructor for a Instance class for the MPI backend
    */
-  Instance(const int rank, const MPI_Comm comm, mpi::MemoryManager* const memoryManager) :
+  Instance(const int rank, mpi::MemoryManager* const memoryManager) :
    _memoryManager(memoryManager),
    _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
-   _rank(rank),
-   _comm(comm)
+   _rank(rank)
   { }
 
   /**
@@ -64,35 +63,41 @@ class Instance final : public HiCR::Instance
    const auto dest = getRank();
 
    // Sending request
-   MPI_Send(&eIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _comm);
-   MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _comm);
+   MPI_Send(&eIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _memoryManager->getComm());
+   MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _memoryManager->getComm());
   }
 
-  __USED__ inline size_t getReturnValueSizeImpl() override
+  __USED__ inline HiCR::MemorySlot* getReturnValueImpl() override
   {
    // Buffer to store the size
    size_t size;
 
    // Getting return value size
-   MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, _rank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm, MPI_STATUS_IGNORE);
+   MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, _rank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _memoryManager->getComm(), MPI_STATUS_IGNORE);
 
-   // Returning value
-   return size;
-  }
+   // Allocating memory slot to store the return value
+   auto memorySlot = _memoryManager->allocateLocalMemorySlot(_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID, size);
 
-  __USED__ inline void getReturnValueDataImpl(void* data, const size_t size) override
-  {
    // Getting data directly
-   MPI_Recv(data, size, MPI_BYTE, _rank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm, MPI_STATUS_IGNORE);
+   MPI_Recv(memorySlot->getPointer(), size, MPI_BYTE, _rank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _memoryManager->getComm(), MPI_STATUS_IGNORE);
+
+   // Returning memory slot containing the return value
+   return memorySlot;
   }
 
-  __USED__ inline void submitReturnValueImpl(const void* data, const size_t size) override
+  __USED__ inline void submitReturnValueImpl(HiCR::MemorySlot* value) override
   {
+   // Getting return value size
+   const auto size = value->getSize();
+
+   // Getting return value data pointer
+   const auto data = value->getPointer();
+
    // Sending message size
-   MPI_Send(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);
+   MPI_Send(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _memoryManager->getComm());
 
    // Getting RPC execution unit index
-   MPI_Send(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm);
+   MPI_Send(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _memoryManager->getComm());
   }
 
   __USED__ inline void listenImpl() override
@@ -107,7 +112,7 @@ class Instance final : public HiCR::Instance
    HiCR::Instance::executionUnitIndex_t eIdx = 0;
 
    // Getting RPC execution unit index
-   MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _comm, &status);
+   MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _memoryManager->getComm(), &status);
 
    // Getting requester instance rank
    _RPCRequestRank = status.MPI_SOURCE;
@@ -116,7 +121,7 @@ class Instance final : public HiCR::Instance
    HiCR::Instance::processingUnitIndex_t pIdx = 0;
 
    // Getting RPC execution unit index
-   MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _comm, MPI_STATUS_IGNORE);
+   MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _memoryManager->getComm(), MPI_STATUS_IGNORE);
 
    // Trying to run remote request
    runRequest(pIdx, eIdx);
@@ -148,7 +153,7 @@ class Instance final : public HiCR::Instance
   /**
    * Pointer to the memory manager required to obtain remote information
    */
-  HiCR::backend::MemoryManager* const _memoryManager;
+  HiCR::backend::mpi::MemoryManager* const _memoryManager;
 
   /**
    * Local memory slot that represents the instance status
@@ -164,11 +169,6 @@ class Instance final : public HiCR::Instance
    * Remembers the MPI rank this instance belongs to
    */
   const int _rank;
-
-  /**
-   * Remembers the MPI communicator this rank belongs to
-   */
-  const MPI_Comm _comm;
 };
 
 } // namespace mpi

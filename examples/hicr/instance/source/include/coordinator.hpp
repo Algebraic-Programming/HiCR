@@ -30,17 +30,11 @@ void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
   // If it is a worker instance, then get return value size
   if (instance != coordinator)
   {
-   // Getting size
-   auto size = instance->getReturnValueSize();
-
-   // Allocating storage to receive return value data
-   auto data = (uint8_t*) malloc (size);
-
-   // Getting data
-   instance->getReturnValueData(data, size);
+   // Getting return value as a memory slot
+   auto returnValue = instance->getReturnValue();
 
    // Printing value
-   printf("Received Return value: '%s'\n", (char*)data);
+   printf("Received Return value: '%s'\n", (char*)returnValue->getPointer());
   }
  }
 }

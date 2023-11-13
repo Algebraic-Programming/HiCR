@@ -9,17 +9,26 @@ void workerFc(HiCR::backend::InstanceManager& instanceManager)
  // Initializing sequential backend
  HiCR::backend::sequential::ComputeManager computeManager;
 
+ // Fetching memory manager
+ auto memoryManager = instanceManager.getMemoryManager();
+
  // Getting current instance
  auto currentInstance = instanceManager.getCurrentInstance();
 
  // Creating worker function
- auto fcLambda = [currentInstance]()
+ auto fcLambda = [currentInstance, memoryManager]()
  {
   // Creating simple message
   auto message = std::string("Hello, I am a worker!");
 
+  // Registering memory slot at the first available memory space as source buffer to send the return value from
+  auto sendBuffer = memoryManager->registerLocalMemorySlot(message.data(), message.size()+1);
+
   // Registering return value
-  currentInstance->submitReturnValue(message.data(), message.size()+1);
+  currentInstance->submitReturnValue(sendBuffer);
+
+  // Deregistering memory slot
+  memoryManager->deregisterLocalMemorySlot(sendBuffer);
  };
 
  // Creating execution unit
