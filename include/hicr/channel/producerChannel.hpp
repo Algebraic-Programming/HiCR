@@ -124,12 +124,12 @@ class ProducerChannel final : public Channel
       // Copying with source increasing offset per token
       _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
-      // Adding flush operation to ensure buffers are ready for re-use
-      _memoryManager->flush();
-
       // Advance head, as we have added a new element
       advanceHead(1);
     }
+
+    // Adding flush operation to ensure buffers are ready for re-use
+    _memoryManager->flush();
 
     // Increasing the number of pushed tokens
     _pushedTokens += n;
