@@ -43,7 +43,7 @@ build:
   - mkdir LPF/build; pushd LPF/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j8; make install; popd
   - echo "Building..."
   - mkdir build
-  - meson setup build -Db_coverage=true -Dbackends=sharedMemory,lpf,mpi -DbuildTests=true -DbuildExamples=true 
+  - meson setup build -Db_coverage=true -Dbackends=sharedMemory,mpi -DbuildTests=true -DbuildExamples=true 
   - meson compile -C build
   - echo "Running tests..."
   - OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 meson test -C build
