@@ -316,7 +316,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    const auto pointer = memorySlot->getPointer();
 
    // Checking whether the pointer is valid
-   if (pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exit or represents a NULL pointer.");
+   if (pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
 
    // Deallocating memory using MPI's free mechanism
    auto status = MPI_Free_mem(pointer);
