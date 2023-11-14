@@ -77,7 +77,7 @@ class ExecutionState final : public HiCR::ExecutionState
 
   protected:
 
-  __USED__ inline void initializeImpl(const HiCR::ExecutionUnit *executionUnit) override
+  __USED__ inline void initializeImpl(const HiCR::ExecutionUnit *executionUnit)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_cast<const ExecutionUnit *>(executionUnit);
