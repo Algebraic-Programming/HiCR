@@ -5,10 +5,10 @@
  */
 
 /**
- * @file channel.hpp
- * @brief Provides functionality for a Channel over HiCR
- * @author A. N. Yzelman & S. M Martin
- * @date 28/7/2023
+ * @file base.hpp
+ * @brief Provides base functionality for a Multiple-Producer Single-Consumer Channel over HiCR
+ * @author S. M Martin
+ * @date 14/11/2023
  */
 
 #pragma once
@@ -20,13 +20,13 @@
 namespace HiCR
 {
 
+namespace MPSC
+{
+
 /**
- * Class definition for a HiCR Channel
- *
- * It exposes the functionality to be expected for a channel
- *
+ * Base class definition for a HiCR Multiple-Producer Single-Consumer Channel
  */
-class Channel
+class Base
 {
   public:
 
@@ -60,7 +60,7 @@ class Channel
    */
   __USED__ inline size_t getDepth() const noexcept
   {
-    return _depth;
+    return *_depth;
   }
 
   /**
@@ -73,7 +73,7 @@ class Channel
    */
   __USED__ inline bool isFull() const noexcept
   {
-    return _depth == _capacity;
+    return *_depth == _capacity;
   }
 
   /**
@@ -86,7 +86,7 @@ class Channel
    */
   __USED__ inline bool isEmpty() const noexcept
   {
-    return _depth == 0;
+    return *_depth == 0;
   }
 
   /**
@@ -103,6 +103,50 @@ class Channel
   __USED__ inline size_t getTokenSize() const noexcept
   {
     return _tokenSize;
+  }
+
+  /**
+   * This function can be used to check the size of the coordination buffer that needs to be provided
+   * in the creation of the producer channel
+   *
+   * \return Size (bytes) of the coordination buffer
+   */
+  __USED__ static inline size_t getCoordinationBufferSize() noexcept
+  {
+    return 2 * sizeof(size_t);
+  }
+
+  /**
+   * This function can be used to check the size of the coordination buffer that needs to be provided
+   * in the creation of the producer channel
+   *
+   * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
+   */
+  __USED__ static inline void initializeCoordinationBuffer(MemorySlot *coordinationBuffer)
+  {
+    // Checking for correct size
+    auto requiredSize = getCoordinationBufferSize();
+    auto size = coordinationBuffer->getSize();
+    if (size < requiredSize) HICR_THROW_LOGIC("Attempting to initialize coordination buffer size on a memory slot (%lu) smaller than the required size (%lu).\n", size, requiredSize);
+
+    // Getting actual buffer of the coordination buffer
+    auto bufferPtr = coordinationBuffer->getPointer();
+
+    // Resetting all its values to zero
+    memset(bufferPtr, 0, getCoordinationBufferSize());
+  }
+
+  /**
+   * This function can be used to check the minimum size of the token buffer that needs to be provided
+   * to the consumer channel.
+   *
+   * \param[in] tokenSize The expected size of the tokens to use in the channel
+   * \param[in] capacity The expected capacity (in token count) to use in the channel
+   * \return Minimum size (bytes) required of the token buffer
+   */
+  __USED__ static inline size_t getTokenBufferSize(const size_t tokenSize, const size_t capacity) noexcept
+  {
+    return tokenSize * capacity;
   }
 
   protected:
@@ -127,27 +171,37 @@ class Channel
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Channel(backend::MemoryManager *memoryManager,
+  Base(backend::MemoryManager *memoryManager,
           MemorySlot *const tokenBuffer,
-          MemorySlot *const coordinationBuffer,
+          MemorySlot *const localCoordinationBuffer,
+          MemorySlot *const globalCoordinationBuffer,
           const size_t tokenSize,
           const size_t capacity) : _memoryManager(memoryManager),
                                    _tokenBuffer(tokenBuffer),
-                                   _coordinationBuffer(coordinationBuffer),
-                                   // Registering a slot for the local variable specifiying the nuber of popped tokens, to transmit it to the producer
-                                   _poppedTokensSlot(_memoryManager->registerLocalMemorySlot(&_poppedTokens, sizeof(size_t))),
+                                   _localCoordinationBuffer(localCoordinationBuffer),
+                                   _globalCoordinationBuffer(globalCoordinationBuffer),
                                    _tokenSize(tokenSize),
-                                   _capacity(capacity)
+                                   _capacity(capacity),
+                                   _depth((size_t*)localCoordinationBuffer->getPointer()),
+                                   _tail(&_depth[1])
   {
     if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
     if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
+
+    // Checking that the provided token exchange  buffer has the right size
+    auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
+    auto providedTokenBufferSize = _tokenBuffer->getSize();
+    if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
+
+    // Checking that the provided coordination buffers have the right size
+    auto requiredCoordinationBufferSize = getCoordinationBufferSize();
+    auto providedLocalCoordinationBufferSize = _localCoordinationBuffer->getSize();
+    if (providedLocalCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a local coordination buffer size (%lu) smaller than the required size (%lu).\n", providedLocalCoordinationBufferSize, requiredCoordinationBufferSize);
+    auto providedGlobalCoordinationBufferSize = _globalCoordinationBuffer->getSize();
+    if (providedGlobalCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a global coordination buffer size (%lu) smaller than the required size (%lu).\n", providedGlobalCoordinationBufferSize, requiredCoordinationBufferSize);
   }
 
-  ~Channel()
-  {
-    // Unregistering memory slot corresponding to popped token count
-    _memoryManager->deregisterLocalMemorySlot(_poppedTokensSlot);
-  }
+  virtual ~Base() = default;
 
   /**
    * @returns The current position of the buffer head
@@ -162,7 +216,7 @@ class Channel
    */
   __USED__ inline size_t getHeadPosition() const noexcept
   {
-    return (_tail + _depth) % _capacity;
+    return (*_tail + *_depth) % _capacity;
   }
 
   /**
@@ -178,13 +232,9 @@ class Channel
    */
   __USED__ inline size_t getTailPosition() const noexcept
   {
-    return _tail;
+    return *_tail;
   }
 
-  /**
-   * This function updates the internal value of the channel depth
-   */
-  virtual void updateDepth() = 0;
 
   protected:
 
@@ -198,10 +248,15 @@ class Channel
    */
   MemorySlot *const _tokenBuffer;
 
+   /**
+   * Memory slot that enables coordination communication from the consumer to the producer
+   */
+  MemorySlot *const _localCoordinationBuffer;
+
   /**
    * Memory slot that enables coordination communication from the consumer to the producer
    */
-  MemorySlot *const _coordinationBuffer;
+  MemorySlot *const _globalCoordinationBuffer;
 
   /**
    * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.
@@ -212,13 +267,13 @@ class Channel
   __USED__ inline void advanceHead(const size_t n = 1)
   {
     // Calculating new depth
-    const auto newDepth = _depth + n;
+    const auto newDepth = *_depth + n;
 
     // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", _depth, n, newDepth, _capacity);
+    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", *_depth, n, newDepth, _capacity);
 
     // Storing new depth
-    _depth = newDepth;
+    *_depth = newDepth;
   }
 
   /**
@@ -230,29 +285,14 @@ class Channel
   __USED__ inline void advanceTail(const size_t n = 1)
   {
     // Sanity check
-    if (n > _depth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", _depth, n);
+    if (n > *_depth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", *_depth, n);
 
     // Decrease depth
-    _depth -= n;
+    *_depth = *_depth - n;
 
     // Advance tail
-    _tail = (_tail + n) % _capacity;
+    *_tail = (*_tail + n) % _capacity;
   }
-
-  /**
-   * Local memory slot to update the tail position
-   */
-  MemorySlot *const _poppedTokensSlot;
-
-  /**
-   * The number of popped tokens
-   */
-  size_t _poppedTokens = 0;
-
-  /**
-   * Internal counter for the number of pushed tokens by the producer
-   */
-  size_t _pushedTokens = 0;
 
   /**
    * Token size
@@ -267,12 +307,14 @@ class Channel
   /**
    * Buffer position at the head
    */
-  size_t _depth = 0;
+  __volatile__ size_t* const _depth;
 
   /**
    * Buffer position at the tail
    */
-  size_t _tail = 0;
+  __volatile__ size_t* const _tail;
 };
 
-}; // namespace HiCR
+} // namespace MPSC
+
+} // namespace HiCR

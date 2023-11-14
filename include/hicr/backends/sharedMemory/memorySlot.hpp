@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <mutex>
 #include <hicr/memorySlot.hpp>
 
 namespace HiCR
@@ -75,12 +76,18 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   __USED__ inline binding_type getBindingType() const { return _bindingType; }
 
+  __USED__ inline bool trylock() { return _mutex.try_lock(); }
+  __USED__ inline void lock() { _mutex.lock(); }
+  __USED__ inline void unlock() { _mutex.unlock(); }
+
   private:
 
   /**
    * Store whether a bound memory allocation has performed
    */
   binding_type _bindingType;
+
+  std::mutex _mutex;
 };
 
 } // namespace sharedMemory

@@ -331,6 +331,42 @@ class MemoryManager final : public backend::MemoryManager
     source->increaseMessagesSent();
     destination->increaseMessagesRecv();
   }
+
+  __USED__ inline bool tryGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  {
+   // Getting up-casted pointer for the execution unit
+   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+   // Locking mutex
+   return m->trylock();
+  }
+
+  __USED__ inline void getGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  {
+   // Getting up-casted pointer for the execution unit
+   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+   // Locking mutex
+   m->lock();
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  {
+   // Getting up-casted pointer for the execution unit
+   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+   // Locking mutex
+   m->unlock();
+  }
 };
 
 } // namespace sharedMemory
