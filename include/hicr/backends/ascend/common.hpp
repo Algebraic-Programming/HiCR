@@ -66,8 +66,6 @@ struct ascendState_t
  */
 __USED__ inline aclError selectDevice(const aclrtContext deviceContext)
 {
-  aclError err;
-
   // select the device context on which operations shoud be executed
   return aclrtSetCurrentContext(deviceContext);
 }
