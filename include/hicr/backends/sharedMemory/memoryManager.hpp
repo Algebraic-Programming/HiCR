@@ -42,7 +42,10 @@ class MemoryManager final : public backend::MemoryManager
   MemoryManager(const hwloc_topology_t *topology, const size_t fenceCount = 1) : backend::MemoryManager(), _topology{topology}
   {
     // Initializing barrier for fence operation
-    pthread_barrier_init(&_fenceBarrier, NULL, fenceCount);
+    pthread_barrier_init(&_barrier, NULL, fenceCount);
+
+    // Initializing mutex object
+    pthread_mutex_init(&_mutex, NULL);
   }
 
   /**
@@ -51,7 +54,10 @@ class MemoryManager final : public backend::MemoryManager
   ~MemoryManager()
   {
     // Freeing barrier memory
-    pthread_barrier_destroy(&_fenceBarrier);
+    pthread_barrier_destroy(&_barrier);
+
+    // Freeing mutex memory
+    pthread_mutex_destroy(&_mutex);
   }
 
   /**
@@ -78,14 +84,14 @@ class MemoryManager final : public backend::MemoryManager
   private:
 
   /**
-   * Stores a barrier object to check on a fence operation
+   * Stores a barrier object to check on a barrier operation
    */
-  pthread_barrier_t _fenceBarrier;
+  pthread_barrier_t _barrier;
 
   /**
    * A mutex to make sure threads do not bother each other during certain operations
    */
-  std::mutex _mutex;
+  pthread_mutex_t _mutex;
 
   /**
    * Structure representing a shared memory backend memory space
@@ -124,7 +130,7 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
     // Doing this operation as a critical section
-    _mutex.lock();
+    pthread_mutex_lock(&_mutex);
 
     // Loading topology
     hwloc_topology_load(*_topology);
@@ -163,7 +169,7 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     // Releasing the lock
-    _mutex.unlock();
+    pthread_mutex_unlock(&_mutex);
 
     // Returning new memory space list
     return memorySpaceList;
@@ -242,7 +248,7 @@ class MemoryManager final : public backend::MemoryManager
     barrier();
 
     // Doing the promotion of memory slots as a critical section
-    _mutex.lock();
+    pthread_mutex_lock(&_mutex);
 
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
@@ -261,7 +267,7 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     // Releasing mutex
-    _mutex.unlock();
+    pthread_mutex_unlock(&_mutex);
 
     // Do not allow any thread to continue until the exchange is made
     barrier();
@@ -333,7 +339,7 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void barrier()
   {
-    pthread_barrier_wait(&_fenceBarrier);
+    pthread_barrier_wait(&_barrier);
   }
 
   /**

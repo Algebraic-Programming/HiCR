@@ -46,11 +46,14 @@ void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  // Waiting for all messages to arrive, and printing them one by one
  while (receivedMessageCount < expectedMessageCount)
  {
+  // Storage for the token position
+  auto pos = consumer.peek();
+
   // Waiting for the next message
-  while (consumer.peek() < 0);
+  while (pos < 0) pos = consumer.peek();
 
   // Printing value
-  printf("    [Consumer] Recv Value: %u  (%lu/%lu)\n", tokenBuffer[consumer.peek()], receivedMessageCount+1, expectedMessageCount);
+  printf("    [Consumer] Recv Value: %u  (%lu/%lu) Pos: %ld\n", tokenBuffer[pos], receivedMessageCount+1, expectedMessageCount, pos);
 
   // Disposing of printed value
   while (consumer.pop() == false);

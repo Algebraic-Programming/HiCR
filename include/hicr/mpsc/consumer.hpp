@@ -89,17 +89,11 @@ class Consumer final : public MPSC::Base
     // Check if the requested position exceeds the capacity of the channel
     if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos+1, getCapacity());
 
-    // Obtaining coordination buffer slot lock
-    if (_memoryManager->acquireGlobalLock(_globalCoordinationBuffer) == false) return -1;
-
     // Check if there are enough tokens in the buffer to satisfy the request
-    if (pos >= getDepth()) { _memoryManager->releaseGlobalLock(_globalCoordinationBuffer); return -1; };
+    if (pos >= getDepth()) return -1;
 
     // Calculating buffer position
     const size_t bufferPos = (getTailPosition() + pos) % getCapacity();
-
-    // Releasing coordination buffer slot lock
-    _memoryManager->releaseGlobalLock(_globalCoordinationBuffer);
 
     // Succeeded in pushing the token(s)
     return bufferPos;

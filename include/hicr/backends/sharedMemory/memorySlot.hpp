@@ -11,7 +11,6 @@
  */
 #pragma once
 
-#include <mutex>
 #include <hicr/memorySlot.hpp>
 
 namespace HiCR
@@ -65,9 +64,14 @@ class MemorySlot final : public HiCR::MemorySlot
     const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey),
                                        _bindingType(bindingType)
   {
+   pthread_mutex_init(&_mutex, NULL);
   }
 
-  ~MemorySlot() = default;
+  ~MemorySlot()
+  {
+   // Freeing mutex memory
+   pthread_mutex_destroy(&_mutex);
+  }
 
   /**
    * Returns the binding type used to allocate/register this memory slot
@@ -76,9 +80,9 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   __USED__ inline binding_type getBindingType() const { return _bindingType; }
 
-  __USED__ inline bool trylock() { return _mutex.try_lock(); }
-  __USED__ inline void lock() { _mutex.lock(); }
-  __USED__ inline void unlock() { _mutex.unlock(); }
+  __USED__ inline bool trylock() { return pthread_mutex_trylock(&_mutex) == 0; }
+  __USED__ inline void lock() { pthread_mutex_lock(&_mutex); }
+  __USED__ inline void unlock() { pthread_mutex_unlock(&_mutex); }
 
   private:
 
@@ -87,7 +91,10 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   binding_type _bindingType;
 
-  std::mutex _mutex;
+  /**
+   * Internal memory slot mutex to enforce lock acquisition
+   */
+  pthread_mutex_t _mutex;
 };
 
 } // namespace sharedMemory

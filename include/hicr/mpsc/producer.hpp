@@ -91,6 +91,9 @@ class Producer final : public MPSC::Base
     // If the exchange buffer does not have n free slots, reject the operation
     if (getDepth() + n > getCapacity()) { _memoryManager->releaseGlobalLock(_globalCoordinationBuffer); return false; }
 
+    // Acquiring token slot lock
+    _memoryManager->acquireGlobalLock(_tokenBuffer);
+
     // Copy tokens
     for (size_t i = 0; i < n; i++)
     {
@@ -106,6 +109,9 @@ class Producer final : public MPSC::Base
 
     // Adding flush operation to ensure buffers are ready for re-use
     _memoryManager->flush();
+
+    // Acquiring token slot lock
+    _memoryManager->releaseGlobalLock(_tokenBuffer);
 
     // Releasing remote token and coordination buffer slots
     _memoryManager->releaseGlobalLock(_globalCoordinationBuffer);

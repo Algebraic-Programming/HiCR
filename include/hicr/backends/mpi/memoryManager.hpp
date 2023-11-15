@@ -137,7 +137,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // on these operations, so I rather do the whole thing manually.
 
     // Locking MPI window to ensure the messages arrives before returning
-    lockMPIWindow(rank, window);
+//    lockMPIWindow(rank, window);
 
     // Getting remote counter into the local conter
     size_t accumulatorBuffer = 0;
@@ -157,7 +157,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Put) for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
 
     // Unlocking window after copy is completed
-    unlockMPIWindow(rank, window);
+//    unlockMPIWindow(rank, window);
   }
 
   __USED__ inline void memcpyImpl(HiCR::MemorySlot *destinationSlotPtr, const size_t dst_offset, HiCR::MemorySlot *sourceSlotPtr, const size_t sourceOffset, const size_t size) override
@@ -201,7 +201,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     if (isSourceRemote == true && isDestinationRemote == false)
     {
       // Locking MPI window to ensure the messages arrives before returning
-      lockMPIWindow(sourceRank, sourceDataWindow);
+//      lockMPIWindow(sourceRank, sourceDataWindow);
 
       // Executing the get operation
       auto status = MPI_Get(destinationPointer, size, MPI_BYTE, sourceRank, sourceOffset, size, MPI_BYTE, *sourceDataWindow);
@@ -210,7 +210,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get");
 
       // Unlocking window after copy is completed
-      unlockMPIWindow(sourceRank, sourceDataWindow);
+//      unlockMPIWindow(sourceRank, sourceDataWindow);
 
       // Increasing the remote sent message counter and local destination received message counter
       increaseWindowCounter(sourceRank, sourceSentMessageWindow);
@@ -221,7 +221,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     if (isSourceRemote == false && isDestinationRemote == true)
     {
       // Locking MPI window to ensure the messages arrives before returning
-      lockMPIWindow(destinationRank, destinationDataWindow);
+//      lockMPIWindow(destinationRank, destinationDataWindow);
 
       // Executing the put operation
       auto status = MPI_Put(sourcePointer, size, MPI_BYTE, destinationRank, dst_offset, size, MPI_BYTE, *destinationDataWindow);
@@ -229,7 +229,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put");
 
       // Unlocking window after copy is completed
-      unlockMPIWindow(destinationRank, destinationDataWindow);
+//      unlockMPIWindow(destinationRank, destinationDataWindow);
 
       // Increasing the remote received message counter and local sent message counter
       increaseWindowCounter(destinationRank, destinationRecvMessageWindow);
@@ -518,9 +518,9 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
    // Locking access to all relevant memory slot windows
-   lockMPIWindow(_rank, m->getDataWindow());
-   lockMPIWindow(_rank, m->getRecvMessageCountWindow());
-   lockMPIWindow(_rank, m->getSentMessageCountWindow());
+   lockMPIWindow(m->getRank(), m->getDataWindow());
+   lockMPIWindow(m->getRank(), m->getRecvMessageCountWindow());
+   lockMPIWindow(m->getRank(), m->getSentMessageCountWindow());
 
    // This function is assumed to always succeed
    return true;
@@ -535,9 +535,9 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
    // Releasing access to all relevant memory slot windows
-   unlockMPIWindow(_rank, m->getDataWindow());
-   unlockMPIWindow(_rank, m->getRecvMessageCountWindow());
-   unlockMPIWindow(_rank, m->getSentMessageCountWindow());
+   unlockMPIWindow(m->getRank(), m->getDataWindow());
+   unlockMPIWindow(m->getRank(), m->getRecvMessageCountWindow());
+   unlockMPIWindow(m->getRank(), m->getSentMessageCountWindow());
   }
 };
 
