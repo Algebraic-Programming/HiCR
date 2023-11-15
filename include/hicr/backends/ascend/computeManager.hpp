@@ -7,17 +7,18 @@
  * @file computeManager.hpp
  * @brief This is a minimal backend for compute management of Ascend devices
  * @author S. M. Martin and L. Terracciano
- * @date 10/12/2023
+ * @date 30/10/2023
  */
 
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/backends/ascend/executionState.hpp>
+#include <hicr/backends/ascend/common.hpp>
 #include <hicr/backends/ascend/executionUnit.hpp>
+#include <hicr/backends/ascend/init.hpp>
+#include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/backends/ascend/processingUnit.hpp>
 #include <hicr/backends/computeManager.hpp>
-
 namespace HiCR
 {
 
@@ -28,111 +29,82 @@ namespace ascend
 {
 
 /**
- * Implementation of the HiCR ascend backend's compute manager.
+ * Implementation of the HiCR ascend backend compute manager.
  *
- * It detects and returns the processing units detected by Ascend Computing Language
+ * It stores the processing units detected by Ascend Computing Language.
  */
 class ComputeManager final : public backend::ComputeManager
 {
   public:
 
   /**
-   * Constructor for the compute manager class for the ascend backend
+   * Constructor for the Compute Manager class for the ascend backend
+   *
+   * \param[in] i ACL initializer
    *
    */
-  ComputeManager() : backend::ComputeManager(){};
+  ComputeManager(const Initializer &i) : backend::ComputeManager(), _deviceStatusMap(i.getContexts()){};
 
-  ~ComputeManager()
-  {
-    // Destroy Ascend contexts
-    for (const auto memSpaceData : _deviceStatusMap) (void)aclrtDestroyContext(memSpaceData.second.context);
-  }
+  ~ComputeManager() = default;
 
+  /**
+   * Creates a new execution unit encapsulating a function.
+   * This function is currently not supported and throws a runtime exception.
+   *
+   * \param[in] executionUnit function to be executed
+   *
+   * \return throws exception
+   */
   __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(HiCR::ExecutionUnit::function_t executionUnit) override
   {
     HICR_THROW_RUNTIME("Ascend backend currently does not support this API");
   }
 
-  __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(const char *kernelPath, const std::vector<ExecutionUnit::tensorData_t> &inputs, const std::vector<ExecutionUnit::tensorData_t> &outputs, const aclopAttr *kernelAttrs)
+  /**
+   * Creates an execution unit given a stream/vector of \p kernelOperations to be executed on the device
+   *
+   * \param[in] kernelOperations the sequence of kernel operations to executed
+   *
+   * \return a pointer to the new execution unit
+   */
+  __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(const std::vector<kernel::Kernel *> &kernelOperations)
   {
-    return new ExecutionUnit(kernelPath, inputs, outputs, kernelAttrs);
+    return new ExecutionUnit(kernelOperations);
   }
 
   private:
 
   /**
-   * Keeps track of how many devices are connected to the host
+   * Keep track of the device context for each computeResourceId/deviceId
    */
-  uint32_t _deviceCount;
-
-  struct ascendState_t
-  {
-    /**
-     * remember the context associated to a device
-     */
-    aclrtContext context;
-  };
+  const std::map<computeResourceId_t, ascendState_t> &_deviceStatusMap;
 
   /**
-   * Keep track of the context for each memorySpaceId/deviceId
-   */
-  std::map<computeResourceId_t, ascendState_t> _deviceStatusMap;
-
-  /**
-   * Set the device on which the operations needs to be executed
+   * Internal implementaion of queryComputeResource routine.
    *
-   * \param[in] memorySpace the device identifier
+   * \return list of compute resources detected by ACL
    */
-  __USED__ inline void selectDevice(const computeResourceId_t resource)
-  {
-    aclError err;
-
-    // select the device context on which we should allocate the memory
-    err = aclrtSetCurrentContext(_deviceStatusMap[resource].context);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not set ascend device %d. Error %d", resource, err);
-  }
-
   __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
-  { // Clearing existing memory space map
-    _deviceStatusMap.clear();
-
-    // New compute resources list to return
+  {
+    // new compute resources list to return
     computeResourceList_t computeResourceList;
 
-    // Ask ACL for available devices
-    aclError err;
-    err = aclrtGetDeviceCount(&_deviceCount);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
-
-    aclrtContext deviceContext;
-
-    // Add as many computing resources as devices
-    for (uint32_t deviceId = 0; deviceId < _deviceCount; ++deviceId)
-    {
-      // Create the device context
-      err = aclrtCreateContext(&deviceContext, deviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
-
-      // update the internal data structure
-      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext};
-      computeResourceList.insert(deviceId);
-    }
-
-    // TODO: do we need to model the host?
-    _deviceStatusMap[_deviceCount] = ascendState_t{};
-    computeResourceList.insert(_deviceCount);
+    // add as many computing resources as devices
+    for (const auto deviceData : _deviceStatusMap) computeResourceList.insert(deviceData.first);
 
     return computeResourceList;
   }
 
-  __USED__ inline ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const override
+  /**
+   * Create a new processing unit for the specified \p resource (device)
+   *
+   * \param[in] resource the deviceId in which the processing unit is to be created
+   *
+   * \return a pointer to the new processing unit
+   */
+  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-    return new ProcessingUnit(resource, _deviceStatusMap.at(resource).context);
-  }
-
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
-  {
-    return std::make_unique<ascend::ExecutionState>();
+    return std::make_unique<ProcessingUnit>(resource, _deviceStatusMap.at(resource).context);
   }
 };
 

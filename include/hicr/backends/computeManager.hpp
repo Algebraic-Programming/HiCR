@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include <unordered_set>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/executionUnit.hpp>
 #include <hicr/processingUnit.hpp>
+#include <unordered_set>
 
 namespace HiCR
 {

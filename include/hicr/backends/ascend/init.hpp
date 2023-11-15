@@ -13,7 +13,6 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hccl/hccl.h>
 #include <hicr/backends/ascend/common.hpp>
 #include <hicr/backends/sequential/memoryManager.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -30,7 +29,7 @@ namespace ascend
 
 /**
  * Initializer class implementation for the ascend backend responsible for initializing ACL
- * and create context for each device
+ * and create context for each device.
  */
 class Initializer final
 {
@@ -39,27 +38,26 @@ class Initializer final
   /**
    * Constructor for the initializer class for the ascend backend. It inizialies ACL
    *
-   * \param[in] config_path configuration file to initialize ACL
+   * \param config_path configuration file to initialize ACL
    */
   Initializer(const char *config_path = NULL)
   {
-    aclError err = aclInit(NULL);
+    aclError err = aclInit(config_path);
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
   }
 
   ~Initializer()
   {
-    // Destroy HCCL communicators among Ascends
-    destroyHcclCommunicators();
-    delete _hcclComms;
-    for (const auto &deviceData : _deviceStatusMap) (void)aclrtDestroyContext(deviceData.second.context);
+    (void)aclFinalize();
   }
 
   /**
-   * return the mapping between a device Id and the ACL context for that device
+   * Return the mapping between a device id and the ACL context for that device
+   *
+   * \return a map containing for each device Id its corresponding ascendState_t structure
    */
-  __USED__ inline std::map<deviceIdentifier_t, ascendState_t> &getContexts() { return _deviceStatusMap; }
+  __USED__ inline const std::map<deviceIdentifier_t, ascendState_t> &getContexts() const { return _deviceStatusMap; }
 
   /**
    * Discover available ascend devices, get memory information (HBM per single card), and create dedicated ACL contexts per device
@@ -68,8 +66,17 @@ class Initializer final
   {
     // Discover and create device contexts
     createContexts();
-    // setup HCCL communication
-    setupHccl();
+
+    // setup inter device communication
+    setupInterDeviceCommunication();
+  }
+
+  /**
+   * Finalize the ACL environment by destroying the device contexts
+   */
+  __USED__ inline void finalize()
+  {
+    for (const auto &deviceData : _deviceStatusMap) (void)aclrtDestroyContext(deviceData.second.context);
   }
 
   private:
@@ -80,15 +87,13 @@ class Initializer final
   deviceIdentifier_t _deviceCount;
 
   /**
-   * MPI-like communicators to transmit data among Ascends
-   */
-  HcclComm *_hcclComms = NULL;
-
-  /**
-   * Keep track of the context for each memorySpaceId/deviceId
+   * Keep track of the context for each deviceId
    */
   std::map<deviceIdentifier_t, ascendState_t> _deviceStatusMap;
 
+  /**
+   * Create ACL contexts for each available ascend device
+   */
   __USED__ inline void createContexts()
   {
     // Clearing existing memory space map
@@ -103,7 +108,7 @@ class Initializer final
     aclrtContext deviceContext;
 
     // Add as many memory spaces as devices
-    for (uint32_t deviceId = 0; deviceId < _deviceCount; ++deviceId)
+    for (int32_t deviceId = 0; deviceId < (int32_t)_deviceCount; deviceId++)
     {
       // Create the device context
       err = aclrtCreateContext(&deviceContext, deviceId);
@@ -120,66 +125,39 @@ class Initializer final
       // update the internal data structure
       _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = ascendMemorySize};
     }
-
     // init host state (no context needed)
     const auto hostMemorySize = HiCR::backend::sequential::MemoryManager::getTotalSystemMemory();
-    _deviceStatusMap[_deviceCount] = ascendState_t{.deviceType = deviceType_t::Host, .size = hostMemorySize};
+    _deviceStatusMap[(int32_t)_deviceCount] = ascendState_t{.deviceType = deviceType_t::Host, .size = hostMemorySize};
   }
 
   /**
-   * Setup HCCL. This method populates the hccl communicators and initialize the peer communication
-   * channels among ascends.
+   * Setup inter device communication in the ACL runtime.
    */
-  __USED__ inline void setupHccl()
+  __USED__ inline void setupInterDeviceCommunication()
   {
-    if (_hcclComms == NULL) _hcclComms = new HcclComm[_deviceCount]();
-
-    // destroy previously allocated hccl communicators
-    destroyHcclCommunicators();
-
-    HcclResult hcclErr;
-
-    // instruct the HCCL api on how many devices ID are present
-    int32_t devices[_deviceCount];
-    for (uint32_t deviceId = 0; deviceId < _deviceCount; ++deviceId)
-    {
-      devices[deviceId] = deviceId;
-    }
-
-    // Setup a single-process multiple card communication
-    hcclErr = HcclCommInitAll(_deviceCount, devices, _hcclComms);
-    if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize HCCL. Error %d", hcclErr);
-
     int32_t canAccessPeer = 0;
     aclError err;
 
     // enable communication among each pair of ascend cards
-    for (uint32_t src = 0; src < _deviceCount; src++)
+    for (int32_t src = 0; src < (int32_t)_deviceCount; src++)
     {
-      for (uint32_t dst = 0; dst < _deviceCount; dst++)
+      for (int32_t dst = 0; dst < (int32_t)_deviceCount; dst++)
       {
         if (src == dst) continue;
+
+        // verify that the two cards can see each other
         err = aclrtDeviceCanAccessPeer(&canAccessPeer, src, dst);
         if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine peer accessibility to device %ld from device %ld.. Error %d", dst, src, err);
 
         if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dst, src, err);
 
-        err = selectDevice(_deviceStatusMap.at(dst).context);
-        if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not select the device %ld. Error %d", dst, err);
+        selectDevice(_deviceStatusMap.at(dst).context, dst);
 
+        // enable the communication
         err = aclrtDeviceEnablePeerAccess(src, 0);
         if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable peer access from device %ld to device %ld. Error %d", dst, src, err);
       }
     }
-  }
-  /**
-   * Destroy the HCCL communicators used for the device-to-device communication.
-   */
-  __USED__ inline void destroyHcclCommunicators()
-  {
-    if (_hcclComms == NULL) return;
-
-    for (uint32_t deviceId = 0; deviceId < _deviceCount; ++deviceId) (void)HcclCommDestroy(_hcclComms[deviceId]);
   }
 };
 } // namespace ascend

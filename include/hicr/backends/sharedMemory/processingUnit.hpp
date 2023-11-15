@@ -89,7 +89,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline ProcessingUnit(computeResourceId_t core) : HiCR::ProcessingUnit(core){};
 
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(HiCR::ExecutionUnit* executionUnit) override
+  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(HiCR::ExecutionUnit *executionUnit) override
   {
     // Creating and returning new execution state
     return std::make_unique<sequential::ExecutionState>(executionUnit);

@@ -13,8 +13,8 @@
 #pragma once
 
 #include <hicr/backends/memoryManager.hpp>
-#include <hicr/backends/sequential/memoryManager.hpp>
 #include <hicr/backends/mpi/memorySlot.hpp>
+#include <hicr/backends/sequential/memoryManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <mpi.h>
 
@@ -27,6 +27,9 @@ namespace backend
 namespace mpi
 {
 
+/**
+ * This macro represents an identifier for the default system-wide memory space in this backend
+ */
 #define _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID 0
 
 /**
@@ -52,8 +55,22 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
   ~MemoryManager() = default;
 
+  /**
+   * MPI Communicator getter
+   * \return The internal MPI communicator used during the instantiation of this class
+   */
   const MPI_Comm getComm() const { return _comm; }
+
+  /**
+   * MPI Communicator size getter
+   * \return The size of the internal MPI communicator used during the instantiation of this class
+   */
   const int getSize() const { return _size; }
+
+  /**
+   * MPI Communicator rank getter
+   * \return The rank within the internal MPI communicator used during the instantiation of this class that corresponds to this instance
+   */
   const int getRank() const { return _rank; }
 
   private:
@@ -82,7 +99,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
     if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
-     HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
+      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
 
     return sequential::MemoryManager::getTotalSystemMemory();
   }
@@ -289,20 +306,20 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
-   if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
-    HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
+    if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
+      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
 
-   // Storage for the new pointer
-   void* ptr = NULL;
+    // Storage for the new pointer
+    void *ptr = NULL;
 
-   // Attempting to allocate the new memory slot
-   auto status = MPI_Alloc_mem(size, MPI_INFO_NULL, &ptr);
+    // Attempting to allocate the new memory slot
+    auto status = MPI_Alloc_mem(size, MPI_INFO_NULL, &ptr);
 
-   // Check whether it was successful
-   if (status != MPI_SUCCESS || ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
+    // Check whether it was successful
+    if (status != MPI_SUCCESS || ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
 
-   // Creating and returning new memory slot
-   return registerLocalMemorySlotImpl(ptr, size);
+    // Creating and returning new memory slot
+    return registerLocalMemorySlotImpl(ptr, size);
   }
 
   /**
@@ -312,17 +329,17 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {
-   // Getting memory slot pointer
-   const auto pointer = memorySlot->getPointer();
+    // Getting memory slot pointer
+    const auto pointer = memorySlot->getPointer();
 
-   // Checking whether the pointer is valid
-   if (pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
+    // Checking whether the pointer is valid
+    if (pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
 
-   // Deallocating memory using MPI's free mechanism
-   auto status = MPI_Free_mem(pointer);
+    // Deallocating memory using MPI's free mechanism
+    auto status = MPI_Free_mem(pointer);
 
-   // Check whether it was successful
-   if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Could not free memory slot (ptr: 0x%lX, size: %lu)", pointer, memorySlot->getSize());
+    // Check whether it was successful
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Could not free memory slot (ptr: 0x%lX, size: %lu)", pointer, memorySlot->getSize());
   }
 
   /**
@@ -491,7 +508,6 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       registerGlobalMemorySlot(memorySlot);
     }
   }
-
 };
 
 } // namespace mpi

@@ -26,6 +26,9 @@ namespace backend
 namespace sequential
 {
 
+/**
+ * This macro represents an identifier for the default system-wide memory space in this backend
+ */
 #define _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID 0
 
 /**
@@ -68,7 +71,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
     if (memorySpace != _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID)
-     HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID);
+      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID);
 
     return getTotalSystemMemory();
   }
@@ -102,7 +105,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
-   if (memorySpace != _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID) HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID);
+    if (memorySpace != _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID) HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID);
 
     // Atempting to allocate the new memory slot
     auto ptr = malloc(size);
