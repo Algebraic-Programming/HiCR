@@ -58,7 +58,7 @@ class ExecutionState final : public HiCR::ExecutionState
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
   }
 
-  ~ExecutionState() 
+  ~ExecutionState()
   {
     // free synchronization variable
     aclError err = aclrtFreeHost(_synchronize);
@@ -83,7 +83,7 @@ class ExecutionState final : public HiCR::ExecutionState
     // set the synchronize variable to 0
     err = aclrtMemset((void *)_synchronize, sizeof(int8_t), 0, sizeof(int8_t));
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not initialize synchronize bit");
-    
+
     // start the sequence of kernels execution
     _executionUnit->start(_stream);
 
@@ -91,7 +91,6 @@ class ExecutionState final : public HiCR::ExecutionState
     // This is a workaround to the stream query status
     err = aclrtMemsetAsync((void *)_synchronize, sizeof(int8_t), 1, sizeof(int8_t), _stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
-
   }
 
   __USED__ inline void suspendImpl()
@@ -105,7 +104,7 @@ class ExecutionState final : public HiCR::ExecutionState
    * \return whether all the kernels described in the execution unit finished.
    */
   __USED__ inline bool checkFinalizationImpl() override
-  { 
+  {
     // check the synchronization bit for stream completion
     if (*_synchronize == 0) return false;
 
@@ -138,7 +137,7 @@ class ExecutionState final : public HiCR::ExecutionState
 
   /**
    * Synchronization variable to check for stream completion
-  */
+   */
   int8_t *_synchronize;
 };
 
