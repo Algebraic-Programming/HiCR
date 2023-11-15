@@ -83,7 +83,7 @@ class Producer final : public MPSC::Base
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
     // Locking remote token and coordination buffer slots
-    if (_memoryManager->tryGlobalLock(_globalCoordinationBuffer) == false) return false;
+    if (_memoryManager->acquireGlobalLock(_globalCoordinationBuffer) == false) return false;
 
     // Updating local coordination buffer
     _memoryManager->memcpy(_localCoordinationBuffer, 0, _globalCoordinationBuffer, 0, getCoordinationBufferSize());

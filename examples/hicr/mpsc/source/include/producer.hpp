@@ -3,7 +3,7 @@
 #include <hicr/mpsc/producer.hpp>
 #include <common.hpp>
 
-void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity)
+void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity, const size_t producerId)
 {
  // Obtaining memory spaces
  auto memSpaces = memoryManager->getMemorySpaceList();
@@ -33,19 +33,17 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  auto sendSlot = memoryManager->registerLocalMemorySlot(sendBufferPtr, sizeof(ELEMENT_TYPE));
 
  // Pushing values to the channel, one by one, suspending when/if the channel is full
- sendBuffer = 42;
- while (producer.push(sendSlot) == false);
- printf("Sent Value:     %u\n", *sendBufferPtr);
+ for (size_t i = 0; i < MESSAGES_PER_PRODUCER; i++)
+ {
+  // Calculating message value
+  sendBuffer = 42 + i;
 
- // Sending second value
- sendBuffer = 43;
- while (producer.push(sendSlot) == false);
- printf("Sent Value:     %u\n", *sendBufferPtr);
+  // Trying to push (if the consumer buffer is busy or full, it will fail and try again)
+  while (producer.push(sendSlot) == false);
 
- // Sending third value
- sendBuffer = 44;
- while (producer.push(sendSlot) == false);
- printf("Sent Value:     %u\n", *sendBufferPtr);
+  // Printing value sent
+  printf("[Producer %03lu] Sent Value: %u\n", producerId, *sendBufferPtr);
+ }
 
  // Synchronizing so that all actors have finished registering their global memory slots
  memoryManager->fence(CHANNEL_TAG);
@@ -53,6 +51,9 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  // De-registering global slots
  memoryManager->deregisterGlobalMemorySlot(globalTokenBufferSlot);
  memoryManager->deregisterGlobalMemorySlot(globalCoordinationBufferSlot);
+
+ // Freeing up local memory
+ memoryManager->freeLocalMemorySlot(localCoordinationBufferSlot);
 }
 
 

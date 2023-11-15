@@ -355,7 +355,7 @@ class MemoryManager
     fenceImpl(tag);
   }
 
-  __USED__ inline bool tryGlobalLock(MemorySlot* memorySlot)
+  __USED__ inline bool acquireGlobalLock(MemorySlot* memorySlot)
   {
    // Getting memory slot global information
    const auto memorySlotTag = memorySlot->getGlobalTag();
@@ -368,23 +368,7 @@ class MemoryManager
    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
 
    // Calling internal implementation
-   return tryGlobalLockImpl(memorySlot);
-  }
-
-  __USED__ inline void getGlobalLock(MemorySlot* memorySlot)
-  {
-   // Getting memory slot global information
-   const auto memorySlotTag = memorySlot->getGlobalTag();
-   const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
-
-   // Checking whether the memory slot is correctly registered as global
-   if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
-
-   // Checking whether the memory slot is correctly registered as global
-   if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
-
-   // Calling internal implementation
-   getGlobalLockImpl(memorySlot);
+   return acquireGlobalLockImpl(memorySlot);
   }
 
   __USED__ inline void releaseGlobalLock(MemorySlot* memorySlot)
@@ -518,9 +502,7 @@ class MemoryManager
    */
   virtual void fenceImpl(const tag_t tag) = 0;
 
-  virtual bool tryGlobalLockImpl(MemorySlot* memorySlot) = 0;
-
-  virtual void getGlobalLockImpl(MemorySlot* memorySlot) = 0;
+  virtual bool acquireGlobalLockImpl(MemorySlot* memorySlot) = 0;
 
   virtual void releaseGlobalLockImpl(MemorySlot* memorySlot) = 0;
 

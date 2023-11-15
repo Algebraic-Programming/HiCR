@@ -508,6 +508,37 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       registerGlobalMemorySlot(memorySlot);
     }
   }
+
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  {
+   // Getting up-casted pointer for the execution unit
+   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+   // Locking access to all relevant memory slot windows
+   lockMPIWindow(_rank, m->getDataWindow());
+   lockMPIWindow(_rank, m->getRecvMessageCountWindow());
+   lockMPIWindow(_rank, m->getSentMessageCountWindow());
+
+   // This function is assumed to always succeed
+   return true;
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  {
+   // Getting up-casted pointer for the execution unit
+   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+   // Checking whether the execution unit passed is compatible with this backend
+   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+   // Releasing access to all relevant memory slot windows
+   unlockMPIWindow(_rank, m->getDataWindow());
+   unlockMPIWindow(_rank, m->getRecvMessageCountWindow());
+   unlockMPIWindow(_rank, m->getSentMessageCountWindow());
+  }
 };
 
 } // namespace mpi

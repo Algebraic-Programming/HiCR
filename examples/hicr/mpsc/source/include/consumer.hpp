@@ -3,7 +3,7 @@
 #include <hicr/mpsc/consumer.hpp>
 #include <common.hpp>
 
-void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity)
+void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity, const size_t producerCount)
 {
  // Obtaining memory spaces
  auto memSpaces = memoryManager->getMemorySpaceList();
@@ -39,23 +39,32 @@ void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  // Getting internal pointer of the token buffer slot
  auto tokenBuffer = (ELEMENT_TYPE*)localTokenBufferSlot->getPointer();
 
- // Getting a single value from the channel
- while (consumer.peek() < 0);
- printf("Received Value: %u\n", tokenBuffer[consumer.peek()]);
- while (consumer.pop() == false);
+ // Calculating the expected message count
+ size_t expectedMessageCount = MESSAGES_PER_PRODUCER * producerCount;
+ size_t receivedMessageCount = 0;
 
- // Getting two values from the channel at once
- while (consumer.peek(1) < 0);
- printf("Received Value: %u\n", tokenBuffer[consumer.peek(0)]);
- printf("Received Value: %u\n", tokenBuffer[consumer.peek(1)]);
- while (consumer.pop(2) == false);
+ // Waiting for all messages to arrive, and printing them one by one
+ while (receivedMessageCount < expectedMessageCount)
+ {
+  // Waiting for the next message
+  while (consumer.peek() < 0);
+
+  // Printing value
+  printf("    [Consumer] Recv Value: %u  (%lu/%lu)\n", tokenBuffer[consumer.peek()], receivedMessageCount+1, expectedMessageCount);
+
+  // Disposing of printed value
+  while (consumer.pop() == false);
+
+  // Increasing received message counter
+  receivedMessageCount++;
+ }
 
  // Synchronizing so that all actors have finished registering their global memory slots
  memoryManager->fence(CHANNEL_TAG);
 
  // De-registering global slots
- memoryManager->deregisterGlobalMemorySlot(localTokenBufferSlot);
- memoryManager->deregisterGlobalMemorySlot(localCoordinationBufferSlot);
+ memoryManager->deregisterGlobalMemorySlot(globalTokenBufferSlot);
+ memoryManager->deregisterGlobalMemorySlot(globalCoordinationBufferSlot);
 
  // Freeing up local memory
  memoryManager->freeLocalMemorySlot(localTokenBufferSlot);

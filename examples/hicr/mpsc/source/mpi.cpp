@@ -1,7 +1,7 @@
-#include <consumer.hpp>
+#include <mpi.h>
 #include <hicr.hpp>
 #include <hicr/backends/mpi/memoryManager.hpp>
-#include <mpi.h>
+#include <consumer.hpp>
 #include <producer.hpp>
 
 int main(int argc, char **argv)
@@ -16,9 +16,9 @@ int main(int argc, char **argv)
   MPI_Comm_size(MPI_COMM_WORLD, &rankCount);
 
   // Sanity Check
-  if (rankCount != 2)
+  if (rankCount < 2)
   {
-    if (rankId == 0) fprintf(stderr, "Launch error: MPI process count must be equal to 2\n");
+    if (rankId == 0) fprintf(stderr, "Launch error: MPI process count must be at least 2\n");
     return MPI_Finalize();
   }
 
@@ -45,12 +45,17 @@ int main(int argc, char **argv)
  // Asking memory manager to check the available memory spaces
  m.queryMemorySpaces();
 
- // Rank 0 is producer, Rank 1 is consumer
- if (rankId == 0) producerFc(&m, channelCapacity);
- if (rankId == 1) consumerFc(&m, channelCapacity);
+ // Calculating the number of producer processes
+ size_t producerCount = rankCount - 1;
+
+ // Rank 0 is consumer, the rest are producers
+ if (rankId == 0) consumerFc(&m, channelCapacity, producerCount);
+ if (rankId >= 1) producerFc(&m, channelCapacity, rankId);
 
   // Finalizing MPI
   MPI_Finalize();
 
   return 0;
 }
+
+
