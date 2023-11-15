@@ -52,12 +52,18 @@ class ExecutionState final : public HiCR::ExecutionState
     if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType());
 
     _executionUnit = e;
+
+    // allocate synchronization variable
+    aclError err = aclrtMallocHost((void **)&_synchronize, sizeof(int8_t));
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
   }
 
-  /**
-   * Default destructor
-   */
-  ~ExecutionState() = default;
+  ~ExecutionState() 
+  {
+    // free synchronization variable
+    aclError err = aclrtFreeHost(_synchronize);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to free synchronize bit");
+  };
 
   protected:
 
@@ -72,11 +78,20 @@ class ExecutionState final : public HiCR::ExecutionState
     // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
     // that reuse the same stream
     aclError err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
-
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d", _deviceId);
 
-    // start the kernel execution
+    // set the synchronize variable to 0
+    err = aclrtMemset((void *)_synchronize, sizeof(int8_t), 0, sizeof(int8_t));
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not initialize synchronize bit");
+    
+    // start the sequence of kernels execution
     _executionUnit->start(_stream);
+
+    // add a memset to the synchronization bit as the last operation on the stream.
+    // This is a workaround to the stream query status
+    err = aclrtMemsetAsync((void *)_synchronize, sizeof(int8_t), 1, sizeof(int8_t), _stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
+
   }
 
   __USED__ inline void suspendImpl()
@@ -90,22 +105,12 @@ class ExecutionState final : public HiCR::ExecutionState
    * \return whether all the kernels described in the execution unit finished.
    */
   __USED__ inline bool checkFinalizationImpl() override
-  {
-    // TODO: implement after
-    //  aclrtStreamStatus status;
-    //  aclError err = aclrtStreamQuery(_stream, &status);
+  { 
+    // check the synchronization bit for stream completion
+    if (*_synchronize == 0) return false;
 
-    // if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to query stream status. Error %d", err);
-
-    // printf("Stream status is %d\n", status);
-
-    // if (status != ACL_STREAM_STATUS_COMPLETE) return false;
-
-    // temporary strategy until we get clear answers on how to correctly query the stream
-    aclError err = aclrtSynchronizeStream(_stream);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to synchronize on stream. Error %d", err);
-
-    err = aclrtDestroyStream(_stream);
+    // destroy the stream
+    aclError err = aclrtDestroyStream(_stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
 
     return true;
@@ -130,6 +135,11 @@ class ExecutionState final : public HiCR::ExecutionState
    * Stream on which the execution unit kernels are scheduled.
    */
   aclrtStream _stream;
+
+  /**
+   * Synchronization variable to check for stream completion
+  */
+  int8_t *_synchronize;
 };
 
 } // end namespace ascend
