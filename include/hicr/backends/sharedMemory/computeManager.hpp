@@ -16,6 +16,7 @@
 #include <hicr/backends/computeManager.hpp>
 #include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/backends/sharedMemory/processingUnit.hpp>
+#include <memory>
 
 namespace HiCR
 {
@@ -88,15 +89,9 @@ class ComputeManager final : public backend::ComputeManager
     return computeResourceList;
   }
 
-  __USED__ inline ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-    return new ProcessingUnit(resource);
-  }
-
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
-  {
-    // Creating and returning new execution state
-    return std::make_unique<sequential::ExecutionState>();
+    return std::make_unique<ProcessingUnit>(resource);
   }
 
   /**

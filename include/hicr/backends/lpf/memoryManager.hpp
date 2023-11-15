@@ -32,19 +32,13 @@
  * #CHECK(f...) Checks if an LPF function returns LPF_SUCCESS, else
  * it prints an error message
  */
-#define CHECK(f...)                                                     \
-  {                                                                     \
-    const lpf_err_t __r = f;                                            \
-    if (__r != LPF_SUCCESS)                                             \
-    {                                                                   \
-      printf("Error: '%s' [%s:%i]: %i\n", #f, __FILE__, __LINE__, __r); \
-      exit(EXIT_FAILURE);                                               \
-    }                                                                   \
-  }
+#define CHECK(f...) \
+  if (f != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f);
 
 #include <cstring>
 #include <hicr/backends/lpf/memorySlot.hpp>
 #include <hicr/backends/memoryManager.hpp>
+#include <hicr/backends/sequential/memoryManager.hpp>
 #include <lpf/collectives.h>
 #include <lpf/core.h>
 
@@ -56,6 +50,11 @@ namespace backend
 
 namespace lpf
 {
+
+/**
+ * This macro represents an identifier for the default system-wide memory space in this backend
+ */
+#define _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID 0
 
 /**
  * Implementation of the HiCR LPF backend
@@ -84,7 +83,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const
   {
-    HICR_THROW_RUNTIME("This backend provides no support for memory spaces");
+    if (memorySpace != _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID)
+      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID);
+
+    return sequential::MemoryManager::getTotalSystemMemory();
   }
 
   /**
@@ -366,18 +368,32 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
   __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {
-    HICR_THROW_RUNTIME("This backend provides no support for memory freeing");
+    // Getting memory slot pointer
+    const auto pointer = memorySlot->getPointer();
+
+    // Checking whether the pointer is valid
+    if (pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
+
+    // Deallocating memory using MPI's free mechanism
+    free(pointer);
   }
 
   __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
-    HICR_THROW_RUNTIME("This backend provides no support for memory allocation");
+    if (memorySpace != _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID)
+      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID);
+
+    // Attempting to allocate the new memory slot
+    auto ptr = malloc(size);
+
+    // Creating and returning new memory slot
+    return registerLocalMemorySlotImpl(ptr, size);
   }
 
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
-    // No memory spaces are provided by this backend
-    return memorySpaceList_t({});
+    // Only a single memory space is created
+    return memorySpaceList_t({_BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID});
   }
   //    memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)  {
   //

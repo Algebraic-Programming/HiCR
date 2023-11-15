@@ -10,4 +10,3 @@ void work(const size_t iterations)
       value = value * value;
     }
 }
-

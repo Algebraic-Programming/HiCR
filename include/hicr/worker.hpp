@@ -155,10 +155,7 @@ class Worker
                                                               { this->mainLoop(); });
 
     // Creating worker's execution state
-    auto executionState = _computeManager->createExecutionState();
-
-    // Initializing execution state
-    executionState->initialize(executionUnit);
+    auto executionState = _processingUnits[0]->createExecutionState(executionUnit);
 
     // Launching worker in the lead resource (first one to be added)
     _processingUnits[0]->start(std::move(executionState));
@@ -236,14 +233,14 @@ class Worker
    *
    * @param[in] pu Processing unit to assign to the worker
    */
-  __USED__ inline void addProcessingUnit(ProcessingUnit *pu) { _processingUnits.push_back(pu); }
+  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
    * Gets a reference to the workers assigned processing units.
    *
    * @return A container with the worker's resources
    */
-  __USED__ inline processingUnitList_t &getProcessingUnits() { return _processingUnits; }
+  __USED__ inline std::vector<std::unique_ptr<HiCR::ProcessingUnit>> &getProcessingUnits() { return _processingUnits; }
 
   /**
    * Gets a reference to the dispatchers the worker has been subscribed to
@@ -267,7 +264,7 @@ class Worker
   /**
    * Group of resources the worker can freely use
    */
-  processingUnitList_t _processingUnits;
+  std::vector<std::unique_ptr<HiCR::ProcessingUnit>> _processingUnits;
 
   /**
    * Compute manager to use to instantiate and manage the worker's and task execution states
@@ -296,7 +293,7 @@ class Worker
           if (task->getState() == ExecutionState::state_t::uninitialized)
           {
             // First, create new execution state for the processing unit
-            auto executionState = _computeManager->createExecutionState();
+            auto executionState = _processingUnits[0]->createExecutionState(task->getExecutionUnit());
 
             // Then initialize the task with the new execution state
             task->initialize(std::move(executionState));

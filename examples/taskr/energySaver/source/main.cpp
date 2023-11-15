@@ -1,33 +1,33 @@
 #include <cstdio>
 #include <cstring>
+#include <hicr/backends/sharedMemory/computeManager.hpp>
 #include <hwloc.h>
 #include <taskr.hpp>
-#include <hicr/backends/sharedMemory/computeManager.hpp>
 
 void workFc(const size_t iterations)
 {
- __volatile__ double value = 2.0;
- for (size_t i = 0; i < iterations; i++)
-  for (size_t j = 0; j < iterations; j++)
-  {
-    value = sqrt(value + i);
-    value = value * value;
-  }
+  __volatile__ double value = 2.0;
+  for (size_t i = 0; i < iterations; i++)
+    for (size_t j = 0; j < iterations; j++)
+    {
+      value = sqrt(value + i);
+      value = value * value;
+    }
 }
 
-void waitFc(taskr::Runtime* taskr, size_t secondsDelay)
+void waitFc(taskr::Runtime *taskr, size_t secondsDelay)
 {
- // Reducing maximum active workers to 1
- taskr->setMaximumActiveWorkers(1);
+  // Reducing maximum active workers to 1
+  taskr->setMaximumActiveWorkers(1);
 
- printf("Starting long task...\n");
- fflush(stdout);
- sleep(secondsDelay);
- printf("Finished long task...\n");
- fflush(stdout);
+  printf("Starting long task...\n");
+  fflush(stdout);
+  sleep(secondsDelay);
+  printf("Finished long task...\n");
+  fflush(stdout);
 
- // Increasing maximum active workers
- taskr->setMaximumActiveWorkers(1024);
+  // Increasing maximum active workers
+  taskr->setMaximumActiveWorkers(1024);
 }
 
 int main(int argc, char **argv)
@@ -59,10 +59,12 @@ int main(int argc, char **argv)
   taskr::Runtime taskr;
 
   // Creating task work execution unit
-  auto workExecutionUnit = computeManager.createExecutionUnit([&iterations]() { workFc(iterations); });
+  auto workExecutionUnit = computeManager.createExecutionUnit([&iterations]()
+                                                              { workFc(iterations); });
 
   // Creating task wait execution unit
-  auto waitExecutionUnit = computeManager.createExecutionUnit([&taskr, &secondsDelay]() { waitFc(&taskr, secondsDelay); });
+  auto waitExecutionUnit = computeManager.createExecutionUnit([&taskr, &secondsDelay]()
+                                                              { waitFc(&taskr, secondsDelay); });
 
   // Create processing units from the detected compute resource list and giving them to taskr
   for (auto &resource : computeResources)
@@ -71,7 +73,7 @@ int main(int argc, char **argv)
     auto processingUnit = computeManager.createProcessingUnit(resource);
 
     // Assigning resource to the taskr
-    taskr.addProcessingUnit(processingUnit);
+    taskr.addProcessingUnit(std::move(processingUnit));
   }
 
   printf("Starting many work tasks...\n");
