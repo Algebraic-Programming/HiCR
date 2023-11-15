@@ -72,6 +72,21 @@ class ComputeManager final : public backend::ComputeManager
     return new ExecutionUnit(kernelOperations);
   }
 
+  /**
+   * Get the device id associated with the host system
+   *
+   * \param computeResources the collection of computeResources
+   *
+   * \return the id associated with the host system
+   */
+  __USED__ inline const computeResourceId_t getHostId(computeResourceList_t computeResources)
+  {
+    for (const auto c : computeResources)
+      if (_deviceStatusMap.at(c).deviceType == deviceType_t::Host) return c;
+
+    HICR_THROW_RUNTIME("No ID associated with the host system");
+  }
+
   private:
 
   /**
@@ -90,7 +105,7 @@ class ComputeManager final : public backend::ComputeManager
     computeResourceList_t computeResourceList;
 
     // add as many computing resources as devices
-    for (const auto deviceData : _deviceStatusMap) computeResourceList.insert(deviceData.first);
+    for (const auto [deviceId, _] : _deviceStatusMap) computeResourceList.insert(deviceId);
 
     return computeResourceList;
   }
@@ -104,6 +119,7 @@ class ComputeManager final : public backend::ComputeManager
    */
   __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
+    if (_deviceStatusMap.at(resource).deviceType == deviceType_t::Host) HICR_THROW_RUNTIME("Ascend backend can not create a processing unit on the host.");
     return std::make_unique<ProcessingUnit>(resource, _deviceStatusMap.at(resource).context);
   }
 };

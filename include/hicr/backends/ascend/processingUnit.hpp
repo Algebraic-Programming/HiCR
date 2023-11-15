@@ -12,12 +12,10 @@
 
 #pragma once
 
-#include <chrono>
 #include <hicr/backends/ascend/executionState.hpp>
 #include <hicr/backends/ascend/executionUnit.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/processingUnit.hpp>
-#include <thread>
 
 namespace HiCR
 {
@@ -94,7 +92,6 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     if (e == NULL) HICR_THROW_LOGIC("The execution state is not supported by this backend\n");
 
     _executionState = std::move(e);
-
     _executionState.get()->resume();
   }
 
