@@ -66,7 +66,7 @@ class MemoryManager final : public backend::MemoryManager
   {
     for (const auto m : memorySpaces)
       if (_deviceStatusMap.at(m).deviceType == deviceType_t::Host) return m;
-    
+
     HICR_THROW_RUNTIME("No ID associated with the host system");
   }
 
