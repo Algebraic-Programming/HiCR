@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <filesystem>
 #include "hwloc.h"
 #include <hicr/backends/computeManager.hpp>
 #include <hicr/backends/sequential/executionUnit.hpp>

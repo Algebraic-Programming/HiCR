@@ -7,6 +7,7 @@
 #include <hicr/backends/ascend/memoryManager.hpp>
 #include <hicr/backends/ascend/processingUnit.hpp>
 #include <iomanip>
+#include <filesystem>
 #include <stdio.h>
 
 #define BUFF_SIZE 192
@@ -102,8 +103,10 @@ int main(int argc, char **argv)
     });
 
   // Create the vector addition ComputeKernel
+  auto currentPath = std::filesystem::current_path().string();
+  auto kernelPath = currentPath + std::string("/../examples/hicr/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om");
   ascend::kernel::ComputationKernel kernel = ascend::kernel::ComputationKernel(
-    "/home/HwHiAiUser/hicr/examples/hicr/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om",
+    kernelPath.c_str(),
     "Add",
     std::move(inputs),
     std::move(outputs),
