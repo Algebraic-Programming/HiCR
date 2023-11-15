@@ -27,20 +27,21 @@ namespace ascend
 /**
  * This class represents an abstract definition for a Memory Slot resource in HiCR that:
  *
- * - Represents a contiguous segment within a memory space, with a starting address, a size, and the Ascend device ID
+ * Represents a contiguous segment within a memory space, with a starting address, a size, and the Ascend device id
  */
 class MemorySlot final : public HiCR::MemorySlot
 {
   public:
 
   /**
-   * Constructor for a MemorySlot class for the MPI backend
+   * Constructor for a MemorySlot class for the Ascend backend
    *
-   * \param[in] deviceId Ascend device id this memory slot belongs
-   * \param[in] pointer If this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
-   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
-   * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
-   * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   * \param deviceId ascend device id this memory slot belongs
+   * \param pointer if this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
+   * \param size the size of the memory slot, assumed to be contiguous
+   * \param dataBuffer the ACL data buffer created for the memory slot
+   * \param globalTag for global memory slots, indicates the subset of global memory slots this belongs to
+   * \param globalKey unique identifier for that memory slot that this slot occupies.
    */
   MemorySlot(
     deviceIdentifier_t deviceId,
@@ -58,14 +59,14 @@ class MemorySlot final : public HiCR::MemorySlot
   /**
    * Return the Ascend device id to which this memory slot belongs
    *
-   * \return The Ascend device id to which this memory slot belongs
+   * \return the Ascend device id to which this memory slot belongs
    */
   __USED__ inline const deviceIdentifier_t getDeviceId() const { return _deviceId; }
 
   /**
    * Return the ACL data buffer associated to the memory slot
    *
-   * \return The ACL data buffer associated to the memory slot
+   * \return the ACL data buffer associated to the memory slot
    */
   __USED__ inline const aclDataBuffer *getDataBuffer() const { return _dataBuffer; }
 

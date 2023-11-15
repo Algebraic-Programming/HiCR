@@ -202,7 +202,7 @@ class ProcessingUnit
    *
    * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
    */
-  virtual std::unique_ptr<ExecutionState> createExecutionState(HiCR::ExecutionUnit* executionUnit) = 0;
+  virtual std::unique_ptr<ExecutionState> createExecutionState(HiCR::ExecutionUnit *executionUnit) = 0;
 
   protected:
 

@@ -1,8 +1,8 @@
-#include <thread>
+#include <consumer.hpp>
 #include <hicr.hpp>
 #include <hicr/backends/sequential/memoryManager.hpp>
-#include <consumer.hpp>
 #include <producer.hpp>
+#include <thread>
 
 #define CONCURRENT_THREADS 2
 
@@ -15,15 +15,15 @@ int main(int argc, char **argv)
    return -1;
  }
 
- // Reading argument
- auto channelCapacity = std::atoi(argv[1]);
+  // Reading argument
+  auto channelCapacity = std::atoi(argv[1]);
 
- // Capacity must be larger than zero
- if (channelCapacity == 0)
- {
-   fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
-   return -1;
- }
+  // Capacity must be larger than zero
+  if (channelCapacity == 0)
+  {
+    fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
+    return -1;
+  }
 
  // Instantiating backend
  HiCR::backend::sequential::MemoryManager m(CONCURRENT_THREADS);
@@ -35,10 +35,9 @@ int main(int argc, char **argv)
  auto consumerThread = std::thread(consumerFc, &m, channelCapacity);
  auto producerThread = std::thread(producerFc, &m, channelCapacity);
 
- // Waiting on threads
- consumerThread.join();
- producerThread.join();
+  // Waiting on threads
+  consumerThread.join();
+  producerThread.join();
 
- return 0;
+  return 0;
 }
-

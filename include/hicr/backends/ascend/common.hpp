@@ -30,31 +30,37 @@ namespace ascend
 typedef uint64_t deviceIdentifier_t;
 
 /**
- * Enum used to determine if an ascendState_t represents the host system or an Ascend card
+ * Enum used to determine if a device representation (ascendState_t) represents the host system or an Ascend card
  */
 enum deviceType_t
 {
+  /**
+   * Host system
+   */
   Host = 0,
+  /**
+   * Ascend device
+   */
   Npu
 };
 
 /**
- * Struct to keep trace of the information needed to perform operation on ascend device and host memory
+ * Struct to keep trace of the information needed to perform operations on ascend and the memory size of both the devices and the host system
  */
 struct ascendState_t
 {
   /**
-   * remember the context associated to a device
+   * The context associated to a device
    */
   aclrtContext context;
 
   /**
-   * Tells whether the context represents the host system or the Ascend
+   * Discriminate whether the context represents the host system or one of the Ascend devices
    */
   deviceType_t deviceType;
 
   /**
-   * memory size of the device
+   * Memory size of the device
    */
   size_t size;
 };
@@ -62,12 +68,14 @@ struct ascendState_t
 /**
  * Set the device on which the operations needs to be executed
  *
- * \param[in] deviceContext the device acl context
+ * \param deviceContext the device ACL context
+ * \param deviceId the device identifier
  */
-__USED__ inline aclError selectDevice(const aclrtContext deviceContext)
+__USED__ inline void selectDevice(const aclrtContext deviceContext, const deviceIdentifier_t deviceId)
 {
   // select the device context on which operations shoud be executed
-  return aclrtSetCurrentContext(deviceContext);
+  aclError err = aclrtSetCurrentContext(deviceContext);
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set the device %ld context. Error %d", deviceId, err);
 }
 } // namespace ascend
 } // namespace backend

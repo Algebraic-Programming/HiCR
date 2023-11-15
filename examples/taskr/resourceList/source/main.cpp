@@ -1,10 +1,10 @@
+#include <chrono>
 #include <cstdio>
 #include <cstring>
-#include <chrono>
-#include <hwloc.h>
-#include <taskr.hpp>
 #include <hicr/backends/sharedMemory/computeManager.hpp>
+#include <hwloc.h>
 #include <source/workTask.hpp>
+#include <taskr.hpp>
 
 int main(int argc, char **argv)
 {
@@ -34,7 +34,11 @@ int main(int argc, char **argv)
   for (int i = 3; i < argc; i++) coreSubset.insert(std::atoi(argv[i]));
 
   // Sanity check
-  if (coreSubset.empty()) { fprintf(stderr, "Launch error: no compute resources provided\n"); exit(-1); }
+  if (coreSubset.empty())
+  {
+    fprintf(stderr, "Launch error: no compute resources provided\n");
+    exit(-1);
+  }
 
   // Create processing units from the detected compute resource list and giving them to taskr
   for (auto &coreId : coreSubset)
@@ -47,7 +51,8 @@ int main(int argc, char **argv)
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations](){work(iterations);});
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]()
+                                                              { work(iterations); });
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());

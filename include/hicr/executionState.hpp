@@ -108,6 +108,7 @@ class ExecutionState
   __USED__ inline state_t getState() { return _state; }
 
   ExecutionState() = delete;
+
   virtual ~ExecutionState() = default;
 
   protected:
@@ -117,7 +118,7 @@ class ExecutionState
    *
    * \param[in] executionUnit Represents a replicable executable unit (e.g., function, kernel) to execute
    */
-  ExecutionState(const HiCR::ExecutionUnit *executionUnit) {};
+  ExecutionState(const HiCR::ExecutionUnit *executionUnit){};
 
   /**
    * Backend-specific implementation of the resume function
