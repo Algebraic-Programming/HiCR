@@ -5,7 +5,7 @@ aclIncludes = include_directories([
    '/usr/local/Ascend/ascend-toolkit/latest/include'
 ])
 
-aclDep = [     dependency('threads', required: true),]
+aclDep = [ ]
     
 
 aclLinkArgs = [

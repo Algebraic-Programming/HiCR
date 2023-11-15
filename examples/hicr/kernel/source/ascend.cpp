@@ -49,16 +49,22 @@ int main(int argc, char **argv)
   memoryManager.queryMemorySpaces();
   auto memorySpaces = memoryManager.getMemorySpaceList();
 
+  // get the memory space id associated with the host
+  auto memoryHostId = memoryManager.getHostId(memorySpaces);
+  // make memory spaces contain only device ids
+  memorySpaces.erase(memoryHostId);
+  auto memoryDeviceId = *memorySpaces.begin();
+
   // Allocate input and output buffers on both host and the device
   size_t size = BUFF_SIZE * sizeof(aclFloat16);
-  auto input1Host = memoryManager.allocateLocalMemorySlot(*memorySpaces.rbegin(), size);
-  auto input1Device = memoryManager.allocateLocalMemorySlot(*memorySpaces.begin(), size);
+  auto input1Host = memoryManager.allocateLocalMemorySlot(memoryHostId, size);
+  auto input1Device = memoryManager.allocateLocalMemorySlot(memoryDeviceId, size);
 
-  auto input2Host = memoryManager.allocateLocalMemorySlot(*memorySpaces.rbegin(), size);
-  auto input2Device = memoryManager.allocateLocalMemorySlot(*memorySpaces.begin(), size);
+  auto input2Host = memoryManager.allocateLocalMemorySlot(memoryHostId, size);
+  auto input2Device = memoryManager.allocateLocalMemorySlot(memoryDeviceId, size);
 
-  auto outputHost = memoryManager.allocateLocalMemorySlot(*memorySpaces.rbegin(), size);
-  auto outputDevice = memoryManager.allocateLocalMemorySlot(*memorySpaces.begin(), size);
+  auto outputHost = memoryManager.allocateLocalMemorySlot(memoryHostId, size);
+  auto outputDevice = memoryManager.allocateLocalMemorySlot(memoryDeviceId, size);
 
   // Populate the input buffers with data
   populateMemorySlot(input1Host, 12.0);
@@ -128,9 +134,17 @@ int main(int argc, char **argv)
   // Query compute resources and get them
   computeManager.queryComputeResources();
   auto computeResources = computeManager.getComputeResourceList();
+  
+  // get the compute resource id associated with the host
+  auto computeHostId = computeManager.getHostId(computeResources);
+  // make compute resources contain only device ids
+  computeResources.erase(computeHostId);
+  if (!computeResources.contains(memoryDeviceId)) HICR_THROW_RUNTIME("Mapping mismatch in memory spaces and compute resources.");
+  auto computeDeviceId = memoryDeviceId;
 
   // Create a processing unit and initialize it with the desired device correct context
-  auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = computeManager.createProcessingUnit(computeDeviceId);
+  // auto processingUnit = computeManager.createProcessingUnit(0);
   processingUnit->initialize();
 
   // Create an execution state and initialize it

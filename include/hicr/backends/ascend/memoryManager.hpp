@@ -55,6 +55,21 @@ class MemoryManager final : public backend::MemoryManager
     _stream = stream;
   }
 
+  /**
+   * Get the device id associated with the host system
+   *
+   * \param memorySpaces the collection of memorySpaces
+   *
+   * \return the id associated with the host memory
+   */
+  __USED__ inline const memorySpaceId_t getHostId(const std::set<memorySpaceId_t> memorySpaces)
+  {
+    for (const auto m : memorySpaces)
+      if (_deviceStatusMap.at(m).deviceType == deviceType_t::Host) return m;
+
+    HICR_THROW_RUNTIME("No ID associated with the host system");
+  }
+
   private:
 
   /**
@@ -93,7 +108,7 @@ class MemoryManager final : public backend::MemoryManager
     memorySpaceList_t memorySpaceList;
 
     // Add as many memory spaces as devices
-    for (const auto deviceData : _deviceStatusMap) memorySpaceList.insert(deviceData.first);
+    for (const auto [deviceId, _] : _deviceStatusMap) memorySpaceList.insert(deviceId);
 
     return memorySpaceList;
   }
