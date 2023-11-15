@@ -79,7 +79,13 @@ build-ascend:
   - meson setup .. -Dbackends=ascend -DbuildTests=true -DbuildExamples=true
   - meson compile -C .
   - echo "Running tests..."
-  - meson test -C .
+  - meson test
+  artifacts:
+    name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
+    expire_in: 2 days
+    when: always
+    paths:
+      - build/meson-logs/*
   only:
   - master
   - develop 
