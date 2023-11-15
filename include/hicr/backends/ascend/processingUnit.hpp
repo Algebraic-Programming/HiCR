@@ -108,7 +108,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline void awaitImpl() override
   {
-    // TODO: better mechanism
+    // TODO: better mechanism ask for sleep()
     while (_executionState.get()->checkFinalization() == false)
     {
       std::this_thread::sleep_for(std::chrono::seconds(1));

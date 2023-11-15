@@ -13,11 +13,10 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <chrono>
 #include <hicr/backends/ascend/executionUnit.hpp>
+#include <hicr/backends/ascend/common.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/executionState.hpp>
-#include <thread>
 
 namespace HiCR
 {
@@ -80,6 +79,8 @@ class ExecutionState final : public HiCR::ExecutionState
     aclError err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d", _deviceId);
 
+    _isStreamActive = true;
+
     // set the synchronize variable to 0
     err = aclrtMemset((void *)_synchronize, sizeof(int8_t), 0, sizeof(int8_t));
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not initialize synchronize bit");
@@ -108,10 +109,17 @@ class ExecutionState final : public HiCR::ExecutionState
     // check the synchronization bit for stream completion
     if (*_synchronize == 0) return false;
 
-    // destroy the stream
-    aclError err = aclrtDestroyStream(_stream);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
+    if (_isStreamActive)
+    {
+      // synchronize on the stream
+      aclError err = aclrtSynchronizeStream(_stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to synchronize stream after kernel execution. Error %d", err);
+      // destroy the stream
+      err = aclrtDestroyStream(_stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
 
+      _isStreamActive = false;
+    }
     return true;
   }
 
@@ -139,6 +147,11 @@ class ExecutionState final : public HiCR::ExecutionState
    * Synchronization variable to check for stream completion
    */
   int8_t *_synchronize;
+
+  /**
+   * keep track of the stream status
+   */
+  bool _isStreamActive = false;
 };
 
 } // end namespace ascend
