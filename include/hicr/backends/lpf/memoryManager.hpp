@@ -50,6 +50,9 @@ namespace backend
 namespace lpf
 {
 
+/**
+ * This macro represents an identifier for the default system-wide memory space in this backend
+ */
 #define _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID 0
 
 /**

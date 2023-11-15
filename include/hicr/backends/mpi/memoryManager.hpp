@@ -27,6 +27,9 @@ namespace backend
 namespace mpi
 {
 
+/**
+ * This macro represents an identifier for the default system-wide memory space in this backend
+ */
 #define _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID 0
 
 /**
@@ -52,8 +55,22 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 
   ~MemoryManager() = default;
 
+  /**
+   * MPI Communicator getter
+   * \return The internal MPI communicator used during the instantiation of this class
+   */
   const MPI_Comm getComm() const { return _comm; }
+
+  /**
+   * MPI Communicator size getter
+   * \return The size of the internal MPI communicator used during the instantiation of this class
+   */
   const int getSize() const { return _size; }
+
+  /**
+   * MPI Communicator rank getter
+   * \return The rank within the internal MPI communicator used during the instantiation of this class that corresponds to this instance
+   */
   const int getRank() const { return _rank; }
 
   private:

@@ -42,15 +42,21 @@ class Instance
 
  /**
   * Function to add a new execution unit, assigned to a unique identifier
+  * \param[in] index Indicates the index to assign to the added execution unit
+  * \param[in] executionUnit The execution unit to add
   */
  __USED__ inline void addExecutionUnit(const HiCR::Instance::executionUnitIndex_t index, HiCR::ExecutionUnit* executionUnit) { _executionUnitMap[index] = executionUnit; }
 
  /**
   * Function to add a new processing unit, assigned to a unique identifier
+  * \param[in] index Indicates the index to assign to the added processing unit
+  * \param[in] processingUnit The processing unit to add
   */
  __USED__ inline void addProcessingUnit(const HiCR::Instance::processingUnitIndex_t index, std::unique_ptr<HiCR::ProcessingUnit> processingUnit) { _processingUnitMap[index] = std::move(processingUnit); }
 
-
+ /**
+  * Default destructor
+  */
   virtual ~Instance() = default;
 
   /**
@@ -96,11 +102,14 @@ class Instance
 
   /**
    * Function to trigger the execution of a remote function in a remote HiCR instance
+   * \param[in] pIdx Index to the processing unit to use
+   * \param[in] eIdx Index to the execution unit to run
    */
   virtual void execute(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) = 0;
 
   /**
    * Function to submit a return value for the currently running RPC
+   * \param[in] value The memory slot containing the RPC's return value
    */
   __USED__ inline void submitReturnValue(HiCR::MemorySlot* value)
   {
@@ -112,6 +121,7 @@ class Instance
 
   /**
    * Function to get a return value from a remote instance that ran an RPC
+   * \return A pointer to a newly allocated local memory slot containing the return value
    */
   __USED__ inline HiCR::MemorySlot* getReturnValue()
   {
@@ -121,11 +131,14 @@ class Instance
 
   /**
    * State getter
+   * \return The internal state of the instance
    */
   virtual state_t getState() const = 0;
 
   /**
    * Convenience function to print the state as a string
+   * \param[in] state The value of the state (enumeration)
+   * \return The string corresponding to the passed state
    */
   static std::string getStateString(const state_t state)
   {
@@ -141,11 +154,13 @@ class Instance
 
   /**
    * Backend-specific implementation of the getReturnValue function
+   * \return A pointer to a newly allocated local memory slot containing the return value
    */
   virtual HiCR::MemorySlot* getReturnValueImpl() = 0;
 
   /**
    * Backend-specific implementation of the submitReturnValue
+   * \param[in] value The memory slot containing the RPC's return value
    */
   virtual void submitReturnValueImpl(HiCR::MemorySlot* value) = 0;
 
@@ -154,6 +169,11 @@ class Instance
    */
   virtual void listenImpl() = 0;
 
+  /**
+   * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
+   * \param[in] pIdx Index to the processing unit to use
+   * \param[in] eIdx Index to the execution unit to run
+   */
   __USED__ inline void runRequest(const HiCR::Instance::processingUnitIndex_t pIdx, const HiCR::Instance::executionUnitIndex_t eIdx)
   {
    // Setting current state to running
@@ -179,6 +199,7 @@ class Instance
 
   /**
    * State setter. Only used internally to update the state
+   * \param[in] state The new value of the state to be set
    */
   __USED__ inline void setState(const state_t state) { _state = state; }
 

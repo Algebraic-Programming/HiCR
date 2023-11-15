@@ -40,7 +40,7 @@ class ComputeManager final : public backend::ComputeManager
   /**
    * Constructor for the Compute Manager class for the ascend backend
    *
-   * \param i ACL initializer
+   * \param[in] i ACL initializer
    *
    */
   ComputeManager(const Initializer &i) : backend::ComputeManager(), _deviceStatusMap(i.getContexts()){};
@@ -51,7 +51,7 @@ class ComputeManager final : public backend::ComputeManager
    * Creates a new execution unit encapsulating a function.
    * This function is currently not supported and throws a runtime exception.
    *
-   * \param executionUnit function to be executed
+   * \param[in] executionUnit function to be executed
    *
    * \return throws exception
    */
@@ -63,7 +63,7 @@ class ComputeManager final : public backend::ComputeManager
   /**
    * Creates an execution unit given a stream/vector of \p kernelOperations to be executed on the device
    *
-   * \param kernelOperations the sequence of kernel operations to executed
+   * \param[in] kernelOperations the sequence of kernel operations to executed
    *
    * \return a pointer to the new execution unit
    */
@@ -98,7 +98,7 @@ class ComputeManager final : public backend::ComputeManager
   /**
    * Create a new processing unit for the specified \p resource (device)
    *
-   * \param resource the deviceId in which the processing unit is to be created
+   * \param[in] resource the deviceId in which the processing unit is to be created
    *
    * \return a pointer to the new processing unit
    */

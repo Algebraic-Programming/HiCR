@@ -25,13 +25,34 @@ namespace backend
 namespace mpi
 {
 
-// The base tag can be changed if it collides with others
+
 #ifndef _HICR_MPI_INSTANCE_BASE_TAG
+/**
+ * Base instance tag for data passing
+ *
+ * The base tag can be changed if it collides with others
+ */
 #define _HICR_MPI_INSTANCE_BASE_TAG 4096
 #endif
+
+/**
+ * Tag to indicate an RPC's processing unit
+ */
 #define _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG (_HICR_MPI_INSTANCE_BASE_TAG+1)
+
+/**
+ * Tag to indicate an RPC's execution unit
+ */
 #define _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG  (_HICR_MPI_INSTANCE_BASE_TAG+2)
+
+/**
+ * Tag to indicate an RPC's result size information
+ */
 #define _HICR_MPI_INSTANCE_RETURN_SIZE_TAG     (_HICR_MPI_INSTANCE_BASE_TAG+3)
+
+/**
+ * Tag to indicate an RPC's result data
+ */
 #define _HICR_MPI_INSTANCE_RETURN_DATA_TAG     (_HICR_MPI_INSTANCE_BASE_TAG+4)
 
 /**
@@ -43,6 +64,8 @@ class Instance final : public HiCR::Instance
 
   /**
    * Constructor for a Instance class for the MPI backend
+   * \param[in] rank The MPI rank corresponding to this HiCR instance
+   * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
   Instance(const int rank, mpi::MemoryManager* const memoryManager) :
    _memoryManager(memoryManager),
@@ -55,6 +78,10 @@ class Instance final : public HiCR::Instance
    */
   ~Instance() = default;
 
+  /**
+   * Retrieves this HiCR Instance's MPI rank
+   * \return The MPI rank corresponding to this instance
+   */
   __USED__ inline int getRank() const { return _rank; }
 
   __USED__ inline void execute(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) override
@@ -130,6 +157,7 @@ class Instance final : public HiCR::Instance
 
   /**
    * State getter
+   * \return The instance's current state (up to date, even if the instance is remote)
    */
   __USED__ inline state_t getState() const override
   {
@@ -139,8 +167,22 @@ class Instance final : public HiCR::Instance
    return _state;
   }
 
+  /**
+   * Gets the local memory slot storing the instance's state
+   * \return A pointer to said memory slot
+   */
   __USED__ inline HiCR::MemorySlot* getStateLocalMemorySlot() const { return _stateLocalMemorySlot; }
+
+  /**
+  * Sets the global memory slot storing the instance's state
+  * \param[in] globalSlot A pointer to the global slot to assign
+  */
   __USED__ inline void setStateGlobalMemorySlot(HiCR::MemorySlot* const globalSlot) { _stateGlobalMemorySlot = globalSlot; }
+
+  /**
+  * Gets the global memory slot storing the instance's state
+  * \return A pointer to said memory slot
+  */
   __USED__ inline HiCR::MemorySlot* getStateGlobalMemorySlot() const { return _stateGlobalMemorySlot; }
 
   private:

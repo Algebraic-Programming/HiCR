@@ -27,6 +27,9 @@ namespace backend
 namespace mpi
 {
 
+/**
+ * Instance manager tag for exchanging memory slots
+ */
 #define _HICR_MPI_INSTANCE_MANAGER_TAG 4096
 
 /**
@@ -39,8 +42,7 @@ class InstanceManager final : public HiCR::backend::InstanceManager
   /**
    * Constructor for the MPI instance manager
    *
-   * \param[in] comm The MPI subcommunicator to use in the communication operations in this backend.
-   * If not specified, it will use MPI_COMM_WORLD
+   * \param[in] memoryManager The memory manager to use for internal data passing
    */
   InstanceManager(HiCR::backend::MemoryManager* const memoryManager) : HiCR::backend::InstanceManager(memoryManager)
   {

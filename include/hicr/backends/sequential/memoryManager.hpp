@@ -26,6 +26,9 @@ namespace backend
 namespace sequential
 {
 
+/**
+ * This macro represents an identifier for the default system-wide memory space in this backend
+ */
 #define _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID 0
 
 /**

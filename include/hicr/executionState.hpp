@@ -107,8 +107,14 @@ class ExecutionState
    */
   __USED__ inline state_t getState() { return _state; }
 
+  /**
+   * Default constructor is deleted to prevent instantiation without proper arguments
+   */
   ExecutionState() = delete;
 
+  /**
+   * Default destructor
+   */
   virtual ~ExecutionState() = default;
 
   protected:
