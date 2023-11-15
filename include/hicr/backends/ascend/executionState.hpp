@@ -13,8 +13,8 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/backends/ascend/executionUnit.hpp>
 #include <hicr/backends/ascend/common.hpp>
+#include <hicr/backends/ascend/executionUnit.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/executionState.hpp>
 
@@ -106,7 +106,7 @@ class ExecutionState final : public HiCR::ExecutionState
    */
   __USED__ inline bool checkFinalizationImpl() override
   {
-    // check the synchronization bit for stream completion
+    // check the synchronization for stream completion
     if (*_synchronize == 0) return false;
 
     if (_isStreamActive)
@@ -149,7 +149,7 @@ class ExecutionState final : public HiCR::ExecutionState
   int8_t *_synchronize;
 
   /**
-   * keep track of the stream status
+   * Keep track of the stream status
    */
   bool _isStreamActive = false;
 };
