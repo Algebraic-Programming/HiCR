@@ -34,10 +34,10 @@ class ExecutionState final : public HiCR::ExecutionState
 {
   public:
 
- /**
-  * Creates a new suspendable execution state (coroutine) for execution based on a sequential execution unit
-  * \param[in] executionUnit The replicable stateless execution unit to instantiate
-  */
+  /**
+   * Creates a new suspendable execution state (coroutine) for execution based on a sequential execution unit
+   * \param[in] executionUnit The replicable stateless execution unit to instantiate
+   */
   __USED__ inline ExecutionState(const HiCR::ExecutionUnit *executionUnit) : HiCR::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit

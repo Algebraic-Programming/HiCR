@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include <memory>
 #include "hwloc.h"
 #include <hicr/backends/computeManager.hpp>
 #include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/backends/sharedMemory/processingUnit.hpp>
+#include <memory>
 
 namespace HiCR
 {
