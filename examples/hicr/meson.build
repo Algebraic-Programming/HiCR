@@ -1,6 +1,5 @@
 subdir('memcpy')
 subdir('kernel')
-subdir('channel')
-subdir('mpsc')
+subdir('channels')
 subdir('instance')
 
