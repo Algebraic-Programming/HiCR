@@ -27,7 +27,10 @@ class DeviceModel
 {
   protected:
 
+    /* Compute Manager to interface with the device backend */
     backend::ComputeManager *_computeMan;
+
+    /* Memory Manager to interface with the device backend */
     backend::MemoryManager *_memoryMan;
 
     /* List of actual processing elements */
@@ -36,10 +39,18 @@ class DeviceModel
     /* List of memories/NUMA nodes */
     std::map<backend::MemoryManager::memorySpaceId_t, MemorySpace *> _memorySpaces;
 
+    /* Friendly device description */
     std::string _type;
+
+    /* Optional; friendly device name to print, if available */
+    std::string _name;
 
   public:
 
+    /**
+     * Initialize the device; it is expected that each device will explicitly do specific
+     * operations, pick and initialize the correct Managers etc.
+     */
     virtual void initialize()
     {
     }
