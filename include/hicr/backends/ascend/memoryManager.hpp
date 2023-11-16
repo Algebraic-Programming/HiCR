@@ -65,7 +65,9 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline const memorySpaceId_t getHostId(const std::set<memorySpaceId_t> memorySpaces)
   {
     for (const auto m : memorySpaces)
+    {
       if (_deviceStatusMap.at(m).deviceType == deviceType_t::Host) return m;
+    }
 
     HICR_THROW_RUNTIME("No ID associated with the host system");
   }
@@ -288,9 +290,11 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-   * Backend-internal memcpy implementation.
-   * Restrictions: Only memory copying between Devices in the same thread or between different threads in the same process is supported.
-   * Memory copying between Devices in different processes is not supported.
+   * Backend-internal memcpy implementation. If a valid ACL stream is provided with @ref setMemcpyStream() the memcpy operation is meant
+   * to be executed asynchronously. Otherwise, the sync version of memcpy will be used.
+   * Restrictions:
+   * - Only memory copying between Devices in the same thread or between different threads in the same process is supported. Memory copying between Devices in different processes is not supported.
+   * - The async version memcpy does modify the current thread context. The correct context should be set outside of this function and right before calling it to correctly execute operations on the given stream
    *
    * \param destination destination memory slot
    * \param dst_offset destination offset
@@ -326,25 +330,28 @@ class MemoryManager final : public backend::MemoryManager
 
     aclrtMemcpyKind memcpyKind = getMemcpyKind(srcdeviceType, dstdeviceType);
 
-    if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE || (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE && dstDeviceId != srcDeviceId))
-    {
-      selectDevice(_deviceStatusMap.at(dstDeviceId).context, dstDeviceId);
-    }
-    else if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE || memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)
-    {
-      selectDevice(_deviceStatusMap.at(srcDeviceId).context, srcDeviceId);
-    }
-
+    // if no stream is provided use the sync version of the memcpy API
     if (_stream == NULL)
     {
+      if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE || (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE && dstDeviceId != srcDeviceId))
+      {
+        selectDevice(_deviceStatusMap.at(dstDeviceId).context, dstDeviceId);
+      }
+      else if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE || memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)
+      {
+        selectDevice(_deviceStatusMap.at(srcDeviceId).context, srcDeviceId);
+      }
+
       err = aclrtMemcpy(actualDstPtr, size, actualSrcPtr, size, memcpyKind);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not perform sync memcpy of type %d from device %d to device %d. Error %d", memcpyKind, srcDeviceId, dstDeviceId, err);
     }
     else
     {
+      // here we do not set any context because the async call will be a part of a stream of operation. So, the stream lifetime (which includes setting the correct device context) should be managed outside.
+      if (srcDeviceId != dstDeviceId && srcdeviceType == deviceType_t::Npu && dstdeviceType == deviceType_t::Npu) HICR_THROW_RUNTIME("Copy between different devices is not supported in an asyn scenario");
       err = aclrtMemcpyAsync(actualDstPtr, size, actualSrcPtr, size, memcpyKind, _stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not perform async memcpy of type %d from device %d to device %d. Error %d", memcpyKind, srcDeviceId, dstDeviceId, err);
     }
-
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not copy memory from device. Error %d", err);
 
     source->increaseMessagesSent();
     destination->increaseMessagesRecv();

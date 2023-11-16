@@ -85,7 +85,7 @@ class ComputationKernel final : public Kernel
    *
    * \param stream the ACL stream on which the kernel is to be executed
    */
-  __USED__ inline void start(aclrtStream stream) override
+  __USED__ inline void start(const aclrtStream stream) override
   {
     // register the operator in the ACL runtime
     aclError err = aclopLoad(_kernelPtr, _kernelSize);

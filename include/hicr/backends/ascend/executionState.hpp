@@ -73,7 +73,7 @@ class ExecutionState final : public HiCR::ExecutionState
   {
     // select the ascend card
     selectDevice(_context, _deviceId);
-
+    
     // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
     // that reuse the same stream
     aclError err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
@@ -84,7 +84,7 @@ class ExecutionState final : public HiCR::ExecutionState
     // set the synchronize variable to 0
     err = aclrtMemset((void *)_synchronize, sizeof(int8_t), 0, sizeof(int8_t));
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not initialize synchronize bit");
-
+    
     // start the sequence of kernels execution
     _executionUnit->start(_stream);
 

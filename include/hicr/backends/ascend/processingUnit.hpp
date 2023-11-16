@@ -39,7 +39,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    * \param device device ID
    * \param context ACL context for the desired device
    */
-  __USED__ inline ProcessingUnit(computeResourceId_t device, const aclrtContext context) : HiCR::ProcessingUnit(device), _deviceId(device), _context(context){};
+  __USED__ inline ProcessingUnit(computeResourceId_t device) : HiCR::ProcessingUnit(device), _deviceId(device){};
 
   /**
    * Creates an execution state using the device context information and the exection unit to run on the ascend
@@ -60,6 +60,8 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline void initializeImpl() override
   {
+    aclError err = aclrtCreateContext(&_context, _deviceId);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create ACL context on device %d. Error %d", _deviceId, err);
   }
 
   /**
@@ -100,7 +102,6 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline void terminateImpl() override
   {
-    HICR_THROW_RUNTIME("Not implemented yet");
   }
 
   /**
@@ -108,11 +109,12 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __USED__ inline void awaitImpl() override
   {
-    // TODO: better mechanism ask for sleep()
-    while (_executionState.get()->checkFinalization() == false)
-    {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    // force the execution state to finalize
+    _executionState.get()->checkFinalization();
+    
+    // destroy the ACL context
+    aclError err = aclrtDestroyContext(_context);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy ACL context on device %d. Error %d", _deviceId, err);
   }
 
   private:
@@ -125,7 +127,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   /**
    * ACL context of the device
    */
-  const aclrtContext _context;
+  aclrtContext _context;
 
   /**
    * Variable to hold the execution state to run

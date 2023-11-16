@@ -144,7 +144,6 @@ int main(int argc, char **argv)
 
   // Create a processing unit and initialize it with the desired device correct context
   auto processingUnit = computeManager.createProcessingUnit(computeDeviceId);
-  // auto processingUnit = computeManager.createProcessingUnit(0);
   processingUnit->initialize();
 
   // Create an execution state and initialize it
@@ -152,8 +151,11 @@ int main(int argc, char **argv)
 
   // // Execute the kernel stream
   processingUnit->start(std::move(executionState));
+  
+  // start teminating the processing unit
+  processingUnit->terminate();
 
-  // wait for completion
+  // wait for termination
   processingUnit->await();
 
   // print the result

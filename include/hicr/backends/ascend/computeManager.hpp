@@ -120,7 +120,7 @@ class ComputeManager final : public backend::ComputeManager
   __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
     if (_deviceStatusMap.at(resource).deviceType == deviceType_t::Host) HICR_THROW_RUNTIME("Ascend backend can not create a processing unit on the host.");
-    return std::make_unique<ProcessingUnit>(resource, _deviceStatusMap.at(resource).context);
+    return std::make_unique<ProcessingUnit>(resource);
   }
 };
 
