@@ -29,7 +29,7 @@ namespace ascend
 
 /**
  * Initializer class implementation for the ascend backend responsible for initializing ACL
- * and create context for each device.
+ * and get the default context for each device.
  */
 class Initializer final
 {
@@ -38,19 +38,14 @@ class Initializer final
   /**
    * Constructor for the initializer class for the ascend backend. It inizialies ACL
    *
-   * \param config_path configuration file to initialize ACL
+   * \param configPath configuration file to initialize ACL
    */
-  Initializer(const char *config_path = NULL)
-  {
-    aclError err = aclInit(config_path);
+  Initializer(const char *configPath = NULL): _configPath(configPath){};
 
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
-  }
-
-  ~Initializer()
-  {
-    (void)aclFinalize();
-  }
+  /**
+   * Default destructor
+  */
+  ~Initializer() = default;
 
   /**
    * Return the mapping between a device id and the ACL context for that device
@@ -64,7 +59,10 @@ class Initializer final
    */
   void init()
   {
-    // Discover and create device contexts
+    aclError err = aclInit(_configPath);
+
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
+    // Discover and get default device contexts
     createContexts();
 
     // setup inter device communication
@@ -76,10 +74,16 @@ class Initializer final
    */
   __USED__ inline void finalize()
   {
-    for (const auto &deviceData : _deviceStatusMap) (void)aclrtDestroyContext(deviceData.second.context);
+    aclError err = aclFinalize();
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
   }
 
   private:
+
+  /**
+   * Path to ACL config file
+  */
+  const char *_configPath;
 
   /**
    * Keeps track of how many devices are connected to the host
