@@ -63,7 +63,7 @@ class ComputeManager final : public backend::ComputeManager
    */
   __USED__ inline static void getThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
   {
-    if (obj->arity == 0) threadPUs.push_back(obj->os_index);
+    if (obj->arity == 0) threadPUs.push_back(obj->logical_index);
     for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
   }
 
