@@ -506,7 +506,6 @@ class MemoryManager
 
   virtual void releaseGlobalLockImpl(MemorySlot* memorySlot) = 0;
 
-
   /**
    * Storage for global tag/key associated global memory slot exchange
    */

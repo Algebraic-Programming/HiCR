@@ -1,5 +1,4 @@
 #include <mpi.h>
-#include <hicr.hpp>
 #include <hicr/backends/mpi/memoryManager.hpp>
 #include <consumer.hpp>
 #include <producer.hpp>

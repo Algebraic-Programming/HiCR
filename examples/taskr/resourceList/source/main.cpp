@@ -1,10 +1,9 @@
 #include <chrono>
 #include <cstdio>
-#include <cstring>
-#include <hicr/backends/sharedMemory/computeManager.hpp>
 #include <hwloc.h>
+#include <hicr/backends/sharedMemory/computeManager.hpp>
 #include <source/workTask.hpp>
-#include <taskr.hpp>
+#include <taskr/runtime.hpp>
 
 int main(int argc, char **argv)
 {

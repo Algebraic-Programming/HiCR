@@ -6,19 +6,21 @@
 
 /**
  * @file mpsc/producer.hpp
- * @brief Provides producer functionality for a Multiple-Producer Single-Consumer Channel over HiCR
+ * @brief Provides producer functionality for a Multiple-Producer Single-Consumer Channel (MPSC)over HiCR
  * @author S. M Martin
  * @date 14/11/2023
  */
 
 #pragma once
 
-#include <hicr/mpsc/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/task.hpp>
+#include <hicr/channel/mpsc/base.hpp>
 
 namespace HiCR
+{
+
+namespace channel
 {
 
 namespace MPSC
@@ -122,5 +124,7 @@ class Producer final : public MPSC::Base
 };
 
 } // namespace MPSC
+
+} // namespace channel
 
 } // namespace HiCR

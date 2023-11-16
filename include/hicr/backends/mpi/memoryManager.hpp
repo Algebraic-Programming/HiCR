@@ -113,10 +113,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     return memorySpaceList_t({_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID});
   }
 
-  __USED__ inline void lockMPIWindow(const int rank, MPI_Win *window, int MPILockType)
+  __USED__ inline void lockMPIWindow(const int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
     // Locking MPI window to ensure the messages arrives before returning
-    auto status = MPI_Win_lock(MPILockType, rank, 0, *window);
+    auto status = MPI_Win_lock(MPILockType, rank, MPIAssert, *window);
 
     // Checking correct locking
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
@@ -137,7 +137,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // on these operations, so I rather do the whole thing manually.
 
     // Locking MPI window to ensure the messages arrives before returning
-    lockMPIWindow(rank, window, MPI_LOCK_EXCLUSIVE);
+    lockMPIWindow(rank, window, MPI_LOCK_EXCLUSIVE, 0);
 
     // Getting remote counter into the local conter
     size_t accumulatorBuffer = 0;
@@ -205,7 +205,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     if (isSourceRemote == true && isDestinationRemote == false)
     {
       // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
-      if (isSourceSlotLockAcquired == false) lockMPIWindow(sourceRank, sourceDataWindow, MPI_LOCK_SHARED);
+      if (isSourceSlotLockAcquired == false) lockMPIWindow(sourceRank, sourceDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
 
       // Executing the get operation
       auto status = MPI_Get(destinationPointer, size, MPI_BYTE, sourceRank, sourceOffset, size, MPI_BYTE, *sourceDataWindow);
@@ -228,7 +228,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     if (isSourceRemote == false && isDestinationRemote == true)
     {
      // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
-     if (isDestinationSlotLockAcquired == false) lockMPIWindow(destinationRank, destinationDataWindow, MPI_LOCK_SHARED);
+     if (isDestinationSlotLockAcquired == false) lockMPIWindow(destinationRank, destinationDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
 
       // Executing the put operation
       auto status = MPI_Put(sourcePointer, size, MPI_BYTE, destinationRank, dst_offset, size, MPI_BYTE, *destinationDataWindow);
@@ -528,7 +528,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
    // Locking access to all relevant memory slot windows
-   lockMPIWindow(m->getRank(), m->getDataWindow(), MPI_LOCK_EXCLUSIVE);
+   lockMPIWindow(m->getRank(), m->getDataWindow(), MPI_LOCK_EXCLUSIVE, 0);
 
    // Setting memory slot lock as aquired
    m->setLockAcquiredValue(true);

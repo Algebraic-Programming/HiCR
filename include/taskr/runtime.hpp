@@ -12,9 +12,10 @@
 
 #pragma once
 #include <atomic>
-#include <hicr.hpp>
 #include <map>
 #include <mutex>
+#include <hicr/worker.hpp>
+#include <hicr/task.hpp>
 #include <taskr/common.hpp>
 #include <taskr/task.hpp>
 

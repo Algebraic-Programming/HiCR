@@ -1,8 +1,8 @@
 #include <cstdio>
-#include <cstring>
-#include <hicr/backends/sharedMemory/computeManager.hpp>
 #include <hwloc.h>
-#include <taskr.hpp>
+#include <hicr/backends/sharedMemory/computeManager.hpp>
+#include <taskr/runtime.hpp>
+#include <taskr/task.hpp>
 
 void workFc(const size_t iterations)
 {

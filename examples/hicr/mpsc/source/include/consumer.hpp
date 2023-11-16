@@ -1,6 +1,6 @@
 #pragma once
 
-#include <hicr/mpsc/consumer.hpp>
+#include <hicr/channel/mpsc/consumer.hpp>
 #include <common.hpp>
 
 void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity, const size_t producerCount)
@@ -9,19 +9,19 @@ void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  auto memSpaces = memoryManager->getMemorySpaceList();
 
  // Getting required buffer sizes
- auto tokenBufferSize = HiCR::MPSC::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
+ auto tokenBufferSize = HiCR::channel::MPSC::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Registering token buffer as a local memory slot
  auto localTokenBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
 
  // Getting required buffer size
- auto coordinationBufferSize = HiCR::MPSC::Base::getCoordinationBufferSize();
+ auto coordinationBufferSize = HiCR::channel::MPSC::Base::getCoordinationBufferSize();
 
  // Registering token buffer as a local memory slot
  auto localCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
 
  // Initializing coordination buffer (sets to zero the counters)
- HiCR::ProducerChannel::initializeCoordinationBuffer(localCoordinationBufferSlot);
+ HiCR::channel::MPSC::Base::initializeCoordinationBuffer(localCoordinationBufferSlot);
 
  // Exchanging local memory slots to become global for them to be used by the remote end
  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, { { TOKEN_BUFFER_KEY, localTokenBufferSlot }, { COORDINATION_BUFFER_KEY, localCoordinationBufferSlot } });
@@ -34,7 +34,7 @@ void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  auto globalCoordinationBufferSlot = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, COORDINATION_BUFFER_KEY);
 
  // Creating producer and consumer channels
- auto consumer = HiCR::MPSC::Consumer(memoryManager, globalTokenBufferSlot, localCoordinationBufferSlot, globalCoordinationBufferSlot, sizeof(ELEMENT_TYPE), channelCapacity);
+ auto consumer = HiCR::channel::MPSC::Consumer(memoryManager, globalTokenBufferSlot, localCoordinationBufferSlot, globalCoordinationBufferSlot, sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Getting internal pointer of the token buffer slot
  auto tokenBuffer = (ELEMENT_TYPE*)localTokenBufferSlot->getPointer();

@@ -5,20 +5,25 @@
  */
 
 /**
- * @file producerChannel.hpp
- * @brief Provides functionality for a producer channel over HiCR
+ * @file spsc/producer.hpp
+ * @brief Provides producer functionality for a Single-Producer Single-Consumer channel (SPSC) over HiCR
  * @author A. N. Yzelman & S. M Martin
  * @date 28/7/2023
  */
 
 #pragma once
 
-#include <hicr/channel/channel.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/task.hpp>
+#include <hicr/channel/spsc/base.hpp>
 
 namespace HiCR
+{
+
+namespace channel
+{
+
+namespace SPSC
 {
 
 /**
@@ -27,7 +32,7 @@ namespace HiCR
  * It exposes the functionality to be expected for a producer channel
  *
  */
-class ProducerChannel final : public Channel
+class Producer final : public SPSC::Base
 {
   public:
 
@@ -44,18 +49,19 @@ class ProducerChannel final : public Channel
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  ProducerChannel(backend::MemoryManager *memoryManager,
+  Producer(backend::MemoryManager *memoryManager,
                   MemorySlot *const tokenBuffer,
                   MemorySlot *const coordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : Channel(memoryManager, tokenBuffer, coordinationBuffer, tokenSize, capacity)
+                  const size_t capacity)
+  : SPSC::Base(memoryManager, tokenBuffer, coordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided coordination buffer has the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
     auto providedCoordinationBufferSize = _coordinationBuffer->getSize();
     if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
   }
-  ~ProducerChannel() = default;
+  ~Producer() = default;
 
   /**
    * This function can be used to check the size of the coordination buffer that needs to be provided
@@ -178,4 +184,8 @@ class ProducerChannel final : public Channel
   }
 };
 
-}; // namespace HiCR
+} // namespace SPSC
+
+} // namespace channel
+
+} // namespace HiCR

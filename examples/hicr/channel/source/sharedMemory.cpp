@@ -1,6 +1,5 @@
-#include <consumer.hpp>
-#include <hicr.hpp>
 #include <hicr/backends/sharedMemory/memoryManager.hpp>
+#include <consumer.hpp>
 #include <producer.hpp>
 #include <thread>
 

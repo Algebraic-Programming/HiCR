@@ -1,6 +1,6 @@
 #pragma once
 
-#include <hicr/mpsc/producer.hpp>
+#include <hicr/channel/mpsc/producer.hpp>
 #include <common.hpp>
 
 void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity, const size_t producerId)
@@ -9,7 +9,7 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  auto memSpaces = memoryManager->getMemorySpaceList();
 
  // Getting required buffer size
- auto coordinationBufferSize = HiCR::MPSC::Base::getCoordinationBufferSize();
+ auto coordinationBufferSize = HiCR::channel::MPSC::Base::getCoordinationBufferSize();
 
  // Registering token buffer as a local memory slot
  auto localCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
@@ -25,7 +25,7 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  auto globalCoordinationBufferSlot = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, COORDINATION_BUFFER_KEY);
 
  // Creating producer and consumer channels
- auto producer = HiCR::MPSC::Producer(memoryManager, globalTokenBufferSlot, localCoordinationBufferSlot, globalCoordinationBufferSlot, sizeof(ELEMENT_TYPE), channelCapacity);
+ auto producer = HiCR::channel::MPSC::Producer(memoryManager, globalTokenBufferSlot, localCoordinationBufferSlot, globalCoordinationBufferSlot, sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Allocating a send slot to put the values we want to communicate
  ELEMENT_TYPE sendBuffer = 0;

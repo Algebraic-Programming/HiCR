@@ -1,4 +1,3 @@
-#include <hicr.hpp>
 #include <hicr/backends/sequential/memoryManager.hpp>
 
 #define BUFFER_SIZE 256

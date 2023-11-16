@@ -1,7 +1,7 @@
 #include <cstdio>
-#include <cstring>
 #include <hicr/backends/computeManager.hpp>
-#include <taskr.hpp>
+#include <taskr/runtime.hpp>
+#include <taskr/task.hpp>
 
 #define ITERATIONS 10
 
