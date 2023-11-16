@@ -110,8 +110,9 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   __USED__ inline void awaitImpl() override
   {
     // force the execution state to finalize
-    _executionState.get()->checkFinalization();
-    
+    // TODO: find another way to implement this. Sync?
+    while(!_executionState.get()->checkFinalization()) {}
+  
     // destroy the ACL context
     aclError err = aclrtDestroyContext(_context);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy ACL context on device %d. Error %d", _deviceId, err);
