@@ -96,10 +96,10 @@ class Initializer final
    */
   __USED__ inline void createContexts()
   {
-    // Clearing existing memory space map
+    // clear existing memory space map
     _deviceStatusMap.clear();
 
-    // Ask ACL for available devices
+    // ask ACL for available devices
     aclError err;
     err = aclrtGetDeviceCount((uint32_t *)&_deviceCount);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
@@ -107,18 +107,18 @@ class Initializer final
     size_t ascendFreeMemory, ascendMemorySize;
     aclrtContext deviceContext;
 
-    // Add as many memory spaces as devices
+    // add as many memory spaces as devices
     for (int32_t deviceId = 0; deviceId < (int32_t)_deviceCount; deviceId++)
     {
-      // Create the device context
-      err = aclrtCreateContext(&deviceContext, deviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
+      // set the device
+      err = aclrtSetDevice(deviceId);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not select the ascend device %d. Error %d", deviceId, err);
 
-      // Select the device by setting the context
-      err = aclrtSetCurrentContext(deviceContext);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
+      // retrieve the default device context
+      err = aclrtGetCurrentContext(&deviceContext);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
 
-      // Retrieve the memory info
+      // get the memory info
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 
