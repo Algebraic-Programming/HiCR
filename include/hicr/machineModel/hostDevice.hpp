@@ -14,26 +14,10 @@
 #include <hicr/machineModel/deviceModel.hpp>
 #include <hicr/backends/sharedMemory/computeManager.hpp>
 #include <hicr/backends/sharedMemory/memoryManager.hpp>
+#include <hicr/machineModel/hostdev/CPU.hpp>
 
 namespace HiCR
 {
-
-class CPU: public ComputeResource
-{
-  private:
-    unsigned int _systemId;
-    unsigned int _logicalId;
-    unsigned int *_siblings; /* Optional */
-    std::vector<Cache> _privateCaches;
-
-  public:
-    CPU(computeResourceId_t id):
-        ComputeResource(id, "Core")
-    {
-    }
-
-
-}; // class CPU
 
 class HostDevice final: public DeviceModel
 {
