@@ -5,3 +5,4 @@
 
 (Header only) base layer for the FF3.0 ecosystem
 
+User Manual: [](https://zrc-von-neumann-lab.pages.huaweirc.ch/runtime-system-innovations/hicr/) (Blue Zone access required)
