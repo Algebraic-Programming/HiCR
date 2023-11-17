@@ -57,10 +57,27 @@ class ExecutionState final : public HiCR::ExecutionState
   }
 
   ~ExecutionState()
-  { 
+  {
     aclError err = aclrtDestroyEvent(_syncEvent);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to free synchronize bit");
   };
+
+  __USED__ inline void finalizeStream()
+  {
+    if (_isStreamActive)
+    {
+      // synchronize on the stream
+      aclError err = aclrtSynchronizeStream(_stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to synchronize stream after kernel execution. Error %d", err);
+
+      // destroy the stream
+      err = aclrtDestroyStream(_stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
+
+      // avoid deleting the stream more than once
+      _isStreamActive = false;
+    }
+  }
 
   protected:
 
@@ -93,7 +110,7 @@ class ExecutionState final : public HiCR::ExecutionState
   }
 
   /**
-   * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and 
+   * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and
    * automatically deletes the stream once it completes.
    *
    * \return whether all the kernels described in the execution unit finished.
@@ -101,27 +118,19 @@ class ExecutionState final : public HiCR::ExecutionState
   __USED__ inline bool checkFinalizationImpl() override
   {
     // Check if the event has been processed
+    printf("event stream status");
     aclrtEventRecordedStatus status;
     aclError err = aclrtQueryEventStatus(_syncEvent, &status);
-    if(err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to query event status. err %d", err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to query event status. err %d", err);
 
     // check the synchronization event status for stream completion
     if (status == ACL_EVENT_RECORDED_STATUS_NOT_READY) return false;
 
+    printf("finalizing stream\n");
+    // synchronize the stream and destroy it
+    finalizeStream();
+    printf("finalized stream\n");
 
-    if (_isStreamActive)
-    {
-      // synchronize on the stream
-      err = aclrtSynchronizeStream(_stream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to synchronize stream after kernel execution. Error %d", err);
-
-      // destroy the stream
-      err = aclrtDestroyStream(_stream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
-
-      // avoid deleting the stream more than once
-      _isStreamActive = false;
-    }
     return true;
   }
 

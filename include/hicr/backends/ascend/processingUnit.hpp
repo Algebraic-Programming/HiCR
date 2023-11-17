@@ -110,8 +110,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   __USED__ inline void awaitImpl() override
   {
     // force the execution state to finalize
-    // TODO: find another way to implement this. Sync?
-    while(!_executionState.get()->checkFinalization()) {}
+    _executionState.get()->finalizeStream();
   
     // destroy the ACL context
     aclError err = aclrtDestroyContext(_context);

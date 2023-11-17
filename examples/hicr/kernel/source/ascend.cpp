@@ -149,8 +149,11 @@ int main(int argc, char **argv)
   // Create an execution state and initialize it
   auto executionState = processingUnit->createExecutionState(executionUnit);
 
-  // // Execute the kernel stream
+  // Execute the kernel stream
   processingUnit->start(std::move(executionState));
+  
+  // in the meantime we can check for completion
+  // printf("Currently the kernel execution completion is %s\n", executionState.get()->checkFinalization() ? "true" : "false"); 
   
   // start teminating the processing unit
   processingUnit->terminate();
