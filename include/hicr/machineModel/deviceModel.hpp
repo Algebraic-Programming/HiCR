@@ -57,49 +57,79 @@ class DeviceModel
 
     virtual ~DeviceModel() = default;
 
+    /**
+     * Obtains a type description of the device
+     *
+     * \return The device type in string format
+     */
     inline std::string getType() const
     {
-        return _type;
+      return _type;
     }
 
+    /**
+     * Obtains the number of available compute resources in the device
+     *
+     * \return Number of Compute Resources
+     */
     inline size_t getComputeCount() const
     {
       return _computeResources.size();
     }
 
+    /**
+     * Obtains the number of available memory spaces detected in the device
+     *
+     * \return Number of Memory Spaces
+     */
     inline size_t getNumMemSpaces() const
     {
       return _memorySpaces.size();
     }
 
+    /**
+     * Obtains the set of memory spaces on the device
+     *
+     * \return An std::set of pointers to the MemorySpaces
+     */
     inline std::set<MemorySpace *> getMemorySpaces() const
     {
-        std::set<MemorySpace *> ret;
-        for (auto it : _memorySpaces)
-            ret.insert(it.second);
+      std::set<MemorySpace *> ret;
+      for (auto it : _memorySpaces)
+          ret.insert(it.second);
 
-        return ret;
+      return ret;
     }
 
+    /**
+     * Obtains the set of compute resources on the device
+     *
+     * \return An std::set of pointers to the ComputeResources
+     */
     inline std::set<ComputeResource *> getComputeResources() const
     {
-        std::set<ComputeResource *> ret;
-        for (auto it : _computeResources)
-            ret.insert(it.second);
+      std::set<ComputeResource *> ret;
+      for (auto it : _computeResources)
+          ret.insert(it.second);
 
-        return ret;
+      return ret;
     }
 
+    /**
+     * Clean-up resources
+     *
+     * Currently called through the MachineModel destructor
+     */
     virtual void shutdown()
     {
-        for (auto it : _memorySpaces)
-            delete it.second;
+      for (auto it : _memorySpaces)
+          delete it.second;
 
-        for (auto it : _computeResources)
-            delete it.second;
+      for (auto it : _computeResources)
+          delete it.second;
 
-        delete _memoryMan;
-        delete _computeMan;
+      delete _memoryMan;
+      delete _computeMan;
     }
 
 }; // class DeviceModel
