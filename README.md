@@ -3,6 +3,6 @@
 # HiCR (HiSilicon Common Runtime)
 
 
-(Header only) base layer for the FF3.0 ecosystem
+This is a header only base layer for the FF3.0 ecosystem. It contains a set of building blocks for the construction of runtime systems that can operate on many distributed and heterogeneous systems using a unified API.
 
-User Manual: [](https://zrc-von-neumann-lab.pages.huaweirc.ch/runtime-system-innovations/hicr/) (Blue Zone access required)
+User Manual: [zrc-von-neumann-lab.pages.huaweirc.ch/runtime-system-innovations/hicr](https://zrc-von-neumann-lab.pages.huaweirc.ch/runtime-system-innovations/hicr/) (Blue Zone access required)
