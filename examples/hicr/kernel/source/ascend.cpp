@@ -78,9 +78,12 @@ int main(int argc, char **argv)
   ascend::kernel::MemoryKernel copyInput2MemoryKernel = ascend::kernel::MemoryKernel(&memoryManager, input2Device, 0, input2Host, 0, size);
 
   // Create the tensor data structure for the ComputeKernel
-  auto castedInput1Device = dynamic_cast<ascend::MemorySlot *>(input1Device);
-  auto castedInput2Device = dynamic_cast<ascend::MemorySlot *>(input2Device);
-  auto castedOutputDevice = dynamic_cast<ascend::MemorySlot *>(outputDevice);
+  auto castedInput1Device = static_cast<ascend::MemorySlot *>(input1Device);
+  auto castedInput2Device = static_cast<ascend::MemorySlot *>(input2Device);
+  auto castedOutputDevice = static_cast<ascend::MemorySlot *>(outputDevice);
+  if ( castedInput1Device == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
+  if ( castedInput2Device == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");  
+  if ( castedOutputDevice == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
 
   // Create tensor descriptor (what's inside the tensor)
   const int64_t dims[] = {192, 1};
