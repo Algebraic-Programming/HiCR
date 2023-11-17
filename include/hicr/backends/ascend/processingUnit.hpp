@@ -111,7 +111,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   {
     // force the execution state to finalize
     _executionState.get()->finalizeStream();
-  
+
     // destroy the ACL context
     aclError err = aclrtDestroyContext(_context);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy ACL context on device %d. Error %d", _deviceId, err);

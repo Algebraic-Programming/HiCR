@@ -40,11 +40,11 @@ class Initializer final
    *
    * \param configPath configuration file to initialize ACL
    */
-  Initializer(const char *configPath = NULL): _configPath(configPath){};
+  Initializer(const char *configPath = NULL) : _configPath(configPath){};
 
   /**
    * Default destructor
-  */
+   */
   ~Initializer() = default;
 
   /**
@@ -82,7 +82,7 @@ class Initializer final
 
   /**
    * Path to ACL config file
-  */
+   */
   const char *_configPath;
 
   /**

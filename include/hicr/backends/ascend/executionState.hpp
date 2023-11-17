@@ -62,6 +62,9 @@ class ExecutionState final : public HiCR::ExecutionState
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to free synchronize bit");
   };
 
+  /**
+   * Synchronize and destroy the currently used stream
+   */
   __USED__ inline void finalizeStream()
   {
     if (_isStreamActive)
@@ -118,7 +121,6 @@ class ExecutionState final : public HiCR::ExecutionState
   __USED__ inline bool checkFinalizationImpl() override
   {
     // Check if the event has been processed
-    printf("event stream status");
     aclrtEventRecordedStatus status;
     aclError err = aclrtQueryEventStatus(_syncEvent, &status);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to query event status. err %d", err);
@@ -126,10 +128,8 @@ class ExecutionState final : public HiCR::ExecutionState
     // check the synchronization event status for stream completion
     if (status == ACL_EVENT_RECORDED_STATUS_NOT_READY) return false;
 
-    printf("finalizing stream\n");
     // synchronize the stream and destroy it
     finalizeStream();
-    printf("finalized stream\n");
 
     return true;
   }
