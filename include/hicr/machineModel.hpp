@@ -13,7 +13,7 @@
 
 // includes
 #include <hicr/machineModel/deviceModel.hpp>
-#include <hicr/machineModel/hostDevice.hpp>
+#include <hicr/machineModel/hostdev/hostDevice.hpp>
 
 namespace HiCR
 {
