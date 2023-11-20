@@ -126,6 +126,16 @@ class Cache
     }
 
     /**
+     * Obtain the associated CPU ID(s) of the cache object
+     *
+     * \return An std::vector of the CPU IDs
+     */
+    inline std::vector<computeResourceId_t> getAssociatedComputeUnit() const
+    {
+      return _associatedComputeUnit;
+    }
+
+    /**
      * Set compute resource ID associated with a cache; used for private caches
      * This should be used only during initialization / resource detection.
      *
