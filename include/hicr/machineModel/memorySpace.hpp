@@ -99,6 +99,11 @@ class MemorySpace
         return _computeResources;
     }
 
+    inline void addComputeResource(computeResourceId_t id)
+    {
+        _computeResources.insert(id);
+    }
+
     /* Register and Allocate operations.
      *
      * Those should wrap the Backend-provided ones, with the correct MemorySpace IDs.
