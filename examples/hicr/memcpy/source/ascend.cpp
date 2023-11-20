@@ -44,17 +44,21 @@ int main(int argc, char **argv)
   m.memcpy(ascendSlot2Device0, DST_OFFSET, ascendSlot1Device0, SRC_OFFSET, BUFFER_SIZE);
   m.memcpy(ascendSlot1Device1, DST_OFFSET, ascendSlot2Device0, SRC_OFFSET, BUFFER_SIZE);
   m.memcpy(hostSlot2, DST_OFFSET, ascendSlot1Device1, SRC_OFFSET, BUFFER_SIZE);
+  // support also circular memcpy
+  m.memcpy(hostSlot1, DST_OFFSET, ascendSlot1Device1, SRC_OFFSET, BUFFER_SIZE);
 
+  m.fence(0);
   // Checking whether the copy was successful
   printf("start: %s\n", (const char *)hostSlot1->getPointer());
   printf("result: %s\n", (const char *)hostSlot2->getPointer());
-
+  
   // deallocate memory slots (the destructor wil take care of that)
   m.freeLocalMemorySlot(hostSlot1);
   m.freeLocalMemorySlot(hostSlot2);
   m.freeLocalMemorySlot(ascendSlot1Device0);
   m.freeLocalMemorySlot(ascendSlot2Device0);
   m.freeLocalMemorySlot(ascendSlot1Device1);
+
 
   i.finalize();
   return 0;

@@ -14,6 +14,7 @@
 #include <acl/acl.h>
 #include <hicr/backends/ascend/common.hpp>
 #include <hicr/memorySlot.hpp>
+#include <deque>
 
 namespace HiCR
 {
@@ -48,8 +49,9 @@ class MemorySlot final : public HiCR::MemorySlot
     void *const pointer,
     size_t size,
     const aclDataBuffer *dataBuffer,
+    const aclrtContext context,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
+    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer), _context(context){};
 
   /**
    * Default destructor
@@ -70,6 +72,35 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   __USED__ inline const aclDataBuffer *getDataBuffer() const { return _dataBuffer; }
 
+  __USED__ inline const aclrtContext getContext() const { return _context; }
+
+  /**
+   * Add the \p stream to the list of the active ones that contains operations involving the memory slot
+   *
+   * \param stream the stream containing an operation on the memory slot
+   */
+  __USED__ inline void addActiveEvent(const aclrtStream stream, const aclrtEvent event)
+  {
+    if (!_activeStreams.contains(stream)) _activeStreams[stream] = std::deque<aclrtEvent>{};
+    _activeStreams[stream].emplace_back(event);
+  }
+
+  __USED__ inline aclrtEvent popActiveEvent(const aclrtStream stream)
+  {
+    auto event = *_activeStreams.at(stream).begin();
+    _activeStreams.at(stream).pop_front();
+    return event;
+  }
+
+  __USED__ inline bool isInvolvedInStreams()
+  {
+    for (auto &[_, events] : _activeStreams)
+    {
+      if (!events.empty()) return true;
+    }
+    return false;
+  }
+
   private:
 
   /**
@@ -81,6 +112,13 @@ class MemorySlot final : public HiCR::MemorySlot
    * The Ascend Data Buffer associated with the memory slot
    */
   const aclDataBuffer *_dataBuffer;
+
+  /**
+   * Keep track of how many active streams operates on this memory slot
+   */
+  std::map<aclrtStream, std::deque<aclrtEvent>> _activeStreams;
+
+  const aclrtContext _context;
 };
 } // namespace ascend
 } // namespace backend
