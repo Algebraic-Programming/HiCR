@@ -20,6 +20,9 @@
 namespace HiCR
 {
 
+namespace machineModel
+{
+
 /**
  * Class definition for a Compute Resource.
  *
@@ -127,6 +130,8 @@ class ComputeResource
     }
 
 }; // class ComputeResource
+
+} // namespace machineModel
 
 } // namespace HiCR
 

@@ -24,7 +24,7 @@ class MachineModel
     /**
      * Keep the various devices discovered by the Backends
      */
-    std::vector<DeviceModel *> _devices;
+    std::vector<machineModel::DeviceModel *> _devices;
 
     // Scheduling domains - peers
 
@@ -43,11 +43,15 @@ class MachineModel
         std::vector<std::string> types = {"host"}; // temporary
         for (auto t : types)
         {
-            DeviceModel *devm;
+            machineModel::DeviceModel *devm;
             if (t == "host")
-                devm = new HostDevice();
+                devm = new machineModel::HostDevice();
+            else if (t == "ascend")
+            {
+                devm = new machineModel::DeviceModel();
+            }
             else //temporary, FIXME
-                devm = new DeviceModel();
+                devm = new machineModel::DeviceModel();
 
             devm->initialize();
             _devices.push_back(devm);
@@ -63,7 +67,7 @@ class MachineModel
         }
     }
 
-    inline std::vector<DeviceModel *> queryDevices()  const //getMachineModel()
+    inline std::vector<machineModel::DeviceModel *> queryDevices()  const //getMachineModel()
     {
         // Get value by copy
         auto ret = _devices;

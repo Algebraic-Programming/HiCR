@@ -17,6 +17,9 @@
 namespace HiCR
 {
 
+namespace machineModel
+{
+
 /**
  * Abstract class definition of a Device object.
  *
@@ -133,6 +136,8 @@ class DeviceModel
     }
 
 }; // class DeviceModel
+
+} // namespace machineModel
 
 } // namespace HiCR
 

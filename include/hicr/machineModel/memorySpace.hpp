@@ -18,6 +18,9 @@
 namespace HiCR
 {
 
+namespace machineModel
+{
+
 /**
  * Class definition for an addressable Memory Space.
  *
@@ -117,6 +120,8 @@ class MemorySpace
     inline void freeMemorySlot(MemorySlot *const memorySlot);
 
 }; // class MemorySpace
+
+} // namespace machineModel
 
 } // namespace HiCR
 

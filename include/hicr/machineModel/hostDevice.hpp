@@ -19,6 +19,9 @@
 namespace HiCR
 {
 
+namespace machineModel
+{
+
 class HostDevice final: public DeviceModel
 {
   private:
@@ -110,6 +113,8 @@ class HostDevice final: public DeviceModel
     }
 
 }; // class HostDevice
+
+} // namespace machineModel
 
 
 } // namespace HiCR

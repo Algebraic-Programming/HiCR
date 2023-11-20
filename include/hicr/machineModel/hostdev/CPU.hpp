@@ -18,6 +18,9 @@
 namespace HiCR
 {
 
+namespace machineModel
+{
+
 /**
  * A ComputeResource class representing a CPU, as found in common
  * multiprocessor systems. Instances of the class are expected to be the
@@ -211,6 +214,8 @@ class CPU: public ComputeResource
       _siblings = siblings;
     }
 }; // class CPU
+
+} // namespace machineModel
 
 } // namespace HiCR
 

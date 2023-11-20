@@ -15,6 +15,9 @@
 namespace HiCR
 {
 
+namespace machineModel
+{
+
 /**
  * Object class representing a cache found in a CPU/Processing Unit
  */
@@ -156,6 +159,8 @@ class Cache
     }
 
 }; // class Cache
+
+} // namespace machineModel
 
 } // namespace HiCR
 
