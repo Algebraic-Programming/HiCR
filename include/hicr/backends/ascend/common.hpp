@@ -63,8 +63,6 @@ struct ascendState_t
    * Memory size of the device
    */
   size_t size;
-
-  aclrtStream stream;
 };
 
 /**

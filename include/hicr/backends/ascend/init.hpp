@@ -16,7 +16,7 @@
 #include <hicr/backends/ascend/common.hpp>
 #include <hicr/backends/sequential/memoryManager.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <map>
+#include <unordered_map>
 
 namespace HiCR
 {
@@ -52,7 +52,7 @@ class Initializer final
    *
    * \return a map containing for each device Id its corresponding ascendState_t structure
    */
-  __USED__ inline const std::map<deviceIdentifier_t, ascendState_t> &getContexts() const { return _deviceStatusMap; }
+  __USED__ inline const std::unordered_map<deviceIdentifier_t, ascendState_t> &getContexts() const { return _deviceStatusMap; }
 
   /**
    * Discover available ascend devices, get memory information (HBM per single card), and create dedicated ACL contexts per device
@@ -93,7 +93,7 @@ class Initializer final
   /**
    * Keep track of the context for each deviceId
    */
-  std::map<deviceIdentifier_t, ascendState_t> _deviceStatusMap;
+  std::unordered_map<deviceIdentifier_t, ascendState_t> _deviceStatusMap;
 
   /**
    * Create ACL contexts for each available ascend device
@@ -110,7 +110,6 @@ class Initializer final
 
     size_t ascendFreeMemory, ascendMemorySize;
     aclrtContext deviceContext;
-    aclrtStream deviceStream;
 
     // add as many memory spaces as devices
     for (int32_t deviceId = 0; deviceId < (int32_t)_deviceCount; deviceId++)
@@ -123,15 +122,12 @@ class Initializer final
       err = aclrtGetCurrentContext(&deviceContext);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
 
-      err = aclrtCreateStream(&deviceStream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
-
       // get the memory info
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 
       // update the internal data structure
-      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = ascendMemorySize, .stream=deviceStream};
+      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = ascendMemorySize};
     }
     // init host state (no context needed)
     const auto hostMemorySize = HiCR::backend::sequential::MemoryManager::getTotalSystemMemory();
