@@ -6,7 +6,7 @@
 
 /**
  * @file mpsc/producer.hpp
- * @brief Provides producer functionality for a Multiple-Producer Single-Consumer Channel (MPSC)over HiCR
+ * @brief Provides producer functionality for a Multiple-Producer Single-Consumer Channel (MPSC) over HiCR
  * @author S. M Martin
  * @date 14/11/2023
  */
@@ -51,11 +51,12 @@ class Producer final : public channel::Base
    */
   Producer(backend::MemoryManager *memoryManager,
                   MemorySlot *const tokenBuffer,
-                  MemorySlot *const localCoordinationBuffer,
-                  MemorySlot *const globalCoordinationBuffer,
+                  MemorySlot *const producerCoordinationBuffer,
+                  MemorySlot *const consumerCoordinationBuffer,
                   const size_t tokenSize,
                   const size_t capacity) :
-                   channel::Base(memoryManager, tokenBuffer, localCoordinationBuffer, globalCoordinationBuffer, tokenSize, capacity)
+                   channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity),
+                   _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {
   }
   ~Producer() = default;
@@ -84,43 +85,53 @@ class Producer final : public channel::Base
     auto providedBufferSize = sourceSlot->getSize();
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
+    // Storage for operation success flag
+    bool successFlag = false;
+
     // Locking remote token and coordination buffer slots
-    if (_memoryManager->acquireGlobalLock(_globalCoordinationBuffer) == false) return false;
+    if (_memoryManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
 
     // Updating local coordination buffer
-    _memoryManager->memcpy(_localCoordinationBuffer, 0, _globalCoordinationBuffer, 0, getCoordinationBufferSize());
+    _memoryManager->memcpy(_coordinationBuffer, 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
+
+    // Calculating current channel depth
+    const auto depth = getDepth();
 
     // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + n > getCapacity()) { _memoryManager->releaseGlobalLock(_globalCoordinationBuffer); return false; }
-
-    // Acquiring token slot lock
-    _memoryManager->acquireGlobalLock(_tokenBuffer);
-
-    // Copy tokens
-    for (size_t i = 0; i < n; i++)
+    if (depth + n <= getCapacity())
     {
-      // Copying with source increasing offset per token
-      _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+     // Acquiring token slot lock
+     _memoryManager->acquireGlobalLock(_tokenBuffer);
 
-      // Advance head, as we have added a new element
-      advanceHead(1);
+     // Copying with source increasing offset per token
+     for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+
+     // Advance head, as we have added a new element
+     advanceHead(n);
+
+     // Updating global coordination buffer
+     _memoryManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
+
+     // Adding flush operation to ensure buffers are ready for re-use
+     _memoryManager->flush();
+
+     // Setting success flag as true
+     successFlag = true;
+
+     // Releasing token slot lock
+     _memoryManager->releaseGlobalLock(_tokenBuffer);
     }
 
-    // Updating global coordination buffer
-    _memoryManager->memcpy(_globalCoordinationBuffer, 0, _localCoordinationBuffer, 0, getCoordinationBufferSize());
-
-    // Adding flush operation to ensure buffers are ready for re-use
-    _memoryManager->flush();
-
-    // Acquiring token slot lock
-    _memoryManager->releaseGlobalLock(_tokenBuffer);
-
     // Releasing remote token and coordination buffer slots
-    _memoryManager->releaseGlobalLock(_globalCoordinationBuffer);
+    _memoryManager->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Succeeded
-    return true;
+    return successFlag;
   }
+
+  private:
+
+  HiCR::MemorySlot* const _consumerCoordinationBuffer;
 };
 
 } // namespace MPSC

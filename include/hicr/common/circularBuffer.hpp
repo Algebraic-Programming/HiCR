@@ -36,10 +36,7 @@ class CircularBuffer
   _capacity(capacity),
   _headAdvanceCounter(headAdvanceCounter),
   _tailAdvanceCounter(tailAdvanceCounter)
- {
-  *_headAdvanceCounter = 0;
-  *_tailAdvanceCounter = 0;
- }
+ { }
 
  virtual ~CircularBuffer() = default;
 
@@ -88,7 +85,7 @@ class CircularBuffer
    const auto curDepth = getDepth();
 
    // Calculating new depth
-   const auto newDepth = getDepth() + n;
+   const auto newDepth = curDepth + n;
 
    // Sanity check
    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", curDepth, n, newDepth, _capacity);

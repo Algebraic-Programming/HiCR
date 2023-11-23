@@ -12,7 +12,10 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  auto coordinationBufferSize = HiCR::channel::Base::getCoordinationBufferSize();
 
  // Registering token buffer as a local memory slot
- auto localCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
+ auto producerCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
+
+ // Initializing coordination buffer (sets to zero the counters)
+ HiCR::channel::Base::initializeCoordinationBuffer(producerCoordinationBufferSlot);
 
  // Exchanging local memory slots to become global for them to be used by the remote end
  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, { });
@@ -21,11 +24,11 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  memoryManager->fence(CHANNEL_TAG);
 
  // Obtaining the globally exchanged memory slots
- auto globalTokenBufferSlot        = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
- auto globalCoordinationBufferSlot = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, COORDINATION_BUFFER_KEY);
+ auto tokenBufferSlot                = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+ auto consumerCoordinationBufferSlot = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, COORDINATION_BUFFER_KEY);
 
  // Creating producer and consumer channels
- auto producer = HiCR::channel::MPSC::Producer(memoryManager, globalTokenBufferSlot, localCoordinationBufferSlot, globalCoordinationBufferSlot, sizeof(ELEMENT_TYPE), channelCapacity);
+ auto producer = HiCR::channel::MPSC::Producer(memoryManager, tokenBufferSlot, producerCoordinationBufferSlot, consumerCoordinationBufferSlot, sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Allocating a send slot to put the values we want to communicate
  ELEMENT_TYPE sendBuffer = 0;
@@ -49,11 +52,11 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  memoryManager->fence(CHANNEL_TAG);
 
  // De-registering global slots
- memoryManager->deregisterGlobalMemorySlot(globalTokenBufferSlot);
- memoryManager->deregisterGlobalMemorySlot(globalCoordinationBufferSlot);
+ memoryManager->deregisterGlobalMemorySlot(tokenBufferSlot);
+ memoryManager->deregisterGlobalMemorySlot(consumerCoordinationBufferSlot);
 
  // Freeing up local memory
- memoryManager->freeLocalMemorySlot(localCoordinationBufferSlot);
+ memoryManager->freeLocalMemorySlot(producerCoordinationBufferSlot);
 }
 
 

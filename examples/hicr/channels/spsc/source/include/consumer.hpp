@@ -56,6 +56,7 @@ void consumerFc(HiCR::backend::MemoryManager *memoryManager, const size_t channe
  memoryManager->fence(CHANNEL_TAG);
 
  // De-registering global slots
+ memoryManager->deregisterGlobalMemorySlot(globalTokenBuffer);
  memoryManager->deregisterGlobalMemorySlot(producerCoordinationBuffer);
 
  // Freeing up local memory

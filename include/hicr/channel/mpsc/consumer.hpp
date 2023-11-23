@@ -52,10 +52,9 @@ class Consumer final : public channel::Base
    */
   Consumer(backend::MemoryManager *memoryManager,
                   MemorySlot *const tokenBuffer,
-                  MemorySlot *const localCoordinationBuffer,
-                  MemorySlot *const globalCoordinationBuffer,
+                  MemorySlot *const consumerCoordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : channel::Base(memoryManager, tokenBuffer, localCoordinationBuffer, globalCoordinationBuffer, tokenSize, capacity)
+                  const size_t capacity) : channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity)
   {
 
   }
@@ -90,11 +89,20 @@ class Consumer final : public channel::Base
     // Check if the requested position exceeds the capacity of the channel
     if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos+1, getCapacity());
 
-    // Check if there are enough tokens in the buffer to satisfy the request
-    if (pos >= getDepth()) return -1;
+    // Value to return, initially set as -1 as default (not able to find the requested value)
+    ssize_t bufferPos = -1;
 
-    // Calculating buffer position
-    const size_t bufferPos = (getTailPosition() + pos) % getCapacity();
+    // Obtaining coordination buffer slot lock
+    if (_memoryManager->acquireGlobalLock(_coordinationBuffer) == false) return bufferPos;
+
+    // Calculating current channel depth
+    const auto curDepth = getDepth();
+
+    // Calculating buffer position, if there are enough tokens in the buffer to satisfy the request
+    if (pos < curDepth) bufferPos = (getTailPosition() + pos) % getCapacity();
+
+    // Releasing coordination buffer slot lock
+    _memoryManager->releaseGlobalLock(_coordinationBuffer);
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -117,20 +125,27 @@ class Consumer final : public channel::Base
   {
     if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
 
+    // Flag to indicate whether the operaton was successful
+    bool successFlag = false;
+
     // Obtaining coordination buffer slot lock
-    if (_memoryManager->acquireGlobalLock(_globalCoordinationBuffer) == false) return false;
+    if (_memoryManager->acquireGlobalLock(_coordinationBuffer) == false) return successFlag;
 
-    // If the exchange buffer does not have n tokens pushed, reject operation
-    if (n > getDepth()) { _memoryManager->releaseGlobalLock(_globalCoordinationBuffer); return false; }
+    // If the exchange buffer does not have n tokens pushed, reject operation, otherwise succeed
+    if (n <= getDepth())
+    {
+     // Advancing tail (removes elements from the circular buffer)
+     advanceTail(n);
 
-    // Advancing tail (removes elements from the circular buffer)
-    advanceTail(n);
+     // Setting success flag
+     successFlag = true;
+    }
 
     // Releasing coordination buffer slot lock
-    _memoryManager->releaseGlobalLock(_globalCoordinationBuffer);
+    _memoryManager->releaseGlobalLock(_coordinationBuffer);
 
     // Operation was successful
-    return true;
+    return successFlag;
   }
 };
 

@@ -64,37 +64,6 @@ class Producer final : public channel::Base
   ~Producer() = default;
 
   /**
-   * This function can be used to check the size of the coordination buffer that needs to be provided
-   * in the creation of the producer channel
-   *
-   * \return Size (bytes) of the coordination buffer
-   */
-  __USED__ static inline size_t getCoordinationBufferSize() noexcept
-  {
-    return sizeof(size_t);
-  }
-
-  /**
-   * This function can be used to check the size of the coordination buffer that needs to be provided
-   * in the creation of the producer channel
-   *
-   * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
-   */
-  __USED__ static inline void initializeCoordinationBuffer(MemorySlot *coordinationBuffer)
-  {
-    // Checking for correct size
-    auto requiredSize = getCoordinationBufferSize();
-    auto size = coordinationBuffer->getSize();
-    if (size < requiredSize) HICR_THROW_LOGIC("Attempting to initialize coordination buffer size on a memory slot (%lu) smaller than the required size (%lu).\n", size, requiredSize);
-
-    // Getting actual buffer of the coordination buffer
-    auto bufferPtr = coordinationBuffer->getPointer();
-
-    // Resetting all its values to zero
-    memset(bufferPtr, 0, getCoordinationBufferSize());
-  }
-
-  /**
    * Puts new token(s) unto the channel.
    *
    * This is a one-sided blocking primitive that need not be made collectively.
@@ -127,15 +96,11 @@ class Producer final : public channel::Base
     // If the exchange buffer does not have n free slots, reject the operation
     if (curDepth + n > getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, getCapacity());
 
-    // Copy tokens
-    for (size_t i = 0; i < n; i++)
-    {
-      // Copying with source increasing offset per token
-      _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+    // Copying with source increasing offset per token
+    for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
-      // Advance head, as we have added a new element
-      advanceHead(1);
-    }
+    // Advance head, as we have added new elements
+    advanceHead(n);
 
     // Adding flush operation to ensure buffers are ready for re-use
     _memoryManager->flush();
