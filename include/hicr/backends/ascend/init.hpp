@@ -110,6 +110,7 @@ class Initializer final
 
     size_t ascendFreeMemory, ascendMemorySize;
     aclrtContext deviceContext;
+    aclrtStream deviceStream;
 
     // add as many memory spaces as devices
     for (int32_t deviceId = 0; deviceId < (int32_t)_deviceCount; deviceId++)
@@ -122,12 +123,15 @@ class Initializer final
       err = aclrtGetCurrentContext(&deviceContext);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
 
+      err = aclrtCreateStream(&deviceStream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
+
       // get the memory info
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 
       // update the internal data structure
-      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = ascendMemorySize};
+      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = ascendMemorySize, .stream=deviceStream};
     }
     // init host state (no context needed)
     const auto hostMemorySize = HiCR::backend::sequential::MemoryManager::getTotalSystemMemory();
