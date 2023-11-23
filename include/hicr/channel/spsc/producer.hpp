@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include <hicr/channel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/base.hpp>
 
 namespace HiCR
 {
@@ -49,11 +49,11 @@ class Producer final : public channel::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Producer(backend::MemoryManager *memoryManager,
-                  MemorySlot *const tokenBuffer,
-                  MemorySlot *const producerCoordinationBuffer,
-                  const size_t tokenSize,
-                  const size_t capacity)
-  : channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity)
+           MemorySlot *const tokenBuffer,
+           MemorySlot *const producerCoordinationBuffer,
+           const size_t tokenSize,
+           const size_t capacity)
+    : channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided coordination buffer has the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
@@ -110,8 +110,8 @@ class Producer final : public channel::Base
    */
   __USED__ inline void updateDepth()
   {
-   // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-   _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
+    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
+    _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
   }
 };
 

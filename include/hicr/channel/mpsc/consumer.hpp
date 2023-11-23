@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include <hicr/channel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/base.hpp>
 
 namespace HiCR
 {
@@ -50,15 +50,13 @@ class Consumer final : public channel::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Consumer(backend::MemoryManager *memoryManager,
-                  MemorySlot *const tokenBuffer,
-                  MemorySlot *const consumerCoordinationBuffer,
-                  const size_t tokenSize,
-                  const size_t capacity) : channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity)
+           MemorySlot *const tokenBuffer,
+           MemorySlot *const consumerCoordinationBuffer,
+           const size_t tokenSize,
+           const size_t capacity) : channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity)
   {
-
   }
   ~Consumer() = default;
-
 
   /**
    * Peeks in the local received queue and returns a pointer to the current
@@ -86,7 +84,7 @@ class Consumer final : public channel::Base
   __USED__ inline ssize_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos+1, getCapacity());
+    if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos + 1, getCapacity());
 
     // Value to return, initially set as -1 as default (not able to find the requested value)
     ssize_t bufferPos = -1;
@@ -134,11 +132,11 @@ class Consumer final : public channel::Base
     // If the exchange buffer does not have n tokens pushed, reject operation, otherwise succeed
     if (n <= getDepth())
     {
-     // Advancing tail (removes elements from the circular buffer)
-     advanceTail(n);
+      // Advancing tail (removes elements from the circular buffer)
+      advanceTail(n);
 
-     // Setting success flag
-     successFlag = true;
+      // Setting success flag
+      successFlag = true;
     }
 
     // Releasing coordination buffer slot lock

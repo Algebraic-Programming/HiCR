@@ -333,7 +333,6 @@ class MemoryManager final : public backend::MemoryManager
     return memSpace.obj->attr->cache.size;
   }
 
-
   /**
    * A barrier implementation that synchronizes all threads in the HiCR instance
    */
@@ -349,7 +348,7 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
-   barrier();
+    barrier();
   }
 
   __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
@@ -370,28 +369,28 @@ class MemoryManager final : public backend::MemoryManager
     destination->increaseMessagesRecv();
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
   {
-   // Getting up-casted pointer for the execution unit
-   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+    // Getting up-casted pointer for the execution unit
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
 
-   // Checking whether the execution unit passed is compatible with this backend
-   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
-   // Locking mutex
-   return m->trylock();
+    // Locking mutex
+    return m->trylock();
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
   {
-   // Getting up-casted pointer for the execution unit
-   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+    // Getting up-casted pointer for the execution unit
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
 
-   // Checking whether the execution unit passed is compatible with this backend
-   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
-   // Locking mutex
-   m->unlock();
+    // Locking mutex
+    m->unlock();
   }
 };
 

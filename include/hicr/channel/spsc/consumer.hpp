@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include <hicr/channel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/base.hpp>
 
 namespace HiCR
 {
@@ -52,13 +52,12 @@ class Consumer final : public channel::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Consumer(backend::MemoryManager *memoryManager,
-                  MemorySlot *const tokenBuffer,
-                  MemorySlot *const consumerCoordinationBuffer,
-                  MemorySlot *const producerCoordinationBuffer,
-                  const size_t tokenSize,
-                  const size_t capacity) :
-                   channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity),
-                   _producerCoordinationBuffer(producerCoordinationBuffer)
+           MemorySlot *const tokenBuffer,
+           MemorySlot *const consumerCoordinationBuffer,
+           MemorySlot *const producerCoordinationBuffer,
+           const size_t tokenSize,
+           const size_t capacity) : channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity),
+                                    _producerCoordinationBuffer(producerCoordinationBuffer)
   {
     // Checking that the provided token exchange  buffer has the right size
     auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
@@ -170,7 +169,6 @@ class Consumer final : public channel::Base
   private:
 
   MemorySlot *const _producerCoordinationBuffer;
-
 };
 
 } // namespace SPSC

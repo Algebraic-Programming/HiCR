@@ -64,13 +64,13 @@ class MemorySlot final : public HiCR::MemorySlot
     const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey),
                                        _bindingType(bindingType)
   {
-   pthread_mutex_init(&_mutex, NULL);
+    pthread_mutex_init(&_mutex, NULL);
   }
 
   ~MemorySlot()
   {
-   // Freeing mutex memory
-   pthread_mutex_destroy(&_mutex);
+    // Freeing mutex memory
+    pthread_mutex_destroy(&_mutex);
   }
 
   /**

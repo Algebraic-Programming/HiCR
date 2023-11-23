@@ -13,10 +13,10 @@
 
 #pragma once
 
+#include <hicr/backends/memoryManager.hpp>
+#include <hicr/common/circularBuffer.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/common/circularBuffer.hpp>
-#include <hicr/backends/memoryManager.hpp>
 #include <hicr/memorySlot.hpp>
 
 /**
@@ -135,20 +135,16 @@ class Base : public common::CircularBuffer
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
   Base(backend::MemoryManager *memoryManager,
-          MemorySlot *const tokenBuffer,
-          MemorySlot *const coordinationBuffer,
-          const size_t tokenSize,
-          const size_t capacity) :
-           common::CircularBuffer
-            (
-             capacity,
-             ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE*)coordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX,
-             ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE*)coordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX
-            ),
-           _memoryManager(memoryManager),
-           _tokenBuffer(tokenBuffer),
-           _coordinationBuffer(coordinationBuffer),
-           _tokenSize(tokenSize)
+       MemorySlot *const tokenBuffer,
+       MemorySlot *const coordinationBuffer,
+       const size_t tokenSize,
+       const size_t capacity) : common::CircularBuffer(capacity,
+                                                       ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX,
+                                                       ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX),
+                                _memoryManager(memoryManager),
+                                _tokenBuffer(tokenBuffer),
+                                _coordinationBuffer(coordinationBuffer),
+                                _tokenSize(tokenSize)
   {
     if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
     if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
@@ -178,7 +174,7 @@ class Base : public common::CircularBuffer
    */
   MemorySlot *const _tokenBuffer;
 
-   /**
+  /**
    * Local storage of coordination metadata
    */
   MemorySlot *const _coordinationBuffer;

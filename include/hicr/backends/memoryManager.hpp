@@ -363,20 +363,20 @@ class MemoryManager
    * @param[in] memorySlot The memory slot to reserve
    * @return true, if the lock was acquired successfully; false, otherwise
    */
-  __USED__ inline bool acquireGlobalLock(MemorySlot* memorySlot)
+  __USED__ inline bool acquireGlobalLock(MemorySlot *memorySlot)
   {
-   // Getting memory slot global information
-   const auto memorySlotTag = memorySlot->getGlobalTag();
-   const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
+    // Getting memory slot global information
+    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
-   // Checking whether the memory slot is correctly registered as global
-   if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
 
-   // Checking whether the memory slot is correctly registered as global
-   if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
 
-   // Calling internal implementation
-   return acquireGlobalLockImpl(memorySlot);
+    // Calling internal implementation
+    return acquireGlobalLockImpl(memorySlot);
   }
 
   /**
@@ -384,20 +384,20 @@ class MemoryManager
    *
    * @param[in] memorySlot The memory slot to release
    */
-  __USED__ inline void releaseGlobalLock(MemorySlot* memorySlot)
+  __USED__ inline void releaseGlobalLock(MemorySlot *memorySlot)
   {
-   // Getting memory slot global information
-   const auto memorySlotTag = memorySlot->getGlobalTag();
-   const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
+    // Getting memory slot global information
+    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
-   // Checking whether the memory slot is correctly registered as global
-   if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
 
-   // Checking whether the memory slot is correctly registered as global
-   if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
 
-   // Calling internal implementation
-   releaseGlobalLockImpl(memorySlot);
+    // Calling internal implementation
+    releaseGlobalLockImpl(memorySlot);
   }
 
   /**
@@ -520,13 +520,13 @@ class MemoryManager
    * @param[in] memorySlot See the acquireGlobalLock function
    * @return See the acquireGlobalLock function
    */
-  virtual bool acquireGlobalLockImpl(MemorySlot* memorySlot) = 0;
+  virtual bool acquireGlobalLockImpl(MemorySlot *memorySlot) = 0;
 
   /**
    * Backend-specific implementation of the releaseGlobalLock function
    * @param[in] memorySlot See the releaseGlobalLock function
    */
-  virtual void releaseGlobalLockImpl(MemorySlot* memorySlot) = 0;
+  virtual void releaseGlobalLockImpl(MemorySlot *memorySlot) = 0;
 
   /**
    * Storage for global tag/key associated global memory slot exchange

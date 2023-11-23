@@ -222,8 +222,7 @@ class Instance
    * \param[in] id Identifier to assign to this instance
    *
    */
-  __USED__ Instance(instanceId_t id) : _id (id) {};
-
+  __USED__ Instance(instanceId_t id) : _id(id){};
 
   /**
    * Represents the internal state of the instance. Inactive upon creation.
@@ -246,7 +245,6 @@ class Instance
    * Instance Identifier
    */
   const instanceId_t _id;
-
 };
 
 } // namespace HiCR

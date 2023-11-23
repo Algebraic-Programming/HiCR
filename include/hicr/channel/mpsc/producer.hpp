@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include <hicr/channel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/base.hpp>
 
 namespace HiCR
 {
@@ -51,13 +51,12 @@ class Producer final : public channel::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Producer(backend::MemoryManager *memoryManager,
-                  MemorySlot *const tokenBuffer,
-                  MemorySlot *const producerCoordinationBuffer,
-                  MemorySlot *const consumerCoordinationBuffer,
-                  const size_t tokenSize,
-                  const size_t capacity) :
-                   channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity),
-                   _consumerCoordinationBuffer(consumerCoordinationBuffer)
+           MemorySlot *const tokenBuffer,
+           MemorySlot *const producerCoordinationBuffer,
+           MemorySlot *const consumerCoordinationBuffer,
+           const size_t tokenSize,
+           const size_t capacity) : channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity),
+                                    _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {
   }
   ~Producer() = default;
@@ -102,20 +101,20 @@ class Producer final : public channel::Base
     // If the exchange buffer does not have n free slots, reject the operation
     if (depth + n <= getCapacity())
     {
-     // Copying with source increasing offset per token
-     for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      // Copying with source increasing offset per token
+      for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
-     // Advance head, as we have added a new element
-     advanceHead(n);
+      // Advance head, as we have added a new element
+      advanceHead(n);
 
-     // Updating global coordination buffer
-     _memoryManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
+      // Updating global coordination buffer
+      _memoryManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
 
-     // Adding flush operation to ensure buffers are ready for re-use
-     _memoryManager->flush();
+      // Adding flush operation to ensure buffers are ready for re-use
+      _memoryManager->flush();
 
-     // Setting success flag as true
-     successFlag = true;
+      // Setting success flag as true
+      successFlag = true;
     }
 
     // Releasing remote token and coordination buffer slots
@@ -127,7 +126,7 @@ class Producer final : public channel::Base
 
   private:
 
-  HiCR::MemorySlot* const _consumerCoordinationBuffer;
+  HiCR::MemorySlot *const _consumerCoordinationBuffer;
 };
 
 } // namespace MPSC

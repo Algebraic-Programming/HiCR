@@ -227,8 +227,8 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // Perform a put if source is local and destination is remote
     if (isSourceRemote == false && isDestinationRemote == true)
     {
-     // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
-     if (isDestinationSlotLockAcquired == false) lockMPIWindow(destinationRank, destinationDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
+      // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
+      if (isDestinationSlotLockAcquired == false) lockMPIWindow(destinationRank, destinationDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
 
       // Executing the put operation
       auto status = MPI_Put(sourcePointer, size, MPI_BYTE, destinationRank, dst_offset, size, MPI_BYTE, *destinationDataWindow);
@@ -519,37 +519,37 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     }
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
   {
-   // Getting up-casted pointer for the execution unit
-   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+    // Getting up-casted pointer for the execution unit
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
 
-   // Checking whether the execution unit passed is compatible with this backend
-   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
-   // Locking access to all relevant memory slot windows
-   lockMPIWindow(m->getRank(), m->getDataWindow(), MPI_LOCK_EXCLUSIVE, 0);
+    // Locking access to all relevant memory slot windows
+    lockMPIWindow(m->getRank(), m->getDataWindow(), MPI_LOCK_EXCLUSIVE, 0);
 
-   // Setting memory slot lock as aquired
-   m->setLockAcquiredValue(true);
+    // Setting memory slot lock as aquired
+    m->setLockAcquiredValue(true);
 
-   // This function is assumed to always succeed
-   return true;
+    // This function is assumed to always succeed
+    return true;
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot* memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
   {
-   // Getting up-casted pointer for the execution unit
-   auto m = dynamic_cast<MemorySlot *>(memorySlot);
+    // Getting up-casted pointer for the execution unit
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
 
-   // Checking whether the execution unit passed is compatible with this backend
-   if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
-   // Releasing access to all relevant memory slot windows
-   unlockMPIWindow(m->getRank(), m->getDataWindow());
+    // Releasing access to all relevant memory slot windows
+    unlockMPIWindow(m->getRank(), m->getDataWindow());
 
-   // Setting memory slot lock as released
-   m->setLockAcquiredValue(false);
+    // Setting memory slot lock as released
+    m->setLockAcquiredValue(false);
   }
 };
 
