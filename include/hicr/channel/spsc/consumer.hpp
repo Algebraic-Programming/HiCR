@@ -45,8 +45,9 @@ class Consumer final : public channel::Base
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
-   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
-   * popped. It may also be used for other coordination signals.
+   * \param[in] producerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer of the producer
+                It needs to be a global reference to the remote producer.
+   * \param[in] consumerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer of the consumer.
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */

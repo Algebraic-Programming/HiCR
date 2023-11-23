@@ -45,8 +45,7 @@ class Consumer final : public channel::Base
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
-   * \param[in] coordinationBuffer This is a small buffer to enable the consumer to signal how many tokens it has
-   * popped. It may also be used for other coordination signals.
+   * \param[in] consumerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
@@ -114,9 +113,10 @@ class Consumer final : public channel::Base
    *
    * This is a one-sided blocking call that need not be made collectively.
    *
-   * @param[in] n How many tokens to pop. Optional; default is one.
-   *
    * In case there are less than n tokens in the channel, no tokens will be popped.
+   *
+   * @param[in] n How many tokens to pop. Optional; default is one.
+   * @return True, if there was enough elements (>= n) to be removed; false, otherwise
    *
    * @see queryDepth to determine whether the channel has an item to pop before calling
    * this function.

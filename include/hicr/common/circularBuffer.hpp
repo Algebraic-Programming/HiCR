@@ -32,6 +32,13 @@ class CircularBuffer
 {
  public:
 
+ /**
+  * Constructor for the circular buffer class
+  *
+  * @param[in] capacity The maximum capacity (elements) in the buffer
+  * @param[in] headAdvanceCounter A pointer to storage for the head advance counter
+  * @param[in] tailAdvanceCounter A pointer to storage fot the tail advance counter
+  */
  CircularBuffer(size_t capacity, __volatile__ size_t* headAdvanceCounter, __volatile__ size_t* tailAdvanceCounter) :
   _capacity(capacity),
   _headAdvanceCounter(headAdvanceCounter),
@@ -175,6 +182,11 @@ class CircularBuffer
 
  protected:
 
+  /**
+   * Forces the head advance counter into a specific absolute value
+   *
+   * @param[in] headAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the channel has negative depth
+   */
  __USED__ inline void setHead(const size_t headAdvanceCounter)
  {
     // Sanity check
@@ -190,6 +202,11 @@ class CircularBuffer
    *_headAdvanceCounter = headAdvanceCounter;
  }
 
+ /**
+ * Forces the tail advance counter into a specific absolute value
+ *
+ * @param[in] tailAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the channel has negative depth
+ */
  __USED__ inline void setTail(const size_t tailAdvanceCounter)
  {
     // Sanity check

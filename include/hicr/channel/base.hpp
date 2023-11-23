@@ -19,9 +19,24 @@
 #include <hicr/backends/memoryManager.hpp>
 #include <hicr/memorySlot.hpp>
 
+/**
+ * Establishes how many elements are required in the base coordination buffer
+ */
 #define _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT 2
+
+/**
+ * Establishes how the type of elements required in the base coordination buffer
+ */
 #define _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE size_t
+
+/**
+ * Establishes the value index for the head advance count
+ */
 #define _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX 0
+
+/**
+ * Establishes the value index for the tail advance count
+ */
 #define _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX 1
 
 namespace HiCR

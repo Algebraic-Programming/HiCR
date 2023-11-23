@@ -46,8 +46,9 @@ class MemorySlot final : public HiCR::MemorySlot
     void *const pointer,
     const size_t size,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey),
-                                       _rank(rank)
+    const globalKey_t globalKey = 0) :
+     HiCR::MemorySlot(pointer, size, globalTag, globalKey),
+     _rank(rank)
   {
   }
 
@@ -84,7 +85,18 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   __USED__ inline MPI_Win *&getSentMessageCountWindow() { return _sentMessageCountWindow; }
 
+  /**
+   * Returns whether the memory slot lock has been acquired by the current MPI instance
+   *
+   * @return The internal state of _lockAcquired
+   */
   __USED__ inline bool getLockAcquiredValue () const { return _lockAcquired; }
+
+  /**
+   * Sets memory slot lock state (whether it has been acquired by the current MPI instance or not)
+   *
+   * @param[in] value The internal state of _lockAcquired to set
+   */
   __USED__ inline void setLockAcquiredValue (const bool value) { _lockAcquired = value; }
 
   private:

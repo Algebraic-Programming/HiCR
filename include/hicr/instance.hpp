@@ -155,6 +155,10 @@ class Instance
     HICR_THROW_LOGIC("Unrecognized instance state (0x%lX).\n", state);
   }
 
+  /**
+   * This function returns the (hopefully) unique identifier of the current instance
+   * @return The instance identifier
+   */
   __USED__ inline instanceId_t getId() const { return _id; }
 
   protected:
@@ -211,9 +215,12 @@ class Instance
   __USED__ inline void setState(const state_t state) { _state = state; }
 
   /**
-   * Protected constructor for the worker class.
+   * Protected constructor for the base instance class.
    *
-   * This is a purely abstract class
+   * \note This is a purely abstract class
+   *
+   * \param[in] id Identifier to assign to this instance
+   *
    */
   __USED__ Instance(instanceId_t id) : _id (id) {};
 

@@ -355,6 +355,14 @@ class MemoryManager
     fenceImpl(tag);
   }
 
+  /**
+   * This function ensures that the global memory slot is reserved exclusively for access by the caller.
+   *
+   * This function might (or might not) block the caller to satisfy the exclusion, if the lock is already held by another caller.
+   *
+   * @param[in] memorySlot The memory slot to reserve
+   * @return true, if the lock was acquired successfully; false, otherwise
+   */
   __USED__ inline bool acquireGlobalLock(MemorySlot* memorySlot)
   {
    // Getting memory slot global information
@@ -371,6 +379,11 @@ class MemoryManager
    return acquireGlobalLockImpl(memorySlot);
   }
 
+  /**
+   * This function releases a previously acquired lock on a global memory slot
+   *
+   * @param[in] memorySlot The memory slot to release
+   */
   __USED__ inline void releaseGlobalLock(MemorySlot* memorySlot)
   {
    // Getting memory slot global information
@@ -502,8 +515,17 @@ class MemoryManager
    */
   virtual void fenceImpl(const tag_t tag) = 0;
 
+  /**
+   * Backend-specific implementation of the acquireGlobalLock function
+   * @param[in] memorySlot See the acquireGlobalLock function
+   * @return See the acquireGlobalLock function
+   */
   virtual bool acquireGlobalLockImpl(MemorySlot* memorySlot) = 0;
 
+  /**
+   * Backend-specific implementation of the releaseGlobalLock function
+   * @param[in] memorySlot See the releaseGlobalLock function
+   */
   virtual void releaseGlobalLockImpl(MemorySlot* memorySlot) = 0;
 
   /**
