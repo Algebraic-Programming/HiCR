@@ -66,9 +66,11 @@ class Instance final : public HiCR::Instance
    * \param[in] rank The MPI rank corresponding to this HiCR instance
    * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
-  Instance(const int rank, mpi::MemoryManager *const memoryManager) : _memoryManager(memoryManager),
-                                                                      _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
-                                                                      _rank(rank)
+  Instance(const int rank, mpi::MemoryManager *const memoryManager) :
+   HiCR::Instance((instanceId_t)rank),
+   _memoryManager(memoryManager),
+   _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
+   _rank(rank)
   {
   }
 

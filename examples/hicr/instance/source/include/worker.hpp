@@ -19,7 +19,10 @@ void workerFc(HiCR::backend::InstanceManager& instanceManager)
  auto fcLambda = [currentInstance, memoryManager]()
  {
   // Creating simple message
-  auto message = std::string("Hello, I am a worker!");
+  auto message = std::string("Hello, I am a worker! ");
+
+  // Adding n characters to make the return values of variable length
+  for (size_t i = 0; i < currentInstance->getId(); i++) message += std::string("*");
 
   // Registering memory slot at the first available memory space as source buffer to send the return value from
   auto sendBuffer = memoryManager->registerLocalMemorySlot(message.data(), message.size()+1);
