@@ -18,7 +18,6 @@
 #include <hicr/backends/ascend/memorySlot.hpp>
 #include <hicr/backends/memoryManager.hpp>
 #include <unordered_map>
-
 namespace HiCR
 {
 
@@ -46,12 +45,17 @@ class MemoryManager final : public backend::MemoryManager
   {
     aclError err;
     aclrtStream stream;
+    // create the stream to be used in the memcpy operations
     for (const auto &[deviceId, deviceStatus] : _deviceStatusMap)
     {
+      // skip the host device
       if (deviceStatus.deviceType == deviceType_t::Host) continue;
+
       selectDevice(deviceStatus.context, deviceId);
+
       err = aclrtCreateStream(&stream);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d. Error %d", deviceId, err);
+
       _deviceStreamMap[deviceId] = stream;
     }
   };
@@ -59,10 +63,13 @@ class MemoryManager final : public backend::MemoryManager
   ~MemoryManager()
   {
     aclError err;
+    // destroy the stream created in the constructor
     for (const auto &[deviceId, deviceStream] : _deviceStreamMap)
     {
       const auto deviceStatus = _deviceStatusMap.at(deviceId);
+
       selectDevice(deviceStatus.context, deviceId);
+
       err = aclrtDestroyStream(deviceStream);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy stream on device %d. Error %d", deviceId, err);
     }
@@ -176,9 +183,9 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     // create the new memory slot
-    auto memorySlot = new MemorySlot(memorySpaceId, ptr, size, dataBuffer, _deviceStatusMap.at(memorySpaceId).context);
-    return memorySlot;
+    return new MemorySlot(memorySpaceId, ptr, size, dataBuffer);
   }
+
   /**
    * Allocate memory on the Host memory through Ascend-dedicated functions.
    *
@@ -323,10 +330,12 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-   * Backend-internal memcpy implementation. If a valid ACL stream is provided with @ref setMemcpyStream() the memcpy will reuse the stream, otherwise will create a new stream for each memcpy operation.
+   * Backend-internal memcpy implementation. If the user provides a valid ACL stream via @ref setMemcpyStream() the function will reuse the stream for all the subsequent memcpy invocation on the same device,
+   * otherwise it will use one of the ones instantieted by the memory manager. This memcpy implementation does support asynchronous inter-device communication, meaning the fence should be called when date are
+   * moved among different ascend devices.
+   *
    * Restrictions:
-   * - Only memory copying between Devices in the same thread or between different threads in the same process is supported. Memory copying between Devices in different processes is not supported.
-   * - The async version memcpy does modify the current thread context. The correct context should be set outside of this function and right before calling it to correctly execute operations on the given stream
+   * - Only memory copying between devices in the same thread or between different threads in the same process is supported. Memory copying between Devices in different processes is not supported.
    *
    * \param destination destination memory slot
    * \param dst_offset destination offset
@@ -384,14 +393,14 @@ class MemoryManager final : public backend::MemoryManager
       return;
     }
 
-    // if there is no current stream set we no pending operations to execute. Then, create a stream and start encode operations
+    // if no stream has already been provided, there are no pending operations to execute. In this case, use one of the streams already created by the memory manager
     bool streamModeEnabled = _stream != NULL;
     if (!streamModeEnabled)
     {
       const auto deviceId = deviceMemSlot->getDeviceId();
       const auto deviceStatus = _deviceStatusMap.at(deviceId);
-      // set the device in ACL runtime
       selectDevice(deviceStatus.context, deviceId);
+      // get one of the already created streams
       _stream = _deviceStreamMap.at(deviceId);
     }
 

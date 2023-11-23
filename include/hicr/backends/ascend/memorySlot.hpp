@@ -48,7 +48,6 @@ class MemorySlot final : public HiCR::MemorySlot
     void *const pointer,
     size_t size,
     const aclDataBuffer *dataBuffer,
-    const aclrtContext context,
     const tag_t globalTag = 0,
     const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
 
