@@ -9,7 +9,7 @@ void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  auto memSpaces = memoryManager->getMemorySpaceList();
 
  // Getting required buffer size
- auto coordinationBufferSize = HiCR::channel::MPSC::Base::getCoordinationBufferSize();
+ auto coordinationBufferSize = HiCR::channel::Base::getCoordinationBufferSize();
 
  // Registering token buffer as a local memory slot
  auto localCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);

@@ -15,7 +15,7 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/mpsc/base.hpp>
+#include <hicr/channel/base.hpp>
 
 namespace HiCR
 {
@@ -32,7 +32,7 @@ namespace MPSC
  * It exposes the functionality to be expected for a consumer channel
  *
  */
-class Consumer final : public MPSC::Base
+class Consumer final : public channel::Base
 {
   public:
 
@@ -55,7 +55,7 @@ class Consumer final : public MPSC::Base
                   MemorySlot *const localCoordinationBuffer,
                   MemorySlot *const globalCoordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : MPSC::Base(memoryManager, tokenBuffer, localCoordinationBuffer, globalCoordinationBuffer, tokenSize, capacity)
+                  const size_t capacity) : channel::Base(memoryManager, tokenBuffer, localCoordinationBuffer, globalCoordinationBuffer, tokenSize, capacity)
   {
 
   }

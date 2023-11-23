@@ -15,7 +15,7 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/spsc/base.hpp>
+#include <hicr/channel/base.hpp>
 
 namespace HiCR
 {
@@ -32,7 +32,7 @@ namespace SPSC
  * It exposes the functionality to be expected for a consumer channel
  *
  */
-class Consumer final : public SPSC::Base
+class Consumer final : public channel::Base
 {
   public:
 
@@ -52,9 +52,12 @@ class Consumer final : public SPSC::Base
    */
   Consumer(backend::MemoryManager *memoryManager,
                   MemorySlot *const tokenBuffer,
-                  MemorySlot *const coordinationBuffer,
+                  MemorySlot *const consumerCoordinationBuffer,
+                  MemorySlot *const producerCoordinationBuffer,
                   const size_t tokenSize,
-                  const size_t capacity) : SPSC::Base(memoryManager, tokenBuffer, coordinationBuffer, tokenSize, capacity)
+                  const size_t capacity) :
+                   channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity),
+                   _producerCoordinationBuffer(producerCoordinationBuffer)
   {
     // Checking that the provided token exchange  buffer has the right size
     auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
@@ -62,19 +65,6 @@ class Consumer final : public SPSC::Base
     if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
   }
   ~Consumer() = default;
-
-  /**
-   * This function can be used to check the minimum size of the token buffer that needs to be provided
-   * to the consumer channel.
-   *
-   * \param[in] tokenSize The expected size of the tokens to use in the channel
-   * \param[in] capacity The expected capacity (in token count) to use in the channel
-   * \return Minimum size (bytes) required of the token buffer
-   */
-  __USED__ static inline size_t getTokenBufferSize(const size_t tokenSize, const size_t capacity) noexcept
-  {
-    return tokenSize * capacity;
-  }
 
   /**
    * Peeks in the local received queue and returns a pointer to the current
@@ -105,7 +95,7 @@ class Consumer final : public SPSC::Base
     if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, getCapacity());
 
     // Updating channel depth
-    updateDepth();
+    checkReceivedTokens();
 
     // Check if there are enough tokens in the buffer to satisfy the request
     if (pos >= getDepth()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, getDepth());
@@ -135,7 +125,7 @@ class Consumer final : public SPSC::Base
     if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
 
     // Updating channel depth
-    updateDepth();
+    checkReceivedTokens();
 
     // If the exchange buffer does not have n tokens pushed, reject operation
     if (n > getDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, getDepth());
@@ -143,21 +133,17 @@ class Consumer final : public SPSC::Base
     // Advancing tail (removes elements from the circular buffer)
     advanceTail(n);
 
-    // Increasing the number of popped tokens
-    _poppedTokens += n;
-
     // Notifying producer(s) of buffer liberation
-    _memoryManager->memcpy(_coordinationBuffer, 0, _poppedTokensSlot, 0, sizeof(size_t));
+    _memoryManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
 
-    // Re-syncing token and coordination buffers
-    _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
+    // Re-syncing coordination buffer
     _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
   }
 
   /**
    * This function updates the internal value of the channel depth
    */
-  __USED__ inline void updateDepth() override
+  __USED__ inline void updateDepth()
   {
     checkReceivedTokens();
   }
@@ -174,17 +160,16 @@ class Consumer final : public SPSC::Base
     _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count
-    auto newPushedTokens = _tokenBuffer->getMessagesRecv();
-
-    // The number of received tokens is the difference between the currently pushed tokens and the previous one
-    auto receivedTokens = newPushedTokens - _pushedTokens;
+    auto receivedTokenCount = _tokenBuffer->getMessagesRecv();
 
     // We advance the head locally as many times as newly received tokens
-    advanceHead(receivedTokens);
-
-    // Update the number of pushed tokens
-    _pushedTokens = newPushedTokens;
+    setHead(receivedTokenCount);
   }
+
+  private:
+
+  MemorySlot *const _producerCoordinationBuffer;
+
 };
 
 } // namespace SPSC

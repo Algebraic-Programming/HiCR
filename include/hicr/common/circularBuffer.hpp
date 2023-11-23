@@ -22,24 +22,23 @@ namespace common
  * @brief Generic class type for circular buffer
  *
  * Abstracts away the implementation of a circular buffer with two pointers
- *   - Head: It stores the position after the last added token
- *   - Tail: It stores the position after the last removed token
- *
- * This class does not contain the buffers, only the logic to access it based on previous head/tail advances
- *
- * The internal state of the buffer is calculated via the depth and tail values.
+ *   - Head Advance Counter: How many positions has the head been advanced
+ *   - Tail Advance Counter: How many positions has the tail been advanced
  * Storage for these pointers shall be provided by the caller as pointers and will be considered volatile
- * (useful for RDMA changes to the internal state of the circular buffer).
+ * (this is useful for RDMA changes to the internal state of the circular buffer).
  *
  */
 class CircularBuffer
 {
  public:
 
- CircularBuffer(size_t capacity, __volatile__ size_t* depth, __volatile__ size_t* tail) : _capacity(capacity), _depth(depth), _tail(tail)
+ CircularBuffer(size_t capacity, __volatile__ size_t* headAdvanceCounter, __volatile__ size_t* tailAdvanceCounter) :
+  _capacity(capacity),
+  _headAdvanceCounter(headAdvanceCounter),
+  _tailAdvanceCounter(tailAdvanceCounter)
  {
-  *_depth = 0;
-  *_tail = 0;
+  *_headAdvanceCounter = 0;
+  *_tailAdvanceCounter = 0;
  }
 
  virtual ~CircularBuffer() = default;
@@ -58,7 +57,7 @@ class CircularBuffer
   */
  __USED__ inline size_t getHeadPosition() const noexcept
  {
-   return (*_tail + *_depth) % _capacity;
+   return *_headAdvanceCounter % _capacity;
  }
 
  /**
@@ -74,7 +73,7 @@ class CircularBuffer
   */
  __USED__ inline size_t getTailPosition() const noexcept
  {
-   return *_tail;
+   return *_tailAdvanceCounter % _capacity;
  }
 
  /**
@@ -85,14 +84,17 @@ class CircularBuffer
   */
  __USED__ inline void advanceHead(const size_t n = 1)
  {
+   // Current depth
+   const auto curDepth = getDepth();
+
    // Calculating new depth
-   const auto newDepth = *_depth + n;
+   const auto newDepth = getDepth() + n;
 
    // Sanity check
-   if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", *_depth, n, newDepth, _capacity);
+   if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", curDepth, n, newDepth, _capacity);
 
-   // Storing new depth
-   *_depth = newDepth;
+   // Advance head
+   *_headAdvanceCounter = *_headAdvanceCounter + n;
  }
 
  /**
@@ -103,15 +105,17 @@ class CircularBuffer
   */
  __USED__ inline void advanceTail(const size_t n = 1)
  {
-   // Sanity check
-   if (n > *_depth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", *_depth, n);
+   // Current depth
+   const auto curDepth = getDepth();
 
-   // Decrease depth
-   *_depth = *_depth - n;
+   // Sanity check
+   if (n > curDepth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", curDepth, n);
 
    // Advance tail
-   *_tail = (*_tail + n) % _capacity;
+   *_tailAdvanceCounter = *_tailAdvanceCounter + n;
  }
+
+
 
  /**
    * @returns The capacity of the channel.
@@ -143,7 +147,7 @@ class CircularBuffer
    */
   __USED__ inline size_t getDepth() const noexcept
   {
-    return *_depth;
+    return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter);
   }
 
   /**
@@ -156,7 +160,7 @@ class CircularBuffer
    */
   __USED__ inline bool isFull() const noexcept
   {
-    return *_depth == _capacity;
+    return getDepth() == _capacity;
   }
 
   /**
@@ -169,10 +173,40 @@ class CircularBuffer
    */
   __USED__ inline bool isEmpty() const noexcept
   {
-    return *_depth == 0;
+    return *_headAdvanceCounter == *_tailAdvanceCounter;
   }
 
  protected:
+
+ __USED__ inline void setHead(const size_t headAdvanceCounter)
+ {
+    // Sanity check
+   if (*_tailAdvanceCounter > headAdvanceCounter) HICR_THROW_FATAL("Circular buffer new head advance value is smaller than tail's (%lu < %lu). This is probably a bug in HiCR.\n", headAdvanceCounter, *_tailAdvanceCounter);
+
+   // Calculating new depth
+   const auto newDepth = calculateDepth(headAdvanceCounter, *_tailAdvanceCounter);
+
+   // Sanity check
+   if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (%lu) exceeded capacity (%lu) on setHead. This is probably a bug in HiCR.\n", newDepth, _capacity);
+
+   // Setting head
+   *_headAdvanceCounter = headAdvanceCounter;
+ }
+
+ __USED__ inline void setTail(const size_t tailAdvanceCounter)
+ {
+    // Sanity check
+   if (tailAdvanceCounter > *_headAdvanceCounter) HICR_THROW_FATAL("Circular buffer new tail advance value exceeds head (%lu > %lu). This is probably a bug in HiCR.\n", tailAdvanceCounter, *_headAdvanceCounter);
+
+   // Calculating new depth
+   const auto newDepth = calculateDepth(*_headAdvanceCounter, tailAdvanceCounter);
+
+   // Sanity check
+   if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (%lu) exceeded capacity (%lu) on setTail. This is probably a bug in HiCR.\n", newDepth, _capacity);
+
+   // Setting head
+   *_tailAdvanceCounter = tailAdvanceCounter;
+ }
 
  /**
   * How many tokens fit in the buffer
@@ -180,15 +214,21 @@ class CircularBuffer
  const size_t _capacity;
 
  /**
-  * Buffer position at the head
+  * Stores how many position has the head advanced so far
   */
- __volatile__ size_t* const _depth;
+ __volatile__ size_t* const _headAdvanceCounter;
 
  /**
-  * Buffer position at the tail
+  * Stores how many position has the tail advanced so far
   */
- __volatile__ size_t* const _tail;
+ __volatile__ size_t* const _tailAdvanceCounter;
 
+ private:
+
+ __USED__ static inline size_t calculateDepth(const size_t headAdvanceCounter, const size_t tailAdvanceCounter)
+ {
+  return headAdvanceCounter - tailAdvanceCounter;
+ }
 };
 
 } // namespace common

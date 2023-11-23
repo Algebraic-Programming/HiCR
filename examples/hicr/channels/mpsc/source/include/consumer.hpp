@@ -9,13 +9,13 @@ void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channe
  auto memSpaces = memoryManager->getMemorySpaceList();
 
  // Getting required buffer sizes
- auto tokenBufferSize = HiCR::channel::MPSC::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
+ auto tokenBufferSize = HiCR::channel::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Registering token buffer as a local memory slot
  auto localTokenBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
 
  // Getting required buffer size
- auto coordinationBufferSize = HiCR::channel::MPSC::Base::getCoordinationBufferSize();
+ auto coordinationBufferSize = HiCR::channel::Base::getCoordinationBufferSize();
 
  // Registering token buffer as a local memory slot
  auto localCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);

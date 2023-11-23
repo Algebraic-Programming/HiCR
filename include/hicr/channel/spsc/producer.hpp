@@ -15,7 +15,7 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/spsc/base.hpp>
+#include <hicr/channel/base.hpp>
 
 namespace HiCR
 {
@@ -32,7 +32,7 @@ namespace SPSC
  * It exposes the functionality to be expected for a producer channel
  *
  */
-class Producer final : public SPSC::Base
+class Producer final : public channel::Base
 {
   public:
 
@@ -51,10 +51,10 @@ class Producer final : public SPSC::Base
    */
   Producer(backend::MemoryManager *memoryManager,
                   MemorySlot *const tokenBuffer,
-                  MemorySlot *const coordinationBuffer,
+                  MemorySlot *const producerCoordinationBuffer,
                   const size_t tokenSize,
                   const size_t capacity)
-  : SPSC::Base(memoryManager, tokenBuffer, coordinationBuffer, tokenSize, capacity)
+  : channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided coordination buffer has the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
@@ -121,8 +121,11 @@ class Producer final : public SPSC::Base
     // Updating channel depth
     updateDepth();
 
+    // Calculating current channel depth
+    auto curDepth = getDepth();
+
     // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + n > getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, _depth, getCapacity());
+    if (curDepth + n > getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, getCapacity());
 
     // Copy tokens
     for (size_t i = 0; i < n; i++)
@@ -136,51 +139,15 @@ class Producer final : public SPSC::Base
 
     // Adding flush operation to ensure buffers are ready for re-use
     _memoryManager->flush();
-
-    // Increasing the number of pushed tokens
-    _pushedTokens += n;
   }
 
   /**
    * This function updates the internal value of the channel depth
    */
-  __USED__ inline void updateDepth() override
+  __USED__ inline void updateDepth()
   {
-    checkReceiverPops();
-  }
-
-  private:
-
-  /**
-   * Checks whether the receiver has freed up space in the receiver buffer
-   * and reports how many tokens were popped.
-   *
-   * \internal This function needs to be re-callable without side-effects
-   * since it will be called repeatedly to check whether a pending operation
-   * has finished.
-   *
-   * \internal This function relies on HiCR's one-sided communication semantics.
-   * If the update of the popped tokens value required some kind of function call
-   * in the backend, this will deadlock. To enable synchronized communication,
-   * a call to Backend::queryMemorySlotUpdates should be added here.
-   *
-   */
-  __USED__ inline void checkReceiverPops()
-  {
-    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
-
-    // Getting current tail position
-    size_t currentPoppedTokens = _poppedTokens;
-
-    // Updating local value of the tail until it changes
-    std::memcpy(_poppedTokensSlot->getPointer(), _coordinationBuffer->getPointer(), sizeof(size_t));
-
-    // Calculating difference between previous and new tail position
-    size_t n = _poppedTokens - currentPoppedTokens;
-
-    // Adjusting depth
-    advanceTail(n);
+   // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
+   _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
   }
 };
 

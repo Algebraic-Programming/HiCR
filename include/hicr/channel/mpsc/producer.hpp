@@ -15,7 +15,7 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/channel/mpsc/base.hpp>
+#include <hicr/channel/base.hpp>
 
 namespace HiCR
 {
@@ -32,7 +32,7 @@ namespace MPSC
  * It exposes the functionality to be expected for a producer channel
  *
  */
-class Producer final : public MPSC::Base
+class Producer final : public channel::Base
 {
   public:
 
@@ -55,7 +55,7 @@ class Producer final : public MPSC::Base
                   MemorySlot *const globalCoordinationBuffer,
                   const size_t tokenSize,
                   const size_t capacity) :
-                  MPSC::Base(memoryManager, tokenBuffer, localCoordinationBuffer, globalCoordinationBuffer, tokenSize, capacity)
+                   channel::Base(memoryManager, tokenBuffer, localCoordinationBuffer, globalCoordinationBuffer, tokenSize, capacity)
   {
   }
   ~Producer() = default;
