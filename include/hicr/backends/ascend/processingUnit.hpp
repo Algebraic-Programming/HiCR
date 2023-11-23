@@ -37,7 +37,6 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    * Constructor for the Processing Unit (kernel) class
    *
    * \param device device ID
-   * \param context ACL context for the desired device
    */
   __USED__ inline ProcessingUnit(computeResourceId_t device) : HiCR::ProcessingUnit(device), _deviceId(device){};
 
