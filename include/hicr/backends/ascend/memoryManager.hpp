@@ -79,6 +79,15 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
+   * Reset the ACL \p stream to its default value.
+   *
+   */
+  __USED__ inline void resetMemcpyStream()
+  {
+    _stream = NULL;
+  }
+
+  /**
    * Get the device id associated with the host system
    *
    * \param memorySpaces the collection of memorySpaces

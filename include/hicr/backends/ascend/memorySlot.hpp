@@ -12,7 +12,6 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <deque>
 #include <hicr/backends/ascend/common.hpp>
 #include <hicr/memorySlot.hpp>
 

@@ -73,6 +73,7 @@ class MemoryKernel final : public Kernel
   {
     _memManager->setMemcpyStream(stream);
     _memManager->memcpy(_dst, _dstOffset, _src, _srcOffset, _size);
+    _memManager->resetMemcpyStream();
   }
 
   private:
