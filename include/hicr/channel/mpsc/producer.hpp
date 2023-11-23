@@ -100,9 +100,6 @@ class Producer final : public channel::Base
     // If the exchange buffer does not have n free slots, reject the operation
     if (depth + n <= getCapacity())
     {
-     // Acquiring token slot lock
-     _memoryManager->acquireGlobalLock(_tokenBuffer);
-
      // Copying with source increasing offset per token
      for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
@@ -117,9 +114,6 @@ class Producer final : public channel::Base
 
      // Setting success flag as true
      successFlag = true;
-
-     // Releasing token slot lock
-     _memoryManager->releaseGlobalLock(_tokenBuffer);
     }
 
     // Releasing remote token and coordination buffer slots
