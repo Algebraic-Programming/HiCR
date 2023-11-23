@@ -391,6 +391,16 @@ class MemoryManager final : public backend::MemoryManager
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
+
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+  }
 };
 } // namespace ascend
 } // namespace backend
