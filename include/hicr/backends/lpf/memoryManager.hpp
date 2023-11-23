@@ -419,6 +419,16 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   {
     lpf_flush(_lpf);
   }
+
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+  }
 };
 
 } // namespace lpf
