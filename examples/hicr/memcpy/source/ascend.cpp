@@ -1,4 +1,3 @@
-#include <hicr.hpp>
 #include <hicr/backends/ascend/init.hpp>
 #include <hicr/backends/ascend/memoryManager.hpp>
 
