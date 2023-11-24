@@ -61,7 +61,7 @@ class CPU: public ComputeResource
      * \param[in] t A Cache::cacheType identifier
      * \return A Cache object of the given type
      */
-    Cache getCache(Cache::cacheType t)
+    Cache getCache(Cache::cacheType t) const
     {
       for (auto c : _caches) {
         if (c.getCacheType() == t)
@@ -71,6 +71,17 @@ class CPU: public ComputeResource
       HICR_THROW_RUNTIME("Cache object of the requested level not found");
       Cache ret;
       return ret;
+    }
+
+    /**
+     * Alternative (to getCache(type) method to obtain all Caches associated
+     * with the current CPU.
+     *
+     * \return A vector of Cache objects
+     */
+    std::vector<Cache> getAllCaches() const
+    {
+        return _caches;
     }
 
     /**
