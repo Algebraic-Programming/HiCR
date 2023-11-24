@@ -21,11 +21,8 @@ int main(int argc, char **argv)
  // Obtaining the machine model
  b.build(HICR_MACHINE_MODEL_ROOT_INSTANCE_ID);
 
- // Get current instance
- auto currentInstance = instanceManager.getCurrentInstance();
-
  // If this is the root instance, then print the machine model
- if (currentInstance->getId() == HICR_MACHINE_MODEL_ROOT_INSTANCE_ID) printf("%s\n", b.stringify().c_str());
+ printf("%s", b.stringify().c_str());
 
  // Finalizing MPI
  MPI_Finalize();
