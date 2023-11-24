@@ -13,6 +13,8 @@
 #pragma once
 
 #include <acl/acl.h>
+#include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {

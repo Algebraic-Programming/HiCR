@@ -231,6 +231,20 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     source->increaseMessagesSent();
     destination->increaseMessagesRecv();
   }
+
+  __USED__ inline bool acquireGlobalLockImpl(MemorySlot *memorySlot) override
+  {
+    // This function does not do anything because sequential applications
+    // do not incur concurrency issues.
+
+    return true;
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(MemorySlot *memorySlot) override
+  {
+    // This function does not do anything because sequential applications
+    // do not incur concurrency issues.
+  }
 };
 
 } // namespace sequential

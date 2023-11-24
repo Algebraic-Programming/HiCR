@@ -1,6 +1,5 @@
-#include <hicr.hpp>
-#include <hicr/backends/sequential/computeManager.hpp>
 #include <stdio.h>
+#include <hicr/backends/sequential/computeManager.hpp>
 
 int main(int argc, char **argv)
 {

@@ -17,8 +17,6 @@
 namespace HiCR
 {
 
-class Task;
-
 namespace common
 {
 

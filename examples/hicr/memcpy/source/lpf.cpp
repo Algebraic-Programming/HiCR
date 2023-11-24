@@ -1,4 +1,3 @@
-#include <hicr.hpp>
 #include <hicr/backends/lpf/memoryManager.hpp>
 #include <hicr/memorySlot.hpp>
 

@@ -459,6 +459,16 @@ class MemoryManager final : public backend::MemoryManager
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy stream. Error %d", err);
     _stream = NULL;
   }
+
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+  }
 };
 } // namespace ascend
 } // namespace backend

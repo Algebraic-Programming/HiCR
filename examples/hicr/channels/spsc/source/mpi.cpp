@@ -1,8 +1,7 @@
-#include <consumer.hpp>
-#include <hicr.hpp>
-#include <hicr/backends/mpi/memoryManager.hpp>
 #include <mpi.h>
+#include <consumer.hpp>
 #include <producer.hpp>
+#include <hicr/backends/mpi/memoryManager.hpp>
 
 int main(int argc, char **argv)
 {
@@ -39,19 +38,8 @@ int main(int argc, char **argv)
     return MPI_Finalize();
   }
 
-  // Creating communicator that includes only the producer and the consumer
-  // This is not necessary in this example because only two processes run and MPI_COMM_WORLD suffices
-  // However, in a real world scenario, this is might be required for preventing involving other ranks in its creation and use
-  const int ranks[2] = {0, 1};
-  MPI_Group commWorldGroup;
-  MPI_Group channelGroup;
-  MPI_Comm_group(MPI_COMM_WORLD, &commWorldGroup);
-  MPI_Group_incl(commWorldGroup, 2, ranks, &channelGroup);
-  MPI_Comm channelCommunicator;
-  MPI_Comm_create_group(MPI_COMM_WORLD, channelGroup, 0, &channelCommunicator);
-
-  // Instantiating backend
-  HiCR::backend::mpi::MemoryManager m(channelCommunicator);
+ // Instantiating backend
+ HiCR::backend::mpi::MemoryManager m(MPI_COMM_WORLD);
 
  // Asking memory manager to check the available memory spaces
  m.queryMemorySpaces();

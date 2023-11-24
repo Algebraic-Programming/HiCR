@@ -1,4 +1,3 @@
-#include <hicr.hpp>
 #include <hicr/backends/ascend/computationKernel.hpp>
 #include <hicr/backends/ascend/computeManager.hpp>
 #include <hicr/backends/ascend/executionUnit.hpp>

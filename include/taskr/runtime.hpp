@@ -12,7 +12,8 @@
 
 #pragma once
 #include <atomic>
-#include <hicr.hpp>
+#include <hicr/task.hpp>
+#include <hicr/worker.hpp>
 #include <map>
 #include <mutex>
 #include <taskr/common.hpp>
