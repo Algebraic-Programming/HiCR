@@ -31,6 +31,11 @@ class Instance
   public:
 
   /**
+   * Type definition for a unique instance identifier
+   */
+  typedef uint64_t instanceId_t;
+
+  /**
    * Type definition for an index to indicate the execution of a specific execution unit
    */
   typedef uint64_t executionUnitIndex_t;
@@ -150,6 +155,12 @@ class Instance
     HICR_THROW_LOGIC("Unrecognized instance state (0x%lX).\n", state);
   }
 
+  /**
+   * This function returns the (hopefully) unique identifier of the current instance
+   * @return The instance identifier
+   */
+  __USED__ inline instanceId_t getId() const { return _id; }
+
   protected:
 
   /**
@@ -204,11 +215,14 @@ class Instance
   __USED__ inline void setState(const state_t state) { _state = state; }
 
   /**
-   * Protected constructor for the worker class.
+   * Protected constructor for the base instance class.
    *
-   * This is a purely abstract class
+   * \note This is a purely abstract class
+   *
+   * \param[in] id Identifier to assign to this instance
+   *
    */
-  Instance() = default;
+  __USED__ Instance(instanceId_t id) : _id(id){};
 
   /**
    * Represents the internal state of the instance. Inactive upon creation.
@@ -226,6 +240,11 @@ class Instance
    * Map of execution units, representing potential RPC requests
    */
   std::map<HiCR::Instance::executionUnitIndex_t, HiCR::ExecutionUnit *> _executionUnitMap;
+
+  /**
+   * Instance Identifier
+   */
+  const instanceId_t _id;
 };
 
 } // namespace HiCR

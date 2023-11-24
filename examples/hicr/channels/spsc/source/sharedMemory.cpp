@@ -1,6 +1,5 @@
+#include <hicr/backends/sharedMemory/memoryManager.hpp>
 #include <consumer.hpp>
-#include <hicr.hpp>
-#include <hicr/backends/sequential/memoryManager.hpp>
 #include <producer.hpp>
 #include <thread>
 
@@ -25,8 +24,14 @@ int main(int argc, char **argv)
     return -1;
   }
 
- // Instantiating backend
- HiCR::backend::sequential::MemoryManager m(CONCURRENT_THREADS);
+ // Creating HWloc topology object
+ hwloc_topology_t topology;
+
+ // Reserving memory for hwloc
+ hwloc_topology_init(&topology);
+
+ // Instantiating Shared Memory backend
+ HiCR::backend::sharedMemory::MemoryManager m(&topology, CONCURRENT_THREADS);
 
  // Asking memory manager to check the available memory spaces
  m.queryMemorySpaces();

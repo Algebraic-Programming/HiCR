@@ -1,7 +1,7 @@
 #include <cstdio>
-#include <cstring>
 #include <hicr/backends/sequential/computeManager.hpp>
-#include <taskr.hpp>
+#include <taskr/runtime.hpp>
+#include <taskr/task.hpp>
 
 #define TASK_LABEL 42
 
