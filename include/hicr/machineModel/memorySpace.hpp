@@ -32,96 +32,123 @@ class MemorySpace
 {
   protected:
 
-    /* Backend-provided unique ID of the MemorySpace */
-    backend::MemoryManager::memorySpaceId_t _id;
+  /**
+   *  Backend-provided unique ID of the MemorySpace
+   */
+  backend::MemoryManager::memorySpaceId_t _id;
 
-    std::string _type;
+  /**
+   * Type for the memory space
+   */
+  std::string _type;
 
-    /* Size in Bytes */
-    size_t _size;
+  /**
+   *  Size in Bytes
+   */
+  size_t _size;
 
-    /* Optional */
-    size_t _pageSize;
+  /**
+   * (Optional) Page size in bytes
+   */
+  size_t _pageSize;
 
-    /* List of associated processing elements */
-    backend::ComputeManager::computeResourceList_t _computeResources;
-
-    // Enhance with bandwidth information, latency...
-    // The problem is how to obtain this information.
-    // It is not exposed, so either read it from a file or run profiling
-    // (probably bad idea)
-    size_t _bandwidth;
-    size_t _latency;
+  /**
+   *  List of associated processing elements
+   */
+  backend::ComputeManager::computeResourceList_t _computeResources;
 
   public:
 
   /**
    * Disabled default constructor
    */
-    MemorySpace() = delete;
+  MemorySpace() = delete;
 
-    MemorySpace(
-            backend::MemoryManager::memorySpaceId_t id,
-            std::string type,
-            size_t size,
-            size_t pageSize = 4096): /* Default page size; Consider using a constant but in a not dangerous way (e.g. define DEFAULT_PAGESIZE could mess up things) */
-        _id(id),
-        _type(type),
-        _size(size),
-        _pageSize(pageSize)
-    {
-    }
+  /**
+   * Parametric constructor for the memory space object
+   *
+   * @param[in] id Identifier for the memory space
+   * @param[in] type Type for the memory space
+   * @param[in] size Size of the memory space
+   * @param[in] pageSize Detected page size of the memory space
+   */
+  MemorySpace(
+    backend::MemoryManager::memorySpaceId_t id,
+    std::string type,
+    size_t size,
+    size_t pageSize = 4096) : /* Default page size; Consider using a constant but in a not dangerous way (e.g. define DEFAULT_PAGESIZE could mess up things) */
+                              _id(id),
+                              _type(type),
+                              _size(size),
+                              _pageSize(pageSize)
+  {
+  }
 
-    inline backend::MemoryManager::memorySpaceId_t getId() const
-    {
-        return _id;
-    }
+  /**
+   * Accessor for the id value
+   *
+   * @return The id value
+   */
+  inline backend::MemoryManager::memorySpaceId_t getId() const
+  {
+    return _id;
+  }
 
-    inline std::string getType() const
-    {
-        return _type;
-    }
+  /**
+   * Accessor for the type value
+   *
+   * @return The type value
+   */
+  inline std::string getType() const
+  {
+    return _type;
+  }
 
-    inline size_t getSize() const
-    {
-        return _size;
-    }
+  /**
+   * Accessor for the size value
+   *
+   * @return The size value
+   */
+  inline size_t getSize() const
+  {
+    return _size;
+  }
 
-    /* If supported, obtain the amount of memory currently in use.
-     * In conjunction with the total size above, the user may deduce
-     * information like, usage%, if a particular allocation will be
-     * possible etc.
-     */
-    inline size_t getUsage() const
-    {
-        return 0; //TODO
-    }
+  /**
+   *  If supported, obtain the amount of memory currently in use.
+   * In conjunction with the total size above, the user may deduce
+   * information like, usage%, if a particular allocation will be
+   * possible etc.
+   *
+   * @return The usage for this memory space
+   */
+  inline size_t getUsage() const
+  {
+    return 0; // TODO
+  }
 
-    inline backend::ComputeManager::computeResourceList_t getComputeUnits() const
-    {
-        return _computeResources;
-    }
+  /**
+   * Returns the associated compute units to this memory space
+   *
+   * @return A list of associated compute units
+   */
+  inline backend::ComputeManager::computeResourceList_t getComputeUnits() const
+  {
+    return _computeResources;
+  }
 
-    inline void addComputeResource(computeResourceId_t id)
-    {
-        _computeResources.insert(id);
-    }
-
-    /* Register and Allocate operations.
-     *
-     * Those should wrap the Backend-provided ones, with the correct MemorySpace IDs.
-     */
-    inline MemorySlot *registerMemorySlot(void *const ptr, const size_t size);
-
-    inline MemorySlot *allocateMemorySlot(const size_t size);
-
-    inline void deregisterMemorySlot(MemorySlot *const memorySlot);
-
-    inline void freeMemorySlot(MemorySlot *const memorySlot);
+  /**
+   * Adds a compute resource to this memory space
+   *
+   * @param[in] id The id of the compute resource to add
+   */
+  inline void addComputeResource(computeResourceId_t id)
+  {
+    _computeResources.insert(id);
+  }
 
 }; // class MemorySpace
 
 } // namespace machineModel
 
 } // namespace HiCR
-

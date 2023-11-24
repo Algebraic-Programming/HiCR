@@ -33,105 +33,130 @@ namespace machineModel
 class ComputeResource
 {
   protected:
-    /* Backend-provided unique ID of the ComputeResource */
-    computeResourceId_t _id;
 
-    /* Optional; The device number, or CPU logical ID, if the _id differs/doesn't suffice */
-    size_t _index;
+  /**
+   *  Backend-provided unique ID of the ComputeResource
+   */
+  computeResourceId_t _id;
 
-    /* Denotes the type of the ComputeResource */
-    std::string  _type;
+  /**
+   *  Optional; The device number, or CPU logical ID, if the _id differs/doesn't suffice
+   */
+  size_t _index;
 
-    /* List of associated Memory Spaces */
-    backend::MemoryManager::memorySpaceList_t _memorySpaces;
+  /**
+   *  Denotes the type of the ComputeResource
+   */
+  std::string _type;
 
-    /* Associated ProcessingUnit executing on the resource */
-    ProcessingUnit *_procUnit;
+  /**
+   *  List of associated Memory Spaces
+   */
+  backend::MemoryManager::memorySpaceList_t _memorySpaces;
 
-    /* Optional; distances from other NUMA nodes in case of multiple NUMA nodes present */
-    std::map<backend::MemoryManager::memorySpaceId_t, size_t> _numaDistances;
+  /**
+   *  Associated ProcessingUnit executing on the resource
+   */
+  ProcessingUnit *_procUnit;
+
+  /**
+   *  Optional; distances from other NUMA nodes in case of multiple NUMA nodes present
+   */
+  std::map<backend::MemoryManager::memorySpaceId_t, size_t> _numaDistances;
 
   public:
 
   /**
    * Disabled default constructor
    */
-    ComputeResource() = delete;
+  ComputeResource() = delete;
 
-    ComputeResource(
-            computeResourceId_t id,
-            std::string type
-            ):
-        _id(id),
-        _type(type)
-    {
-    }
+  /**
+   * Parametric constuctor for the ComputeResource class
+   *
+   * @param[in] id Id of the compute resource
+   * @param[in] type Type of the compute resource
+   */
+  ComputeResource(
+    computeResourceId_t id,
+    std::string type) : _id(id),
+                        _type(type)
+  {
+  }
 
-    virtual ~ComputeResource() /* consider doing this in Device shutdown() */
-    {
-        delete _procUnit;
-    }
+  /**
+   * Default destructor
+   */
+  virtual ~ComputeResource() /* consider doing this in Device shutdown() */
+  {
+    delete _procUnit;
+  }
 
-    /**
-     * Obtain the ID of the resource
-     *
-     * \return A computeResourceId associated with the ComputeResource
-     */
-    inline computeResourceId_t getId() const
-    {
-        return _id;
-    }
+  /**
+   * Obtain the ID of the resource
+   *
+   * \return A computeResourceId associated with the ComputeResource
+   */
+  inline computeResourceId_t getId() const
+  {
+    return _id;
+  }
 
-    /**
-     * Obtain the device index of the resource (possibly redundant, TBD)
-     *
-     * \return A device index associated with the ComputeResource
-     */
-    inline size_t getIndex() const
-    {
-        return _index;
-    }
+  /**
+   * Obtain the device index of the resource (possibly redundant, TBD)
+   *
+   * \return A device index associated with the ComputeResource
+   */
+  inline size_t getIndex() const
+  {
+    return _index;
+  }
 
-    /**
-     * Obtain the type of the resource
-     *
-     * \return A string describing the device type.
-     */
-    inline std::string getType() const
-    {
-        return _type;
-    }
+  /**
+   * Obtain the type of the resource
+   *
+   * \return A string describing the device type.
+   */
+  inline std::string getType() const
+  {
+    return _type;
+  }
 
-    // TODO: change this to meaningful functionality; currently placeholder
-    inline ProcessingUnit *getProcessingUnit() const
-    {
-        return _procUnit;
-    }
+  /**
+   * Function to get the processing unit out this compute resource
+   *
+   * @return A pointer to the processing unit
+   *
+   * TODO: change this to meaningful functionality; currently placeholder
+   */
+  inline ProcessingUnit *getProcessingUnit() const
+  {
+    return _procUnit;
+  }
 
-    /**
-     * Obtain a list of the Memory Spaces associated with the device
-     *
-     * \return A hash set of associated MemorySpaces
-     */
-    inline backend::MemoryManager::memorySpaceList_t getMemorySpaces() const
-    {
-        return _memorySpaces;
-    }
+  /**
+   * Obtain a list of the Memory Spaces associated with the device
+   *
+   * \return A hash set of associated MemorySpaces
+   */
+  inline backend::MemoryManager::memorySpaceList_t getMemorySpaces() const
+  {
+    return _memorySpaces;
+  }
 
-    /**
-     * Add a Memory Space in the set of associated Memory Spaces
-     * This should be used only during initialization / resource detection.
-     *
-     * \param[i] id The ID of the Memory Space to be added
-     */
-    inline void addMemorySpace(backend::MemoryManager::memorySpaceId_t id)
-    {
-        _memorySpaces.insert(id);
-    }
+  /**
+   * Add a Memory Space in the set of associated Memory Spaces
+   * This should be used only during initialization / resource detection.
+   *
+   * \param[in] id The ID of the Memory Space to be added
+   */
+  inline void addMemorySpace(backend::MemoryManager::memorySpaceId_t id)
+  {
+    _memorySpaces.insert(id);
+  }
 
 }; // class ComputeResource
 
 } // namespace machineModel
 
 } // namespace HiCR
-

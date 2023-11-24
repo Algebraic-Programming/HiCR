@@ -78,7 +78,7 @@ class ComputeManager final : public backend::ComputeManager
     hwloc_obj_t obj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_PU, cpuId);
     if (!obj)
       HICR_THROW_RUNTIME(
-          "Attempting to access a compute resource that does not exist (%lu) in this backend", cpuId);
+        "Attempting to access a compute resource that does not exist (%lu) in this backend", cpuId);
 
     // Acquire the parent core object
     // There is an asumption here that a HWLOC_OBJ_PU type always has a parent of type HWLOC_OBJ_CORE,
@@ -86,7 +86,7 @@ class ComputeManager final : public backend::ComputeManager
     obj = obj->parent;
     if (obj->type != HWLOC_OBJ_CORE)
       HICR_THROW_RUNTIME(
-          "Unexpected hwloc object type while trying to access Core/CPU (%lu)", cpuId);
+        "Unexpected hwloc object type while trying to access Core/CPU (%lu)", cpuId);
 
     return obj->logical_index;
   }
@@ -103,12 +103,13 @@ class ComputeManager final : public backend::ComputeManager
     hwloc_obj_t obj = pu;
     if (!obj)
       HICR_THROW_RUNTIME(
-          "Attempting to access a compute resource that does not exist (%lu) in this backend", cpuId);
+        "Attempting to access a compute resource that does not exist (%lu) in this backend", cpuId);
 
     std::vector<unsigned> ret;
 
     // Probe if there are *next* siblings
-    while(obj->next_sibling) {
+    while (obj->next_sibling)
+    {
       ret.push_back(obj->next_sibling->logical_index);
       obj = obj->next_sibling;
     }
@@ -116,7 +117,8 @@ class ComputeManager final : public backend::ComputeManager
     // Return to initial PU object
     obj = pu;
     // Probe if there are *previous* siblings
-    while(obj->prev_sibling) {
+    while (obj->prev_sibling)
+    {
       ret.push_back(obj->prev_sibling->logical_index);
       obj = obj->prev_sibling;
     }
@@ -137,7 +139,7 @@ class ComputeManager final : public backend::ComputeManager
 
     if (!obj)
       HICR_THROW_RUNTIME(
-          "Attempting to access a compute resource that does not exist (%lu) in this backend", cpuId);
+        "Attempting to access a compute resource that does not exist (%lu) in this backend", cpuId);
 
     size_t ret = 0;
 
@@ -148,22 +150,22 @@ class ComputeManager final : public backend::ComputeManager
 
     // iterate over parents until we find a memory node
     while (ancestor && !ancestor->memory_arity)
-        ancestor = ancestor->parent;
+      ancestor = ancestor->parent;
 
     // iterate over potential sibling nodes (the likely behavior though is to run only once)
-    for (size_t memChild = 0; memChild < ancestor->memory_arity; memChild++) {
+    for (size_t memChild = 0; memChild < ancestor->memory_arity; memChild++)
+    {
       if (memChild == 0)
         nodeNUMA = ancestor->memory_first_child;
-      else
-        if (nodeNUMA)
-          nodeNUMA = nodeNUMA->next_sibling;
+      else if (nodeNUMA)
+        nodeNUMA = nodeNUMA->next_sibling;
 
       if (hwloc_obj_type_is_memory(nodeNUMA->type) &&
-            hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
+          hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
       {
-          found = true;
-          ret = nodeNUMA->logical_index;
-          break;
+        found = true;
+        ret = nodeNUMA->logical_index;
+        break;
       }
     }
 
@@ -193,7 +195,7 @@ class ComputeManager final : public backend::ComputeManager
 
     if (!obj)
       HICR_THROW_RUNTIME(
-          "Attempting to access a compute resource that does not exist (%lu) in this backend", cpuId);
+        "Attempting to access a compute resource that does not exist (%lu) in this backend", cpuId);
 
     std::vector<std::pair<std::string, size_t>> ret;
     std::string type;
@@ -203,55 +205,48 @@ class ComputeManager final : public backend::ComputeManager
     hwloc_obj_t cache = obj->parent;
     do {
       // Check if the current object is a cache-type object
-      if (   cache->type == HWLOC_OBJ_L1CACHE
-          || cache->type == HWLOC_OBJ_L2CACHE
-          || cache->type == HWLOC_OBJ_L3CACHE
-          || cache->type == HWLOC_OBJ_L4CACHE
-          || cache->type == HWLOC_OBJ_L5CACHE
-          || cache->type == HWLOC_OBJ_L1ICACHE
-          || cache->type == HWLOC_OBJ_L2ICACHE
-          || cache->type == HWLOC_OBJ_L3ICACHE
-         ) {
+      if (cache->type == HWLOC_OBJ_L1CACHE || cache->type == HWLOC_OBJ_L2CACHE || cache->type == HWLOC_OBJ_L3CACHE || cache->type == HWLOC_OBJ_L4CACHE || cache->type == HWLOC_OBJ_L5CACHE || cache->type == HWLOC_OBJ_L1ICACHE || cache->type == HWLOC_OBJ_L2ICACHE || cache->type == HWLOC_OBJ_L3ICACHE)
+      {
         // In case it is a cache, deduce the level from the types HWloc supports
-        switch(cache->type)
+        switch (cache->type)
         {
-          case HWLOC_OBJ_L1CACHE:
-          case HWLOC_OBJ_L1ICACHE:
-            type = "L1";
-            break;
-          case HWLOC_OBJ_L2CACHE:
-          case HWLOC_OBJ_L2ICACHE:
-            type = "L2";
-            break;
-          case HWLOC_OBJ_L3CACHE:
-          case HWLOC_OBJ_L3ICACHE:
-            type = "L3";
-            break;
-          case HWLOC_OBJ_L4CACHE:
-            type = "L4";
-            break;
-          case HWLOC_OBJ_L5CACHE:
-            type = "L5";
-            break;
-          // We never expect to get here; this is for compiler warning suppresion
-          default:
-            type = "Unknown level";
+        case HWLOC_OBJ_L1CACHE:
+        case HWLOC_OBJ_L1ICACHE:
+          type = "L1";
+          break;
+        case HWLOC_OBJ_L2CACHE:
+        case HWLOC_OBJ_L2ICACHE:
+          type = "L2";
+          break;
+        case HWLOC_OBJ_L3CACHE:
+        case HWLOC_OBJ_L3ICACHE:
+          type = "L3";
+          break;
+        case HWLOC_OBJ_L4CACHE:
+          type = "L4";
+          break;
+        case HWLOC_OBJ_L5CACHE:
+          type = "L5";
+          break;
+        // We never expect to get here; this is for compiler warning suppresion
+        default:
+          type = "Unknown level";
         }
 
         type += " ";
 
         // Discover the type: Instruction, Data or Unified
-        switch(cache->attr->cache.type)
+        switch (cache->attr->cache.type)
         {
-          case HWLOC_OBJ_CACHE_UNIFIED:
-            type += "Unified";
-            break;
-          case HWLOC_OBJ_CACHE_INSTRUCTION:
-            type += "Instruction";
-            break;
-          case HWLOC_OBJ_CACHE_DATA:
-            type += "Data";
-            break;
+        case HWLOC_OBJ_CACHE_UNIFIED:
+          type += "Unified";
+          break;
+        case HWLOC_OBJ_CACHE_INSTRUCTION:
+          type += "Instruction";
+          break;
+        case HWLOC_OBJ_CACHE_DATA:
+          type += "Data";
+          break;
         }
 
         type += " ";
@@ -261,7 +256,8 @@ class ComputeManager final : public backend::ComputeManager
         if (cache->arity > 1)
         {
           type += "Shared";
-          for (size_t i = 0; i < cache->arity; i++) {
+          for (size_t i = 0; i < cache->arity; i++)
+          {
             hwloc_obj_t child = cache->children[i];
             std::vector<int> puIds;
             getThreadPUs(*_topology, child, 0, puIds);
