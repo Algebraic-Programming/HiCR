@@ -44,6 +44,92 @@ class HostDevice final: public DeviceModel
         _type = "host";
     }
 
+   // Constructor through JSON for serialized; to be used to instantiate remote devices
+   HostDevice(nlohmann::json json)
+   {
+       // Not local so these should not be used!
+       _computeMan = nullptr;
+       _memoryMan = nullptr;
+
+       size_t computeCount = (size_t)json["ComputeResources"]["NumComputeRes"];
+       size_t memCount = (size_t)json["NumMemSpaces"];
+       for (size_t i = 0; i < memCount; i++)
+       {
+           if (json["MemorySpaces"][i]["type"] != "NUMA Domain")
+               HICR_THROW_RUNTIME("Potential misconfiguration: Not matching NUMA domain in MemorySpace type");
+
+           std::string tmp_type = "NUMA Domain";
+           size_t size = (size_t)json["MemorySpaces"][i]["size"];
+           MemorySpace *ms = new MemorySpace(
+                   i, /* memorySpaceId_t */
+                   tmp_type, /* type */
+                   size /* size */
+                   );
+           _memorySpaces.insert(std::make_pair(i, ms));
+       }
+
+       for (size_t i = 0; i < computeCount; i++)
+       {
+           CPU *c = new CPU(i);
+
+           std::string index = "Core " + std::to_string(i);
+
+           c->setSystemId(json["ComputeResources"][index]["systemCoreId"]);
+
+           //Detect siblings from the string; parse the string one by one and assign
+           std::string strSiblings = json["ComputeResources"][index]["siblings"];
+           std::vector<unsigned> cpuSiblings;
+           strSiblings = strSiblings.substr(0, strSiblings.find_first_not_of(" "));
+           while (!strSiblings.empty())
+           {
+               std::string id = strSiblings.substr(0, strSiblings.find_first_of(" "));
+               cpuSiblings.push_back(std::stoi(id));
+               strSiblings = strSiblings.substr(strSiblings.find_first_of(" ") + 1, strSiblings.size() - 1);
+           }
+           c->setSiblings(cpuSiblings);
+
+           _computeResources.insert(std::make_pair(i, c));
+
+           // Detect caches and create strings' vector compatible with the setCaches() method:
+           std::vector<std::string> cachetypes = {"L1i", "L1d", "L2", "L3"};
+
+           std::vector<std::pair<std::string, size_t>> strCaches;
+
+           strCaches.resize(4); // Hardcoded for 1st prototype FIXME
+           for (auto type : cachetypes)
+           {
+               std::string tmp;
+               if (type == "L1i")
+                   tmp = "L1 Instruction";
+               else if (type == "L1d")
+                   tmp = "L1 Data";
+               else if (type == "L2")
+                   tmp = "L2 Unified";
+               else if (type == "L3")
+                   tmp = "L3 Unified";
+
+               tmp += " ";
+
+               if (json["ComputeResources"][index]["caches"][type]["shared"])
+               {
+                   tmp += "Shared";
+                   tmp += " ";
+                   tmp += json["ComputeResources"][index]["caches"][type]["sharing PUs"];
+               }
+               else
+                   tmp += "Private";
+
+               size_t cachesize = json["ComputeResources"][index]["caches"][type]["size"];
+
+               strCaches.push_back(std::make_pair(tmp, cachesize));
+           }
+
+           // Assign the newly created object:
+           c->setCaches(strCaches);
+
+       }
+   }
+
     void initialize() override
    {
        // Creating HWloc topology object
