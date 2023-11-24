@@ -125,7 +125,7 @@ class MemoryManager final : public backend::MemoryManager
   const hwloc_topology_t *const _topology;
 
   /**
-   * Pthread implementation of the Backend queryResources() function. This will add one memory space object per NUMA domain found
+   * Hwloc implementation of the Backend queryResources() function. This will add one memory space object per NUMA domain found
    */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {

@@ -15,6 +15,7 @@
 
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/machineModel/base.hpp>
 
 namespace HiCR
 {
@@ -27,7 +28,7 @@ namespace machineModel
  *
  * This class provides an overview of the entire system (compute and memory elements) and their connectivity
  */
-class Model
+class Model : public machineModel::Base
 {
   public:
 
@@ -36,14 +37,15 @@ class Model
    *
    * The internal data can be updated upon explicit initialization
    */
-  Model() = default;
+  Model() : machineModel::Base()
+  {  }
 
   /**
    * This function creates a new machine model by directly deserializing an input.
    *
    * @param[in] serialData The serial representation of the model's internal state to deserialize (parse)
    */
-  Model(const std::string &serialData)
+  Model(const std::string &serialData) : machineModel::Base()
   {
     deserialize(serialData);
   }
@@ -55,7 +57,7 @@ class Model
    */
   __USED__ inline void update()
   {
-    _internalData = "(16 cores)";
+   queryDevices();
   }
 
   /**
@@ -65,7 +67,7 @@ class Model
    */
   __USED__ inline std::string serialize() const
   {
-    return _internalData;
+   return _devices[0]->jSerialize().dump();
   }
 
   /**
@@ -75,7 +77,10 @@ class Model
    */
   __USED__ inline void deserialize(const std::string &serialData)
   {
-    _internalData = serialData;
+   nlohmann::json data = nlohmann::json::parse(serialData);
+   auto d = new machineModel::HostDevice(data);
+   _devices.clear();
+   _devices.push_back(d);
   }
 
   /**
@@ -86,7 +91,7 @@ class Model
    */
   __USED__ inline std::string stringify() const
   {
-    return _internalData;
+   return _devices[0]->jSerialize().dump(2);
   }
 
   private:
