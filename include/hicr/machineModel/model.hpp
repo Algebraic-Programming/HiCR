@@ -43,9 +43,9 @@ class Model
    *
    * @param[in] serialData The serial representation of the model's internal state to deserialize (parse)
    */
-  Model(const std::string& serialData)
+  Model(const std::string &serialData)
   {
-   deserialize(serialData);
+    deserialize(serialData);
   }
 
   ~Model() = default;
@@ -73,7 +73,7 @@ class Model
    *
    * @param[in] serialData The serial representation of the model's internal state to deserialize (parse)
    */
-  __USED__ inline void deserialize(const std::string& serialData)
+  __USED__ inline void deserialize(const std::string &serialData)
   {
     _internalData = serialData;
   }
@@ -86,7 +86,7 @@ class Model
    */
   __USED__ inline std::string stringify() const
   {
-   return _internalData;
+    return _internalData;
   }
 
   private:
