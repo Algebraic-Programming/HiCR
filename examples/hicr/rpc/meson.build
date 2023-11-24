@@ -1,4 +1,4 @@
-testSuite = [ 'examples', 'hicr', 'process']
+testSuite = [ 'examples', 'hicr', 'rpc']
 test_timeout = 180
 
 if 'mpi' in enabledBackends

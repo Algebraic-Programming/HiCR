@@ -1,5 +1,6 @@
 subdir('memcpy')
 subdir('kernel')
 subdir('channels')
-subdir('instance')
+subdir('rpc')
+subdir('machineModel')
 
