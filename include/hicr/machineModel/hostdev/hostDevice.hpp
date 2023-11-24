@@ -100,6 +100,78 @@ class HostDevice final: public DeviceModel
 
    }
 
+   void jSerializeImpl(nlohmann::json& json)
+   {
+       if (json["Device Type"] != "host") // The way it's currently written, this should never happen; placeholder for future check
+           HICR_THROW_RUNTIME("Device type incompatibility in JSON creation");
+
+       // Compute Resources section
+       json["ComputeResources"]["NumComputeRes"] = getComputeCount();
+       for (auto c : _computeResources)
+       {
+           CPU *cpu = static_cast<CPU *>(c.second);
+           std::string index = "Core " + std::to_string(c.first);
+           std::string siblings;
+           for (auto id : cpu->getSiblings())
+               siblings += std::to_string(id) + " ";
+           size_t end = siblings.find_last_not_of(" ") + 1;
+           json["ComputeResources"][index]["siblings"] = siblings.substr(0, end);
+
+           json["ComputeResources"][index]["systemCoreId"] = cpu->getSystemId();
+
+           for (auto cache : cpu->getAllCaches())
+           {
+               std::string cacheType;
+               switch(cache.getCacheType())
+               {
+                   case Cache::L1i:
+                       cacheType = "L1i";
+                       break;
+                   case Cache::L1d:
+                       cacheType = "L1d";
+                       break;
+                   case Cache::L2:
+                       cacheType = "L2";
+                       break;
+                   case Cache::L3:
+                       cacheType = "L3";
+                       break;
+               }
+
+               json["ComputeResources"][index]["caches"][cacheType]["size"] = cache.getCacheSize();
+               json["ComputeResources"][index]["caches"][cacheType]["linesize"] = cache.getLineSize();
+               json["ComputeResources"][index]["caches"][cacheType]["shared"] = cache.isShared();
+               if (cache.isShared())
+               {
+                   std::string sharingPUs;
+                   for (auto id : cache.getAssociatedComputeUnit())
+                       sharingPUs += std::to_string(id) + " ";
+                   sharingPUs = sharingPUs.substr(0, sharingPUs.find_last_not_of(" ") +1);
+                   json["ComputeResources"][index]["caches"][cacheType]["sharing PUs"] = sharingPUs;
+               }
+
+           }
+
+           json["ComputeResources"][index]["NumaAffinity"] = *cpu->getMemorySpaces().find(0); //just get the 1st element for now
+
+       } // end of Compute Resources section
+
+       // Memory Spaces section
+       json["NumMemSpaces"] = _memorySpaces.size();
+       for (auto memspace : _memorySpaces)
+       {
+           MemorySpace *ms = memspace.second;
+
+           json["MemorySpaces"][ms->getId()]["type"] = ms->getType();
+           json["MemorySpaces"][ms->getId()]["size"] = ms->getSize();
+           std::string compUnits;
+           for (auto id : ms->getComputeUnits())
+               compUnits += std::to_string(id) + " ";
+           compUnits = compUnits.substr(0, compUnits.find_last_not_of(" ") +1);
+           json["MemorySpaces"][ms->getId()]["compute units"] = compUnits;
+       } // end of Memory Spaces section
+   }
+
    void shutdown() override 
     {
         for (auto it : _memorySpaces)

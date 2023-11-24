@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#include <nlohmann_json/json.hpp>
+
 #include <hicr/machineModel/computeResource.hpp>
 #include <hicr/machineModel/memorySpace.hpp>
 
@@ -116,6 +118,28 @@ class DeviceModel
           ret.insert(it.second);
 
       return ret;
+    }
+
+    /**
+     * Device specific implementation of the JSON serialization
+     */
+    virtual void jSerializeImpl(nlohmann::json &json) = 0;
+
+    /**
+     * Creates a JSON description of the device resources.
+     * To be used for centralized representation of the unified machine model
+     *
+     * \return A JSON object using the nlohmann library containing all fields of internal objects (compute units, memory spaces etc.)
+     */
+    nlohmann::json jSerialize()
+    {
+        nlohmann::json ret;
+
+        ret["Device Type"] = getType();
+
+        jSerializeImpl(ret);
+
+        return ret;
     }
 
     /**
