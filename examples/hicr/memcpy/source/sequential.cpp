@@ -1,3 +1,4 @@
+#include "include/telephoneGame.hpp"
 #include <hicr/backends/sequential/memoryManager.hpp>
 
 #define BUFFER_SIZE 256
@@ -15,21 +16,19 @@ int main(int argc, char **argv)
   // Obtaining memory spaces
   auto memSpaces = m.getMemorySpaceList();
 
+  // Define the order of mem spaces for the telephone game
+  auto memSpaceOrder = std::vector<HiCR::backend::MemoryManager::memorySpaceId_t>(memSpaces.begin(), memSpaces.end());
+  
   // Allocating memory slots in different NUMA domains
-  auto slot1 = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE);  // First NUMA Domain
-  auto slot2 = m.allocateLocalMemorySlot(*memSpaces.rbegin(), BUFFER_SIZE); // Last NUMA Domain
+  auto input = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE); // First NUMA Domain
 
   // Initializing values in memory slot 1
-  sprintf((char *)slot1->getPointer(), "Hello, HiCR user!\n");
+  sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 
-  // Performing the copy
-  m.memcpy(slot2, DST_OFFSET, slot1, SRC_OFFSET, BUFFER_SIZE);
+  // Run the telephono game
+  telephoneGame(m, input, memSpaceOrder, 3);
 
-  // Waiting on the operation to have finished
-  m.fence(0);
-
-  // Checking whether the copy was successful
-  printf("%s", (const char *)slot2->getPointer());
-
+  // Free input memory slot
+  m.freeLocalMemorySlot(input);
   return 0;
 }

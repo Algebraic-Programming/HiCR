@@ -18,6 +18,7 @@
 #include <hicr/backends/ascend/memorySlot.hpp>
 #include <hicr/backends/memoryManager.hpp>
 #include <unordered_map>
+
 namespace HiCR
 {
 
