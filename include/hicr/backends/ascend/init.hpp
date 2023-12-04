@@ -16,7 +16,7 @@
 #include <hicr/backends/ascend/common.hpp>
 #include <hicr/backends/sequential/memoryManager.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <map>
+#include <unordered_map>
 
 namespace HiCR
 {
@@ -29,7 +29,7 @@ namespace ascend
 
 /**
  * Initializer class implementation for the ascend backend responsible for initializing ACL
- * and create context for each device.
+ * and get the default context for each device.
  */
 class Initializer final
 {
@@ -38,33 +38,31 @@ class Initializer final
   /**
    * Constructor for the initializer class for the ascend backend. It inizialies ACL
    *
-   * \param config_path configuration file to initialize ACL
+   * \param configPath configuration file to initialize ACL
    */
-  Initializer(const char *config_path = NULL)
-  {
-    aclError err = aclInit(config_path);
+  Initializer(const char *configPath = NULL) : _configPath(configPath){};
 
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
-  }
-
-  ~Initializer()
-  {
-    (void)aclFinalize();
-  }
+  /**
+   * Default destructor
+   */
+  ~Initializer() = default;
 
   /**
    * Return the mapping between a device id and the ACL context for that device
    *
    * \return a map containing for each device Id its corresponding ascendState_t structure
    */
-  __USED__ inline const std::map<deviceIdentifier_t, ascendState_t> &getContexts() const { return _deviceStatusMap; }
+  __USED__ inline const std::unordered_map<deviceIdentifier_t, ascendState_t> &getContexts() const { return _deviceStatusMap; }
 
   /**
    * Discover available ascend devices, get memory information (HBM per single card), and create dedicated ACL contexts per device
    */
   void init()
   {
-    // Discover and create device contexts
+    aclError err = aclInit(_configPath);
+
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
+    // Discover and get default device contexts
     createContexts();
 
     // setup inter device communication
@@ -76,10 +74,16 @@ class Initializer final
    */
   __USED__ inline void finalize()
   {
-    for (const auto &deviceData : _deviceStatusMap) (void)aclrtDestroyContext(deviceData.second.context);
+    aclError err = aclFinalize();
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
   }
 
   private:
+
+  /**
+   * Path to ACL config file
+   */
+  const char *_configPath;
 
   /**
    * Keeps track of how many devices are connected to the host
@@ -89,17 +93,17 @@ class Initializer final
   /**
    * Keep track of the context for each deviceId
    */
-  std::map<deviceIdentifier_t, ascendState_t> _deviceStatusMap;
+  std::unordered_map<deviceIdentifier_t, ascendState_t> _deviceStatusMap;
 
   /**
    * Create ACL contexts for each available ascend device
    */
   __USED__ inline void createContexts()
   {
-    // Clearing existing memory space map
+    // clear existing memory space map
     _deviceStatusMap.clear();
 
-    // Ask ACL for available devices
+    // ask ACL for available devices
     aclError err;
     err = aclrtGetDeviceCount((uint32_t *)&_deviceCount);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
@@ -107,18 +111,18 @@ class Initializer final
     size_t ascendFreeMemory, ascendMemorySize;
     aclrtContext deviceContext;
 
-    // Add as many memory spaces as devices
+    // add as many memory spaces as devices
     for (int32_t deviceId = 0; deviceId < (int32_t)_deviceCount; deviceId++)
     {
-      // Create the device context
-      err = aclrtCreateContext(&deviceContext, deviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
+      // set the device
+      err = aclrtSetDevice(deviceId);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not select the ascend device %d. Error %d", deviceId, err);
 
-      // Select the device by setting the context
-      err = aclrtSetCurrentContext(deviceContext);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
+      // retrieve the default device context
+      err = aclrtGetCurrentContext(&deviceContext);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
 
-      // Retrieve the memory info
+      // get the memory info
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 

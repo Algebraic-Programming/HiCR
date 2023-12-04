@@ -17,6 +17,7 @@
 #include <hicr/backends/ascend/init.hpp>
 #include <hicr/backends/ascend/memorySlot.hpp>
 #include <hicr/backends/memoryManager.hpp>
+#include <unordered_map>
 
 namespace HiCR
 {
@@ -41,9 +42,39 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param i ACL initializer
    */
-  MemoryManager(const Initializer &i) : HiCR::backend::MemoryManager(), _deviceStatusMap(i.getContexts()){};
+  MemoryManager(const Initializer &i) : HiCR::backend::MemoryManager(), _deviceStatusMap(i.getContexts())
+  {
+    aclError err;
+    aclrtStream stream;
+    // create the stream to be used in the memcpy operations
+    for (const auto &[deviceId, deviceStatus] : _deviceStatusMap)
+    {
+      // skip the host device
+      if (deviceStatus.deviceType == deviceType_t::Host) continue;
 
-  ~MemoryManager() = default;
+      selectDevice(deviceStatus.context, deviceId);
+
+      err = aclrtCreateStream(&stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d. Error %d", deviceId, err);
+
+      _deviceStreamMap[deviceId] = stream;
+    }
+  };
+
+  ~MemoryManager()
+  {
+    aclError err;
+    // destroy the stream created in the constructor
+    for (const auto &[deviceId, deviceStream] : _deviceStreamMap)
+    {
+      const auto deviceStatus = _deviceStatusMap.at(deviceId);
+
+      selectDevice(deviceStatus.context, deviceId);
+
+      err = aclrtDestroyStream(deviceStream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy stream on device %d. Error %d", deviceId, err);
+    }
+  };
 
   /**
    * Set the ACL \p stream in which the next memcpy operations needs to be executed.
@@ -56,6 +87,15 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
+   * Reset the ACL \p stream to its default value.
+   *
+   */
+  __USED__ inline void resetMemcpyStream()
+  {
+    _stream = NULL;
+  }
+
+  /**
    * Get the device id associated with the host system
    *
    * \param memorySpaces the collection of memorySpaces
@@ -65,7 +105,9 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline const memorySpaceId_t getHostId(const std::set<memorySpaceId_t> memorySpaces)
   {
     for (const auto m : memorySpaces)
+    {
       if (_deviceStatusMap.at(m).deviceType == deviceType_t::Host) return m;
+    }
 
     HICR_THROW_RUNTIME("No ID associated with the host system");
   }
@@ -75,8 +117,9 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Keep track of the context for each memorySpaceId/deviceId
    */
-  const std::map<memorySpaceId_t, ascendState_t> &_deviceStatusMap;
+  const std::unordered_map<memorySpaceId_t, ascendState_t> &_deviceStatusMap;
 
+  std::unordered_map<memorySpaceId_t, aclrtStream> _deviceStreamMap;
   /**
    * Stream on which memcpy operations are executed. The default value is NULL (use the default ACL stream)
    */
@@ -141,9 +184,9 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     // create the new memory slot
-    auto memorySlot = new MemorySlot(memorySpaceId, ptr, size, dataBuffer);
-    return memorySlot;
+    return new MemorySlot(memorySpaceId, ptr, size, dataBuffer);
   }
+
   /**
    * Allocate memory on the Host memory through Ascend-dedicated functions.
    *
@@ -288,9 +331,12 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-   * Backend-internal memcpy implementation.
-   * Restrictions: Only memory copying between Devices in the same thread or between different threads in the same process is supported.
-   * Memory copying between Devices in different processes is not supported.
+   * Backend-internal memcpy implementation. If the user provides a valid ACL stream via @ref setMemcpyStream() the function will reuse the stream for all the subsequent memcpy invocation on the same device,
+   * otherwise it will use one of the ones instantieted by the memory manager. This memcpy implementation does support asynchronous inter-device communication, meaning the fence should be called when date are
+   * moved among different ascend devices.
+   *
+   * Restrictions:
+   * - Only memory copying between devices in the same thread or between different threads in the same process is supported. Memory copying between Devices in different processes is not supported.
    *
    * \param destination destination memory slot
    * \param dst_offset destination offset
@@ -324,30 +370,48 @@ class MemoryManager final : public backend::MemoryManager
     const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
     const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
 
+    // determine the correct memcpy kind
     aclrtMemcpyKind memcpyKind = getMemcpyKind(srcdeviceType, dstdeviceType);
 
+    MemorySlot *deviceMemSlot;
+
+    // select device according to memcpy kind
     if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE || (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE && dstDeviceId != srcDeviceId))
     {
-      selectDevice(_deviceStatusMap.at(dstDeviceId).context, dstDeviceId);
+      deviceMemSlot = d;
     }
     else if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE || memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)
     {
-      selectDevice(_deviceStatusMap.at(srcDeviceId).context, srcDeviceId);
-    }
-
-    if (_stream == NULL)
-    {
-      err = aclrtMemcpy(actualDstPtr, size, actualSrcPtr, size, memcpyKind);
+      deviceMemSlot = s;
     }
     else
     {
-      err = aclrtMemcpyAsync(actualDstPtr, size, actualSrcPtr, size, memcpyKind, _stream);
+      // async memcpy not supported between host to host case
+      err = aclrtMemcpy(actualDstPtr, size, actualSrcPtr, size, memcpyKind);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not perform memcpy of type %d in host. Error %d", memcpyKind, err);
+      s->increaseMessagesSent();
+      d->increaseMessagesRecv();
+      return;
     }
 
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not copy memory from device. Error %d", err);
+    // if no stream has already been provided, there are no pending operations to execute. In this case, use one of the streams already created by the memory manager
+    bool streamModeEnabled = _stream != NULL;
+    if (!streamModeEnabled)
+    {
+      const auto deviceId = deviceMemSlot->getDeviceId();
+      const auto deviceStatus = _deviceStatusMap.at(deviceId);
+      selectDevice(deviceStatus.context, deviceId);
+      // get one of the already created streams
+      _stream = _deviceStreamMap.at(deviceId);
+    }
 
-    source->increaseMessagesSent();
-    destination->increaseMessagesRecv();
+    // execute memcpy
+    err = aclrtMemcpyAsync(actualDstPtr, size, actualSrcPtr, size, memcpyKind, _stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not perform memcpy of type %d from device %d to device %d. Error %d", memcpyKind, srcDeviceId, dstDeviceId, err);
+
+    // increase message counters and keep track of streams in memory slot
+    s->increaseMessagesSent();
+    d->increaseMessagesRecv();
   }
 
   /**
@@ -389,7 +453,12 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
-    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+    // no need to fence if stream not set
+    if (_stream == NULL) return;
+    // no need to do context setting
+    aclError err = aclrtSynchronizeStream(_stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy stream. Error %d", err);
+    _stream = NULL;
   }
 
   __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override

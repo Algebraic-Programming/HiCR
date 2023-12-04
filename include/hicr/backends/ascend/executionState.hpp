@@ -52,17 +52,35 @@ class ExecutionState final : public HiCR::ExecutionState
 
     _executionUnit = e;
 
-    // allocate synchronization variable
-    aclError err = aclrtMallocHost((void **)&_synchronize, sizeof(int8_t));
+    aclError err = aclrtCreateEvent(&_syncEvent);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
   }
 
   ~ExecutionState()
   {
-    // free synchronization variable
-    aclError err = aclrtFreeHost(_synchronize);
+    aclError err = aclrtDestroyEvent(_syncEvent);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to free synchronize bit");
   };
+
+  /**
+   * Synchronize and destroy the currently used stream
+   */
+  __USED__ inline void finalizeStream()
+  {
+    if (_isStreamActive)
+    {
+      // synchronize on the stream
+      aclError err = aclrtSynchronizeStream(_stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to synchronize stream after kernel execution. Error %d", err);
+
+      // destroy the stream
+      err = aclrtDestroyStream(_stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
+
+      // avoid deleting the stream more than once
+      _isStreamActive = false;
+    }
+  }
 
   protected:
 
@@ -81,16 +99,11 @@ class ExecutionState final : public HiCR::ExecutionState
 
     _isStreamActive = true;
 
-    // set the synchronize variable to 0
-    err = aclrtMemset((void *)_synchronize, sizeof(int8_t), 0, sizeof(int8_t));
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not initialize synchronize bit");
-
     // start the sequence of kernels execution
     _executionUnit->start(_stream);
 
-    // add a memset to the synchronization bit as the last operation on the stream.
-    // This is a workaround to the stream query status
-    err = aclrtMemsetAsync((void *)_synchronize, sizeof(int8_t), 1, sizeof(int8_t), _stream);
+    // add an event at the end of the operations to query its status and check for completion
+    err = aclrtRecordEvent(_syncEvent, _stream);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
   }
 
@@ -100,26 +113,24 @@ class ExecutionState final : public HiCR::ExecutionState
   }
 
   /**
-   * Internal implementation of checkFinalization routine. It periodically query the ACL stream to check for completion.
+   * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and
+   * automatically deletes the stream once it completes.
    *
    * \return whether all the kernels described in the execution unit finished.
    */
   __USED__ inline bool checkFinalizationImpl() override
   {
-    // check the synchronization for stream completion
-    if (*_synchronize == 0) return false;
+    // Check if the event has been processed
+    aclrtEventRecordedStatus status;
+    aclError err = aclrtQueryEventStatus(_syncEvent, &status);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to query event status. err %d", err);
 
-    if (_isStreamActive)
-    {
-      // synchronize on the stream
-      aclError err = aclrtSynchronizeStream(_stream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to synchronize stream after kernel execution. Error %d", err);
-      // destroy the stream
-      err = aclrtDestroyStream(_stream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
+    // check the synchronization event status for stream completion
+    if (status == ACL_EVENT_RECORDED_STATUS_NOT_READY) return false;
 
-      _isStreamActive = false;
-    }
+    // synchronize the stream and destroy it
+    finalizeStream();
+
     return true;
   }
 
@@ -144,9 +155,9 @@ class ExecutionState final : public HiCR::ExecutionState
   aclrtStream _stream;
 
   /**
-   * Synchronization variable to check for stream completion
+   * Synchronization event to check for stream completion
    */
-  int8_t *_synchronize;
+  aclrtEvent _syncEvent;
 
   /**
    * Keep track of the stream status

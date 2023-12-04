@@ -19,6 +19,7 @@
 #include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/backends/ascend/processingUnit.hpp>
 #include <hicr/backends/computeManager.hpp>
+#include <unordered_map>
 namespace HiCR
 {
 
@@ -92,7 +93,7 @@ class ComputeManager final : public backend::ComputeManager
   /**
    * Keep track of the device context for each computeResourceId/deviceId
    */
-  const std::map<computeResourceId_t, ascendState_t> &_deviceStatusMap;
+  const std::unordered_map<computeResourceId_t, ascendState_t> &_deviceStatusMap;
 
   /**
    * Internal implementaion of queryComputeResource routine.
@@ -120,7 +121,7 @@ class ComputeManager final : public backend::ComputeManager
   __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
     if (_deviceStatusMap.at(resource).deviceType == deviceType_t::Host) HICR_THROW_RUNTIME("Ascend backend can not create a processing unit on the host.");
-    return std::make_unique<ProcessingUnit>(resource, _deviceStatusMap.at(resource).context);
+    return std::make_unique<ProcessingUnit>(resource);
   }
 };
 

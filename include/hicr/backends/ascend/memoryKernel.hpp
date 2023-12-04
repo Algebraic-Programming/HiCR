@@ -33,6 +33,8 @@ namespace kernel
 /**
  * This class represents a replicable Memory Kernel for the ascend backend.
  * A Memory Kernel enable the execution of memcopy operations in a stream/sequence of Kernels.
+ * Memory Kernels currently supports memcpy operations on the same device, since they are meant to be chained
+ * with other Kernels.
  */
 class MemoryKernel final : public Kernel
 {
@@ -71,6 +73,7 @@ class MemoryKernel final : public Kernel
   {
     _memManager->setMemcpyStream(stream);
     _memManager->memcpy(_dst, _dstOffset, _src, _srcOffset, _size);
+    _memManager->resetMemcpyStream();
   }
 
   private:
