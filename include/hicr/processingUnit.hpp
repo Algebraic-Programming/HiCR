@@ -195,6 +195,16 @@ class ProcessingUnit
    */
   __USED__ inline computeResourceId_t getComputeResourceId() { return _computeResourceId; }
 
+  /**
+   * This function enables the creation of an empty execution state object.
+   *
+   * The instantiation of its internal memory structures is delayed until explicit initialization to reduce memory usage when, for example, scheduling many tasks that do not need to execute at the same time.
+   *
+   * \param[in] executionUnit The replicable state-less execution unit to instantiate into an execution state
+   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
+   */
+  virtual std::unique_ptr<ExecutionState> createExecutionState(HiCR::ExecutionUnit *executionUnit) = 0;
+
   protected:
 
   /**
@@ -241,10 +251,5 @@ class ProcessingUnit
    */
   computeResourceId_t _computeResourceId;
 };
-
-/**
- * Type definition for a generic memory space identifier
- */
-typedef std::vector<ProcessingUnit *> processingUnitList_t;
 
 } // namespace HiCR

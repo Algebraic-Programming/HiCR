@@ -11,8 +11,6 @@ aclDep = [ ]
 aclLinkArgs = [
    '-L/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64/stub',
    '-lascendcl',
-   '-L/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64',
-   '-lhccl'
 ]
 
 aclDeps = declare_dependency(

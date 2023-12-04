@@ -64,9 +64,14 @@ class MemorySlot final : public HiCR::MemorySlot
     const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey),
                                        _bindingType(bindingType)
   {
+    pthread_mutex_init(&_mutex, NULL);
   }
 
-  ~MemorySlot() = default;
+  ~MemorySlot()
+  {
+    // Freeing mutex memory
+    pthread_mutex_destroy(&_mutex);
+  }
 
   /**
    * Returns the binding type used to allocate/register this memory slot
@@ -75,12 +80,38 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   __USED__ inline binding_type getBindingType() const { return _bindingType; }
 
+  /**
+   * Attempts to lock memory lock using its pthread mutex object
+   *
+   * This function never blocks the caller
+   *
+   * @return True, if successful; false, otherwise.
+   */
+  __USED__ inline bool trylock() { return pthread_mutex_trylock(&_mutex) == 0; }
+
+  /**
+   * Attempts to lock memory lock using its pthread mutex object
+   *
+   * This function might block the caller if the memory slot is already locked
+   */
+  __USED__ inline void lock() { pthread_mutex_lock(&_mutex); }
+
+  /**
+   * Unlocks the memory slot, if previously locked by the caller
+   */
+  __USED__ inline void unlock() { pthread_mutex_unlock(&_mutex); }
+
   private:
 
   /**
    * Store whether a bound memory allocation has performed
    */
   binding_type _bindingType;
+
+  /**
+   * Internal memory slot mutex to enforce lock acquisition
+   */
+  pthread_mutex_t _mutex;
 };
 
 } // namespace sharedMemory

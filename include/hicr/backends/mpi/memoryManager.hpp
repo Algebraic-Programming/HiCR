@@ -14,6 +14,7 @@
 
 #include <hicr/backends/memoryManager.hpp>
 #include <hicr/backends/mpi/memorySlot.hpp>
+#include <hicr/backends/sequential/memoryManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <mpi.h>
 
@@ -25,6 +26,11 @@ namespace backend
 
 namespace mpi
 {
+
+/**
+ * This macro represents an identifier for the default system-wide memory space in this backend
+ */
+#define _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID 0
 
 /**
  * Implementation of the HiCR MPI backend
@@ -48,6 +54,24 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   }
 
   ~MemoryManager() = default;
+
+  /**
+   * MPI Communicator getter
+   * \return The internal MPI communicator used during the instantiation of this class
+   */
+  const MPI_Comm getComm() const { return _comm; }
+
+  /**
+   * MPI Communicator size getter
+   * \return The size of the internal MPI communicator used during the instantiation of this class
+   */
+  const int getSize() const { return _size; }
+
+  /**
+   * MPI Communicator rank getter
+   * \return The rank within the internal MPI communicator used during the instantiation of this class that corresponds to this instance
+   */
+  const int getRank() const { return _rank; }
 
   private:
 
@@ -74,22 +98,25 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
-    HICR_THROW_RUNTIME("This backend provides no support for memory spaces");
+    if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
+      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
+
+    return sequential::MemoryManager::getTotalSystemMemory();
   }
 
   /**
-   * The MPI backend offers no memory spaces
+   * Sequential backend implementation that returns a single memory space representing the entire RAM host memory.
    */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
-    // No memory spaces are provided by this backend
-    return memorySpaceList_t({});
+    // Only a single memory space is created
+    return memorySpaceList_t({_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID});
   }
 
-  __USED__ inline void lockMPIWindow(const int rank, MPI_Win *window)
+  __USED__ inline void lockMPIWindow(const int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
     // Locking MPI window to ensure the messages arrives before returning
-    auto status = MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, *window);
+    auto status = MPI_Win_lock(MPILockType, rank, MPIAssert, *window);
 
     // Checking correct locking
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
@@ -110,7 +137,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // on these operations, so I rather do the whole thing manually.
 
     // Locking MPI window to ensure the messages arrives before returning
-    lockMPIWindow(rank, window);
+    lockMPIWindow(rank, window, MPI_LOCK_EXCLUSIVE, 0);
 
     // Getting remote counter into the local conter
     size_t accumulatorBuffer = 0;
@@ -158,6 +185,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // Sanity checks
     if (isSourceRemote == true && isDestinationRemote == true) HICR_THROW_LOGIC("Trying to use MPI backend perform a remote to remote copy between slots");
 
+    // Check if we already acquired a lock on the memory slots
+    [[maybe_unused]] bool isSourceSlotLockAcquired = source->getLockAcquiredValue();
+    [[maybe_unused]] bool isDestinationSlotLockAcquired = destination->getLockAcquiredValue();
+
     // Calculating pointers
     [[maybe_unused]] auto destinationPointer = (void *)(((uint8_t *)destination->getPointer()) + dst_offset);
     [[maybe_unused]] auto sourcePointer = (void *)(((uint8_t *)source->getPointer()) + sourceOffset);
@@ -173,8 +204,8 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // Perform a get if the source is remote and destination is local
     if (isSourceRemote == true && isDestinationRemote == false)
     {
-      // Locking MPI window to ensure the messages arrives before returning
-      lockMPIWindow(sourceRank, sourceDataWindow);
+      // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
+      if (isSourceSlotLockAcquired == false) lockMPIWindow(sourceRank, sourceDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
 
       // Executing the get operation
       auto status = MPI_Get(destinationPointer, size, MPI_BYTE, sourceRank, sourceOffset, size, MPI_BYTE, *sourceDataWindow);
@@ -182,8 +213,11 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       // Checking execution status
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get");
 
-      // Unlocking window after copy is completed
-      unlockMPIWindow(sourceRank, sourceDataWindow);
+      // Making sure the operation finished
+      MPI_Win_flush(sourceRank, *sourceDataWindow);
+
+      // Unlocking window, if taken, after copy is completed
+      if (isSourceSlotLockAcquired == false) unlockMPIWindow(sourceRank, sourceDataWindow);
 
       // Increasing the remote sent message counter and local destination received message counter
       increaseWindowCounter(sourceRank, sourceSentMessageWindow);
@@ -193,16 +227,19 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // Perform a put if source is local and destination is remote
     if (isSourceRemote == false && isDestinationRemote == true)
     {
-      // Locking MPI window to ensure the messages arrives before returning
-      lockMPIWindow(destinationRank, destinationDataWindow);
+      // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
+      if (isDestinationSlotLockAcquired == false) lockMPIWindow(destinationRank, destinationDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
 
       // Executing the put operation
       auto status = MPI_Put(sourcePointer, size, MPI_BYTE, destinationRank, dst_offset, size, MPI_BYTE, *destinationDataWindow);
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put");
 
-      // Unlocking window after copy is completed
-      unlockMPIWindow(destinationRank, destinationDataWindow);
+      // Making sure the operation finished
+      MPI_Win_flush(destinationRank, *destinationDataWindow);
+
+      // Unlocking window, if taken, after copy is completed
+      if (isDestinationSlotLockAcquired == false) unlockMPIWindow(destinationRank, destinationDataWindow);
 
       // Increasing the remote received message counter and local sent message counter
       increaseWindowCounter(destinationRank, destinationRecvMessageWindow);
@@ -279,7 +316,40 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    */
   __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
-    HICR_THROW_RUNTIME("This backend provides no support for memory allocation");
+    if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
+      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
+
+    // Storage for the new pointer
+    void *ptr = NULL;
+
+    // Attempting to allocate the new memory slot
+    auto status = MPI_Alloc_mem(size, MPI_INFO_NULL, &ptr);
+
+    // Check whether it was successful
+    if (status != MPI_SUCCESS || ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
+
+    // Creating and returning new memory slot
+    return registerLocalMemorySlotImpl(ptr, size);
+  }
+
+  /**
+   * Frees up a local memory slot reserved from this memory space
+   *
+   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
+   */
+  __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    // Getting memory slot pointer
+    const auto pointer = memorySlot->getPointer();
+
+    // Checking whether the pointer is valid
+    if (pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
+
+    // Deallocating memory using MPI's free mechanism
+    auto status = MPI_Free_mem(pointer);
+
+    // Check whether it was successful
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Could not free memory slot (ptr: 0x%lX, size: %lu)", pointer, memorySlot->getSize());
   }
 
   /**
@@ -449,14 +519,37 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     }
   }
 
-  /**
-   * Frees up a local memory slot reserved from this memory space
-   *
-   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
-   */
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
   {
-    HICR_THROW_RUNTIME("This backend provides no support for memory freeing");
+    // Getting up-casted pointer for the execution unit
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+    // Locking access to all relevant memory slot windows
+    lockMPIWindow(m->getRank(), m->getDataWindow(), MPI_LOCK_EXCLUSIVE, 0);
+
+    // Setting memory slot lock as aquired
+    m->setLockAcquiredValue(true);
+
+    // This function is assumed to always succeed
+    return true;
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    // Getting up-casted pointer for the execution unit
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+    // Releasing access to all relevant memory slot windows
+    unlockMPIWindow(m->getRank(), m->getDataWindow());
+
+    // Setting memory slot lock as released
+    m->setLockAcquiredValue(false);
   }
 };
 

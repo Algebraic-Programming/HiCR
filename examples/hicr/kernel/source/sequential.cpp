@@ -1,38 +1,34 @@
 #include <stdio.h>
 #include <hicr/backends/sequential/computeManager.hpp>
-#include <hicr.hpp>
 
 int main(int argc, char **argv)
 {
- // Initializing sequential backend
- HiCR::backend::sequential::ComputeManager computeManager;
+  // Initializing sequential backend
+  HiCR::backend::sequential::ComputeManager computeManager;
 
- auto fcLambda = []() { printf("Hello, World!\n");};
+  auto fcLambda = []()
+  { printf("Hello, World!\n"); };
 
- // Creating execution unit
- auto executionUnit = computeManager.createExecutionUnit(fcLambda);
+  // Creating execution unit
+  auto executionUnit = computeManager.createExecutionUnit(fcLambda);
 
- // Querying compute resources
- computeManager.queryComputeResources();
+  // Querying compute resources
+  computeManager.queryComputeResources();
 
- // Getting compute resources
- auto computeResources = computeManager.getComputeResourceList();
+  // Getting compute resources
+  auto computeResources = computeManager.getComputeResourceList();
 
- // Creating processing unit from the compute resource
- auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
+  // Creating processing unit from the compute resource
+  auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
 
- // Initializing processing unit
- processingUnit->initialize();
+  // Initializing processing unit
+  processingUnit->initialize();
 
- // Asking the processing unit to create a new execution state from the given execution unit (stateless)
- auto executionState = computeManager.createExecutionState();
+  // Asking the processing unit to create a new execution state from the given execution unit (stateless)
+  auto executionState = processingUnit->createExecutionState(executionUnit);
 
- // Initializing execution state with the execution unit
- executionState->initialize(executionUnit);
+  // Running compute unit with the newly created execution state
+  processingUnit->start(std::move(executionState));
 
- // Running compute unit with the newly created execution state
- processingUnit->start(std::move(executionState));
-
- return 0;
+  return 0;
 }
-

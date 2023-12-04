@@ -51,14 +51,6 @@ class ComputeManager final : public backend::ComputeManager
    */
   ~ComputeManager() = default;
 
-  protected:
-
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionStateImpl() override
-  {
-    // Creating and returning new execution state
-    return std::make_unique<sequential::ExecutionState>();
-  }
-
   private:
 
   /**
@@ -70,9 +62,9 @@ class ComputeManager final : public backend::ComputeManager
     return computeResourceList_t({0});
   }
 
-  __USED__ inline HiCR::ProcessingUnit *createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
   {
-    return new ProcessingUnit(resource);
+    return std::make_unique<ProcessingUnit>(resource);
   }
 };
 

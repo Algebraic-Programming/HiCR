@@ -12,7 +12,8 @@
 
 #pragma once
 #include <atomic>
-#include <hicr.hpp>
+#include <hicr/task.hpp>
+#include <hicr/worker.hpp>
 #include <map>
 #include <mutex>
 #include <taskr/common.hpp>
@@ -85,7 +86,7 @@ class Runtime
   /**
    * The processing units assigned to taskr to run workers from
    */
-  HiCR::processingUnitList_t _processingUnits;
+  std::vector<std::unique_ptr<HiCR::ProcessingUnit>> _processingUnits;
 
   /**
    * This function checks whether a given task is ready to go (i.e., all its dependencies have been satisfied)
@@ -179,9 +180,9 @@ class Runtime
    *
    * \param[in] pu The processing unit to add
    */
-  __USED__ inline void addProcessingUnit(HiCR::ProcessingUnit *pu)
+  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::ProcessingUnit> pu)
   {
-    _processingUnits.push_back(pu);
+    _processingUnits.push_back(std::move(pu));
   }
 
   /**
@@ -317,7 +318,7 @@ class Runtime
       auto worker = new HiCR::Worker(computeManager);
 
       // Assigning resource to the thread
-      worker->addProcessingUnit(pu);
+      worker->addProcessingUnit(std::move(pu));
 
       // Assigning worker to the common dispatcher
       worker->subscribe(_dispatcher);

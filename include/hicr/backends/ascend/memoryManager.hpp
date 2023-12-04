@@ -13,11 +13,11 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hccl/hccl.h>
+#include <hicr/backends/ascend/common.hpp>
+#include <hicr/backends/ascend/init.hpp>
 #include <hicr/backends/ascend/memorySlot.hpp>
 #include <hicr/backends/memoryManager.hpp>
-#include <hicr/backends/sequential/memoryManager.hpp>
-#include <hicr/common/definitions.hpp>
+#include <unordered_map>
 
 namespace HiCR
 {
@@ -29,108 +29,108 @@ namespace ascend
 {
 
 /**
- * Implementation of the HiCR MPI backend
+ * Implementation of the Memory Manager for the Ascend backend.
  *
- * This backend is very useful for testing other HiCR modules in isolation (unit tests) without involving the use of threading, which might incur side-effects
+ * It stores the memory spaces detected by the Ascend computing language
  */
 class MemoryManager final : public backend::MemoryManager
 {
   public:
 
   /**
-   * Constructor for the ascend backend.
+   * Constructor for the ascend memory manager class for the ascend backend.
    *
-   * \param[in] config_path configuration file to initialize ACL
+   * \param i ACL initializer
    */
-  MemoryManager(const char *config_path = NULL) : HiCR::backend::MemoryManager()
+  MemoryManager(const Initializer &i) : HiCR::backend::MemoryManager(), _deviceStatusMap(i.getContexts())
   {
     aclError err;
-    err = aclInit(config_path);
+    aclrtStream stream;
+    // create the stream to be used in the memcpy operations
+    for (const auto &[deviceId, deviceStatus] : _deviceStatusMap)
+    {
+      // skip the host device
+      if (deviceStatus.deviceType == deviceType_t::Host) continue;
 
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
-  }
+      selectDevice(deviceStatus.context, deviceId);
+
+      err = aclrtCreateStream(&stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d. Error %d", deviceId, err);
+
+      _deviceStreamMap[deviceId] = stream;
+    }
+  };
 
   ~MemoryManager()
   {
-    // Destroy HCCL communicators among Ascends
-    destroyHcclCommunicators();
-    free(hcclComms);
-
-    // Destroy Ascend contexts
-    for (const auto memSpaceData : _deviceStatusMap)
+    aclError err;
+    // destroy the stream created in the constructor
+    for (const auto &[deviceId, deviceStream] : _deviceStreamMap)
     {
-      (void)aclrtDestroyContext(memSpaceData.second.context);
+      const auto deviceStatus = _deviceStatusMap.at(deviceId);
+
+      selectDevice(deviceStatus.context, deviceId);
+
+      err = aclrtDestroyStream(deviceStream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy stream on device %d. Error %d", deviceId, err);
+    }
+  };
+
+  /**
+   * Set the ACL \p stream in which the next memcpy operations needs to be executed.
+   *
+   * \param stream ACL stream on which future memcpy will be executed
+   */
+  __USED__ inline void setMemcpyStream(const aclrtStream stream)
+  {
+    _stream = stream;
+  }
+
+  /**
+   * Reset the ACL \p stream to its default value.
+   *
+   */
+  __USED__ inline void resetMemcpyStream()
+  {
+    _stream = NULL;
+  }
+
+  /**
+   * Get the device id associated with the host system
+   *
+   * \param memorySpaces the collection of memorySpaces
+   *
+   * \return the id associated with the host memory
+   */
+  __USED__ inline const memorySpaceId_t getHostId(const std::set<memorySpaceId_t> memorySpaces)
+  {
+    for (const auto m : memorySpaces)
+    {
+      if (_deviceStatusMap.at(m).deviceType == deviceType_t::Host) return m;
     }
 
-    _deviceStatusMap.clear();
-
-    // Finalize ACL environment
-    (void)aclFinalize();
+    HICR_THROW_RUNTIME("No ID associated with the host system");
   }
 
   private:
 
   /**
-   * Enum used to determine if an ascendState_t represents the host system or an Ascend card
-   */
-  enum deviceType_t
-  {
-    Host = 0,
-    Npu
-  };
-
-  /**
-   * Keeps track of how many devices are connected to the host
-   */
-  uint32_t deviceCount;
-
-  /**
-   * MPI-like communicators to transmit data among Ascends
-   */
-  HcclComm *hcclComms = NULL;
-
-  struct ascendState_t
-  {
-    /**
-     * remember the context associated to a device
-     */
-    aclrtContext context;
-
-    /**
-     * Tells whether the context represents the host system or the Ascend
-     */
-    deviceType_t deviceType;
-
-    /**
-     * memory size of the device
-     */
-    size_t size;
-  };
-
-  /**
    * Keep track of the context for each memorySpaceId/deviceId
    */
-  std::map<memorySpaceId_t, ascendState_t> _deviceStatusMap;
+  const std::unordered_map<memorySpaceId_t, ascendState_t> &_deviceStatusMap;
 
+  std::unordered_map<memorySpaceId_t, aclrtStream> _deviceStreamMap;
   /**
-   * Set the device on which the operations needs to be executed
-   *
-   * \param[in] memorySpace the device identifier
+   * Stream on which memcpy operations are executed. The default value is NULL (use the default ACL stream)
    */
-  __USED__ inline void selectDevice(const memorySpaceId_t memorySpace)
-  {
-    aclError err;
-
-    // select the device context on which we should allocate the memory
-    err = aclrtSetCurrentContext(_deviceStatusMap[memorySpace].context);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not set ascend device %d. Error %d", memorySpace, err);
-  }
+  aclrtStream _stream = NULL;
 
   /**
-   * This function returns the available allocatable size in the current system RAM
+   * This function returns the available allocatable size (HBM) in the current system RAM
    *
-   * @param[in] memorySpace Either the memory space representing the device or the host
-   * @return The allocatable size within the system
+   * \param memorySpace either the memory space representing the device or the host system
+   *
+   * \return the allocatable size within the system
    */
   __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
   {
@@ -140,126 +140,18 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-   * Ascend backend implementation that returns a memory space representing the entire RAM device memory and the
-   * other ones representing the Ascends connected to the host. Once the memory spaces are discovered, the HCCL
-   * communicators are configured to enable device-to-device communication.
+   * Backend-internal implementation that returns a memory space representing the entire RAM device memory and the
+   * other ones representing the Ascends connected to the host.
    *
    * \return a list of memory spaces representing the system status (host memory + ascend devices connected)
    */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
-    // Discover memory spaces
-    const auto memorySpaceList = createMemorySpacesListAndSetupContexts();
-
-    // setup HCCL communication
-    setupHccl();
-
-    return memorySpaceList;
-  }
-
-  /**
-   * Destroy the HCCL communicators used for the device-to-device communication.
-   */
-  __USED__ inline void destroyHcclCommunicators()
-  {
-    if (hcclComms == NULL) return;
-
-    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
-    {
-      (void)HcclCommDestroy(hcclComms[deviceId]);
-    }
-  }
-
-  /**
-   * Setup HCCL. This method populates the hccl communicators and initialize the peer communication
-   * channels among ascends.
-   */
-  __USED__ inline void setupHccl()
-  {
-    if (hcclComms == NULL) hcclComms = new HcclComm[deviceCount]();
-
-    // destroy previously allocated hccl communicators
-    destroyHcclCommunicators();
-
-    HcclResult hcclErr;
-
-    // instruct the HCCL api on how many devices ID are present
-    int32_t devices[deviceCount];
-    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
-    {
-      devices[deviceId] = deviceId;
-    }
-
-    // Setup a single-process multiple card communication
-    hcclErr = HcclCommInitAll(deviceCount, devices, hcclComms);
-    if (hcclErr != HCCL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize HCCL. Error %d", hcclErr);
-
-    int32_t canAccessPeer = 0;
-    aclError err;
-
-    // enable communication among each pair of ascend cards
-    for (uint32_t src = 0; src < deviceCount; src++)
-    {
-      for (uint32_t dst = 0; dst < deviceCount; dst++)
-      {
-        if (src == dst) continue;
-        err = aclrtDeviceCanAccessPeer(&canAccessPeer, src, dst);
-        if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine peer accessibility to device %ld from device %ld.. Error %d", dst, src, err);
-
-        if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dst, src, err);
-
-        selectDevice(dst);
-        err = aclrtDeviceEnablePeerAccess(src, 0);
-        if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable peer access from device %ld to device %ld. Error %d", dst, src, err);
-      }
-    }
-  }
-
-  /**
-   * Ascend backend implementation that returns a list of memory space representing the host memory and the Ascend cards with the context already initialized.
-   *
-   * \return A list of memory spaces that comprise both the Ascend devices and the host.
-   */
-  __USED__ inline memorySpaceList_t createMemorySpacesListAndSetupContexts()
-  {
-    // Clearing existing memory space map
-    _deviceStatusMap.clear();
-
     // New memory space list to return
     memorySpaceList_t memorySpaceList;
 
-    // Ask ACL for available devices
-    aclError err;
-    err = aclrtGetDeviceCount(&deviceCount);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
-
-    size_t ascendFreeMemory, ascendMemorySize;
-    aclrtContext deviceContext;
-
     // Add as many memory spaces as devices
-    for (uint32_t deviceId = 0; deviceId < deviceCount; ++deviceId)
-    {
-      // Create the device context
-      err = aclrtCreateContext(&deviceContext, deviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
-
-      // Select the device by setting the context
-      err = aclrtSetCurrentContext(deviceContext);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context in ascend device %d. Error %d", deviceId, err);
-
-      // Retrieve the memory info
-      err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
-
-      // update the internal data structure
-      _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = ascendMemorySize};
-      memorySpaceList.insert(deviceId);
-    }
-
-    // init host context
-    const auto hostMemorySize = HiCR::backend::sequential::MemoryManager::getTotalSystemMemory();
-    _deviceStatusMap[deviceCount] = ascendState_t{.deviceType = deviceType_t::Host, .size = hostMemorySize};
-    memorySpaceList.insert(deviceCount);
+    for (const auto [deviceId, _] : _deviceStatusMap) memorySpaceList.insert(deviceId);
 
     return memorySpaceList;
   }
@@ -267,31 +159,38 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Backend-internal implementation of the queryLocalMemorySlot function
    *
-   * \param[in] memorySpaceId Memory space to allocate memory in
-   * \param[in] size Size of the memory slot to create
-   * \return The internal pointer associated to the local memory slot
+   * \param[in] memorySpaceId memory space to allocate memory in
+   * \param[in] size size of the memory slot to create
+   * \return the internal pointer associated to the local memory slot
    */
   __USED__ inline MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
   {
     void *ptr = NULL;
+    aclDataBuffer *dataBuffer;
+
+    // discriminate whether the memory space id reprensets the host or the ascend devices
     if (_deviceStatusMap.at(memorySpaceId).deviceType == deviceType_t::Host)
     {
+      // do a malloc on the host and do not create the databuffer
       ptr = hostAlloc(size);
+      dataBuffer = NULL;
     }
     else
     {
+      // do a malloc on the ascend and create the databuffer
       ptr = deviceAlloc(memorySpaceId, size);
+      dataBuffer = aclCreateDataBuffer(ptr, size);
+      if (dataBuffer == NULL) HICR_THROW_RUNTIME("Can not create data buffer in memory space %d", memorySpaceId);
     }
 
-    // keep track of the mapping between unique identifier and pointer + deviceId
-    auto memorySlot = new MemorySlot(memorySpaceId, ptr, size);
-
-    return memorySlot;
+    // create the new memory slot
+    return new MemorySlot(memorySpaceId, ptr, size, dataBuffer);
   }
+
   /**
    * Allocate memory on the Host memory through Ascend-dedicated functions.
    *
-   * \param[in] size Allocation size
+   * \param size allocation size
    */
   __USED__ inline void *hostAlloc(const size_t size)
   {
@@ -307,15 +206,15 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Allocate memory on the Ascend memory through Ascend-dedicated functions.
    *
-   * \param[in] memorySpace Device id where memory is allocated
-   * \param[in] size Allocation size
+   * \param memorySpace device id where memory is allocated
+   * \param size allocation size
    */
   __USED__ inline void *deviceAlloc(const memorySpaceId_t memorySpace, const size_t size)
   {
-    void *ptr;
-
     // select the device context on which we should allocate the memory
-    selectDevice(memorySpace);
+    selectDevice(_deviceStatusMap.at(memorySpace).context, memorySpace);
+
+    void *ptr;
 
     // do the allocation on device memory
     aclError err = aclrtMalloc(&ptr, size, ACL_MEM_MALLOC_HUGE_FIRST);
@@ -324,11 +223,11 @@ class MemoryManager final : public backend::MemoryManager
     return ptr;
   }
   /**
-   * Backend-internal implementation of the registerLocalMemorySlot function
+   * Backend-internal implementation of the registerLocalMemorySlot function. Not implemented.
    *
-   * \param[in] ptr Pointer to the start of the memory slot
-   * \param[in] size Size of the memory slot to create
-   * \return A newly created memory slot
+   * \param ptr pointer to the start of the memory slot
+   * \param size size of the memory slot to create
+   * \return a newly created memory slot
    */
   __USED__ inline MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
@@ -338,7 +237,7 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function
    *
-   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
+   * \param memorySlot local memory slot to free up. It becomes unusable after freeing.
    */
   __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {
@@ -359,40 +258,41 @@ class MemoryManager final : public backend::MemoryManager
     else
     {
       freeDeviceMemorySlot(memorySlotDeviceId, memorySlotPointer);
+      aclError err = aclDestroyDataBuffer(m->getDataBuffer());
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy data buffer. Error %d", err);
     }
   }
 
   /**
    * Release memory on the Host memory through Ascend-dedicated functions.
    *
-   * \param[in] ptr Local memory to free up.
+   * \param ptr local memory to free up.
    */
   __USED__ inline void freeHostMemorySlot(const void *ptr)
   {
     aclError err;
     err = aclrtFreeHost((void *)ptr);
-    if (err != ACL_SUCCESS) HICR_THROW_LOGIC("Error while freeing host memory. Error %d", err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while freeing host memory. Error %d", err);
   }
 
   /**
    * Release memory on the Ascend memory through Ascend-dedicated functions.
    *
-   * \param[in] deviceId Device id where memory is allocated.
-   * \param[in] ptr Local memory to free up.
+   * \param deviceId device id where memory is allocated.
+   * \param ptr local memory to free up.
    */
   __USED__ inline void freeDeviceMemorySlot(const deviceIdentifier_t deviceId, const void *ptr)
   {
-    selectDevice(deviceId);
+    selectDevice(_deviceStatusMap.at(deviceId).context, deviceId);
 
-    aclError err;
-    err = aclrtFree((void *)ptr);
-    if (err != ACL_SUCCESS) HICR_THROW_LOGIC("Error while freeing device %d memory. Error %d", deviceId, err);
+    aclError err = aclrtFree((void *)ptr);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while freeing device %d memory. Error %d", deviceId, err);
   }
 
   /**
    * Backend-internal implementation of the deregisterMemorySlot function
    *
-   * \param[in] memorySlot Memory slot to deregister.
+   * \param memorySlot memory slot to deregister.
    */
   __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {
@@ -402,7 +302,7 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Backend-internal implementation of the deregisterGlobalMemorySlotImpl function
    *
-   * \param[in] memorySlot Memory slot to deregister.
+   * \param memorySlot memory slot to deregister.
    */
   __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
   {
@@ -412,8 +312,8 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
-   * \param[in] tag Identifies a particular subset of global memory slots
-   * \param[in] memorySlots Array of local memory slots to make globally accessible
+   * \param tag identifies a particular subset of global memory slots
+   * \param memorySlots array of local memory slots to make globally accessible
    */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
@@ -423,7 +323,7 @@ class MemoryManager final : public backend::MemoryManager
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
    *
-   * \param[in] memorySlot Memory slot to query updates for.
+   * \param memorySlot memory slot to query updates for.
    */
   __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::MemorySlot *memorySlot) override
   {
@@ -431,15 +331,18 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-   * Backend-internal memcpy implementation.
-   * Restrictions: Only memory copying between Devices in the same thread or between different threads in the same process is supported.
-   * Memory copying between Devices in different processes is not supported.
+   * Backend-internal memcpy implementation. If the user provides a valid ACL stream via @ref setMemcpyStream() the function will reuse the stream for all the subsequent memcpy invocation on the same device,
+   * otherwise it will use one of the ones instantieted by the memory manager. This memcpy implementation does support asynchronous inter-device communication, meaning the fence should be called when date are
+   * moved among different ascend devices.
    *
-   * \param[in] destination Destination memory slot
-   * \param[in] dst_offset Destination offset
-   * \param[in] source Source memory slot
-   * \param[in] src_offset Source offset
-   * \param[in] size size how the data to be copied
+   * Restrictions:
+   * - Only memory copying between devices in the same thread or between different threads in the same process is supported. Memory copying between Devices in different processes is not supported.
+   *
+   * \param destination destination memory slot
+   * \param dst_offset destination offset
+   * \param source source memory slot
+   * \param src_offset source offset
+   * \param size the number of bytes to copy
    */
   __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
   {
@@ -467,30 +370,55 @@ class MemoryManager final : public backend::MemoryManager
     const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
     const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
 
+    // determine the correct memcpy kind
     aclrtMemcpyKind memcpyKind = getMemcpyKind(srcdeviceType, dstdeviceType);
 
+    MemorySlot *deviceMemSlot;
+
+    // select device according to memcpy kind
     if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE || (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE && dstDeviceId != srcDeviceId))
     {
-      selectDevice(dstDeviceId);
+      deviceMemSlot = d;
     }
     else if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE || memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)
     {
-      selectDevice(srcDeviceId);
+      deviceMemSlot = s;
+    }
+    else
+    {
+      // async memcpy not supported between host to host case
+      err = aclrtMemcpy(actualDstPtr, size, actualSrcPtr, size, memcpyKind);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not perform memcpy of type %d in host. Error %d", memcpyKind, err);
+      s->increaseMessagesSent();
+      d->increaseMessagesRecv();
+      return;
     }
 
-    err = aclrtMemcpy(actualDstPtr, size, actualSrcPtr, size, memcpyKind);
+    // if no stream has already been provided, there are no pending operations to execute. In this case, use one of the streams already created by the memory manager
+    bool streamModeEnabled = _stream != NULL;
+    if (!streamModeEnabled)
+    {
+      const auto deviceId = deviceMemSlot->getDeviceId();
+      const auto deviceStatus = _deviceStatusMap.at(deviceId);
+      selectDevice(deviceStatus.context, deviceId);
+      // get one of the already created streams
+      _stream = _deviceStreamMap.at(deviceId);
+    }
 
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not copy memory from device. Error %d", err);
+    // execute memcpy
+    err = aclrtMemcpyAsync(actualDstPtr, size, actualSrcPtr, size, memcpyKind, _stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not perform memcpy of type %d from device %d to device %d. Error %d", memcpyKind, srcDeviceId, dstDeviceId, err);
 
-    source->increaseMessagesSent();
-    destination->increaseMessagesRecv();
+    // increase message counters and keep track of streams in memory slot
+    s->increaseMessagesSent();
+    d->increaseMessagesRecv();
   }
 
   /**
    * Determine the correct kind of memcpy to be used according to the source and destination device (can be either ascend or host)
    *
-   * \param[in] src source device type
-   * \param[in] dst destination device type
+   * \param src source device type
+   * \param dst destination device type
    *
    * \return the memcpy kind to be used
    */
@@ -518,13 +446,29 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
-   * Backend-internal implementation of the fence function
+   * Backend-internal implementation of the fence function.
    *
-   * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
+   * \param tag A tag that releases all processes that share the same value once they have arrived at it
    *
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
+    // no need to fence if stream not set
+    if (_stream == NULL) return;
+    // no need to do context setting
+    aclError err = aclrtSynchronizeStream(_stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy stream. Error %d", err);
+    _stream = NULL;
+  }
+
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 };
 } // namespace ascend

@@ -42,7 +42,10 @@ class MemoryManager final : public backend::MemoryManager
   MemoryManager(const hwloc_topology_t *topology, const size_t fenceCount = 1) : backend::MemoryManager(), _topology{topology}
   {
     // Initializing barrier for fence operation
-    pthread_barrier_init(&_fenceBarrier, NULL, fenceCount);
+    pthread_barrier_init(&_barrier, NULL, fenceCount);
+
+    // Initializing mutex object
+    pthread_mutex_init(&_mutex, NULL);
   }
 
   /**
@@ -51,7 +54,10 @@ class MemoryManager final : public backend::MemoryManager
   ~MemoryManager()
   {
     // Freeing barrier memory
-    pthread_barrier_destroy(&_fenceBarrier);
+    pthread_barrier_destroy(&_barrier);
+
+    // Freeing mutex memory
+    pthread_mutex_destroy(&_mutex);
   }
 
   /**
@@ -78,9 +84,14 @@ class MemoryManager final : public backend::MemoryManager
   private:
 
   /**
-   * Stores a barrier object to check on a fence operation
+   * Stores a barrier object to check on a barrier operation
    */
-  pthread_barrier_t _fenceBarrier;
+  pthread_barrier_t _barrier;
+
+  /**
+   * A mutex to make sure threads do not bother each other during certain operations
+   */
+  pthread_mutex_t _mutex;
 
   /**
    * Structure representing a shared memory backend memory space
@@ -114,10 +125,13 @@ class MemoryManager final : public backend::MemoryManager
   const hwloc_topology_t *const _topology;
 
   /**
-   * Pthread implementation of the Backend queryResources() function. This will add one memory space object per NUMA domain found
+   * Hwloc implementation of the Backend queryResources() function. This will add one memory space object per NUMA domain found
    */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
+    // Doing this operation as a critical section
+    pthread_mutex_lock(&_mutex);
+
     // Loading topology
     hwloc_topology_load(*_topology);
 
@@ -153,6 +167,9 @@ class MemoryManager final : public backend::MemoryManager
       // Storing new memory space
       memorySpaceList.insert(i);
     }
+
+    // Releasing the lock
+    pthread_mutex_unlock(&_mutex);
 
     // Returning new memory space list
     return memorySpaceList;
@@ -227,6 +244,12 @@ class MemoryManager final : public backend::MemoryManager
    */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
+    // Synchronize all intervening threads in this call
+    barrier();
+
+    // Doing the promotion of memory slots as a critical section
+    pthread_mutex_lock(&_mutex);
+
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
     {
@@ -242,6 +265,12 @@ class MemoryManager final : public backend::MemoryManager
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
     }
+
+    // Releasing mutex
+    pthread_mutex_unlock(&_mutex);
+
+    // Do not allow any thread to continue until the exchange is made
+    barrier();
   }
 
   /**
@@ -305,13 +334,21 @@ class MemoryManager final : public backend::MemoryManager
   }
 
   /**
+   * A barrier implementation that synchronizes all threads in the HiCR instance
+   */
+  __USED__ inline void barrier()
+  {
+    pthread_barrier_wait(&_barrier);
+  }
+
+  /**
    * Implementation of the fence operation for the shared memory backend. In this case, nothing needs to be done, as
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
   __USED__ inline void fenceImpl(const tag_t tag) override
   {
-    pthread_barrier_wait(&_fenceBarrier);
+    barrier();
   }
 
   __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
@@ -330,6 +367,30 @@ class MemoryManager final : public backend::MemoryManager
     // Increasing message received/sent counters for memory slots
     source->increaseMessagesSent();
     destination->increaseMessagesRecv();
+  }
+
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    // Getting up-casted pointer for the execution unit
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+    // Locking mutex
+    return m->trylock();
+  }
+
+  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  {
+    // Getting up-casted pointer for the execution unit
+    auto m = dynamic_cast<MemorySlot *>(memorySlot);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+
+    // Locking mutex
+    m->unlock();
   }
 };
 

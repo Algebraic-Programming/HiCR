@@ -12,6 +12,7 @@
 #pragma once
 
 #include <hicr/memorySlot.hpp>
+#include <mpi.h>
 
 namespace HiCR
 {
@@ -60,30 +61,49 @@ class MemorySlot final : public HiCR::MemorySlot
    *
    * \return The rank to which this memory slot belongs
    */
-  const int getRank() { return _rank; }
+  __USED__ inline const int getRank() { return _rank; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the actual memory slot data
    *
    * \return A pointer to the MPI window for the actual memory slot data
    */
-  MPI_Win *&getDataWindow() { return _dataWindow; }
+  __USED__ inline MPI_Win *&getDataWindow() { return _dataWindow; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the received message count
    *
    * \return A pointer to the MPI window for the received message count
    */
-  MPI_Win *&getRecvMessageCountWindow() { return _recvMessageCountWindow; }
+  __USED__ inline MPI_Win *&getRecvMessageCountWindow() { return _recvMessageCountWindow; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the sent message count
    *
    * \return A pointer to the MPI window for the sent message count
    */
-  MPI_Win *&getSentMessageCountWindow() { return _sentMessageCountWindow; }
+  __USED__ inline MPI_Win *&getSentMessageCountWindow() { return _sentMessageCountWindow; }
+
+  /**
+   * Returns whether the memory slot lock has been acquired by the current MPI instance
+   *
+   * @return The internal state of _lockAcquired
+   */
+  __USED__ inline bool getLockAcquiredValue() const { return _lockAcquired; }
+
+  /**
+   * Sets memory slot lock state (whether it has been acquired by the current MPI instance or not)
+   *
+   * @param[in] value The internal state of _lockAcquired to set
+   */
+  __USED__ inline void setLockAcquiredValue(const bool value) { _lockAcquired = value; }
 
   private:
+
+  /**
+   * Indicates whether we hold a lock on the current slot's windows
+   */
+  bool _lockAcquired = false;
 
   /**
    * Remembers the MPI rank this memory slot belongs to

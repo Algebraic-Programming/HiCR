@@ -1,51 +1,44 @@
+#include "include/telephoneGame.hpp"
+#include <hicr/backends/ascend/init.hpp>
 #include <hicr/backends/ascend/memoryManager.hpp>
-#include <hicr.hpp>
-
-#define BUFFER_SIZE 256
-#define DST_OFFSET 0
-#define SRC_OFFSET 0
 
 int main(int argc, char **argv)
 {
-  // Instantiating Shared Memory m
-  HiCR::backend::ascend::MemoryManager m;
+  // Initialize ACL runtime
+  HiCR::backend::ascend::Initializer i;
+  i.init();
 
-  // Asking m to check the available resources
+  // Instantiating Memory manager
+  HiCR::backend::ascend::MemoryManager m(i);
+
+  // Asking the memory manager to check the available resources
   m.queryMemorySpaces();
 
   // Obtaining memory spaces
   auto memSpaces = m.getMemorySpaceList();
 
-  // Allocating memory slots in different Ascend devices and on host
-  auto hostSlot1 = m.allocateLocalMemorySlot(*memSpaces.end() - 1, BUFFER_SIZE);   // initial local host allocation  
-  auto ascendSlot1Device0 = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE);   // first allocation on Ascend device 0 
-  auto ascendSlot2Device0 = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE);   // second allocation on Ascend device 0 
-  auto ascendSlot1Device7 = m.allocateLocalMemorySlot(*memSpaces.end() - 2, BUFFER_SIZE); // first allocation on Ascend device 7
-  auto hostSlot2 = m.allocateLocalMemorySlot(*memSpaces.end() - 1, BUFFER_SIZE);   // final local host allocation
+  // Get the memory space id associated with the host
+  auto memoryHostId = m.getHostId(memSpaces);
+  // Make memory spaces contain only ascend device ids
+  memSpaces.erase(memoryHostId);
 
-  // populate starting host slot
-  sprintf((char *)hostSlot1->getPointer(), "Hello, HiCR user!\n");
+  // Define the order of mem spaces for the telephone game
+  auto memSpaceOrder = std::vector<HiCR::backend::MemoryManager::memorySpaceId_t>{};
+  memSpaceOrder.emplace_back(memoryHostId);
+  memSpaceOrder.insert(memSpaceOrder.end(), memSpaces.begin(), memSpaces.end());
+  memSpaceOrder.emplace_back(memoryHostId);
 
-  // perform the memcpys
-  m.memcpy(ascendSlot1Device0, DST_OFFSET, hostSlot1, SRC_OFFSET, BUFFER_SIZE);
-  m.memcpy(ascendSlot2Device0, DST_OFFSET, ascendSlot1Device0, SRC_OFFSET, BUFFER_SIZE);
-  m.memcpy(ascendSlot1Device7, DST_OFFSET, ascendSlot2Device0, SRC_OFFSET, BUFFER_SIZE);
-  m.memcpy(hostSlot2, DST_OFFSET, ascendSlot1Device7, SRC_OFFSET, BUFFER_SIZE);
+  // Allocate and populate input memory slot
+  auto input = m.allocateLocalMemorySlot(memoryHostId, BUFFER_SIZE);
+  sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 
-  // Checking whether the copy was successful
-  printf("start: %s\n", (const char *)hostSlot1->getPointer());
-  printf("result: %s\n", (const char *)hostSlot2->getPointer());
+  // Run the telephone game
+  telephoneGame(m, input, memSpaceOrder, 3);
 
-  // deallocate memory slots (the destructor wil take care of that)
-  m.freeLocalMemorySlot(hostSlot1);   
-  m.freeLocalMemorySlot(hostSlot2);   
-  m.freeLocalMemorySlot(ascendSlot1Device0); 
-  m.freeLocalMemorySlot(ascendSlot2Device0); 
-  m.freeLocalMemorySlot(ascendSlot1Device7); 
+  // Free input memory slot
+  m.freeLocalMemorySlot(input);
 
-
-  // Waiting on the operation to have finished
-  m.fence(0);
-
+  // Finalize ACL
+  i.finalize();
   return 0;
 }

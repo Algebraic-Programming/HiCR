@@ -122,7 +122,7 @@ class MemoryManager
   }
 
   /**
-   * Allocates a local memory slotin the specified memory space
+   * Allocates a local memory slot in the specified memory space
    *
    * \param[in] memorySpaceId Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
@@ -211,7 +211,7 @@ class MemoryManager
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag is not registered in this backend");
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag/key pair is not registered in this backend");
 
     // Calling internal implementation
     deregisterGlobalMemorySlotImpl(memorySlot);
@@ -356,6 +356,51 @@ class MemoryManager
   }
 
   /**
+   * This function ensures that the global memory slot is reserved exclusively for access by the caller.
+   *
+   * This function might (or might not) block the caller to satisfy the exclusion, if the lock is already held by another caller.
+   *
+   * @param[in] memorySlot The memory slot to reserve
+   * @return true, if the lock was acquired successfully; false, otherwise
+   */
+  __USED__ inline bool acquireGlobalLock(MemorySlot *memorySlot)
+  {
+    // Getting memory slot global information
+    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
+
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
+
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
+
+    // Calling internal implementation
+    return acquireGlobalLockImpl(memorySlot);
+  }
+
+  /**
+   * This function releases a previously acquired lock on a global memory slot
+   *
+   * @param[in] memorySlot The memory slot to release
+   */
+  __USED__ inline void releaseGlobalLock(MemorySlot *memorySlot)
+  {
+    // Getting memory slot global information
+    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
+
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
+
+    // Checking whether the memory slot is correctly registered as global
+    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
+
+    // Calling internal implementation
+    releaseGlobalLockImpl(memorySlot);
+  }
+
+  /**
    * This function flushes pending memcpy operations
    */
   __USED__ virtual inline void flush() {}
@@ -469,6 +514,19 @@ class MemoryManager
    *
    */
   virtual void fenceImpl(const tag_t tag) = 0;
+
+  /**
+   * Backend-specific implementation of the acquireGlobalLock function
+   * @param[in] memorySlot See the acquireGlobalLock function
+   * @return See the acquireGlobalLock function
+   */
+  virtual bool acquireGlobalLockImpl(MemorySlot *memorySlot) = 0;
+
+  /**
+   * Backend-specific implementation of the releaseGlobalLock function
+   * @param[in] memorySlot See the releaseGlobalLock function
+   */
+  virtual void releaseGlobalLockImpl(MemorySlot *memorySlot) = 0;
 
   /**
    * Storage for global tag/key associated global memory slot exchange
