@@ -1,12 +1,12 @@
-#include <hicr/backends/memoryManager.hpp>
-#include <hicr/memorySlot.hpp>
 #include <vector>
+#include <hicr/backends/memoryManager.hpp>
+#include <hicr/L0/memorySlot.hpp>
 
 #define BUFFER_SIZE 256
 #define DST_OFFSET 0
 #define SRC_OFFSET 0
 
-void telephoneGame(HiCR::backend::MemoryManager &m, HiCR::MemorySlot *input, std::vector<HiCR::backend::MemoryManager::memorySpaceId_t> memSpaces, int memcpyInMemspace)
+void telephoneGame(HiCR::backend::MemoryManager &m, HiCR::L0::MemorySlot *input, std::vector<HiCR::backend::MemoryManager::memorySpaceId_t> memSpaces, int memcpyInMemspace)
 {
   // Asking Memory manager to check the available resources
   m.queryMemorySpaces();
@@ -17,7 +17,7 @@ void telephoneGame(HiCR::backend::MemoryManager &m, HiCR::MemorySlot *input, std
   (void)memSpacesO;
 
   // Collect the newly created memory slots
-  auto memSlots = std::vector<HiCR::MemorySlot *>{};
+  auto memSlots = std::vector<HiCR::L0::MemorySlot *>{};
 
   // iterate all over the memory spaces and create multiple memory slots in each one
   for (HiCR::backend::MemoryManager::memorySpaceId_t memSpace : memSpaces)
@@ -30,8 +30,8 @@ void telephoneGame(HiCR::backend::MemoryManager &m, HiCR::MemorySlot *input, std
     }
   }
 
-  HiCR::MemorySlot *srcMemSlot = input;
-  HiCR::MemorySlot *output = *memSlots.rbegin();
+  HiCR::L0::MemorySlot *srcMemSlot = input;
+  HiCR::L0::MemorySlot *output = *memSlots.rbegin();
   int memcpyCount = 0;
   // perform the memcpy operations
   for (const auto dstMemSlot : memSlots)

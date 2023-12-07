@@ -10,10 +10,10 @@
  * @date 12/9/2023
  */
 
+#include <set>
 #include "gtest/gtest.h"
 #include <hicr/backends/sharedMemory/computeManager.hpp>
 #include <hicr/backends/sharedMemory/processingUnit.hpp>
-#include <set>
 
 namespace backend = HiCR::backend::sharedMemory;
 
@@ -81,7 +81,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   auto executionUnit = m.createExecutionUnit(fc);
 
   // Creating and initializing execution state
-  std::unique_ptr<HiCR::ExecutionState> executionState = NULL;
+  std::unique_ptr<HiCR::L0::ExecutionState> executionState = NULL;
   EXPECT_NO_THROW(executionState = std::move(p.createExecutionState(executionUnit)));
 
   // Starting execution state execution
@@ -103,11 +103,11 @@ TEST(ProcessingUnit, ThreadAffinity)
 
 TEST(ProcessingUnit, LifeCycle)
 {
-  HiCR::computeResourceId_t pId = 0;
+  HiCR::L0::computeResourceId_t pId = 0;
   backend::ProcessingUnit p(pId);
 
   // Checking that the correct resourceId was used
-  HiCR::computeResourceId_t pIdAlt = pId + 1;
+  HiCR::L0::computeResourceId_t pIdAlt = pId + 1;
   EXPECT_NO_THROW(pIdAlt = p.getComputeResourceId());
   EXPECT_EQ(pIdAlt, pId);
 

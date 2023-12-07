@@ -1,6 +1,6 @@
 #include <mpi.h>
 #include <hicr/backends/mpi/instanceManager.hpp>
-#include <hicr/machineModel/builder.hpp>
+#include <hicr/L2/machineModel/builder.hpp>
 
 #define HICR_MACHINE_MODEL_ROOT_INSTANCE_ID 0
 

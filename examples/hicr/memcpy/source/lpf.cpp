@@ -1,5 +1,5 @@
 #include <hicr/backends/lpf/memoryManager.hpp>
-#include <hicr/memorySlot.hpp>
+#include <hicr/L0/memorySlot.hpp>
 
 #include <lpf/core.h>
 #include <lpf/mpi.h>
@@ -27,7 +27,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   char *buffer1 = new char[BUFFER_SIZE];
 
   auto dstSlot = m.registerLocalMemorySlot(buffer1, BUFFER_SIZE);
-  std::vector<std::pair<size_t, HiCR::MemorySlot *>> promoted;
+  std::vector<std::pair<size_t, HiCR::L0::MemorySlot *>> promoted;
   promoted.push_back(std::make_pair(myProcess, dstSlot));
 
   // Performing all pending local to global memory slot promotions now
@@ -36,7 +36,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Synchronizing so that all actors have finished registering their global memory slots
   m.fence(CHANNEL_TAG);
 
-  HiCR::MemorySlot *myPromotedSlot;
+  HiCR::L0::MemorySlot *myPromotedSlot;
 
   if (myProcess == SENDER_PROCESS)
   {

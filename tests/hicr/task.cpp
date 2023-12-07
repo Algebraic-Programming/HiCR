@@ -12,30 +12,30 @@
 
 #include "gtest/gtest.h"
 #include <hicr/backends/sequential/computeManager.hpp>
-#include <hicr/task.hpp>
+#include <hicr/L1/tasking/task.hpp>
 
 TEST(Task, Construction)
 {
-  HiCR::Task *t = NULL;
-  HiCR::ExecutionUnit *u = NULL;
+  HiCR::L1::tasking::Task *t = NULL;
+  HiCR::L0::ExecutionUnit *u = NULL;
 
-  EXPECT_NO_THROW(t = new HiCR::Task(u, NULL));
+  EXPECT_NO_THROW(t = new HiCR::L1::tasking::Task(u, NULL));
   EXPECT_FALSE(t == nullptr);
   delete t;
 }
 
 TEST(Task, SetterAndGetters)
 {
-  HiCR::ExecutionUnit *u = NULL;
-  HiCR::Task t(u, NULL);
+  HiCR::L0::ExecutionUnit *u = NULL;
+  HiCR::L1::tasking::Task t(u, NULL);
 
-  HiCR::Task::taskEventMap_t e;
+  HiCR::L1::tasking::Task::taskEventMap_t e;
   EXPECT_NO_THROW(t.setEventMap(&e));
   EXPECT_EQ(t.getEventMap(), &e);
 
-  HiCR::ExecutionState::state_t state;
+  HiCR::L0::ExecutionState::state_t state;
   EXPECT_NO_THROW(state = t.getState());
-  EXPECT_EQ(state, HiCR::ExecutionState::state_t::uninitialized);
+  EXPECT_EQ(state, HiCR::L0::ExecutionState::state_t::uninitialized);
 }
 
 TEST(Task, Run)
@@ -45,16 +45,16 @@ TEST(Task, Run)
   bool hasCorrectTaskPointer = false;
 
   // Pointer for the task to create
-  HiCR::Task *t = NULL;
+  HiCR::L1::tasking::Task *t = NULL;
 
   // Creating task function
   auto f = [&t, &hasRunningState, &hasCorrectTaskPointer]()
   {
     // Checking whether the state is correctly assigned
-    if (t->getState() == HiCR::ExecutionState::state_t::running) hasRunningState = true;
+    if (t->getState() == HiCR::L0::ExecutionState::state_t::running) hasRunningState = true;
 
     // Checking whether the current task pointer is the correct one
-    if (HiCR::Task::getCurrentTask() == t) hasCorrectTaskPointer = true;
+    if (HiCR::L1::tasking::Task::getCurrentTask() == t) hasCorrectTaskPointer = true;
 
     // Yielding as many times as necessary
     t->suspend();
@@ -67,7 +67,7 @@ TEST(Task, Run)
   auto u = m.createExecutionUnit(f);
 
   // Creating task
-  t = new HiCR::Task(u);
+  t = new HiCR::L1::tasking::Task(u);
 
   // Querying compute resources
   m.queryComputeResources();
@@ -88,17 +88,17 @@ TEST(Task, Run)
   t->initialize(std::move(executionState));
 
   // A first run should start the task
-  EXPECT_EQ(t->getState(), HiCR::ExecutionState::state_t::initialized);
+  EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::initialized);
   EXPECT_NO_THROW(t->run());
   EXPECT_TRUE(hasRunningState);
   EXPECT_TRUE(hasCorrectTaskPointer);
-  EXPECT_EQ(t->getState(), HiCR::ExecutionState::state_t::suspended);
-  EXPECT_EQ(HiCR::Task::getCurrentTask(), (HiCR::Task *)NULL);
+  EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::suspended);
+  EXPECT_EQ(HiCR::L1::tasking::Task::getCurrentTask(), (HiCR::L1::tasking::Task *)NULL);
 
   // A second run should resume the task
   EXPECT_NO_THROW(t->run());
-  EXPECT_EQ(HiCR::Task::getCurrentTask(), (HiCR::Task *)NULL);
-  EXPECT_EQ(t->getState(), HiCR::ExecutionState::state_t::finished);
+  EXPECT_EQ(HiCR::L1::tasking::Task::getCurrentTask(), (HiCR::L1::tasking::Task *)NULL);
+  EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::finished);
 
   // The task has now finished, so a third run should fail
   EXPECT_THROW(t->run(), HiCR::common::RuntimeException);
@@ -113,23 +113,23 @@ TEST(Task, Events)
   bool onFinishHasRun = false;
 
   // Creating callbacks
-  auto onExecuteCallback = [&onExecuteHasRun](HiCR::Task *t)
+  auto onExecuteCallback = [&onExecuteHasRun](HiCR::L1::tasking::Task *t)
   { onExecuteHasRun = true; };
-  auto onSuspendCallback = [&onSuspendHasRun](HiCR::Task *t)
+  auto onSuspendCallback = [&onSuspendHasRun](HiCR::L1::tasking::Task *t)
   { onSuspendHasRun = true; };
-  auto onFinishCallback = [&onFinishHasRun](HiCR::Task *t)
+  auto onFinishCallback = [&onFinishHasRun](HiCR::L1::tasking::Task *t)
   { onFinishHasRun = true; delete t ; };
 
   // Creating event map
-  HiCR::Task::taskEventMap_t eventMap;
+  HiCR::L1::tasking::Task::taskEventMap_t eventMap;
 
   // Associating events to the map
-  eventMap.setEvent(HiCR::Task::event_t::onTaskExecute, onExecuteCallback);
-  eventMap.setEvent(HiCR::Task::event_t::onTaskSuspend, onSuspendCallback);
-  eventMap.setEvent(HiCR::Task::event_t::onTaskFinish, onFinishCallback);
+  eventMap.setEvent(HiCR::L1::tasking::Task::event_t::onTaskExecute, onExecuteCallback);
+  eventMap.setEvent(HiCR::L1::tasking::Task::event_t::onTaskSuspend, onSuspendCallback);
+  eventMap.setEvent(HiCR::L1::tasking::Task::event_t::onTaskFinish, onFinishCallback);
 
   // Declaring task pointer
-  HiCR::Task *t = NULL;
+  HiCR::L1::tasking::Task *t = NULL;
 
   // Creating task function
   auto f = [&t, &onExecuteHasRun, &onExecuteUpdated]()
@@ -148,7 +148,7 @@ TEST(Task, Events)
   auto u = m.createExecutionUnit(f);
 
   // Creating task
-  t = new HiCR::Task(u);
+  t = new HiCR::L1::tasking::Task(u);
 
   // Querying compute resources
   m.queryComputeResources();
@@ -186,7 +186,7 @@ TEST(Task, Events)
   EXPECT_EXIT({ delete t; fprintf(stderr, "Delete worked"); exit(0); }, ::testing::ExitedWithCode(0), "Delete worked");
 
   // Creating a task with an event map to make sure the functions are ran
-  t = new HiCR::Task(u);
+  t = new HiCR::L1::tasking::Task(u);
 
   // First, creating processing unit
   executionState = processingUnit->createExecutionState(t->getExecutionUnit());

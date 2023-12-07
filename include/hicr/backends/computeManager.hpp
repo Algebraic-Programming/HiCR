@@ -11,12 +11,13 @@
  */
 
 #pragma once
-
+ 
+#include <memory>
+#include <unordered_set>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/executionUnit.hpp>
-#include <hicr/processingUnit.hpp>
-#include <unordered_set>
+#include <hicr/L0/executionUnit.hpp>
+#include <hicr/L0/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -36,7 +37,7 @@ class ComputeManager
   /**
    * Common type for a collection of compute resources
    */
-  typedef std::unordered_set<computeResourceId_t> computeResourceList_t;
+  typedef std::unordered_set<L0::computeResourceId_t> computeResourceList_t;
 
   /**
    * Default destructor
@@ -52,7 +53,7 @@ class ComputeManager
    * \param[in] executionUnit The replicable function to execute
    * \return Returns a pointer to the newly created execution unit. The user needs to delete it to free up its allocated memory.
    */
-  virtual ExecutionUnit *createExecutionUnit(ExecutionUnit::function_t executionUnit) = 0;
+  virtual L0::ExecutionUnit *createExecutionUnit(L0::ExecutionUnit::function_t executionUnit) = 0;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.
@@ -92,7 +93,7 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  __USED__ inline std::unique_ptr<ProcessingUnit> createProcessingUnit(computeResourceId_t resource)
+  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnit(L0::computeResourceId_t resource)
   {
     // Checking whether the referenced compute resource actually exists
     if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
@@ -113,7 +114,7 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual std::unique_ptr<ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const = 0;
+  virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::computeResourceId_t resource) const = 0;
 
   /**
    * Backend-internal implementation of the queryComputeResources function

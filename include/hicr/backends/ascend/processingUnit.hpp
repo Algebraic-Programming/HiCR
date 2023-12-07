@@ -12,10 +12,11 @@
 
 #pragma once
 
+#include <memory>
+#include <hicr/common/exceptions.hpp>
 #include <hicr/backends/ascend/executionState.hpp>
 #include <hicr/backends/ascend/executionUnit.hpp>
-#include <hicr/common/exceptions.hpp>
-#include <hicr/processingUnit.hpp>
+#include <hicr/L0/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -29,7 +30,7 @@ namespace ascend
 /**
  * Implementation of a processing unit (a device capable of executing kernels) for the ascend backend
  */
-class ProcessingUnit final : public HiCR::ProcessingUnit
+class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 {
   public:
 
@@ -38,7 +39,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    *
    * \param device device ID
    */
-  __USED__ inline ProcessingUnit(computeResourceId_t device) : HiCR::ProcessingUnit(device), _deviceId(device){};
+  __USED__ inline ProcessingUnit(HiCR::L0::computeResourceId_t device) : HiCR::L0::ProcessingUnit(device), _deviceId(device){};
 
   /**
    * Creates an execution state using the device context information and the exection unit to run on the ascend
@@ -47,9 +48,9 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    *
    * \return return a unique pointer to the newly created Execution State
    */
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(HiCR::ExecutionUnit *executionUnit) override
+  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
-    return std::make_unique<ExecutionState>(executionUnit, _context, _deviceId);
+    return std::make_unique<HiCR::L0::ExecutionState>(executionUnit, _context, _deviceId);
   }
 
   protected:
@@ -84,7 +85,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    *
    * \param executionState the execution state to start
    */
-  __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
+  __USED__ inline void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
   {
     // Getting up-casted pointer for the execution unit
     std::unique_ptr<ExecutionState> e = std::unique_ptr<ExecutionState>(dynamic_cast<ExecutionState *>(executionState.release()));

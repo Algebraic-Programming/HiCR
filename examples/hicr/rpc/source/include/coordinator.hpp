@@ -1,7 +1,7 @@
 #pragma once
 
 #include <hicr/backends/instanceManager.hpp>
-#include <include/common.hpp>
+#include "common.hpp"
 
 void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
 {
@@ -18,7 +18,7 @@ void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
   auto state = instance->getState();
 
   // Printing state
-  printf("Worker state: %s\n", HiCR::Instance::getStateString(state).c_str());
+  printf("Worker state: %s\n", HiCR::L0::Instance::getStateString(state).c_str());
 
   // If it is a worker instance, execute an RPC
   if (instance != coordinator) instance->execute(TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);

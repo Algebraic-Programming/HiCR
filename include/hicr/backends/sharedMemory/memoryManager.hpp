@@ -182,7 +182,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
   {
     // Recovering memory space from the map
     auto &memSpace = _memorySpaceMap.at(memorySpaceId);
@@ -212,7 +212,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
     auto memorySlot = new MemorySlot(MemorySlot::binding_type::strict_non_binding, ptr, size);
@@ -226,12 +226,12 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *const memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::MemorySlot *const memorySlot) override
   {
     // Nothing to do here
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Nothing to do here
   }
@@ -242,7 +242,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::MemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Synchronize all intervening threads in this call
     barrier();
@@ -278,7 +278,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_cast<MemorySlot *>(memorySlot);
@@ -313,7 +313,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] memorySlot Memory slot to query updates for.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // This function should check and update the abstract class for completed memcpy operations
   }
@@ -346,12 +346,12 @@ class MemoryManager final : public backend::MemoryManager
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl(const tag_t tag) override
+  __USED__ inline void fenceImpl(const HiCR::L0::MemorySlot::tag_t tag) override
   {
     barrier();
   }
 
-  __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::MemorySlot *destination, const size_t dst_offset, HiCR::L0::MemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting slot pointers
     const auto srcPtr = source->getPointer();
@@ -369,7 +369,7 @@ class MemoryManager final : public backend::MemoryManager
     destination->increaseMessagesRecv();
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_cast<MemorySlot *>(memorySlot);
@@ -381,7 +381,7 @@ class MemoryManager final : public backend::MemoryManager
     return m->trylock();
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_cast<MemorySlot *>(memorySlot);

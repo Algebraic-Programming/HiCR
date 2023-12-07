@@ -32,15 +32,14 @@
  * #CHECK(f...) Checks if an LPF function returns LPF_SUCCESS, else
  * it prints an error message
  */
-#define CHECK(f...) \
-  if (f != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f);
+#define CHECK(f...)  if (f != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f);
 
 #include <cstring>
+#include <lpf/collectives.h>
+#include <lpf/core.h>
 #include <hicr/backends/lpf/memorySlot.hpp>
 #include <hicr/backends/memoryManager.hpp>
 #include <hicr/backends/sequential/memoryManager.hpp>
-#include <lpf/collectives.h>
-#include <lpf/core.h>
 
 namespace HiCR
 {
@@ -123,7 +122,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::MemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange
     size_t localSlotCount = memorySlots.size();
@@ -170,10 +169,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // each process (zero or more) to become global.
 
     std::vector<size_t> localSlotSizes(localSlotCount);
-    std::vector<globalKey_t> localSlotKeys(localSlotCount);
+    std::vector<HiCR::L0::MemorySlot::globalKey_t> localSlotKeys(localSlotCount);
     std::vector<size_t> localSlotProcessId(localSlotCount);
     std::vector<size_t> globalSlotSizes(globalSlotCount);
-    std::vector<globalKey_t> globalSlotKeys(globalSlotCount);
+    std::vector<HiCR::L0::MemorySlot::globalKey_t> globalSlotKeys(globalSlotCount);
     std::vector<void *> globalSlotPointers(globalSlotCount);
     std::vector<size_t> globalSlotProcessId(globalSlotCount);
 
@@ -260,7 +259,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     }
   }
 
-  __USED__ inline void memcpyImpl(HiCR::MemorySlot *destinationSlotPtr, const size_t dstOffset, HiCR::MemorySlot *sourceSlotPtr, const size_t srcOffset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::MemorySlot *destinationSlotPtr, const size_t dstOffset, HiCR::L0::MemorySlot *sourceSlotPtr, const size_t srcOffset, const size_t size) override
   {
     /**
      * For a put:
@@ -322,7 +321,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * @param[in] tag Tags used as filter to decide which slots to fence against
    * \todo: Implement tags in LPF !!!
    */
-  __USED__ inline void fenceImpl(const tag_t tag) override
+  __USED__ inline void fenceImpl(const HiCR::L0::MemorySlot::tag_t tag) override
   {
     lpf_sync(_lpf, LPF_SYNC_DEFAULT);
   }
@@ -345,12 +344,12 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     return memorySlot;
   }
 
-  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     pullMessagesRecv(memorySlot);
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlotPtr) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlotPtr) override
   {
     // Getting up-casted pointer for the execution unit
     auto memorySlot = dynamic_cast<MemorySlot *>(memorySlotPtr);
@@ -361,12 +360,12 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     lpf_deregister(_lpf, memorySlot->getLPFSlot());
   }
 
-  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Nothing to do here for this backend
   }
 
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting memory slot pointer
     const auto pointer = memorySlot->getPointer();
@@ -378,7 +377,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     free(pointer);
   }
 
-  __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
     if (memorySpace != _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID)
       HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID);
@@ -405,7 +404,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * a HiCR memory slot
    * @param[inout] memorySlot whose messageRecv should be updated
    */
-  __USED__ inline void pullMessagesRecv(HiCR::MemorySlot *memorySlot)
+  __USED__ inline void pullMessagesRecv(HiCR::L0::MemorySlot *memorySlot)
   {
     size_t msg_cnt;
     lpf::MemorySlot *memSlot = static_cast<lpf::MemorySlot *>(memorySlot);
@@ -420,12 +419,12 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     lpf_flush(_lpf);
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }

@@ -13,7 +13,7 @@
 
 #include <acl/acl.h>
 #include <hicr/backends/ascend/common.hpp>
-#include <hicr/memorySlot.hpp>
+#include <hicr/L0/memorySlot.hpp>
 
 namespace HiCR
 {
@@ -29,7 +29,7 @@ namespace ascend
  *
  * Represents a contiguous segment within a memory space, with a starting address, a size, and the Ascend device id
  */
-class MemorySlot final : public HiCR::MemorySlot
+class MemorySlot final : public HiCR::L0::MemorySlot
 {
   public:
 
@@ -49,7 +49,7 @@ class MemorySlot final : public HiCR::MemorySlot
     size_t size,
     const aclDataBuffer *dataBuffer,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
+    const globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
 
   /**
    * Default destructor
@@ -82,6 +82,9 @@ class MemorySlot final : public HiCR::MemorySlot
    */
   const aclDataBuffer *_dataBuffer;
 };
+
 } // namespace ascend
+
 } // namespace backend
+
 } // namespace HiCR

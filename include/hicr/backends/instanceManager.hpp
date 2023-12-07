@@ -13,7 +13,7 @@
 #pragma once
 
 #include <hicr/backends/memoryManager.hpp>
-#include <hicr/instance.hpp>
+#include <hicr/L0/instance.hpp>
 #include <set>
 
 namespace HiCR
@@ -46,13 +46,13 @@ class InstanceManager
    * This function prompts the backend to perform the necessary steps to discover and list the currently created (active or not)
    * \return A set of pointers to HiCR instances that refer to both local and remote instances
    */
-  __USED__ inline const std::set<HiCR::Instance *> &getInstances() const { return _instances; }
+  __USED__ inline const std::set<HiCR::L0::Instance *> &getInstances() const { return _instances; }
 
   /**
    * Function to retrieve the currently executing instance
    * \return A pointer to the local HiCR instance (in other words, the one running this function)
    */
-  __USED__ inline HiCR::Instance *getCurrentInstance() const { return _currentInstance; }
+  __USED__ inline HiCR::L0::Instance *getCurrentInstance() const { return _currentInstance; }
 
   /**
    * Function to retrieve the internal memory manager for this instance manager
@@ -63,12 +63,12 @@ class InstanceManager
   /**
    * Collection of instances
    */
-  std::set<HiCR::Instance *> _instances;
+  std::set<HiCR::L0::Instance *> _instances;
 
   /**
    * Pointer to current instance
    */
-  HiCR::Instance *_currentInstance = NULL;
+  HiCR::L0::Instance *_currentInstance = NULL;
 
   protected:
 

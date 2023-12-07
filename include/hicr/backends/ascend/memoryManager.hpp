@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <acl/acl.h>
 #include <hicr/backends/ascend/common.hpp>
 #include <hicr/backends/ascend/init.hpp>
 #include <hicr/backends/ascend/memorySlot.hpp>
 #include <hicr/backends/memoryManager.hpp>
-#include <unordered_map>
 
 namespace HiCR
 {
@@ -239,7 +239,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param memorySlot local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_cast<MemorySlot *>(memorySlot);
@@ -294,7 +294,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param memorySlot memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
@@ -304,7 +304,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param memorySlot memory slot to deregister.
    */
-  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
@@ -315,7 +315,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param tag identifies a particular subset of global memory slots
    * \param memorySlots array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::MemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
@@ -325,7 +325,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param memorySlot memory slot to query updates for.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
@@ -344,7 +344,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param src_offset source offset
    * \param size the number of bytes to copy
    */
-  __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::MemorySlot *destination, const size_t dst_offset, HiCR::L0::MemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
     auto s = dynamic_cast<MemorySlot *>(source);
@@ -451,7 +451,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param tag A tag that releases all processes that share the same value once they have arrived at it
    *
    */
-  __USED__ inline void fenceImpl(const tag_t tag) override
+  __USED__ inline void fenceImpl(const HiCR::L0::MemorySlot::tag_t tag) override
   {
     // no need to fence if stream not set
     if (_stream == NULL) return;
@@ -461,12 +461,12 @@ class MemoryManager final : public backend::MemoryManager
     _stream = NULL;
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }

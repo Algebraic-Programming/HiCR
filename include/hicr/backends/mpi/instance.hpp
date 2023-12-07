@@ -12,8 +12,8 @@
 #pragma once
 
 #include <hicr/backends/mpi/memoryManager.hpp>
-#include <hicr/instance.hpp>
-#include <hicr/memorySlot.hpp>
+#include <hicr/L0/instance.hpp>
+#include <hicr/L0/memorySlot.hpp>
 #include <mpi.h>
 
 namespace HiCR
@@ -57,7 +57,7 @@ namespace mpi
 /**
  * This class represents an abstract definition for a HICR instance as represented by the MPI backend:
  */
-class Instance final : public HiCR::Instance
+class Instance final : public HiCR::L0::Instance
 {
   public:
 
@@ -66,7 +66,7 @@ class Instance final : public HiCR::Instance
    * \param[in] rank The MPI rank corresponding to this HiCR instance
    * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
-  Instance(const int rank, mpi::MemoryManager *const memoryManager) : HiCR::Instance((instanceId_t)rank),
+  Instance(const int rank, mpi::MemoryManager *const memoryManager) : HiCR::L0::Instance((instanceId_t)rank),
                                                                       _memoryManager(memoryManager),
                                                                       _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
                                                                       _rank(rank)
@@ -94,7 +94,7 @@ class Instance final : public HiCR::Instance
     MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _memoryManager->getComm());
   }
 
-  __USED__ inline HiCR::MemorySlot *getReturnValueImpl() override
+  __USED__ inline HiCR::L0::MemorySlot *getReturnValueImpl() override
   {
     // Buffer to store the size
     size_t size;
@@ -112,7 +112,7 @@ class Instance final : public HiCR::Instance
     return memorySlot;
   }
 
-  __USED__ inline void submitReturnValueImpl(HiCR::MemorySlot *value) override
+  __USED__ inline void submitReturnValueImpl(HiCR::L0::MemorySlot *value) override
   {
     // Getting return value size
     const auto size = value->getSize();
@@ -130,13 +130,13 @@ class Instance final : public HiCR::Instance
   __USED__ inline void listenImpl() override
   {
     // Setting current state to listening
-    _state = HiCR::Instance::state_t::listening;
+    _state = HiCR::L0::Instance::state_t::listening;
 
     // We need to preserve the status to receive more information about the RPC
     MPI_Status status;
 
     // Storage for incoming execution unit index
-    HiCR::Instance::executionUnitIndex_t eIdx = 0;
+    HiCR::L0::Instance::executionUnitIndex_t eIdx = 0;
 
     // Getting RPC execution unit index
     MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _memoryManager->getComm(), &status);
@@ -145,7 +145,7 @@ class Instance final : public HiCR::Instance
     _RPCRequestRank = status.MPI_SOURCE;
 
     // Storage for the index of the processing unit to use
-    HiCR::Instance::processingUnitIndex_t pIdx = 0;
+    HiCR::L0::Instance::processingUnitIndex_t pIdx = 0;
 
     // Getting RPC execution unit index
     MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _memoryManager->getComm(), MPI_STATUS_IGNORE);
@@ -161,7 +161,7 @@ class Instance final : public HiCR::Instance
   __USED__ inline state_t getState() const override
   {
     // Obtaining state from the global memory slot, to handle the case where the instance is remote
-    _memoryManager->memcpy(getStateLocalMemorySlot(), 0, getStateGlobalMemorySlot(), 0, sizeof(HiCR::Instance::state_t));
+    _memoryManager->memcpy(getStateLocalMemorySlot(), 0, getStateGlobalMemorySlot(), 0, sizeof(HiCR::L0::Instance::state_t));
 
     return _state;
   }
@@ -170,19 +170,19 @@ class Instance final : public HiCR::Instance
    * Gets the local memory slot storing the instance's state
    * \return A pointer to said memory slot
    */
-  __USED__ inline HiCR::MemorySlot *getStateLocalMemorySlot() const { return _stateLocalMemorySlot; }
+  __USED__ inline HiCR::L0::MemorySlot *getStateLocalMemorySlot() const { return _stateLocalMemorySlot; }
 
   /**
    * Sets the global memory slot storing the instance's state
    * \param[in] globalSlot A pointer to the global slot to assign
    */
-  __USED__ inline void setStateGlobalMemorySlot(HiCR::MemorySlot *const globalSlot) { _stateGlobalMemorySlot = globalSlot; }
+  __USED__ inline void setStateGlobalMemorySlot(HiCR::L0::MemorySlot *const globalSlot) { _stateGlobalMemorySlot = globalSlot; }
 
   /**
    * Gets the global memory slot storing the instance's state
    * \return A pointer to said memory slot
    */
-  __USED__ inline HiCR::MemorySlot *getStateGlobalMemorySlot() const { return _stateGlobalMemorySlot; }
+  __USED__ inline HiCR::L0::MemorySlot *getStateGlobalMemorySlot() const { return _stateGlobalMemorySlot; }
 
   private:
 
@@ -199,12 +199,12 @@ class Instance final : public HiCR::Instance
   /**
    * Local memory slot that represents the instance status
    */
-  HiCR::MemorySlot *const _stateLocalMemorySlot;
+  HiCR::L0::MemorySlot *const _stateLocalMemorySlot;
 
   /**
    * Global memory slot that represents the instance status
    */
-  HiCR::MemorySlot *_stateGlobalMemorySlot;
+  HiCR::L0::MemorySlot *_stateGlobalMemorySlot;
 
   /**
    * Remembers the MPI rank this instance belongs to

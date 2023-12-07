@@ -10,11 +10,12 @@
  * @date 11/9/2023
  */
 
-#include "gtest/gtest.h"
-#include <hicr/backends/sequential/memoryManager.hpp>
 #include <limits>
+#include "gtest/gtest.h"
+#include <hicr/common/exceptions.hpp>
+#include <hicr/backends/sequential/memoryManager.hpp>
 
-namespace backend = HiCR::backend::sequential;
+namespace backend = HiCR::backend::sequential; 
 
 TEST(MemoryManager, Construction)
 {
@@ -52,7 +53,7 @@ TEST(MemoryManager, Memory)
   EXPECT_THROW(b.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
 
   // Allocating memory correctly now
-  HiCR::MemorySlot *s1 = NULL;
+  HiCR::L0::MemorySlot *s1 = NULL;
   EXPECT_NO_THROW(s1 = b.allocateLocalMemorySlot(r, testMemAllocSize));
   EXPECT_EQ(s1->getSize(), testMemAllocSize);
 
@@ -62,7 +63,7 @@ TEST(MemoryManager, Memory)
   memset(s1LocalPtr, 0, testMemAllocSize);
 
   // Creating memory slot from a previous allocation
-  HiCR::MemorySlot *s2 = NULL;
+  HiCR::L0::MemorySlot *s2 = NULL;
   EXPECT_NO_THROW(s2 = b.registerLocalMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(s2->getSize(), testMemAllocSize);
 

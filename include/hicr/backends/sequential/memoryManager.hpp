@@ -13,9 +13,10 @@
 #pragma once
 
 #include <atomic>
-#include <hicr/backends/memoryManager.hpp>
-#include <hicr/common/definitions.hpp>
 #include <unistd.h>
+#include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <hicr/backends/memoryManager.hpp>
 
 namespace HiCR
 {
@@ -26,7 +27,7 @@ namespace backend
 namespace sequential
 {
 
-/**
+/** 
  * This macro represents an identifier for the default system-wide memory space in this backend
  */
 #define _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID 0
@@ -92,7 +93,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
   }
 
@@ -103,7 +104,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly allocated memory slot
    */
-  __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
     if (memorySpace != _BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID) HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_SEQUENTIAL_DEFAULT_MEMORY_SPACE_ID);
 
@@ -123,10 +124,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
-    auto memorySlot = new MemorySlot(ptr, size);
+    auto memorySlot = new HiCR::L0::MemorySlot(ptr, size);
 
     // Returning new memory slot pointer
     return memorySlot;
@@ -137,12 +138,12 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Nothing to do here for this backend
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Nothing to do here
   }
@@ -153,7 +154,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::MemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
@@ -165,7 +166,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       auto memorySlot = entry.second;
 
       // Creating new memory slot
-      auto globalMemorySlot = new MemorySlot(memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
+      auto globalMemorySlot = new HiCR::L0::MemorySlot(memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
@@ -177,7 +178,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    *
    * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     if (memorySlot->getPointer() == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exit or represents a NULL pointer.");
 
@@ -192,7 +193,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   /**
    * Common definition of a collection of memory slots
    */
-  typedef parallelHashMap_t<tag_t, size_t> fenceCountTagMap_t;
+  typedef parallelHashMap_t<HiCR::L0::MemorySlot::tag_t, size_t> fenceCountTagMap_t;
 
   /**
    * Counter for calls to fence, filtered per tag
@@ -204,7 +205,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl(const tag_t tag) override
+  __USED__ inline void fenceImpl(const HiCR::L0::MemorySlot::tag_t tag) override
   {
     // Increasing the counter for the fence corresponding to the tag
     _fenceCountTagMap[tag]++;
@@ -214,7 +215,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       ;
   }
 
-  __USED__ inline void memcpyImpl(HiCR::MemorySlot *destination, const size_t dst_offset, HiCR::MemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::MemorySlot *destination, const size_t dst_offset, HiCR::L0::MemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting slot pointers
     const auto srcPtr = source->getPointer();
@@ -232,7 +233,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     destination->increaseMessagesRecv();
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(MemorySlot *memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // This function does not do anything because sequential applications
     // do not incur concurrency issues.
@@ -240,7 +241,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     return true;
   }
 
-  __USED__ inline void releaseGlobalLockImpl(MemorySlot *memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // This function does not do anything because sequential applications
     // do not incur concurrency issues.
@@ -248,5 +249,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
 };
 
 } // namespace sequential
+
 } // namespace backend
+
 } // namespace HiCR

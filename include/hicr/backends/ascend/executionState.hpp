@@ -16,7 +16,7 @@
 #include <hicr/backends/ascend/common.hpp>
 #include <hicr/backends/ascend/executionUnit.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/executionState.hpp>
+#include <hicr/L0/executionState.hpp>
 
 namespace HiCR
 {
@@ -31,7 +31,7 @@ namespace ascend
  * This class represents the execution state of a kernel for the ascend backend.
  * Since kernels are not preemptible, it does not offer suspend/resume functionality.
  */
-class ExecutionState final : public HiCR::ExecutionState
+class ExecutionState final : public HiCR::L0::ExecutionState
 {
   public:
 
@@ -42,7 +42,7 @@ class ExecutionState final : public HiCR::ExecutionState
    * \param context ACL context associated to the device
    * \param deviceId ascend device id
    */
-  ExecutionState(const HiCR::ExecutionUnit *executionUnit, const aclrtContext context, const deviceIdentifier_t deviceId) : HiCR::ExecutionState(executionUnit), _context(context), _deviceId(deviceId)
+  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit, const aclrtContext context, const deviceIdentifier_t deviceId) : HiCR::L0::ExecutionState(executionUnit), _context(context), _deviceId(deviceId)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_cast<const ExecutionUnit *>(executionUnit);
@@ -166,5 +166,7 @@ class ExecutionState final : public HiCR::ExecutionState
 };
 
 } // end namespace ascend
+
 } // namespace backend
+
 } // namespace HiCR

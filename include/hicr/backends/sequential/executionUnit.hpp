@@ -13,7 +13,7 @@
 #pragma once
 
 #include <functional>
-#include <hicr/executionUnit.hpp>
+#include <hicr/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -27,7 +27,7 @@ namespace sequential
 /**
  * This class represents a replicable C++ executable function for the sequential (and shared memory) backends.
  */
-class ExecutionUnit final : public HiCR::ExecutionUnit
+class ExecutionUnit final : public HiCR::L0::ExecutionUnit
 {
   public:
 
@@ -36,7 +36,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
    *
    * \param fc A replicable C++ function to run in this execution unit
    */
-  ExecutionUnit(function_t fc) : HiCR::ExecutionUnit(), _fc(fc){};
+  ExecutionUnit(function_t fc) : HiCR::L0::ExecutionUnit(), _fc(fc){};
   ExecutionUnit() = delete;
 
   /**

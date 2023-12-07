@@ -11,7 +11,7 @@
  */
 #pragma once
 
-#include <hicr/memorySlot.hpp>
+#include <hicr/L0/memorySlot.hpp>
 #include <mpi.h>
 
 namespace HiCR
@@ -28,7 +28,7 @@ namespace mpi
  *
  * - Represents a contiguous segment within a memory space, with a starting address and a size
  */
-class MemorySlot final : public HiCR::MemorySlot
+class MemorySlot final : public HiCR::L0::MemorySlot
 {
   public:
 
@@ -45,9 +45,9 @@ class MemorySlot final : public HiCR::MemorySlot
     int rank,
     void *const pointer,
     const size_t size,
-    const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::MemorySlot(pointer, size, globalTag, globalKey),
-                                       _rank(rank)
+    const HiCR::L0::MemorySlot::tag_t globalTag = 0,
+    const HiCR::L0::MemorySlot::globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, globalTag, globalKey),
+                                                            _rank(rank)
   {
   }
 

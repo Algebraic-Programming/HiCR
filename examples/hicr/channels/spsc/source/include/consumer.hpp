@@ -1,13 +1,13 @@
 #pragma once
 
-#include <common.hpp>
 #include <hicr/backends/memoryManager.hpp>
-#include <hicr/channel/spsc/consumer.hpp>
+#include <hicr/L1/channel/spsc/consumer.hpp>
+#include "common.hpp"
 
 void consumerFc(HiCR::backend::MemoryManager *memoryManager, const size_t channelCapacity)
 {
  // Getting required buffer sizes
- auto tokenBufferSize = HiCR::channel::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
+ auto tokenBufferSize = HiCR::L1::channel::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Obtaining memory spaces
  auto memSpaces = memoryManager->getMemorySpaceList();
@@ -16,13 +16,13 @@ void consumerFc(HiCR::backend::MemoryManager *memoryManager, const size_t channe
  auto tokenBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
 
  // Getting required buffer size
- auto coordinationBufferSize = HiCR::channel::Base::getCoordinationBufferSize();
+ auto coordinationBufferSize = HiCR::L1::channel::Base::getCoordinationBufferSize();
 
  // Allocating coordination buffer as a local memory slot
  auto consumerCoordinationBuffer = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
- HiCR::channel::Base::initializeCoordinationBuffer(consumerCoordinationBuffer);
+ HiCR::L1::channel::Base::initializeCoordinationBuffer(consumerCoordinationBuffer);
 
  // Exchanging local memory slots to become global for them to be used by the remote end
  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBufferSlot}});
@@ -35,7 +35,7 @@ void consumerFc(HiCR::backend::MemoryManager *memoryManager, const size_t channe
  auto producerCoordinationBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
 
  // Creating producer and consumer channels
- auto consumer = HiCR::channel::SPSC::Consumer(memoryManager, globalTokenBuffer, consumerCoordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+ auto consumer = HiCR::L1::channel::SPSC::Consumer(memoryManager, globalTokenBuffer, consumerCoordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
  // Getting a single value from the channel
  while (consumer.isEmpty()) consumer.updateDepth();

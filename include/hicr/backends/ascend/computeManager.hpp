@@ -56,7 +56,7 @@ class ComputeManager final : public backend::ComputeManager
    *
    * \return throws exception
    */
-  __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(HiCR::ExecutionUnit::function_t executionUnit) override
+  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(HiCR::L0::ExecutionUnit::function_t executionUnit) override
   {
     HICR_THROW_RUNTIME("Ascend backend currently does not support this API");
   }
@@ -68,7 +68,7 @@ class ComputeManager final : public backend::ComputeManager
    *
    * \return a pointer to the new execution unit
    */
-  __USED__ inline HiCR::ExecutionUnit *createExecutionUnit(const std::vector<kernel::Kernel *> &kernelOperations)
+  __USED__ inline ExecutionUnit *createExecutionUnit(const std::vector<kernel::Kernel *> &kernelOperations)
   {
     return new ExecutionUnit(kernelOperations);
   }
@@ -80,7 +80,7 @@ class ComputeManager final : public backend::ComputeManager
    *
    * \return the id associated with the host system
    */
-  __USED__ inline const computeResourceId_t getHostId(computeResourceList_t computeResources)
+  __USED__ inline const HiCR::L0::computeResourceId_t getHostId(computeResourceList_t computeResources)
   {
     for (const auto c : computeResources)
       if (_deviceStatusMap.at(c).deviceType == deviceType_t::Host) return c;
@@ -93,7 +93,7 @@ class ComputeManager final : public backend::ComputeManager
   /**
    * Keep track of the device context for each computeResourceId/deviceId
    */
-  const std::unordered_map<computeResourceId_t, ascendState_t> &_deviceStatusMap;
+  const std::unordered_map<HiCR::L0::computeResourceId_t, ascendState_t> &_deviceStatusMap;
 
   /**
    * Internal implementaion of queryComputeResource routine.
@@ -118,7 +118,7 @@ class ComputeManager final : public backend::ComputeManager
    *
    * \return a pointer to the new processing unit
    */
-  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::computeResourceId_t resource) const override
   {
     if (_deviceStatusMap.at(resource).deviceType == deviceType_t::Host) HICR_THROW_RUNTIME("Ascend backend can not create a processing unit on the host.");
     return std::make_unique<ProcessingUnit>(resource);

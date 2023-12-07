@@ -27,6 +27,7 @@ namespace ascend
 
 namespace kernel
 {
+  
 /**
  * This class represents a replicable kernel for the ascend backend.
  * A Kernel is a piece of computation meant to be executed on an ascend device.
@@ -51,6 +52,9 @@ class Kernel
 };
 
 } // namespace kernel
+
 } // namespace ascend
+
 } // namespace backend
+
 } // namespace HiCR

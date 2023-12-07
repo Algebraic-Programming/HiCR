@@ -77,6 +77,9 @@ __USED__ inline void selectDevice(const aclrtContext deviceContext, const device
   aclError err = aclrtSetCurrentContext(deviceContext);
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set the device %ld context. Error %d", deviceId, err);
 }
+
 } // namespace ascend
+
 } // namespace backend
+
 } // namespace HiCR

@@ -16,7 +16,7 @@
 #include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/backends/ascend/memoryManager.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/memorySlot.hpp>
+#include <hicr/L0/memorySlot.hpp>
 
 namespace HiCR
 {
@@ -50,7 +50,7 @@ class MemoryKernel final : public Kernel
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(MemoryManager *memManager, HiCR::MemorySlot *destination, const size_t destinationOffset, HiCR::MemorySlot *source, const size_t sourceOffset, size_t size) : Kernel(),
+  MemoryKernel(MemoryManager *memManager, HiCR::L0::MemorySlot *destination, const size_t destinationOffset, HiCR::L0::MemorySlot *source, const size_t sourceOffset, size_t size) : Kernel(),
                                                                                                                                                                              _dst(destination),
                                                                                                                                                                              _src(source),
                                                                                                                                                                              _dstOffset(destinationOffset),
@@ -81,11 +81,11 @@ class MemoryKernel final : public Kernel
   /**
    * Destionation memory slot
    */
-  HiCR::MemorySlot *_dst;
+  HiCR::L0::MemorySlot *_dst;
   /**
    * Source memory slot
    */
-  HiCR::MemorySlot *_src;
+  HiCR::L0::MemorySlot *_src;
 
   /**
    * Destination offset
@@ -108,6 +108,9 @@ class MemoryKernel final : public Kernel
 };
 
 } // namespace kernel
+
 } // namespace ascend
+
 } // namespace backend
+
 } // namespace HiCR

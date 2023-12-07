@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include <hicr/executionUnit.hpp>
-#include <hicr/task.hpp>
-#include <taskr/common.hpp>
 #include <vector>
+#include <hicr/L0/executionUnit.hpp>
+#include <hicr/L1/tasking/task.hpp>
+#include <taskr/common.hpp>
 
 namespace taskr
 {
@@ -32,7 +32,7 @@ class Task
   /**
    * HiCR Task object to implement TaskR tasks
    */
-  HiCR::Task _hicrTask;
+  HiCR::L1::tasking::Task _hicrTask;
 
   /**
    * Tasks's label, chosen by the user
@@ -53,7 +53,7 @@ class Task
    * \param[in] label A user-defined unique identifier for the task. It is required for dependency management
    * \param[in] executionUnit A user-defined function/kernel to run
    */
-  __USED__ inline Task(const taskLabel_t label, HiCR::ExecutionUnit *executionUnit) : _hicrTask(executionUnit), _label(label)
+  __USED__ inline Task(const taskLabel_t label, HiCR::L0::ExecutionUnit *executionUnit) : _hicrTask(executionUnit), _label(label)
   {
     // Setting internal HiCR task a reference to this object
     _hicrTask.setBackwardReferencePointer(this);
@@ -64,7 +64,7 @@ class Task
    *
    * \return A pointer to the underlying HiCR task
    */
-  __USED__ inline HiCR::Task *getHiCRTask() { return &_hicrTask; }
+  __USED__ inline HiCR::L1::tasking::Task *getHiCRTask() { return &_hicrTask; }
 
   /**
    * Returns the task's label

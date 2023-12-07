@@ -2,7 +2,7 @@
 
 #include <hicr/backends/sequential/computeManager.hpp>
 #include <hicr/backends/instanceManager.hpp>
-#include <include/common.hpp>
+#include "common.hpp"
 
 void workerFc(HiCR::backend::InstanceManager& instanceManager)
 {

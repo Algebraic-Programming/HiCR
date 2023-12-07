@@ -5,11 +5,11 @@
 int main(int argc, char **argv)
 {
   // Initialize ACL runtime
-  HiCR::backend::ascend::Initializer i;
-  i.init();
+  HiCR::backend::ascend::Initializer ascendCore;
+  ascendCore.init();
 
   // Instantiating Memory manager
-  HiCR::backend::ascend::MemoryManager m(i);
+  HiCR::backend::ascend::MemoryManager m(ascendCore);
 
   // Asking the memory manager to check the available resources
   m.queryMemorySpaces();

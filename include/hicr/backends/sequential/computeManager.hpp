@@ -36,7 +36,7 @@ class ComputeManager final : public backend::ComputeManager
 {
   public:
 
-  __USED__ inline ExecutionUnit *createExecutionUnit(ExecutionUnit::function_t executionUnit) override
+  __USED__ inline ExecutionUnit *createExecutionUnit(L0::ExecutionUnit::function_t executionUnit) override
   {
     return new ExecutionUnit(executionUnit);
   }
@@ -62,7 +62,7 @@ class ComputeManager final : public backend::ComputeManager
     return computeResourceList_t({0});
   }
 
-  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::computeResourceId_t resource) const override
   {
     return std::make_unique<ProcessingUnit>(resource);
   }

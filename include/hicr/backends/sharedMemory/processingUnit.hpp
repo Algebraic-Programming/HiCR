@@ -12,16 +12,16 @@
 
 #pragma once
 
-#include <csignal>
-#include <fcntl.h>
-#include <hicr/backends/sequential/executionState.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
-#include <hicr/common/exceptions.hpp>
-#include <hicr/processingUnit.hpp>
-#include <pthread.h>
 #include <set>
+#include <csignal>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <pthread.h>
+#include <fcntl.h>
+#include <hicr/common/exceptions.hpp>
+#include <hicr/backends/sequential/executionState.hpp>
+#include <hicr/backends/sequential/executionUnit.hpp>
+#include <hicr/L0/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -49,7 +49,7 @@ thread_local ProcessingUnit *_currentThread;
  *
  * This implementation uses PThreads as backend for the creation and management of OS threads..
  */
-class ProcessingUnit final : public HiCR::ProcessingUnit
+class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 {
   public:
 
@@ -87,9 +87,9 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    *
    * \param core Represents the core affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(computeResourceId_t core) : HiCR::ProcessingUnit(core){};
+  __USED__ inline ProcessingUnit(HiCR::L0::computeResourceId_t core) : HiCR::L0::ProcessingUnit(core){};
 
-  __USED__ inline std::unique_ptr<HiCR::ExecutionState> createExecutionState(HiCR::ExecutionUnit *executionUnit) override
+  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
     // Creating and returning new execution state
     return std::make_unique<sequential::ExecutionState>(executionUnit);
@@ -105,7 +105,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   /**
    * Internal state of execution
    */
-  std::unique_ptr<ExecutionState> _executionState;
+  std::unique_ptr<HiCR::L0::ExecutionState> _executionState;
 
   /**
    * Barrier to synchronize thread initialization
@@ -182,7 +182,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void startImpl(std::unique_ptr<HiCR::ExecutionState> executionState) override
+  __USED__ inline void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
   {
     // Initializing barrier
     pthread_barrier_init(&initializationBarrier, NULL, 2);

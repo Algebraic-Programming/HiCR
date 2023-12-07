@@ -12,11 +12,12 @@
 
 #pragma once
 
+#include <memory>
 #include "hwloc.h"
 #include <hicr/backends/computeManager.hpp>
 #include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/backends/sharedMemory/processingUnit.hpp>
-#include <memory>
+
 
 namespace HiCR
 {
@@ -48,7 +49,7 @@ class ComputeManager final : public backend::ComputeManager
    */
   ~ComputeManager() = default;
 
-  __USED__ inline ExecutionUnit *createExecutionUnit(sequential::ExecutionUnit::function_t executionUnit) override
+  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(sequential::ExecutionUnit::function_t executionUnit) override
   {
     return new sequential::ExecutionUnit(executionUnit);
   }
@@ -73,7 +74,7 @@ class ComputeManager final : public backend::ComputeManager
    * \param[in] cpuId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
-  inline size_t getCpuSystemId(computeResourceId_t cpuId) const
+  inline size_t getCpuSystemId(HiCR::L0::computeResourceId_t cpuId) const
   {
     hwloc_obj_t obj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_PU, cpuId);
     if (!obj)
@@ -97,7 +98,7 @@ class ComputeManager final : public backend::ComputeManager
    * \param[in] cpuId The ID of the processor we are doing the search for
    * \returns A vector of processor IDs, siblings of cpuId (expected to have up to 1 in most archs)
    */
-  inline std::vector<unsigned> getCpuSiblings(computeResourceId_t cpuId) const
+  inline std::vector<unsigned> getCpuSiblings(HiCR::L0::computeResourceId_t cpuId) const
   {
     hwloc_obj_t pu = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_PU, cpuId);
     hwloc_obj_t obj = pu;
@@ -132,7 +133,7 @@ class ComputeManager final : public backend::ComputeManager
    * \param[in] cpuId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
-  size_t getCpuNumaAffinity(computeResourceId_t cpuId) const
+  size_t getCpuNumaAffinity(HiCR::L0::computeResourceId_t cpuId) const
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_PU, cpuId);
@@ -188,7 +189,7 @@ class ComputeManager final : public backend::ComputeManager
    *          P/S:   may be "Private" or "Shared"
    *          associated IDs: (optional, for Shared cache) a list of core IDs, e.g. "0 1 2 3"
    */
-  std::vector<std::pair<std::string, size_t>> getCpuCaches(computeResourceId_t cpuId) const
+  std::vector<std::pair<std::string, size_t>> getCpuCaches(HiCR::L0::computeResourceId_t cpuId) const
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_PU, cpuId);
@@ -305,7 +306,7 @@ class ComputeManager final : public backend::ComputeManager
     return computeResourceList;
   }
 
-  __USED__ inline std::unique_ptr<HiCR::ProcessingUnit> createProcessingUnitImpl(computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::computeResourceId_t resource) const override
   {
     return std::make_unique<ProcessingUnit>(resource);
   }

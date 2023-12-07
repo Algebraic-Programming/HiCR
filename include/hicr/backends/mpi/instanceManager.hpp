@@ -12,11 +12,11 @@
 
 #pragma once
 
+#include <mpi.h>
+#include <hicr/common/definitions.hpp>
 #include <hicr/backends/instanceManager.hpp>
 #include <hicr/backends/mpi/instance.hpp>
 #include <hicr/backends/mpi/memoryManager.hpp>
-#include <hicr/common/definitions.hpp>
-#include <mpi.h>
 
 namespace HiCR
 {

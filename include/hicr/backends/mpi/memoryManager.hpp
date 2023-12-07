@@ -12,11 +12,11 @@
 
 #pragma once
 
+#include <mpi.h>
+#include <hicr/common/definitions.hpp>
 #include <hicr/backends/memoryManager.hpp>
 #include <hicr/backends/mpi/memorySlot.hpp>
 #include <hicr/backends/sequential/memoryManager.hpp>
-#include <hicr/common/definitions.hpp>
-#include <mpi.h>
 
 namespace HiCR
 {
@@ -160,7 +160,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     unlockMPIWindow(rank, window);
   }
 
-  __USED__ inline void memcpyImpl(HiCR::MemorySlot *destinationSlotPtr, const size_t dst_offset, HiCR::MemorySlot *sourceSlotPtr, const size_t sourceOffset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::MemorySlot *destinationSlotPtr, const size_t dst_offset, HiCR::L0::MemorySlot *sourceSlotPtr, const size_t sourceOffset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
     auto destination = dynamic_cast<MemorySlot *>(destinationSlotPtr);
@@ -265,7 +265,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
   }
 
@@ -273,7 +273,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * Implementation of the fence operation for the mpi backend. For every single window corresponding
    * to a memory slot associated with the tag, a fence needs to be executed
    */
-  __USED__ inline void fenceImpl(const tag_t tag) override
+  __USED__ inline void fenceImpl(const HiCR::L0::MemorySlot::tag_t tag) override
   {
     // For every key-valued subset, and its elements, execute a fence
     for (const auto &entry : _globalMemorySlotTagKeyMap[tag])
@@ -314,7 +314,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The address of the newly allocated memory slot
    */
-  __USED__ inline HiCR::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
   {
     if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
       HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
@@ -337,7 +337,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    *
    * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting memory slot pointer
     const auto pointer = memorySlot->getPointer();
@@ -373,12 +373,12 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    *
    * \param[in] memorySlot Pointer to the memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Nothing to do here for this backend
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::MemorySlot *memorySlotPtr) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlotPtr) override
   {
     // Getting up-casted pointer for the execution unit
     auto memorySlot = dynamic_cast<MemorySlot *>(memorySlotPtr);
@@ -402,7 +402,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::MemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange
     int localSlotCount = (int)memorySlots.size();
@@ -427,8 +427,8 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // Allocating storage for local and global memory slot sizes, keys and process id
     std::vector<size_t> localSlotSizes(localSlotCount);
     std::vector<size_t> globalSlotSizes(globalSlotCount);
-    std::vector<globalKey_t> localSlotKeys(localSlotCount);
-    std::vector<globalKey_t> globalSlotKeys(globalSlotCount);
+    std::vector<HiCR::L0::MemorySlot::globalKey_t> localSlotKeys(localSlotCount);
+    std::vector<HiCR::L0::MemorySlot::globalKey_t> globalSlotKeys(globalSlotCount);
     std::vector<int> localSlotProcessId(localSlotCount);
     std::vector<int> globalSlotProcessId(globalSlotCount);
 
@@ -519,7 +519,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     }
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_cast<MemorySlot *>(memorySlot);
@@ -537,7 +537,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     return true;
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::MemorySlot *memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_cast<MemorySlot *>(memorySlot);

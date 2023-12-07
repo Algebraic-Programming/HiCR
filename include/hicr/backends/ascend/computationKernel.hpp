@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include <acl/acl.h>
 #include <filesystem>
 #include <fstream>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/common/exceptions.hpp>
 #include <iostream>
 #include <regex>
 #include <vector>
+#include <acl/acl.h>
+#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
