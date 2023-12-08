@@ -24,6 +24,9 @@ namespace backend
 namespace sequential
 {
 
+namespace L0
+{
+
 /**
  * This class represents a replicable C++ executable function for the sequential (and shared memory) backends.
  */
@@ -60,6 +63,8 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    */
   const function_t _fc;
 };
+
+} // namespace L0
 
 } // namespace sequential
 

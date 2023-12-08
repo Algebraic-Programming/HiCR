@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/backends/memoryManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
 
 namespace HiCR
 {
@@ -27,6 +27,10 @@ namespace backend
 namespace sequential
 {
 
+namespace L1
+{
+
+
 /** 
  * This macro represents an identifier for the default system-wide memory space in this backend
  */
@@ -35,7 +39,7 @@ namespace sequential
 /**
  * Implementation of the SharedMemory/HWloc-based HiCR Shared Memory Backend.
  */
-class MemoryManager final : public HiCR::backend::MemoryManager
+class MemoryManager final : public HiCR::L1::MemoryManager
 {
   public:
 
@@ -44,7 +48,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    *
    * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
-  MemoryManager(const size_t fenceCount = 1) : backend::MemoryManager(), _fenceCount{fenceCount} {}
+  MemoryManager(const size_t fenceCount = 1) : HiCR::L1::MemoryManager(), _fenceCount{fenceCount} {}
   ~MemoryManager() = default;
 
   /**
@@ -247,6 +251,8 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     // do not incur concurrency issues.
   }
 };
+
+} // namespace L1
 
 } // namespace sequential
 

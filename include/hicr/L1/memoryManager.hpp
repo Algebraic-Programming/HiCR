@@ -22,7 +22,7 @@
 namespace HiCR
 {
 
-namespace backend
+namespace L1
 {
 
 /**
@@ -541,6 +541,6 @@ class MemoryManager
   memorySpaceList_t _memorySpaceList;
 };
 
-} // namespace backend
+} // namespace L1
 
 } // namespace HiCR

@@ -11,12 +11,15 @@
  */
 #pragma once
 
-#include <hicr/backends/sharedMemory/computeManager.hpp>
-#include <hicr/backends/sharedMemory/memoryManager.hpp>
+#include <hicr/backends/sharedMemory/L1/computeManager.hpp>
+#include <hicr/backends/sharedMemory/L1/memoryManager.hpp>
 #include <hicr/L2/machineModel/deviceModel.hpp>
 #include <hicr/L2/machineModel/hostdev/CPU.hpp>
 
 namespace HiCR
+{
+
+namespace L2
 {
 
 namespace machineModel
@@ -147,8 +150,8 @@ class HostDevice final : public DeviceModel
     hwloc_topology_init(&topology);
 
     // Initialize Backend-specific Compute & Memory Managers
-    _computeManager = new backend::sharedMemory::ComputeManager(&topology);
-    _memoryManager = new backend::sharedMemory::MemoryManager(&topology);
+    _computeManager = new backend::sharedMemory::L1::ComputeManager(&topology);
+    _memoryManager = new backend::sharedMemory::L1::MemoryManager(&topology);
 
     _computeManager->queryComputeResources();
     _memoryManager->queryMemorySpaces();
@@ -156,7 +159,7 @@ class HostDevice final : public DeviceModel
     // Populate our own resource representation based on the backend-specific Managers
     for (auto m : _memoryManager->getMemorySpaceList())
     {
-      backend::MemoryManager::memorySpaceId_t tmp_id = m;
+      L1::MemoryManager::memorySpaceId_t tmp_id = m;
       std::string tmp_type = "NUMA Domain";
       MemorySpace *ms = new MemorySpace(
         tmp_id,                                    /* memorySpaceId_t */
@@ -176,7 +179,7 @@ class HostDevice final : public DeviceModel
     }
 
     // NOTE: Since we created the pointers in this same function, it is safe to assume static cast correctness
-    backend::sharedMemory::ComputeManager *compMan = static_cast<backend::sharedMemory::ComputeManager *>(_computeManager);
+    backend::sharedMemory::L1::ComputeManager *compMan = static_cast<backend::sharedMemory::L1::ComputeManager *>(_computeManager);
     // backend::sharedMemory::MemoryManager  *memMan  = static_cast<backend::sharedMemory::MemoryManager *>(_memoryManager);
 
     for (auto com : _computeResources)
@@ -279,5 +282,7 @@ class HostDevice final : public DeviceModel
 }; // class HostDevice
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

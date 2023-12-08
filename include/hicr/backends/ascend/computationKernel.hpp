@@ -18,8 +18,8 @@
 #include <regex>
 #include <vector>
 #include <acl/acl.h>
-#include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/common/exceptions.hpp>
+#include <hicr/backends/ascend/kernel.hpp>
 
 namespace HiCR
 {
@@ -28,9 +28,6 @@ namespace backend
 {
 
 namespace ascend
-{
-
-namespace kernel
 {
 
 /**
@@ -180,7 +177,8 @@ class ComputationKernel final : public Kernel
   }
 };
 
-} // namespace kernel
 } // namespace ascend
+
 } // namespace backend
+
 } // namespace HiCR

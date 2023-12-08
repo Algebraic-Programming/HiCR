@@ -11,7 +11,7 @@
  */
 #pragma once
 
-#include <hicr/backends/mpi/memoryManager.hpp>
+#include <hicr/backends/mpi/L1/memoryManager.hpp>
 #include <hicr/L0/instance.hpp>
 #include <hicr/L0/memorySlot.hpp>
 #include <mpi.h>
@@ -66,7 +66,7 @@ class Instance final : public HiCR::L0::Instance
    * \param[in] rank The MPI rank corresponding to this HiCR instance
    * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
-  Instance(const int rank, mpi::MemoryManager *const memoryManager) : HiCR::L0::Instance((instanceId_t)rank),
+  Instance(const int rank, mpi::L1::MemoryManager *const memoryManager) : HiCR::L0::Instance((instanceId_t)rank),
                                                                       _memoryManager(memoryManager),
                                                                       _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
                                                                       _rank(rank)
@@ -194,7 +194,7 @@ class Instance final : public HiCR::L0::Instance
   /**
    * Pointer to the memory manager required to obtain remote information
    */
-  HiCR::backend::mpi::MemoryManager *const _memoryManager;
+  HiCR::backend::mpi::L1::MemoryManager *const _memoryManager;
 
   /**
    * Local memory slot that represents the instance status

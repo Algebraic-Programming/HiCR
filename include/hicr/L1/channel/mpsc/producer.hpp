@@ -53,7 +53,7 @@ class Producer final : public L1::channel::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(backend::MemoryManager *memoryManager,
+  Producer(L1::MemoryManager *memoryManager,
            L0::MemorySlot *const tokenBuffer,
            L0::MemorySlot *const producerCoordinationBuffer,
            L0::MemorySlot *const consumerCoordinationBuffer,

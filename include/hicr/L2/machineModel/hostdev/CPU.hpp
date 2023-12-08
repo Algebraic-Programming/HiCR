@@ -9,13 +9,17 @@
  * @author O. Korakitis
  * @date 15/11/2023
  */
-#pragma once
-#include <vector>
 
+#pragma once
+
+#include <vector>
 #include <hicr/L2/machineModel/computeResource.hpp>
 #include <hicr/L2/machineModel/hostdev/cache.hpp>
 
 namespace HiCR
+{
+
+namespace L2
 {
 
 namespace machineModel
@@ -236,5 +240,7 @@ class CPU : public ComputeResource
 }; // class CPU
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

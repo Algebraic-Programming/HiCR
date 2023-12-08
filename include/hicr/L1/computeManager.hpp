@@ -22,7 +22,7 @@
 namespace HiCR
 {
 
-namespace backend
+namespace L1
 {
 
 /**
@@ -131,6 +131,6 @@ class ComputeManager
   computeResourceList_t _computeResourceList;
 };
 
-} // namespace backend
+} // namespace L1
 
 } // namespace HiCR

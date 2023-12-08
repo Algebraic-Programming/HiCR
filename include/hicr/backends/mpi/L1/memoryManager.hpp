@@ -14,9 +14,9 @@
 
 #include <mpi.h>
 #include <hicr/common/definitions.hpp>
-#include <hicr/backends/memoryManager.hpp>
-#include <hicr/backends/mpi/memorySlot.hpp>
-#include <hicr/backends/sequential/memoryManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
+#include <hicr/backends/mpi/L0/memorySlot.hpp>
+#include <hicr/backends/sequential/L1/memoryManager.hpp>
 
 namespace HiCR
 {
@@ -25,6 +25,9 @@ namespace backend
 {
 
 namespace mpi
+{
+
+namespace L1
 {
 
 /**
@@ -37,7 +40,7 @@ namespace mpi
  *
  * This backend is very useful for testing other HiCR modules in isolation (unit tests) without involving the use of threading, which might incur side-effects
  */
-class MemoryManager final : public HiCR::backend::MemoryManager
+class MemoryManager final : public HiCR::L1::MemoryManager
 {
   public:
 
@@ -47,7 +50,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] comm The MPI subcommunicator to use in the communication operations in this backend.
    * If not specified, it will use MPI_COMM_WORLD
    */
-  MemoryManager(MPI_Comm comm = MPI_COMM_WORLD) : HiCR::backend::MemoryManager(), _comm(comm)
+  MemoryManager(MPI_Comm comm = MPI_COMM_WORLD) : HiCR::L1::MemoryManager(), _comm(comm)
   {
     MPI_Comm_size(_comm, &_size);
     MPI_Comm_rank(_comm, &_rank);
@@ -101,7 +104,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
       HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
 
-    return sequential::MemoryManager::getTotalSystemMemory();
+    return sequential::L1::MemoryManager::getTotalSystemMemory();
   }
 
   /**
@@ -553,6 +556,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   }
 };
 
+} // namespace L1
+
 } // namespace mpi
+
 } // namespace backend
+
 } // namespace HiCR

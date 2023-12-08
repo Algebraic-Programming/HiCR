@@ -14,10 +14,10 @@
 
 #include <unordered_map>
 #include <acl/acl.h>
+#include <hicr/L1/memoryManager.hpp>
 #include <hicr/backends/ascend/common.hpp>
-#include <hicr/backends/ascend/init.hpp>
-#include <hicr/backends/ascend/memorySlot.hpp>
-#include <hicr/backends/memoryManager.hpp>
+#include <hicr/backends/ascend/core.hpp>
+#include <hicr/backends/ascend/L0/memorySlot.hpp>
 
 namespace HiCR
 {
@@ -28,21 +28,24 @@ namespace backend
 namespace ascend
 {
 
+namespace L1
+{
+
 /**
  * Implementation of the Memory Manager for the Ascend backend.
  *
  * It stores the memory spaces detected by the Ascend computing language
  */
-class MemoryManager final : public backend::MemoryManager
+class MemoryManager final : public HiCR::L1::MemoryManager
 {
   public:
 
   /**
    * Constructor for the ascend memory manager class for the ascend backend.
    *
-   * \param i ACL initializer
+   * \param core ACL Core initializer
    */
-  MemoryManager(const Initializer &i) : HiCR::backend::MemoryManager(), _deviceStatusMap(i.getContexts())
+  MemoryManager(const Core &core) : HiCR::L1::MemoryManager(), _deviceStatusMap(core.getContexts())
   {
     aclError err;
     aclrtStream stream;
@@ -163,7 +166,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param[in] size size of the memory slot to create
    * \return the internal pointer associated to the local memory slot
    */
-  __USED__ inline MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
   {
     void *ptr = NULL;
     aclDataBuffer *dataBuffer;
@@ -184,7 +187,7 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     // create the new memory slot
-    return new MemorySlot(memorySpaceId, ptr, size, dataBuffer);
+    return new L0::MemorySlot(memorySpaceId, ptr, size, dataBuffer);
   }
 
   /**
@@ -229,7 +232,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param size size of the memory slot to create
    * \return a newly created memory slot
    */
-  __USED__ inline MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
@@ -242,7 +245,7 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<MemorySlot *>(memorySlot);
+    auto m = dynamic_cast<L0::MemorySlot *>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -347,8 +350,8 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline void memcpyImpl(HiCR::L0::MemorySlot *destination, const size_t dst_offset, HiCR::L0::MemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
-    auto s = dynamic_cast<MemorySlot *>(source);
-    auto d = dynamic_cast<MemorySlot *>(destination);
+    auto s = dynamic_cast<L0::MemorySlot *>(source);
+    auto d = dynamic_cast<L0::MemorySlot *>(destination);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (s == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -373,7 +376,7 @@ class MemoryManager final : public backend::MemoryManager
     // determine the correct memcpy kind
     aclrtMemcpyKind memcpyKind = getMemcpyKind(srcdeviceType, dstdeviceType);
 
-    MemorySlot *deviceMemSlot;
+    L0::MemorySlot *deviceMemSlot;
 
     // select device according to memcpy kind
     if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE || (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE && dstDeviceId != srcDeviceId))
@@ -471,6 +474,11 @@ class MemoryManager final : public backend::MemoryManager
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 };
+
+} // namespace L1
+
 } // namespace ascend
+
 } // namespace backend
+
 } // namespace HiCR

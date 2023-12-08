@@ -12,14 +12,14 @@
 
 #include <thread>
 #include "gtest/gtest.h"
-#include <hicr/backends/sequential/memoryManager.hpp>
+#include <hicr/backends/sequential/L1/memoryManager.hpp>
 #include <hicr/L1/channel/spsc/consumer.hpp>
 #include <hicr/L1/channel/spsc/producer.hpp>
 
 TEST(ProducerChannel, Construction)
 {
   // Instantiating backend
-  HiCR::backend::sequential::MemoryManager backend;
+  HiCR::backend::sequential::L1::MemoryManager backend;
 
   // Asking memory manager to check the available memory spaces
   backend.queryMemorySpaces();
@@ -56,7 +56,7 @@ TEST(ProducerChannel, Construction)
 TEST(ProducerChannel, Push)
 {
   // Instantiating backend
-  HiCR::backend::sequential::MemoryManager backend;
+  HiCR::backend::sequential::L1::MemoryManager backend;
 
   // Asking memory manager to check the available memory spaces
   backend.queryMemorySpaces();
@@ -111,7 +111,7 @@ TEST(ProducerChannel, Push)
 TEST(ProducerChannel, PushWait)
 {
   // Instantiating backend
-  HiCR::backend::sequential::MemoryManager backend;
+  HiCR::backend::sequential::L1::MemoryManager backend;
 
   // Asking memory manager to check the available memory spaces
   backend.queryMemorySpaces();

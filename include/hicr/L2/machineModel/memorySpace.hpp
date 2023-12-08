@@ -12,10 +12,13 @@
  */
 #pragma once
 
-#include <hicr/backends/computeManager.hpp>
-#include <hicr/backends/memoryManager.hpp>
+#include <hicr/L1/computeManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
 
 namespace HiCR
+{
+
+namespace L2
 {
 
 namespace machineModel
@@ -35,7 +38,7 @@ class MemorySpace
   /**
    *  Backend-provided unique ID of the MemorySpace
    */
-  backend::MemoryManager::memorySpaceId_t _id;
+  L1::MemoryManager::memorySpaceId_t _id;
 
   /**
    * Type for the memory space
@@ -55,7 +58,7 @@ class MemorySpace
   /**
    *  List of associated processing elements
    */
-  backend::ComputeManager::computeResourceList_t _computeResources;
+  L1::ComputeManager::computeResourceList_t _computeResources;
 
   public:
 
@@ -73,7 +76,7 @@ class MemorySpace
    * @param[in] pageSize Detected page size of the memory space
    */
   MemorySpace(
-    backend::MemoryManager::memorySpaceId_t id,
+    L1::MemoryManager::memorySpaceId_t id,
     std::string type,
     size_t size,
     size_t pageSize = 4096) : /* Default page size; Consider using a constant but in a not dangerous way (e.g. define DEFAULT_PAGESIZE could mess up things) */
@@ -89,7 +92,7 @@ class MemorySpace
    *
    * @return The id value
    */
-  inline backend::MemoryManager::memorySpaceId_t getId() const
+  inline L1::MemoryManager::memorySpaceId_t getId() const
   {
     return _id;
   }
@@ -132,7 +135,7 @@ class MemorySpace
    *
    * @return A list of associated compute units
    */
-  inline backend::ComputeManager::computeResourceList_t getComputeUnits() const
+  inline L1::ComputeManager::computeResourceList_t getComputeUnits() const
   {
     return _computeResources;
   }
@@ -150,5 +153,7 @@ class MemorySpace
 }; // class MemorySpace
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

@@ -52,7 +52,7 @@ class Consumer final : public L1::channel::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(backend::MemoryManager *memoryManager,
+  Consumer(L1::MemoryManager *memoryManager,
            L0::MemorySlot *const tokenBuffer,
            L0::MemorySlot *const consumerCoordinationBuffer,
            const size_t tokenSize,

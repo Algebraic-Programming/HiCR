@@ -14,8 +14,8 @@
 
 #include "hwloc.h"
 #include "pthread.h"
-#include <hicr/backends/memoryManager.hpp>
-#include <hicr/backends/sharedMemory/memorySlot.hpp>
+#include <hicr/L1/memoryManager.hpp>
+#include <hicr/backends/sharedMemory/L0/memorySlot.hpp>
 
 namespace HiCR
 {
@@ -26,10 +26,13 @@ namespace backend
 namespace sharedMemory
 {
 
+namespace L1
+{
+
 /**
  * Implementation of the SharedMemory/HWloc-based HiCR Shared Memory Backend.
  */
-class MemoryManager final : public backend::MemoryManager
+class MemoryManager final : public HiCR::L1::MemoryManager
 {
   public:
 
@@ -39,7 +42,7 @@ class MemoryManager final : public backend::MemoryManager
    * \param[in] topology An HWloc topology object that can be used to query the available memory resources
    * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
-  MemoryManager(const hwloc_topology_t *topology, const size_t fenceCount = 1) : backend::MemoryManager(), _topology{topology}
+  MemoryManager(const hwloc_topology_t *topology, const size_t fenceCount = 1) : HiCR::L1::MemoryManager(), _topology{topology}
   {
     // Initializing barrier for fence operation
     pthread_barrier_init(&_barrier, NULL, fenceCount);
@@ -66,7 +69,7 @@ class MemoryManager final : public backend::MemoryManager
    * @param[in] memorySpace The memory space to check binding
    * @return The supported memory binding type by the memory space
    */
-  __USED__ inline MemorySlot::binding_type getSupportedBindingType(const memorySpaceId_t memorySpace) const
+  __USED__ inline L0::MemorySlot::binding_type getSupportedBindingType(const memorySpaceId_t memorySpace) const
   {
     return _memorySpaceMap.at(memorySpace).bindingSupport;
   }
@@ -76,7 +79,7 @@ class MemoryManager final : public backend::MemoryManager
    *
    * \param[in] type Specifies the desired binding type for future allocations
    */
-  __USED__ inline void setRequestedBindingType(const MemorySlot::binding_type type)
+  __USED__ inline void setRequestedBindingType(const L0::MemorySlot::binding_type type)
   {
     _hwlocBindingRequested = type;
   }
@@ -106,13 +109,13 @@ class MemoryManager final : public backend::MemoryManager
     /**
      * Stores whether it is possible to allocate bound memory in this memory space
      */
-    MemorySlot::binding_type bindingSupport;
+    L0::MemorySlot::binding_type bindingSupport;
   };
 
   /**
    * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
    */
-  MemorySlot::binding_type _hwlocBindingRequested = MemorySlot::binding_type::strict_binding;
+  L0::MemorySlot::binding_type _hwlocBindingRequested = L0::MemorySlot::binding_type::strict_binding;
 
   /**
    * Thread-safe map that stores all detected memory spaces HWLoC objects associated to this backend
@@ -149,7 +152,7 @@ class MemoryManager final : public backend::MemoryManager
       auto obj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, i);
 
       // Checking whther bound memory allocation and freeing is supported
-      auto bindingSupport = MemorySlot::binding_type::strict_non_binding;
+      auto bindingSupport = L0::MemorySlot::binding_type::strict_non_binding;
       size_t size = 1024;
       auto ptr = hwloc_alloc_membind(*_topology, size, obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
       if (ptr != NULL)
@@ -158,7 +161,7 @@ class MemoryManager final : public backend::MemoryManager
         auto status = hwloc_free(*_topology, ptr, size);
 
         // Freeing was successful, then strict binding is supported
-        if (status == 0) bindingSupport = MemorySlot::binding_type::strict_binding;
+        if (status == 0) bindingSupport = L0::MemorySlot::binding_type::strict_binding;
       }
 
       // Storing reference to the HWLoc object for future reference
@@ -192,14 +195,14 @@ class MemoryManager final : public backend::MemoryManager
 
     // Allocating memory in the reqested memory space
     void *ptr = NULL;
-    if (memSpace.bindingSupport == MemorySlot::binding_type::strict_binding) ptr = hwloc_alloc_membind(*_topology, size, memSpace.obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
-    if (memSpace.bindingSupport == MemorySlot::binding_type::strict_non_binding) ptr = malloc(size);
+    if (memSpace.bindingSupport == L0::MemorySlot::binding_type::strict_binding) ptr = hwloc_alloc_membind(*_topology, size, memSpace.obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+    if (memSpace.bindingSupport == L0::MemorySlot::binding_type::strict_non_binding) ptr = malloc(size);
 
     // Error checking
     if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpaceId);
 
     // Creating new memory slot object
-    auto memorySlot = new MemorySlot(memSpace.bindingSupport, ptr, size);
+    auto memorySlot = new L0::MemorySlot(memSpace.bindingSupport, ptr, size);
 
     // Assinging new entry in the memory slot map
     return memorySlot;
@@ -215,7 +218,7 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
-    auto memorySlot = new MemorySlot(MemorySlot::binding_type::strict_non_binding, ptr, size);
+    auto memorySlot = new L0::MemorySlot(L0::MemorySlot::binding_type::strict_non_binding, ptr, size);
 
     // Returning new memory slot pointer
     return memorySlot;
@@ -260,7 +263,7 @@ class MemoryManager final : public backend::MemoryManager
       auto memorySlot = entry.second;
 
       // Creating new memory slot
-      auto globalMemorySlot = new MemorySlot(MemorySlot::binding_type::strict_non_binding, memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
+      auto globalMemorySlot = new L0::MemorySlot(L0::MemorySlot::binding_type::strict_non_binding, memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
@@ -281,7 +284,7 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<MemorySlot *>(memorySlot);
+    auto m = dynamic_cast<L0::MemorySlot *>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -292,7 +295,7 @@ class MemoryManager final : public backend::MemoryManager
     const auto memorySlotSize = m->getSize();
 
     // If using strict binding, use hwloc_free to properly unmap the memory binding
-    if (memorySlotBindingType == MemorySlot::binding_type::strict_binding)
+    if (memorySlotBindingType == L0::MemorySlot::binding_type::strict_binding)
     {
       // Freeing memory slot
       auto status = hwloc_free(*_topology, memorySlotPointer, memorySlotSize);
@@ -302,7 +305,7 @@ class MemoryManager final : public backend::MemoryManager
     }
 
     // If using strict non binding, use system's free
-    if (memorySlotBindingType == MemorySlot::binding_type::strict_non_binding)
+    if (memorySlotBindingType == L0::MemorySlot::binding_type::strict_non_binding)
     {
       free(memorySlotPointer);
     }
@@ -372,7 +375,7 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<MemorySlot *>(memorySlot);
+    auto m = dynamic_cast<L0::MemorySlot *>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -384,7 +387,7 @@ class MemoryManager final : public backend::MemoryManager
   __USED__ inline void releaseGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<MemorySlot *>(memorySlot);
+    auto m = dynamic_cast<L0::MemorySlot *>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -394,6 +397,10 @@ class MemoryManager final : public backend::MemoryManager
   }
 };
 
+} // namespace L1
+
 } // namespace sharedMemory
+
 } // namespace backend
+
 } // namespace HiCR

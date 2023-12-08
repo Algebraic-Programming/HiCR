@@ -1,11 +1,8 @@
-#include <hicr/backends/lpf/memoryManager.hpp>
-#include <hicr/L0/memorySlot.hpp>
-
+#include <iostream>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <mpi.h>
-
-#include <iostream>
+#include <hicr/backends/lpf/L1/memoryManager.hpp>
 
 #define BUFFER_SIZE 256
 #define SENDER_PROCESS 0
@@ -21,7 +18,7 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
   (void)args; // ignore args parameter passed by lpf_exec
-  HiCR::backend::lpf::MemoryManager m(nprocs, pid, lpf);
+  HiCR::backend::lpf::L1::MemoryManager m(nprocs, pid, lpf);
   size_t myProcess = pid;
 
   char *buffer1 = new char[BUFFER_SIZE];

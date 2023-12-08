@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include <hicr/backends/memoryManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
 #include <hicr/L0/instance.hpp>
 #include <set>
 
 namespace HiCR
 {
 
-namespace backend
+namespace L1
 {
 
 /**
@@ -58,7 +58,7 @@ class InstanceManager
    * Function to retrieve the internal memory manager for this instance manager
    * \return A pointer to the memory manager used to instantiate this instance manager
    */
-  __USED__ inline HiCR::backend::MemoryManager *getMemoryManager() const { return _memoryManager; }
+  __USED__ inline HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
 
   /**
    * Collection of instances
@@ -76,7 +76,7 @@ class InstanceManager
    * Constructor with proper arguments
    * \param memoryManager The memory manager to use for exchange of data (state, return values) between instances
    */
-  InstanceManager(HiCR::backend::MemoryManager *const memoryManager) : _memoryManager(memoryManager)
+  InstanceManager(HiCR::L1::MemoryManager *const memoryManager) : _memoryManager(memoryManager)
   {
     // Querying memory spaces in the memory manager
     _memoryManager->queryMemorySpaces();
@@ -85,9 +85,9 @@ class InstanceManager
   /**
    * Memory manager object for exchanging information among HiCR instances
    */
-  HiCR::backend::MemoryManager *const _memoryManager;
+  HiCR::L1::MemoryManager *const _memoryManager;
 };
 
-} // namespace backend
+} // namespace L1
 
 } // namespace HiCR

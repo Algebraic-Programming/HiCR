@@ -12,8 +12,8 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/backends/ascend/common.hpp>
 #include <hicr/L0/memorySlot.hpp>
+#include <hicr/backends/ascend/common.hpp>
 
 namespace HiCR
 {
@@ -22,6 +22,9 @@ namespace backend
 {
 
 namespace ascend
+{
+
+namespace L0
 {
 
 /**
@@ -82,6 +85,8 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    */
   const aclDataBuffer *_dataBuffer;
 };
+
+} // namespace L0
 
 } // namespace ascend
 

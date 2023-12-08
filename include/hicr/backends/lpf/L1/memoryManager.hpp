@@ -37,9 +37,9 @@
 #include <cstring>
 #include <lpf/collectives.h>
 #include <lpf/core.h>
-#include <hicr/backends/lpf/memorySlot.hpp>
-#include <hicr/backends/memoryManager.hpp>
-#include <hicr/backends/sequential/memoryManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
+#include <hicr/backends/sequential/L1/memoryManager.hpp>
+#include <hicr/backends/lpf/L0/memorySlot.hpp>
 
 namespace HiCR
 {
@@ -48,6 +48,9 @@ namespace backend
 {
 
 namespace lpf
+{
+
+namespace L1
 {
 
 /**
@@ -60,7 +63,7 @@ namespace lpf
  *
  * The only LPF engine currently of interest is the IB Verbs engine (see above for branch and hash)
  */
-class MemoryManager final : public HiCR::backend::MemoryManager
+class MemoryManager final : public HiCR::L1::MemoryManager
 {
   private:
 
@@ -85,7 +88,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
     if (memorySpace != _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID)
       HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID);
 
-    return sequential::MemoryManager::getTotalSystemMemory();
+    return sequential::L1::MemoryManager::getTotalSystemMemory();
   }
 
   /**
@@ -94,7 +97,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * It is important to know the initial count per slot so as to avoid
    * incrementing the messagesRecv at the beginning without need.
    */
-  std::map<MemorySlot, size_t> initMsgCnt;
+  std::map<L0::MemorySlot, size_t> initMsgCnt;
 
   /**
    * Constructor of the LPF memory manager
@@ -107,7 +110,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * On the other hand, the resize message queue could also be locally
    * made, and placed elsewhere.
    */
-  MemoryManager(size_t size, size_t rank, lpf_t lpf) : HiCR::backend::MemoryManager(), _size(size), _rank(rank), _lpf(lpf)
+  MemoryManager(size_t size, size_t rank, lpf_t lpf) : HiCR::L1::MemoryManager(), _size(size), _rank(rank), _lpf(lpf)
   {
     const size_t msgslots = DEFAULT_MSGSLOTS;
     const size_t memslots = DEFAULT_MEMSLOTS;
@@ -231,7 +234,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       {
         // deregister locally as it will be registered globally
 
-        lpf::MemorySlot *memorySlot = static_cast<lpf::MemorySlot *>(memorySlots[localPointerPos++].second);
+        lpf::L0::MemorySlot *memorySlot = static_cast<lpf::L0::MemorySlot *>(memorySlots[localPointerPos++].second);
         lpf_deregister(_lpf, memorySlot->getLPFSlot());
         globalSlotPointers[i] = memorySlot->getPointer();
         // optionally initialize here?
@@ -241,7 +244,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
       CHECK(lpf_register_global(_lpf, globalSlotPointers[i], globalSlotSizes[i], &newSlot));
 
       // Creating new memory slot object
-      auto memorySlot = new lpf::MemorySlot(
+      auto memorySlot = new lpf::L0::MemorySlot(
         globalSlotProcessId[i],
         newSlot,
         globalSlotPointers[i],
@@ -274,13 +277,13 @@ class MemoryManager final : public HiCR::backend::MemoryManager
      */
 
     // Getting up-casted pointer for the execution unit
-    auto destination = dynamic_cast<MemorySlot *>(destinationSlotPtr);
+    auto destination = dynamic_cast<L0::MemorySlot *>(destinationSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (destination == NULL) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
 
     // Getting up-casted pointer for the execution unit
-    auto source = dynamic_cast<MemorySlot *>(sourceSlotPtr);
+    auto source = dynamic_cast<L0::MemorySlot *>(sourceSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (source == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
@@ -333,14 +336,14 @@ class MemoryManager final : public HiCR::backend::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
   {
     lpf_memslot_t lpfSlot = LPF_INVALID_MEMSLOT;
     auto rc = lpf_register_local(_lpf, ptr, size, &lpfSlot);
     if (rc != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Memory Manager: lpf_register_local failed");
 
     // Creating new memory slot object
-    auto memorySlot = new MemorySlot(_rank, lpfSlot, ptr, size);
+    auto memorySlot = new L0::MemorySlot(_rank, lpfSlot, ptr, size);
     return memorySlot;
   }
 
@@ -352,7 +355,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlotPtr) override
   {
     // Getting up-casted pointer for the execution unit
-    auto memorySlot = dynamic_cast<MemorySlot *>(memorySlotPtr);
+    auto memorySlot = dynamic_cast<L0::MemorySlot *>(memorySlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
@@ -407,7 +410,7 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   __USED__ inline void pullMessagesRecv(HiCR::L0::MemorySlot *memorySlot)
   {
     size_t msg_cnt;
-    lpf::MemorySlot *memSlot = static_cast<lpf::MemorySlot *>(memorySlot);
+    lpf::L0::MemorySlot *memSlot = static_cast<lpf::L0::MemorySlot *>(memorySlot);
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
     lpf_get_rcvd_msg_count_per_slot(_lpf, &msg_cnt, lpfSlot);
     for (size_t i = initMsgCnt[*memSlot] + memSlot->getMessagesRecv(); i < msg_cnt; i++)
@@ -430,6 +433,10 @@ class MemoryManager final : public HiCR::backend::MemoryManager
   }
 };
 
+} // namespace L1
+
 } // namespace lpf
+
 } // namespace backend
+
 } // namespace HiCR

@@ -13,10 +13,10 @@
 #pragma once
 
 #include "hwloc.h"
-#include <hicr/backends/computeManager.hpp>
-#include <hicr/backends/sequential/executionState.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
-#include <hicr/backends/sequential/processingUnit.hpp>
+#include <hicr/L1/computeManager.hpp>
+#include <hicr/backends/sequential/L0/executionState.hpp>
+#include <hicr/backends/sequential/L0/executionUnit.hpp>
+#include <hicr/backends/sequential/L0/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -27,24 +27,27 @@ namespace backend
 namespace sequential
 {
 
+namespace L1
+{
+
 /**
  * Implementation of the HWloc-based HiCR Shared Memory backend's compute manager.
  *
  * It detects and returns the processing units detected by the HWLoc library
  */
-class ComputeManager final : public backend::ComputeManager
+class ComputeManager final : public HiCR::L1::ComputeManager
 {
   public:
 
-  __USED__ inline ExecutionUnit *createExecutionUnit(L0::ExecutionUnit::function_t executionUnit) override
+  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(HiCR::L0::ExecutionUnit::function_t executionUnit) override
   {
-    return new ExecutionUnit(executionUnit);
+    return new L0::ExecutionUnit(executionUnit);
   }
 
   /**
    * The constructor is employed to reserve memory required for hwloc
    */
-  ComputeManager() : backend::ComputeManager() {}
+  ComputeManager() : HiCR::L1::ComputeManager() {}
 
   /**
    * The constructor is employed to free memory required for hwloc
@@ -62,12 +65,16 @@ class ComputeManager final : public backend::ComputeManager
     return computeResourceList_t({0});
   }
 
-  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::computeResourceId_t resource) const override
   {
-    return std::make_unique<ProcessingUnit>(resource);
+    return std::make_unique<L0::ProcessingUnit>(resource);
   }
 };
 
+} // namespace L1
+
 } // namespace sequential
+
 } // namespace backend
+
 } // namespace HiCR

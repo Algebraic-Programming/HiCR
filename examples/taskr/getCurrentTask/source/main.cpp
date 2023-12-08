@@ -1,5 +1,5 @@
 #include <cstdio>
-#include <hicr/backends/sequential/computeManager.hpp>
+#include <hicr/backends/sequential/L1/computeManager.hpp>
 #include <taskr/runtime.hpp>
 #include <taskr/task.hpp>
 
@@ -8,7 +8,7 @@
 int main(int argc, char **argv)
 {
   // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sequential::ComputeManager computeManager;
+  HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   // Querying computational resources
   computeManager.queryComputeResources();

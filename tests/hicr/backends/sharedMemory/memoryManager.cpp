@@ -12,7 +12,7 @@
 
 #include <limits>
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/memoryManager.hpp>
+#include <hicr/backends/sharedMemory/L1/memoryManager.hpp>
 
 namespace backend = HiCR::backend::sharedMemory;
 
@@ -24,9 +24,9 @@ TEST(MemoryManager, Construction)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  backend::MemoryManager *b = NULL;
+  backend::L1::MemoryManager *b = NULL;
 
-  EXPECT_NO_THROW(b = new backend::MemoryManager(&topology));
+  EXPECT_NO_THROW(b = new backend::L1::MemoryManager(&topology));
   EXPECT_FALSE(b == nullptr);
   delete b;
 }
@@ -39,13 +39,13 @@ TEST(MemoryManager, Memory)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  backend::MemoryManager b(&topology);
+  backend::L1::MemoryManager b(&topology);
 
   // Querying resources
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  std::set<HiCR::backend::MemoryManager::memorySpaceId_t> mList;
+  std::set<HiCR::L1::MemoryManager::memorySpaceId_t> mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
   EXPECT_GT(mList.size(), 0);
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <hicr/backends/memoryManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/channel/spsc/producer.hpp>
 #include "common.hpp"
 
-void producerFc(HiCR::backend::MemoryManager *memoryManager, const size_t channelCapacity)
+void producerFc(HiCR::L1::MemoryManager *memoryManager, const size_t channelCapacity)
 {
  // Obtaining memory spaces
  auto memSpaces = memoryManager->getMemorySpaceList();

@@ -3,7 +3,7 @@
 #include <hicr/L1/channel/mpsc/producer.hpp>
 #include "common.hpp"
 
-void producerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity, const size_t producerId)
+void producerFc(HiCR::L1::MemoryManager* memoryManager, const size_t channelCapacity, const size_t producerId)
 {
  // Obtaining memory spaces
  auto memSpaces = memoryManager->getMemorySpaceList();

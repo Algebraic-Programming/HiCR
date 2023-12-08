@@ -14,9 +14,9 @@
 
 #include <memory>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/backends/ascend/executionState.hpp>
-#include <hicr/backends/ascend/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
+#include <hicr/backends/ascend/L0/executionState.hpp>
+#include <hicr/backends/ascend/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -25,6 +25,9 @@ namespace backend
 {
 
 namespace ascend
+{
+
+namespace L0
 {
 
 /**
@@ -134,6 +137,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   std::unique_ptr<ExecutionState> _executionState;
 };
+
+} // namespace L0
 
 } // namespace ascend
 

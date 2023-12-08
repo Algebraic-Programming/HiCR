@@ -14,9 +14,10 @@
 
 #include <mpi.h>
 #include <hicr/common/definitions.hpp>
-#include <hicr/backends/instanceManager.hpp>
-#include <hicr/backends/mpi/instance.hpp>
-#include <hicr/backends/mpi/memoryManager.hpp>
+#include <hicr/L1/instanceManager.hpp>
+#include <hicr/backends/mpi/L0/instance.hpp>
+#include <hicr/backends/mpi/L1/memoryManager.hpp>
+
 
 namespace HiCR
 {
@@ -27,6 +28,9 @@ namespace backend
 namespace mpi
 {
 
+namespace L1
+{
+
 /**
  * Instance manager tag for exchanging memory slots
  */
@@ -35,7 +39,7 @@ namespace mpi
 /**
  * Implementation of the HiCR MPI Instance Manager
  */
-class InstanceManager final : public HiCR::backend::InstanceManager
+class InstanceManager final : public HiCR::L1::InstanceManager
 {
   public:
 
@@ -44,10 +48,10 @@ class InstanceManager final : public HiCR::backend::InstanceManager
    *
    * \param[in] memoryManager The memory manager to use for internal data passing
    */
-  InstanceManager(HiCR::backend::MemoryManager *const memoryManager) : HiCR::backend::InstanceManager(memoryManager)
+  InstanceManager(HiCR::L1::MemoryManager *const memoryManager) : HiCR::L1::InstanceManager(memoryManager)
   {
     // Getting up-casted pointer for the MPI memory manager
-    auto mm = dynamic_cast<mpi::MemoryManager *const>(_memoryManager);
+    auto mm = dynamic_cast<mpi::L1::MemoryManager *const>(_memoryManager);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (mm == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");
@@ -88,6 +92,10 @@ class InstanceManager final : public HiCR::backend::InstanceManager
   ~InstanceManager() = default;
 };
 
+} // namespace L1
+
 } // namespace mpi
+
 } // namespace backend
+
 } // namespace HiCR

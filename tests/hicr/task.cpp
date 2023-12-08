@@ -11,7 +11,7 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sequential/computeManager.hpp>
+#include <hicr/backends/sequential/L1/computeManager.hpp>
 #include <hicr/L1/tasking/task.hpp>
 
 TEST(Task, Construction)
@@ -61,7 +61,7 @@ TEST(Task, Run)
   };
 
   // Instantiating default compute manager
-  HiCR::backend::sequential::ComputeManager m;
+  HiCR::backend::sequential::L1::ComputeManager m;
 
   // Creating execution unit
   auto u = m.createExecutionUnit(f);
@@ -142,7 +142,7 @@ TEST(Task, Events)
   };
 
   // Instantiating default compute manager
-  HiCR::backend::sequential::ComputeManager m;
+  HiCR::backend::sequential::L1::ComputeManager m;
 
   // Creating execution unit
   auto u = m.createExecutionUnit(f);

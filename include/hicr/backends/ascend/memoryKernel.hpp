@@ -13,10 +13,11 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/backends/ascend/memoryManager.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/L0/memorySlot.hpp>
+#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/backends/ascend/L1/memoryManager.hpp>
+
 
 namespace HiCR
 {
@@ -25,9 +26,6 @@ namespace backend
 {
 
 namespace ascend
-{
-
-namespace kernel
 {
 
 /**
@@ -50,7 +48,7 @@ class MemoryKernel final : public Kernel
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(MemoryManager *memManager, HiCR::L0::MemorySlot *destination, const size_t destinationOffset, HiCR::L0::MemorySlot *source, const size_t sourceOffset, size_t size) : Kernel(),
+  MemoryKernel(L1::MemoryManager *memManager, HiCR::L0::MemorySlot *destination, const size_t destinationOffset, HiCR::L0::MemorySlot *source, const size_t sourceOffset, size_t size) : ascend::Kernel(),
                                                                                                                                                                              _dst(destination),
                                                                                                                                                                              _src(source),
                                                                                                                                                                              _dstOffset(destinationOffset),
@@ -104,10 +102,8 @@ class MemoryKernel final : public Kernel
   /**
    * Ascend memory manager
    */
-  MemoryManager *_memManager;
+  L1::MemoryManager *_memManager;
 };
-
-} // namespace kernel
 
 } // namespace ascend
 

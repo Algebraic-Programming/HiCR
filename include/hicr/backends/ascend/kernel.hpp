@@ -25,9 +25,6 @@ namespace backend
 namespace ascend
 {
 
-namespace kernel
-{
-  
 /**
  * This class represents a replicable kernel for the ascend backend.
  * A Kernel is a piece of computation meant to be executed on an ascend device.
@@ -50,8 +47,6 @@ class Kernel
    */
   __USED__ inline virtual void start(const aclrtStream stream) = 0;
 };
-
-} // namespace kernel
 
 } // namespace ascend
 

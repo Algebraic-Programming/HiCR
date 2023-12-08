@@ -16,9 +16,9 @@
 #include <hicr/common/circularBuffer.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/backends/memoryManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
 #include <hicr/L0/memorySlot.hpp>
-
+ 
 /**
  * Establishes how many elements are required in the base coordination buffer
  */
@@ -137,7 +137,7 @@ class Base : public common::CircularBuffer
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(backend::MemoryManager *memoryManager,
+  Base(L1::MemoryManager *memoryManager,
        L0::MemorySlot *const tokenBuffer,
        L0::MemorySlot *const coordinationBuffer,
        const size_t tokenSize,
@@ -170,7 +170,7 @@ class Base : public common::CircularBuffer
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  backend::MemoryManager *const _memoryManager;
+  L1::MemoryManager *const _memoryManager;
 
   /**
    * Memory slot that represents the token buffer that producer sends data to

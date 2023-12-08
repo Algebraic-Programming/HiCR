@@ -14,10 +14,9 @@
 
 #include <memory>
 #include "hwloc.h"
-#include <hicr/backends/computeManager.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
-#include <hicr/backends/sharedMemory/processingUnit.hpp>
-
+#include <hicr/L1/computeManager.hpp>
+#include <hicr/backends/sequential/L0/executionUnit.hpp>
+#include <hicr/backends/sharedMemory/L0/processingUnit.hpp>
 
 namespace HiCR
 {
@@ -28,12 +27,15 @@ namespace backend
 namespace sharedMemory
 {
 
+namespace L1
+{
+
 /**
  * Implementation of the HWloc-based HiCR Shared Memory backend's compute manager.
  *
  * It detects and returns the processing units detected by the HWLoc library
  */
-class ComputeManager final : public backend::ComputeManager
+class ComputeManager final : public HiCR::L1::ComputeManager
 {
   public:
 
@@ -42,16 +44,16 @@ class ComputeManager final : public backend::ComputeManager
    *
    * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
-  ComputeManager(hwloc_topology_t *topology) : backend::ComputeManager(), _topology{topology} {}
+  ComputeManager(hwloc_topology_t *topology) : HiCR::L1::ComputeManager(), _topology{topology} {}
 
   /**
    * The constructor is employed to free memory required for hwloc
    */
   ~ComputeManager() = default;
 
-  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(sequential::ExecutionUnit::function_t executionUnit) override
+  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(sequential::L0::ExecutionUnit::function_t executionUnit) override
   {
-    return new sequential::ExecutionUnit(executionUnit);
+    return new sequential::L0::ExecutionUnit(executionUnit);
   }
 
   /**
@@ -308,7 +310,7 @@ class ComputeManager final : public backend::ComputeManager
 
   __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::computeResourceId_t resource) const override
   {
-    return std::make_unique<ProcessingUnit>(resource);
+    return std::make_unique<L0::ProcessingUnit>(resource);
   }
 
   /**
@@ -317,6 +319,10 @@ class ComputeManager final : public backend::ComputeManager
   hwloc_topology_t *_topology;
 };
 
+} // namespace L1
+
 } // namespace sharedMemory
+
 } // namespace backend
+
 } // namespace HiCR

@@ -1,6 +1,6 @@
-#include "include/abcTasks.hpp"
-#include <hicr/backends/sharedMemory/computeManager.hpp>
 #include <hwloc.h>
+#include <hicr/backends/sharedMemory/L1/computeManager.hpp>
+#include "include/abcTasks.hpp"
 
 int main(int argc, char **argv)
 {
@@ -11,7 +11,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::ComputeManager computeManager(&topology);
+  HiCR::backend::sharedMemory::L1::ComputeManager computeManager(&topology);
 
   // Running ABCtasks example
   abcTasks(&computeManager);

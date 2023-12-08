@@ -13,14 +13,14 @@
 #include "gtest/gtest.h"
 #include <thread> 
 #include <hicr/common/exceptions.hpp>
-#include <hicr/backends/sequential/memoryManager.hpp>
+#include <hicr/backends/sequential/L1/memoryManager.hpp>
 #include <hicr/L1/channel/spsc/consumer.hpp>
 #include <hicr/L1/channel/spsc/producer.hpp>
 
 TEST(ConsumerChannel, Construction)
 {
   // Instantiating backend's memory manager
-  HiCR::backend::sequential::MemoryManager backend;
+  HiCR::backend::sequential::L1::MemoryManager backend;
 
   // Asking memory manager to check the available memory spaces
   backend.queryMemorySpaces();
@@ -59,7 +59,7 @@ TEST(ConsumerChannel, Construction)
 TEST(ConsumerChannel, PeekPop)
 {
   // Instantiating backend
-  HiCR::backend::sequential::MemoryManager backend;
+  HiCR::backend::sequential::L1::MemoryManager backend;
 
   // Asking memory manager to check the available memory spaces
   backend.queryMemorySpaces();
@@ -121,7 +121,7 @@ TEST(ConsumerChannel, PeekPop)
 TEST(ConsumerChannel, PeekWait)
 {
   // Instantiating backend
-  HiCR::backend::sequential::MemoryManager backend;
+  HiCR::backend::sequential::L1::MemoryManager backend;
 
   // Asking memory manager to check the available memory spaces
   backend.queryMemorySpaces();

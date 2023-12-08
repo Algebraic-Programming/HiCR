@@ -14,10 +14,13 @@
 
 #include <map>
 
-#include <hicr/backends/computeManager.hpp>
-#include <hicr/backends/memoryManager.hpp>
+#include <hicr/L1/computeManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
 
 namespace HiCR
+{
+
+namespace L2
 {
 
 namespace machineModel
@@ -52,7 +55,7 @@ class ComputeResource
   /**
    *  List of associated Memory Spaces
    */
-  backend::MemoryManager::memorySpaceList_t _memorySpaces;
+  L1::MemoryManager::memorySpaceList_t _memorySpaces;
 
   /**
    *  Associated HiCR::L0::ProcessingUnit executing on the resource
@@ -62,7 +65,7 @@ class ComputeResource
   /**
    *  Optional; distances from other NUMA nodes in case of multiple NUMA nodes present
    */
-  std::map<backend::MemoryManager::memorySpaceId_t, size_t> _numaDistances;
+  std::map<L1::MemoryManager::memorySpaceId_t, size_t> _numaDistances;
 
   public:
 
@@ -139,7 +142,7 @@ class ComputeResource
    *
    * \return A hash set of associated MemorySpaces
    */
-  inline backend::MemoryManager::memorySpaceList_t getMemorySpaces() const
+  inline L1::MemoryManager::memorySpaceList_t getMemorySpaces() const
   {
     return _memorySpaces;
   }
@@ -150,7 +153,7 @@ class ComputeResource
    *
    * \param[in] id The ID of the Memory Space to be added
    */
-  inline void addMemorySpace(backend::MemoryManager::memorySpaceId_t id)
+  inline void addMemorySpace(L1::MemoryManager::memorySpaceId_t id)
   {
     _memorySpaces.insert(id);
   }
@@ -158,5 +161,7 @@ class ComputeResource
 }; // class ComputeResource
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

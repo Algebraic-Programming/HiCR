@@ -1,19 +1,20 @@
-#include <hicr/backends/ascend/computationKernel.hpp>
-#include <hicr/backends/ascend/computeManager.hpp>
-#include <hicr/backends/ascend/executionUnit.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/backends/ascend/memoryKernel.hpp>
-#include <hicr/backends/ascend/memoryManager.hpp>
-#include <hicr/backends/ascend/processingUnit.hpp>
 #include <iomanip>
 #include <filesystem>
 #include <stdio.h>
+#include <hicr/backends/ascend/computationKernel.hpp>
+#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/backends/ascend/memoryKernel.hpp>
+#include <hicr/backends/ascend/L0/processingUnit.hpp>
+#include <hicr/backends/ascend/L0/executionUnit.hpp>
+#include <hicr/backends/ascend/L1/computeManager.hpp>
+#include <hicr/backends/ascend/L1/memoryManager.hpp>
+
 
 #define BUFF_SIZE 192
 
 namespace ascend = HiCR::backend::ascend;
 
-void populateMemorySlot(HiCR::MemorySlot *memorySlot, float value)
+void populateMemorySlot(HiCR::L0::MemorySlot *memorySlot, float value)
 {
   for (int i = 0; i < BUFF_SIZE; i++)
   {
@@ -38,11 +39,11 @@ void doPrintMatrix(const aclFloat16 *matrix, uint32_t numRows, uint32_t numCols)
 int main(int argc, char **argv)
 {
   // Initialize ACL runtime
-  HiCR::backend::ascend::Initializer i;
+  ascend::Core i;
   i.init();
 
   // Instantiating Memory Manager
-  HiCR::backend::ascend::MemoryManager memoryManager(i);
+  ascend::L1::MemoryManager memoryManager(i);
 
   // get memory spaces
   memoryManager.queryMemorySpaces();
@@ -70,16 +71,16 @@ int main(int argc, char **argv)
   populateMemorySlot(input2Host, 2.0);
 
   // Instantiating Compute Manager
-  ascend::ComputeManager computeManager(i);
+  ascend::L1::ComputeManager computeManager(i);
 
   // Copy the inputs from the host buffers to the device buffers using a MemoryKernel abstraction
-  ascend::kernel::MemoryKernel copyInput1MemoryKernel = ascend::kernel::MemoryKernel(&memoryManager, input1Device, 0, input1Host, 0, size);
-  ascend::kernel::MemoryKernel copyInput2MemoryKernel = ascend::kernel::MemoryKernel(&memoryManager, input2Device, 0, input2Host, 0, size);
+  ascend::MemoryKernel copyInput1MemoryKernel = ascend::MemoryKernel(&memoryManager, input1Device, 0, input1Host, 0, size);
+  ascend::MemoryKernel copyInput2MemoryKernel = ascend::MemoryKernel(&memoryManager, input2Device, 0, input2Host, 0, size);
 
   // Create the tensor data structure for the ComputeKernel
-  auto castedInput1Device = static_cast<ascend::MemorySlot *>(input1Device);
-  auto castedInput2Device = static_cast<ascend::MemorySlot *>(input2Device);
-  auto castedOutputDevice = static_cast<ascend::MemorySlot *>(outputDevice);
+  auto castedInput1Device = static_cast<ascend::L0::MemorySlot *>(input1Device);
+  auto castedInput2Device = static_cast<ascend::L0::MemorySlot *>(input2Device);
+  auto castedOutputDevice = static_cast<ascend::L0::MemorySlot *>(outputDevice);
   if ( castedInput1Device == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
   if ( castedInput2Device == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");  
   if ( castedOutputDevice == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
@@ -91,20 +92,20 @@ int main(int argc, char **argv)
   if (tensorDesc == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
 
   // Prepare kernel input tensor data
-  std::vector<ascend::kernel::ComputationKernel::tensorData_t> inputs = std::vector<ascend::kernel::ComputationKernel::tensorData_t>(
+  std::vector<ascend::ComputationKernel::tensorData_t> inputs = std::vector<ascend::ComputationKernel::tensorData_t>(
     {
-      ascend::kernel::ComputationKernel::tensorData_t{
+      ascend::ComputationKernel::tensorData_t{
         .dataBuffer = castedInput1Device->getDataBuffer(),
         .tensorDescriptor = tensorDesc},
-      ascend::kernel::ComputationKernel::tensorData_t{
+      ascend::ComputationKernel::tensorData_t{
         .dataBuffer = castedInput2Device->getDataBuffer(),
         .tensorDescriptor = tensorDesc},
     });
 
   // Prepare kernel output tensor data
-  std::vector<ascend::kernel::ComputationKernel::tensorData_t> outputs = std::vector<ascend::kernel::ComputationKernel::tensorData_t>(
+  std::vector<ascend::ComputationKernel::tensorData_t> outputs = std::vector<ascend::ComputationKernel::tensorData_t>(
     {
-      ascend::kernel::ComputationKernel::tensorData_t{
+      ascend::ComputationKernel::tensorData_t{
         .dataBuffer = castedOutputDevice->getDataBuffer(),
         .tensorDescriptor = tensorDesc,
       },
@@ -113,7 +114,7 @@ int main(int argc, char **argv)
   // Create the vector addition ComputeKernel
   auto currentPath = std::filesystem::current_path().string();
   auto kernelPath = currentPath + std::string("/../examples/hicr/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om");
-  ascend::kernel::ComputationKernel kernel = ascend::kernel::ComputationKernel(
+  ascend::ComputationKernel kernel = ascend::ComputationKernel(
     kernelPath.c_str(),
     "Add",
     std::move(inputs),
@@ -121,10 +122,10 @@ int main(int argc, char **argv)
     aclopCreateAttr());
 
   // copy the result back on the host
-  ascend::kernel::MemoryKernel copyOutputMemoryKernel = ascend::kernel::MemoryKernel(&memoryManager, outputHost, 0, outputDevice, 0, size);
+  ascend::MemoryKernel copyOutputMemoryKernel = ascend::MemoryKernel(&memoryManager, outputHost, 0, outputDevice, 0, size);
 
   // create the stream of Kernel operations to be executed on the device
-  std::vector<ascend::kernel::Kernel *> operations = std::vector<ascend::kernel::Kernel *>(
+  std::vector<ascend::Kernel *> operations = std::vector<ascend::Kernel *>(
     {&copyInput1MemoryKernel,
      &copyInput2MemoryKernel,
      &kernel,

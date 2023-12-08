@@ -23,6 +23,9 @@ namespace backend
 namespace lpf
 {
 
+namespace L0
+{
+
 /**
  * This class is the definition for a Memory Slot resource for the LPF backend
  */
@@ -97,6 +100,8 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    */
   const lpf_memslot_t _lpfMemSlot;
 };
+
+} // namespace L0
 
 } // namespace lpf
 

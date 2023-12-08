@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <acl/acl.h>
 #include <chrono>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/L0/executionUnit.hpp>
 #include <thread>
 #include <vector>
+#include <acl/acl.h>
+#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -27,6 +27,10 @@ namespace backend
 
 namespace ascend
 {
+
+namespace L0
+{
+
 
 /**
  * This class represents a replicable sequence of kernels meant to be executed on Ascend.
@@ -40,7 +44,7 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    *
    * \param kernelOperations kernels to execute
    */
-  ExecutionUnit(const std::vector<kernel::Kernel *> &kernelOperations) : HiCR::L0::ExecutionUnit(), _kernels(kernelOperations){};
+  ExecutionUnit(const std::vector<ascend::Kernel *> &kernelOperations) : HiCR::L0::ExecutionUnit(), _kernels(kernelOperations){};
   ExecutionUnit() = delete;
 
   /**
@@ -70,8 +74,10 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
   /**
    * Ordered sequence of kernels meant to be executed as a unique stream of operations.
    */
-  const std::vector<kernel::Kernel *> _kernels;
+  const std::vector<ascend::Kernel *> _kernels;
 };
+
+} // namespace L0
 
 } // namespace ascend
 

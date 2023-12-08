@@ -11,16 +11,16 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sequential/computeManager.hpp>
-#include <hicr/backends/sequential/processingUnit.hpp>
+#include <hicr/backends/sequential/L0/processingUnit.hpp>
+#include <hicr/backends/sequential/L1/computeManager.hpp>
 
 namespace backend = HiCR::backend::sequential;
 
 TEST(ProcessingUnit, Construction)
 {
-  backend::ProcessingUnit *p = NULL;
+  backend::L0::ProcessingUnit *p = NULL;
 
-  EXPECT_NO_THROW(p = new backend::ProcessingUnit(0));
+  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(0));
   EXPECT_FALSE(p == nullptr);
   delete p;
 }
@@ -28,7 +28,7 @@ TEST(ProcessingUnit, Construction)
 TEST(ProcessingUnit, LifeCycle)
 {
   HiCR::L0::computeResourceId_t pId = 0;
-  backend::ProcessingUnit p(pId);
+  backend::L0::ProcessingUnit p(pId);
 
   // Checking that the correct resourceId was used
   HiCR::L0::computeResourceId_t pIdAlt = pId + 1;
@@ -52,7 +52,7 @@ TEST(ProcessingUnit, LifeCycle)
   };
 
   // Creating compute manager
-  HiCR::backend::sequential::ComputeManager m;
+  HiCR::backend::sequential::L1::ComputeManager m;
 
   // Creating execution unit
   auto executionUnit = m.createExecutionUnit(fc);

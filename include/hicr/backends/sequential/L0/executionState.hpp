@@ -13,9 +13,9 @@
 #pragma once
 
 #include <functional>
-#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/L0/executionState.hpp>
+#include <hicr/backends/sequential/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -24,6 +24,9 @@ namespace backend
 {
 
 namespace sequential
+{
+
+namespace L0
 {
 
 /**
@@ -41,7 +44,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   __USED__ inline ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit) : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_cast<const sequential::ExecutionUnit *>(executionUnit);
+    auto e = dynamic_cast<const sequential::L0::ExecutionUnit *>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
@@ -78,7 +81,9 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   common::Coroutine _coroutine;
 };
 
-} // end namespace sequential
+} // namespace L0
+
+} // namespace sequential
 
 } // namespace backend
 

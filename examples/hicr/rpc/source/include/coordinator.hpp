@@ -1,9 +1,9 @@
 #pragma once
 
-#include <hicr/backends/instanceManager.hpp>
+#include <hicr/L1/instanceManager.hpp>
 #include "common.hpp"
 
-void coordinatorFc(HiCR::backend::InstanceManager& instanceManager)
+void coordinatorFc(HiCR::L1::InstanceManager& instanceManager)
 {
  // Querying instance list
  auto& instances = instanceManager.getInstances();

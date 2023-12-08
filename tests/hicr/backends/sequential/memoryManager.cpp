@@ -13,28 +13,28 @@
 #include <limits>
 #include "gtest/gtest.h"
 #include <hicr/common/exceptions.hpp>
-#include <hicr/backends/sequential/memoryManager.hpp>
+#include <hicr/backends/sequential/L1/memoryManager.hpp>
 
 namespace backend = HiCR::backend::sequential; 
 
 TEST(MemoryManager, Construction)
 {
-  backend::MemoryManager *b = NULL;
+  backend::L1::MemoryManager *b = NULL;
 
-  EXPECT_NO_THROW(b = new backend::MemoryManager());
+  EXPECT_NO_THROW(b = new backend::L1::MemoryManager());
   EXPECT_FALSE(b == nullptr);
   delete b;
 }
 
 TEST(MemoryManager, Memory)
 {
-  backend::MemoryManager b;
+  backend::L1::MemoryManager b;
 
   // Querying resources
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  std::set<HiCR::backend::MemoryManager::memorySpaceId_t> mList;
+  std::set<HiCR::L1::MemoryManager::memorySpaceId_t> mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
   EXPECT_EQ(mList.size(), 1);
 

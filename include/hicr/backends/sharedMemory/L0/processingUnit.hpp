@@ -19,9 +19,9 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/backends/sequential/executionState.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
+#include <hicr/backends/sequential/L0/executionState.hpp>
+#include <hicr/backends/sequential/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -30,6 +30,9 @@ namespace backend
 {
 
 namespace sharedMemory
+{
+
+namespace L0
 {
 
 /**
@@ -92,7 +95,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
     // Creating and returning new execution state
-    return std::make_unique<sequential::ExecutionState>(executionUnit);
+    return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
   }
 
   private:
@@ -212,7 +215,9 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   }
 };
 
-} // end namespace sharedMemory
+} // namespace L0
+
+} // namespace sharedMemory
 
 } // namespace backend
 

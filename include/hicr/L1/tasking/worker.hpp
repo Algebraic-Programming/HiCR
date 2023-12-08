@@ -16,13 +16,12 @@
 #include <memory>
 #include <pthread.h>
 #include <unistd.h>
-#include <hicr/backends/computeManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/L0/processingUnit.hpp>
+#include <hicr/L1/computeManager.hpp>
 #include <hicr/L1/tasking/dispatcher.hpp>
 #include <hicr/L1/tasking/task.hpp>
-
 
 namespace HiCR
 {
@@ -76,7 +75,7 @@ class Worker
    *
    * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
    */
-  Worker(HiCR::backend::ComputeManager *computeManager) : _computeManager(computeManager)
+  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(computeManager)
   {
     // Making sure the worker-identifying key is created (only once) with the first created task
     pthread_once(&_workerPointerKeyConfig, createWorkerPointerKey);
@@ -277,7 +276,7 @@ class Worker
   /**
    * Compute manager to use to instantiate and manage the worker's and task execution states
    */
-  HiCR::backend::ComputeManager *const _computeManager;
+  HiCR::L1::ComputeManager *const _computeManager;
 
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run

@@ -13,10 +13,10 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/backends/ascend/common.hpp>
-#include <hicr/backends/ascend/executionUnit.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/L0/executionState.hpp>
+#include <hicr/backends/ascend/common.hpp>
+#include <hicr/backends/ascend/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -25,6 +25,9 @@ namespace backend
 {
 
 namespace ascend
+{
+
+namespace L0
 {
 
 /**
@@ -165,7 +168,9 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   bool _isStreamActive = false;
 };
 
-} // end namespace ascend
+} // namespace L0
+
+} // namespace ascend
 
 } // namespace backend
 

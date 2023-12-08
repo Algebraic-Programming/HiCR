@@ -16,7 +16,7 @@
 #include <acl/acl.h>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/backends/ascend/common.hpp>
-#include <hicr/backends/sequential/memoryManager.hpp>
+#include <hicr/backends/sequential/L1/memoryManager.hpp>
 
 namespace HiCR
 {
@@ -28,24 +28,24 @@ namespace ascend
 {
 
 /**
- * Initializer class implementation for the ascend backend responsible for initializing ACL
+ * Core class implementation for the ascend backend responsible for initializing ACL
  * and get the default context for each device.
  */
-class Initializer final
+class Core final
 {
   public:
 
   /**
-   * Constructor for the initializer class for the ascend backend. It inizialies ACL
+   * Constructor for the core class for the ascend backend. It inizialies ACL
    *
    * \param configPath configuration file to initialize ACL
    */
-  Initializer(const char *configPath = NULL) : _configPath(configPath){};
+  Core(const char *configPath = NULL) : _configPath(configPath){};
 
   /**
    * Default destructor
    */
-  ~Initializer() = default;
+  ~Core() = default;
 
   /**
    * Return the mapping between a device id and the ACL context for that device
@@ -130,7 +130,7 @@ class Initializer final
       _deviceStatusMap[deviceId] = ascendState_t{.context = deviceContext, .deviceType = deviceType_t::Npu, .size = ascendMemorySize};
     }
     // init host state (no context needed)
-    const auto hostMemorySize = HiCR::backend::sequential::MemoryManager::getTotalSystemMemory();
+    const auto hostMemorySize = HiCR::backend::sequential::L1::MemoryManager::getTotalSystemMemory();
     _deviceStatusMap[(int32_t)_deviceCount] = ascendState_t{.deviceType = deviceType_t::Host, .size = hostMemorySize};
   }
 

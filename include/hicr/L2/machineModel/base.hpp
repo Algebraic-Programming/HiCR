@@ -11,11 +11,13 @@
  */
 #pragma once
 
-// includes
 #include <hicr/L2/machineModel/deviceModel.hpp>
 #include <hicr/L2/machineModel/hostdev/hostDevice.hpp>
 
 namespace HiCR
+{
+
+namespace L2
 {
 
 namespace machineModel
@@ -81,5 +83,7 @@ class Base
 }; // class Base
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

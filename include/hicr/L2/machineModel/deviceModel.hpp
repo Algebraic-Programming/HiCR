@@ -18,6 +18,9 @@
 namespace HiCR
 {
 
+namespace L2
+{
+
 namespace machineModel
 {
 
@@ -34,22 +37,22 @@ class DeviceModel
   /**
    *  Compute Manager to interface with the device backend
    */
-  backend::ComputeManager *_computeManager;
+  L1::ComputeManager *_computeManager;
 
   /**
    *  Memory Manager to interface with the device backend
    */
-  backend::MemoryManager *_memoryManager;
+  L1::MemoryManager *_memoryManager;
 
   /**
    *  List of actual processing elements
    */
-  std::map<HiCR::L0::computeResourceId_t, ComputeResource *> _computeResources;
+  std::map<HiCR::L0::computeResourceId_t, L2::machineModel::ComputeResource *> _computeResources;
 
   /**
    *  List of memories/NUMA nodes
    */
-  std::map<backend::MemoryManager::memorySpaceId_t, MemorySpace *> _memorySpaces;
+  std::map<L1::MemoryManager::memorySpaceId_t, MemorySpace *> _memorySpaces;
 
   /**
    *  Friendly device description
@@ -122,9 +125,9 @@ class DeviceModel
    *
    * \return An std::set of pointers to the ComputeResources
    */
-  inline std::set<ComputeResource *> getComputeResources() const
+  inline std::set<L2::machineModel::ComputeResource *> getComputeResources() const
   {
-    std::set<ComputeResource *> ret;
+    std::set<L2::machineModel::ComputeResource *> ret;
     for (auto it : _computeResources)
       ret.insert(it.second);
 
@@ -175,5 +178,7 @@ class DeviceModel
 }; // class DeviceModel
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

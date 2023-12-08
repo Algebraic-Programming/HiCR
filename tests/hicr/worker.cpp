@@ -11,14 +11,14 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/sequential/computeManager.hpp>
+#include <hicr/backends/sequential/L1/computeManager.hpp>
 #include <hicr/L1/tasking/task.hpp>
 #include <hicr/L1/tasking/worker.hpp>
 
 TEST(Worker, Construction)
 {
   HiCR::L1::tasking::Worker *w = NULL;
-  HiCR::backend::ComputeManager *m = NULL;
+  HiCR::L1::ComputeManager *m = NULL;
 
   EXPECT_NO_THROW(w = new HiCR::L1::tasking::Worker(m));
   EXPECT_FALSE(w == nullptr);
@@ -28,7 +28,7 @@ TEST(Worker, Construction)
 TEST(Task, SetterAndGetters)
 {
   // Instantiating default compute manager
-  HiCR::backend::sequential::ComputeManager m;
+  HiCR::backend::sequential::L1::ComputeManager m;
 
   HiCR::L1::tasking::Worker w(&m);
 
@@ -63,7 +63,7 @@ TEST(Task, SetterAndGetters)
 TEST(Worker, LifeCycle)
 {
   // Instantiating default compute manager
-  HiCR::backend::sequential::ComputeManager m;
+  HiCR::backend::sequential::L1::ComputeManager m;
 
   HiCR::L1::tasking::Worker w(&m);
 

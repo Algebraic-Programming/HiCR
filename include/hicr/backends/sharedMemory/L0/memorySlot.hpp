@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <pthread.h>
 #include <hicr/L0/memorySlot.hpp>
 
 namespace HiCR
@@ -20,6 +21,9 @@ namespace backend
 {
 
 namespace sharedMemory
+{
+
+namespace L0
 {
 
 /**
@@ -113,6 +117,8 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    */
   pthread_mutex_t _mutex;
 };
+
+} // namespace L0
 
 } // namespace sharedMemory
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <hicr/backends/memoryManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/channel/spsc/consumer.hpp>
 #include "common.hpp"
 
-void consumerFc(HiCR::backend::MemoryManager *memoryManager, const size_t channelCapacity)
+void consumerFc(HiCR::L1::MemoryManager *memoryManager, const size_t channelCapacity)
 {
  // Getting required buffer sizes
  auto tokenBufferSize = HiCR::L1::channel::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);

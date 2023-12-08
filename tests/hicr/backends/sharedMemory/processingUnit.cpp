@@ -12,16 +12,16 @@
 
 #include <set>
 #include "gtest/gtest.h"
-#include <hicr/backends/sharedMemory/computeManager.hpp>
-#include <hicr/backends/sharedMemory/processingUnit.hpp>
+#include <hicr/backends/sharedMemory/L0/processingUnit.hpp>
+#include <hicr/backends/sharedMemory/L1/computeManager.hpp>
 
 namespace backend = HiCR::backend::sharedMemory;
 
 TEST(ProcessingUnit, Construction)
 {
-  backend::ProcessingUnit *p = NULL;
+  backend::L0::ProcessingUnit *p = NULL;
 
-  EXPECT_NO_THROW(p = new backend::ProcessingUnit(0));
+  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(0));
   EXPECT_FALSE(p == nullptr);
   delete p;
 }
@@ -30,16 +30,16 @@ TEST(ProcessingUnit, AffinityFunctions)
 {
   // Storing current affinity set
   std::set<int> originalAffinitySet;
-  EXPECT_NO_THROW(originalAffinitySet = backend::ProcessingUnit::getAffinity());
+  EXPECT_NO_THROW(originalAffinitySet = backend::L0::ProcessingUnit::getAffinity());
 
   // Attempting to set and check new affinity set
   std::set<int> newAffinitySet({0, 1});
-  EXPECT_NO_THROW(backend::ProcessingUnit::updateAffinity(newAffinitySet));
-  EXPECT_EQ(newAffinitySet, backend::ProcessingUnit::getAffinity());
+  EXPECT_NO_THROW(backend::L0::ProcessingUnit::updateAffinity(newAffinitySet));
+  EXPECT_EQ(newAffinitySet, backend::L0::ProcessingUnit::getAffinity());
 
   // Re-setting affinity set
-  EXPECT_NO_THROW(backend::ProcessingUnit::updateAffinity(originalAffinitySet));
-  EXPECT_EQ(originalAffinitySet, backend::ProcessingUnit::getAffinity());
+  EXPECT_NO_THROW(backend::L0::ProcessingUnit::updateAffinity(originalAffinitySet));
+  EXPECT_EQ(originalAffinitySet, backend::L0::ProcessingUnit::getAffinity());
 }
 
 TEST(ProcessingUnit, ThreadAffinity)
@@ -47,7 +47,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   // Checking that a created thread has a correct affinity
   int threadAffinity = 1;
   std::set<int> threadAffinitySet({threadAffinity});
-  backend::ProcessingUnit p(threadAffinity);
+  backend::L0::ProcessingUnit p(threadAffinity);
 
   // Initializing processing unit
   EXPECT_NO_THROW(p.initialize());
@@ -59,7 +59,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]()
   {
     // Getting actual affinity set from the running thread
-    auto actualThreadAffinity = backend::ProcessingUnit::getAffinity();
+    auto actualThreadAffinity = backend::L0::ProcessingUnit::getAffinity();
 
     // Checking whether the one detected corresponds to the resource id
     if (actualThreadAffinity == threadAffinitySet) hasCorrectAffinity = true;
@@ -75,7 +75,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   hwloc_topology_init(&topology);
 
   // Creating compute manager
-  HiCR::backend::sharedMemory::ComputeManager m(&topology);
+  HiCR::backend::sharedMemory::L1::ComputeManager m(&topology);
 
   // Creating execution unit
   auto executionUnit = m.createExecutionUnit(fc);
@@ -104,7 +104,7 @@ TEST(ProcessingUnit, ThreadAffinity)
 TEST(ProcessingUnit, LifeCycle)
 {
   HiCR::L0::computeResourceId_t pId = 0;
-  backend::ProcessingUnit p(pId);
+  backend::L0::ProcessingUnit p(pId);
 
   // Checking that the correct resourceId was used
   HiCR::L0::computeResourceId_t pIdAlt = pId + 1;
@@ -149,10 +149,10 @@ TEST(ProcessingUnit, LifeCycle)
   hwloc_topology_init(&topology);
 
   // Creating compute manager
-  HiCR::backend::sharedMemory::ComputeManager m(&topology);
+  HiCR::backend::sharedMemory::L1::ComputeManager m(&topology);
 
   // Creating execution unit
-  auto executionUnit1 = new HiCR::backend::sequential::ExecutionUnit(fc1);
+  auto executionUnit1 = new HiCR::backend::sequential::L0::ExecutionUnit(fc1);
 
   // Testing forbidden transitions
   EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit1))), HiCR::common::RuntimeException);
@@ -259,7 +259,7 @@ TEST(ProcessingUnit, LifeCycle)
   };
 
   // Creating execution unit
-  auto executionUnit2 = new HiCR::backend::sequential::ExecutionUnit(fc2);
+  auto executionUnit2 = new HiCR::backend::sequential::L0::ExecutionUnit(fc2);
 
   // Reinitializing
   EXPECT_NO_THROW(p.initialize());
@@ -285,7 +285,7 @@ TEST(ProcessingUnit, LifeCycle)
   };
 
   // Creating execution unit
-  auto executionUnit3 = new HiCR::backend::sequential::ExecutionUnit(fc3);
+  auto executionUnit3 = new HiCR::backend::sequential::L0::ExecutionUnit(fc3);
 
   // Creating and initializing execution state
   auto executionState3 = p.createExecutionState(executionUnit3);

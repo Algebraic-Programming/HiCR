@@ -301,10 +301,11 @@ class Runtime
    *
    * \param[in] computeManager The compute manager to use to coordinate the execution of processing units and tasks
    */
-  __USED__ inline void run(HiCR::backend::ComputeManager *computeManager)
+  __USED__ inline void run(HiCR::L1::ComputeManager *computeManager)
   {
     _dispatcher = new HiCR::L1::tasking::Dispatcher([this]()
                                        { return checkWaitingTasks(); });
+                                       
     _eventMap = new HiCR::L1::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events

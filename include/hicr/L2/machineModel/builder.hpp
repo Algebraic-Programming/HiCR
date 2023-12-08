@@ -13,12 +13,13 @@
 
 #pragma once
 
-#include <hicr/backends/instanceManager.hpp>
-#include <hicr/backends/sequential/computeManager.hpp>
+
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/L0/instance.hpp>
+#include <hicr/L1/instanceManager.hpp>
 #include <hicr/L2/machineModel/model.hpp>
+#include <hicr/backends/sequential/L1/computeManager.hpp>
 
 /**
  * Internal id of the processing unit id to use when running the machine model worker RPC
@@ -31,6 +32,9 @@
 #define HICR_MACHINE_MODEL_RPC_EXECUTION_UNIT_ID 4096
 
 namespace HiCR
+{
+
+namespace L2
 {
 
 namespace machineModel
@@ -52,7 +56,7 @@ class Builder
    *
    * @param[in] instanceManager The instance manager for the discovery of other instances
    */
-  Builder(backend::InstanceManager *instanceManager) : _instanceManager(instanceManager)
+  Builder(L1::InstanceManager *instanceManager) : _instanceManager(instanceManager)
   {
   }
 
@@ -162,7 +166,7 @@ class Builder
   __USED__ inline void workerFunction(HiCR::L0::Instance *currentInstance)
   {
     // Initializing sequential backend
-    HiCR::backend::sequential::ComputeManager computeManager;
+    HiCR::backend::sequential::L1::ComputeManager computeManager;
 
     // Fetching memory manager
     auto memoryManager = _instanceManager->getMemoryManager();
@@ -217,7 +221,7 @@ class Builder
   /**
    * Pointer to the backend that is in charge of managing instances, rpcs and their return values
    */
-  backend::InstanceManager *const _instanceManager;
+  L1::InstanceManager *const _instanceManager;
 
   /**
    * This map links instance ids to their machine model
@@ -226,5 +230,7 @@ class Builder
 };
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

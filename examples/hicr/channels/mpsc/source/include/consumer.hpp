@@ -2,8 +2,8 @@
 
 #include <hicr/L1/channel/mpsc/consumer.hpp>
 #include "common.hpp"
-
-void consumerFc(HiCR::backend::MemoryManager* memoryManager, const size_t channelCapacity, const size_t producerCount)
+ 
+void consumerFc(HiCR::L1::MemoryManager* memoryManager, const size_t channelCapacity, const size_t producerCount)
 {
  // Obtaining memory spaces
  auto memSpaces = memoryManager->getMemorySpaceList();

@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <hicr/backends/sequential/executionState.hpp>
-#include <hicr/backends/sequential/executionUnit.hpp>
 #include <hicr/common/coroutine.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
+#include <hicr/backends/sequential/L0/executionState.hpp>
+#include <hicr/backends/sequential/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -26,6 +26,9 @@ namespace backend
 {
 
 namespace sequential
+{
+
+namespace L0
 {
 
 /**
@@ -40,12 +43,12 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param process An id for the process (should be zero)
    */
-  __USED__ inline ProcessingUnit(L0::computeResourceId_t process) : HiCR::L0::ProcessingUnit(process){};
+  __USED__ inline ProcessingUnit(HiCR::L0::computeResourceId_t process) : HiCR::L0::ProcessingUnit(process){};
 
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
     // Creating and returning new execution state
-    return std::make_unique<sequential::ExecutionState>(executionUnit);
+    return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
   }
 
   private:
@@ -89,7 +92,9 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   }
 };
 
-} // end namespace sequential
+} // namespace L0
+
+} // namespace sequential
 
 } // namespace backend
 

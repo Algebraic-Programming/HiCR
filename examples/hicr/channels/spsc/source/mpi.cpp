@@ -1,5 +1,5 @@
 #include <mpi.h>
-#include <hicr/backends/mpi/memoryManager.hpp>
+#include <hicr/backends/mpi/L1/memoryManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
   }
 
  // Instantiating backend
- HiCR::backend::mpi::MemoryManager m(MPI_COMM_WORLD);
+ HiCR::backend::mpi::L1::MemoryManager m(MPI_COMM_WORLD);
 
  // Asking memory manager to check the available memory spaces
  m.queryMemorySpaces();

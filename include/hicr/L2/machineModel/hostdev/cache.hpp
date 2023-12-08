@@ -16,6 +16,9 @@
 namespace HiCR
 {
 
+namespace L2
+{
+
 namespace machineModel
 {
 
@@ -188,5 +191,7 @@ class Cache
 }; // class Cache
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

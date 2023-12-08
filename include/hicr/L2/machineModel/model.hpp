@@ -20,6 +20,9 @@
 namespace HiCR
 {
 
+namespace L2
+{
+
 namespace machineModel
 {
 
@@ -101,5 +104,7 @@ class Model : public machineModel::Base
 };
 
 } // namespace machineModel
+
+} // namespace L2
 
 } // namespace HiCR

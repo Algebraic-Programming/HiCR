@@ -12,14 +12,15 @@
 
 #pragma once
 
-#include <acl/acl.h>
-#include <hicr/backends/ascend/common.hpp>
-#include <hicr/backends/ascend/executionUnit.hpp>
-#include <hicr/backends/ascend/init.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/backends/ascend/processingUnit.hpp>
-#include <hicr/backends/computeManager.hpp>
 #include <unordered_map>
+#include <acl/acl.h>
+#include <hicr/L1/computeManager.hpp>
+#include <hicr/backends/ascend/common.hpp>
+#include <hicr/backends/ascend/core.hpp>
+#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/backends/ascend/L0/processingUnit.hpp>
+#include <hicr/backends/ascend/L0/executionUnit.hpp>
+
 namespace HiCR
 {
 
@@ -29,12 +30,15 @@ namespace backend
 namespace ascend
 {
 
+namespace L1
+{
+
 /**
  * Implementation of the HiCR ascend backend compute manager.
  *
  * It stores the processing units detected by Ascend Computing Language.
  */
-class ComputeManager final : public backend::ComputeManager
+class ComputeManager final : public HiCR::L1::ComputeManager
 {
   public:
 
@@ -44,7 +48,7 @@ class ComputeManager final : public backend::ComputeManager
    * \param[in] i ACL initializer
    *
    */
-  ComputeManager(const Initializer &i) : backend::ComputeManager(), _deviceStatusMap(i.getContexts()){};
+  ComputeManager(const Core &i) : HiCR::L1::ComputeManager(), _deviceStatusMap(i.getContexts()){};
 
   ~ComputeManager() = default;
 
@@ -68,9 +72,9 @@ class ComputeManager final : public backend::ComputeManager
    *
    * \return a pointer to the new execution unit
    */
-  __USED__ inline ExecutionUnit *createExecutionUnit(const std::vector<kernel::Kernel *> &kernelOperations)
+  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(const std::vector<ascend::Kernel *> &kernelOperations)
   {
-    return new ExecutionUnit(kernelOperations);
+    return new L0::ExecutionUnit(kernelOperations);
   }
 
   /**
@@ -121,10 +125,14 @@ class ComputeManager final : public backend::ComputeManager
   __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::computeResourceId_t resource) const override
   {
     if (_deviceStatusMap.at(resource).deviceType == deviceType_t::Host) HICR_THROW_RUNTIME("Ascend backend can not create a processing unit on the host.");
-    return std::make_unique<ProcessingUnit>(resource);
+    return std::make_unique<L0::ProcessingUnit>(resource);
   }
 };
 
+} // namespace L1
+
 } // namespace ascend
+
 } // namespace backend
+
 } // namespace HiCR
