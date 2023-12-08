@@ -39,6 +39,6 @@ int main(int argc, char **argv)
   m.freeLocalMemorySlot(input);
 
   // Finalize ACL
-  i.finalize();
+  ascendCore.finalize();
   return 0;
 }

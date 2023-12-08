@@ -1,7 +1,7 @@
-#include <hicr/backends/sharedMemory/memoryManager.hpp>
-#include <consumer.hpp>
-#include <producer.hpp>
 #include <thread>
+#include <hicr/backends/sharedMemory/memoryManager.hpp>
+#include "include/consumer.hpp"
+#include "include/producer.hpp"
 
 #define CONCURRENT_THREADS 2
 

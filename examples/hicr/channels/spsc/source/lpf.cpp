@@ -2,8 +2,8 @@
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <hicr/backends/lpf/memoryManager.hpp>
-#include <producer.hpp>
-#include <consumer.hpp>
+#include "include/producer.hpp"
+#include "include/consumer.hpp"
 
 // flag needed when using MPI to launch
 const int LPF_MPI_AUTO_INITIALIZE = 0;
