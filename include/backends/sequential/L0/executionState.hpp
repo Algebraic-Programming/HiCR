@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include <functional>
-#include <hicr/common/coroutine.hpp>
-#include <hicr/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
+#include <functional>
+#include <hicr/L0/executionState.hpp>
+#include <hicr/common/coroutine.hpp>
 
 namespace HiCR
 {

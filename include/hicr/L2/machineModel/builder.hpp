@@ -13,13 +13,12 @@
 
 #pragma once
 
-
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
 #include <hicr/L0/instance.hpp>
 #include <hicr/L1/instanceManager.hpp>
 #include <hicr/L2/machineModel/model.hpp>
-#include <backends/sequential/L1/computeManager.hpp>
+#include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
 
 /**
  * Internal id of the processing unit id to use when running the machine model worker RPC

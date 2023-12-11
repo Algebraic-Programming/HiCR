@@ -11,10 +11,10 @@
  */
 #pragma once
 
-#include <hicr/L2/machineModel/deviceModel.hpp>
-#include <hicr/L2/machineModel/hostdev/CPU.hpp>
 #include <backends/sharedMemory/L1/computeManager.hpp>
 #include <backends/sharedMemory/L1/memoryManager.hpp>
+#include <hicr/L2/machineModel/deviceModel.hpp>
+#include <hicr/L2/machineModel/hostdev/CPU.hpp>
 
 namespace HiCR
 {

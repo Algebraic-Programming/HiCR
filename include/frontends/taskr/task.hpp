@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include <vector>
+#include <frontends/taskr/common.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L1/tasking/task.hpp>
-#include <frontends/taskr/common.hpp>
+#include <vector>
 
 namespace taskr
 {

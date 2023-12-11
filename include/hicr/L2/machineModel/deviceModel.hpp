@@ -11,9 +11,9 @@
  */
 #pragma once
 
-#include <nlohmann_json/json.hpp>
 #include <hicr/L2/machineModel/computeResource.hpp>
 #include <hicr/L2/machineModel/memorySpace.hpp>
+#include <nlohmann_json/json.hpp>
 
 namespace HiCR
 {

@@ -10,9 +10,9 @@
  * @date 13/9/2023
  */
 
-#include <limits>
 #include "gtest/gtest.h"
 #include <backends/sharedMemory/L1/memoryManager.hpp>
+#include <limits>
 
 namespace backend = HiCR::backend::sharedMemory;
 

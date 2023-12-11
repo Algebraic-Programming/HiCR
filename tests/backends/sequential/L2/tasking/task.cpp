@@ -11,8 +11,8 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/L1/tasking/task.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
+#include <hicr/L1/tasking/task.hpp>
 
 TEST(Task, Construction)
 {

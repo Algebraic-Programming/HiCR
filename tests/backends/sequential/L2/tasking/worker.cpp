@@ -11,9 +11,9 @@
  */
 
 #include "gtest/gtest.h"
+#include <backends/sequential/L1/computeManager.hpp>
 #include <hicr/L1/tasking/task.hpp>
 #include <hicr/L1/tasking/worker.hpp>
-#include <backends/sequential/L1/computeManager.hpp>
 
 TEST(Worker, Construction)
 {
@@ -38,7 +38,7 @@ TEST(Task, SetterAndGetters)
 
   // Now adding something to the lists/sets
   auto d = HiCR::L1::tasking::Dispatcher([]()
-                            { return (HiCR::L1::tasking::Task *)NULL; });
+                                         { return (HiCR::L1::tasking::Task *)NULL; });
 
   // Subscribing worker to dispatcher
   w.subscribe(&d);
@@ -138,7 +138,7 @@ TEST(Worker, LifeCycle)
 
   // Creating task dispatcher
   auto d = HiCR::L1::tasking::Dispatcher([&t]()
-                            { return &t; });
+                                         { return &t; });
 
   // Suscribing worker to dispatcher
   EXPECT_NO_THROW(w.subscribe(&d));

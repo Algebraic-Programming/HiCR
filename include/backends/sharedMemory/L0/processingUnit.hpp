@@ -12,16 +12,16 @@
 
 #pragma once
 
-#include <set>
-#include <csignal>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <hicr/common/exceptions.hpp>
-#include <hicr/L0/processingUnit.hpp>
 #include <backends/sequential/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
+#include <csignal>
+#include <fcntl.h>
+#include <hicr/L0/processingUnit.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <pthread.h>
+#include <set>
+#include <sys/mman.h>
+#include <sys/stat.h>
 
 namespace HiCR
 {

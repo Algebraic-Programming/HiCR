@@ -13,12 +13,12 @@
 
 #pragma once
 
+#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L1/memoryManager.hpp>
 #include <hicr/common/circularBuffer.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/L1/memoryManager.hpp>
-#include <hicr/L0/memorySlot.hpp>
- 
+
 /**
  * Establishes how many elements are required in the base coordination buffer
  */

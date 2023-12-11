@@ -13,11 +13,10 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/common/exceptions.hpp>
 #include <hicr/L0/memorySlot.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/backends/ascend/L1/memoryManager.hpp>
-
+#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
@@ -49,12 +48,12 @@ class MemoryKernel final : public Kernel
    * \param size the number of bytes to copy
    */
   MemoryKernel(L1::MemoryManager *memManager, HiCR::L0::MemorySlot *destination, const size_t destinationOffset, HiCR::L0::MemorySlot *source, const size_t sourceOffset, size_t size) : ascend::Kernel(),
-                                                                                                                                                                             _dst(destination),
-                                                                                                                                                                             _src(source),
-                                                                                                                                                                             _dstOffset(destinationOffset),
-                                                                                                                                                                             _srcOffset(sourceOffset),
-                                                                                                                                                                             _size(size),
-                                                                                                                                                                             _memManager(memManager){};
+                                                                                                                                                                                         _dst(destination),
+                                                                                                                                                                                         _src(source),
+                                                                                                                                                                                         _dstOffset(destinationOffset),
+                                                                                                                                                                                         _srcOffset(sourceOffset),
+                                                                                                                                                                                         _size(size),
+                                                                                                                                                                                         _memManager(memManager){};
   MemoryKernel() = delete;
 
   /**

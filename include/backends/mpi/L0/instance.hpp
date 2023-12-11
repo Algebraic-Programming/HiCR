@@ -11,10 +11,10 @@
  */
 #pragma once
 
-#include <mpi.h>
+#include <backends/mpi/L1/memoryManager.hpp>
 #include <hicr/L0/instance.hpp>
 #include <hicr/L0/memorySlot.hpp>
-#include <backends/mpi/L1/memoryManager.hpp>
+#include <mpi.h>
 
 namespace HiCR
 {
@@ -67,9 +67,9 @@ class Instance final : public HiCR::L0::Instance
    * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
   Instance(const int rank, mpi::L1::MemoryManager *const memoryManager) : HiCR::L0::Instance((instanceId_t)rank),
-                                                                      _memoryManager(memoryManager),
-                                                                      _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
-                                                                      _rank(rank)
+                                                                          _memoryManager(memoryManager),
+                                                                          _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
+                                                                          _rank(rank)
   {
   }
 

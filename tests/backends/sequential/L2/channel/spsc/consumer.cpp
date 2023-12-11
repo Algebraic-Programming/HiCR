@@ -11,11 +11,11 @@
  */
 
 #include "gtest/gtest.h"
-#include <thread> 
-#include <hicr/common/exceptions.hpp>
+#include <backends/sequential/L1/memoryManager.hpp>
 #include <hicr/L1/channel/spsc/consumer.hpp>
 #include <hicr/L1/channel/spsc/producer.hpp>
-#include <backends/sequential/L1/memoryManager.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <thread>
 
 TEST(ConsumerChannel, Construction)
 {

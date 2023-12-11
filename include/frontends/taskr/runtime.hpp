@@ -11,13 +11,13 @@
  */
 
 #pragma once
-#include <map>
-#include <mutex>
 #include <atomic>
-#include <hicr/L1/tasking/task.hpp>
-#include <hicr/L1/tasking/worker.hpp>
 #include <frontends/taskr/common.hpp>
 #include <frontends/taskr/task.hpp>
+#include <hicr/L1/tasking/task.hpp>
+#include <hicr/L1/tasking/worker.hpp>
+#include <map>
+#include <mutex>
 
 namespace taskr
 {
@@ -304,8 +304,8 @@ class Runtime
   __USED__ inline void run(HiCR::L1::ComputeManager *computeManager)
   {
     _dispatcher = new HiCR::L1::tasking::Dispatcher([this]()
-                                       { return checkWaitingTasks(); });
-                                       
+                                                    { return checkWaitingTasks(); });
+
     _eventMap = new HiCR::L1::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events

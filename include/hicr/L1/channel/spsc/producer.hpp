@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include <hicr/L1/channel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/L1/channel/base.hpp>
 
 namespace HiCR
 {
@@ -36,7 +36,7 @@ namespace SPSC
  *
  */
 class Producer final : public L1::channel::Base
-{ 
+{
   public:
 
   /**

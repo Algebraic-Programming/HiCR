@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include <unordered_map>
 #include <acl/acl.h>
-#include <hicr/common/exceptions.hpp>
 #include <hicr/backends/ascend/common.hpp>
 #include <hicr/backends/sequential/L1/memoryManager.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <unordered_map>
 
 namespace HiCR
 {

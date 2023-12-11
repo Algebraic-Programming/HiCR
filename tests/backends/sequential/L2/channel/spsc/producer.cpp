@@ -10,11 +10,11 @@
  * @date 19/9/2023
  */
 
-#include <thread>
 #include "gtest/gtest.h"
+#include <backends/sequential/L1/memoryManager.hpp>
 #include <hicr/L1/channel/spsc/consumer.hpp>
 #include <hicr/L1/channel/spsc/producer.hpp>
-#include <backends/sequential/L1/memoryManager.hpp>
+#include <thread>
 
 TEST(ProducerChannel, Construction)
 {
@@ -115,7 +115,7 @@ TEST(ProducerChannel, PushWait)
 
   // Asking memory manager to check the available memory spaces
   backend.queryMemorySpaces();
-  
+
   // Obtaining memory spaces
   auto memSpaces = backend.getMemorySpaceList();
 

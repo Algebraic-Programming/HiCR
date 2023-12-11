@@ -10,12 +10,12 @@
  * @date 11/9/2023
  */
 
-#include <limits>
 #include "gtest/gtest.h"
-#include <hicr/common/exceptions.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <limits>
 
-namespace backend = HiCR::backend::sequential; 
+namespace backend = HiCR::backend::sequential;
 
 TEST(MemoryManager, Construction)
 {

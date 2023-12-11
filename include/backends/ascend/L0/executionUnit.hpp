@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include <acl/acl.h>
 #include <chrono>
+#include <hicr/L0/executionUnit.hpp>
+#include <hicr/backends/ascend/kernel.hpp>
 #include <thread>
 #include <vector>
-#include <acl/acl.h>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -30,7 +30,6 @@ namespace ascend
 
 namespace L0
 {
-
 
 /**
  * This class represents a replicable sequence of kernels meant to be executed on Ascend.

@@ -32,14 +32,15 @@
  * #CHECK(f...) Checks if an LPF function returns LPF_SUCCESS, else
  * it prints an error message
  */
-#define CHECK(f...)  if (f != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f);
+#define CHECK(f...) \
+  if (f != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f);
 
+#include <backends/lpf/L0/memorySlot.hpp>
+#include <backends/sequential/L1/memoryManager.hpp>
 #include <cstring>
+#include <hicr/L1/memoryManager.hpp>
 #include <lpf/collectives.h>
 #include <lpf/core.h>
-#include <hicr/L1/memoryManager.hpp>
-#include <backends/sequential/L1/memoryManager.hpp>
-#include <backends/lpf/L0/memorySlot.hpp>
 
 namespace HiCR
 {

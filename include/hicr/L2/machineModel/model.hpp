@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include <hicr/L2/machineModel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/L2/machineModel/base.hpp>
 
 namespace HiCR
 {

@@ -11,8 +11,8 @@
  */
 #pragma once
 
-#include <pthread.h>
 #include <hicr/L0/memorySlot.hpp>
+#include <pthread.h>
 
 namespace HiCR
 {
@@ -66,7 +66,7 @@ class MemorySlot final : public HiCR::L0::MemorySlot
     const size_t size,
     const HiCR::L0::MemorySlot::tag_t globalTag = 0,
     const HiCR::L0::MemorySlot::globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, globalTag, globalKey),
-                                                            _bindingType(bindingType)
+                                                             _bindingType(bindingType)
   {
     pthread_mutex_init(&_mutex, NULL);
   }
