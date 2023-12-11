@@ -1,0 +1,2 @@
+test('producer', executable('producer', 'producer.cpp', dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'hicr', 'backends', 'sequential', 'L2', 'channel', 'spsc' ] )
+test('consumer', executable('consumer', 'consumer.cpp', dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'hicr', 'backends', 'sequential', 'L2', 'channel', 'spsc' ] )
