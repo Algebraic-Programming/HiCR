@@ -42,7 +42,7 @@
 namespace HiCR
 {
 
-namespace L1
+namespace L2
 {
 
 namespace channel
@@ -190,6 +190,6 @@ class Base : public common::CircularBuffer
 
 } // namespace channel
 
-} // namespace L1
+} // namespace L2
 
 } // namespace HiCR

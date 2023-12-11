@@ -26,7 +26,7 @@
 namespace HiCR
 {
 
-namespace L1
+namespace L2
 {
 
 namespace tasking
@@ -295,6 +295,6 @@ class Task
 
 } // namespace tasking
 
-} // namespace L1
+} // namespace L2
 
 } // namespace HiCR

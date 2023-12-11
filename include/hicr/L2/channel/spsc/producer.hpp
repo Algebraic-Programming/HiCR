@@ -13,14 +13,14 @@
 
 #pragma once
 
-#include <hicr/L1/channel/base.hpp>
+#include <hicr/L2/channel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
 
-namespace L1
+namespace L2
 {
 
 namespace channel
@@ -35,7 +35,7 @@ namespace SPSC
  * It exposes the functionality to be expected for a producer channel
  *
  */
-class Producer final : public L1::channel::Base
+class Producer final : public L2::channel::Base
 {
   public:
 
@@ -56,7 +56,7 @@ class Producer final : public L1::channel::Base
            L0::MemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity)
-    : L1::channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity)
+    : L2::channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity)
   {
     // Checking that the provided coordination buffer has the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
@@ -122,6 +122,6 @@ class Producer final : public L1::channel::Base
 
 } // namespace channel
 
-} // namespace L1
+} // namespace L2
 
 } // namespace HiCR

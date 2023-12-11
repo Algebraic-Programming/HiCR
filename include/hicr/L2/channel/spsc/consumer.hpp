@@ -13,14 +13,14 @@
 
 #pragma once
 
-#include <hicr/L1/channel/base.hpp>
+#include <hicr/L2/channel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
 
-namespace L1
+namespace L2
 {
 
 namespace channel
@@ -35,7 +35,7 @@ namespace SPSC
  * It exposes the functionality to be expected for a consumer channel
  *
  */
-class Consumer final : public L1::channel::Base
+class Consumer final : public L2::channel::Base
 {
   public:
 
@@ -59,7 +59,7 @@ class Consumer final : public L1::channel::Base
            L0::MemorySlot *const consumerCoordinationBuffer,
            L0::MemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L1::channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity),
+           const size_t capacity) : L2::channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity),
                                     _producerCoordinationBuffer(producerCoordinationBuffer)
   {
     // Checking that the provided token exchange  buffer has the right size
@@ -178,6 +178,6 @@ class Consumer final : public L1::channel::Base
 
 } // namespace channel
 
-} // namespace L1
+} // namespace L2
 
 } // namespace HiCR

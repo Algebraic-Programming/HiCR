@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <hicr/L1/tasking/task.hpp>
+#include <hicr/L2/tasking/task.hpp>
 #include <hicr/common/concurrentQueue.hpp>
 #include <hicr/common/definitions.hpp>
 #include <vector>
@@ -20,7 +20,7 @@
 namespace HiCR
 {
 
-namespace L1
+namespace L2
 {
 
 namespace tasking
@@ -75,6 +75,6 @@ class Dispatcher
 
 } // namespace tasking
 
-} // namespace L1
+} // namespace L2
 
 } // namespace HiCR
