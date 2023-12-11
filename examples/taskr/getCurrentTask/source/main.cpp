@@ -1,14 +1,14 @@
 #include <cstdio>
-#include <hicr/backends/sequential/computeManager.hpp>
-#include <taskr/runtime.hpp>
-#include <taskr/task.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
+#include <frontends/taskr/runtime.hpp>
+#include <frontends/taskr/task.hpp>
 
 #define TASK_LABEL 42
 
 int main(int argc, char **argv)
 {
   // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sequential::ComputeManager computeManager;
+  HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   // Querying computational resources
   computeManager.queryComputeResources();
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   // Creating task  execution unit
   auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr]()
                                                               {
-   const auto hicrTask   = HiCR::Task::getCurrentTask();
+   const auto hicrTask   = HiCR::L1::tasking::Task::getCurrentTask();
    const auto taskrLabel = taskr.getCurrentTask()->getLabel();
    printf("Current HiCR  Task   pointer:  0x%lX\n", (uint64_t)hicrTask);
    printf("Current TaskR Task   label:    %lu\n", taskrLabel); });

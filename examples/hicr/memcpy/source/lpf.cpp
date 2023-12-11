@@ -1,11 +1,8 @@
-#include <hicr/backends/lpf/memoryManager.hpp>
-#include <hicr/memorySlot.hpp>
-
+#include <iostream>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <mpi.h>
-
-#include <iostream>
+#include <backends/lpf/L1/memoryManager.hpp>
 
 #define BUFFER_SIZE 256
 #define SENDER_PROCESS 0
@@ -21,13 +18,13 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
   (void)args; // ignore args parameter passed by lpf_exec
-  HiCR::backend::lpf::MemoryManager m(nprocs, pid, lpf);
+  HiCR::backend::lpf::L1::MemoryManager m(nprocs, pid, lpf);
   size_t myProcess = pid;
 
   char *buffer1 = new char[BUFFER_SIZE];
 
   auto dstSlot = m.registerLocalMemorySlot(buffer1, BUFFER_SIZE);
-  std::vector<std::pair<size_t, HiCR::MemorySlot *>> promoted;
+  std::vector<std::pair<size_t, HiCR::L0::MemorySlot *>> promoted;
   promoted.push_back(std::make_pair(myProcess, dstSlot));
 
   // Performing all pending local to global memory slot promotions now
@@ -36,7 +33,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Synchronizing so that all actors have finished registering their global memory slots
   m.fence(CHANNEL_TAG);
 
-  HiCR::MemorySlot *myPromotedSlot;
+  HiCR::L0::MemorySlot *myPromotedSlot;
 
   if (myProcess == SENDER_PROCESS)
   {

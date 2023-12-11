@@ -1,9 +1,9 @@
 #include <chrono>
 #include <cstdio>
 #include <hwloc.h>
-#include <hicr/backends/sharedMemory/computeManager.hpp>
-#include <source/workTask.hpp>
-#include <taskr/runtime.hpp>
+#include <backends/sharedMemory/L1/computeManager.hpp>
+#include <frontends/taskr/runtime.hpp>
+#include "source/workTask.hpp"
 
 int main(int argc, char **argv)
 {
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::ComputeManager computeManager(&topology);
+  HiCR::backend::sharedMemory::L1::ComputeManager computeManager(&topology);
 
   // Querying computational resources
   computeManager.queryComputeResources();

@@ -13,7 +13,7 @@
 #pragma once
 
 #include <boost/context/continuation.hpp>
-#include <functional> // std::function
+#include <functional>
 #include <hicr/common/exceptions.hpp>
 
 namespace HiCR

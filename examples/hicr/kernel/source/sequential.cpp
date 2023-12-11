@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include <hicr/backends/sequential/computeManager.hpp>
+#include <backends/sequential/L1/computeManager.hpp> 
 
 int main(int argc, char **argv)
 {
   // Initializing sequential backend
-  HiCR::backend::sequential::ComputeManager computeManager;
+  HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   auto fcLambda = []()
   { printf("Hello, World!\n"); };

@@ -1,7 +1,7 @@
-#include <hicr/backends/sequential/memoryManager.hpp>
-#include <consumer.hpp>
-#include <producer.hpp>
 #include <thread>
+#include <backends/sequential/L1/memoryManager.hpp>
+#include "include/consumer.hpp"
+#include "include/producer.hpp"
 
 #define CONCURRENT_THREADS 2
 
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
  }
 
  // Instantiating backend
- HiCR::backend::sequential::MemoryManager m(CONCURRENT_THREADS);
+ HiCR::backend::sequential::L1::MemoryManager m(CONCURRENT_THREADS);
 
  // Asking memory manager to check the available memory spaces
  m.queryMemorySpaces();

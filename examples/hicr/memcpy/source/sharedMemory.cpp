@@ -1,5 +1,5 @@
+#include <backends/sharedMemory/L1/memoryManager.hpp>
 #include "include/telephoneGame.hpp"
-#include <hicr/backends/sharedMemory/memoryManager.hpp>
 
 #define BUFFER_SIZE 256
 #define DST_OFFSET 0
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Instantiating Shared Memory backend
-  HiCR::backend::sharedMemory::MemoryManager m(&topology);
+  HiCR::backend::sharedMemory::L1::MemoryManager m(&topology);
 
   // Asking backend to check the available resources
   m.queryMemorySpaces();
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
   auto memSpaces = m.getMemorySpaceList();
 
   // Define the order of mem spaces for the telephone game
-  auto memSpaceOrder = std::vector<HiCR::backend::MemoryManager::memorySpaceId_t>(memSpaces.begin(), memSpaces.end());
+  auto memSpaceOrder = std::vector<HiCR::L1::MemoryManager::memorySpaceId_t>(memSpaces.begin(), memSpaces.end());
 
   // Specific to the shared memory backend: Adjusting memory binding support to the system's
   m.setRequestedBindingType(m.getSupportedBindingType(*memSpaces.begin()));

@@ -1,15 +1,15 @@
+#include <backends/ascend/core.hpp>
+#include <backends/ascend/L1/memoryManager.hpp>
 #include "include/telephoneGame.hpp"
-#include <hicr/backends/ascend/init.hpp>
-#include <hicr/backends/ascend/memoryManager.hpp>
 
 int main(int argc, char **argv)
 {
   // Initialize ACL runtime
-  HiCR::backend::ascend::Initializer i;
-  i.init();
+  HiCR::backend::ascend::Core ascendCore;
+  ascendCore.init();
 
   // Instantiating Memory manager
-  HiCR::backend::ascend::MemoryManager m(i);
+  HiCR::backend::ascend::L1::MemoryManager m(ascendCore);
 
   // Asking the memory manager to check the available resources
   m.queryMemorySpaces();
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
   memSpaces.erase(memoryHostId);
 
   // Define the order of mem spaces for the telephone game
-  auto memSpaceOrder = std::vector<HiCR::backend::MemoryManager::memorySpaceId_t>{};
+  auto memSpaceOrder = std::vector<HiCR::L1::MemoryManager::memorySpaceId_t>{};
   memSpaceOrder.emplace_back(memoryHostId);
   memSpaceOrder.insert(memSpaceOrder.end(), memSpaces.begin(), memSpaces.end());
   memSpaceOrder.emplace_back(memoryHostId);
@@ -39,6 +39,6 @@ int main(int argc, char **argv)
   m.freeLocalMemorySlot(input);
 
   // Finalize ACL
-  i.finalize();
+  ascendCore.finalize();
   return 0;
 }

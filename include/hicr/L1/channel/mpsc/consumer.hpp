@@ -1,0 +1,159 @@
+
+/*
+ * Copyright Huawei Technologies Switzerland AG
+ * All rights reserved.
+ */
+
+/**
+ * @file mpsc/consumer.hpp
+ * @brief Provides Consumer functionality for a Multiple-Producer Single-Consumer Channel (MPSC) over HiCR
+ * @author S. M Martin
+ * @date 14/11/2023
+ */
+
+#pragma once
+
+#include <hicr/L1/channel/base.hpp>
+#include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
+
+namespace HiCR
+{
+
+namespace L1
+{
+
+namespace channel
+{
+
+namespace MPSC
+{
+
+/**
+ * Class definition for a HiCR Consumer MPSC Channel
+ *
+ * It exposes the functionality to be expected for a consumer channel
+ *
+ */
+class Consumer final : public L1::channel::Base
+{
+  public:
+
+  /**
+   * The constructor of the consumer channel class.
+   *
+   * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
+   *
+   * \param[in] memoryManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
+   * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
+   * token.
+   * \param[in] consumerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer
+   * \param[in] tokenSize The size of each token.
+   * \param[in] capacity The maximum number of tokens that will be held by this channel
+   */
+  Consumer(L1::MemoryManager *memoryManager,
+           L0::MemorySlot *const tokenBuffer,
+           L0::MemorySlot *const consumerCoordinationBuffer,
+           const size_t tokenSize,
+           const size_t capacity) : L1::channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity)
+  {
+  }
+  ~Consumer() = default;
+
+  /**
+   * Peeks in the local received queue and returns a pointer to the current
+   * token.
+   *
+   * This is a one-sided blocking call that need not be made collectively.
+   *
+   * @param[in] pos The token position required. pos = 0 indicates earliest token that
+   *                is currently present in the buffer. pos = getDepth()-1 indicates
+   *                the latest token to have arrived.
+   *
+   * @returns A value representing the relative position within the token buffer where
+   *         the required element can be found.
+   *
+   * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
+   * This function has no side-effects.
+   *
+   * An exception will occur if you do attempt to peek and no
+   *
+   * @see queryDepth to determine whether the channel has an item to pop.
+   *
+   * \note While this function does not modify the state of the channel, the
+   *       contents of the token may be modified by the caller.
+   */
+  __USED__ inline ssize_t peek(const size_t pos = 0)
+  {
+    // Check if the requested position exceeds the capacity of the channel
+    if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos + 1, getCapacity());
+
+    // Value to return, initially set as -1 as default (not able to find the requested value)
+    ssize_t bufferPos = -1;
+
+    // Obtaining coordination buffer slot lock
+    if (_memoryManager->acquireGlobalLock(_coordinationBuffer) == false) return bufferPos;
+
+    // Calculating current channel depth
+    const auto curDepth = getDepth();
+
+    // Calculating buffer position, if there are enough tokens in the buffer to satisfy the request
+    if (pos < curDepth) bufferPos = (getTailPosition() + pos) % getCapacity();
+
+    // Releasing coordination buffer slot lock
+    _memoryManager->releaseGlobalLock(_coordinationBuffer);
+
+    // Succeeded in pushing the token(s)
+    return bufferPos;
+  }
+
+  /**
+   * Removes the current token from the channel, and moves to the next token
+   * (or to an empty channel state).
+   *
+   * This is a one-sided blocking call that need not be made collectively.
+   *
+   * In case there are less than n tokens in the channel, no tokens will be popped.
+   *
+   * @param[in] n How many tokens to pop. Optional; default is one.
+   * @return True, if there was enough elements (>= n) to be removed; false, otherwise
+   *
+   * @see queryDepth to determine whether the channel has an item to pop before calling
+   * this function.
+   */
+  __USED__ inline bool pop(const size_t n = 1)
+  {
+    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
+
+    // Flag to indicate whether the operaton was successful
+    bool successFlag = false;
+
+    // Obtaining coordination buffer slot lock
+    if (_memoryManager->acquireGlobalLock(_coordinationBuffer) == false) return successFlag;
+
+    // If the exchange buffer does not have n tokens pushed, reject operation, otherwise succeed
+    if (n <= getDepth())
+    {
+      // Advancing tail (removes elements from the circular buffer)
+      advanceTail(n);
+
+      // Setting success flag
+      successFlag = true;
+    }
+
+    // Releasing coordination buffer slot lock
+    _memoryManager->releaseGlobalLock(_coordinationBuffer);
+
+    // Operation was successful
+    return successFlag;
+  }
+};
+
+} // namespace MPSC
+
+} // namespace channel
+
+} // namespace L1
+
+} // namespace HiCR

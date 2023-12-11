@@ -1,7 +1,7 @@
-#include <hicr/backends/sharedMemory/memoryManager.hpp>
-#include <consumer.hpp>
-#include <producer.hpp>
 #include <thread>
+#include <backends/sharedMemory/L1/memoryManager.hpp>
+#include "include/consumer.hpp"
+#include "include/producer.hpp"
 
 #define CONCURRENT_THREADS 2
 
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
  hwloc_topology_init(&topology);
 
  // Instantiating Shared Memory backend
- HiCR::backend::sharedMemory::MemoryManager m(&topology, CONCURRENT_THREADS);
+ HiCR::backend::sharedMemory::L1::MemoryManager m(&topology, CONCURRENT_THREADS);
 
  // Asking memory manager to check the available memory spaces
  m.queryMemorySpaces();

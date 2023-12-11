@@ -12,9 +12,8 @@
 
 #pragma once
 
-#include <map>
-
 #include <hicr/common/definitions.hpp>
+#include <map>
 
 namespace HiCR
 {

@@ -1,5 +1,6 @@
 #include <thread>
-#include <hicr/backends/sharedMemory/memoryManager.hpp>
+#include <hwloc.h>
+#include <backends/sharedMemory/L1/memoryManager.hpp>
 #include <consumer.hpp>
 #include <producer.hpp>
 
@@ -40,7 +41,7 @@ int main(int argc, char **argv)
  hwloc_topology_init(&topology);
 
  // Instantiating Shared Memory backend
- HiCR::backend::sharedMemory::MemoryManager m(&topology, producerCount + 1);
+ HiCR::backend::sharedMemory::L1::MemoryManager m(&topology, producerCount + 1);
 
  // Asking memory manager to check the available memory spaces
  m.queryMemorySpaces();

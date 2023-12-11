@@ -1,13 +1,13 @@
 #pragma once
 
-#include <hicr/backends/sequential/computeManager.hpp>
-#include <hicr/backends/instanceManager.hpp>
-#include <include/common.hpp>
+#include <hicr/L1/instanceManager.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
+#include "common.hpp"
 
-void workerFc(HiCR::backend::InstanceManager& instanceManager)
+void workerFc(HiCR::L1::InstanceManager& instanceManager)
 {
  // Initializing sequential backend
- HiCR::backend::sequential::ComputeManager computeManager;
+ HiCR::backend::sequential::L1::ComputeManager computeManager;
 
  // Fetching memory manager
  auto memoryManager = instanceManager.getMemoryManager();

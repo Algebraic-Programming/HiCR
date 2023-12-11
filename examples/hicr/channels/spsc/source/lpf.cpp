@@ -1,9 +1,9 @@
 #include <mpi.h>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
-#include <hicr/backends/lpf/memoryManager.hpp>
-#include <producer.hpp>
-#include <consumer.hpp>
+#include <backends/lpf/L1/memoryManager.hpp>
+#include "include/producer.hpp"
+#include "include/consumer.hpp"
 
 // flag needed when using MPI to launch
 const int LPF_MPI_AUTO_INITIALIZE = 0;
@@ -14,7 +14,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   int channelCapacity = (*(int *)args.input);
   if (channelCapacity == 0) if (pid == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
 
-  HiCR::backend::lpf::MemoryManager m(nprocs, pid, lpf);
+  HiCR::backend::lpf::L1::MemoryManager m(nprocs, pid, lpf);
 
   // Asking memory manager to check the available memory spaces
   m.queryMemorySpaces();
