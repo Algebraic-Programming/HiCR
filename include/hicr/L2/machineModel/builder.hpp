@@ -19,7 +19,7 @@
 #include <hicr/L0/instance.hpp>
 #include <hicr/L1/instanceManager.hpp>
 #include <hicr/L2/machineModel/model.hpp>
-#include <hicr/backends/sequential/L1/computeManager.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
 
 /**
  * Internal id of the processing unit id to use when running the machine model worker RPC

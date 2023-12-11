@@ -1,13 +1,13 @@
 #include <iomanip>
 #include <filesystem>
 #include <stdio.h>
-#include <hicr/backends/ascend/computationKernel.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/backends/ascend/memoryKernel.hpp>
-#include <hicr/backends/ascend/L0/processingUnit.hpp>
-#include <hicr/backends/ascend/L0/executionUnit.hpp>
-#include <hicr/backends/ascend/L1/computeManager.hpp>
-#include <hicr/backends/ascend/L1/memoryManager.hpp>
+#include <backends/ascend/computationKernel.hpp>
+#include <backends/ascend/kernel.hpp>
+#include <backends/ascend/memoryKernel.hpp>
+#include <backends/ascend/L0/processingUnit.hpp>
+#include <backends/ascend/L0/executionUnit.hpp>
+#include <backends/ascend/L1/computeManager.hpp>
+#include <backends/ascend/L1/memoryManager.hpp>
 
 
 #define BUFF_SIZE 192

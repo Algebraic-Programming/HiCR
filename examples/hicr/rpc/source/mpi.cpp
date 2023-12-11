@@ -1,5 +1,5 @@
 #include <mpi.h>
-#include <hicr/backends/mpi/L1/instanceManager.hpp>
+#include <backends/mpi/L1/instanceManager.hpp>
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
 

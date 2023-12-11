@@ -1,5 +1,6 @@
 #include <thread>
-#include <hicr/backends/sharedMemory/L1/memoryManager.hpp>
+#include <hwloc.h>
+#include <backends/sharedMemory/L1/memoryManager.hpp>
 #include <consumer.hpp>
 #include <producer.hpp>
 

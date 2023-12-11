@@ -1,7 +1,7 @@
 #include <mpi.h>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
-#include <hicr/backends/lpf/L1/memoryManager.hpp>
+#include <backends/lpf/L1/memoryManager.hpp>
 #include "include/producer.hpp"
 #include "include/consumer.hpp"
 

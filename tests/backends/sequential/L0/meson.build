@@ -1,0 +1,2 @@
+# Registering tests
+test('processingUnit', executable('processingUnit', 'processingUnit.cpp', dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'backends', 'sequential', 'L0' ] )

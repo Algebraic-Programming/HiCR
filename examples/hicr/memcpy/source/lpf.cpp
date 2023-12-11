@@ -2,7 +2,7 @@
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <mpi.h>
-#include <hicr/backends/lpf/L1/memoryManager.hpp>
+#include <backends/lpf/L1/memoryManager.hpp>
 
 #define BUFFER_SIZE 256
 #define SENDER_PROCESS 0

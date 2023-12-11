@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <hicr/backends/sequential/L1/computeManager.hpp> 
+#include <backends/sequential/L1/computeManager.hpp> 
 
 int main(int argc, char **argv)
 {

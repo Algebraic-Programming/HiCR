@@ -1,5 +1,5 @@
 #include <hwloc.h>
-#include <hicr/backends/sharedMemory/L1/computeManager.hpp>
+#include <backends/sharedMemory/L1/computeManager.hpp>
 #include "include/abcTasks.hpp"
 
 int main(int argc, char **argv)

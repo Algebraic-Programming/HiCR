@@ -1,5 +1,5 @@
 #include <hwloc.h>
-#include <hicr/backends/sequential/L1/computeManager.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
 #include "include/abcTasks.hpp"
 
 int main(int argc, char **argv)

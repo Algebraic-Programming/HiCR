@@ -1,5 +1,5 @@
+#include <backends/sequential/L1/memoryManager.hpp>
 #include "include/telephoneGame.hpp"
-#include <hicr/backends/sequential/L1/memoryManager.hpp>
 
 #define BUFFER_SIZE 256
 #define DST_OFFSET 0

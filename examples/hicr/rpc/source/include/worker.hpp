@@ -1,7 +1,7 @@
 #pragma once
 
 #include <hicr/L1/instanceManager.hpp>
-#include <hicr/backends/sequential/L1/computeManager.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
 #include "common.hpp"
 
 void workerFc(HiCR::L1::InstanceManager& instanceManager)

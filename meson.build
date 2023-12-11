@@ -7,29 +7,29 @@ project('HiCR', [ 'cpp', 'c'],
 
 # Including dependencies
 subdir('include/hicr')
-subdir('include/taskr')
+subdir('include/frontends/taskr')
 
 # Getting selected backends
 enabledBackends = get_option('backends')
 
 # The sequential backend is the default for HiCR
-subdir('include/hicr/backends/sequential')
+subdir('include/backends/sequential')
 
 # Including selected optional backends
 if 'sharedMemory' in enabledBackends
-  subdir('include/hicr/backends/sharedMemory')
+  subdir('include/backends/sharedMemory')
 endif
 
 if 'mpi' in enabledBackends
-  subdir('include/hicr/backends/mpi')
+  subdir('include/backends/mpi')
 endif
 
 if 'lpf' in enabledBackends
-  subdir('include/hicr/backends/lpf')
+  subdir('include/backends/lpf')
 endif
 
 if 'ascend' in enabledBackends    
-  subdir('include/hicr/backends/ascend')
+  subdir('include/backends/ascend')
 endif    
     
 # Build example targets
