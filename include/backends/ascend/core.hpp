@@ -4,7 +4,7 @@
  */
 
 /**
- * @file init.hpp
+ * @file core.hpp
  * @brief Provides an initialization to the ACL runtime for the Ascend backend
  * @author L.Terracciano
  * @date 2/11/2023
