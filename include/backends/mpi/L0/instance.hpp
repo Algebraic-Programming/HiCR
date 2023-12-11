@@ -25,6 +25,9 @@ namespace backend
 namespace mpi
 {
 
+namespace L0
+{
+
 #ifndef _HICR_MPI_INSTANCE_BASE_TAG
   /**
    * Base instance tag for data passing
@@ -67,7 +70,6 @@ class Instance final : public HiCR::L0::Instance
    * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
   Instance(const int rank, mpi::L1::MemoryManager *const memoryManager) : HiCR::L0::Instance((instanceId_t)rank),
-                                                                          _memoryManager(memoryManager),
                                                                           _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
                                                                           _rank(rank)
   {
@@ -83,88 +85,6 @@ class Instance final : public HiCR::L0::Instance
    * \return The MPI rank corresponding to this instance
    */
   __USED__ inline int getRank() const { return _rank; }
-
-  __USED__ inline void execute(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) override
-  {
-    // Getting rank Id for the passed instance
-    const auto dest = getRank();
-
-    // Sending request
-    MPI_Send(&eIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _memoryManager->getComm());
-    MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _memoryManager->getComm());
-  }
-
-  __USED__ inline HiCR::L0::MemorySlot *getReturnValueImpl() override
-  {
-    // Buffer to store the size
-    size_t size;
-
-    // Getting return value size
-    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, _rank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _memoryManager->getComm(), MPI_STATUS_IGNORE);
-
-    // Allocating memory slot to store the return value
-    auto memorySlot = _memoryManager->allocateLocalMemorySlot(_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID, size);
-
-    // Getting data directly
-    MPI_Recv(memorySlot->getPointer(), size, MPI_BYTE, _rank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _memoryManager->getComm(), MPI_STATUS_IGNORE);
-
-    // Returning memory slot containing the return value
-    return memorySlot;
-  }
-
-  __USED__ inline void submitReturnValueImpl(HiCR::L0::MemorySlot *value) override
-  {
-    // Getting return value size
-    const auto size = value->getSize();
-
-    // Getting return value data pointer
-    const auto data = value->getPointer();
-
-    // Sending message size
-    MPI_Send(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _memoryManager->getComm());
-
-    // Getting RPC execution unit index
-    MPI_Send(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _memoryManager->getComm());
-  }
-
-  __USED__ inline void listenImpl() override
-  {
-    // Setting current state to listening
-    _state = HiCR::L0::Instance::state_t::listening;
-
-    // We need to preserve the status to receive more information about the RPC
-    MPI_Status status;
-
-    // Storage for incoming execution unit index
-    HiCR::L0::Instance::executionUnitIndex_t eIdx = 0;
-
-    // Getting RPC execution unit index
-    MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _memoryManager->getComm(), &status);
-
-    // Getting requester instance rank
-    _RPCRequestRank = status.MPI_SOURCE;
-
-    // Storage for the index of the processing unit to use
-    HiCR::L0::Instance::processingUnitIndex_t pIdx = 0;
-
-    // Getting RPC execution unit index
-    MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _memoryManager->getComm(), MPI_STATUS_IGNORE);
-
-    // Trying to run remote request
-    runRequest(pIdx, eIdx);
-  }
-
-  /**
-   * State getter
-   * \return The instance's current state (up to date, even if the instance is remote)
-   */
-  __USED__ inline state_t getState() const override
-  {
-    // Obtaining state from the global memory slot, to handle the case where the instance is remote
-    _memoryManager->memcpy(getStateLocalMemorySlot(), 0, getStateGlobalMemorySlot(), 0, sizeof(HiCR::L0::Instance::state_t));
-
-    return _state;
-  }
 
   /**
    * Gets the local memory slot storing the instance's state
@@ -187,16 +107,6 @@ class Instance final : public HiCR::L0::Instance
   private:
 
   /**
-   * This value remembers what is the MPI rank of the instance that requested the execution of an RPC
-   */
-  int _RPCRequestRank = 0;
-
-  /**
-   * Pointer to the memory manager required to obtain remote information
-   */
-  HiCR::backend::mpi::L1::MemoryManager *const _memoryManager;
-
-  /**
    * Local memory slot that represents the instance status
    */
   HiCR::L0::MemorySlot *const _stateLocalMemorySlot;
@@ -211,6 +121,8 @@ class Instance final : public HiCR::L0::Instance
    */
   const int _rank;
 };
+
+} // namespace L0
 
 } // namespace mpi
 

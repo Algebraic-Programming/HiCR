@@ -16,7 +16,7 @@ void workerFc(HiCR::L1::InstanceManager& instanceManager)
  auto currentInstance = instanceManager.getCurrentInstance();
 
  // Creating worker function
- auto fcLambda = [currentInstance, memoryManager]()
+ auto fcLambda = [currentInstance, memoryManager, &instanceManager]()
  {
   // Creating simple message
   auto message = std::string("Hello, I am a worker! ");
@@ -28,7 +28,7 @@ void workerFc(HiCR::L1::InstanceManager& instanceManager)
   auto sendBuffer = memoryManager->registerLocalMemorySlot(message.data(), message.size()+1);
 
   // Registering return value
-  currentInstance->submitReturnValue(sendBuffer);
+  instanceManager.submitReturnValue(sendBuffer);
 
   // Deregistering memory slot
   memoryManager->deregisterLocalMemorySlot(sendBuffer);
@@ -50,11 +50,11 @@ void workerFc(HiCR::L1::InstanceManager& instanceManager)
  processingUnit->initialize();
 
  // Assigning processing unit to the instance manager
- currentInstance->addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
+ instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
 
  // Assigning processing unit to the instance manager
- currentInstance->addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
+ instanceManager.addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
 
  // Listening for RPC requests
- currentInstance->listen();
+ instanceManager.listen();
 }
