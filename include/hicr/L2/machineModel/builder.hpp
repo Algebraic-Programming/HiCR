@@ -128,7 +128,7 @@ class Builder
     // Printing instance information and invoking a simple RPC if its not ourselves
     for (const auto &instance : instances)
       if (instance != currentInstance)
-        instance->execute(HICR_MACHINE_MODEL_RPC_PROCESSING_UNIT_ID, HICR_MACHINE_MODEL_RPC_EXECUTION_UNIT_ID);
+        _instanceManager->execute(instance, HICR_MACHINE_MODEL_RPC_PROCESSING_UNIT_ID, HICR_MACHINE_MODEL_RPC_EXECUTION_UNIT_ID);
 
     // Pushing coordinators own local machine model
     machineModel::Model coordinatorMachineModel;
@@ -144,7 +144,7 @@ class Builder
       if (instance != currentInstance)
       {
         // Getting serialized machine model information from the instance
-        const auto returnValue = instance->getReturnValue();
+        const auto returnValue = _instanceManager->getReturnValue(instance);
 
         // Converting returned value to string for subsequent parsing
         const auto instanceModelString = std::string((const char *)returnValue->getPointer(), returnValue->getSize());
@@ -171,7 +171,7 @@ class Builder
     auto memoryManager = _instanceManager->getMemoryManager();
 
     // Creating worker function
-    auto fcLambda = [currentInstance, memoryManager]()
+    auto fcLambda = [currentInstance, memoryManager, this]()
     {
       // Creating local machine model and updating its resources
       machineModel::Model localModel;
@@ -186,7 +186,7 @@ class Builder
       auto sendBuffer = memoryManager->registerLocalMemorySlot(message.data(), message.size());
 
       // Registering return value
-      currentInstance->submitReturnValue(sendBuffer);
+      _instanceManager->submitReturnValue(sendBuffer);
 
       // Deregistering memory slot
       memoryManager->deregisterLocalMemorySlot(sendBuffer);
@@ -208,13 +208,13 @@ class Builder
     processingUnit->initialize();
 
     // Assigning processing unit to the instance manager
-    currentInstance->addProcessingUnit(HICR_MACHINE_MODEL_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
+    _instanceManager->addProcessingUnit(HICR_MACHINE_MODEL_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
 
     // Assigning processing unit to the instance manager
-    currentInstance->addExecutionUnit(HICR_MACHINE_MODEL_RPC_EXECUTION_UNIT_ID, executionUnit);
+    _instanceManager->addExecutionUnit(HICR_MACHINE_MODEL_RPC_EXECUTION_UNIT_ID, executionUnit);
 
     // Listening for RPC requests
-    currentInstance->listen();
+    _instanceManager->listen();
   }
 
   /**
