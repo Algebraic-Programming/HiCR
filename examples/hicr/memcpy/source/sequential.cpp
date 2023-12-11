@@ -1,5 +1,5 @@
-#include <backends/sequential/L1/memoryManager.hpp>
 #include "include/telephoneGame.hpp"
+#include <backends/sequential/L1/memoryManager.hpp>
 
 #define BUFFER_SIZE 256
 #define DST_OFFSET 0
@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 
   // Define the order of mem spaces for the telephone game
   auto memSpaceOrder = std::vector<HiCR::L1::MemoryManager::memorySpaceId_t>(memSpaces.begin(), memSpaces.end());
-  
+
   // Allocating memory slots in different NUMA domains
   auto input = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE); // First NUMA Domain
 

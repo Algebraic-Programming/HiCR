@@ -1,6 +1,6 @@
-#include <vector>
-#include <hicr/L1/memoryManager.hpp>
 #include <hicr/L0/memorySlot.hpp>
+#include <hicr/L1/memoryManager.hpp>
+#include <vector>
 
 #define BUFFER_SIZE 256
 #define DST_OFFSET 0

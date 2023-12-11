@@ -1,6 +1,6 @@
-#include <backends/ascend/core.hpp>
-#include <backends/ascend/L1/memoryManager.hpp>
 #include "include/telephoneGame.hpp"
+#include <backends/ascend/L1/memoryManager.hpp>
+#include <backends/ascend/core.hpp>
 
 int main(int argc, char **argv)
 {

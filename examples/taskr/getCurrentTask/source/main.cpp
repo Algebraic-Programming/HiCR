@@ -1,5 +1,5 @@
-#include <cstdio>
 #include <backends/sequential/L1/computeManager.hpp>
+#include <cstdio>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
 

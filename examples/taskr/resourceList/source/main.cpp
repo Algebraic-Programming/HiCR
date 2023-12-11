@@ -1,9 +1,9 @@
+#include "source/workTask.hpp"
+#include <backends/sharedMemory/L1/computeManager.hpp>
 #include <chrono>
 #include <cstdio>
-#include <hwloc.h>
-#include <backends/sharedMemory/L1/computeManager.hpp>
 #include <frontends/taskr/runtime.hpp>
-#include "source/workTask.hpp"
+#include <hwloc.h>
 
 int main(int argc, char **argv)
 {

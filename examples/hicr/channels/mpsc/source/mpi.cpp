@@ -1,7 +1,7 @@
-#include <mpi.h>
-#include <backends/mpi/L1/memoryManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
+#include <backends/mpi/L1/memoryManager.hpp>
+#include <mpi.h>
 
 int main(int argc, char **argv)
 {
@@ -38,23 +38,21 @@ int main(int argc, char **argv)
     return MPI_Finalize();
   }
 
- // Instantiating backend
- HiCR::backend::mpi::L1::MemoryManager m(MPI_COMM_WORLD);
+  // Instantiating backend
+  HiCR::backend::mpi::L1::MemoryManager m(MPI_COMM_WORLD);
 
- // Asking memory manager to check the available memory spaces
- m.queryMemorySpaces();
+  // Asking memory manager to check the available memory spaces
+  m.queryMemorySpaces();
 
- // Calculating the number of producer processes
- size_t producerCount = rankCount - 1;
+  // Calculating the number of producer processes
+  size_t producerCount = rankCount - 1;
 
- // Rank 0 is consumer, the rest are producers
- if (rankId == 0) consumerFc(&m, channelCapacity, producerCount);
- if (rankId >= 1) producerFc(&m, channelCapacity, rankId);
+  // Rank 0 is consumer, the rest are producers
+  if (rankId == 0) consumerFc(&m, channelCapacity, producerCount);
+  if (rankId >= 1) producerFc(&m, channelCapacity, rankId);
 
   // Finalizing MPI
   MPI_Finalize();
 
   return 0;
 }
-
-

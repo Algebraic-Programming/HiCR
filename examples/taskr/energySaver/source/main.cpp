@@ -1,8 +1,8 @@
-#include <cstdio>
-#include <hwloc.h>
 #include <backends/sharedMemory/L1/computeManager.hpp>
+#include <cstdio>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
+#include <hwloc.h>
 
 void workFc(const size_t iterations)
 {
@@ -22,7 +22,7 @@ void waitFc(taskr::Runtime *taskr, size_t secondsDelay)
 
   printf("Starting long task...\n");
   fflush(stdout);
-  
+
   sleep(secondsDelay);
 
   printf("Finished long task...\n");

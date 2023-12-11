@@ -5,5 +5,3 @@
 #define COORDINATION_BUFFER_KEY 1
 #define MESSAGES_PER_PRODUCER 3
 #define ELEMENT_TYPE unsigned int
-
-

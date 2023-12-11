@@ -1,7 +1,7 @@
 #include <cstdio>
-#include <hicr/L1/computeManager.hpp>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
+#include <hicr/L1/computeManager.hpp>
 
 #define ITERATIONS 10
 
@@ -20,9 +20,12 @@ void abcTasks(HiCR::L1::ComputeManager *computeManager)
   for (auto &resource : computeResources) taskr.addProcessingUnit(std::move(computeManager->createProcessingUnit(resource)));
 
   // Creating task functions
-  auto taskAfc = computeManager->createExecutionUnit([&taskr]() { printf("Task A %lu\n", taskr.getCurrentTask()->getLabel()); });
-  auto taskBfc = computeManager->createExecutionUnit([&taskr]() { printf("Task B %lu\n", taskr.getCurrentTask()->getLabel()); });
-  auto taskCfc = computeManager->createExecutionUnit([&taskr]() { printf("Task C %lu\n", taskr.getCurrentTask()->getLabel()); });
+  auto taskAfc = computeManager->createExecutionUnit([&taskr]()
+                                                     { printf("Task A %lu\n", taskr.getCurrentTask()->getLabel()); });
+  auto taskBfc = computeManager->createExecutionUnit([&taskr]()
+                                                     { printf("Task B %lu\n", taskr.getCurrentTask()->getLabel()); });
+  auto taskCfc = computeManager->createExecutionUnit([&taskr]()
+                                                     { printf("Task C %lu\n", taskr.getCurrentTask()->getLabel()); });
 
   // Now creating tasks and their dependency graph
   for (size_t i = 0; i < ITERATIONS; i++)

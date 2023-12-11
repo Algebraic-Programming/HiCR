@@ -1,14 +1,13 @@
-#include <iomanip>
-#include <filesystem>
-#include <stdio.h>
+#include <backends/ascend/L0/executionUnit.hpp>
+#include <backends/ascend/L0/processingUnit.hpp>
+#include <backends/ascend/L1/computeManager.hpp>
+#include <backends/ascend/L1/memoryManager.hpp>
 #include <backends/ascend/computationKernel.hpp>
 #include <backends/ascend/kernel.hpp>
 #include <backends/ascend/memoryKernel.hpp>
-#include <backends/ascend/L0/processingUnit.hpp>
-#include <backends/ascend/L0/executionUnit.hpp>
-#include <backends/ascend/L1/computeManager.hpp>
-#include <backends/ascend/L1/memoryManager.hpp>
-
+#include <filesystem>
+#include <iomanip>
+#include <stdio.h>
 
 #define BUFF_SIZE 192
 
@@ -81,9 +80,9 @@ int main(int argc, char **argv)
   auto castedInput1Device = static_cast<ascend::L0::MemorySlot *>(input1Device);
   auto castedInput2Device = static_cast<ascend::L0::MemorySlot *>(input2Device);
   auto castedOutputDevice = static_cast<ascend::L0::MemorySlot *>(outputDevice);
-  if ( castedInput1Device == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
-  if ( castedInput2Device == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");  
-  if ( castedOutputDevice == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
+  if (castedInput1Device == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
+  if (castedInput2Device == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
+  if (castedOutputDevice == NULL) HICR_THROW_RUNTIME("Can not perform cast on memory slot");
 
   // Create tensor descriptor (what's inside the tensor)
   const int64_t dims[] = {192, 1};
@@ -137,7 +136,7 @@ int main(int argc, char **argv)
   // Query compute resources and get them
   computeManager.queryComputeResources();
   auto computeResources = computeManager.getComputeResourceList();
-  
+
   // get the compute resource id associated with the host
   auto computeHostId = computeManager.getHostId(computeResources);
   // make compute resources contain only device ids
@@ -154,10 +153,10 @@ int main(int argc, char **argv)
 
   // Execute the kernel stream
   processingUnit->start(std::move(executionState));
-  
+
   // in the meantime we can check for completion
-  // printf("Currently the kernel execution completion is %s\n", executionState.get()->checkFinalization() ? "true" : "false"); 
-  
+  // printf("Currently the kernel execution completion is %s\n", executionState.get()->checkFinalization() ? "true" : "false");
+
   // start teminating the processing unit
   processingUnit->terminate();
 
