@@ -13,10 +13,10 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/L0/memorySlot.hpp>
-#include <hicr/common/exceptions.hpp>
 #include <backends/ascend/L1/memoryManager.hpp>
 #include <backends/ascend/kernel.hpp>
+#include <hicr/L0/memorySlot.hpp>
+#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {

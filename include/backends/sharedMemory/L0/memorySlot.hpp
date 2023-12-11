@@ -11,8 +11,8 @@
  */
 #pragma once
 
-#include <pthread.h>
 #include <hicr/L0/memorySlot.hpp>
+#include <pthread.h>
 
 namespace HiCR
 {

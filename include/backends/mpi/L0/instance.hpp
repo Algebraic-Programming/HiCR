@@ -11,10 +11,10 @@
  */
 #pragma once
 
-#include <mpi.h>
+#include <backends/mpi/L1/memoryManager.hpp>
 #include <hicr/L0/instance.hpp>
 #include <hicr/L0/memorySlot.hpp>
-#include <backends/mpi/L1/memoryManager.hpp>
+#include <mpi.h>
 
 namespace HiCR
 {

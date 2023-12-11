@@ -14,8 +14,8 @@
 
 #include "hwloc.h"
 #include "pthread.h"
-#include <hicr/L1/memoryManager.hpp>
 #include <backends/sharedMemory/L0/memorySlot.hpp>
+#include <hicr/L1/memoryManager.hpp>
 
 namespace HiCR
 {

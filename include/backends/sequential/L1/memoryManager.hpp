@@ -13,10 +13,10 @@
 #pragma once
 
 #include <atomic>
-#include <unistd.h>
+#include <hicr/L1/memoryManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/L1/memoryManager.hpp>
+#include <unistd.h>
 
 namespace HiCR
 {

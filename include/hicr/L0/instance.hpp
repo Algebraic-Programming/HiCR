@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include <map>
-#include <memory>
-#include <utility>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/memorySlot.hpp>
 #include <hicr/L0/processingUnit.hpp>
+#include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <map>
+#include <memory>
+#include <utility>
 
 namespace HiCR
 {

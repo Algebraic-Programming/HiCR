@@ -11,8 +11,8 @@
  */
 #pragma once
 
-#include <mpi.h>
 #include <hicr/L0/memorySlot.hpp>
+#include <mpi.h>
 
 namespace HiCR
 {

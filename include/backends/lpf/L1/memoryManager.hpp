@@ -35,12 +35,12 @@
 #define CHECK(f...) \
   if (f != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f);
 
-#include <cstring>
-#include <lpf/collectives.h>
-#include <lpf/core.h>
-#include <hicr/L1/memoryManager.hpp>
 #include <backends/lpf/L0/memorySlot.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
+#include <cstring>
+#include <hicr/L1/memoryManager.hpp>
+#include <lpf/collectives.h>
+#include <lpf/core.h>
 
 namespace HiCR
 {

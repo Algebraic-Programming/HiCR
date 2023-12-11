@@ -12,8 +12,8 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/L0/memorySlot.hpp>
 #include <backends/ascend/common.hpp>
+#include <hicr/L0/memorySlot.hpp>
 
 namespace HiCR
 {

@@ -12,9 +12,9 @@
  */
 #pragma once
 
-#include <map>
 #include <hicr/L1/computeManager.hpp>
 #include <hicr/L1/memoryManager.hpp>
+#include <map>
 
 namespace HiCR
 {

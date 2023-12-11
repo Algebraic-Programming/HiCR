@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include <map>
-#include <set>
+#include <hicr/L0/memorySlot.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <hicr/L0/memorySlot.hpp>
+#include <map>
+#include <set>
 
 namespace HiCR
 {

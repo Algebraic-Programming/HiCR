@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include <memory>
-#include <hicr/common/exceptions.hpp>
-#include <hicr/L0/processingUnit.hpp>
 #include <backends/ascend/L0/executionState.hpp>
 #include <backends/ascend/L0/executionUnit.hpp>
+#include <hicr/L0/processingUnit.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <memory>
 
 namespace HiCR
 {

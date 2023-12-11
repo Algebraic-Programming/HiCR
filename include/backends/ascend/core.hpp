@@ -13,10 +13,10 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <unordered_map>
-#include <hicr/common/exceptions.hpp>
 #include <backends/ascend/common.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
+#include <hicr/common/exceptions.hpp>
+#include <unordered_map>
 
 namespace HiCR
 {
