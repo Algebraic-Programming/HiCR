@@ -14,7 +14,7 @@
 
 #include <frontends/taskr/common.hpp>
 #include <hicr/L0/executionUnit.hpp>
-#include <hicr/L1/tasking/task.hpp>
+#include <hicr/L2/tasking/task.hpp>
 #include <vector>
 
 namespace taskr
@@ -32,7 +32,7 @@ class Task
   /**
    * HiCR Task object to implement TaskR tasks
    */
-  HiCR::L1::tasking::Task _hicrTask;
+  HiCR::L2::tasking::Task _hicrTask;
 
   /**
    * Tasks's label, chosen by the user
@@ -64,7 +64,7 @@ class Task
    *
    * \return A pointer to the underlying HiCR task
    */
-  __USED__ inline HiCR::L1::tasking::Task *getHiCRTask() { return &_hicrTask; }
+  __USED__ inline HiCR::L2::tasking::Task *getHiCRTask() { return &_hicrTask; }
 
   /**
    * Returns the task's label

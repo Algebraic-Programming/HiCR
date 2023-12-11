@@ -14,8 +14,8 @@
 
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
-#include <hicr/L1/tasking/dispatcher.hpp>
-#include <hicr/L1/tasking/task.hpp>
+#include <hicr/L2/tasking/dispatcher.hpp>
+#include <hicr/L2/tasking/task.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <memory>
@@ -26,7 +26,7 @@
 namespace HiCR
 {
 
-namespace L1
+namespace L2
 {
 
 namespace tasking
@@ -339,6 +339,6 @@ class Worker
 
 } // namespace tasking
 
-} // namespace L1
+} // namespace L2
 
 } // namespace HiCR

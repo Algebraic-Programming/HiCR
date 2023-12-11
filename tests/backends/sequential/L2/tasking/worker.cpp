@@ -12,15 +12,15 @@
 
 #include "gtest/gtest.h"
 #include <backends/sequential/L1/computeManager.hpp>
-#include <hicr/L1/tasking/task.hpp>
-#include <hicr/L1/tasking/worker.hpp>
+#include <hicr/L2/tasking/task.hpp>
+#include <hicr/L2/tasking/worker.hpp>
 
 TEST(Worker, Construction)
 {
-  HiCR::L1::tasking::Worker *w = NULL;
+  HiCR::L2::tasking::Worker *w = NULL;
   HiCR::L1::ComputeManager *m = NULL;
 
-  EXPECT_NO_THROW(w = new HiCR::L1::tasking::Worker(m));
+  EXPECT_NO_THROW(w = new HiCR::L2::tasking::Worker(m));
   EXPECT_FALSE(w == nullptr);
   delete w;
 }
@@ -30,15 +30,15 @@ TEST(Task, SetterAndGetters)
   // Instantiating default compute manager
   HiCR::backend::sequential::L1::ComputeManager m;
 
-  HiCR::L1::tasking::Worker w(&m);
+  HiCR::L2::tasking::Worker w(&m);
 
   // Getting empty lists
   EXPECT_TRUE(w.getProcessingUnits().empty());
   EXPECT_TRUE(w.getDispatchers().empty());
 
   // Now adding something to the lists/sets
-  auto d = HiCR::L1::tasking::Dispatcher([]()
-                                         { return (HiCR::L1::tasking::Task *)NULL; });
+  auto d = HiCR::L2::tasking::Dispatcher([]()
+                                         { return (HiCR::L2::tasking::Task *)NULL; });
 
   // Subscribing worker to dispatcher
   w.subscribe(&d);
@@ -65,10 +65,10 @@ TEST(Worker, LifeCycle)
   // Instantiating default compute manager
   HiCR::backend::sequential::L1::ComputeManager m;
 
-  HiCR::L1::tasking::Worker w(&m);
+  HiCR::L2::tasking::Worker w(&m);
 
   // Worker state should in an uninitialized state first
-  EXPECT_EQ(w.getState(), HiCR::L1::tasking::Worker::state_t::uninitialized);
+  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::uninitialized);
 
   // Attempting to run without any assigned resources
   EXPECT_THROW(w.initialize(), HiCR::common::LogicException);
@@ -104,7 +104,7 @@ TEST(Worker, LifeCycle)
   EXPECT_THROW(w.initialize(), HiCR::common::RuntimeException);
 
   // Worker state should be ready now
-  EXPECT_EQ(w.getState(), HiCR::L1::tasking::Worker::state_t::ready);
+  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::ready);
 
   // Flag to check running state
   bool runningStateFound = false;
@@ -113,13 +113,13 @@ TEST(Worker, LifeCycle)
   auto f = [&runningStateFound]()
   {
     // Getting worker pointer
-    auto w = HiCR::L1::tasking::Worker::getCurrentWorker();
+    auto w = HiCR::L2::tasking::Worker::getCurrentWorker();
 
     // Getting worker pointer
-    auto t = HiCR::L1::tasking::Task::getCurrentTask();
+    auto t = HiCR::L2::tasking::Task::getCurrentTask();
 
     // Checking running state
-    if (w->getState() == HiCR::L1::tasking::Worker::state_t::running) runningStateFound = true;
+    if (w->getState() == HiCR::L2::tasking::Worker::state_t::running) runningStateFound = true;
 
     // suspending worker and yielding task
     w->suspend();
@@ -134,10 +134,10 @@ TEST(Worker, LifeCycle)
   auto u = m.createExecutionUnit(f);
 
   // Creating task to run, and setting function to run
-  HiCR::L1::tasking::Task t(u);
+  HiCR::L2::tasking::Task t(u);
 
   // Creating task dispatcher
-  auto d = HiCR::L1::tasking::Dispatcher([&t]()
+  auto d = HiCR::L2::tasking::Dispatcher([&t]()
                                          { return &t; });
 
   // Suscribing worker to dispatcher
@@ -149,7 +149,7 @@ TEST(Worker, LifeCycle)
   EXPECT_TRUE(runningStateFound);
 
   // Checking the worker is suspended
-  EXPECT_EQ(w.getState(), HiCR::L1::tasking::Worker::state_t::suspended);
+  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::suspended);
 
   // Fail on trying to terminate when not running
   EXPECT_THROW(w.terminate(), HiCR::common::RuntimeException);
@@ -158,11 +158,11 @@ TEST(Worker, LifeCycle)
   EXPECT_NO_THROW(w.resume());
 
   // Checking the worker is terminating
-  EXPECT_EQ(w.getState(), HiCR::L1::tasking::Worker::state_t::terminating);
+  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::terminating);
 
   // Awaiting for worker termination
   EXPECT_NO_THROW(w.await());
 
   // Checking the worker is terminated
-  EXPECT_EQ(w.getState(), HiCR::L1::tasking::Worker::state_t::terminated);
+  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::terminated);
 }
