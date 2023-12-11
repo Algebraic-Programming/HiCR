@@ -13,7 +13,7 @@
 
 #include <acl/acl.h>
 #include <hicr/L0/memorySlot.hpp>
-#include <hicr/backends/ascend/common.hpp>
+#include <backends/ascend/common.hpp>
 
 namespace HiCR
 {

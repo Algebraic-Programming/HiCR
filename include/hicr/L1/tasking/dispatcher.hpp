@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include <hicr/L1/tasking/task.hpp>
+#include <vector>
 #include <hicr/common/concurrentQueue.hpp>
 #include <hicr/common/definitions.hpp>
-#include <vector>
+#include <hicr/L1/tasking/task.hpp>
 
 namespace HiCR
 {

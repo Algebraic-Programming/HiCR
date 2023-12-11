@@ -11,13 +11,13 @@
  */
 
 #pragma once
-#include <atomic>
-#include <frontends/taskr/common.hpp>
-#include <frontends/taskr/task.hpp>
-#include <hicr/L1/tasking/task.hpp>
-#include <hicr/L1/tasking/worker.hpp>
 #include <map>
 #include <mutex>
+#include <atomic>
+#include <hicr/L1/tasking/task.hpp>
+#include <hicr/L1/tasking/worker.hpp>
+#include <frontends/taskr/common.hpp>
+#include <frontends/taskr/task.hpp>
 
 namespace taskr
 {

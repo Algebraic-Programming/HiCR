@@ -12,16 +12,16 @@
 
 #pragma once
 
+#include <memory>
+#include <vector>
+#include <pthread.h>
+#include <unistd.h>
+#include <hicr/common/definitions.hpp>
+#include <hicr/common/exceptions.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <hicr/L1/tasking/dispatcher.hpp>
 #include <hicr/L1/tasking/task.hpp>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
-#include <memory>
-#include <pthread.h>
-#include <unistd.h>
-#include <vector>
 
 namespace HiCR
 {

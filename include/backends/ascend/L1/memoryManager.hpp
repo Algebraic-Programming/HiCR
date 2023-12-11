@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <acl/acl.h>
 #include <hicr/L1/memoryManager.hpp>
-#include <hicr/backends/ascend/L0/memorySlot.hpp>
-#include <hicr/backends/ascend/common.hpp>
-#include <hicr/backends/ascend/core.hpp>
-#include <unordered_map>
+#include <backends/ascend/L0/memorySlot.hpp>
+#include <backends/ascend/common.hpp>
+#include <backends/ascend/core.hpp>
 
 namespace HiCR
 {

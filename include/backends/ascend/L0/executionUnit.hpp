@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <acl/acl.h>
-#include <chrono>
-#include <hicr/L0/executionUnit.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
 #include <thread>
 #include <vector>
+#include <chrono>
+#include <acl/acl.h>
+#include <hicr/L0/executionUnit.hpp>
+#include <backends/ascend/kernel.hpp>
 
 namespace HiCR
 {

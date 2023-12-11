@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <boost/context/continuation.hpp>
 #include <functional>
+#include <boost/context/continuation.hpp>
 #include <hicr/common/exceptions.hpp>
 
 namespace HiCR

@@ -11,8 +11,8 @@
  */
 #pragma once
 
-#include <hicr/L0/memorySlot.hpp>
 #include <lpf/core.h>
+#include <hicr/L0/memorySlot.hpp>
 
 namespace HiCR
 {

@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include <vector>
 #include <hicr/L2/machineModel/computeResource.hpp>
 #include <hicr/L2/machineModel/hostdev/cache.hpp>
-#include <vector>
 
 namespace HiCR
 {

@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include <hicr/L0/processingUnit.hpp>
-#include <hicr/backends/ascend/L0/executionState.hpp>
-#include <hicr/backends/ascend/L0/executionUnit.hpp>
-#include <hicr/common/exceptions.hpp>
 #include <memory>
+#include <hicr/common/exceptions.hpp>
+#include <hicr/L0/processingUnit.hpp>
+#include <backends/ascend/L0/executionState.hpp>
+#include <backends/ascend/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -53,7 +53,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
-    return std::make_unique<HiCR::L0::ExecutionState>(executionUnit, _context, _deviceId);
+    return std::make_unique<L0::ExecutionState>(executionUnit, _context, _deviceId);
   }
 
   protected:

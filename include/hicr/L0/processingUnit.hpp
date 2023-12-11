@@ -11,10 +11,10 @@
  */
 #pragma once
 
+#include <set>
+#include <hicr/common/definitions.hpp>
 #include <hicr/L0/executionState.hpp>
 #include <hicr/L0/executionUnit.hpp>
-#include <hicr/common/definitions.hpp>
-#include <set>
 
 namespace HiCR
 {

@@ -12,14 +12,14 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <acl/acl.h>
 #include <hicr/L1/computeManager.hpp>
-#include <hicr/backends/ascend/L0/executionUnit.hpp>
-#include <hicr/backends/ascend/L0/processingUnit.hpp>
-#include <hicr/backends/ascend/common.hpp>
-#include <hicr/backends/ascend/core.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <unordered_map>
+#include <backends/ascend/L0/executionUnit.hpp>
+#include <backends/ascend/L0/processingUnit.hpp>
+#include <backends/ascend/common.hpp>
+#include <backends/ascend/core.hpp>
+#include <backends/ascend/kernel.hpp>
 
 namespace HiCR
 {

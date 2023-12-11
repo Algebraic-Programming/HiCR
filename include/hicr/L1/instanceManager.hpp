@@ -12,9 +12,10 @@
 
 #pragma once
 
+#include <set>
 #include <hicr/L0/instance.hpp>
 #include <hicr/L1/memoryManager.hpp>
-#include <set>
+
 
 namespace HiCR
 {

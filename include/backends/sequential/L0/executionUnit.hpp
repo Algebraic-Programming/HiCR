@@ -13,6 +13,7 @@
 #pragma once
 
 #include <functional>
+#include <hicr/common/definitions.hpp>
 #include <hicr/L0/executionUnit.hpp>
 
 namespace HiCR
