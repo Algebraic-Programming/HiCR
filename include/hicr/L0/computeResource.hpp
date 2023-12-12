@@ -4,8 +4,8 @@
  */
 
 /**
- * @file computeUnit.hpp
- * @brief Provides a base definition for a HiCR ComputeUnit class
+ * @file computeResource.hpp
+ * @brief Provides a base definition for a HiCR ComputeResource class
  * @author S. M. Martin
  * @date 06/10/2023
  */
@@ -21,11 +21,12 @@ namespace L0
 {
 
 /**
- * This class represents an abstract definition for a Compute Unit that:
+ * This class represents an abstract definition for a Compute Resource that:
  *
  * - Represents a single autonomous unit of computing power (e.g., CPU core, device)
+ * - This is a copy-able class that only contains metadata
  */
-class ComputeUnit
+class ComputeResource
 {
   public:
 
@@ -39,11 +40,11 @@ class ComputeUnit
   /**
    * Default destructor
    */
-  virtual ~ComputeUnit() = default;
+  virtual ~ComputeResource() = default;
 
   protected:
 
-  ComputeUnit() = default;
+  ComputeResource() = default;
 };
 
 } // namespace L0

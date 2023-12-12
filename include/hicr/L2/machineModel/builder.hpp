@@ -196,13 +196,13 @@ class Builder
     auto executionUnit = computeManager.createExecutionUnit(fcLambda);
 
     // Querying compute resources
-    computeManager.queryComputeUnits();
+    computeManager.queryComputeResources();
 
     // Getting compute resources
-    auto computeUnits = computeManager.getComputeUnitList();
+    auto computeResources = computeManager.getComputeResourceList();
 
     // Creating processing unit from the compute resource
-    auto processingUnit = computeManager.createProcessingUnit(*computeUnits.begin());
+    auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
 
     // Initialize processing unit
     processingUnit->initialize();

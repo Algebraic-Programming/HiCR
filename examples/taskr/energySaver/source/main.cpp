@@ -52,10 +52,10 @@ int main(int argc, char **argv)
   HiCR::backend::sharedMemory::L1::ComputeManager computeManager(&topology);
 
   // Querying compute units
-  computeManager.queryComputeUnits();
+  computeManager.queryComputeResources();
 
   // Updating the compute resource list
-  auto computeResources = computeManager.getComputeUnitList();
+  auto computeResources = computeManager.getComputeResourceList();
 
   // Initializing taskr
   taskr::Runtime taskr;

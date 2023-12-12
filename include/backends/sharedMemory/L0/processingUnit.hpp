@@ -14,7 +14,7 @@
 
 #include <backends/sequential/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
-#include <backends/sharedMemory/L0/computeUnit.hpp>
+#include <backends/sharedMemory/L0/computeResource.hpp>
 #include <csignal>
 #include <fcntl.h>
 #include <hicr/L0/processingUnit.hpp>
@@ -91,7 +91,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param core Represents the core affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::ComputeUnit* core) : HiCR::L0::ProcessingUnit(core){};
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* core) : HiCR::L0::ProcessingUnit(core){};
 
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
@@ -127,7 +127,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     auto thread = (sharedMemory::L0::ProcessingUnit *)p;
 
     // Getting associated compute unit reference
-    auto computeUnit = (sharedMemory::L0::ComputeUnit*)thread->getComputeUnit();
+    auto computeUnit = (sharedMemory::L0::ComputeResource*)thread->getComputeResource();
 
     // Storing current thread pointer
     _currentThread = thread;

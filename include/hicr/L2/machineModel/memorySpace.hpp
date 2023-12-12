@@ -58,7 +58,7 @@ class MemorySpace
   /**
    *  List of associated processing elements
    */
-  L1::ComputeManager::computeUnitList_t _computeUnits;
+  L1::ComputeManager::computeResourceList_t _computeResources;
 
   public:
 
@@ -135,9 +135,9 @@ class MemorySpace
    *
    * @return A list of associated compute units
    */
-  inline L1::ComputeManager::computeUnitList_t getComputeUnits() const
+  inline L1::ComputeManager::computeResourceList_t getComputeUnits() const
   {
-    return _computeUnits;
+    return _computeResources;
   }
 
   /**
@@ -145,9 +145,9 @@ class MemorySpace
    *
    * @param[in] id The id of the compute resource to add
    */
-  inline void addComputeResource(HiCR::L0::ComputeUnit* computeUnit)
+  inline void addComputeResource(HiCR::L0::ComputeResource* computeResource)
   {
-    _computeUnits.insert(computeUnit);
+    _computeResources.insert(computeResource);
   }
 
 }; // class MemorySpace

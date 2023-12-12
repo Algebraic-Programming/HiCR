@@ -82,7 +82,7 @@ class HostDevice final : public DeviceModel
 
     for (size_t i = 0; i < computeCount; i++)
     {
-      auto computeUnit = new backend::sharedMemory::L0::ComputeUnit(i);
+      auto computeUnit = new backend::sharedMemory::L0::ComputeResource(i);
       CPU *c = new CPU(computeUnit);
 
       std::string index = "Core " + std::to_string(i);
@@ -101,7 +101,7 @@ class HostDevice final : public DeviceModel
       }
       c->setSiblings(cpuSiblings);
 
-      _computeUnits.insert(std::make_pair(computeUnit, c));
+      _computeResources.insert(std::make_pair(computeUnit, c));
 
       // Detect caches and create strings' vector compatible with the setCaches() method:
       std::vector<std::string> cachetypes = {"L1i", "L1d", "L2", "L3"};
@@ -154,7 +154,7 @@ class HostDevice final : public DeviceModel
     _computeManager = new backend::sharedMemory::L1::ComputeManager(&topology);
     _memoryManager = new backend::sharedMemory::L1::MemoryManager(&topology);
 
-    _computeManager->queryComputeUnits();
+    _computeManager->queryComputeResources();
     _memoryManager->queryMemorySpaces();
 
     // Populate our own resource representation based on the backend-specific Managers
@@ -170,20 +170,20 @@ class HostDevice final : public DeviceModel
       _memorySpaces.insert(std::make_pair(tmp_id, ms));
     }
 
-    for (auto c : _computeManager->getComputeUnitList())
+    for (auto c : _computeManager->getComputeResourceList())
     {
       CPU *cmp = new CPU(c);
-      _computeUnits.insert(std::make_pair(c, cmp));
+      _computeResources.insert(std::make_pair(c, cmp));
     }
 
     // NOTE: Since we created the pointers in this same function, it is safe to assume static cast correctness
     backend::sharedMemory::L1::ComputeManager *compMan = static_cast<backend::sharedMemory::L1::ComputeManager *>(_computeManager);
     // backend::sharedMemory::MemoryManager  *memMan  = static_cast<backend::sharedMemory::MemoryManager *>(_memoryManager);
 
-    for (auto com : _computeUnits)
+    for (auto com : _computeResources)
     {
       CPU *c = static_cast<CPU *>(com.second);
-      auto core = c->getComputeUnit();
+      auto core = c->getComputeResource();
       c->setCaches(compMan->getCpuCaches(core));
       c->setSiblings(compMan->getCpuSiblings(core));
       c->setSystemId(compMan->getCpuSystemId(core));
@@ -201,10 +201,10 @@ class HostDevice final : public DeviceModel
 
     // Compute Resources section
     json["ComputeResources"]["NumComputeRes"] = getComputeCount();
-    for (auto c : _computeUnits)
+    for (auto c : _computeResources)
     {
       CPU *cpu = static_cast<CPU *>(c.second);
-      auto core = (backend::sharedMemory::L0::ComputeUnit*)c.first;
+      auto core = (backend::sharedMemory::L0::ComputeResource*)c.first;
       std::string index = "Core " + std::to_string(core->getAffinity());
       std::string siblings;
       for (auto id : cpu->getSiblings())
@@ -241,7 +241,7 @@ class HostDevice final : public DeviceModel
           std::string sharingPUs;
           for (auto c : cache.getAssociatedComputeUnits())
           {
-            auto core = (backend::sharedMemory::L0::ComputeUnit*)c;
+            auto core = (backend::sharedMemory::L0::ComputeResource*)c;
             sharingPUs += std::to_string(core->getAffinity()) + " ";
           }
           sharingPUs = sharingPUs.substr(0, sharingPUs.find_last_not_of(" ") + 1);
@@ -264,7 +264,7 @@ class HostDevice final : public DeviceModel
       std::string compUnits;
       for (auto c : ms->getComputeUnits())
       {
-        auto core = (backend::sharedMemory::L0::ComputeUnit*)c;
+        auto core = (backend::sharedMemory::L0::ComputeResource*)c;
         compUnits += std::to_string(core->getAffinity()) + " ";
       }
       compUnits = compUnits.substr(0, compUnits.find_last_not_of(" ") + 1);
@@ -277,7 +277,7 @@ class HostDevice final : public DeviceModel
     for (auto it : _memorySpaces)
       delete it.second;
 
-    for (auto it : _computeUnits)
+    for (auto it : _computeResources)
       delete it.second;
 
     delete (_computeManager);

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <hicr/L0/computeUnit.hpp>
+#include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/common/definitions.hpp>
@@ -38,7 +38,7 @@ class ComputeManager
   /**
    * Common type for a collection of compute resources
    */
-  typedef std::unordered_set<L0::ComputeUnit*> computeUnitList_t;
+  typedef std::unordered_set<L0::ComputeResource*> computeResourceList_t;
 
   /**
    * Default destructor
@@ -63,13 +63,13 @@ class ComputeManager
    *
    * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
    */
-  __USED__ inline void queryComputeUnits()
+  __USED__ inline void queryComputeResources()
   {
     // Clearing existing compute units
-    _computeUnitList.clear();
+    _computeResourceList.clear();
 
     // Calling backend-internal implementation
-    _computeUnitList = queryComputeUnitsImpl();
+    _computeResourceList = queryComputeResourcesImpl();
   }
 
   /**
@@ -79,10 +79,10 @@ class ComputeManager
    *
    * @return The list of compute resources, as detected the last time \a queryResources was executed.
    */
-  __USED__ inline const computeUnitList_t getComputeUnitList()
+  __USED__ inline const computeResourceList_t getComputeResourceList()
   {
     // Getting value by copy
-    const auto value = _computeUnitList;
+    const auto value = _computeResourceList;
 
     return value;
   }
@@ -94,10 +94,10 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnit(L0::ComputeUnit* resource)
+  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnit(L0::ComputeResource* resource)
   {
     // Checking whether the referenced compute resource actually exists
-    if (_computeUnitList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
+    if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
 
     // Getting value by copy
     auto value = createProcessingUnitImpl(resource);
@@ -115,21 +115,21 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::ComputeUnit* resource) const = 0;
+  virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::ComputeResource* resource) const = 0;
 
   /**
-   * Backend-internal implementation of the queryComputeUnits function
+   * Backend-internal implementation of the queryComputeResources function
    *
    * @return A list of compute units
    */
-  virtual computeUnitList_t queryComputeUnitsImpl() = 0;
+  virtual computeResourceList_t queryComputeResourcesImpl() = 0;
 
   private:
 
   /**
    * The internal container for the queried compute units.
    */
-  computeUnitList_t _computeUnitList;
+  computeResourceList_t _computeResourceList;
 };
 
 } // namespace L1

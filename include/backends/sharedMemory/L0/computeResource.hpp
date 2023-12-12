@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <hicr/L0/computeUnit.hpp>
+#include <hicr/L0/computeResource.hpp>
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
@@ -30,22 +30,22 @@ namespace L0
 /**
  * This class represents a compute resource, visible by the sequential backend. That is, a CPU core with information about locality.
  */
-class ComputeUnit final : public HiCR::L0::ComputeUnit
+class ComputeResource final : public HiCR::L0::ComputeResource
 {
   public:
 
   /**
-   * Constructor for the execution unit class of the sequential backend
+   * Constructor for the compute resource class of the sequential backend
    *
-   * \param fc A replicable C++ function to run in this execution unit
+   * \param affinity Os-determied core affinity assigned to this compute resource
    */
-  ComputeUnit(const int affinity) : HiCR::L0::ComputeUnit(), _affinity(affinity) {};
-  ComputeUnit() = delete;
+  ComputeResource(const int affinity) : HiCR::L0::ComputeResource(), _affinity(affinity) {};
+  ComputeResource() = delete;
 
   /**
    * Default destructor
    */
-  ~ComputeUnit() = default;
+  ~ComputeResource() = default;
 
   __USED__ inline std::string getType() const override { return "CPU Core"; }
 

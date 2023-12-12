@@ -12,10 +12,10 @@ int main(int argc, char **argv)
   auto executionUnit = computeManager.createExecutionUnit(fcLambda);
 
   // Querying compute resources
-  computeManager.queryComputeUnits();
+  computeManager.queryComputeResources();
 
   // Getting compute resources
-  auto computeResources = computeManager.getComputeUnitList();
+  auto computeResources = computeManager.getComputeResourceList();
 
   // Creating processing unit from the compute resource
   auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());

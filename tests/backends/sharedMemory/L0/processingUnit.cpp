@@ -54,13 +54,13 @@ TEST(ProcessingUnit, ThreadAffinity)
   backend::L1::ComputeManager m(&topology);
 
   // Querying backend for its resources
-  m.queryComputeUnits();
+  m.queryComputeResources();
 
   // Gathering compute resources from backend
-  auto computeResources = m.getComputeUnitList();
+  auto computeResources = m.getComputeResourceList();
 
   // Casting compute resource correctly
-  auto computeUnit = (backend::L0::ComputeUnit*) *computeResources.begin();
+  auto computeUnit = (backend::L0::ComputeResource*) *computeResources.begin();
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(computeUnit);
@@ -126,13 +126,13 @@ TEST(ProcessingUnit, LifeCycle)
   backend::L1::ComputeManager m(&topology);
 
   // Querying backend for its resources
-  m.queryComputeUnits();
+  m.queryComputeResources();
 
   // Gathering compute resources from backend
-  auto computeResources = m.getComputeUnitList();
+  auto computeResources = m.getComputeResourceList();
 
   // Casting compute resource correctly
-  auto computeUnit = (backend::L0::ComputeUnit*) *computeResources.begin();
+  auto computeUnit = (backend::L0::ComputeResource*) *computeResources.begin();
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(computeUnit);

@@ -14,7 +14,8 @@
 
 #include <backends/sequential/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
-#include <hicr/L0/computeUnit.hpp>
+#include <backends/sequential/L0/computeResource.hpp>
+#include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/common/coroutine.hpp>
@@ -42,9 +43,9 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Constructor for the Process class
    *
-   * \param process An id for the process (should be zero)
+   * \param processor An id for the process (should be zero)
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::ComputeUnit* processor) : HiCR::L0::ProcessingUnit(processor){};
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* processor) : HiCR::L0::ProcessingUnit(processor){};
 
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {

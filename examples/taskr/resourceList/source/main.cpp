@@ -17,7 +17,7 @@ int main(int argc, char **argv)
   HiCR::backend::sharedMemory::L1::ComputeManager computeManager(&topology);
 
   // Querying computational resources
-  computeManager.queryComputeUnits();
+  computeManager.queryComputeResources();
 
   // Initializing taskr
   taskr::Runtime taskr;
@@ -40,10 +40,10 @@ int main(int argc, char **argv)
   }
 
   // Create processing units from the detected compute resource list and giving them to taskr
-  for (auto computeUnit : computeManager.getComputeUnitList()) 
+  for (auto computeResource : computeManager.getComputeResourceList()) 
   {
-    // Interpreting compute unit as core
-    auto core = (HiCR::backend::sharedMemory::L0::ComputeUnit*) computeUnit;
+    // Interpreting compute resource as core
+    auto core = (HiCR::backend::sharedMemory::L0::ComputeResource*) computeResource;
 
     // If the core affinity is included in the list, create new processing unit
     if (coreSubset.contains(core->getAffinity()))

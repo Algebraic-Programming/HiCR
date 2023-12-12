@@ -11,10 +11,10 @@ int main(int argc, char **argv)
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   // Querying computational resources
-  computeManager.queryComputeUnits();
+  computeManager.queryComputeResources();
 
   // Updating the compute resource list
-  auto computeResources = computeManager.getComputeUnitList();
+  auto computeResources = computeManager.getComputeResourceList();
 
   // Initializing taskr
   taskr::Runtime taskr;

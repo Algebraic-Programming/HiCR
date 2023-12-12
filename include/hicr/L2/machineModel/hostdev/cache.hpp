@@ -78,7 +78,7 @@ class Cache
    * will appear here. There is currently redunduncy in the representation,
    * as all cores that share the cache will keep a copy of this information
    */
-  std::vector<HiCR::L0::ComputeUnit*> _associatedComputeUnits;
+  std::vector<HiCR::L0::ComputeResource*> _associatedComputeUnits;
 
   public:
 
@@ -150,7 +150,7 @@ class Cache
    *
    * \return An std::vector of the CPU IDs
    */
-  inline std::vector<HiCR::L0::ComputeUnit*> getAssociatedComputeUnits() const
+  inline std::vector<HiCR::L0::ComputeResource*> getAssociatedComputeUnits() const
   {
     return _associatedComputeUnits;
   }
@@ -161,7 +161,7 @@ class Cache
    *
    * \param[in] id The HiCR::L0::computeResourceId_t ID of the Processing Unit the cache belongs to
    */
-  inline void setAssociatedComputeUnit(HiCR::L0::ComputeUnit* computeUnit)
+  inline void setAssociatedComputeUnit(HiCR::L0::ComputeResource* computeUnit)
   {
     _associatedComputeUnits.resize(1);
     _associatedComputeUnits[0] = computeUnit;
@@ -173,7 +173,7 @@ class Cache
    *
    * \param[in] id The HiCR::L0::computeResourceId_t ID of a Processing Unit sharing the cache
    */
-  inline void addAssociatedComputeUnit(HiCR::L0::ComputeUnit* computeUnit)
+  inline void addAssociatedComputeUnit(HiCR::L0::ComputeResource* computeUnit)
   {
     _associatedComputeUnits.push_back(computeUnit);
   }

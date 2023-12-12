@@ -14,7 +14,7 @@
 
 #include "hwloc.h"
 #include <backends/sequential/L0/executionUnit.hpp>
-#include <backends/sharedMemory/L0/computeUnit.hpp>
+#include <backends/sharedMemory/L0/computeResource.hpp>
 #include <backends/sharedMemory/L0/processingUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <memory>
@@ -77,10 +77,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    * \param[in] cpuId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
-  inline size_t getCpuSystemId(HiCR::L0::ComputeUnit* computeUnit) const
+  inline size_t getCpuSystemId(HiCR::L0::ComputeResource* computeResource) const
   {
     // Getting up-casted pointer for the MPI instance
-    auto core = dynamic_cast<L0::ComputeUnit *const>(computeUnit);
+    auto core = dynamic_cast<L0::ComputeResource *const>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (core == NULL) HICR_THROW_LOGIC("The passed compute unit is not supported by this compute manager\n");
@@ -106,10 +106,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    * \param[in] cpuId The ID of the processor we are doing the search for
    * \returns A vector of processor IDs, siblings of cpuId (expected to have up to 1 in most archs)
    */
-  inline std::vector<unsigned> getCpuSiblings(HiCR::L0::ComputeUnit* computeUnit) const
+  inline std::vector<unsigned> getCpuSiblings(HiCR::L0::ComputeResource* computeResource) const
   {
     // Getting up-casted pointer for the MPI instance
-    auto core = dynamic_cast<L0::ComputeUnit *const>(computeUnit);
+    auto core = dynamic_cast<L0::ComputeResource *const>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (core == NULL) HICR_THROW_LOGIC("The passed compute unit is not supported by this compute manager\n");
@@ -148,10 +148,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    * \param[in] cpuId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
-  size_t getCpuNumaAffinity(HiCR::L0::ComputeUnit* computeUnit) const
+  size_t getCpuNumaAffinity(HiCR::L0::ComputeResource* computeResource) const
   {
     // Getting up-casted pointer for the MPI instance
-    auto core = dynamic_cast<L0::ComputeUnit *const>(computeUnit);
+    auto core = dynamic_cast<L0::ComputeResource *const>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (core == NULL) HICR_THROW_LOGIC("The passed compute unit is not supported by this compute manager\n");
@@ -210,10 +210,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *          P/S:   may be "Private" or "Shared"
    *          associated IDs: (optional, for Shared cache) a list of core IDs, e.g. "0 1 2 3"
    */
-  std::vector<std::pair<std::string, size_t>> getCpuCaches(HiCR::L0::ComputeUnit* computeUnit) const
+  std::vector<std::pair<std::string, size_t>> getCpuCaches(HiCR::L0::ComputeResource* computeResource) const
   {
     // Getting up-casted pointer for the MPI instance
-    auto core = dynamic_cast<L0::ComputeUnit *const>(computeUnit);
+    auto core = dynamic_cast<L0::ComputeResource *const>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (core == NULL) HICR_THROW_LOGIC("The passed compute unit is not supported by this compute manager\n");
@@ -313,9 +313,9 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   private:
 
   /**
-   * Pthread implementation of the Backend queryComputeUnits() function. This will add one compute resource object per Thread / Processing Unit (PU) found
+   * Pthread implementation of the Backend queryComputeResource() function. This will add one compute resource object per HW Thread / Processing Unit (PU) found
    */
-  __USED__ inline computeUnitList_t queryComputeUnitsImpl() override
+  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
   {
     // Disable filters in order to detect instr. caches
     hwloc_topology_set_icache_types_filter(*_topology, HWLOC_TYPE_FILTER_KEEP_ALL);
@@ -324,20 +324,20 @@ class ComputeManager final : public HiCR::L1::ComputeManager
     hwloc_topology_load(*_topology);
 
     // New compute resource list to return
-    computeUnitList_t computeResourceList;
+    computeResourceList_t computeResourceList;
 
     // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
     std::vector<int> threadPUs;
     getThreadPUs(*_topology, hwloc_get_root_obj(*_topology), 0, threadPUs);
-    for (const auto pu : threadPUs) computeResourceList.insert(new L0::ComputeUnit(pu));
+    for (const auto pu : threadPUs) computeResourceList.insert(new L0::ComputeResource(pu));
 
     // Returning new compute resource list
     return computeResourceList;
   }
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeUnit* computeUnit) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource* computeResource) const override
   {
-    return std::make_unique<L0::ProcessingUnit>(computeUnit);
+    return std::make_unique<L0::ProcessingUnit>(computeResource);
   }
 
   /**

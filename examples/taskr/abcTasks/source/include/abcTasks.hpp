@@ -8,10 +8,10 @@
 void abcTasks(HiCR::L1::ComputeManager *computeManager)
 {
   // Querying computational resources
-  computeManager->queryComputeUnits();
+  computeManager->queryComputeResources();
 
   // Updating the compute resource list
-  auto computeUnits = computeManager->getComputeUnitList();
+  auto computeUnits = computeManager->getComputeResourceList();
 
   // Initializing taskr
   taskr::Runtime taskr;

@@ -11,7 +11,7 @@
  */
 #pragma once
 
-#include <hicr/L0/computeUnit.hpp>
+#include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/executionState.hpp>
 #include <hicr/common/definitions.hpp>
@@ -26,9 +26,10 @@ namespace L0
 /**
  * This class represents an abstract definition for a Processing Unit resource in HiCR that:
  *
- * - Represents a single computational resource that has been instantiated for execution (as opposed of those who shall remain unused or unassigned).
+ * - Represents a single compute resource that has been instantiated for execution (as opposed of those who shall remain unused or unassigned).
  * - Is capable of executing or contributing to the execution of tasks.
- * - Is assigned to a worker to perform the work necessary to execute a task.
+ * - Is assigned, for example, to a worker to perform the work necessary to execute a task.
+ * - This is a non-copy-able class
  */
 class ProcessingUnit
 {
@@ -76,11 +77,11 @@ class ProcessingUnit
   ProcessingUnit() = delete;
 
   /**
-   * A processing unit is created to instantiate a single compute resource
+   * Constructor for a processing unit
    *
-   * \param computeResourceId The identifier of the compute resource to instantiate, as indicated by the backend
+   * \param computeResource The instance of the compute resource to instantiate, as indicated by the backend
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::ComputeUnit* computeUnit) : _computeUnit(computeUnit){};
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* computeResource) : _computeResource(computeResource){};
 
   virtual ~ProcessingUnit() = default;
 
@@ -188,11 +189,11 @@ class ProcessingUnit
   }
 
   /**
-   * Returns the processing unit's associated compute resource (unit)
+   * Returns the processing unit's associated compute resource
    *
    * \return The identifier of the compute resource associated to this processing unit.
    */
-  __USED__ inline ComputeUnit* getComputeUnit() { return _computeUnit; }
+  __USED__ inline ComputeResource* getComputeResource() { return _computeResource; }
 
   /**
    * This function enables the creation of an empty execution state object.
@@ -248,7 +249,7 @@ class ProcessingUnit
   /**
    * Identifier of the compute resource associated to this processing unit
    */
-  HiCR::L0::ComputeUnit* _computeUnit;
+  HiCR::L0::ComputeResource* _computeResource;
 };
 
 } // namespace L0

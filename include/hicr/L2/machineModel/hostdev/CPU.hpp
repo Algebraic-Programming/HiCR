@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <backends/sharedMemory/L0/computeUnit.hpp>
+#include <backends/sharedMemory/L0/computeResource.hpp>
 #include <hicr/L2/machineModel/computeResource.hpp>
 #include <hicr/L2/machineModel/hostdev/cache.hpp>
 #include <vector>
@@ -62,7 +62,7 @@ class CPU : public ComputeResource
    *
    * \param[in] id Identifier of the compute resource
    */
-  CPU(HiCR::L0::ComputeUnit* computeUnit) : ComputeResource(computeUnit, "Core")
+  CPU(HiCR::L0::ComputeResource* computeUnit) : ComputeResource(computeUnit, "Core")
   {
   }
 
@@ -156,7 +156,7 @@ class CPU : public ComputeResource
 
       // Parse sharing status and associated CPUs
       if (type.find("Private") != type.npos)
-        _caches[count].setAssociatedComputeUnit(_computeUnit);
+        _caches[count].setAssociatedComputeUnit(_computeResource);
 
       else if (type.find("Shared") != type.npos)
       {
@@ -175,7 +175,7 @@ class CPU : public ComputeResource
         {
           size_t end = puIDs.find_first_of(" ", 0);
           int tmpId = std::stoi(puIDs.substr(0, end));
-          _caches[count].addAssociatedComputeUnit(new backend::sharedMemory::L0::ComputeUnit(tmpId));
+          _caches[count].addAssociatedComputeUnit(new backend::sharedMemory::L0::ComputeResource(tmpId));
           if (puIDs.find_first_not_of(" ", end) != puIDs.npos)
             puIDs = puIDs.substr(puIDs.find_first_not_of(" ", end), puIDs.size());
           else

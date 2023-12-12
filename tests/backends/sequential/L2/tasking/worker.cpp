@@ -44,10 +44,10 @@ TEST(Task, SetterAndGetters)
   w.subscribe(&d);
 
   // Querying backend for its resources
-  m.queryComputeUnits();
+  m.queryComputeResources();
 
   // Gathering compute resources from backend
-  auto computeResources = m.getComputeUnitList();
+  auto computeResources = m.getComputeResourceList();
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
@@ -74,10 +74,10 @@ TEST(Worker, LifeCycle)
   EXPECT_THROW(w.initialize(), HiCR::common::LogicException);
 
   // Querying backend for its resources
-  m.queryComputeUnits();
+  m.queryComputeResources();
 
   // Gathering compute resources from backend
-  auto computeResources = m.getComputeUnitList();
+  auto computeResources = m.getComputeResourceList();
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
