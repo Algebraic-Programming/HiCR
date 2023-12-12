@@ -104,7 +104,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return list of compute resources detected by ACL
    */
-  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
+  __USED__ inline computeResourceList_t queryComputeUnitsImpl() override
   {
     // new compute resources list to return
     computeResourceList_t computeResourceList;

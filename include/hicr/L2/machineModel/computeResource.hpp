@@ -12,6 +12,7 @@
  */
 #pragma once
 
+#include <hicr/L0/computeUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <map>
@@ -39,10 +40,10 @@ class ComputeResource
   /**
    *  Backend-provided unique ID of the ComputeResource
    */
-  HiCR::L0::computeResourceId_t _id;
+  HiCR::L0::ComputeUnit* _computeUnit;
 
   /**
-   *  Optional; The device number, or CPU logical ID, if the _id differs/doesn't suffice
+   *  Optional; The device number, or CPU logical ID, if the _computeUnit differs/doesn't suffice
    */
   size_t _index;
 
@@ -80,8 +81,8 @@ class ComputeResource
    * @param[in] type Type of the compute resource
    */
   ComputeResource(
-    HiCR::L0::computeResourceId_t id,
-    std::string type) : _id(id),
+    HiCR::L0::ComputeUnit* computeUnit,
+    std::string type) : _computeUnit(computeUnit),
                         _type(type)
   {
   }
@@ -95,13 +96,13 @@ class ComputeResource
   }
 
   /**
-   * Obtain the ID of the resource
+   * Obtain the compute unit of the resource
    *
    * \return A computeResourceId associated with the ComputeResource
    */
-  inline HiCR::L0::computeResourceId_t getId() const
+  inline HiCR::L0::ComputeUnit* getComputeUnit() const
   {
-    return _id;
+    return _computeUnit;
   }
 
   /**

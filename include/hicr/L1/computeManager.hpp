@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <hicr/L0/computeUnit.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/common/definitions.hpp>
@@ -37,7 +38,7 @@ class ComputeManager
   /**
    * Common type for a collection of compute resources
    */
-  typedef std::unordered_set<L0::computeResourceId_t> computeResourceList_t;
+  typedef std::unordered_set<L0::ComputeUnit*> computeUnitList_t;
 
   /**
    * Default destructor
@@ -56,19 +57,19 @@ class ComputeManager
   virtual L0::ExecutionUnit *createExecutionUnit(L0::ExecutionUnit::function_t executionUnit) = 0;
 
   /**
-   * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.
+   * This function prompts the backend to perform the necessary steps to discover and list the compute units provided by the library which it supports.
    *
    * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
    *
    * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
    */
-  __USED__ inline void queryComputeResources()
+  __USED__ inline void queryComputeUnits()
   {
-    // Clearing existing compute resources
-    _computeResourceList.clear();
+    // Clearing existing compute units
+    _computeUnitList.clear();
 
     // Calling backend-internal implementation
-    _computeResourceList = queryComputeResourcesImpl();
+    _computeUnitList = queryComputeUnitsImpl();
   }
 
   /**
@@ -78,10 +79,10 @@ class ComputeManager
    *
    * @return The list of compute resources, as detected the last time \a queryResources was executed.
    */
-  __USED__ inline const computeResourceList_t getComputeResourceList()
+  __USED__ inline const computeUnitList_t getComputeUnitList()
   {
     // Getting value by copy
-    const auto value = _computeResourceList;
+    const auto value = _computeUnitList;
 
     return value;
   }
@@ -93,10 +94,10 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnit(L0::computeResourceId_t resource)
+  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnit(L0::ComputeUnit* resource)
   {
     // Checking whether the referenced compute resource actually exists
-    if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
+    if (_computeUnitList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
 
     // Getting value by copy
     auto value = createProcessingUnitImpl(resource);
@@ -114,21 +115,21 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::computeResourceId_t resource) const = 0;
+  virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::ComputeUnit* resource) const = 0;
 
   /**
-   * Backend-internal implementation of the queryComputeResources function
+   * Backend-internal implementation of the queryComputeUnits function
    *
-   * @return A list of compute resources
+   * @return A list of compute units
    */
-  virtual computeResourceList_t queryComputeResourcesImpl() = 0;
+  virtual computeUnitList_t queryComputeUnitsImpl() = 0;
 
   private:
 
   /**
-   * The internal container for the queried compute resources.
+   * The internal container for the queried compute units.
    */
-  computeResourceList_t _computeResourceList;
+  computeUnitList_t _computeUnitList;
 };
 
 } // namespace L1

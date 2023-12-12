@@ -51,11 +51,11 @@ int main(int argc, char **argv)
   // Initializing Pthreads backend to run in parallel
   HiCR::backend::sharedMemory::L1::ComputeManager computeManager(&topology);
 
-  // Querying computational resources
-  computeManager.queryComputeResources();
+  // Querying compute units
+  computeManager.queryComputeUnits();
 
   // Updating the compute resource list
-  auto computeResources = computeManager.getComputeResourceList();
+  auto computeResources = computeManager.getComputeUnitList();
 
   // Initializing taskr
   taskr::Runtime taskr;

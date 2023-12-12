@@ -17,7 +17,7 @@ int main(int argc, char **argv)
   HiCR::backend::sharedMemory::L1::ComputeManager computeManager(&topology);
 
   // Querying computational resources
-  computeManager.queryComputeResources();
+  computeManager.queryComputeUnits();
 
   // Initializing taskr
   taskr::Runtime taskr;
@@ -40,18 +40,24 @@ int main(int argc, char **argv)
   }
 
   // Create processing units from the detected compute resource list and giving them to taskr
-  for (auto &coreId : coreSubset)
+  for (auto computeUnit : computeManager.getComputeUnitList()) 
   {
-    // Creating a processing unit out of the computational resource
-    auto processingUnit = computeManager.createProcessingUnit(coreId);
+    // Interpreting compute unit as core
+    auto core = (HiCR::backend::sharedMemory::L0::ComputeUnit*) computeUnit;
 
-    // Assigning resource to the taskr
-    taskr.addProcessingUnit(std::move(processingUnit));
+    // If the core affinity is included in the list, create new processing unit
+    if (coreSubset.contains(core->getAffinity()))
+    {
+      // Creating a processing unit out of the computational resource
+      auto processingUnit = computeManager.createProcessingUnit(core);
+
+      // Assigning resource to the taskr
+      taskr.addProcessingUnit(std::move(processingUnit));
+    }
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]()
-                                                              { work(iterations); });
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]() { work(iterations); });
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());

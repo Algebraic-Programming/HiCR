@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <hicr/L0/computeUnit.hpp>
 #include <hicr/L2/machineModel/computeResource.hpp>
 #include <hicr/L2/machineModel/memorySpace.hpp>
 #include <nlohmann_json/json.hpp>
@@ -47,7 +48,7 @@ class DeviceModel
   /**
    *  List of actual processing elements
    */
-  std::map<HiCR::L0::computeResourceId_t, L2::machineModel::ComputeResource *> _computeResources;
+  std::map<HiCR::L0::ComputeUnit*, L2::machineModel::ComputeResource *> _computeUnits;
 
   /**
    *  List of memories/NUMA nodes
@@ -93,7 +94,7 @@ class DeviceModel
    */
   inline size_t getComputeCount() const
   {
-    return _computeResources.size();
+    return _computeUnits.size();
   }
 
   /**
@@ -125,10 +126,10 @@ class DeviceModel
    *
    * \return An std::set of pointers to the ComputeResources
    */
-  inline std::set<L2::machineModel::ComputeResource *> getComputeResources() const
+  inline std::set<L2::machineModel::ComputeResource *> getComputeUnits() const
   {
     std::set<L2::machineModel::ComputeResource *> ret;
-    for (auto it : _computeResources)
+    for (auto it : _computeUnits)
       ret.insert(it.second);
 
     return ret;
@@ -168,7 +169,7 @@ class DeviceModel
     for (auto it : _memorySpaces)
       delete it.second;
 
-    for (auto it : _computeResources)
+    for (auto it : _computeUnits)
       delete it.second;
 
     delete _memoryManager;

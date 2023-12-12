@@ -11,8 +11,9 @@
  */
 #pragma once
 
-#include <hicr/L0/executionState.hpp>
+#include <hicr/L0/computeUnit.hpp>
 #include <hicr/L0/executionUnit.hpp>
+#include <hicr/L0/executionState.hpp>
 #include <hicr/common/definitions.hpp>
 #include <set>
 
@@ -21,11 +22,6 @@ namespace HiCR
 
 namespace L0
 {
-
-/**
- * Type definition for a generic memory space identifier
- */
-typedef uint64_t computeResourceId_t;
 
 /**
  * This class represents an abstract definition for a Processing Unit resource in HiCR that:
@@ -84,7 +80,7 @@ class ProcessingUnit
    *
    * \param computeResourceId The identifier of the compute resource to instantiate, as indicated by the backend
    */
-  __USED__ inline ProcessingUnit(computeResourceId_t computeResourceId) : _computeResourceId(computeResourceId){};
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeUnit* computeUnit) : _computeUnit(computeUnit){};
 
   virtual ~ProcessingUnit() = default;
 
@@ -192,11 +188,11 @@ class ProcessingUnit
   }
 
   /**
-   * Returns the processing unit's associated compute resource
+   * Returns the processing unit's associated compute resource (unit)
    *
    * \return The identifier of the compute resource associated to this processing unit.
    */
-  __USED__ inline computeResourceId_t getComputeResourceId() { return _computeResourceId; }
+  __USED__ inline ComputeUnit* getComputeUnit() { return _computeUnit; }
 
   /**
    * This function enables the creation of an empty execution state object.
@@ -252,7 +248,7 @@ class ProcessingUnit
   /**
    * Identifier of the compute resource associated to this processing unit
    */
-  computeResourceId_t _computeResourceId;
+  HiCR::L0::ComputeUnit* _computeUnit;
 };
 
 } // namespace L0

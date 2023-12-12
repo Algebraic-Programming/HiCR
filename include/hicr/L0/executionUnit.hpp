@@ -21,7 +21,7 @@ namespace L0
 {
 
 /**
- * This class represents an abstract definition for a Compute Unit that:
+ * This class represents an abstract definition for a Execution Unit that:
  *
  * - Represents a single state-less computational operation (e.g., a function or a kernel) that can be replicated many times
  * - Is executed in the context of an ExecutionState class

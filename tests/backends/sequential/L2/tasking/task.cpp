@@ -70,10 +70,10 @@ TEST(Task, Run)
   t = new HiCR::L2::tasking::Task(u);
 
   // Querying compute resources
-  m.queryComputeResources();
+  m.queryComputeUnits();
 
   // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
+  auto computeResources = m.getComputeUnitList();
 
   // Creating processing unit from the compute resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
@@ -151,13 +151,13 @@ TEST(Task, Events)
   t = new HiCR::L2::tasking::Task(u);
 
   // Querying compute resources
-  m.queryComputeResources();
+  m.queryComputeUnits();
 
   // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
+  auto computeResources = m.getComputeUnitList();
 
   // Querying compute resources
-  m.queryComputeResources();
+  m.queryComputeUnits();
 
   // Creating processing unit from the compute resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());

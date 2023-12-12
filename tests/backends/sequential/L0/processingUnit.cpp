@@ -11,6 +11,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <backends/sequential/L0/computeUnit.hpp>
 #include <backends/sequential/L0/processingUnit.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
 
@@ -27,12 +28,12 @@ TEST(ProcessingUnit, Construction)
 
 TEST(ProcessingUnit, LifeCycle)
 {
-  HiCR::L0::computeResourceId_t pId = 0;
+  HiCR::L0::ComputeUnit* pId = 0;
   backend::L0::ProcessingUnit p(pId);
 
   // Checking that the correct resourceId was used
-  HiCR::L0::computeResourceId_t pIdAlt = pId + 1;
-  EXPECT_NO_THROW(pIdAlt = p.getComputeResourceId());
+  HiCR::L0::ComputeUnit* pIdAlt = pId + 1;
+  EXPECT_NO_THROW(pIdAlt = p.getComputeUnit());
   EXPECT_EQ(pIdAlt, pId);
 
   // Counter for execution times

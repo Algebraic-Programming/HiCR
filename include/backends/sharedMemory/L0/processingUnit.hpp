@@ -14,6 +14,7 @@
 
 #include <backends/sequential/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
+#include <backends/sharedMemory/L0/computeUnit.hpp>
 #include <csignal>
 #include <fcntl.h>
 #include <hicr/L0/processingUnit.hpp>
@@ -90,7 +91,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param core Represents the core affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::computeResourceId_t core) : HiCR::L0::ProcessingUnit(core){};
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeUnit* core) : HiCR::L0::ProcessingUnit(core){};
 
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
@@ -123,7 +124,10 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline static void *launchWrapper(void *p)
   {
     // Gathering thread object
-    auto thread = (ProcessingUnit *)p;
+    auto thread = (sharedMemory::L0::ProcessingUnit *)p;
+
+    // Getting associated compute unit reference
+    auto computeUnit = (sharedMemory::L0::ComputeUnit*)thread->getComputeUnit();
 
     // Storing current thread pointer
     _currentThread = thread;
@@ -132,7 +136,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
 
     // Setting initial thread affinity
-    thread->updateAffinity(std::set<int>({(int)thread->getComputeResourceId()}));
+    thread->updateAffinity(std::set<int>({ computeUnit->getAffinity() }));
 
     // Yielding execution to allow affinity to refresh
     sched_yield();

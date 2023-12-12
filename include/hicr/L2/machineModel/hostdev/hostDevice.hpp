@@ -82,7 +82,8 @@ class HostDevice final : public DeviceModel
 
     for (size_t i = 0; i < computeCount; i++)
     {
-      CPU *c = new CPU(i);
+      auto computeUnit = new backend::sharedMemory::L0::ComputeUnit(i);
+      CPU *c = new CPU(computeUnit);
 
       std::string index = "Core " + std::to_string(i);
 
@@ -100,7 +101,7 @@ class HostDevice final : public DeviceModel
       }
       c->setSiblings(cpuSiblings);
 
-      _computeResources.insert(std::make_pair(i, c));
+      _computeUnits.insert(std::make_pair(computeUnit, c));
 
       // Detect caches and create strings' vector compatible with the setCaches() method:
       std::vector<std::string> cachetypes = {"L1i", "L1d", "L2", "L3"};
@@ -153,7 +154,7 @@ class HostDevice final : public DeviceModel
     _computeManager = new backend::sharedMemory::L1::ComputeManager(&topology);
     _memoryManager = new backend::sharedMemory::L1::MemoryManager(&topology);
 
-    _computeManager->queryComputeResources();
+    _computeManager->queryComputeUnits();
     _memoryManager->queryMemorySpaces();
 
     // Populate our own resource representation based on the backend-specific Managers
@@ -169,30 +170,27 @@ class HostDevice final : public DeviceModel
       _memorySpaces.insert(std::make_pair(tmp_id, ms));
     }
 
-    for (auto c : _computeManager->getComputeResourceList())
+    for (auto c : _computeManager->getComputeUnitList())
     {
-      HiCR::L0::computeResourceId_t tmp_id = c;
-      CPU *cmp = new CPU(
-        tmp_id /* HiCR::L0::computeResourceId_t */
-      );
-      _computeResources.insert(std::make_pair(tmp_id, cmp));
+      CPU *cmp = new CPU(c);
+      _computeUnits.insert(std::make_pair(c, cmp));
     }
 
     // NOTE: Since we created the pointers in this same function, it is safe to assume static cast correctness
     backend::sharedMemory::L1::ComputeManager *compMan = static_cast<backend::sharedMemory::L1::ComputeManager *>(_computeManager);
     // backend::sharedMemory::MemoryManager  *memMan  = static_cast<backend::sharedMemory::MemoryManager *>(_memoryManager);
 
-    for (auto com : _computeResources)
+    for (auto com : _computeUnits)
     {
       CPU *c = static_cast<CPU *>(com.second);
-      auto coreId = c->getId();
-      c->setCaches(compMan->getCpuCaches(coreId));
-      c->setSiblings(compMan->getCpuSiblings(coreId));
-      c->setSystemId(compMan->getCpuSystemId(coreId));
-      auto memspaceId = compMan->getCpuNumaAffinity(coreId);
+      auto core = c->getComputeUnit();
+      c->setCaches(compMan->getCpuCaches(core));
+      c->setSiblings(compMan->getCpuSiblings(core));
+      c->setSystemId(compMan->getCpuSystemId(core));
+      auto memspaceId = compMan->getCpuNumaAffinity(core);
       c->addMemorySpace(memspaceId);
       auto ms = _memorySpaces.at(memspaceId);
-      ms->addComputeResource(coreId);
+      ms->addComputeResource(core);
     }
   }
 
@@ -203,10 +201,11 @@ class HostDevice final : public DeviceModel
 
     // Compute Resources section
     json["ComputeResources"]["NumComputeRes"] = getComputeCount();
-    for (auto c : _computeResources)
+    for (auto c : _computeUnits)
     {
       CPU *cpu = static_cast<CPU *>(c.second);
-      std::string index = "Core " + std::to_string(c.first);
+      auto core = (backend::sharedMemory::L0::ComputeUnit*)c.first;
+      std::string index = "Core " + std::to_string(core->getAffinity());
       std::string siblings;
       for (auto id : cpu->getSiblings())
         siblings += std::to_string(id) + " ";
@@ -240,8 +239,11 @@ class HostDevice final : public DeviceModel
         if (cache.isShared())
         {
           std::string sharingPUs;
-          for (auto id : cache.getAssociatedComputeUnit())
-            sharingPUs += std::to_string(id) + " ";
+          for (auto c : cache.getAssociatedComputeUnits())
+          {
+            auto core = (backend::sharedMemory::L0::ComputeUnit*)c;
+            sharingPUs += std::to_string(core->getAffinity()) + " ";
+          }
           sharingPUs = sharingPUs.substr(0, sharingPUs.find_last_not_of(" ") + 1);
           json["ComputeResources"][index]["caches"][cacheType]["sharing PUs"] = sharingPUs;
         }
@@ -260,8 +262,11 @@ class HostDevice final : public DeviceModel
       json["MemorySpaces"][ms->getId()]["type"] = ms->getType();
       json["MemorySpaces"][ms->getId()]["size"] = ms->getSize();
       std::string compUnits;
-      for (auto id : ms->getComputeUnits())
-        compUnits += std::to_string(id) + " ";
+      for (auto c : ms->getComputeUnits())
+      {
+        auto core = (backend::sharedMemory::L0::ComputeUnit*)c;
+        compUnits += std::to_string(core->getAffinity()) + " ";
+      }
       compUnits = compUnits.substr(0, compUnits.find_last_not_of(" ") + 1);
       json["MemorySpaces"][ms->getId()]["compute units"] = compUnits;
     } // end of Memory Spaces section
@@ -272,7 +277,7 @@ class HostDevice final : public DeviceModel
     for (auto it : _memorySpaces)
       delete it.second;
 
-    for (auto it : _computeResources)
+    for (auto it : _computeUnits)
       delete it.second;
 
     delete (_computeManager);

@@ -38,10 +38,10 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager)
   auto executionUnit = computeManager.createExecutionUnit(fcLambda);
 
   // Querying compute resources
-  computeManager.queryComputeResources();
+  computeManager.queryComputeUnits();
 
   // Getting compute resources
-  auto computeResources = computeManager.getComputeResourceList();
+  auto computeResources = computeManager.getComputeUnitList();
 
   // Creating processing unit from the compute resource
   auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
