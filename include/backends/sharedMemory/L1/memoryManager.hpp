@@ -14,6 +14,7 @@
 
 #include "hwloc.h"
 #include "pthread.h"
+#include <backends/sharedMemory/L0/memorySpace.hpp>
 #include <backends/sharedMemory/L0/memorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
 
@@ -63,27 +64,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     pthread_mutex_destroy(&_mutex);
   }
 
-  /**
-   * Function to determine whether the memory space supports strictly bound memory allocations
-   *
-   * @param[in] memorySpace The memory space to check binding
-   * @return The supported memory binding type by the memory space
-   */
-  __USED__ inline L0::MemorySlot::binding_type getSupportedBindingType(const memorySpaceId_t memorySpace) const
-  {
-    return _memorySpaceMap.at(memorySpace).bindingSupport;
-  }
-
-  /**
-   * Function to set memory allocating binding type
-   *
-   * \param[in] type Specifies the desired binding type for future allocations
-   */
-  __USED__ inline void setRequestedBindingType(const L0::MemorySlot::binding_type type)
-  {
-    _hwlocBindingRequested = type;
-  }
-
   private:
 
   /**
@@ -97,30 +77,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   pthread_mutex_t _mutex;
 
   /**
-   * Structure representing a shared memory backend memory space
-   */
-  struct memorySpace_t
-  {
-    /**
-     * HWloc object representing this memory space
-     */
-    hwloc_obj_t obj;
-
-    /**
-     * Stores whether it is possible to allocate bound memory in this memory space
-     */
-    L0::MemorySlot::binding_type bindingSupport;
-  };
-
-  /**
    * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
    */
   L0::MemorySlot::binding_type _hwlocBindingRequested = L0::MemorySlot::binding_type::strict_binding;
-
-  /**
-   * Thread-safe map that stores all detected memory spaces HWLoC objects associated to this backend
-   */
-  parallelHashMap_t<memorySpaceId_t, memorySpace_t> _memorySpaceMap;
 
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
@@ -138,9 +97,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // Loading topology
     hwloc_topology_load(*_topology);
 
-    // Clearing existing memory space map
-    _memorySpaceMap.clear();
-
     // New memory space list to return
     memorySpaceList_t memorySpaceList;
 
@@ -149,12 +105,12 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     for (int i = 0; i < n; i++)
     {
       // Getting HWLoc object related to this NUMA domain
-      auto obj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, i);
+      auto hwlocObj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, i);
 
       // Checking whther bound memory allocation and freeing is supported
       auto bindingSupport = L0::MemorySlot::binding_type::strict_non_binding;
       size_t size = 1024;
-      auto ptr = hwloc_alloc_membind(*_topology, size, obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+      auto ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
       if (ptr != NULL)
       {
         // Attempting to free with hwloc
@@ -164,11 +120,14 @@ class MemoryManager final : public HiCR::L1::MemoryManager
         if (status == 0) bindingSupport = L0::MemorySlot::binding_type::strict_binding;
       }
 
-      // Storing reference to the HWLoc object for future reference
-      _memorySpaceMap[i] = memorySpace_t{.obj = obj, .bindingSupport = bindingSupport};
+      // Getting memory space size
+      auto memSpaceSize = hwlocObj->attr->cache.size;
+
+      // Creating new memory space object
+      auto memorySpace = new sharedMemory::L0::MemorySpace(memSpaceSize, hwlocObj, bindingSupport);
 
       // Storing new memory space
-      memorySpaceList.insert(i);
+      memorySpaceList.insert(memorySpace);
     }
 
     // Releasing the lock
@@ -185,24 +144,33 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const HiCR::L0::MemorySpace* memorySpace, const size_t size) override
   {
-    // Recovering memory space from the map
-    auto &memSpace = _memorySpaceMap.at(memorySpaceId);
+        // Getting up-casted pointer for the MPI instance
+    auto m = dynamic_cast<const L0::MemorySpace *>(memorySpace);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
+
+    // Getting binding type supported by the memory space
+    const auto supportedBindingType = m->getSupportedBindingType();
 
     // Checking whether the operation requested is supported by the HWLoc on this memory space
-    if (_hwlocBindingRequested > memSpace.bindingSupport) HICR_THROW_LOGIC("Requesting an allocation binding support level (%u) not supported by the operating system (HWLoc max support: %u)", _hwlocBindingRequested, memSpace.bindingSupport);
+    if (_hwlocBindingRequested > supportedBindingType) HICR_THROW_LOGIC("Requesting an allocation binding support level (%u) not supported by the operating system (HWLoc max support: %u)", _hwlocBindingRequested, supportedBindingType);
+
+    // Getting memory space's HWLoc object to perform the operation with
+    const auto hwlocObj = m->getHWLocObject();
 
     // Allocating memory in the reqested memory space
     void *ptr = NULL;
-    if (memSpace.bindingSupport == L0::MemorySlot::binding_type::strict_binding) ptr = hwloc_alloc_membind(*_topology, size, memSpace.obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
-    if (memSpace.bindingSupport == L0::MemorySlot::binding_type::strict_non_binding) ptr = malloc(size);
+    if (supportedBindingType == L0::MemorySlot::binding_type::strict_binding) ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+    if (supportedBindingType == L0::MemorySlot::binding_type::strict_non_binding) ptr = malloc(size);
 
     // Error checking
-    if (ptr == NULL) HICR_THROW_LOGIC("Could not allocate memory (size %lu) in the requested memory space (%lu)", size, memorySpaceId);
+    if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory (size %lu) in the requested memory space", size);
 
     // Creating new memory slot object
-    auto memorySlot = new L0::MemorySlot(memSpace.bindingSupport, ptr, size);
+    auto memorySlot = new L0::MemorySlot(supportedBindingType, ptr, size);
 
     // Assinging new entry in the memory slot map
     return memorySlot;
@@ -319,21 +287,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::MemorySlot *memorySlot) override
   {
     // This function should check and update the abstract class for completed memcpy operations
-  }
-
-  /**
-   * This function returns the available allocatable size in the NUMA domain represented by the given memory space
-   *
-   * @param[in] memorySpace The NUMA domain to query
-   * @return The allocatable size within that NUMA domain
-   */
-  __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
-  {
-    // Recovering memory space
-    const auto memSpace = _memorySpaceMap.at(memorySpace);
-
-    // Returning entry corresponding to the memory size
-    return memSpace.obj->attr->cache.size;
   }
 
   /**

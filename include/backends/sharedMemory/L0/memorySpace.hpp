@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "hwloc.h"
+#include <backends/sharedMemory/L0/memorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
 
@@ -21,7 +23,7 @@ namespace HiCR
 namespace backend
 {
 
-namespace sequential
+namespace sharedMemory
 {
 
 namespace L0
@@ -37,7 +39,10 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   /**
    * Constructor for the compute resource class of the sequential backend
    */
-  MemorySpace(const size_t size) : HiCR::L0::MemorySpace(size) {};
+  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::L0::MemorySlot::binding_type bindingSupport) :
+   HiCR::L0::MemorySpace(size),
+   _hwlocObject(hwlocObject),
+   _bindingSupport(bindingSupport) {};
 
   /**
    * Default destructor
@@ -45,11 +50,43 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   ~MemorySpace() = default;
 
   __USED__ inline std::string getType() const override { return "NUMA Domain"; }
+
+  /**
+   * Function to determine whether the memory space supports strictly bound memory allocations
+   *
+   * @return The supported memory binding type by the memory space
+   */
+  __USED__ inline sharedMemory::L0::MemorySlot::binding_type getSupportedBindingType() const
+  {
+    return _bindingSupport;
+  }
+
+  /**
+   * Function to get the internal HWLoc object represented by this memory space
+   *
+   * @return The internal HWLoc object
+   */
+  __USED__ inline const hwloc_obj_t getHWLocObject() const
+  {
+    return _hwlocObject;
+  }
+
+  private:
+
+  /**
+   * HWloc object representing this memory space
+   */
+  const hwloc_obj_t _hwlocObject;
+
+  /**
+   * Stores whether it is possible to allocate bound memory in this memory space
+   */
+  const sharedMemory::L0::MemorySlot::binding_type _bindingSupport;
 };
 
 } // namespace L0
 
-} // namespace sequential
+} // namespace sharedMemory
 
 } // namespace backend
 
