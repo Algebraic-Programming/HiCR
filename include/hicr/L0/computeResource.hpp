@@ -11,7 +11,6 @@
  */
 #pragma once
 
-#include <functional>
 #include <string>
 
 namespace HiCR
@@ -33,7 +32,7 @@ class ComputeResource
   /**
    * Indicates what type of compute unit is contained in this instance
    *
-   * \return A string containing a human-readable description of the compute unit type
+   * \return A string containing a human-readable description of the compute resource type
    */
   virtual std::string getType() const = 0;
 

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <map>
@@ -37,14 +38,9 @@ class MemoryManager
   public:
 
   /**
-   * Type definition for a generic memory space identifier
-   */
-  typedef uint64_t memorySpaceId_t;
-
-  /**
    * Common definition of a collection of memory spaces
    */
-  typedef parallelHashSet_t<memorySpaceId_t> memorySpaceList_t;
+  typedef parallelHashSet_t<L0::MemorySpace*> memorySpaceList_t;
 
   /**
    * Common definition of a map that links key ids with memory slot id arrays (for global exchange)
@@ -94,30 +90,12 @@ class MemoryManager
    *
    * @return The list of memory spaces, as detected the last time \a queryResources was executed.
    */
-  __USED__ inline const std::set<memorySpaceId_t> getMemorySpaceList()
+  __USED__ inline const std::set<L0::MemorySpace*> getMemorySpaceList()
   {
     // Getting value by copy
-    const std::set<memorySpaceId_t> list(_memorySpaceList.begin(), _memorySpaceList.end());
+    const std::set<L0::MemorySpace*> list(_memorySpaceList.begin(), _memorySpaceList.end());
 
     return list;
-  }
-
-  /**
-   * This function returns the available allocatable size provided by the given memory space
-   *
-   * @param[in] memorySpace The memory space to query
-   * @return The allocatable size within that memory space
-   */
-  __USED__ inline size_t getMemorySpaceSize(const memorySpaceId_t memorySpace)
-  {
-    // Checking whether the referenced memory space actually exists
-    if (_memorySpaceList.contains(memorySpace) == false) HICR_THROW_RUNTIME("Attempting to get size from memory space that does not exist (%lu) in this backend", memorySpace);
-
-    // Getting value by copy
-    const auto value = getMemorySpaceSizeImpl(memorySpace);
-
-    // Calling internal implementation
-    return value;
   }
 
   /**
@@ -127,16 +105,16 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in the specified memory space
    */
-  __USED__ inline L0::MemorySlot *allocateLocalMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)
+  __USED__ inline L0::MemorySlot *allocateLocalMemorySlot(const L0::MemorySpace* memorySpace, const size_t size)
   {
     // Checks whether the size requested exceeds the memory space size. This is a thread-safe operation
-    auto maxSize = getMemorySpaceSize(memorySpaceId);
+    auto maxSize = memorySpace->getSize();
 
     // Checking size doesn't exceed slot size
     if (size > maxSize) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
 
     // Creating new memory slot structure
-    auto newMemSlot = allocateLocalMemorySlotImpl(memorySpaceId, size);
+    auto newMemSlot = allocateLocalMemorySlotImpl(memorySpace, size);
 
     // Returning the id of the new memory slot
     return newMemSlot;
@@ -427,14 +405,6 @@ class MemoryManager
   }
 
   /**
-   * Backend-internal implementation of the getMemorySpaceSize function
-   *
-   * @param[in] memorySpace The memory space to query
-   * @return The allocatable size within that memory space
-   */
-  virtual size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const = 0;
-
-  /**
    * Backend-internal implementation of the queryMemorySpaces function
    *
    * @return A list of memory spaces
@@ -448,7 +418,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  virtual L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) = 0;
+  virtual L0::MemorySlot *allocateLocalMemorySlotImpl(const L0::MemorySpace* memorySpace, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function

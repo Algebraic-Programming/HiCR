@@ -36,9 +36,9 @@ class MemorySpace
   protected:
 
   /**
-   *  Backend-provided unique ID of the MemorySpace
+   *  Backend-provided MemorySpace pointer
    */
-  L1::MemoryManager::memorySpaceId_t _id;
+  L0::MemorySpace* _memorySpace;
 
   /**
    * Type for the memory space
@@ -76,11 +76,11 @@ class MemorySpace
    * @param[in] pageSize Detected page size of the memory space
    */
   MemorySpace(
-    L1::MemoryManager::memorySpaceId_t id,
+    L0::MemorySpace* memorySpace,
     std::string type,
     size_t size,
     size_t pageSize = 4096) : /* Default page size; Consider using a constant but in a not dangerous way (e.g. define DEFAULT_PAGESIZE could mess up things) */
-                              _id(id),
+                              _memorySpace(memorySpace),
                               _type(type),
                               _size(size),
                               _pageSize(pageSize)
@@ -92,9 +92,9 @@ class MemorySpace
    *
    * @return The id value
    */
-  inline L1::MemoryManager::memorySpaceId_t getId() const
+  inline L0::MemorySpace* getMemorySpace() const
   {
-    return _id;
+    return _memorySpace;
   }
 
   /**
