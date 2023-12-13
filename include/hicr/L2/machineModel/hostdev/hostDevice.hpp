@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <backends/sharedMemory/L0/memorySpace.hpp>
 #include <backends/sharedMemory/L1/computeManager.hpp>
 #include <backends/sharedMemory/L1/memoryManager.hpp>
 #include <hicr/L2/machineModel/deviceModel.hpp>
@@ -72,12 +73,17 @@ class HostDevice final : public DeviceModel
 
       std::string tmp_type = "NUMA Domain";
       size_t size = (size_t)json["MemorySpaces"][i]["size"];
+
+      //  Creating new base memory space object, with no HWloc information
+      auto baseMemSpace = new backend::sharedMemory::L0::MemorySpace(size, NULL, backend::sharedMemory::L0::MemorySlot::binding_type::strict_non_binding);
+
       MemorySpace *ms = new MemorySpace(
-        i,        /* memorySpaceId_t */
+        baseMemSpace,    /* L0::MemorySpace* */
         tmp_type, /* type */
         size      /* size */
       );
-      _memorySpaces.insert(std::make_pair(i, ms));
+
+      _memorySpaces.insert(std::make_pair(baseMemSpace, ms));
     }
 
     for (size_t i = 0; i < computeCount; i++)
@@ -160,13 +166,14 @@ class HostDevice final : public DeviceModel
     // Populate our own resource representation based on the backend-specific Managers
     for (auto m : _memoryManager->getMemorySpaceList())
     {
-      L1::MemoryManager::memorySpaceId_t tmp_id = m;
+      L0::MemorySpace* tmp_id = m;
       std::string tmp_type = "NUMA Domain";
       MemorySpace *ms = new MemorySpace(
         tmp_id,                                    /* memorySpaceId_t */
         tmp_type,                                  /* type */
-        _memoryManager->getMemorySpaceSize(tmp_id) /* size */
+        m->getSize() /* size */
       );
+
       _memorySpaces.insert(std::make_pair(tmp_id, ms));
     }
 
@@ -187,10 +194,10 @@ class HostDevice final : public DeviceModel
       c->setCaches(compMan->getCpuCaches(core));
       c->setSiblings(compMan->getCpuSiblings(core));
       c->setSystemId(compMan->getCpuSystemId(core));
-      auto memspaceId = compMan->getCpuNumaAffinity(core);
-      c->addMemorySpace(memspaceId);
-      auto ms = _memorySpaces.at(memspaceId);
-      ms->addComputeResource(core);
+      //auto memspaceId = compMan->getCpuNumaAffinity(core);
+      //c->addMemorySpace(memspaceId);
+      //auto ms = _memorySpaces.at(memspaceId);
+      //ms->addComputeResource(core);
     }
   }
 
@@ -249,18 +256,20 @@ class HostDevice final : public DeviceModel
         }
       }
 
-      json["ComputeResources"][index]["NumaAffinity"] = *cpu->getMemorySpaces().find(0); // just get the 1st element for now
+      json["ComputeResources"][index]["NumaAffinity"] = 0; // *cpu->getMemorySpaces().find(0); // just get the 1st element for now
 
     } // end of Compute Resources section
 
     // Memory Spaces section
     json["NumMemSpaces"] = _memorySpaces.size();
+    
+    size_t curIdx = 0;
     for (auto memspace : _memorySpaces)
     {
       MemorySpace *ms = memspace.second;
 
-      json["MemorySpaces"][ms->getId()]["type"] = ms->getType();
-      json["MemorySpaces"][ms->getId()]["size"] = ms->getSize();
+      json["MemorySpaces"][curIdx]["type"] = ms->getType();
+      json["MemorySpaces"][curIdx]["size"] = ms->getSize();
       std::string compUnits;
       for (auto c : ms->getComputeUnits())
       {
@@ -268,7 +277,9 @@ class HostDevice final : public DeviceModel
         compUnits += std::to_string(core->getAffinity()) + " ";
       }
       compUnits = compUnits.substr(0, compUnits.find_last_not_of(" ") + 1);
-      json["MemorySpaces"][ms->getId()]["compute units"] = compUnits;
+      json["MemorySpaces"][curIdx]["compute units"] = compUnits;
+
+      curIdx++;
     } // end of Memory Spaces section
   }
 

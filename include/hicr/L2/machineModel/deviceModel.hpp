@@ -53,7 +53,7 @@ class DeviceModel
   /**
    *  List of memories/NUMA nodes
    */
-  std::map<L1::MemoryManager::memorySpaceId_t, MemorySpace *> _memorySpaces;
+  std::map<L0::MemorySpace*, MemorySpace *> _memorySpaces;
 
   /**
    *  Friendly device description

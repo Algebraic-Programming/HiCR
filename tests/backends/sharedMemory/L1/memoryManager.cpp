@@ -45,20 +45,17 @@ TEST(MemoryManager, Memory)
   EXPECT_NO_THROW(b.queryMemorySpaces());
 
   // Getting memory resource list (should be size 1)
-  std::set<HiCR::L1::MemoryManager::memorySpaceId_t> mList;
+  std::set<HiCR::L0::MemorySpace*> mList;
   EXPECT_NO_THROW(mList = b.getMemorySpaceList());
   EXPECT_GT(mList.size(), 0);
 
   // Getting memory resource
-  auto &r = *mList.begin();
-
-  // Adjusting memory binding support to the system's
-  EXPECT_NO_THROW(b.setRequestedBindingType(b.getSupportedBindingType(r)));
+  auto r = *mList.begin();
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;
   size_t totalMem = 0;
-  EXPECT_NO_THROW(totalMem = b.getMemorySpaceSize(r));
+  EXPECT_NO_THROW(totalMem = r->getSize());
 
   // Making sure the system has enough memory for the next test
   EXPECT_GE(totalMem, testMemAllocSize);

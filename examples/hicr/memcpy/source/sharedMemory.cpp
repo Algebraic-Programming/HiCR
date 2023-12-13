@@ -23,10 +23,7 @@ int main(int argc, char **argv)
   auto memSpaces = m.getMemorySpaceList();
 
   // Define the order of mem spaces for the telephone game
-  auto memSpaceOrder = std::vector<HiCR::L1::MemoryManager::memorySpaceId_t>(memSpaces.begin(), memSpaces.end());
-
-  // Specific to the shared memory backend: Adjusting memory binding support to the system's
-  m.setRequestedBindingType(m.getSupportedBindingType(*memSpaces.begin()));
+  auto memSpaceOrder = std::vector<HiCR::L0::MemorySpace*>(memSpaces.begin(), memSpaces.end());
 
   // Allocating memory slots in different NUMA domains
   auto input = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE); // First NUMA Domain

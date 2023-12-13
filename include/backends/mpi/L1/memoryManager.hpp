@@ -13,6 +13,7 @@
 #pragma once
 
 #include <backends/mpi/L0/memorySlot.hpp>
+#include <backends/sequential/L0/memorySpace.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/common/definitions.hpp>
@@ -29,11 +30,6 @@ namespace mpi
 
 namespace L1
 {
-
-/**
- * This macro represents an identifier for the default system-wide memory space in this backend
- */
-#define _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID 0
 
 /**
  * Implementation of the HiCR MPI backend
@@ -94,26 +90,12 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   int _rank;
 
   /**
-   * This function returns the available allocatable size in the current system RAM
-   *
-   * @param[in] memorySpace Always zero, represents the system's RAM
-   * @return The allocatable size within the system
-   */
-  __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
-  {
-    if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
-      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
-
-    return sequential::L1::MemoryManager::getTotalSystemMemory();
-  }
-
-  /**
    * Sequential backend implementation that returns a single memory space representing the entire RAM host memory.
    */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
     // Only a single memory space is created
-    return memorySpaceList_t({_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID});
+    return memorySpaceList_t( { new sequential::L0::MemorySpace(sequential::L1::MemoryManager::getTotalSystemMemory()) } ); 
   }
 
   __USED__ inline void lockMPIWindow(const int rank, MPI_Win *window, int MPILockType, int MPIAssert)
@@ -317,10 +299,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The address of the newly allocated memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const HiCR::L0::MemorySpace* memorySpace, const size_t size) override
   {
-    if (memorySpace != _BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID)
-      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID);
+    // Getting up-casted pointer for the MPI instance
+    auto m = dynamic_cast<const sequential::L0::MemorySpace *>(memorySpace);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     // Storage for the new pointer
     void *ptr = NULL;

@@ -36,6 +36,7 @@
   if (f != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f);
 
 #include <backends/lpf/L0/memorySlot.hpp>
+#include <backends/sequential/L0/memorySpace.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 #include <cstring>
 #include <hicr/L1/memoryManager.hpp>
@@ -55,11 +56,6 @@ namespace L1
 {
 
 /**
- * This macro represents an identifier for the default system-wide memory space in this backend
- */
-#define _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID 0
-
-/**
  * Implementation of the HiCR LPF backend
  *
  * The only LPF engine currently of interest is the IB Verbs engine (see above for branch and hash)
@@ -77,20 +73,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    */
 
   public:
-
-  /**
-   * This function returns the available allocatable size in the current system RAM
-   *
-   * @param[in] memorySpace Always zero, represents the system's RAM
-   * @return The allocatable size within the system
-   */
-  size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const
-  {
-    if (memorySpace != _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID)
-      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID);
-
-    return sequential::L1::MemoryManager::getTotalSystemMemory();
-  }
 
   /**
    * A map from a HiCR slot ID to the initial message count. This count is unlikely
@@ -381,10 +363,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     free(pointer);
   }
 
-  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const HiCR::L0::MemorySpace* memorySpace, const size_t size) override
   {
-    if (memorySpace != _BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID)
-      HICR_THROW_RUNTIME("This backend does not support multiple memory spaces. Provided: %lu, Expected: %lu", memorySpace, (memorySpaceId_t)_BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID);
+    // Getting up-casted pointer for the MPI instance
+    auto m = dynamic_cast<const sequential::L0::MemorySpace *>(memorySpace);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     // Attempting to allocate the new memory slot
     auto ptr = malloc(size);
@@ -393,14 +378,14 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return registerLocalMemorySlotImpl(ptr, size);
   }
 
+  /**
+   * Sequential backend implementation that returns a single memory space representing the entire RAM host memory.
+   */
   __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
   {
     // Only a single memory space is created
-    return memorySpaceList_t({_BACKEND_LPF_DEFAULT_MEMORY_SPACE_ID});
+    return memorySpaceList_t( { new sequential::L0::MemorySpace(sequential::L1::MemoryManager::getTotalSystemMemory()) } ); 
   }
-  //    memorySlotId_t allocateMemorySlot(const memorySpaceId_t memorySpaceId, const size_t size)  {
-  //
-  //        memorySlotId_t m = 0; return m;}
 
   /**
    * This function pulls the received message count via LPF

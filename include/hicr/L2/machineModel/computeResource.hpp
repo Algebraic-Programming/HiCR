@@ -12,6 +12,7 @@
  */
 #pragma once
 
+#include <hicr/L0/memorySpace.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <hicr/L1/memoryManager.hpp>
@@ -65,7 +66,7 @@ class ComputeResource
   /**
    *  Optional; distances from other NUMA nodes in case of multiple NUMA nodes present
    */
-  std::map<L1::MemoryManager::memorySpaceId_t, size_t> _numaDistances;
+  std::map<L0::MemorySpace*, size_t> _numaDistances;
 
   public:
 
@@ -153,9 +154,9 @@ class ComputeResource
    *
    * \param[in] id The ID of the Memory Space to be added
    */
-  inline void addMemorySpace(L1::MemoryManager::memorySpaceId_t id)
+  inline void addMemorySpace(L0::MemorySpace* const memorySpace)
   {
-    _memorySpaces.insert(id);
+    _memorySpaces.insert(memorySpace);
   }
 
 }; // class ComputeResource

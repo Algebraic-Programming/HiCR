@@ -52,6 +52,9 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     // Checking whether the execution unit passed is compatible with this backend
     if (_MPIMemoryManager == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");
 
+    // Getting memory space for allocation of incoming return values
+    _allocationMemorySpace = *memoryManager->getMemorySpaceList().begin();
+
     // In MPI, the initial set of processes represents all the currently available instances of HiCR
     for (int i = 0; i < _MPIMemoryManager->getSize(); i++)
     {
@@ -118,7 +121,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPIMemoryManager->getComm(), MPI_STATUS_IGNORE);
 
     // Allocating memory slot to store the return value
-    auto memorySlot = _memoryManager->allocateLocalMemorySlot(_BACKEND_MPI_DEFAULT_MEMORY_SPACE_ID, size);
+    auto memorySlot = _memoryManager->allocateLocalMemorySlot(_allocationMemorySpace, size);
 
     // Getting data directly
     MPI_Recv(memorySlot->getPointer(), size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPIMemoryManager->getComm(), MPI_STATUS_IGNORE);
@@ -177,6 +180,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    * Internal pointer for a casted MPI memory manager
    */
   mpi::L1::MemoryManager *const _MPIMemoryManager;
+
+  /**
+   * Memory slot to use for allocations
+  */
+ HiCR::L0::MemorySpace* _allocationMemorySpace;
 };
 
 } // namespace L1
