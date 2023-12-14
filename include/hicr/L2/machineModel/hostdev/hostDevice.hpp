@@ -11,11 +11,13 @@
  */
 #pragma once
 
+#include <vector>
+#include <backends/sharedMemory/cache.hpp>
+#include <backends/sharedMemory/coreInfo.hpp>
 #include <backends/sharedMemory/L0/memorySpace.hpp>
 #include <backends/sharedMemory/L1/computeManager.hpp>
 #include <backends/sharedMemory/L1/memoryManager.hpp>
 #include <hicr/L2/machineModel/deviceModel.hpp>
-#include <hicr/L2/machineModel/hostdev/CPU.hpp>
 
 namespace HiCR
 {
@@ -33,7 +35,7 @@ class HostDevice final : public DeviceModel
 {
   private:
 
-  std::vector<Cache> _sharedCaches; // revisit
+  std::vector<backend::sharedMemory::Cache> _sharedCaches; // revisit
 
   public:
 
@@ -88,8 +90,8 @@ class HostDevice final : public DeviceModel
 
     for (size_t i = 0; i < computeCount; i++)
     {
-      auto computeUnit = new backend::sharedMemory::L0::ComputeResource(i);
-      CPU *c = new CPU(computeUnit);
+      auto ComputeResource = new backend::sharedMemory::L0::ComputeResource(i);
+      auto c = new backend::sharedMemory::CoreInfo(ComputeResource);
 
       std::string index = "Core " + std::to_string(i);
 
@@ -107,7 +109,7 @@ class HostDevice final : public DeviceModel
       }
       c->setSiblings(cpuSiblings);
 
-      _computeResources.insert(std::make_pair(computeUnit, c));
+      _computeResources.insert(std::make_pair(ComputeResource, c));
 
       // Detect caches and create strings' vector compatible with the setCaches() method:
       std::vector<std::string> cachetypes = {"L1i", "L1d", "L2", "L3"};
@@ -189,11 +191,11 @@ class HostDevice final : public DeviceModel
 
     for (auto com : _computeResources)
     {
-      CPU *c = static_cast<CPU *>(com.second);
+      auto c = new backend::sharedMemory::CoreInfo(ComputeResource);
       auto core = c->getComputeResource();
       c->setCaches(compMan->getCpuCaches(core));
       c->setSiblings(compMan->getCpuSiblings(core));
-      c->setSystemId(compMan->getCpuSystemId(core));
+      c->setPhysicalId(compMan->getCorePhysicalId(core));
       //auto memspaceId = compMan->getCpuNumaAffinity(core);
       //c->addMemorySpace(memspaceId);
       //auto ms = _memorySpaces.at(memspaceId);
@@ -226,16 +228,16 @@ class HostDevice final : public DeviceModel
         std::string cacheType;
         switch (cache.getCacheType())
         {
-        case Cache::L1i:
+        case backend::sharedMemory::Cache::L1i:
           cacheType = "L1i";
           break;
-        case Cache::L1d:
+        case backend::sharedMemory::Cache::L1d:
           cacheType = "L1d";
           break;
-        case Cache::L2:
+        case backend::sharedMemory::Cache::L2:
           cacheType = "L2";
           break;
-        case Cache::L3:
+        case backend::sharedMemory::Cache::L3:
           cacheType = "L3";
           break;
         }

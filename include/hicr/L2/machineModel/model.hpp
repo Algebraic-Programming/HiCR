@@ -71,7 +71,7 @@ class Model : public machineModel::Base
    */
   __USED__ inline std::string serialize() const
   {
-    return _devices[0]->jSerialize().dump();
+    return "[To-Do]"; // _devices[0]->jSerialize().dump();
   }
 
   /**
@@ -81,10 +81,10 @@ class Model : public machineModel::Base
    */
   __USED__ inline void deserialize(const std::string &serialData)
   {
-    nlohmann::json data = nlohmann::json::parse(serialData);
-    auto d = new machineModel::HostDevice(data);
+    //nlohmann::json data = nlohmann::json::parse(serialData);
+    // auto d = new machineModel::HostDevice(data);
     _devices.clear();
-    _devices.push_back(d);
+    // _devices.push_back(d);
   }
 
   /**
@@ -95,7 +95,7 @@ class Model : public machineModel::Base
    */
   __USED__ inline std::string stringify() const
   {
-    return _devices[0]->jSerialize().dump(2);
+    return "[To-Do]"; // _devices[0]->jSerialize().dump(2);
   }
 
   private:

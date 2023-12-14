@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     auto core = (HiCR::backend::sharedMemory::L0::ComputeResource*) computeResource;
 
     // If the core affinity is included in the list, create new processing unit
-    if (coreSubset.contains(core->getAffinity()))
+    if (coreSubset.contains(core->getProcessorId()))
     {
       // Creating a processing unit out of the computational resource
       auto processingUnit = computeManager.createProcessingUnit(core);

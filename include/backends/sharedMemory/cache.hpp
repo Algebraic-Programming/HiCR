@@ -11,15 +11,16 @@
  */
 #pragma once
 
-#include <hicr/L0/processingUnit.hpp>
+#include <vector>
+#include <hicr/L0/computeResource.hpp>
 
 namespace HiCR
 {
 
-namespace L2
+namespace backend
 {
 
-namespace machineModel
+namespace sharedMemory
 {
 
 /**
@@ -32,28 +33,7 @@ class Cache
   /**
    * Set of cache types commonly encountered
    */
-  typedef enum
-  {
-    /**
-     *  L1 instruction Cache
-     */
-    L1i,
-
-    /**
-     *  L1 data Cache
-     */
-    L1d,
-
-    /**
-     *  L2 Cache
-     */
-    L2,
-
-    /**
-     *  L3 Cache
-     */
-    L3
-  } cacheType;
+  typedef std::string cacheType_t;
 
   protected:
 
@@ -70,7 +50,7 @@ class Cache
   /**
    * Type of the Cache object
    */
-  cacheType _level;
+  cacheType_t _level;
 
   /**
    * Storage of Compute Units associated with the Cache;
@@ -81,6 +61,11 @@ class Cache
   std::vector<HiCR::L0::ComputeResource*> _associatedComputeUnits;
 
   public:
+
+  Cache(const cacheType_t level, const size_t size) : 
+    _cacheSize(size),
+     _level(level)
+     {}
 
   /**
    * Obtain the size of the cache object
@@ -127,9 +112,9 @@ class Cache
   /**
    * Obtain the type of the cache object
    *
-   * \return The cache type in as a cacheType enum value
+   * \return The cache type in as a cacheType_t enum value
    */
-  inline cacheType getCacheType() const
+  inline cacheType_t getCacheType() const
   {
     return _level;
   }
@@ -138,9 +123,9 @@ class Cache
    * Set the cache type with information obtained from the backend.
    * This should be used only during initialization / resource detection.
    *
-   * \param[in] t The type of the cache as a cacheType enum value
+   * \param[in] t The type of the cache as a cacheType_t enum value
    */
-  inline void setCacheType(cacheType t)
+  inline void setCacheType(cacheType_t t)
   {
     _level = t;
   }
@@ -190,8 +175,8 @@ class Cache
 
 }; // class Cache
 
-} // namespace machineModel
+} // namespace sharedMemory
 
-} // namespace L2
+} // namespace backend
 
 } // namespace HiCR

@@ -127,7 +127,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     auto thread = (sharedMemory::L0::ProcessingUnit *)p;
 
     // Getting associated compute unit reference
-    auto computeUnit = (sharedMemory::L0::ComputeResource*)thread->getComputeResource();
+    auto computeResource = (sharedMemory::L0::ComputeResource*)thread->getComputeResource();
 
     // Storing current thread pointer
     _currentThread = thread;
@@ -136,7 +136,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
 
     // Setting initial thread affinity
-    thread->updateAffinity(std::set<int>({ computeUnit->getAffinity() }));
+    thread->updateAffinity(std::set<int>({ computeResource->getProcessorId() }));
 
     // Yielding execution to allow affinity to refresh
     sched_yield();

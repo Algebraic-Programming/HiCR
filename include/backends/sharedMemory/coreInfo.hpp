@@ -4,45 +4,37 @@
  */
 
 /**
- * @file CPU.hpp
- * @brief Defines the class and API for interacting with CPUs as a Compute Resource
- * @author O. Korakitis
+ * @file coreInfo.hpp
+ * @brief Defines the class and API to hold information about a CPU core (or hyperthread)
+ * @author O. Korakitis & S. Martin
  * @date 15/11/2023
  */
 
 #pragma once
 
-#include <backends/sharedMemory/L0/computeResource.hpp>
-#include <hicr/L2/machineModel/computeResource.hpp>
-#include <hicr/L2/machineModel/hostdev/cache.hpp>
+#include <backends/sharedMemory/cache.hpp>
+#include <hicr/L0/computeResource.hpp>
 #include <vector>
 
 namespace HiCR
 {
 
-namespace L2
+namespace backend
 {
 
-namespace machineModel
+namespace sharedMemory
 {
+
 
 /**
- * A ComputeResource class representing a CPU, as found in common
+ * A CoreInfo class representing a CPU 'core', as found in common
  * multiprocessor systems. Instances of the class are expected to be the
  * "leaves" in a multicore hierarchy: the logical thread, if Hyperthreading
  * is enabled, or the core, if no Hyperthreading occurs.
  */
-class CPU : public ComputeResource
+class CoreInfo
 {
   private:
-
-  /**
-   *
-   * The ID of the hardware core; in SMT systems that will mean the core ID,
-   * which may also have other HW threads. In non SMT systems it is expected
-   * for logical and system IDs to be 1-to-1.
-   */
-  unsigned int _systemId;
 
   /**
    * List of sibling threads/cores, if applicable.
@@ -50,10 +42,9 @@ class CPU : public ComputeResource
   std::vector<unsigned int> _siblings;
 
   /**
-   * List of Cache objects associated with the CPU. There is the assumption
-   * that only one cache object of each type can be associated with a CPU.
-   */
-  std::vector<Cache> _caches;
+   * Stores the associated compute resource
+  */
+ HiCR::L0::ComputeResource* _computeResource;
 
   public:
 
@@ -62,7 +53,7 @@ class CPU : public ComputeResource
    *
    * \param[in] id Identifier of the compute resource
    */
-  CPU(HiCR::L0::ComputeResource* computeUnit) : ComputeResource(computeUnit, "Core")
+  CoreInfo(HiCR::L0::ComputeResource* computeResource) : _computeResource (computeResource)
   {
   }
 
@@ -72,7 +63,7 @@ class CPU : public ComputeResource
    * \param[in] t A Cache::cacheType identifier
    * \return A Cache object of the given type
    */
-  Cache getCache(Cache::cacheType t) const
+  backend::sharedMemory::Cache getCache(backend::sharedMemory::Cache::cacheType t) const
   {
     for (auto c : _caches)
     {
@@ -81,7 +72,7 @@ class CPU : public ComputeResource
     }
 
     HICR_THROW_RUNTIME("Cache object of the requested level not found");
-    Cache ret;
+    backend::sharedMemory::Cache ret;
     return ret;
   }
 
@@ -91,7 +82,7 @@ class CPU : public ComputeResource
    *
    * \return A vector of Cache objects
    */
-  std::vector<Cache> getAllCaches() const
+  std::vector<backend::sharedMemory::Cache> getAllCaches() const
   {
     return _caches;
   }
@@ -102,7 +93,7 @@ class CPU : public ComputeResource
    * \param[in] t A Cache::cacheType identifier
    * \return True, if the cache is shared; False if private.
    */
-  inline bool isCacheShared(Cache::cacheType t) const
+  inline bool isCacheShared(backend::sharedMemory::Cache::cacheType t) const
   {
     bool ret = false;
     for (auto c : _caches)
@@ -145,14 +136,14 @@ class CPU : public ComputeResource
       if (type.starts_with("L1"))
       {
         if (type.find("Instruction") != type.npos)
-          _caches[count].setCacheType(Cache::L1i);
+          _caches[count].setCacheType(backend::sharedMemory::Cache::L1i);
         else                                       // if (type.find("Data") != type.npos)
-          _caches[count].setCacheType(Cache::L1d); // If not specified, assume Data
+          _caches[count].setCacheType(backend::sharedMemory::Cache::L1d); // If not specified, assume Data
       }
       else if (type.starts_with("L2"))
-        _caches[count].setCacheType(Cache::L2);
+        _caches[count].setCacheType(backend::sharedMemory::Cache::L2);
       else if (type.starts_with("L3"))
-        _caches[count].setCacheType(Cache::L3);
+        _caches[count].setCacheType(backend::sharedMemory::Cache::L3);
 
       // Parse sharing status and associated CPUs
       if (type.find("Private") != type.npos)
@@ -174,8 +165,8 @@ class CPU : public ComputeResource
         while (!puIDs.empty())
         {
           size_t end = puIDs.find_first_of(" ", 0);
-          int tmpId = std::stoi(puIDs.substr(0, end));
-          _caches[count].addAssociatedComputeUnit(new backend::sharedMemory::L0::ComputeResource(tmpId));
+          //int tmpId = std::stoi(puIDs.substr(0, end));
+          //_caches[count].addAssociatedComputeUnit(new backend::sharedMemory::L0::ComputeResource(tmpId));
           if (puIDs.find_first_not_of(" ", end) != puIDs.npos)
             puIDs = puIDs.substr(puIDs.find_first_not_of(" ", end), puIDs.size());
           else
@@ -188,28 +179,6 @@ class CPU : public ComputeResource
 
       ++count;
     }
-  }
-
-  /**
-   * Obtains the Core ID of the CPU; in non SMT systems that will be the actual id;
-   * in SMT it is the id of the actual core the thread belongs to.
-   *
-   * \return The System ID of the hardware Core
-   */
-  inline unsigned int getSystemId() const
-  {
-    return _systemId;
-  }
-
-  /**
-   * Set the System ID
-   * This should be used only during initialization / resource detection.
-   *
-   * \param[in] id The id of the actual core the thread belongs to
-   */
-  inline void setSystemId(unsigned int id)
-  {
-    _systemId = id;
   }
 
   /**
@@ -240,8 +209,8 @@ class CPU : public ComputeResource
   }
 }; // class CPU
 
-} // namespace machineModel
+} // namespace sharedMemory
 
-} // namespace L2
+} // namespace backend
 
 } // namespace HiCR

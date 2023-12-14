@@ -60,13 +60,13 @@ TEST(ProcessingUnit, ThreadAffinity)
   auto computeResources = m.getComputeResourceList();
 
   // Casting compute resource correctly
-  auto computeUnit = (backend::L0::ComputeResource*) *computeResources.begin();
+  auto computeResource = (backend::L0::ComputeResource*) *computeResources.begin();
 
   // Creating processing unit from resource
-  auto processingUnit = m.createProcessingUnit(computeUnit);
+  auto processingUnit = m.createProcessingUnit(computeResource);
 
   // Getting compute unit affinity
-  auto threadAffinity = computeUnit->getAffinity();
+  auto threadAffinity = computeResource->getProcessorId();
 
   // Putting affinity into a set
   std::set<int> threadAffinitySet({threadAffinity});

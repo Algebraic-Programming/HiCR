@@ -12,7 +12,7 @@
 #pragma once
 
 #include <hicr/L2/machineModel/deviceModel.hpp>
-#include <hicr/L2/machineModel/hostdev/hostDevice.hpp>
+// #include <hicr/L2/machineModel/hostdev/hostDevice.hpp>
 
 namespace HiCR
 {
@@ -62,12 +62,12 @@ class Base
    */
   __USED__ inline void queryDevices()
   {
-    std::vector<std::string> types = {"host"}; // temporary
-    for (auto t : types)
-    {
-      machineModel::DeviceModel *devm = NULL;
-      if (t == "host")
-        devm = new machineModel::HostDevice();
+    // std::vector<std::string> types = {"host"}; // temporary
+    // for (auto t : types)
+    // {
+      // machineModel::DeviceModel *devm = NULL;
+      // if (t == "host")
+        // devm = new machineModel::HostDevice();
       //            else if (t == "ascend")
       //            {
       //                devm = new machineModel::DeviceModel();
@@ -75,9 +75,9 @@ class Base
       //            else //temporary, FIXME
       //                devm = new machineModel::DeviceModel();
 
-      devm->initialize();
-      _devices.push_back(devm);
-    }
+      // // devm->initialize();
+      // _devices.push_back(devm);
+    // }
   }
 
 }; // class Base
