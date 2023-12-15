@@ -14,6 +14,7 @@
 #include <acl/acl.h>
 #include <backends/ascend/common.hpp>
 #include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/memorySpace.hpp>
 
 namespace HiCR
 {
@@ -51,8 +52,9 @@ class MemorySlot final : public HiCR::L0::MemorySlot
     void *const pointer,
     size_t size,
     const aclDataBuffer *dataBuffer,
+    HiCR::L0::MemorySpace* memorySpace,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
+    const globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, memorySpace, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
 
   /**
    * Default destructor

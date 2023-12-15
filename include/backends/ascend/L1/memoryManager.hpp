@@ -6,13 +6,14 @@
 /**
  * @file memoryManager.hpp
  * @brief This file implements the memory manager class for the Ascend backend
- * @author S. M. Martin and L. Terracciano
+ * @author L. Terracciano & S. M. Martin
  * @date 11/9/2023
  */
 
 #pragma once
 
 #include <acl/acl.h>
+#include <backends/ascend/L0/memorySpace.hpp>
 #include <backends/ascend/L0/memorySlot.hpp>
 #include <backends/ascend/common.hpp>
 #include <backends/ascend/core.hpp>
@@ -49,6 +50,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   {
     aclError err;
     aclrtStream stream;
+    
     // create the stream to be used in the memcpy operations
     for (const auto &[deviceId, deviceStatus] : _deviceStatusMap)
     {
@@ -105,13 +107,19 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \return the id associated with the host memory
    */
-  __USED__ inline const memorySpaceId_t getHostId(const std::set<memorySpaceId_t> memorySpaces)
+  __USED__ inline ascend::L0::MemorySpace* getHostId(const std::set<HiCR::L0::MemorySpace*> memorySpaces) const
   {
-    for (const auto m : memorySpaces)
+    for (const auto memorySpace : memorySpaces)
     {
-      if (_deviceStatusMap.at(m).deviceType == deviceType_t::Host) return m;
-    }
+      // Getting up-casted pointer for the MPI instance
+      auto m = dynamic_cast<ascend::L0::MemorySpace *>(memorySpace);
 
+      // Checking whether the execution unit passed is compatible with this backend
+      if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
+
+      if (m->getDeviceType() == deviceType_t::Host) return m;
+    }
+    
     HICR_THROW_RUNTIME("No ID associated with the host system");
   }
 
@@ -120,9 +128,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Keep track of the context for each memorySpaceId/deviceId
    */
-  const std::unordered_map<memorySpaceId_t, ascendState_t> &_deviceStatusMap;
+  const std::unordered_map<deviceIdentifier_t, ascendState_t> &_deviceStatusMap;
 
-  std::unordered_map<memorySpaceId_t, aclrtStream> _deviceStreamMap;
+  std::unordered_map<deviceIdentifier_t, aclrtStream> _deviceStreamMap;
   /**
    * Stream on which memcpy operations are executed. The default value is NULL (use the default ACL stream)
    */
@@ -135,9 +143,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \return the allocatable size within the system
    */
-  __USED__ inline size_t getMemorySpaceSizeImpl(const memorySpaceId_t memorySpace) const override
+  __USED__ inline size_t getDeviceMemorySpaceSizeImpl(const deviceIdentifier_t deviceId) const
   {
-    const auto deviceState = _deviceStatusMap.at(memorySpace);
+    // Getting Ascend device state (metadata)
+    const auto deviceState = _deviceStatusMap.at(deviceId);
 
     return deviceState.size;
   }
@@ -154,7 +163,20 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     memorySpaceList_t memorySpaceList;
 
     // Add as many memory spaces as devices
-    for (const auto [deviceId, _] : _deviceStatusMap) memorySpaceList.insert(deviceId);
+    for (const auto [deviceId, deviceState] : _deviceStatusMap)
+    {
+       // Getting device's type
+      auto deviceType = deviceState.deviceType;
+
+      // Getting device's available allocatable size (HBM) in the current system RAM
+      auto deviceRAMSize = deviceState.size;
+
+      // Creating new Memory Space object
+      auto deviceMemorySpace = new ascend::L0::MemorySpace(deviceRAMSize, deviceType, deviceId);
+
+      // Adding it to the list
+      memorySpaceList.insert(deviceMemorySpace);
+    } 
 
     return memorySpaceList;
   }
@@ -166,13 +188,22 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size size of the memory slot to create
    * \return the internal pointer associated to the local memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const memorySpaceId_t memorySpaceId, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
   {
+    // Getting up-casted pointer for the MPI instance
+    auto m = dynamic_cast<const ascend::L0::MemorySpace *>(memorySpace);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
+
     void *ptr = NULL;
     aclDataBuffer *dataBuffer;
 
+    // Getting device Id
+    auto deviceId = m->getDeviceId();
+
     // discriminate whether the memory space id reprensets the host or the ascend devices
-    if (_deviceStatusMap.at(memorySpaceId).deviceType == deviceType_t::Host)
+    if (_deviceStatusMap.at(deviceId).deviceType == deviceType_t::Host)
     {
       // do a malloc on the host and do not create the databuffer
       ptr = hostAlloc(size);
@@ -181,13 +212,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     else
     {
       // do a malloc on the ascend and create the databuffer
-      ptr = deviceAlloc(memorySpaceId, size);
+      ptr = deviceAlloc(m, size);
       dataBuffer = aclCreateDataBuffer(ptr, size);
-      if (dataBuffer == NULL) HICR_THROW_RUNTIME("Can not create data buffer in memory space %d", memorySpaceId);
+      if (dataBuffer == NULL) HICR_THROW_RUNTIME("Can not create data buffer in device %d", deviceId);
     }
 
     // create the new memory slot
-    return new L0::MemorySlot(memorySpaceId, ptr, size, dataBuffer);
+    return new L0::MemorySlot(deviceId, ptr, size, dataBuffer, memorySpace);
   }
 
   /**
@@ -212,10 +243,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param memorySpace device id where memory is allocated
    * \param size allocation size
    */
-  __USED__ inline void *deviceAlloc(const memorySpaceId_t memorySpace, const size_t size)
+  __USED__ inline void *deviceAlloc(const ascend::L0::MemorySpace* memorySpace, const size_t size)
   {
     // select the device context on which we should allocate the memory
-    selectDevice(_deviceStatusMap.at(memorySpace).context, memorySpace);
+    selectDevice(_deviceStatusMap.at(memorySpace->getDeviceId()).context, memorySpace->getDeviceId());
 
     void *ptr;
 
@@ -232,7 +263,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param size size of the memory slot to create
    * \return a newly created memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
