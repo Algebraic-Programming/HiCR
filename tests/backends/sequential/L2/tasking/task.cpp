@@ -156,9 +156,6 @@ TEST(Task, Events)
   // Getting compute resources
   auto computeResources = m.getComputeResourceList();
 
-  // Querying compute resources
-  m.queryComputeResources();
-
   // Creating processing unit from the compute resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 

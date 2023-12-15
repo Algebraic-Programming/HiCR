@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   taskr::Runtime taskr;
 
   // Create processing units from the detected compute resource list and giving them to taskr
-  for (auto &resource : computeResources)
+  for (auto resource : computeResources)
   {
     // Creating a processing unit out of the computational resource
     auto processingUnit = computeManager.createProcessingUnit(resource);

@@ -21,7 +21,25 @@ TEST(ProcessingUnit, Construction)
 {
   backend::L0::ProcessingUnit *p = NULL;
 
-  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(0));
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  // Instantiating default compute manager
+  backend::L1::ComputeManager m(&topology);
+
+  // Querying compute resources
+  m.queryComputeResources();
+
+  // Getting compute resources
+  auto computeResources = m.getComputeResourceList();
+
+  // Getting first compute resource
+  auto computeResource = *computeResources.begin(); 
+
+  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(computeResource));
   EXPECT_FALSE(p == nullptr);
   delete p;
 }

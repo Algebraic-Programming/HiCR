@@ -63,7 +63,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
   {
     // Only a single processing unit is created
-    return computeResourceList_t({0});
+    auto hostCPU = new sequential::L0::ComputeResource();
+
+    // Returning list
+    return computeResourceList_t({hostCPU});
   }
 
   __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource* resource) const override

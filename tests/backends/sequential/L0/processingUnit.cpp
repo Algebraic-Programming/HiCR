@@ -21,20 +21,41 @@ TEST(ProcessingUnit, Construction)
 {
   backend::L0::ProcessingUnit *p = NULL;
 
-  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(0));
+  // Initializing sequential backend
+  HiCR::backend::sequential::L1::ComputeManager computeManager;
+
+  // Querying compute resources
+  computeManager.queryComputeResources();
+
+  // Getting compute resources
+  auto computeResources = computeManager.getComputeResourceList();
+
+  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(*computeResources.begin()));
   EXPECT_FALSE(p == nullptr);
   delete p;
 }
 
 TEST(ProcessingUnit, LifeCycle)
 {
-  HiCR::L0::ComputeResource* pId = 0;
-  backend::L0::ProcessingUnit p(pId);
+    // Initializing sequential backend
+  HiCR::backend::sequential::L1::ComputeManager computeManager;
+
+  // Querying compute resources
+  computeManager.queryComputeResources();
+
+  // Getting compute resources
+  auto computeResources = computeManager.getComputeResourceList();
+ 
+  // Getting first compute resource
+  auto computeResource = *computeResources.begin(); 
+
+  // Creating processin gunit
+  backend::L0::ProcessingUnit p(computeResource);
 
   // Checking that the correct resourceId was used
-  HiCR::L0::ComputeResource* pIdAlt = pId + 1;
+  HiCR::L0::ComputeResource* pIdAlt = NULL;
   EXPECT_NO_THROW(pIdAlt = p.getComputeResource());
-  EXPECT_EQ(pIdAlt, pId);
+  EXPECT_EQ(pIdAlt, computeResource);
 
   // Counter for execution times
   int executionTimes = 0;
