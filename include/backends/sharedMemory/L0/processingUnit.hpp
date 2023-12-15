@@ -91,7 +91,14 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param core Represents the core affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* core) : HiCR::L0::ProcessingUnit(core){};
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* computeResource) : HiCR::L0::ProcessingUnit(computeResource)
+  {
+    // Getting up-casted pointer for the MPI instance
+    auto c = dynamic_cast<L0::ComputeResource *>(computeResource);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+  };
 
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {

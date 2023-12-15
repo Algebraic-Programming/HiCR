@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <backends/ascend/L0/computeResource.hpp> 
 #include <backends/ascend/L0/executionState.hpp>
 #include <backends/ascend/L0/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
@@ -42,7 +43,17 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param device device ID
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::computeResourceId_t device) : HiCR::L0::ProcessingUnit(device), _deviceId(device){};
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* computeResource) : HiCR::L0::ProcessingUnit(computeResource)
+   {
+      // Getting up-casted pointer for the instance
+      auto c = dynamic_cast<L0::ComputeResource *>(computeResource);
+
+      // Checking whether the execution unit passed is compatible with this backend
+      if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+
+      // Checking the processing unit does not reference the host device
+      if (c->getDeviceType() == deviceType_t::Host) HICR_THROW_RUNTIME("Ascend backend can not create a processing unit on the host.");
+   };
 
   /**
    * Creates an execution state using the device context information and the exection unit to run on the ascend
@@ -53,7 +64,10 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
-    return std::make_unique<L0::ExecutionState>(executionUnit, _context, _deviceId);
+    // Getting device id associated to the underlying compute resource (ascend)
+    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDeviceId();
+
+    return std::make_unique<L0::ExecutionState>(executionUnit, _context, deviceId);
   }
 
   protected:
@@ -63,8 +77,9 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __USED__ inline void initializeImpl() override
   {
-    aclError err = aclrtCreateContext(&_context, _deviceId);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create ACL context on device %d. Error %d", _deviceId, err);
+    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDeviceId();
+    aclError err = aclrtCreateContext(&_context, deviceId);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create ACL context on device %d. Error %d", deviceId, err);
   }
 
   /**
@@ -112,20 +127,18 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __USED__ inline void awaitImpl() override
   {
+    // Getting device id associated to the underlying compute resource (ascend)
+    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDeviceId();
+
     // force the execution state to finalize
     _executionState.get()->finalizeStream();
 
     // destroy the ACL context
     aclError err = aclrtDestroyContext(_context);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy ACL context on device %d. Error %d", _deviceId, err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy ACL context on device %d. Error %d", deviceId, err);
   }
 
   private:
-
-  /**
-   * Device Identifier
-   */
-  const deviceIdentifier_t _deviceId;
 
   /**
    * ACL context of the device

@@ -38,39 +38,83 @@ void doPrintMatrix(const aclFloat16 *matrix, uint32_t numRows, uint32_t numCols)
 int main(int argc, char **argv)
 {
   // Initialize ACL runtime
-  ascend::Core i;
-  i.init();
+  ascend::Core ascendCore;
+  ascendCore.init();
+
+  //////////////////////// This part of the code will be greatly simplified once we add the device class 
 
   // Instantiating Memory Manager
-  ascend::L1::MemoryManager memoryManager(i);
+  ascend::L1::MemoryManager memoryManager(ascendCore);
 
-  // get memory spaces
+  // Asking the memory manager to check the available resources
   memoryManager.queryMemorySpaces();
-  auto memorySpaces = memoryManager.getMemorySpaceList();
 
-  // get the memory space id associated with the host
-  auto memoryHostId = memoryManager.getHostId(memorySpaces);
+  // Obtaining memory spaces
+  auto memSpaces = memoryManager.getMemorySpaceList();
+
+  // Pointers of the intervening memory spaces 
+  ascend::L0::MemorySpace* deviceMemSpace;
+  ascend::L0::MemorySpace* hostMemSpace;
+
+  // Get all memory spaces associated with Ascend devices and the one associated with the host
+  std::vector<ascend::L0::MemorySpace*> deviceMemSpaces; 
+  for (const auto memSpace : memSpaces)
+  {
+    // Getting ascend type memory space pointer
+    auto ascendMemSpace = (ascend::L0::MemorySpace*) memSpace;
+
+    // Adding memory spaces that are not of host type
+    if (ascendMemSpace->getDeviceType() != ascend::deviceType_t::Host) deviceMemSpaces.push_back(ascendMemSpace);
+  
+    // Adding memory spaces is of host type, set it
+    if (ascendMemSpace->getDeviceType() == ascend::deviceType_t::Host) hostMemSpace = ascendMemSpace;
+  }
   // make memory spaces contain only device ids
-  memorySpaces.erase(memoryHostId);
-  auto memoryDeviceId = *memorySpaces.begin();
+  deviceMemSpace = *deviceMemSpaces.begin();
+
+  
+  // Instantiating Memory Manager
+  ascend::L1::ComputeManager computeManager(ascendCore);
+
+  // Asking the memory manager to check the available resources
+  computeManager.queryComputeResources();
+
+  // Obtaining memory spaces
+  auto computeResources = computeManager.getComputeResourceList();
+
+  // Pointers of the intervening memory spaces 
+  ascend::L0::ComputeResource* deviceComputeResource;
+
+  // Get all memory spaces associated with Ascend devices and the one associated with the host
+  std::vector<ascend::L0::ComputeResource*> deviceComputeResources; 
+  for (const auto computeResource : computeResources)
+  {
+    // Getting ascend type memory space pointer
+    auto ascendComputeResource = (ascend::L0::ComputeResource*) computeResource;
+
+    // Adding memory spaces that are not of host type
+    if (ascendComputeResource->getDeviceType() != ascend::deviceType_t::Host) deviceComputeResources.push_back(ascendComputeResource);
+  }
+  
+  // make memory spaces contain only device ids
+  deviceComputeResource = *deviceComputeResources.begin();
+
+  //////////////////////// This part of the code will be greatly simplified once we add the device class 
 
   // Allocate input and output buffers on both host and the device
   size_t size = BUFF_SIZE * sizeof(aclFloat16);
-  auto input1Host = memoryManager.allocateLocalMemorySlot(memoryHostId, size);
-  auto input1Device = memoryManager.allocateLocalMemorySlot(memoryDeviceId, size);
+  auto input1Host = memoryManager.allocateLocalMemorySlot(hostMemSpace, size);
+  auto input1Device = memoryManager.allocateLocalMemorySlot(deviceMemSpace, size);
 
-  auto input2Host = memoryManager.allocateLocalMemorySlot(memoryHostId, size);
-  auto input2Device = memoryManager.allocateLocalMemorySlot(memoryDeviceId, size);
+  auto input2Host = memoryManager.allocateLocalMemorySlot(hostMemSpace, size);
+  auto input2Device = memoryManager.allocateLocalMemorySlot(deviceMemSpace, size);
 
-  auto outputHost = memoryManager.allocateLocalMemorySlot(memoryHostId, size);
-  auto outputDevice = memoryManager.allocateLocalMemorySlot(memoryDeviceId, size);
+  auto outputHost = memoryManager.allocateLocalMemorySlot(hostMemSpace, size);
+  auto outputDevice = memoryManager.allocateLocalMemorySlot(deviceMemSpace, size);
 
   // Populate the input buffers with data
   populateMemorySlot(input1Host, 12.0);
   populateMemorySlot(input2Host, 2.0);
-
-  // Instantiating Compute Manager
-  ascend::L1::ComputeManager computeManager(i);
 
   // Copy the inputs from the host buffers to the device buffers using a MemoryKernel abstraction
   ascend::MemoryKernel copyInput1MemoryKernel = ascend::MemoryKernel(&memoryManager, input1Device, 0, input1Host, 0, size);
@@ -133,19 +177,8 @@ int main(int argc, char **argv)
   // Create execution unit
   auto executionUnit = computeManager.createExecutionUnit(operations);
 
-  // Query compute resources and get them
-  computeManager.queryComputeResources();
-  auto computeResources = computeManager.getComputeResourceList();
-
-  // get the compute resource id associated with the host
-  auto computeHostId = computeManager.getHostId(computeResources);
-  // make compute resources contain only device ids
-  computeResources.erase(computeHostId);
-  if (!computeResources.contains(memoryDeviceId)) HICR_THROW_RUNTIME("Mapping mismatch in memory spaces and compute resources.");
-  auto computeDeviceId = memoryDeviceId;
-
   // Create a processing unit and initialize it with the desired device correct context
-  auto processingUnit = computeManager.createProcessingUnit(computeDeviceId);
+  auto processingUnit = computeManager.createProcessingUnit(deviceComputeResource);
   processingUnit->initialize();
 
   // Create an execution state and initialize it
@@ -176,6 +209,6 @@ int main(int argc, char **argv)
   memoryManager.freeLocalMemorySlot(outputHost);
   memoryManager.freeLocalMemorySlot(outputDevice);
 
-  i.finalize();
+  ascendCore.finalize();
   return 0;
 }
