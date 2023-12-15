@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <hicr/L2/machineModel/base.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 
@@ -31,7 +30,7 @@ namespace machineModel
  *
  * This class provides an overview of the entire system (compute and memory elements) and their connectivity
  */
-class Model : public machineModel::Base
+class Model 
 {
   public:
 
@@ -40,7 +39,7 @@ class Model : public machineModel::Base
    *
    * The internal data can be updated upon explicit initialization
    */
-  Model() : machineModel::Base()
+  Model() 
   {
   }
 
@@ -49,7 +48,7 @@ class Model : public machineModel::Base
    *
    * @param[in] serialData The serial representation of the model's internal state to deserialize (parse)
    */
-  Model(const std::string &serialData) : machineModel::Base()
+  Model(const std::string &serialData) 
   {
     deserialize(serialData);
   }
@@ -61,7 +60,6 @@ class Model : public machineModel::Base
    */
   __USED__ inline void update()
   {
-    queryDevices();
   }
 
   /**
@@ -83,7 +81,6 @@ class Model : public machineModel::Base
   {
     //nlohmann::json data = nlohmann::json::parse(serialData);
     // auto d = new machineModel::HostDevice(data);
-    _devices.clear();
     // _devices.push_back(d);
   }
 

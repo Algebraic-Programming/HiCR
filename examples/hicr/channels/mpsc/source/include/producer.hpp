@@ -33,7 +33,7 @@ void producerFc(HiCR::L1::MemoryManager *memoryManager, const size_t channelCapa
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer = 0;
   auto sendBufferPtr = &sendBuffer;
-  auto sendSlot = memoryManager->registerLocalMemorySlot(sendBufferPtr, sizeof(ELEMENT_TYPE));
+  auto sendSlot = memoryManager->registerLocalMemorySlot(*memSpaces.begin(), sendBufferPtr, sizeof(ELEMENT_TYPE));
 
   // Pushing values to the channel, one by one, suspending when/if the channel is full
   for (size_t i = 0; i < MESSAGES_PER_PRODUCER; i++)

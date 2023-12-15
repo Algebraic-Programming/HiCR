@@ -4,9 +4,9 @@
  */
 
 /**
- * @file executionUnit.hpp
- * @brief This file implements the compute resource class for the sequential backend
- * @author S. M. Martin & O. Korakitis
+ * @file computeResource.hpp
+ * @brief This file implements the compute resource class for the shared memory backend
+ * @author O. Korakitis & S. M. Martin
  * @date 12/12/2023
  */
 
@@ -31,7 +31,7 @@ namespace L0
 {
 
 /**
- * This class represents a compute resource, visible by the sequential backend. That is, a CPU processing unit (core or hyperthread) with information about locality.
+ * This class represents a compute resource, visible by the sequential backend. That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
  */
 class ComputeResource final : public HiCR::L0::ComputeResource
 {
@@ -60,9 +60,10 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) :
    HiCR::L0::ComputeResource(),
     _logicalProcessorId(logicalProcessorId),
-    _physicalProcessorId(getPhysicalProcessorId(topology, logicalProcessorId)),
-    _numaAffinity(getCoreNUMAffinity(topology, logicalProcessorId)),
-    _caches(getCpuCaches(topology, logicalProcessorId))
+    _physicalProcessorId(detectPhysicalProcessorId(topology, logicalProcessorId)),
+    _numaAffinity(detectCoreNUMAffinity(topology, logicalProcessorId)),
+    _caches(detectCpuCaches(topology, logicalProcessorId)),
+    _siblings(detectCPUSiblings(topology, logicalProcessorId))
      {};
   ComputeResource() = delete;
 
@@ -86,7 +87,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    *
    * \return The physical ID of the hardware Core
    */
-  __USED__ inline unsigned int getPhysicalProcessorId() const { return _physicalProcessorId; }
+  __USED__ inline unsigned int detectPhysicalProcessorId() const { return _physicalProcessorId; }
 
   /**
    * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
@@ -96,10 +97,10 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * \param[in] depth Stores the current exploration depth level, necessary to return only the processing units at the leaf level
    * \param[out] threadPUs Storage for the found procesing units
    */
-  __USED__ inline static void getThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
+  __USED__ inline static void detectThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
   {
     if (obj->arity == 0) threadPUs.push_back(obj->logical_index);
-    for (unsigned int i = 0; i < obj->arity; i++) getThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
+    for (unsigned int i = 0; i < obj->arity; i++) detectThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
   }
 
    /**
@@ -108,7 +109,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * \param[in] logicalProcessorId The logical ID of the processor we are doing the search for
    * \returns The ID of the associated physical identifier related to the passed logical processor id
    */
-  __USED__ inline static physicalProcessorId_t getPhysicalProcessorId(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __USED__ inline static physicalProcessorId_t detectPhysicalProcessorId(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
     if (!obj)  HICR_THROW_RUNTIME( "Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
@@ -128,7 +129,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * \param[in] cpuId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
-  __USED__ static numaAffinity_t getCoreNUMAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __USED__ static numaAffinity_t detectCoreNUMAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
@@ -181,7 +182,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    *          P/S:   may be "Private" or "Shared"
    *          associated IDs: (optional, for Shared cache) a list of core IDs, e.g. "0 1 2 3"
    */
-  __USED__ static inline std::vector<backend::sharedMemory::Cache> getCpuCaches(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __USED__ static inline std::vector<backend::sharedMemory::Cache> detectCpuCaches(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
@@ -251,7 +252,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
           {
             hwloc_obj_t child = cache->children[i];
             std::vector<int> puIds;
-            getThreadPUs(topology, child, 0, puIds);
+            detectThreadPUs(topology, child, 0, puIds);
             for (int id : puIds)
               type += " " + std::to_string(id);
           }
@@ -272,6 +273,40 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 
     return ret;
   }
+
+  /**
+   * Uses HWloc to discover the sibling logical processors associated with a given logical processor ID
+   *
+   * \param[in] cpuId The ID of the processor we are doing the search for
+   * \returns A vector of processor IDs, siblings of cpuId (expected to have up to 1 in most archs)
+   */
+  __USED__ static inline std::vector<L0::ComputeResource::logicalProcessorId_t> detectCPUSiblings(hwloc_topology_t topology, L0::ComputeResource::logicalProcessorId_t logicalProcessorId)
+  {
+    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
+    hwloc_obj_t obj = pu;
+    if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
+
+    std::vector<L0::ComputeResource::logicalProcessorId_t> ret;
+
+    // Probe if there are *next* siblings
+    while (obj->next_sibling)
+    {
+      ret.push_back(obj->next_sibling->logical_index);
+      obj = obj->next_sibling;
+    }
+
+    // Return to initial PU object
+    obj = pu;
+    // Probe if there are *previous* siblings
+    while (obj->prev_sibling)
+    {
+      ret.push_back(obj->prev_sibling->logical_index);
+      obj = obj->prev_sibling;
+    }
+
+    return ret;
+  }
+
 
   private:
 
@@ -297,6 +332,11 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * that only one cache object of each type can be associated with a CPU.
    */
   const std::vector<backend::sharedMemory::Cache> _caches;
+
+  /**
+   * List of sibling threads/cores, if applicable.
+   */
+  const std::vector<L0::ComputeResource::logicalProcessorId_t> _siblings;
 };
 
 } // namespace L0

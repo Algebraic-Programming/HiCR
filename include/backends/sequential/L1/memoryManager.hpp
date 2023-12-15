@@ -89,7 +89,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly allocated memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const HiCR::L0::MemorySpace* memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_cast<const L0::MemorySpace *>(memorySpace);
@@ -104,7 +104,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
 
     // Creating and returning new memory slot
-    return registerLocalMemorySlotImpl(ptr, size);
+    return registerLocalMemorySlotImpl(memorySpace, ptr, size);
   }
 
   /**
@@ -113,10 +113,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
-    auto memorySlot = new HiCR::L0::MemorySlot(ptr, size);
+    auto memorySlot = new HiCR::L0::MemorySlot(ptr, size, memorySpace);
 
     // Returning new memory slot pointer
     return memorySlot;
@@ -155,7 +155,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
       auto memorySlot = entry.second;
 
       // Creating new memory slot
-      auto globalMemorySlot = new HiCR::L0::MemorySlot(memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
+      auto globalMemorySlot = new HiCR::L0::MemorySlot(memorySlot->getPointer(), memorySlot->getSize(), NULL, tag, globalKey);
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);

@@ -12,6 +12,7 @@
 #pragma once
 
 #include <hicr/common/definitions.hpp>
+#include <hicr/L0/memorySpace.hpp>
 
 namespace HiCR
 {
@@ -43,14 +44,21 @@ class MemorySlot
    *
    * \param[in] pointer The pointer corresponding to an address in a given memory space
    * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
+   * \param[in] memorySpace Pointer to the memory space that this memory slot belongs to. NULL, if the memory slot is global (remote)
    * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
    * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
    */
   MemorySlot(
     void *const pointer,
     const size_t size,
+    MemorySpace* memorySpace = NULL,
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : _pointer(pointer), _size(size), _globalTag(globalTag), _globalKey(globalKey)
+    const globalKey_t globalKey = 0) :
+     _pointer(pointer),
+     _size(size),
+     _memorySpace(memorySpace),
+     _globalTag(globalTag),
+     _globalKey(globalKey)
   {
   }
 
@@ -117,6 +125,12 @@ class MemorySlot
    */
   __USED__ inline __volatile__ size_t *getMessagesSentPointer() noexcept { return &_messagesSent; }
 
+  /**
+   * Getter function for the memory slot's associated memory space
+   * \returns The memory slot's associated memory space
+   */
+  __USED__ inline L0::MemorySpace* getMemorySpace() const noexcept { return _memorySpace; }
+
   private:
 
   /**
@@ -128,6 +142,11 @@ class MemorySlot
    * Size of the memory slot
    */
   const size_t _size;
+
+  /**
+   * Memory space that this memory slot belongs to
+   */
+  L0::MemorySpace* const _memorySpace;
 
   /**
    * Only for global slots - identifies to which global memory slot subset this one belongs to
@@ -148,6 +167,7 @@ class MemorySlot
    * Messages sent from this slot
    */
   __volatile__ size_t _messagesSent = 0;
+  
 };
 
 } // namespace L0

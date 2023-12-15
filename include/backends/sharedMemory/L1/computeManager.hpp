@@ -57,39 +57,6 @@ class ComputeManager final : public HiCR::L1::ComputeManager
     return new sequential::L0::ExecutionUnit(executionUnit);
   }
 
-  /**
-   * Uses HWloc to discover the sibling logical processors associated with a given logical processor ID
-   *
-   * \param[in] cpuId The ID of the processor we are doing the search for
-   * \returns A vector of processor IDs, siblings of cpuId (expected to have up to 1 in most archs)
-   */
-  __USED__ static inline std::vector<L0::ComputeResource::logicalProcessorId_t> getCPUSiblings(hwloc_topology_t topology, L0::ComputeResource::logicalProcessorId_t logicalProcessorId)
-  {
-    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
-    hwloc_obj_t obj = pu;
-    if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
-
-    std::vector<L0::ComputeResource::logicalProcessorId_t> ret;
-
-    // Probe if there are *next* siblings
-    while (obj->next_sibling)
-    {
-      ret.push_back(obj->next_sibling->logical_index);
-      obj = obj->next_sibling;
-    }
-
-    // Return to initial PU object
-    obj = pu;
-    // Probe if there are *previous* siblings
-    while (obj->prev_sibling)
-    {
-      ret.push_back(obj->prev_sibling->logical_index);
-      obj = obj->prev_sibling;
-    }
-
-    return ret;
-  }
-
   private:
 
   /**
@@ -108,7 +75,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 
     // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
     std::vector<int> logicalProcessorIds;
-    L0::ComputeResource::getThreadPUs(*_topology, hwloc_get_root_obj(*_topology), 0, logicalProcessorIds);
+    L0::ComputeResource::detectThreadPUs(*_topology, hwloc_get_root_obj(*_topology), 0, logicalProcessorIds);
 
     for (const auto id : logicalProcessorIds)
     {  

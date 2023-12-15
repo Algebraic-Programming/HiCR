@@ -232,6 +232,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
         newSlot,
         globalSlotPointers[i],
         globalSlotSizes[i],
+        NULL,
         tag,
         globalSlotKeys[i]);
 
@@ -319,14 +320,14 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
   {
     lpf_memslot_t lpfSlot = LPF_INVALID_MEMSLOT;
     auto rc = lpf_register_local(_lpf, ptr, size, &lpfSlot);
     if (rc != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Memory Manager: lpf_register_local failed");
 
     // Creating new memory slot object
-    auto memorySlot = new L0::MemorySlot(_rank, lpfSlot, ptr, size);
+    auto memorySlot = new L0::MemorySlot(_rank, lpfSlot, ptr, size, memorySpace);
     return memorySlot;
   }
 
@@ -363,7 +364,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     free(pointer);
   }
 
-  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const HiCR::L0::MemorySpace* memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_cast<const sequential::L0::MemorySpace *>(memorySpace);
@@ -375,7 +376,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     auto ptr = malloc(size);
 
     // Creating and returning new memory slot
-    return registerLocalMemorySlotImpl(ptr, size);
+    return registerLocalMemorySlotImpl(memorySpace, ptr, size);
   }
 
   /**

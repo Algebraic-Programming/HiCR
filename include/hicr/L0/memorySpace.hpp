@@ -6,11 +6,12 @@
 /**
  * @file memorySpace.hpp
  * @brief Provides a base definition for a HiCR MemorySpace class
- * @author S. M. Martin
+ * @author S. M. Martin & O. Korakitis
  * @date 13/12/2023
  */
 #pragma once
 
+#include <hicr/common/exceptions.hpp>
 #include <string>
 
 namespace HiCR
@@ -25,6 +26,10 @@ namespace L0
  * - Represents a autonomous unit of byte-addressable memory (e.g., host memory, NUMA domain, device global RAM)
  * - The space is assumed to be contiguous and have a fixed sized determined at construction time
  * - This is a copy-able class that only contains metadata
+ * 
+ * A Device object may comprise one or more such Memory Spaces
+ * on which data can be allocated, copied and communicated among
+ * different Memory Spaces, provided there is connectivity
  */
 class MemorySpace
 {
@@ -42,7 +47,29 @@ class MemorySpace
   *
   * \return The memory space's size
   */
-  virtual const size_t getSize() const { return _size; }
+  __USED__ virtual inline const size_t getSize() const { return _size; }
+
+  /**
+   *  If supported, obtain the amount of memory currently in use.
+   * In conjunction with the total size above, the user may deduce
+   * information like, usage%, if a particular allocation will be
+   * possible etc.
+   */
+  __USED__ virtual inline size_t getUsage() const { return _usage; }; 
+
+  __USED__ inline void increaseUsage(const size_t delta)
+   { 
+     if (_usage + delta > _size) HICR_THROW_LOGIC("Increasing memory space usage beyond its capacity (current_usage + increase > capacity | %lu + %lu > %lu)\n", _usage, delta, _size);
+
+    _usage += delta;
+   }
+
+  __USED__ inline void decreaseUsage(const size_t delta)
+   {
+    if (delta > _usage) HICR_THROW_LOGIC("Decreasing memory space usage below zero (probably a bug in HiCR) (current_usage - decrease < 0 | %lu - %lu < 0)\n", _usage, delta);
+
+    _usage -= delta;
+   }
 
   /**
    * Default destructor
@@ -62,6 +89,11 @@ class MemorySpace
    * The memory space size, defined at construction time
    */
   const size_t _size;
+
+  /**
+  * This variable keeps track of the memory space usage (through allocation and frees)
+  */
+  size_t _usage = 0;
 };
 
 } // namespace L0

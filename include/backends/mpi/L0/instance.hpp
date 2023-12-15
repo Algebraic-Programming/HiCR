@@ -70,7 +70,9 @@ class Instance final : public HiCR::L0::Instance
    * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
   Instance(const int rank, mpi::L1::MemoryManager *const memoryManager) : HiCR::L0::Instance((instanceId_t)rank),
-                                                                          _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
+                                                                          _stateLocalMemorySlot(
+                                                                              memoryManager->registerLocalMemorySlot(*memoryManager->getMemorySpaceList().begin(), &_state, sizeof(state_t))
+                                                                            ),
                                                                           _rank(rank)
   {
   }

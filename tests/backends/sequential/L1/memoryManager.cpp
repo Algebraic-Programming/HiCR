@@ -64,7 +64,7 @@ TEST(MemoryManager, Memory)
 
   // Creating memory slot from a previous allocation
   HiCR::L0::MemorySlot *s2 = NULL;
-  EXPECT_NO_THROW(s2 = b.registerLocalMemorySlot(malloc(testMemAllocSize), testMemAllocSize));
+  EXPECT_NO_THROW(s2 = b.registerLocalMemorySlot(r, malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(s2->getSize(), testMemAllocSize);
 
   // Getting local pointer from allocation

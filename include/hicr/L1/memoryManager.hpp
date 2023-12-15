@@ -105,13 +105,10 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in the specified memory space
    */
-  __USED__ inline L0::MemorySlot *allocateLocalMemorySlot(const L0::MemorySpace* memorySpace, const size_t size)
+  __USED__ inline L0::MemorySlot *allocateLocalMemorySlot(L0::MemorySpace* memorySpace, const size_t size)
   {
-    // Checks whether the size requested exceeds the memory space size. This is a thread-safe operation
-    auto maxSize = memorySpace->getSize();
-
-    // Checking size doesn't exceed slot size
-    if (size > maxSize) HICR_THROW_LOGIC("Attempting to allocate more memory (%lu) than available in the memory space (%lu)", size, maxSize);
+    // Increasing memory space usage
+    memorySpace->increaseUsage(size);
 
     // Creating new memory slot structure
     auto newMemSlot = allocateLocalMemorySlotImpl(memorySpace, size);
@@ -127,10 +124,13 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual L0::MemorySlot *registerLocalMemorySlot(void *const ptr, const size_t size)
+  virtual L0::MemorySlot *registerLocalMemorySlot(L0::MemorySpace* memorySpace, void *const ptr, const size_t size)
   {
+    // Increasing memory space usage
+    memorySpace->increaseUsage(size);
+
     // Creating new memory slot structure
-    auto newMemSlot = registerLocalMemorySlotImpl(ptr, size);
+    auto newMemSlot = registerLocalMemorySlotImpl(memorySpace, ptr, size);
 
     // Returning the id of the new memory slot
     return newMemSlot;
@@ -172,6 +172,9 @@ class MemoryManager
    */
   __USED__ inline void deregisterLocalMemorySlot(L0::MemorySlot *const memorySlot)
   {
+    // Decreasing memory space usage
+    memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
+
     // Calling internal implementation
     deregisterLocalMemorySlotImpl(memorySlot);
   }
@@ -204,6 +207,9 @@ class MemoryManager
    */
   __USED__ inline void freeLocalMemorySlot(L0::MemorySlot *memorySlot)
   {
+    // Decreasing memory space usage
+    memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
+
     // Actually freeing up slot
     freeLocalMemorySlotImpl(memorySlot);
   }
@@ -414,11 +420,11 @@ class MemoryManager
   /**
    * Backend-internal implementation of the queryLocalMemorySlot function
    *
-   * \param[in] memorySpaceId Memory space to allocate memory in
+   * \param[in] memorySpace Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  virtual L0::MemorySlot *allocateLocalMemorySlotImpl(const L0::MemorySpace* memorySpace, const size_t size) = 0;
+  virtual L0::MemorySlot *allocateLocalMemorySlotImpl(L0::MemorySpace* memorySpace, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
@@ -427,7 +433,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) = 0;
+  virtual L0::MemorySlot *registerLocalMemorySlotImpl(L0::MemorySpace* memorySpace, void *const ptr, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function

@@ -37,7 +37,7 @@ namespace L2
 {
 
 namespace machineModel
-{
+{ 
 
 /**
  * Class definition for the HiCR machine model builder.
@@ -176,6 +176,9 @@ class Builder
       // Creating local machine model and updating its resources
       machineModel::Model localModel;
 
+      // Obtaining memory spaces
+      auto memSpaces = memoryManager->getMemorySpaceList();
+
       // Updating (detecting) the local machine model
       localModel.update();
 
@@ -183,7 +186,7 @@ class Builder
       auto message = localModel.serialize();
 
       // Registering memory slot at the first available memory space as source buffer to send the return value from
-      auto sendBuffer = memoryManager->registerLocalMemorySlot(message.data(), message.size());
+      auto sendBuffer = memoryManager->registerLocalMemorySlot(*memSpaces.begin(), message.data(), message.size());
 
       // Registering return value
       _instanceManager->submitReturnValue(sendBuffer);

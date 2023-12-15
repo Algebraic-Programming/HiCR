@@ -19,11 +19,17 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
   (void)args; // ignore args parameter passed by lpf_exec
   HiCR::backend::lpf::L1::MemoryManager m(nprocs, pid, lpf);
-  size_t myProcess = pid;
 
+  // Asking backend to check the available resources
+  m.queryMemorySpaces();
+
+  // Obtaining memory spaces
+  auto memSpaces = m.getMemorySpaceList();
+
+  size_t myProcess = pid;
   char *buffer1 = new char[BUFFER_SIZE];
 
-  auto dstSlot = m.registerLocalMemorySlot(buffer1, BUFFER_SIZE);
+  auto dstSlot = m.registerLocalMemorySlot(*memSpaces.begin(), buffer1, BUFFER_SIZE);
   std::vector<std::pair<size_t, HiCR::L0::MemorySlot *>> promoted;
   promoted.push_back(std::make_pair(myProcess, dstSlot));
 
@@ -39,7 +45,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   {
     char *buffer2 = new char[BUFFER_SIZE];
     sprintf(static_cast<char *>(buffer2), "Hello, HiCR user!\n");
-    auto srcSlot = m.registerLocalMemorySlot(buffer2, BUFFER_SIZE);
+    auto srcSlot = m.registerLocalMemorySlot(*memSpaces.begin(), buffer2, BUFFER_SIZE);
     // sleep(15);
     myPromotedSlot = m.getGlobalMemorySlot(CHANNEL_TAG, RECEIVER_PROCESS);
     m.memcpy(myPromotedSlot, DST_OFFSET, srcSlot, SRC_OFFSET, BUFFER_SIZE);

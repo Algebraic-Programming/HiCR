@@ -124,7 +124,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
       auto memSpaceSize = hwlocObj->attr->cache.size;
 
       // Creating new memory space object
-      auto memorySpace = new sharedMemory::L0::MemorySpace(memSpaceSize, hwlocObj, bindingSupport);
+      auto memorySpace = new sharedMemory::L0::MemorySpace(memSpaceSize, hwlocObj, bindingSupport); 
 
       // Storing new memory space
       memorySpaceList.insert(memorySpace);
@@ -144,7 +144,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(const HiCR::L0::MemorySpace* memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
   {
         // Getting up-casted pointer for the MPI instance
     auto m = dynamic_cast<const L0::MemorySpace *>(memorySpace);
@@ -170,7 +170,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory (size %lu) in the requested memory space", size);
 
     // Creating new memory slot object
-    auto memorySlot = new L0::MemorySlot(supportedBindingType, ptr, size);
+    auto memorySlot = new L0::MemorySlot(supportedBindingType, ptr, size, memorySpace);
 
     // Assinging new entry in the memory slot map
     return memorySlot;
@@ -183,10 +183,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
-    auto memorySlot = new L0::MemorySlot(L0::MemorySlot::binding_type::strict_non_binding, ptr, size);
+    auto memorySlot = new L0::MemorySlot(L0::MemorySlot::binding_type::strict_non_binding, ptr, size, memorySpace);
 
     // Returning new memory slot pointer
     return memorySlot;
@@ -231,7 +231,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
       auto memorySlot = entry.second;
 
       // Creating new memory slot
-      auto globalMemorySlot = new L0::MemorySlot(L0::MemorySlot::binding_type::strict_non_binding, memorySlot->getPointer(), memorySlot->getSize(), tag, globalKey);
+      auto globalMemorySlot = new L0::MemorySlot(L0::MemorySlot::binding_type::strict_non_binding, memorySlot->getPointer(), memorySlot->getSize(), NULL, tag, globalKey);
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);

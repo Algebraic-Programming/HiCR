@@ -12,12 +12,18 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager)
   // Fetching memory manager
   auto memoryManager = instanceManager.getMemoryManager();
 
+  // Asking backend to check the available resources
+  memoryManager->queryMemorySpaces();
+
   // Getting current instance
   auto currentInstance = instanceManager.getCurrentInstance();
 
   // Creating worker function
   auto fcLambda = [currentInstance, memoryManager, &instanceManager]()
   {
+    // Obtaining memory spaces
+    auto memSpaces = memoryManager->getMemorySpaceList();
+
     // Creating simple message
     auto message = std::string("Hello, I am a worker! ");
 
@@ -25,7 +31,7 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager)
     for (size_t i = 0; i < currentInstance->getId(); i++) message += std::string("*");
 
     // Registering memory slot at the first available memory space as source buffer to send the return value from
-    auto sendBuffer = memoryManager->registerLocalMemorySlot(message.data(), message.size() + 1);
+    auto sendBuffer = memoryManager->registerLocalMemorySlot(*memSpaces.begin(), message.data(), message.size() + 1);
 
     // Registering return value
     instanceManager.submitReturnValue(sendBuffer);
