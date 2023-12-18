@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/globalMemorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/common/circularBuffer.hpp>
 #include <hicr/common/definitions.hpp>
@@ -88,7 +88,7 @@ class Base : public common::CircularBuffer
    *
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __USED__ static inline void initializeCoordinationBuffer(L0::MemorySlot *coordinationBuffer)
+  __USED__ static inline void initializeCoordinationBuffer(L0::LocalMemorySlot *coordinationBuffer)
   {
     // Checking for correct size
     auto requiredSize = getCoordinationBufferSize();
@@ -138,28 +138,21 @@ class Base : public common::CircularBuffer
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
   Base(L1::MemoryManager *memoryManager,
-       L0::MemorySlot *const tokenBuffer,
-       L0::MemorySlot *const coordinationBuffer,
+       L0::LocalMemorySlot  *const localCoordinationBuffer,
        const size_t tokenSize,
        const size_t capacity) : common::CircularBuffer(capacity,
-                                                       ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX,
-                                                       ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX),
+                                                       ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)localCoordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX,
+                                                       ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)localCoordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX),
                                 _memoryManager(memoryManager),
-                                _tokenBuffer(tokenBuffer),
-                                _coordinationBuffer(coordinationBuffer),
+                                _localCoordinationBuffer(localCoordinationBuffer),
                                 _tokenSize(tokenSize)
   {
     if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
     if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
 
-    // Checking that the provided token exchange  buffer has the right size
-    auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
-    auto providedTokenBufferSize = _tokenBuffer->getSize();
-    if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
-
     // Checking that the provided coordination buffers have the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
-    auto providedCoordinationBufferSize = _coordinationBuffer->getSize();
+    auto providedCoordinationBufferSize = _localCoordinationBuffer->getSize();
     if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a local coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
   }
 
@@ -173,14 +166,9 @@ class Base : public common::CircularBuffer
   L1::MemoryManager *const _memoryManager;
 
   /**
-   * Memory slot that represents the token buffer that producer sends data to
-   */
-  L0::MemorySlot *const _tokenBuffer;
-
-  /**
    * Local storage of coordination metadata
    */
-  L0::MemorySlot *const _coordinationBuffer;
+  L0::LocalMemorySlot *const _localCoordinationBuffer;
 
   /**
    * Token size

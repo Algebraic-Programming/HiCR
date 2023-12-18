@@ -55,16 +55,21 @@ class Consumer final : public L2::channel::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Consumer(L1::MemoryManager *memoryManager,
-           L0::MemorySlot *const tokenBuffer,
-           L0::MemorySlot *const consumerCoordinationBuffer,
-           L0::MemorySlot *const producerCoordinationBuffer,
+           L0::GlobalMemorySlot *const tokenBuffer,
+           L0::LocalMemorySlot  *const consumerCoordinationBuffer,
+           L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity),
-                                    _producerCoordinationBuffer(producerCoordinationBuffer)
+           const size_t capacity) : L2::channel::Base(memoryManager, consumerCoordinationBuffer, tokenSize, capacity),
+           _tokenBuffer(tokenBuffer),
+           _producerCoordinationBuffer(producerCoordinationBuffer)
+
   {
+    // Checking whether the memory slot is local. This backend only supports local data transfers
+    if (tokenBuffer->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed coordination slot was not created locally (it must be to be used internally by the channel implementation)\n");
+
     // Checking that the provided token exchange  buffer has the right size
     auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
-    auto providedTokenBufferSize = _tokenBuffer->getSize();
+    auto providedTokenBufferSize = tokenBuffer->getSourceLocalMemorySlot()->getSize();
     if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
   }
   ~Consumer() = default;
@@ -137,7 +142,7 @@ class Consumer final : public L2::channel::Base
     advanceTail(n);
 
     // Notifying producer(s) of buffer liberation
-    _memoryManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+    _memoryManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _localCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
 
     // Re-syncing coordination buffer
     _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
@@ -169,9 +174,10 @@ class Consumer final : public L2::channel::Base
     setHead(receivedTokenCount);
   }
 
-  private:
+  HiCR::L0::GlobalMemorySlot* const _tokenBuffer;
 
-  L0::MemorySlot *const _producerCoordinationBuffer;
+  HiCR::L0::GlobalMemorySlot *const _producerCoordinationBuffer;
+
 };
 
 } // namespace SPSC

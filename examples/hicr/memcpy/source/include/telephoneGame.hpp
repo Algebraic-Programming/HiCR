@@ -1,5 +1,5 @@
 #include <hicr/L0/memorySpace.hpp>
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <vector>
 
@@ -8,10 +8,10 @@
 #define DST_OFFSET 0
 #define SRC_OFFSET 0
 
-void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L0::MemorySlot *input, std::vector<HiCR::L0::MemorySpace*> memSpaces, int iterations)
+void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L0::LocalMemorySlot *input, std::vector<HiCR::L0::MemorySpace*> memSpaces, int iterations)
 {
   // Collect the newly created memory slots
-  auto memSlots = std::vector<HiCR::L0::MemorySlot *>{};
+  auto memSlots = std::vector<HiCR::L0::LocalMemorySlot *>{};
 
   // iterate all over the memory spaces and create multiple memory slots in each one
   for (const auto memSpace : memSpaces) 

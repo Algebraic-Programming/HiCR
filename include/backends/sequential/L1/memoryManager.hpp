@@ -55,7 +55,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::MemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
   }
 
@@ -66,7 +66,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly allocated memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_cast<const L0::MemorySpace *>(memorySpace);
@@ -81,7 +81,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
 
     // Creating and returning new memory slot
-    return registerLocalMemorySlotImpl(memorySpace, ptr, size);
+    return  new HiCR::L0::LocalMemorySlot(ptr, size, memorySpace);
   }
 
   /**
@@ -90,13 +90,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::L0::MemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
   {
-    // Creating new memory slot object
-    auto memorySlot = new HiCR::L0::MemorySlot(ptr, size, memorySpace);
-
     // Returning new memory slot pointer
-    return memorySlot;
+    return new HiCR::L0::LocalMemorySlot(ptr, size, memorySpace);
   }
 
   /**
@@ -104,12 +101,12 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *memorySlot) override
   {
     // Nothing to do here for this backend
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
     // Nothing to do here
   }
@@ -120,7 +117,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::MemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
@@ -132,7 +129,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
       auto memorySlot = entry.second;
 
       // Creating new memory slot
-      auto globalMemorySlot = new HiCR::L0::MemorySlot(memorySlot->getPointer(), memorySlot->getSize(), NULL, tag, globalKey);
+      auto globalMemorySlot = new HiCR::L0::GlobalMemorySlot(tag, globalKey, memorySlot);
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
@@ -144,7 +141,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::MemorySlot *memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *memorySlot) override
   {
     if (memorySlot->getPointer() == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exit or represents a NULL pointer.");
 
@@ -159,7 +156,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Common definition of a collection of memory slots
    */
-  typedef parallelHashMap_t<HiCR::L0::MemorySlot::tag_t, size_t> fenceCountTagMap_t;
+  typedef parallelHashMap_t<HiCR::L0::GlobalMemorySlot::tag_t, size_t> fenceCountTagMap_t;
 
   /**
    * Counter for calls to fence, filtered per tag
@@ -171,7 +168,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl(const HiCR::L0::MemorySlot::tag_t tag) override
+  __USED__ inline void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
   {
     // Increasing the counter for the fence corresponding to the tag
     _fenceCountTagMap[tag]++;
@@ -181,7 +178,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
       ;
   }
 
-  __USED__ inline void memcpyImpl(HiCR::L0::MemorySlot *destination, const size_t dst_offset, HiCR::L0::MemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting slot pointers
     const auto srcPtr = source->getPointer();
@@ -193,13 +190,61 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
     // Running memcpy now
     std::memcpy(actualDstPtr, actualSrcPtr, size);
-
-    // Increasing message received/sent counters for memory slots
-    source->increaseMessagesSent();
-    destination->increaseMessagesRecv();
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
+    __USED__ inline void memcpyImpl(HiCR::L0::GlobalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) override
+  {
+    // Getting up-casted pointer for the execution unit
+    auto dest = dynamic_cast<HiCR::L0::GlobalMemorySlot *>(destination);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (dest == NULL) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
+
+    // Checking whether the memory slot is local. This backend only supports local data transfers
+    if (dest->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed destination memory slot is not local (required by this backend)\n");
+
+    // Getting slot pointers
+    const auto srcPtr = source->getPointer();
+    const auto dstPtr = dest->getSourceLocalMemorySlot()->getPointer();
+
+    // Calculating actual offsets
+    const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
+    const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
+
+    // Running memcpy now
+    std::memcpy(actualDstPtr, actualSrcPtr, size);
+
+    // Increasing message received/sent counters for memory slots
+    dest->increaseMessagesRecv();
+  }
+
+    __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size) override
+  {
+    // Getting up-casted pointer for the execution unit
+    auto src = dynamic_cast<HiCR::L0::GlobalMemorySlot *>(source);
+
+    // Checking whether the memory slot is compatible with this backend
+    if (src == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
+
+    // Checking whether the memory slot is local. This backend only supports local data transfers
+    if (src->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed source memory slot is not local (required by this backend)\n");
+    
+    // Getting slot pointers
+    const auto srcPtr = src->getSourceLocalMemorySlot()->getPointer();
+    const auto dstPtr = destination->getPointer();
+
+    // Calculating actual offsets
+    const auto actualSrcPtr = (void *)((uint8_t *)srcPtr + src_offset);
+    const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
+
+    // Running memcpy now
+    std::memcpy(actualDstPtr, actualSrcPtr, size);
+
+    // Increasing message received/sent counters for memory slots
+    src->increaseMessagesSent();
+  }
+
+  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
     // This function does not do anything because sequential applications
     // do not incur concurrency issues.
@@ -207,7 +252,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return true;
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::MemorySlot *memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
     // This function does not do anything because sequential applications
     // do not incur concurrency issues.

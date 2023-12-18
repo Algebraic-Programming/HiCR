@@ -12,7 +12,8 @@
 
 #pragma once
 
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>  
+#include <hicr/L0/globalMemorySlot.hpp> 
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -37,24 +38,24 @@ class MemoryManager
   public:
 
   /**
-   * Common definition of a map that links key ids with memory slot id arrays (for global exchange)
+   * Common definition of a map that links key ids with global memory slot id arrays (for global exchange)
    */
-  typedef parallelHashMap_t<L0::MemorySlot::globalKey_t, std::vector<L0::MemorySlot *>> memorySlotIdArrayMap_t;
+  typedef parallelHashMap_t<L0::GlobalMemorySlot::globalKey_t, std::vector<L0::GlobalMemorySlot *>> memorySlotIdArrayMap_t;
 
   /**
-   * Type definition for a global key / memory slot pair
+   * Type definition for a global key / local memory slot pair
    */
-  typedef std::pair<L0::MemorySlot::globalKey_t, L0::MemorySlot *> globalKeyMemorySlotPair_t;
+  typedef std::pair<L0::GlobalMemorySlot::globalKey_t, L0::LocalMemorySlot *> globalKeyMemorySlotPair_t;
 
   /**
    * Type definition for an array that stores sets of memory slots, separated by global key
    */
-  typedef parallelHashMap_t<L0::MemorySlot::globalKey_t, L0::MemorySlot *> globalKeyToMemorySlotMap_t;
+  typedef parallelHashMap_t<L0::GlobalMemorySlot::globalKey_t, L0::GlobalMemorySlot *> globalKeyToMemorySlotMap_t;
 
   /**
    * Type definition for a tag-mapped set of key-mapped memory slot arrays
    */
-  typedef parallelHashMap_t<L0::MemorySlot::tag_t, globalKeyToMemorySlotMap_t> globalMemorySlotTagKeyMap_t;
+  typedef parallelHashMap_t<L0::GlobalMemorySlot::tag_t, globalKeyToMemorySlotMap_t> globalMemorySlotTagKeyMap_t;
 
   /**
    * Default destructor
@@ -68,7 +69,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly allocated memory slot in the specified memory space
    */
-  __USED__ inline L0::MemorySlot *allocateLocalMemorySlot(L0::MemorySpace* memorySpace, const size_t size)
+  __USED__ inline L0::LocalMemorySlot *allocateLocalMemorySlot(L0::MemorySpace* memorySpace, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -87,7 +88,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual L0::MemorySlot *registerLocalMemorySlot(L0::MemorySpace* memorySpace, void *const ptr, const size_t size)
+  virtual L0::LocalMemorySlot *registerLocalMemorySlot(L0::MemorySpace* memorySpace, void *const ptr, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -105,7 +106,7 @@ class MemoryManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const L0::MemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
+  __USED__ inline void exchangeGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
   {
     // Calling internal implementation of this function
     exchangeGlobalMemorySlotsImpl(tag, memorySlots);
@@ -118,7 +119,7 @@ class MemoryManager
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  __USED__ inline L0::MemorySlot *getGlobalMemorySlot(const L0::MemorySlot::tag_t tag, const L0::MemorySlot::globalKey_t globalKey)
+  __USED__ inline L0::GlobalMemorySlot *getGlobalMemorySlot(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey)
   {
     // If the requested tag and key are not found, return empty storage
     if (_globalMemorySlotTagKeyMap.contains(tag) == false) HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
@@ -133,7 +134,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlot(L0::MemorySlot *const memorySlot)
+  __USED__ inline void deregisterLocalMemorySlot(L0::LocalMemorySlot *const memorySlot)
   {
     // Decreasing memory space usage
     memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
@@ -147,7 +148,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterGlobalMemorySlot(L0::MemorySlot *const memorySlot)
+  __USED__ inline void deregisterGlobalMemorySlot(L0::GlobalMemorySlot *const memorySlot)
   {
     // Getting memory slot global information
     const auto memorySlotTag = memorySlot->getGlobalTag();
@@ -168,7 +169,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlot(L0::MemorySlot *memorySlot)
+  __USED__ inline void freeLocalMemorySlot(L0::LocalMemorySlot *memorySlot)
   {
     // Decreasing memory space usage
     memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
@@ -184,7 +185,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Identifier of the memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdates(L0::MemorySlot *memorySlot)
+  __USED__ inline void queryMemorySlotUpdates(L0::GlobalMemorySlot *memorySlot)
   {
     // Getting value by copy
     queryMemorySlotUpdatesImpl(memorySlot);
@@ -243,7 +244,7 @@ class MemoryManager
    * \todo Should this be <tt>nb_memcpy</tt> to make clear that, quite different
    *       from the NIX standard <tt>memcpy</tt>, it is nonblocking?
    */
-  __USED__ inline void memcpy(L0::MemorySlot *destination, const size_t dst_offset, L0::MemorySlot *source, const size_t src_offset, const size_t size)
+  __USED__ inline void memcpy(L0::LocalMemorySlot *destination, const size_t dst_offset, L0::LocalMemorySlot *source, const size_t src_offset, const size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -262,6 +263,36 @@ class MemoryManager
     // To enable concurrent memcpy operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
     // and try not to access any of the internal Backend class fields without proper mutex locking
+
+    // Now calling internal memcpy function to give us a function that satisfies the operation
+    memcpyImpl(destination, dst_offset, source, src_offset, size);
+  }
+
+  __USED__ inline void memcpy(L0::GlobalMemorySlot *destination, const size_t dst_offset, L0::LocalMemorySlot *source, const size_t src_offset, const size_t size)
+  {
+    // Getting slot sizes. This operation is thread-safe
+    const auto srcSize = source->getSize();
+
+    // Making sure the memory slots exist and is not null
+    const auto actualSrcSize = size + src_offset;
+
+    // Checking size doesn't exceed slot size
+    if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).", size, src_offset, actualSrcSize, source, srcSize);
+
+    // Now calling internal memcpy function to give us a function that satisfies the operation
+    memcpyImpl(destination, dst_offset, source, src_offset, size);
+  }
+
+  __USED__ inline void memcpy(L0::LocalMemorySlot *destination, const size_t dst_offset, L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size)
+  {
+    // Getting slot sizes. This operation is thread-safe
+    const auto dstSize = destination->getSize();
+
+    // Making sure the memory slots exist and is not null
+    const auto actualDstSize = size + dst_offset;
+
+    // Checking size doesn't exceed slot size
+    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
 
     // Now calling internal memcpy function to give us a function that satisfies the operation
     memcpyImpl(destination, dst_offset, source, src_offset, size);
@@ -291,7 +322,7 @@ class MemoryManager
    *
    * \todo This all should be threading safe.
    */
-  __USED__ inline void fence(const L0::MemorySlot::tag_t tag)
+  __USED__ inline void fence(const L0::GlobalMemorySlot::tag_t tag)
   {
     // To enable concurrent fence operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
@@ -309,7 +340,7 @@ class MemoryManager
    * @param[in] memorySlot The memory slot to reserve
    * @return true, if the lock was acquired successfully; false, otherwise
    */
-  __USED__ inline bool acquireGlobalLock(L0::MemorySlot *memorySlot)
+  __USED__ inline bool acquireGlobalLock(L0::GlobalMemorySlot *memorySlot)
   {
     // Getting memory slot global information
     const auto memorySlotTag = memorySlot->getGlobalTag();
@@ -330,7 +361,7 @@ class MemoryManager
    *
    * @param[in] memorySlot The memory slot to release
    */
-  __USED__ inline void releaseGlobalLock(L0::MemorySlot *memorySlot)
+  __USED__ inline void releaseGlobalLock(L0::GlobalMemorySlot *memorySlot)
   {
     // Getting memory slot global information
     const auto memorySlotTag = memorySlot->getGlobalTag();
@@ -360,7 +391,7 @@ class MemoryManager
    *
    * \internal This function is only meant to be called internally
    */
-  __USED__ inline void registerGlobalMemorySlot(L0::MemorySlot *memorySlot)
+  __USED__ inline void registerGlobalMemorySlot(L0::GlobalMemorySlot *memorySlot)
   {
     // Getting memory slot information
     const auto tag = memorySlot->getGlobalTag();
@@ -380,7 +411,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  virtual L0::MemorySlot *allocateLocalMemorySlotImpl(L0::MemorySpace* memorySpace, const size_t size) = 0;
+  virtual L0::LocalMemorySlot *allocateLocalMemorySlotImpl(L0::MemorySpace* memorySpace, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
@@ -389,28 +420,28 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual L0::MemorySlot *registerLocalMemorySlotImpl(L0::MemorySpace* memorySpace, void *const ptr, const size_t size) = 0;
+  virtual L0::LocalMemorySlot *registerLocalMemorySlotImpl(L0::MemorySpace* memorySpace, void *const ptr, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function
    *
    * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  virtual void freeLocalMemorySlotImpl(L0::MemorySlot *memorySlot) = 0;
+  virtual void freeLocalMemorySlotImpl(L0::LocalMemorySlot *memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the deregisterMemorySlot function
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  virtual void deregisterLocalMemorySlotImpl(L0::MemorySlot *memorySlot) = 0;
+  virtual void deregisterLocalMemorySlotImpl(L0::LocalMemorySlot *memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the deregisterGlobalMemorySlotImpl function
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  virtual void deregisterGlobalMemorySlotImpl(L0::MemorySlot *memorySlot) = 0;
+  virtual void deregisterGlobalMemorySlotImpl(L0::GlobalMemorySlot *memorySlot) = 0;
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
@@ -418,14 +449,14 @@ class MemoryManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  virtual void exchangeGlobalMemorySlotsImpl(const L0::MemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
+  virtual void exchangeGlobalMemorySlotsImpl(const L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
    *
    * \param[in] memorySlot Memory slot to query updates for.
    */
-  virtual void queryMemorySlotUpdatesImpl(L0::MemorySlot *memorySlot) = 0;
+  virtual void queryMemorySlotUpdatesImpl(L0::GlobalMemorySlot *memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the memcpy function
@@ -436,7 +467,9 @@ class MemoryManager
    * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(L0::MemorySlot *destination, const size_t dst_offset, L0::MemorySlot *source, const size_t src_offset, const size_t size) = 0;
+  virtual void memcpyImpl(L0::LocalMemorySlot *destination, const size_t dst_offset, L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) = 0;
+  virtual void memcpyImpl(L0::GlobalMemorySlot *destination, const size_t dst_offset, L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) = 0;
+  virtual void memcpyImpl(L0::LocalMemorySlot *destination, const size_t dst_offset, L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the fence function
@@ -444,20 +477,20 @@ class MemoryManager
    * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    *
    */
-  virtual void fenceImpl(const L0::MemorySlot::tag_t tag) = 0;
+  virtual void fenceImpl(const L0::GlobalMemorySlot::tag_t tag) = 0;
 
   /**
    * Backend-specific implementation of the acquireGlobalLock function
    * @param[in] memorySlot See the acquireGlobalLock function
    * @return See the acquireGlobalLock function
    */
-  virtual bool acquireGlobalLockImpl(L0::MemorySlot *memorySlot) = 0;
+  virtual bool acquireGlobalLockImpl(L0::GlobalMemorySlot *memorySlot) = 0;
 
   /**
    * Backend-specific implementation of the releaseGlobalLock function
    * @param[in] memorySlot See the releaseGlobalLock function
    */
-  virtual void releaseGlobalLockImpl(L0::MemorySlot *memorySlot) = 0;
+  virtual void releaseGlobalLockImpl(L0::GlobalMemorySlot *memorySlot) = 0;
 
   /**
    * Storage for global tag/key associated global memory slot exchange

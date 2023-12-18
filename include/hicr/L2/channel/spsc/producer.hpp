@@ -52,17 +52,15 @@ class Producer final : public L2::channel::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Producer(L1::MemoryManager *memoryManager,
-           L0::MemorySlot *const tokenBuffer,
-           L0::MemorySlot *const producerCoordinationBuffer,
+           L0::GlobalMemorySlot *const tokenBuffer,
+           L0::LocalMemorySlot  *const localProducerCoordinationBuffer,
+           L0::GlobalMemorySlot *const globalProducerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity)
-    : L2::channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity)
-  {
-    // Checking that the provided coordination buffer has the right size
-    auto requiredCoordinationBufferSize = getCoordinationBufferSize();
-    auto providedCoordinationBufferSize = _coordinationBuffer->getSize();
-    if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
-  }
+       : L2::channel::Base(memoryManager, localProducerCoordinationBuffer, tokenSize, capacity),
+       _tokenBuffer(tokenBuffer),
+       _globalProducerCoordinationBuffer(globalProducerCoordinationBuffer) {  } 
+
   ~Producer() = default;
 
   /**
@@ -82,7 +80,7 @@ class Producer final : public L2::channel::Base
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline void push(L0::MemorySlot *sourceSlot, const size_t n = 1)
+  __USED__ inline void push(L0::LocalMemorySlot *sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
@@ -114,8 +112,20 @@ class Producer final : public L2::channel::Base
   __USED__ inline void updateDepth()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _memoryManager->queryMemorySlotUpdates(_coordinationBuffer);
+    _memoryManager->queryMemorySlotUpdates(_globalProducerCoordinationBuffer);
   }
+
+  private:
+
+  /**
+  * Memory slot that represents the token buffer that producer sends data to
+  */
+  L0::GlobalMemorySlot *const _tokenBuffer;
+
+  /*
+  * Global Memory slot pointing to the producer's own coordination buffer
+  */
+  L0::GlobalMemorySlot *const _globalProducerCoordinationBuffer;
 };
 
 } // namespace SPSC

@@ -4,15 +4,14 @@
  */
 
 /**
- * @file memorySlot.hpp
- * @brief Provides a definition for a HiCR ProcessingUnit class
+ * @file globalMemorySlot.hpp
+ * @brief Provides a definition for a HiCR Global Memory Slot class
  * @author S. M. Martin
  * @date 4/10/2023
  */
 #pragma once
 
 #include <hicr/common/definitions.hpp>
-#include <hicr/L0/memorySpace.hpp>
 
 namespace HiCR
 {
@@ -21,11 +20,11 @@ namespace L0
 {
 
 /**
- * This class represents an abstract definition for a Memory Slot resource in HiCR that:
+ * This class represents an abstract definition for a Global Memory Slot resource in HiCR that:
  *
- * - Represents a contiguous segment within a memory space, with a starting address and a size
+ * - Represents a contiguous segment of memory located in a non-local memory space
  */
-class MemorySlot
+class GlobalMemorySlot
 {
   public:
 
@@ -42,42 +41,25 @@ class MemorySlot
   /**
    * Default constructor for a MemorySlot class
    *
-   * \param[in] pointer The pointer corresponding to an address in a given memory space
-   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
-   * \param[in] memorySpace Pointer to the memory space that this memory slot belongs to. NULL, if the memory slot is global (remote)
    * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
    * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   * \param[in] sourceLocalMemorySlot Indicates the source local memory slot (if any) that was promoted into this global memory slot.
+   *                                  If none exists, a nullptr value is provided that encodes that the global memory slot is non-local (remote)
    */
-  MemorySlot(
-    void *const pointer,
-    const size_t size,
-    MemorySpace* memorySpace = NULL,
+  GlobalMemorySlot(
     const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) :
-     _pointer(pointer),
-     _size(size),
-     _memorySpace(memorySpace),
+    const globalKey_t globalKey = 0,
+    HiCR::L0::LocalMemorySlot* sourceLocalMemorySlot = nullptr) :
      _globalTag(globalTag),
-     _globalKey(globalKey)
+     _globalKey(globalKey),
+     _sourceLocalMemorySlot(sourceLocalMemorySlot)
   {
   }
 
   /**
    * Default destructor
    */
-  virtual ~MemorySlot() = default;
-
-  /**
-   * Getter function for the memory slot's pointer
-   * \returns The memory slot's internal pointer
-   */
-  __USED__ inline void *getPointer() const noexcept { return _pointer; }
-
-  /**
-   * Getter function for the memory slot's size
-   * \returns The memory slot's size
-   */
-  __USED__ inline size_t getSize() const noexcept { return _size; }
+  virtual ~GlobalMemorySlot() = default;
 
   /**
    * Getter function for the memory slot's global tag
@@ -126,27 +108,11 @@ class MemorySlot
   __USED__ inline __volatile__ size_t *getMessagesSentPointer() noexcept { return &_messagesSent; }
 
   /**
-   * Getter function for the memory slot's associated memory space
-   * \returns The memory slot's associated memory space
-   */
-  __USED__ inline L0::MemorySpace* getMemorySpace() const noexcept { return _memorySpace; }
+  * Function to return the source local memory slot from which this global slot was created, if one exists (if not, it's a remote memory slot)
+  */
+  __USED__ HiCR::L0::LocalMemorySlot* getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
 
   private:
-
-  /**
-   * Pointer to the local memory address containing this slot
-   */
-  void *const _pointer;
-
-  /**
-   * Size of the memory slot
-   */
-  const size_t _size;
-
-  /**
-   * Memory space that this memory slot belongs to
-   */
-  L0::MemorySpace* const _memorySpace;
 
   /**
    * Only for global slots - identifies to which global memory slot subset this one belongs to
@@ -159,6 +125,11 @@ class MemorySlot
   const globalKey_t _globalKey;
 
   /**
+   * Pointer to the associated local memory slot (if one exists)
+  */
+  HiCR::L0::LocalMemorySlot* const _sourceLocalMemorySlot = 0;
+
+  /**
    * Messages received into this slot
    */
   __volatile__ size_t _messagesRecv = 0;
@@ -167,7 +138,6 @@ class MemorySlot
    * Messages sent from this slot
    */
   __volatile__ size_t _messagesSent = 0;
-  
 };
 
 } // namespace L0
