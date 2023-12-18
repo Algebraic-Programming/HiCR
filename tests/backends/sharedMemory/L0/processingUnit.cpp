@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 #include <backends/sharedMemory/L0/processingUnit.hpp>
 #include <backends/sharedMemory/L1/computeManager.hpp>
+#include <backends/sharedMemory/L1/deviceManager.hpp>
 #include <set>
 
 namespace backend = HiCR::backend::sharedMemory;
@@ -27,14 +28,17 @@ TEST(ProcessingUnit, Construction)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Instantiating default compute manager
-  backend::L1::ComputeManager m(&topology);
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
 
-  // Querying compute resources
-  m.queryComputeResources();
+  // Asking backend to check the available devices
+  dm.queryDevices();
 
-  // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Getting first compute resource
   auto computeResource = *computeResources.begin(); 
@@ -69,13 +73,19 @@ TEST(ProcessingUnit, ThreadAffinity)
   hwloc_topology_init(&topology);
 
   // Instantiating default compute manager
-  backend::L1::ComputeManager m(&topology);
+  backend::L1::ComputeManager m;
 
-  // Querying backend for its resources
-  m.queryComputeResources();
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
 
-  // Gathering compute resources from backend
-  auto computeResources = m.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Casting compute resource correctly
   auto computeResource = (backend::L0::ComputeResource*) *computeResources.begin();
@@ -141,13 +151,19 @@ TEST(ProcessingUnit, LifeCycle)
   hwloc_topology_init(&topology);
 
   // Instantiating default compute manager
-  backend::L1::ComputeManager m(&topology);
+  backend::L1::ComputeManager m;
 
-  // Querying backend for its resources
-  m.queryComputeResources();
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
 
-  // Gathering compute resources from backend
-  auto computeResources = m.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Casting compute resource correctly
   auto computeUnit = (backend::L0::ComputeResource*) *computeResources.begin();

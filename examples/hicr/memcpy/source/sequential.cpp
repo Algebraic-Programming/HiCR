@@ -2,13 +2,9 @@
 #include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 
-#define BUFFER_SIZE 256
-#define DST_OFFSET 0
-#define SRC_OFFSET 0
-
 int main(int argc, char **argv)
 {
-  // Initializing Sequential backend's device manager
+  // Initializing backend's device manager
   HiCR::backend::sequential::L1::DeviceManager dm;
 
   // Asking backend to check the available devices

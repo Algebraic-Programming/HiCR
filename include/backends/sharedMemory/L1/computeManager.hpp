@@ -45,10 +45,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
-  ComputeManager(hwloc_topology_t *topology) : HiCR::L1::ComputeManager(), _topology{topology} {}
+  ComputeManager() : HiCR::L1::ComputeManager() {}
 
   /**
-   * The constructor is employed to free memory required for hwloc
+   * Default destructor
    */
   ~ComputeManager() = default;
 
@@ -59,46 +59,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 
   private:
 
-  /**
-   * Pthread implementation of the Backend queryComputeResource() function. This will add one compute resource object per HW Thread / Processing Unit (PU) found
-   */
-  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
-  {
-    // Disable filters in order to detect instr. caches
-    hwloc_topology_set_icache_types_filter(*_topology, HWLOC_TYPE_FILTER_KEEP_ALL);
-
-    // Loading topology
-    hwloc_topology_load(*_topology);
-
-    // New compute resource list to return
-    computeResourceList_t computeResourceList;
-
-    // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
-    std::vector<int> logicalProcessorIds;
-    L0::ComputeResource::detectThreadPUs(*_topology, hwloc_get_root_obj(*_topology), 0, logicalProcessorIds);
-
-    for (const auto id : logicalProcessorIds)
-    {  
-      // Creating new compute resource class (of CPU core/processor type)
-      auto processor = new L0::ComputeResource(*_topology, id);
-
-      // Adding new resource to the list
-      computeResourceList.insert(processor);
-    } 
-
-    // Returning new compute resource list
-    return computeResourceList;
-  }
-
   __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource* computeResource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(computeResource);
   }
-
-  /**
-   * Local processor and memory hierarchy topology, as detected by Hwloc
-   */
-  hwloc_topology_t *_topology;
 };
 
 } // namespace L1

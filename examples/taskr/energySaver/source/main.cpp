@@ -1,4 +1,5 @@
 #include <backends/sharedMemory/L1/computeManager.hpp>
+#include <backends/sharedMemory/L1/deviceManager.hpp>
 #include <cstdio>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
@@ -49,13 +50,19 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::L1::ComputeManager computeManager(&topology);
+  HiCR::backend::sharedMemory::L1::ComputeManager computeManager;
 
-  // Querying compute units
-  computeManager.queryComputeResources();
+// Initializing Sequential backend's device manager
+  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
 
   // Updating the compute resource list
-  auto computeResources = computeManager.getComputeResourceList();
+  auto computeResources = d->getComputeResourceList();
 
   // Initializing taskr
   taskr::Runtime taskr;

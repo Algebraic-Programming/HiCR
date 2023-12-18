@@ -87,57 +87,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   const hwloc_topology_t *const _topology;
 
   /**
-   * Hwloc implementation of the Backend queryResources() function. This will add one memory space object per NUMA domain found
-   */
-  __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
-  {
-    // Doing this operation as a critical section
-    pthread_mutex_lock(&_mutex);
-
-    // Loading topology
-    hwloc_topology_load(*_topology);
-
-    // New memory space list to return
-    memorySpaceList_t memorySpaceList;
-
-    // Ask hwloc about number of NUMA nodes and add as many memory spaces as NUMA domains
-    auto n = hwloc_get_nbobjs_by_type(*_topology, HWLOC_OBJ_NUMANODE);
-    for (int i = 0; i < n; i++)
-    {
-      // Getting HWLoc object related to this NUMA domain
-      auto hwlocObj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, i);
-
-      // Checking whther bound memory allocation and freeing is supported
-      auto bindingSupport = L0::MemorySlot::binding_type::strict_non_binding;
-      size_t size = 1024;
-      auto ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
-      if (ptr != NULL)
-      {
-        // Attempting to free with hwloc
-        auto status = hwloc_free(*_topology, ptr, size);
-
-        // Freeing was successful, then strict binding is supported
-        if (status == 0) bindingSupport = L0::MemorySlot::binding_type::strict_binding;
-      }
-
-      // Getting memory space size
-      auto memSpaceSize = hwlocObj->attr->cache.size;
-
-      // Creating new memory space object
-      auto memorySpace = new sharedMemory::L0::MemorySpace(memSpaceSize, hwlocObj, bindingSupport); 
-
-      // Storing new memory space
-      memorySpaceList.insert(memorySpace);
-    }
-
-    // Releasing the lock
-    pthread_mutex_unlock(&_mutex);
-
-    // Returning new memory space list
-    return memorySpaceList;
-  }
-
-  /**
    * Backend-internal implementation of the queryLocalMemorySlot function
    *
    * \param[in] memorySpaceId Memory space to allocate memory in

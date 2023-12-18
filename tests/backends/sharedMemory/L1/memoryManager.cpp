@@ -12,6 +12,7 @@
 
 #include "gtest/gtest.h"
 #include <backends/sharedMemory/L1/memoryManager.hpp>
+#include <backends/sharedMemory/L1/deviceManager.hpp>
 #include <limits>
 
 namespace backend = HiCR::backend::sharedMemory;
@@ -41,12 +42,21 @@ TEST(MemoryManager, Memory)
 
   backend::L1::MemoryManager b(&topology);
 
-  // Querying resources
-  EXPECT_NO_THROW(b.queryMemorySpaces());
+  // Initializing backend's device manager
+  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
+
+  // Asking backend to check the available devices
+  EXPECT_NO_THROW(dm.queryDevices());
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Instantiating sequential backend's memory manager
+  HiCR::backend::sharedMemory::L1::MemoryManager m(&topology);
 
   // Getting memory resource list (should be size 1)
-  std::set<HiCR::L0::MemorySpace*> mList;
-  EXPECT_NO_THROW(mList = b.getMemorySpaceList());
+  HiCR::L0::Device::memorySpaceList_t mList;
+  EXPECT_NO_THROW(mList = d->getMemorySpaceList());
   EXPECT_GT(mList.size(), 0);
 
   // Getting memory resource

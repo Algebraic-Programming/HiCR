@@ -3,16 +3,13 @@
 #include "common.hpp"
 #include <hicr/L2/channel/mpsc/producer.hpp>
 
-void producerFc(HiCR::L1::MemoryManager *memoryManager, const size_t channelCapacity, const size_t producerId)
+void producerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L0::MemorySpace* bufferMemorySpace, const size_t channelCapacity, const size_t producerId)
 {
-  // Obtaining memory spaces
-  auto memSpaces = memoryManager->getMemorySpaceList();
-
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::L2::channel::Base::getCoordinationBufferSize();
 
   // Registering token buffer as a local memory slot
-  auto producerCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
+  auto producerCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
   HiCR::L2::channel::Base::initializeCoordinationBuffer(producerCoordinationBufferSlot);
@@ -33,7 +30,7 @@ void producerFc(HiCR::L1::MemoryManager *memoryManager, const size_t channelCapa
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer = 0;
   auto sendBufferPtr = &sendBuffer;
-  auto sendSlot = memoryManager->registerLocalMemorySlot(*memSpaces.begin(), sendBufferPtr, sizeof(ELEMENT_TYPE));
+  auto sendSlot = memoryManager->registerLocalMemorySlot(bufferMemorySpace, sendBufferPtr, sizeof(ELEMENT_TYPE));
 
   // Pushing values to the channel, one by one, suspending when/if the channel is full
   for (size_t i = 0; i < MESSAGES_PER_PRODUCER; i++)
