@@ -12,6 +12,7 @@
 
 #include "gtest/gtest.h"
 #include <backends/sequential/L1/memoryManager.hpp>
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <limits>
 
@@ -28,14 +29,27 @@ TEST(MemoryManager, Construction)
 
 TEST(MemoryManager, Memory)
 {
-  backend::L1::MemoryManager b;
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Querying resources
-  EXPECT_NO_THROW(b.queryMemorySpaces());
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Obtaining memory spaces
+  auto memSpaces = d->getMemorySpaceList();
+
+  // Define the order of mem spaces for the telephone game
+  auto memSpaceOrder = std::vector<HiCR::L0::MemorySpace*>(memSpaces.begin(), memSpaces.end());
+
+  // Instantiating sequential backend's memory manager
+  HiCR::backend::sequential::L1::MemoryManager m;
 
   // Getting memory resource list (should be size 1)
-  std::set<HiCR::L0::MemorySpace*> mList;
-  EXPECT_NO_THROW(mList = b.getMemorySpaceList());
+  HiCR::L0::Device::memorySpaceList_t mList;
+  EXPECT_NO_THROW(mList = d->getMemorySpaceList());
   EXPECT_EQ(mList.size(), 1);
 
   // Getting memory resource
@@ -50,11 +64,11 @@ TEST(MemoryManager, Memory)
   EXPECT_GE(totalMem, testMemAllocSize);
 
   // Trying to allocate more than allowed
-  EXPECT_THROW(b.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
+  EXPECT_THROW(m.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
 
   // Allocating memory correctly now
   HiCR::L0::MemorySlot *s1 = NULL;
-  EXPECT_NO_THROW(s1 = b.allocateLocalMemorySlot(r, testMemAllocSize));
+  EXPECT_NO_THROW(s1 = m.allocateLocalMemorySlot(r, testMemAllocSize));
   EXPECT_EQ(s1->getSize(), testMemAllocSize);
 
   // Getting local pointer from allocation
@@ -64,7 +78,7 @@ TEST(MemoryManager, Memory)
 
   // Creating memory slot from a previous allocation
   HiCR::L0::MemorySlot *s2 = NULL;
-  EXPECT_NO_THROW(s2 = b.registerLocalMemorySlot(r, malloc(testMemAllocSize), testMemAllocSize));
+  EXPECT_NO_THROW(s2 = m.registerLocalMemorySlot(r, malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(s2->getSize(), testMemAllocSize);
 
   // Getting local pointer from allocation
@@ -77,10 +91,10 @@ TEST(MemoryManager, Memory)
   memcpy(s1LocalPtr, testMessage.data(), testMessage.size());
 
   // Copying message from one slot to the other
-  EXPECT_NO_THROW(b.memcpy(s2, 0, s1, 0, testMessage.size()));
+  EXPECT_NO_THROW(m.memcpy(s2, 0, s1, 0, testMessage.size()));
 
   // Force memcpy operation to finish
-  EXPECT_NO_THROW(b.fence(0));
+  EXPECT_NO_THROW(m.fence(0));
 
   // Making sure the message was received
   bool sameStrings = true;
@@ -89,6 +103,6 @@ TEST(MemoryManager, Memory)
   EXPECT_TRUE(sameStrings);
 
   // Freeing and reregistering memory slots
-  EXPECT_NO_THROW(b.freeLocalMemorySlot(s1));
-  EXPECT_NO_THROW(b.deregisterLocalMemorySlot(s2));
+  EXPECT_NO_THROW(m.freeLocalMemorySlot(s1));
+  EXPECT_NO_THROW(m.deregisterLocalMemorySlot(s2));
 }

@@ -11,6 +11,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 #include <hicr/L2/channel/spsc/consumer.hpp>
 #include <hicr/L2/channel/spsc/producer.hpp>
@@ -19,14 +20,20 @@
 
 TEST(ConsumerChannel, Construction)
 {
-  // Instantiating backend's memory manager
-  HiCR::backend::sequential::L1::MemoryManager backend;
+  // Instantiating backend
+  HiCR::backend::sequential::L1::MemoryManager m;
 
-  // Asking memory manager to check the available memory spaces
-  backend.queryMemorySpaces();
+// Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
 
   // Obtaining memory spaces
-  auto memSpaces = backend.getMemorySpaceList();
+  auto memSpaces = d->getMemorySpaceList();
 
   // Channel configuration
   const auto tokenSize = sizeof(size_t);
@@ -38,56 +45,62 @@ TEST(ConsumerChannel, Construction)
   auto consumerCoordinationBufferSize = HiCR::L2::channel::SPSC::Producer::getCoordinationBufferSize();
 
   // Allocating bad memory slots
-  auto badDataBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
-  auto badCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), consumerCoordinationBufferSize - 1);
+  auto badDataBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
+  auto badCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), consumerCoordinationBufferSize - 1);
 
   // Allocating correct memory slots
-  auto correctDataBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
-  auto correctCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), consumerCoordinationBufferSize);
-  auto producerCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), producerCoordinationBufferSize);
+  auto correctDataBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
+  auto correctCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), consumerCoordinationBufferSize);
+  auto producerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), producerCoordinationBufferSize);
 
   // Creating with incorrect parameters
-  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&backend, correctDataBuffer, correctCoordinationBuffer, producerCoordinationBuffer, 0, channelCapacity), HiCR::common::LogicException);
-  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&backend, correctDataBuffer, correctCoordinationBuffer, producerCoordinationBuffer, tokenSize, 0), HiCR::common::LogicException);
-  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&backend, badDataBuffer, correctCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
-  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&backend, correctDataBuffer, badCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
+  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&m, correctDataBuffer, correctCoordinationBuffer, producerCoordinationBuffer, 0, channelCapacity), HiCR::common::LogicException);
+  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&m, correctDataBuffer, correctCoordinationBuffer, producerCoordinationBuffer, tokenSize, 0), HiCR::common::LogicException);
+  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&m, badDataBuffer, correctCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
+  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&m, correctDataBuffer, badCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
 
   // Creating with correct parameters
-  EXPECT_NO_THROW(new HiCR::L2::channel::SPSC::Consumer(&backend, correctDataBuffer, correctCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity));
+  EXPECT_NO_THROW(new HiCR::L2::channel::SPSC::Consumer(&m, correctDataBuffer, correctCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity));
 }
 
 TEST(ConsumerChannel, PeekPop)
 {
   // Instantiating backend
-  HiCR::backend::sequential::L1::MemoryManager backend;
+  HiCR::backend::sequential::L1::MemoryManager m;
 
-  // Asking memory manager to check the available memory spaces
-  backend.queryMemorySpaces();
+// Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
 
   // Obtaining memory spaces
-  auto memSpaces = backend.getMemorySpaceList();
+  auto memSpaces = d->getMemorySpaceList();
 
   // Channel configuration
   const auto tokenSize = sizeof(size_t);
   const auto channelCapacity = 16;
 
   // Allocating correct memory slots
-  auto tokenBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
-  auto producerCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Producer::getCoordinationBufferSize());
-  auto consumerCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Consumer::getCoordinationBufferSize());
+  auto tokenBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
+  auto producerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Producer::getCoordinationBufferSize());
+  auto consumerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Consumer::getCoordinationBufferSize());
 
   // Initializing coordination buffer (sets to zero the counters)
   HiCR::L2::channel::SPSC::Producer::initializeCoordinationBuffer(producerCoordinationBuffer);
   HiCR::L2::channel::SPSC::Consumer::initializeCoordinationBuffer(consumerCoordinationBuffer);
 
   // Creating producer and Consumer channels
-  HiCR::L2::channel::SPSC::Producer producer(&backend, tokenBuffer, producerCoordinationBuffer, tokenSize, channelCapacity);
-  HiCR::L2::channel::SPSC::Consumer consumer(&backend, tokenBuffer, consumerCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::L2::channel::SPSC::Producer producer(&m, tokenBuffer, producerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::L2::channel::SPSC::Consumer consumer(&m, tokenBuffer, consumerCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
   auto sendBufferSize = sendBufferCapacity * tokenSize;
-  auto sendBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
+  auto sendBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
   // Attempting pop and peek
   EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
@@ -121,22 +134,28 @@ TEST(ConsumerChannel, PeekPop)
 TEST(ConsumerChannel, PeekWait)
 {
   // Instantiating backend
-  HiCR::backend::sequential::L1::MemoryManager backend;
+  HiCR::backend::sequential::L1::MemoryManager m;
 
-  // Asking memory manager to check the available memory spaces
-  backend.queryMemorySpaces();
+// Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
 
   // Obtaining memory spaces
-  auto memSpaces = backend.getMemorySpaceList();
+  auto memSpaces = d->getMemorySpaceList();
 
   // Channel configuration
   const auto tokenSize = sizeof(size_t);
   const auto channelCapacity = 1;
 
   // Allocating correct memory slots
-  auto tokenBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
-  auto producerCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Producer::getCoordinationBufferSize());
-  auto consumerCoordinationBuffer = backend.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Consumer::getCoordinationBufferSize());
+  auto tokenBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
+  auto producerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Producer::getCoordinationBufferSize());
+  auto consumerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::L2::channel::SPSC::Consumer::getCoordinationBufferSize());
 
   // Initializing coordination buffer (sets to zero the counters)
   HiCR::L2::channel::SPSC::Producer::initializeCoordinationBuffer(producerCoordinationBuffer);
@@ -146,8 +165,8 @@ TEST(ConsumerChannel, PeekWait)
   auto recvBuffer = (size_t *)tokenBuffer->getPointer();
 
   // Creating channel
-  HiCR::L2::channel::SPSC::Producer producer(&backend, tokenBuffer, producerCoordinationBuffer, tokenSize, channelCapacity);
-  HiCR::L2::channel::SPSC::Consumer consumer(&backend, tokenBuffer, consumerCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::L2::channel::SPSC::Producer producer(&m, tokenBuffer, producerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::L2::channel::SPSC::Consumer consumer(&m, tokenBuffer, consumerCoordinationBuffer, producerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Attempting to push more tokens than channel size (should throw exception)
   EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::common::LogicException);
@@ -187,7 +206,7 @@ TEST(ConsumerChannel, PeekWait)
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
   auto sendBufferSize = sendBufferCapacity * tokenSize;
-  auto sendBufferSlot = backend.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
+  auto sendBufferSlot = m.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
   auto sendBuffer = (size_t *)sendBufferSlot->getPointer();
   *sendBuffer = expectedValue;
 

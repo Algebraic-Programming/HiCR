@@ -1,4 +1,5 @@
 #include "include/telephoneGame.hpp"
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 
 #define BUFFER_SIZE 256
@@ -7,17 +8,23 @@
 
 int main(int argc, char **argv)
 {
-  // Instantiating Shared Memory backend
-  HiCR::backend::sequential::L1::MemoryManager m;
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Asking backend to check the available resources
-  m.queryMemorySpaces();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
 
   // Obtaining memory spaces
-  auto memSpaces = m.getMemorySpaceList();
+  auto memSpaces = d->getMemorySpaceList();
 
   // Define the order of mem spaces for the telephone game
   auto memSpaceOrder = std::vector<HiCR::L0::MemorySpace*>(memSpaces.begin(), memSpaces.end());
+
+  // Instantiating sequential backend's memory manager
+  HiCR::backend::sequential::L1::MemoryManager m;
 
   // Allocating memory slots in different NUMA domains
   auto input = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE); // First NUMA Domain

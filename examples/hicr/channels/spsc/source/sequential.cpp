@@ -1,6 +1,7 @@
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 #include <backends/sequential/L1/memoryManager.hpp>
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <thread>
 
 #define CONCURRENT_THREADS 2
@@ -27,12 +28,21 @@ int main(int argc, char **argv)
   // Instantiating backend
   HiCR::backend::sequential::L1::MemoryManager m(CONCURRENT_THREADS);
 
-  // Asking memory manager to check the available memory spaces
-  m.queryMemorySpaces();
+// Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Obtaining memory spaces
+  auto memSpaces = d->getMemorySpaceList();
 
   // Creating new threads (one for consumer, one for produer)
-  auto consumerThread = std::thread(consumerFc, &m, channelCapacity);
-  auto producerThread = std::thread(producerFc, &m, channelCapacity);
+  auto consumerThread = std::thread(consumerFc, &m, *memSpaces.begin(), channelCapacity);
+  auto producerThread = std::thread(producerFc, &m, *memSpaces.begin(), channelCapacity);
 
   // Waiting on threads
   consumerThread.join();

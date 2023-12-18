@@ -35,16 +35,30 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   public:
 
   /**
+   * This function returns the system physical memory size, which is what matters for a sequential program
+   *
+   * This is adapted from https://stackoverflow.com/a/2513561
+   *
+   * \return the system physical memory size
+   */
+  __USED__ inline static size_t getTotalSystemMemory()
+  {
+    size_t pages = sysconf(_SC_PHYS_PAGES);
+    size_t page_size = sysconf(_SC_PAGE_SIZE);
+    return pages * page_size;
+  }
+
+  /**
    * Constructor for the compute resource class of the sequential backend
    */
-  MemorySpace(const size_t size) : HiCR::L0::MemorySpace(size) {};
+  MemorySpace() : HiCR::L0::MemorySpace(getTotalSystemMemory()) {};
 
   /**
    * Default destructor
    */
   ~MemorySpace() = default;
 
-  __USED__ inline std::string getType() const override { return "System RAM"; }
+  __USED__ inline std::string getType() const override { return "Host RAM"; }
 };
 
 } // namespace L0

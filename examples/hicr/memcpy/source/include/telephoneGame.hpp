@@ -9,9 +9,6 @@
 
 void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L0::MemorySlot *input, std::vector<HiCR::L0::MemorySpace*> memSpaces, int memcpyInMemspace)
 {
-  // Asking Memory manager to check the available resources
-  m.queryMemorySpaces();
-
   // Collect the newly created memory slots
   auto memSlots = std::vector<HiCR::L0::MemorySlot *>{};
 

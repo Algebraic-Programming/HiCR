@@ -4,22 +4,19 @@
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L2/channel/spsc/consumer.hpp>
 
-void consumerFc(HiCR::L1::MemoryManager *memoryManager, const size_t channelCapacity)
+void consumerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L0::MemorySpace* bufferMemorySpace, const size_t channelCapacity)
 {
   // Getting required buffer sizes
   auto tokenBufferSize = HiCR::L2::channel::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
 
-  // Obtaining memory spaces
-  auto memSpaces = memoryManager->getMemorySpaceList();
-
   // Allocating token buffer as a local memory slot
-  auto tokenBufferSlot = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
+  auto tokenBufferSlot = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, tokenBufferSize);
 
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::L2::channel::Base::getCoordinationBufferSize();
 
   // Allocating coordination buffer as a local memory slot
-  auto consumerCoordinationBuffer = memoryManager->allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
+  auto consumerCoordinationBuffer = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
   HiCR::L2::channel::Base::initializeCoordinationBuffer(consumerCoordinationBuffer);

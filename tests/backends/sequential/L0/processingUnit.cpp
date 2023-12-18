@@ -14,6 +14,7 @@
 #include <backends/sequential/L0/computeResource.hpp>
 #include <backends/sequential/L0/processingUnit.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
+#include <backends/sequential/L1/deviceManager.hpp>
 
 namespace backend = HiCR::backend::sequential;
 
@@ -24,11 +25,17 @@ TEST(ProcessingUnit, Construction)
   // Initializing sequential backend
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
-  // Querying compute resources
-  computeManager.queryComputeResources();
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Getting compute resources
-  auto computeResources = computeManager.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(*computeResources.begin()));
   EXPECT_FALSE(p == nullptr);
@@ -37,15 +44,21 @@ TEST(ProcessingUnit, Construction)
 
 TEST(ProcessingUnit, LifeCycle)
 {
-    // Initializing sequential backend
+  // Initializing sequential backend
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
-  // Querying compute resources
-  computeManager.queryComputeResources();
+ // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Getting compute resources
-  auto computeResources = computeManager.getComputeResourceList();
- 
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
+
   // Getting first compute resource
   auto computeResource = *computeResources.begin(); 
 

@@ -1,5 +1,6 @@
-#include <backends/sequential/L1/computeManager.hpp>
 #include <cstdio>
+#include <backends/sequential/L1/computeManager.hpp>
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
 
@@ -7,14 +8,20 @@
 
 int main(int argc, char **argv)
 {
-  // Initializing Pthreads backend to run in parallel
+  // Initializing sequential backend
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
-  // Querying computational resources
-  computeManager.queryComputeResources();
+// Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
 
   // Updating the compute resource list
-  auto computeResources = computeManager.getComputeResourceList();
+  auto computeResources = d->getComputeResourceList();
 
   // Initializing taskr
   taskr::Runtime taskr;

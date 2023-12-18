@@ -17,7 +17,6 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <map>
-#include <set>
 
 namespace HiCR
 {
@@ -36,11 +35,6 @@ namespace L1
 class MemoryManager
 {
   public:
-
-  /**
-   * Common definition of a collection of memory spaces
-   */
-  typedef parallelHashSet_t<L0::MemorySpace*> memorySpaceList_t;
 
   /**
    * Common definition of a map that links key ids with memory slot id arrays (for global exchange)
@@ -66,37 +60,6 @@ class MemoryManager
    * Default destructor
    */
   virtual ~MemoryManager() = default;
-
-  /**
-   * This function prompts the backend to perform the necessary steps to discover and list the memory spaces provided by the library which it supports.
-   *
-   * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
-   *
-   * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
-   */
-  __USED__ inline void queryMemorySpaces()
-  {
-    // Clearing existing memory space entries
-    _memorySpaceList.clear();
-
-    // Calling backend-internal implementation
-    _memorySpaceList = queryMemorySpacesImpl();
-  }
-
-  /**
-   * This function returns the list of queried memory spaces, as visible by the backend.
-   *
-   * If this function is called before queryResources, then it will return an empty container.
-   *
-   * @return The list of memory spaces, as detected the last time \a queryResources was executed.
-   */
-  __USED__ inline const std::set<L0::MemorySpace*> getMemorySpaceList()
-  {
-    // Getting value by copy
-    const std::set<L0::MemorySpace*> list(_memorySpaceList.begin(), _memorySpaceList.end());
-
-    return list;
-  }
 
   /**
    * Allocates a local memory slot in the specified memory space
@@ -411,13 +374,6 @@ class MemoryManager
   }
 
   /**
-   * Backend-internal implementation of the queryMemorySpaces function
-   *
-   * @return A list of memory spaces
-   */
-  virtual memorySpaceList_t queryMemorySpacesImpl() = 0;
-
-  /**
    * Backend-internal implementation of the queryLocalMemorySlot function
    *
    * \param[in] memorySpace Memory space to allocate memory in
@@ -507,13 +463,6 @@ class MemoryManager
    * Storage for global tag/key associated global memory slot exchange
    */
   globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
-
-  private:
-
-  /**
-   * The internal container for the queried memory spaces.
-   */
-  memorySpaceList_t _memorySpaceList;
 };
 
 } // namespace L1

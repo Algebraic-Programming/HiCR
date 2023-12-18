@@ -11,6 +11,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
 #include <hicr/L2/tasking/task.hpp>
 
@@ -69,11 +70,17 @@ TEST(Task, Run)
   // Creating task
   t = new HiCR::L2::tasking::Task(u);
 
-  // Querying compute resources
-  m.queryComputeResources();
+ // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Creating processing unit from the compute resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
@@ -150,11 +157,17 @@ TEST(Task, Events)
   // Creating task
   t = new HiCR::L2::tasking::Task(u);
 
-  // Querying compute resources
-  m.queryComputeResources();
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Creating processing unit from the compute resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());

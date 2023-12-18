@@ -57,18 +57,6 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 
   private:
 
-  /**
-   * Sequential backend implementation that returns a single compute element.
-   */
-  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
-  {
-    // Only a single processing unit is created
-    auto hostCPU = new sequential::L0::ComputeResource();
-
-    // Returning list
-    return computeResourceList_t({hostCPU});
-  }
-
   __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource* resource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(resource);

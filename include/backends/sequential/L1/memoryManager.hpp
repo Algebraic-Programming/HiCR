@@ -46,30 +46,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   MemoryManager(const size_t fenceCount = 1) : HiCR::L1::MemoryManager(), _fenceCount{fenceCount} {}
   ~MemoryManager() = default;
 
-  /**
-   * This function returns the system physical memory size, which is what matters for a sequential program
-   *
-   * This is adapted from https://stackoverflow.com/a/2513561
-   *
-   * \return the system physical memory size
-   */
-  __USED__ inline static size_t getTotalSystemMemory()
-  {
-    size_t pages = sysconf(_SC_PHYS_PAGES);
-    size_t page_size = sysconf(_SC_PAGE_SIZE);
-    return pages * page_size;
-  }
-
   private:
-
-  /**
-   * Sequential backend implementation that returns a single memory space representing the entire RAM host memory.
-   */
-  __USED__ inline memorySpaceList_t queryMemorySpacesImpl() override
-  {
-    // Only a single memory space is created
-    return memorySpaceList_t( { new sequential::L0::MemorySpace(getTotalSystemMemory()) } ); 
-  }
 
   /**
    * Queries the backend to update the internal state of the memory slot.

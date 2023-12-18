@@ -1,8 +1,18 @@
 #include <backends/sequential/L1/computeManager.hpp>
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <stdio.h>
 
 int main(int argc, char **argv)
 {
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
   // Initializing sequential backend
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
@@ -11,11 +21,8 @@ int main(int argc, char **argv)
   // Creating execution unit
   auto executionUnit = computeManager.createExecutionUnit(fcLambda);
 
-  // Querying compute resources
-  computeManager.queryComputeResources();
-
   // Getting compute resources
-  auto computeResources = computeManager.getComputeResourceList();
+  auto computeResources = d->getComputeResourceList();
 
   // Creating processing unit from the compute resource
   auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
