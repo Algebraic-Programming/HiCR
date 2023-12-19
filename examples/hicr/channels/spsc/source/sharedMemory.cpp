@@ -1,6 +1,7 @@
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 #include <backends/sharedMemory/L1/memoryManager.hpp>
+#include <backends/sharedMemory/L1/communicationManager.hpp>
 #include <backends/sharedMemory/L1/deviceManager.hpp>
 #include <thread>
 
@@ -32,7 +33,10 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Instantiating Shared Memory backend
-  HiCR::backend::sharedMemory::L1::MemoryManager m(&topology, CONCURRENT_THREADS);
+  HiCR::backend::sharedMemory::L1::MemoryManager m(&topology);
+
+  // Instantiating shared memory backend's communication manager
+  HiCR::backend::sharedMemory::L1::CommunicationManager c(CONCURRENT_THREADS);
 
 // Initializing Sequential backend's device manager
   HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
@@ -47,8 +51,8 @@ int main(int argc, char **argv)
   auto memSpaces = d->getMemorySpaceList();
 
   // Creating new threads (one for consumer, one for produer)
-  auto consumerThread = std::thread(consumerFc, &m, *memSpaces.begin(), channelCapacity);
-  auto producerThread = std::thread(producerFc, &m, *memSpaces.begin(), channelCapacity);
+  auto consumerThread = std::thread(consumerFc, &m, &c, *memSpaces.begin(), channelCapacity);
+  auto producerThread = std::thread(producerFc, &m, &c, *memSpaces.begin(), channelCapacity);
 
   // Waiting on threads
   consumerThread.join();

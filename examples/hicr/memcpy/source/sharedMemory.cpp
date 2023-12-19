@@ -1,5 +1,6 @@
 #include "include/telephoneGame.hpp"
 #include <backends/sharedMemory/L1/memoryManager.hpp>
+#include <backends/sharedMemory/L1/communicationManager.hpp>
 #include <backends/sharedMemory/L1/deviceManager.hpp>
 
 int main(int argc, char **argv)
@@ -13,6 +14,12 @@ int main(int argc, char **argv)
   // Initializing backend's device manager
   HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
 
+  // Instantiating shared memory backend's memory manager
+  HiCR::backend::sharedMemory::L1::MemoryManager m(&topology);
+
+  // Instantiating shared memory backend's communication manager
+  HiCR::backend::sharedMemory::L1::CommunicationManager c;
+
   // Asking backend to check the available devices
   dm.queryDevices();
 
@@ -25,9 +32,6 @@ int main(int argc, char **argv)
   // Define the order of mem spaces for the telephone game
   auto memSpaceOrder = std::vector<HiCR::L0::MemorySpace*>(memSpaces.begin(), memSpaces.end());
 
-  // Instantiating sequential backend's memory manager
-  HiCR::backend::sharedMemory::L1::MemoryManager m(&topology);
-
   // Allocating memory slots in different NUMA domains
   auto input = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE); // First NUMA Domain
 
@@ -35,7 +39,7 @@ int main(int argc, char **argv)
   sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 
   // Run the telephone game
-  telephoneGame(m, input, memSpaceOrder, ITERATIONS);
+  telephoneGame(m, c, input, memSpaceOrder, ITERATIONS);
 
   // Free input memory slot
   m.freeLocalMemorySlot(input);
