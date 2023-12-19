@@ -44,7 +44,7 @@ class Consumer final : public L2::channel::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] memoryManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
@@ -54,12 +54,12 @@ class Consumer final : public L2::channel::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::MemoryManager *memoryManager,
+  Consumer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
            L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(memoryManager, consumerCoordinationBuffer, tokenSize, capacity),
+           const size_t capacity) : L2::channel::Base(communicationManager, consumerCoordinationBuffer, tokenSize, capacity),
            _tokenBuffer(tokenBuffer),
            _producerCoordinationBuffer(producerCoordinationBuffer)
 
@@ -142,10 +142,10 @@ class Consumer final : public L2::channel::Base
     _circularBuffer->advanceTail(n);
 
     // Notifying producer(s) of buffer liberation
-    _memoryManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer->getSourceLocalMemorySlot(), _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE));
+    _communicationManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer->getSourceLocalMemorySlot(), _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
 
     // Re-syncing coordination buffer
-    _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
+    _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
   }
 
   /**
@@ -165,7 +165,7 @@ class Consumer final : public L2::channel::Base
   __USED__ inline void checkReceivedTokens()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
+    _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count
     auto receivedTokenCount = _tokenBuffer->getMessagesRecv();

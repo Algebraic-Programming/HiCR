@@ -15,7 +15,7 @@
 
 #include <memory>
 #include <hicr/L0/globalMemorySlot.hpp>
-#include <hicr/L1/memoryManager.hpp>
+#include <hicr/L1/communicationManager.hpp>
 #include <hicr/common/circularBuffer.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -23,12 +23,12 @@
 /**
  * Establishes how many elements are required in the base coordination buffer
  */
-#define _HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_COUNT 2
+#define _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT 2
 
 /**
  * Establishes how the type of elements required in the base coordination buffer
  */
-#define _HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE size_t
+#define _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE size_t
 
 /**
  * Establishes the value index for the head advance count
@@ -80,7 +80,7 @@ class Base
    */
   __USED__ static inline size_t getCoordinationBufferSize() noexcept
   {
-    return _HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_COUNT * sizeof(_HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE);
+    return _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
   }
 
   /**
@@ -170,7 +170,7 @@ class Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] memoryManager The backend's memory manager to facilitate communication between the producer and consumer sides
+   * \param[in] communicationManager The backend's memory manager to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the data exchange buffer. This buffer needs to be allocated
    *            at the consumer side. The producer will push new tokens into this buffer, while there is enough space.
    *            This buffer should be big enough to hold the required capacity * tokenSize.
@@ -185,10 +185,10 @@ class Base
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(L1::MemoryManager *memoryManager,
+  Base(L1::CommunicationManager *communicationManager,
        L0::GlobalMemorySlot  *const coordinationBuffer,
        const size_t tokenSize,
-       const size_t capacity) :  _memoryManager(memoryManager),
+       const size_t capacity) :  _communicationManager(communicationManager),
                                 _coordinationBuffer(coordinationBuffer),
                                 _tokenSize(tokenSize)
   {
@@ -205,8 +205,8 @@ class Base
 
     // Creating internal circular buffer
     _circularBuffer = std::make_unique<common::CircularBuffer>(capacity, 
-         (((_HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE *)coordinationBuffer->getSourceLocalMemorySlot()->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
-         (((_HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE *)coordinationBuffer->getSourceLocalMemorySlot()->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
+         (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getSourceLocalMemorySlot()->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
+         (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getSourceLocalMemorySlot()->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
   }
 
   virtual ~Base() = default;
@@ -216,7 +216,7 @@ class Base
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  L1::MemoryManager *const _memoryManager;
+  L1::CommunicationManager *const _communicationManager;
 
   /**
    * Local storage of coordination metadata

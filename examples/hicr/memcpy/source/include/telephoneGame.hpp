@@ -1,6 +1,7 @@
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
+#include <hicr/L1/communicationManager.hpp>
 #include <vector>
 
 #define BUFFER_SIZE 256
@@ -8,7 +9,7 @@
 #define DST_OFFSET 0
 #define SRC_OFFSET 0
 
-void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L0::LocalMemorySlot *input, std::vector<HiCR::L0::MemorySpace*> memSpaces, int iterations)
+void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L1::CommunicationManager &c, HiCR::L0::LocalMemorySlot *input, std::vector<HiCR::L0::MemorySpace*> memSpaces, int iterations)
 {
   // Collect the newly created memory slots
   auto memSlots = std::vector<HiCR::L0::LocalMemorySlot *>{};
@@ -24,10 +25,10 @@ void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L0::LocalMemorySlot *input,
   // Perform the memcpy operations
   for (const auto dstMemSlot : memSlots)
   {
-    m.memcpy(dstMemSlot, DST_OFFSET, srcMemSlot, SRC_OFFSET, BUFFER_SIZE);
+    c.memcpy(dstMemSlot, DST_OFFSET, srcMemSlot, SRC_OFFSET, BUFFER_SIZE);
 
     // fence when the memcpy happens between two different memory spaces
-    m.fence(0);
+    c.fence(0);
 
     // update source memory slot
     srcMemSlot = dstMemSlot;

@@ -44,7 +44,7 @@ class Consumer final : public L2::channel::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] memoryManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
@@ -52,11 +52,11 @@ class Consumer final : public L2::channel::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::MemoryManager *memoryManager,
+  Consumer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
            L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(memoryManager, consumerCoordinationBuffer, tokenSize, capacity)
+           const size_t capacity) : L2::channel::Base(communicationManager, consumerCoordinationBuffer, tokenSize, capacity)
   {
   }
   ~Consumer() = default;
@@ -93,7 +93,7 @@ class Consumer final : public L2::channel::Base
     ssize_t bufferPos = -1;
 
     // Obtaining coordination buffer slot lock
-    if (_memoryManager->acquireGlobalLock(_coordinationBuffer) == false) return bufferPos;
+    if (_communicationManager->acquireGlobalLock(_coordinationBuffer) == false) return bufferPos;
 
     // Calculating current channel depth
     const auto curDepth = getDepth();
@@ -102,7 +102,7 @@ class Consumer final : public L2::channel::Base
     if (pos < curDepth) bufferPos = (_circularBuffer->getTailPosition() + pos) % _circularBuffer->getCapacity();
 
     // Releasing coordination buffer slot lock
-    _memoryManager->releaseGlobalLock(_coordinationBuffer);
+    _communicationManager->releaseGlobalLock(_coordinationBuffer);
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -130,7 +130,7 @@ class Consumer final : public L2::channel::Base
     bool successFlag = false;
 
     // Obtaining coordination buffer slot lock
-    if (_memoryManager->acquireGlobalLock(_coordinationBuffer) == false) return successFlag;
+    if (_communicationManager->acquireGlobalLock(_coordinationBuffer) == false) return successFlag;
 
     // If the exchange buffer does not have n tokens pushed, reject operation, otherwise succeed
     if (n <= getDepth())
@@ -143,7 +143,7 @@ class Consumer final : public L2::channel::Base
     }
 
     // Releasing coordination buffer slot lock
-    _memoryManager->releaseGlobalLock(_coordinationBuffer);
+    _communicationManager->releaseGlobalLock(_coordinationBuffer);
 
     // Operation was successful
     return successFlag;

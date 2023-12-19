@@ -12,6 +12,7 @@
 
 #include "gtest/gtest.h"
 #include <backends/sequential/L1/memoryManager.hpp>
+#include <backends/sequential/L1/communicationManager.hpp>
 #include <backends/sequential/L1/deviceManager.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <limits>
@@ -46,6 +47,9 @@ TEST(MemoryManager, Memory)
 
   // Instantiating sequential backend's memory manager
   HiCR::backend::sequential::L1::MemoryManager m;
+
+    // Instantiating sequential backend's communication manager
+  HiCR::backend::sequential::L1::CommunicationManager c;
 
   // Getting memory resource list (should be size 1)
   HiCR::L0::Device::memorySpaceList_t mList;
@@ -91,10 +95,10 @@ TEST(MemoryManager, Memory)
   memcpy(s1LocalPtr, testMessage.data(), testMessage.size());
 
   // Copying message from one slot to the other
-  EXPECT_NO_THROW(m.memcpy(s2, 0, s1, 0, testMessage.size()));
+  EXPECT_NO_THROW(c.memcpy(s2, 0, s1, 0, testMessage.size()));
 
   // Force memcpy operation to finish
-  EXPECT_NO_THROW(m.fence(0));
+  EXPECT_NO_THROW(c.fence(0));
 
   // Making sure the message was received
   bool sameStrings = true;
