@@ -16,23 +16,24 @@ void consumerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L0::MemorySpace* b
   auto coordinationBufferSize = HiCR::L2::channel::Base::getCoordinationBufferSize();
 
   // Allocating coordination buffer as a local memory slot
-  auto consumerCoordinationBuffer = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+  auto localConsumerCoordinationBuffer = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
-  HiCR::L2::channel::Base::initializeCoordinationBuffer(consumerCoordinationBuffer);
+  HiCR::L2::channel::Base::initializeCoordinationBuffer(localConsumerCoordinationBuffer); 
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBufferSlot}});
+  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBufferSlot}, {CONSUMER_COORDINATION_BUFFER_KEY, localConsumerCoordinationBuffer}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   memoryManager->fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
   auto globalTokenBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
-  auto producerCoordinationBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto globalProducerCoordinationBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto globalConsumerCoordinationBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto consumer = HiCR::L2::channel::SPSC::Consumer(memoryManager, globalTokenBuffer, consumerCoordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto consumer = HiCR::L2::channel::SPSC::Consumer(memoryManager, globalTokenBuffer, globalConsumerCoordinationBuffer, globalProducerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Getting a single value from the channel
   while (consumer.isEmpty()) consumer.updateDepth();
@@ -54,8 +55,10 @@ void consumerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L0::MemorySpace* b
 
   // De-registering global slots
   memoryManager->deregisterGlobalMemorySlot(globalTokenBuffer);
-  memoryManager->deregisterGlobalMemorySlot(producerCoordinationBuffer);
+  memoryManager->deregisterGlobalMemorySlot(globalConsumerCoordinationBuffer);
+  memoryManager->deregisterGlobalMemorySlot(globalProducerCoordinationBuffer);
 
   // Freeing up local memory
   memoryManager->freeLocalMemorySlot(tokenBufferSlot);
+  memoryManager->freeLocalMemorySlot(localConsumerCoordinationBuffer);
 }

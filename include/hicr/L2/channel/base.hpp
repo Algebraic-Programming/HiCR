@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <memory>
 #include <hicr/L0/globalMemorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/common/circularBuffer.hpp>
@@ -22,12 +23,12 @@
 /**
  * Establishes how many elements are required in the base coordination buffer
  */
-#define _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT 2
+#define _HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_COUNT 2
 
 /**
  * Establishes how the type of elements required in the base coordination buffer
  */
-#define _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE size_t
+#define _HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE size_t
 
 /**
  * Establishes the value index for the head advance count
@@ -51,7 +52,7 @@ namespace channel
 /**
  * Base class definition for a HiCR Multiple-Producer Single-Consumer Channel
  */
-class Base : public common::CircularBuffer
+class Base
 {
   public:
 
@@ -79,7 +80,7 @@ class Base : public common::CircularBuffer
    */
   __USED__ static inline size_t getCoordinationBufferSize() noexcept
   {
-    return _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
+    return _HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_COUNT * sizeof(_HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE);
   }
 
   /**
@@ -115,6 +116,53 @@ class Base : public common::CircularBuffer
     return tokenSize * capacity;
   }
 
+    /**
+   * Returns the current channel depth.
+   *
+   * If the current channel is a consumer, it corresponds to how many tokens
+   * may yet be consumed. If the current channel is a producer, it corresponds
+   * the channel capacity minus the returned value equals how many tokens may
+   * still be pushed.
+   *
+   * \note This is not a thread-safe call
+   *
+   * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
+   *
+   * @returns The number of tokens in this channel.
+   *
+   * This function when called on a valid channel instance will never fail.
+   */
+  __USED__ inline size_t getDepth() const noexcept
+  {
+    return _circularBuffer->getDepth();
+  }
+
+  /**
+   * This function can be used to quickly check whether the channel is full.
+   *
+   * It affects the internal state of the channel because it detects any updates in the internal state of the buffers
+   *
+   * \returns true, if the buffer is full
+   * \returns false, if the buffer is not full
+   */
+  __USED__ inline bool isFull() const noexcept
+  {
+    return _circularBuffer->isFull();
+  }
+
+  /**
+   * This function can be used to quickly check whether the channel is empty.
+   *
+   * It does not affects the internal state of the channel
+   *
+   * \returns true, if the buffer is empty
+   * \returns false, if the buffer is not empty
+   */
+  __USED__ inline bool isEmpty() const noexcept
+  {
+    return _circularBuffer->isEmpty();
+  }
+
   protected:
 
   /**
@@ -138,22 +186,27 @@ class Base : public common::CircularBuffer
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
   Base(L1::MemoryManager *memoryManager,
-       L0::LocalMemorySlot  *const localCoordinationBuffer,
+       L0::GlobalMemorySlot  *const coordinationBuffer,
        const size_t tokenSize,
-       const size_t capacity) : common::CircularBuffer(capacity,
-                                                       ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)localCoordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX,
-                                                       ((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)localCoordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX),
-                                _memoryManager(memoryManager),
-                                _localCoordinationBuffer(localCoordinationBuffer),
+       const size_t capacity) :  _memoryManager(memoryManager),
+                                _coordinationBuffer(coordinationBuffer),
                                 _tokenSize(tokenSize)
   {
-    if (_tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
-    if (_capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
+    if (tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
+    if (capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
+
+    // Checking whether the coordination buffer passed is acually local to this side of the channel
+    if (coordinationBuffer->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed coordination slot was not created locally (it must be in order to be used internally by the channel implementation)\n");
 
     // Checking that the provided coordination buffers have the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
-    auto providedCoordinationBufferSize = _localCoordinationBuffer->getSize();
+    auto providedCoordinationBufferSize = _coordinationBuffer->getSourceLocalMemorySlot()->getSize();
     if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a local coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
+
+    // Creating internal circular buffer
+    _circularBuffer = std::make_unique<common::CircularBuffer>(capacity, 
+         (((_HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE *)coordinationBuffer->getSourceLocalMemorySlot()->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
+         (((_HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE *)coordinationBuffer->getSourceLocalMemorySlot()->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
   }
 
   virtual ~Base() = default;
@@ -168,12 +221,17 @@ class Base : public common::CircularBuffer
   /**
    * Local storage of coordination metadata
    */
-  L0::LocalMemorySlot *const _localCoordinationBuffer;
+  L0::GlobalMemorySlot *const _coordinationBuffer;
 
   /**
    * Token size
    */
   const size_t _tokenSize;
+
+  /*
+  * Internal channel (logical) circular buffer
+  */
+  std::unique_ptr<common::CircularBuffer> _circularBuffer;
 };
 
 } // namespace channel

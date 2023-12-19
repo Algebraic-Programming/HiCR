@@ -56,7 +56,7 @@ class Consumer final : public L2::channel::Base
    */
   Consumer(L1::MemoryManager *memoryManager,
            L0::GlobalMemorySlot *const tokenBuffer,
-           L0::LocalMemorySlot  *const consumerCoordinationBuffer,
+           L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity) : L2::channel::Base(memoryManager, consumerCoordinationBuffer, tokenSize, capacity),
@@ -68,7 +68,7 @@ class Consumer final : public L2::channel::Base
     if (tokenBuffer->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed coordination slot was not created locally (it must be to be used internally by the channel implementation)\n");
 
     // Checking that the provided token exchange  buffer has the right size
-    auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, _capacity);
+    auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, capacity);
     auto providedTokenBufferSize = tokenBuffer->getSourceLocalMemorySlot()->getSize();
     if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
   }
@@ -100,16 +100,16 @@ class Consumer final : public L2::channel::Base
   __USED__ inline size_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, getCapacity());
+    if (pos >= _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBuffer->getCapacity());
 
     // Updating channel depth
     checkReceivedTokens();
 
     // Check if there are enough tokens in the buffer to satisfy the request
-    if (pos >= getDepth()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, getDepth());
+    if (pos >= _circularBuffer->getDepth()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, _circularBuffer->getDepth());
 
     // Calculating buffer position
-    const size_t bufferPos = (getTailPosition() + pos) % getCapacity();
+    const size_t bufferPos = (_circularBuffer->getTailPosition() + pos) % _circularBuffer->getCapacity();
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -130,19 +130,19 @@ class Consumer final : public L2::channel::Base
    */
   __USED__ inline void pop(const size_t n = 1)
   {
-    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
+    if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
 
     // Updating channel depth
     checkReceivedTokens();
 
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (n > getDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, getDepth());
+    if (n > _circularBuffer->getDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _circularBuffer->getDepth());
 
     // Advancing tail (removes elements from the circular buffer)
-    advanceTail(n);
+    _circularBuffer->advanceTail(n);
 
     // Notifying producer(s) of buffer liberation
-    _memoryManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _localCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+    _memoryManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer->getSourceLocalMemorySlot(), _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_circularBuffer_ELEMENT_TYPE));
 
     // Re-syncing coordination buffer
     _memoryManager->queryMemorySlotUpdates(_tokenBuffer);
@@ -171,7 +171,7 @@ class Consumer final : public L2::channel::Base
     auto receivedTokenCount = _tokenBuffer->getMessagesRecv();
 
     // We advance the head locally as many times as newly received tokens
-    setHead(receivedTokenCount);
+    _circularBuffer->setHead(receivedTokenCount);
   }
 
   HiCR::L0::GlobalMemorySlot* const _tokenBuffer;

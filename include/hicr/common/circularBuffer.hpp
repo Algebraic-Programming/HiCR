@@ -59,7 +59,7 @@ class CircularBuffer
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
-   * This function when called on a valid channel instance will never fail.
+   * This function when called on a valid circular buffer instance will never fail.
    */
   __USED__ inline size_t getHeadPosition() const noexcept
   {
@@ -75,7 +75,7 @@ class CircularBuffer
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
-   * This function when called on a valid channel instance will never fail.
+   * This function when called on a valid circular buffer instance will never fail.
    */
   __USED__ inline size_t getTailPosition() const noexcept
   {
@@ -97,7 +97,7 @@ class CircularBuffer
     const auto newDepth = curDepth + n;
 
     // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", curDepth, n, newDepth, _capacity);
+    if (newDepth > _capacity) HICR_THROW_FATAL("New buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", curDepth, n, newDepth, _capacity);
 
     // Advance head
     *_headAdvanceCounter = *_headAdvanceCounter + n;
@@ -115,18 +115,18 @@ class CircularBuffer
     const auto curDepth = getDepth();
 
     // Sanity check
-    if (n > curDepth) HICR_THROW_FATAL("Channel's circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", curDepth, n);
+    if (n > curDepth) HICR_THROW_FATAL("Circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", curDepth, n);
 
     // Advance tail
     *_tailAdvanceCounter = *_tailAdvanceCounter + n;
   }
 
   /**
-   * @returns The capacity of the channel.
+   * @returns The capacity of the circular buffer.
    *
    * This is a one-sided blocking call that need not be made collectively.
    *
-   * This function when called on a valid channel instance will never fail.
+   * This function when called on a valid circular buffer instance will never fail.
    */
   __USED__ inline size_t getCapacity() const noexcept
   {
@@ -134,20 +134,15 @@ class CircularBuffer
   }
 
   /**
-   * Returns the current channel depth.
-   *
-   * If the current channel is a consumer, it corresponds to how many tokens
-   * may yet be consumed. If the current channel is a producer, it corresponds
-   * the channel capacity minus the returned value equals how many tokens may
-   * still be pushed.
+   * Returns the current circular buffer depth.
    *
    * \note This is not a thread-safe call
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
-   * @returns The number of tokens in this channel.
+   * @returns The number of tokens in this circular buffer.
    *
-   * This function when called on a valid channel instance will never fail.
+   * This function when called on a valid circular buffer instance will never fail.
    */
   __USED__ inline size_t getDepth() const noexcept
   {
@@ -155,9 +150,9 @@ class CircularBuffer
   }
 
   /**
-   * This function can be used to quickly check whether the channel is full.
+   * This function can be used to quickly check whether the circular buffer is full.
    *
-   * It affects the internal state of the channel because it detects any updates in the internal state of the buffers
+   * It affects the internal state of the circular buffer because it detects any updates in the internal state of the buffers
    *
    * \returns true, if the buffer is full
    * \returns false, if the buffer is not full
@@ -168,9 +163,9 @@ class CircularBuffer
   }
 
   /**
-   * This function can be used to quickly check whether the channel is empty.
+   * This function can be used to quickly check whether the circular buffer is empty.
    *
-   * It does not affects the internal state of the channel
+   * It does not affects the internal state of the circular buffer
    *
    * \returns true, if the buffer is empty
    * \returns false, if the buffer is not empty
@@ -180,12 +175,10 @@ class CircularBuffer
     return *_headAdvanceCounter == *_tailAdvanceCounter;
   }
 
-  protected:
-
   /**
    * Forces the head advance counter into a specific absolute value
    *
-   * @param[in] headAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the channel has negative depth
+   * @param[in] headAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the circular buffer has negative depth
    */
   __USED__ inline void setHead(const size_t headAdvanceCounter)
   {
@@ -196,7 +189,7 @@ class CircularBuffer
     const auto newDepth = calculateDepth(headAdvanceCounter, *_tailAdvanceCounter);
 
     // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (%lu) exceeded capacity (%lu) on setHead. This is probably a bug in HiCR.\n", newDepth, _capacity);
+    if (newDepth > _capacity) HICR_THROW_FATAL("Circular new buffer depth (%lu) exceeded capacity (%lu) on setHead. This is probably a bug in HiCR.\n", newDepth, _capacity);
 
     // Setting head
     *_headAdvanceCounter = headAdvanceCounter;
@@ -205,7 +198,7 @@ class CircularBuffer
   /**
    * Forces the tail advance counter into a specific absolute value
    *
-   * @param[in] tailAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the channel has negative depth
+   * @param[in] tailAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the circular buffer has negative depth
    */
   __USED__ inline void setTail(const size_t tailAdvanceCounter)
   {
@@ -216,12 +209,14 @@ class CircularBuffer
     const auto newDepth = calculateDepth(*_headAdvanceCounter, tailAdvanceCounter);
 
     // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Channel's circular new buffer depth (%lu) exceeded capacity (%lu) on setTail. This is probably a bug in HiCR.\n", newDepth, _capacity);
+    if (newDepth > _capacity) HICR_THROW_FATAL("Circular buffer new buffer depth (%lu) exceeded capacity (%lu) on setTail. This is probably a bug in HiCR.\n", newDepth, _capacity);
 
     // Setting head
     *_tailAdvanceCounter = tailAdvanceCounter;
   }
 
+  private:
+  
   /**
    * How many tokens fit in the buffer
    */

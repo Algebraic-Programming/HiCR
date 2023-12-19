@@ -53,13 +53,13 @@ class Producer final : public L2::channel::Base
    */
   Producer(L1::MemoryManager *memoryManager,
            L0::GlobalMemorySlot *const tokenBuffer,
-           L0::LocalMemorySlot  *const localProducerCoordinationBuffer,
-           L0::GlobalMemorySlot *const globalProducerCoordinationBuffer,
+           L0::GlobalMemorySlot *const consumerCoordinationBuffer,
+           L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity)
-       : L2::channel::Base(memoryManager, localProducerCoordinationBuffer, tokenSize, capacity),
+       : L2::channel::Base(memoryManager, producerCoordinationBuffer, tokenSize, capacity),
        _tokenBuffer(tokenBuffer),
-       _globalProducerCoordinationBuffer(globalProducerCoordinationBuffer) {  } 
+       _producerCoordinationBuffer(producerCoordinationBuffer) {  } 
 
   ~Producer() = default;
 
@@ -91,16 +91,16 @@ class Producer final : public L2::channel::Base
     updateDepth();
 
     // Calculating current channel depth
-    auto curDepth = getDepth();
+    auto curDepth = _circularBuffer->getDepth();
 
     // If the exchange buffer does not have n free slots, reject the operation
-    if (curDepth + n > getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, getCapacity());
+    if (curDepth + n > _circularBuffer->getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, _circularBuffer->getCapacity());
 
     // Copying with source increasing offset per token
-    for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+    for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
     // Advance head, as we have added new elements
-    advanceHead(n);
+    _circularBuffer->advanceHead(n);
 
     // Adding flush operation to ensure buffers are ready for re-use
     _memoryManager->flush();
@@ -112,7 +112,7 @@ class Producer final : public L2::channel::Base
   __USED__ inline void updateDepth()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _memoryManager->queryMemorySlotUpdates(_globalProducerCoordinationBuffer);
+    _memoryManager->queryMemorySlotUpdates(_producerCoordinationBuffer);
   }
 
   private:
@@ -125,7 +125,7 @@ class Producer final : public L2::channel::Base
   /*
   * Global Memory slot pointing to the producer's own coordination buffer
   */
-  L0::GlobalMemorySlot *const _globalProducerCoordinationBuffer;
+  L0::GlobalMemorySlot *const _producerCoordinationBuffer;
 };
 
 } // namespace SPSC

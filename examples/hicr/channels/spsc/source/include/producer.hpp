@@ -24,9 +24,10 @@ void producerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L0::MemorySpace* b
   // Obtaining the globally exchanged memory slots
   auto tokenBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto globalProducerCoordinationBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto globalConsumerCoordinationBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto producer = HiCR::L2::channel::SPSC::Producer(memoryManager, tokenBuffer, producerCoordinationBuffer, globalProducerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto producer = HiCR::L2::channel::SPSC::Producer(memoryManager, tokenBuffer, globalConsumerCoordinationBuffer, globalProducerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer = 0;
@@ -60,6 +61,7 @@ void producerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L0::MemorySpace* b
   // De-registering global slots
   memoryManager->deregisterGlobalMemorySlot(tokenBuffer);
   memoryManager->deregisterGlobalMemorySlot(globalProducerCoordinationBuffer);
+  memoryManager->deregisterGlobalMemorySlot(globalConsumerCoordinationBuffer);
 
   // Freeing up local memory
   memoryManager->freeLocalMemorySlot(producerCoordinationBuffer);
