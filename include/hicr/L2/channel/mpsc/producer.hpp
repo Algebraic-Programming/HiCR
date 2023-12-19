@@ -54,11 +54,12 @@ class Producer final : public L2::channel::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Producer(L1::MemoryManager *memoryManager,
-           L0::MemorySlot *const tokenBuffer,
-           L0::MemorySlot *const producerCoordinationBuffer,
-           L0::MemorySlot *const consumerCoordinationBuffer,
+           L0::GlobalMemorySlot *const tokenBuffer,
+           L0::GlobalMemorySlot *const consumerCoordinationBuffer,
+           L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(memoryManager, tokenBuffer, producerCoordinationBuffer, tokenSize, capacity),
+           const size_t capacity) : L2::channel::Base(memoryManager, producerCoordinationBuffer, tokenSize, capacity),
+                                    _tokenBuffer(tokenBuffer),
                                     _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {
   }
@@ -82,18 +83,21 @@ class Producer final : public L2::channel::Base
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline bool push(L0::MemorySlot *sourceSlot, const size_t n = 1)
+  __USED__ inline bool push(L0::LocalMemorySlot *sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
     auto providedBufferSize = sourceSlot->getSize();
     if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
 
-    // Storage for operation success flag
+    // Flag to record whether the operation was successful or not (it simplifies code by releasing locks only once)
     bool successFlag = false;
 
     // Locking remote token and coordination buffer slots
     if (_memoryManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
+
+    // Adding flush operation to ensure buffers are ready for re-use
+    _memoryManager->flush();
 
     // Updating local coordination buffer
     _memoryManager->memcpy(_coordinationBuffer, 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
@@ -102,13 +106,13 @@ class Producer final : public L2::channel::Base
     const auto depth = getDepth();
 
     // If the exchange buffer does not have n free slots, reject the operation
-    if (depth + n <= getCapacity())
+    if (depth + n <= _circularBuffer->getCapacity())
     {
       // Copying with source increasing offset per token
-      for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      for (size_t i = 0; i < n; i++) _memoryManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
 
       // Advance head, as we have added a new element
-      advanceHead(n);
+      _circularBuffer->advanceHead(n);
 
       // Updating global coordination buffer
       _memoryManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
@@ -116,7 +120,7 @@ class Producer final : public L2::channel::Base
       // Adding flush operation to ensure buffers are ready for re-use
       _memoryManager->flush();
 
-      // Setting success flag as true
+      // Mark operation as successful 
       successFlag = true;
     }
 
@@ -129,7 +133,15 @@ class Producer final : public L2::channel::Base
 
   private:
 
-  HiCR::L0::MemorySlot *const _consumerCoordinationBuffer;
+  /**
+  * Memory slot that represents the token buffer that producer sends data to
+  */
+  L0::GlobalMemorySlot *const _tokenBuffer;
+
+  /*
+  * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
+  */
+  HiCR::L0::GlobalMemorySlot *const _consumerCoordinationBuffer;
 };
 
 } // namespace MPSC

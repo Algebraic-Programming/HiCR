@@ -13,7 +13,7 @@
 #pragma once
 
 #include "hwloc.h"
-#include <backends/sharedMemory/L0/memorySlot.hpp>
+#include <backends/sharedMemory/L0/localMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
 
@@ -39,7 +39,7 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   /**
    * Constructor for the compute resource class of the sequential backend
    */
-  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::L0::MemorySlot::binding_type bindingSupport) :
+  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::L0::LocalMemorySlot::binding_type bindingSupport) :
    HiCR::L0::MemorySpace(size),
    _hwlocObject(hwlocObject),
    _bindingSupport(bindingSupport) {};
@@ -56,7 +56,7 @@ class MemorySpace final : public HiCR::L0::MemorySpace
    *
    * @return The supported memory binding type by the memory space
    */
-  __USED__ inline sharedMemory::L0::MemorySlot::binding_type getSupportedBindingType() const
+  __USED__ inline sharedMemory::L0::LocalMemorySlot::binding_type getSupportedBindingType() const
   {
     return _bindingSupport;
   }
@@ -81,7 +81,7 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   /**
    * Stores whether it is possible to allocate bound memory in this memory space
    */
-  const sharedMemory::L0::MemorySlot::binding_type _bindingSupport;
+  const sharedMemory::L0::LocalMemorySlot::binding_type _bindingSupport;
 };
 
 } // namespace L0

@@ -298,6 +298,11 @@ class MemoryManager
     memcpyImpl(destination, dst_offset, source, src_offset, size);
   }
 
+  __USED__ inline void memcpy(L0::GlobalMemorySlot *destination, const size_t dst_offset, L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size)
+  {
+    memcpyImpl(destination, dst_offset, source, src_offset, size);
+  }
+
   /**
    * Fences a group of memory copies.
    *
@@ -470,6 +475,7 @@ class MemoryManager
   virtual void memcpyImpl(L0::LocalMemorySlot *destination, const size_t dst_offset, L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) = 0;
   virtual void memcpyImpl(L0::GlobalMemorySlot *destination, const size_t dst_offset, L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) = 0;
   virtual void memcpyImpl(L0::LocalMemorySlot *destination, const size_t dst_offset, L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size) = 0;
+  virtual void memcpyImpl(L0::GlobalMemorySlot *destination, const size_t dst_offset, L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the fence function

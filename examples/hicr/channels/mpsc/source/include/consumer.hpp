@@ -15,23 +15,23 @@ void consumerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L0::MemorySpace* b
   auto coordinationBufferSize = HiCR::L2::channel::Base::getCoordinationBufferSize();
 
   // Registering token buffer as a local memory slot
-  auto consumerCoordinationBufferSlot = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+  auto consumerCoordinationBuffer = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
-  HiCR::L2::channel::Base::initializeCoordinationBuffer(consumerCoordinationBufferSlot);
+  HiCR::L2::channel::Base::initializeCoordinationBuffer(consumerCoordinationBuffer);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBufferSlot}, {COORDINATION_BUFFER_KEY, consumerCoordinationBufferSlot}});
+  memoryManager->exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBufferSlot}, {CONSUMER_COORDINATION_BUFFER_KEY, consumerCoordinationBuffer}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   memoryManager->fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto globalTokenBufferSlot = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
-  auto globalCoordinationBufferSlot = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, COORDINATION_BUFFER_KEY);
+  auto globalTokenBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+  auto globalConsumerCoordinationBuffer = memoryManager->getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto consumer = HiCR::L2::channel::MPSC::Consumer(memoryManager, globalTokenBufferSlot, globalCoordinationBufferSlot, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto consumer = HiCR::L2::channel::MPSC::Consumer(memoryManager, globalTokenBuffer, globalConsumerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Getting internal pointer of the token buffer slot
   auto tokenBuffer = (ELEMENT_TYPE *)tokenBufferSlot->getPointer();
@@ -64,10 +64,10 @@ void consumerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L0::MemorySpace* b
   memoryManager->fence(CHANNEL_TAG);
 
   // De-registering global slots
-  memoryManager->deregisterGlobalMemorySlot(globalTokenBufferSlot);
-  memoryManager->deregisterGlobalMemorySlot(globalCoordinationBufferSlot);
+  memoryManager->deregisterGlobalMemorySlot(globalTokenBuffer);
+  memoryManager->deregisterGlobalMemorySlot(globalConsumerCoordinationBuffer);
 
   // Freeing up local memory
   memoryManager->freeLocalMemorySlot(tokenBufferSlot);
-  memoryManager->freeLocalMemorySlot(consumerCoordinationBufferSlot);
+  memoryManager->freeLocalMemorySlot(consumerCoordinationBuffer);
 }

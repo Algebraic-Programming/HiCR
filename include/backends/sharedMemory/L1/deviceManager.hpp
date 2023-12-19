@@ -109,7 +109,7 @@ __USED__ inline HiCR::L0::Device::memorySpaceList_t queryMemorySpaces()
     auto hwlocObj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, i);
 
     // Checking whther bound memory allocation and freeing is supported
-    auto bindingSupport = L0::MemorySlot::binding_type::strict_non_binding;
+    auto bindingSupport = L0::LocalMemorySlot::binding_type::strict_non_binding;
     size_t size = 1024;
     auto ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
     if (ptr != NULL)
@@ -118,7 +118,7 @@ __USED__ inline HiCR::L0::Device::memorySpaceList_t queryMemorySpaces()
       auto status = hwloc_free(*_topology, ptr, size);
 
       // Freeing was successful, then strict binding is supported
-      if (status == 0) bindingSupport = L0::MemorySlot::binding_type::strict_binding;
+      if (status == 0) bindingSupport = L0::LocalMemorySlot::binding_type::strict_binding;
     }
 
     // Getting memory space size

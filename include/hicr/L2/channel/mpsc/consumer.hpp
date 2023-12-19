@@ -53,10 +53,10 @@ class Consumer final : public L2::channel::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Consumer(L1::MemoryManager *memoryManager,
-           L0::MemorySlot *const tokenBuffer,
-           L0::MemorySlot *const consumerCoordinationBuffer,
+           L0::GlobalMemorySlot *const tokenBuffer,
+           L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity)
+           const size_t capacity) : L2::channel::Base(memoryManager, consumerCoordinationBuffer, tokenSize, capacity)
   {
   }
   ~Consumer() = default;
@@ -87,7 +87,7 @@ class Consumer final : public L2::channel::Base
   __USED__ inline ssize_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos + 1, getCapacity());
+    if (pos >= _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos + 1, _circularBuffer->getCapacity());
 
     // Value to return, initially set as -1 as default (not able to find the requested value)
     ssize_t bufferPos = -1;
@@ -99,7 +99,7 @@ class Consumer final : public L2::channel::Base
     const auto curDepth = getDepth();
 
     // Calculating buffer position, if there are enough tokens in the buffer to satisfy the request
-    if (pos < curDepth) bufferPos = (getTailPosition() + pos) % getCapacity();
+    if (pos < curDepth) bufferPos = (_circularBuffer->getTailPosition() + pos) % _circularBuffer->getCapacity();
 
     // Releasing coordination buffer slot lock
     _memoryManager->releaseGlobalLock(_coordinationBuffer);
@@ -124,7 +124,7 @@ class Consumer final : public L2::channel::Base
    */
   __USED__ inline bool pop(const size_t n = 1)
   {
-    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
+    if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
 
     // Flag to indicate whether the operaton was successful
     bool successFlag = false;
@@ -136,7 +136,7 @@ class Consumer final : public L2::channel::Base
     if (n <= getDepth())
     {
       // Advancing tail (removes elements from the circular buffer)
-      advanceTail(n);
+      _circularBuffer->advanceTail(n);
 
       // Setting success flag
       successFlag = true;

@@ -4,16 +4,14 @@
  */
 
 /**
- * @file memorySlot.hpp
- * @brief Provides a definition for the memory slot class for the shared memory backend
+ * @file localMemorySlot.hpp
+ * @brief Provides a definition for the local memory slot class for the shared memory backend
  * @author S. M. Martin
  * @date 19/10/2023
  */
 #pragma once
 
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L0/memorySlot.hpp>
-#include <pthread.h>
+#include <hicr/L0/localMemorySlot.hpp>
 
 namespace HiCR
 {
@@ -32,7 +30,7 @@ namespace L0
  *
  * - Represents a contiguous segment within a memory space, with a starting address and a size
  */
-class MemorySlot final : public HiCR::L0::MemorySlot
+class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
 {
   public:
 
@@ -61,23 +59,15 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
    * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
    */
-  MemorySlot(
+  LocalMemorySlot(
     binding_type bindingType,
     void *const pointer,
     const size_t size,
-    HiCR::L0::MemorySpace* memorySpace,
-    const HiCR::L0::MemorySlot::tag_t globalTag = 0,
-    const HiCR::L0::MemorySlot::globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, memorySpace, globalTag, globalKey),
+    HiCR::L0::MemorySpace* memorySpace) : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
                                                              _bindingType(bindingType)
-  {
-    pthread_mutex_init(&_mutex, NULL);
-  }
+  { }
 
-  ~MemorySlot()
-  {
-    // Freeing mutex memory
-    pthread_mutex_destroy(&_mutex);
-  }
+  ~LocalMemorySlot() = default;
 
   /**
    * Returns the binding type used to allocate/register this memory slot
@@ -86,38 +76,12 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    */
   __USED__ inline binding_type getBindingType() const { return _bindingType; }
 
-  /**
-   * Attempts to lock memory lock using its pthread mutex object
-   *
-   * This function never blocks the caller
-   *
-   * @return True, if successful; false, otherwise.
-   */
-  __USED__ inline bool trylock() { return pthread_mutex_trylock(&_mutex) == 0; }
-
-  /**
-   * Attempts to lock memory lock using its pthread mutex object
-   *
-   * This function might block the caller if the memory slot is already locked
-   */
-  __USED__ inline void lock() { pthread_mutex_lock(&_mutex); }
-
-  /**
-   * Unlocks the memory slot, if previously locked by the caller
-   */
-  __USED__ inline void unlock() { pthread_mutex_unlock(&_mutex); }
-
   private:
 
   /**
    * Store whether a bound memory allocation has performed
    */
-  binding_type _bindingType;
-
-  /**
-   * Internal memory slot mutex to enforce lock acquisition
-   */
-  pthread_mutex_t _mutex;
+  const binding_type _bindingType;
 };
 
 } // namespace L0
