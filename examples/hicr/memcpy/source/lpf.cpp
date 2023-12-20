@@ -59,8 +59,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   size_t myProcess = pid;
 
   // Creating new destination buffer
-  char *buffer1 = new char[BUFFER_SIZE];
-  auto dstSlot = m.registerLocalMemorySlot(*memSpaces.begin(), buffer1, BUFFER_SIZE);
+  auto msgBuffer = (char*) malloc(BUFFER_SIZE);
+  auto dstSlot = m.registerLocalMemorySlot(*memSpaces.begin(), msgBuffer, BUFFER_SIZE);
 
   // Performing all pending local to global memory slot promotions now
   c.exchangeGlobalMemorySlots(CHANNEL_TAG, { { myProcess, dstSlot } });
@@ -86,11 +86,18 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
     auto recvMsgs = myPromotedSlot->getMessagesRecv();
     std::cout << "Received messages (before fence) = " << recvMsgs << std::endl;
     c.fence(CHANNEL_TAG);
-    std::cout << "Received buffer = " << buffer1;
+    std::cout << "Received buffer = " << msgBuffer;
     c.queryMemorySlotUpdates(myPromotedSlot);
     recvMsgs = myPromotedSlot->getMessagesRecv();
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
   }
+
+  // De-registering global slots (collective call)
+  c.deregisterGlobalMemorySlot(myPromotedSlot);
+
+  // Freeing up local memory
+  m.deregisterLocalMemorySlot(dstSlot);
+  free(msgBuffer);
 }
 
 int main(int argc, char **argv)

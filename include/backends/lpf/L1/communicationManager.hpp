@@ -14,13 +14,6 @@
 
 #pragma once
 
-/**
- * #CHECK(f...) Checks if an LPF function returns LPF_SUCCESS, else
- * it prints an error message
- */
-#define CHECK(f...) \
-  if (f != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f);
-
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L1/communicationManager.hpp>
 #include <backends/lpf/L0/globalMemorySlot.hpp>
