@@ -4,15 +4,15 @@
  */
 
 /**
- * @file memorySlot.hpp
- * @brief Provides a definition for the memory slot class for the LPF backend
+ * @file globalMemorySlot.hpp
+ * @brief Provides a definition for the global memory slot class for the LPF backend
  * @author K. Dichev
  * @date 25/10/2023
  */
 #pragma once
 
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/globalMemorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
 #include <lpf/core.h>
 
 namespace HiCR
@@ -30,7 +30,7 @@ namespace L0
 /**
  * This class is the definition for a Memory Slot resource for the LPF backend
  */
-class MemorySlot final : public HiCR::L0::MemorySlot
+class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
 {
   public:
 
@@ -43,21 +43,21 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    * @param[in] globalTag
    * @param[in] globalKey
    */
-  MemorySlot(
+  GlobalMemorySlot(
     size_t rank,
     lpf_memslot_t lpfMemSlot,
-    void *const pointer,
-    const size_t size,
-    HiCR::L0::MemorySpace* memorySpace,
-    const HiCR::L0::MemorySlot::tag_t globalTag = 0,
-    const HiCR::L0::MemorySlot::globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, memorySpace, globalTag, globalKey), _rank(rank), _lpfMemSlot(lpfMemSlot)
+    const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
+    const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
+    HiCR::L0::LocalMemorySlot* sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
+     _rank(rank),
+     _lpfMemSlot(lpfMemSlot)
   {
   }
 
   /**
    * Default destructor
    */
-  ~MemorySlot() = default;
+  ~GlobalMemorySlot() = default;
 
   /**
    * Returns the rank to which this memory slot belongs
@@ -78,7 +78,7 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    * The comparison operator is provided for the hash table
    * MemoryManager::initMsgCnt
    */
-  bool operator<(const MemorySlot &slot) const
+  bool operator<(const GlobalMemorySlot &slot) const
   {
     if (this->getGlobalTag() < slot.getGlobalTag())
       return true;
