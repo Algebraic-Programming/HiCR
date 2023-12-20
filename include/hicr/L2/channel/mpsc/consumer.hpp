@@ -54,11 +54,12 @@ class Consumer final : public L2::channel::Base
    */
   Consumer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
+           L0::LocalMemorySlot  *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(communicationManager, consumerCoordinationBuffer, tokenSize, capacity)
-  {
-  }
+           const size_t capacity) : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+           _consumerCoordinationBuffer (consumerCoordinationBuffer)
+  {  }
   ~Consumer() = default;
 
   /**
@@ -93,7 +94,7 @@ class Consumer final : public L2::channel::Base
     ssize_t bufferPos = -1;
 
     // Obtaining coordination buffer slot lock
-    if (_communicationManager->acquireGlobalLock(_coordinationBuffer) == false) return bufferPos;
+    if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return bufferPos;
 
     // Calculating current channel depth
     const auto curDepth = getDepth();
@@ -102,7 +103,7 @@ class Consumer final : public L2::channel::Base
     if (pos < curDepth) bufferPos = (_circularBuffer->getTailPosition() + pos) % _circularBuffer->getCapacity();
 
     // Releasing coordination buffer slot lock
-    _communicationManager->releaseGlobalLock(_coordinationBuffer);
+    _communicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -130,7 +131,7 @@ class Consumer final : public L2::channel::Base
     bool successFlag = false;
 
     // Obtaining coordination buffer slot lock
-    if (_communicationManager->acquireGlobalLock(_coordinationBuffer) == false) return successFlag;
+    if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
 
     // If the exchange buffer does not have n tokens pushed, reject operation, otherwise succeed
     if (n <= getDepth())
@@ -143,11 +144,18 @@ class Consumer final : public L2::channel::Base
     }
 
     // Releasing coordination buffer slot lock
-    _communicationManager->releaseGlobalLock(_coordinationBuffer);
+    _communicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Operation was successful
     return successFlag;
   }
+
+private:
+
+ /*
+  * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
+  */
+  HiCR::L0::GlobalMemorySlot *const _consumerCoordinationBuffer;
 };
 
 } // namespace MPSC

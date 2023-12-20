@@ -50,16 +50,15 @@ class Consumer final : public L2::channel::Base
    * token.
    * \param[in] producerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer of the producer
                 It needs to be a global reference to the remote producer.
-   * \param[in] consumerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer of the consumer.
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
   Consumer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
-           L0::GlobalMemorySlot *const consumerCoordinationBuffer,
+           L0::LocalMemorySlot  *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(communicationManager, consumerCoordinationBuffer, tokenSize, capacity),
+           const size_t capacity) : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
            _tokenBuffer(tokenBuffer),
            _producerCoordinationBuffer(producerCoordinationBuffer)
 
@@ -142,7 +141,7 @@ class Consumer final : public L2::channel::Base
     _circularBuffer->advanceTail(n);
 
     // Notifying producer(s) of buffer liberation
-    _communicationManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer->getSourceLocalMemorySlot(), _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+    _communicationManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
 
     // Re-syncing coordination buffer
     _communicationManager->queryMemorySlotUpdates(_tokenBuffer);

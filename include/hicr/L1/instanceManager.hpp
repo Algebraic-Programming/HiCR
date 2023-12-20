@@ -14,9 +14,11 @@
 
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/instance.hpp>
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
+#include <hicr/L0/memorySpace.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/L1/memoryManager.hpp>
+#include <hicr/L1/communicationManager.hpp>
 #include <map>
 #include <memory>
 #include <set>
@@ -76,6 +78,18 @@ class InstanceManager
    */
   __USED__ inline HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
 
+   /**
+   * Function to retrieve the internal communication manager for this instance manager
+   * \return A pointer to the communication manager used to instantiate this instance manager
+   */
+  __USED__ inline HiCR::L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
+
+   /**
+   * Function to retrieve the internal memory space used for creating buffers in this instance manager
+   * \return The internal memory space
+   */
+  __USED__ inline HiCR::L0::MemorySpace* getBufferMemorySpace() const { return _bufferMemorySpace; }
+
   /**
    * Function to add a new execution unit, assigned to a unique identifier
    * \param[in] index Indicates the index to assign to the added execution unit
@@ -95,14 +109,8 @@ class InstanceManager
    */
   __USED__ inline void listen()
   {
-    // Setting current state to listening
-    getCurrentInstance()->setState(HiCR::L0::Instance::state_t::listening);
-
     // Calling the backend-specific implementation of the listen function
     listenImpl();
-
-    // Setting current state to detached
-    getCurrentInstance()->setState(HiCR::L0::Instance::state_t::detached);
   }
 
   /**
@@ -117,10 +125,8 @@ class InstanceManager
    * Function to submit a return value for the currently running RPC
    * \param[in] value The memory slot containing the RPC's return value
    */
-  __USED__ inline void submitReturnValue(HiCR::L0::MemorySlot *value) const
+  __USED__ inline void submitReturnValue(HiCR::L0::LocalMemorySlot *value) const
   {
-    if (getCurrentInstance()->getState() != HiCR::L0::Instance::state_t::running) HICR_THROW_LOGIC("Attempting to submit a return value outside a running RPC.");
-
     // Calling backend-specific implementation of this function
     submitReturnValueImpl(value);
   }
@@ -130,7 +136,7 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  __USED__ inline HiCR::L0::MemorySlot *getReturnValue(HiCR::L0::Instance *instance) const
+  __USED__ inline HiCR::L0::LocalMemorySlot *getReturnValue(HiCR::L0::Instance *instance) const
   {
     // Calling backend-specific implementation of this function
     return getReturnValueImpl(instance);
@@ -142,11 +148,13 @@ class InstanceManager
    * Constructor with proper arguments
    * \param memoryManager The memory manager to use for exchange of data (state, return values) between instances
    */
-  InstanceManager(HiCR::L1::MemoryManager *const memoryManager) : _memoryManager(memoryManager)
-  {
-    // Querying memory spaces in the memory manager
-    _memoryManager->queryMemorySpaces();
-  };
+  InstanceManager(HiCR::L1::CommunicationManager *const communicationManager,
+                  HiCR::L1::MemoryManager *const memoryManager,
+                  HiCR::L0::MemorySpace *const bufferMemorySpace) :
+                  _communicationManager(communicationManager),
+                  _memoryManager(memoryManager),
+                  _bufferMemorySpace(bufferMemorySpace)
+  { };
 
   /**
    * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
@@ -155,9 +163,6 @@ class InstanceManager
    */
   __USED__ inline void runRequest(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx)
   {
-    // Setting current state to running
-    getCurrentInstance()->setState(HiCR::L0::Instance::state_t::running);
-
     // Checks that the processing and execution units have been registered
     if (_processingUnitMap.contains(pIdx) == false) HICR_THROW_RUNTIME("Attempting to run an processing unit (%lu) that was not defined in this instance (0x%lX).\n", pIdx, this);
     if (_executionUnitMap.contains(eIdx) == false) HICR_THROW_RUNTIME("Attempting to run an execution unit (%lu) that was not defined in this instance (0x%lX).\n", eIdx, this);
@@ -171,9 +176,6 @@ class InstanceManager
 
     // Running execution state
     p->start(std::move(s));
-
-    // Setting current state to detached
-    getCurrentInstance()->setState(HiCR::L0::Instance::state_t::detached);
   }
 
   /**
@@ -181,13 +183,13 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  virtual HiCR::L0::MemorySlot *getReturnValueImpl(HiCR::L0::Instance *instance) const = 0;
+  virtual HiCR::L0::LocalMemorySlot *getReturnValueImpl(HiCR::L0::Instance *instance) const = 0;
 
   /**
    * Backend-specific implementation of the submitReturnValue
    * \param[in] value The memory slot containing the RPC's return value
    */
-  virtual void submitReturnValueImpl(HiCR::L0::MemorySlot *value) const = 0;
+  virtual void submitReturnValueImpl(HiCR::L0::LocalMemorySlot *value) const = 0;
 
   /**
    * Backend-specific implementation of the listen function
@@ -195,9 +197,19 @@ class InstanceManager
   virtual void listenImpl() = 0;
 
   /**
-   * Memory manager object for exchanging information among HiCR instances
+  * Communication manager for exchanging information among HiCR instances
+  */
+  HiCR::L1::CommunicationManager *const _communicationManager;
+
+  /**
+   * Memory manager for allocating internal buffers
    */
   HiCR::L1::MemoryManager *const _memoryManager;
+
+    /**
+   * Memory space to store the information bufer into
+   */
+  HiCR::L0::MemorySpace *const _bufferMemorySpace;
 
   /**
    * Collection of instances

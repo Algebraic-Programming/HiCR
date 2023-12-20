@@ -1,6 +1,8 @@
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 #include <backends/mpi/L1/memoryManager.hpp>
+#include <backends/mpi/L1/communicationManager.hpp>
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <mpi.h>
 
 int main(int argc, char **argv)
@@ -39,14 +41,24 @@ int main(int argc, char **argv)
   }
 
   // Instantiating backend
-  HiCR::backend::mpi::L1::MemoryManager m(MPI_COMM_WORLD);
+  HiCR::backend::mpi::L1::MemoryManager m;
+  HiCR::backend::mpi::L1::CommunicationManager c(MPI_COMM_WORLD);
 
-  // Asking memory manager to check the available memory spaces
-  m.queryMemorySpaces();
+// Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Obtaining memory spaces
+  auto memSpaces = d->getMemorySpaceList();
 
   // Rank 0 is producer, Rank 1 is consumer
-  if (rankId == 0) producerFc(&m, channelCapacity);
-  if (rankId == 1) consumerFc(&m, channelCapacity);
+  if (rankId == 0) producerFc(&m, &c, *memSpaces.begin(), channelCapacity);
+  if (rankId == 1) consumerFc(&m, &c, *memSpaces.begin(), channelCapacity);
 
   // Finalizing MPI
   MPI_Finalize();

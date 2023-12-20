@@ -11,24 +11,23 @@ void producerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L1::CommunicationM
   auto coordinationBufferSize = HiCR::L2::channel::Base::getCoordinationBufferSize();
 
   // Allocating token buffer as a local memory slot
-  auto producerCoordinationBuffer = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+  auto coordinationBuffer = memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
-  HiCR::L2::channel::Base::initializeCoordinationBuffer(producerCoordinationBuffer);
+  HiCR::L2::channel::Base::initializeCoordinationBuffer(coordinationBuffer);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  communicationManager->exchangeGlobalMemorySlots(CHANNEL_TAG, {{PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}});
+  communicationManager->exchangeGlobalMemorySlots(CHANNEL_TAG, {{PRODUCER_COORDINATION_BUFFER_KEY, coordinationBuffer}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager->fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
   auto tokenBuffer = communicationManager->getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
-  auto globalProducerCoordinationBuffer = communicationManager->getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
-  auto globalConsumerCoordinationBuffer = communicationManager->getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
+  auto producerCoordinationBuffer = communicationManager->getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto producer = HiCR::L2::channel::SPSC::Producer(communicationManager, tokenBuffer, globalConsumerCoordinationBuffer, globalProducerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto producer = HiCR::L2::channel::SPSC::Producer(communicationManager, tokenBuffer, coordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer = 0;
@@ -59,11 +58,10 @@ void producerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L1::CommunicationM
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager->fence(CHANNEL_TAG);
 
-  // De-registering global slots
+  // De-registering global slots (collective calls)
   communicationManager->deregisterGlobalMemorySlot(tokenBuffer);
-  communicationManager->deregisterGlobalMemorySlot(globalProducerCoordinationBuffer);
-  communicationManager->deregisterGlobalMemorySlot(globalConsumerCoordinationBuffer);
+  communicationManager->deregisterGlobalMemorySlot(producerCoordinationBuffer);
 
   // Freeing up local memory
-  memoryManager->freeLocalMemorySlot(producerCoordinationBuffer);
+  memoryManager->freeLocalMemorySlot(coordinationBuffer);
 }

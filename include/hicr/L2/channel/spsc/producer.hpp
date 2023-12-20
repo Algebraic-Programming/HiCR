@@ -53,11 +53,11 @@ class Producer final : public L2::channel::Base
    */
   Producer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
-           L0::GlobalMemorySlot *const consumerCoordinationBuffer,
+           L0::LocalMemorySlot  *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity)
-       : L2::channel::Base(communicationManager, producerCoordinationBuffer, tokenSize, capacity),
+       : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
        _tokenBuffer(tokenBuffer),
        _producerCoordinationBuffer(producerCoordinationBuffer) {  } 
 

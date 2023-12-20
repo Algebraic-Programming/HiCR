@@ -12,8 +12,10 @@
 
 #pragma once
 
+#include <hicr/L0/memorySpace.hpp>
 #include <backends/mpi/L0/instance.hpp>
 #include <backends/mpi/L1/memoryManager.hpp>
+#include <backends/mpi/L1/communicationManager.hpp>
 #include <hicr/L1/instanceManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <mpi.h>
@@ -47,44 +49,26 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    *
    * \param[in] memoryManager The memory manager to use for internal data passing
    */
-  InstanceManager(HiCR::L1::MemoryManager *const memoryManager) : HiCR::L1::InstanceManager(memoryManager), _MPIMemoryManager(dynamic_cast<mpi::L1::MemoryManager *const>(memoryManager))
+  InstanceManager(HiCR::L1::CommunicationManager *const communicationManager,
+                  HiCR::L1::MemoryManager *const memoryManager,
+                  HiCR::L0::MemorySpace* const bufferMemorySpace) :
+                   HiCR::L1::InstanceManager(communicationManager, memoryManager, bufferMemorySpace),
+                  _MPICommunicationManager(dynamic_cast<mpi::L1::CommunicationManager *const>(communicationManager))
   {
     // Checking whether the execution unit passed is compatible with this backend
-    if (_MPIMemoryManager == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");
-
-    // Getting memory space for allocation of incoming return values
-    _allocationMemorySpace = *memoryManager->getMemorySpaceList().begin();
+    if (_MPICommunicationManager == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");
 
     // In MPI, the initial set of processes represents all the currently available instances of HiCR
-    for (int i = 0; i < _MPIMemoryManager->getSize(); i++)
+    for (int i = 0; i < _MPICommunicationManager->getSize(); i++)
     {
       // Creating new MPI-based HiCR instance
-      auto instance = new HiCR::backend::mpi::L0::Instance(i, _MPIMemoryManager);
+      auto instance = new HiCR::backend::mpi::L0::Instance(i);
 
       // If this is the current rank, set it as current instance
-      if (i == _MPIMemoryManager->getRank()) _currentInstance = instance;
+      if (i == _MPICommunicationManager->getRank()) _currentInstance = instance;
 
       // Adding instance to the collection
       _instances.insert(instance);
-    }
-
-    // Getting MPI-specific current instance pointer
-    auto currentInstanceMPIPtr = (mpi::L0::Instance *)_currentInstance;
-
-    // Exchanging global slots for instance state values
-    _MPIMemoryManager->exchangeGlobalMemorySlots(_HICR_MPI_INSTANCE_MANAGER_TAG, {std::make_pair(currentInstanceMPIPtr->getRank(), currentInstanceMPIPtr->getStateLocalMemorySlot())});
-
-    // Getting globally exchanged slots
-    for (auto instance : _instances)
-    {
-      // Getting MPI-specific instance pointer
-      auto instanceMPIPtr = (mpi::L0::Instance *)instance;
-
-      // Getting global slot pointer
-      auto globalSlot = _MPIMemoryManager->getGlobalMemorySlot(_HICR_MPI_INSTANCE_MANAGER_TAG, instanceMPIPtr->getRank());
-
-      // Assigning it to the corresponding instance
-      instanceMPIPtr->setStateGlobalMemorySlot(globalSlot);
     }
   }
 
@@ -102,11 +86,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     const auto dest = MPIInstance->getRank();
 
     // Sending request
-    MPI_Send(&eIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _MPIMemoryManager->getComm());
-    MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _MPIMemoryManager->getComm());
+    MPI_Send(&eIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _MPICommunicationManager->getComm());
+    MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _MPICommunicationManager->getComm());
   }
 
-  __USED__ inline HiCR::L0::MemorySlot *getReturnValueImpl(HiCR::L0::Instance *instance) const override
+  __USED__ inline HiCR::L0::LocalMemorySlot *getReturnValueImpl(HiCR::L0::Instance *instance) const override
   {
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *const>(instance);
@@ -118,19 +102,19 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     size_t size = 0;
 
     // Getting return value size
-    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPIMemoryManager->getComm(), MPI_STATUS_IGNORE);
+    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPICommunicationManager->getComm(), MPI_STATUS_IGNORE);
 
     // Allocating memory slot to store the return value
-    auto memorySlot = _memoryManager->allocateLocalMemorySlot(_allocationMemorySpace, size);
+    auto memorySlot = _memoryManager->allocateLocalMemorySlot(_bufferMemorySpace, size);
 
     // Getting data directly
-    MPI_Recv(memorySlot->getPointer(), size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPIMemoryManager->getComm(), MPI_STATUS_IGNORE);
+    MPI_Recv(memorySlot->getPointer(), size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPICommunicationManager->getComm(), MPI_STATUS_IGNORE);
 
     // Returning memory slot containing the return value
     return memorySlot;
   }
 
-  __USED__ inline void submitReturnValueImpl(HiCR::L0::MemorySlot *value) const override
+  __USED__ inline void submitReturnValueImpl(HiCR::L0::LocalMemorySlot *value) const override
   {
     // Getting return value size
     const auto size = value->getSize();
@@ -139,10 +123,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     const auto data = value->getPointer();
 
     // Sending message size
-    MPI_Send(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPIMemoryManager->getComm());
+    MPI_Send(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPICommunicationManager->getComm());
 
     // Getting RPC execution unit index
-    MPI_Send(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPIMemoryManager->getComm());
+    MPI_Send(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPICommunicationManager->getComm());
   }
 
   __USED__ inline void listenImpl() override
@@ -154,7 +138,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     executionUnitIndex_t eIdx = 0;
 
     // Getting RPC execution unit index
-    MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _MPIMemoryManager->getComm(), &status);
+    MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _MPICommunicationManager->getComm(), &status);
 
     // Getting requester instance rank
     _RPCRequestRank = status.MPI_SOURCE;
@@ -163,7 +147,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     processingUnitIndex_t pIdx = 0;
 
     // Getting RPC execution unit index
-    MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _MPIMemoryManager->getComm(), MPI_STATUS_IGNORE);
+    MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _MPICommunicationManager->getComm(), MPI_STATUS_IGNORE);
 
     // Trying to run remote request
     runRequest(pIdx, eIdx);
@@ -177,14 +161,9 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   int _RPCRequestRank = 0;
 
   /**
-   * Internal pointer for a casted MPI memory manager
+   * Internal communication manager for MPI
    */
-  mpi::L1::MemoryManager *const _MPIMemoryManager;
-
-  /**
-   * Memory slot to use for allocations
-  */
- HiCR::L0::MemorySpace* _allocationMemorySpace;
+  mpi::L1::CommunicationManager *const _MPICommunicationManager;
 };
 
 } // namespace L1

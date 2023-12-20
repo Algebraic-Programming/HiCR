@@ -47,7 +47,6 @@ class Producer final : public L2::channel::Base
    * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    *            tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
-   * \param[in] producerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer
    * \param[in] consumerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer of the consumer.
    *            It needs to be a global reference to the remote consumer.
    * \param[in] tokenSize The size of each token.
@@ -55,10 +54,10 @@ class Producer final : public L2::channel::Base
    */
   Producer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
+           L0::LocalMemorySlot  *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const consumerCoordinationBuffer,
-           L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(communicationManager, producerCoordinationBuffer, tokenSize, capacity),
+           const size_t capacity) : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
                                     _tokenBuffer(tokenBuffer),
                                     _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {

@@ -186,7 +186,7 @@ class Base
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
   Base(L1::CommunicationManager *communicationManager,
-       L0::GlobalMemorySlot  *const coordinationBuffer,
+       L0::LocalMemorySlot  *const coordinationBuffer,
        const size_t tokenSize,
        const size_t capacity) :  _communicationManager(communicationManager),
                                 _coordinationBuffer(coordinationBuffer),
@@ -195,18 +195,15 @@ class Base
     if (tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
     if (capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
 
-    // Checking whether the coordination buffer passed is acually local to this side of the channel
-    if (coordinationBuffer->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed coordination slot was not created locally (it must be in order to be used internally by the channel implementation)\n");
-
     // Checking that the provided coordination buffers have the right size
     auto requiredCoordinationBufferSize = getCoordinationBufferSize();
-    auto providedCoordinationBufferSize = _coordinationBuffer->getSourceLocalMemorySlot()->getSize();
+    auto providedCoordinationBufferSize = _coordinationBuffer->getSize();
     if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a local coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
 
     // Creating internal circular buffer
     _circularBuffer = std::make_unique<common::CircularBuffer>(capacity, 
-         (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getSourceLocalMemorySlot()->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
-         (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getSourceLocalMemorySlot()->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
+         (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
+         (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
   }
 
   virtual ~Base() = default;
@@ -221,7 +218,7 @@ class Base
   /**
    * Local storage of coordination metadata
    */
-  L0::GlobalMemorySlot *const _coordinationBuffer;
+  L0::LocalMemorySlot *const _coordinationBuffer;
 
   /**
    * Token size

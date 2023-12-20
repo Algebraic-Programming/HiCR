@@ -1,29 +1,26 @@
 #pragma once
 
 #include "common.hpp"
-#include <backends/sequential/L1/computeManager.hpp>
+#include <hicr/L1/computeManager.hpp>
 #include <hicr/L1/instanceManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
+#include <hicr/L0/computeResource.hpp>
+#include <hicr/L0/memorySpace.hpp>
 
-void workerFc(HiCR::L1::InstanceManager &instanceManager)
+void workerFc(HiCR::L1::InstanceManager &instanceManager,
+              HiCR::L1::ComputeManager &computeManager,
+              HiCR::L0::MemorySpace* bufferMemorySpace, 
+              HiCR::L0::ComputeResource* rpcExecutor)
 {
-  // Initializing sequential backend
-  HiCR::backend::sequential::L1::ComputeManager computeManager;
-
   // Fetching memory manager
   auto memoryManager = instanceManager.getMemoryManager();
-
-  // Asking backend to check the available resources
-  memoryManager->queryMemorySpaces();
 
   // Getting current instance
   auto currentInstance = instanceManager.getCurrentInstance();
 
   // Creating worker function
-  auto fcLambda = [currentInstance, memoryManager, &instanceManager]()
+  auto fcLambda = [currentInstance, memoryManager, &instanceManager, bufferMemorySpace]()
   {
-    // Obtaining memory spaces
-    auto memSpaces = memoryManager->getMemorySpaceList();
-
     // Creating simple message
     auto message = std::string("Hello, I am a worker! ");
 
@@ -31,7 +28,7 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager)
     for (size_t i = 0; i < currentInstance->getId(); i++) message += std::string("*");
 
     // Registering memory slot at the first available memory space as source buffer to send the return value from
-    auto sendBuffer = memoryManager->registerLocalMemorySlot(*memSpaces.begin(), message.data(), message.size() + 1);
+    auto sendBuffer = memoryManager->registerLocalMemorySlot(bufferMemorySpace, message.data(), message.size() + 1);
 
     // Registering return value
     instanceManager.submitReturnValue(sendBuffer);
@@ -43,14 +40,8 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager)
   // Creating execution unit
   auto executionUnit = computeManager.createExecutionUnit(fcLambda);
 
-  // Querying compute resources
-  computeManager.queryComputeResources();
-
-  // Getting compute resources
-  auto computeResources = computeManager.getComputeResourceList();
-
   // Creating processing unit from the compute resource
-  auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = computeManager.createProcessingUnit(rpcExecutor);
 
   // Initialize processing unit
   processingUnit->initialize();
