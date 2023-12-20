@@ -33,10 +33,9 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
-  const size_t msgslots = DEFAULT_MSGSLOTS;
-  const size_t memslots = DEFAULT_MEMSLOTS;
-  CHECK(lpf_resize_message_queue(lpf, msgslots));
-  CHECK(lpf_resize_memory_register(lpf, memslots));
+  // Initializing LPF
+  CHECK(lpf_resize_message_queue(lpf, DEFAULT_MSGSLOTS));
+  CHECK(lpf_resize_memory_register(lpf, DEFAULT_MEMSLOTS));
   CHECK(lpf_sync(lpf, LPF_SYNC_DEFAULT));
 
   // Initializing backend's device manager

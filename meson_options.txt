@@ -9,3 +9,8 @@ option('buildTests', type : 'boolean', value : false,
 option('buildExamples', type : 'boolean', value : false,
        description: 'Indicates whether to build example apps'
 )
+
+option('exceptionModel', type : 'combo', choices : [ 'stdexception', 'abort' ], value : 'stdexception',
+       description : 'Specifies how exceptions are implemented in HiCR'
+       )
+      
