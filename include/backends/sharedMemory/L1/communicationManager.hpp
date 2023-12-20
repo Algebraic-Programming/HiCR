@@ -200,34 +200,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     src->increaseMessagesSent();
   }
 
-  __USED__ inline void memcpyImpl(HiCR::L0::GlobalMemorySlot *destination, const size_t dst_offset, HiCR::L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size) override
-  {
-    // Getting up-casted pointer for the execution unit
-    auto src = dynamic_cast<HiCR::L0::GlobalMemorySlot *>(source);
-
-    // Checking whether the memory slot is compatible with this backend
-    if (src == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
-
-    // Checking whether the memory slot is local. This backend only supports local data transfers
-    if (src->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed source memory slot is not local (required by this backend)\n");
-
-    // Getting up-casted pointer for the execution unit
-    auto dst = dynamic_cast<HiCR::L0::GlobalMemorySlot *>(destination);
-
-    // Checking whether the execution unit passed is compatible with this backend
-    if (dst == NULL) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
-
-    // Checking whether the memory slot is local. This backend only supports local data transfers
-    if (dst->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed destination memory slot is not local (required by this backend)\n");
-    
-    // Executing actual memcpy
-    memcpy(dst->getSourceLocalMemorySlot(), dst_offset, src->getSourceLocalMemorySlot(), src_offset, size);
-
-    // Increasing message received/sent counters for memory slots
-    src->increaseMessagesSent();
-    dst->increaseMessagesRecv();
-  }
-
   __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
