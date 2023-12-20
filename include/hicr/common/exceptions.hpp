@@ -155,7 +155,7 @@ __USED__ inline void throwException [[noreturn]] (const common::exceptions::exce
   {
     auto errorMsg = std::string("Error in exceptions.hpp, throwLogic() function\n");
 
-    #ifdef HICR_EXCEPTION_USE_EXCEPTION
+    #ifdef HICR_EXCEPTION_USE_STDEXCEPTION
      throw std::runtime_error(errorMsg.c_str());
     #endif
 
@@ -180,7 +180,7 @@ __USED__ inline void throwException [[noreturn]] (const common::exceptions::exce
   snprintf(info, sizeof(info) - 1, " + From %s:%d\n", fileName, lineNumber);
   outString += info;
 
-  #ifdef HICR_EXCEPTION_USE_EXCEPTION
+  #ifdef HICR_EXCEPTION_USE_STDEXCEPTION
 
   switch (type)
   {
@@ -200,6 +200,8 @@ __USED__ inline void throwException [[noreturn]] (const common::exceptions::exce
   std::abort();
 
   #endif
+
+  
 }
 
 } // namespace common

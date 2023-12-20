@@ -3,7 +3,7 @@
 # Parsing exception model
 exceptionModel = get_option('exceptionModel')
 if (exceptionModel == 'stdexception')
- hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_STD' ]
+ hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_STDEXCEPTION' ]
 endif
 if (exceptionModel == 'abort')
  hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_ABORT' ]
