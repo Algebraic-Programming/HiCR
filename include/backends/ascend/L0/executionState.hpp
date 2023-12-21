@@ -6,7 +6,7 @@
 /**
  * @file executionState.hpp
  * @brief This file implements the execution state class for the ascend backend
- * @author S. M. Martin & L. Terracciano
+ * @author L. Terracciano
  * @date 1/11/2023
  */
 

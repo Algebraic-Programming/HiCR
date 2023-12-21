@@ -31,6 +31,11 @@ namespace L0
 {
 
 /**
+ * Forward declaration of the ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+*/
+class Device;
+
+/**
  * This class represents a compute resource, visible by the sequential backend. That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
  */
 class ComputeResource final : public HiCR::L0::ComputeResource
@@ -40,13 +45,8 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   /**
    * Constructor for the compute resource class of the sequential backend
    */
-  ComputeResource(
-   const ascend::deviceType_t deviceType,
-   const ascend::deviceIdentifier_t deviceId) :
-   HiCR::L0::ComputeResource(),
-   _deviceType(deviceType),
-   _deviceId(deviceId)
-     {};
+  ComputeResource() :
+   HiCR::L0::ComputeResource() {};
 
   /**
    * Default destructor
@@ -55,39 +55,28 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 
   __USED__ inline std::string getType() const override { return "Ascend Processor"; }
 
-
-  /**
-   * Function to get the device type associated to this memory space
-   *
-   * @return The device type corresponding to this memory space
-   */
-  __USED__ inline const ascend::deviceType_t getDeviceType() const
-  {
-    return _deviceType;
-  }
-
   /**
   * Function to get the device id associated to this memory space
   *
   * @return The device id corresponding to this memory space
   */
-  __USED__ inline const ascend::deviceIdentifier_t getDeviceId() const
+  __USED__ inline const ascend::L0::Device* getDevice() const
   {
-    return _deviceId;
+    return _device;
   }
+
+  /**
+  * Function to set the ascend device associated to this memory space
+  */
+  __USED__ inline void setDevice(const ascend::L0::Device* device)  { _device = device; }
+
 
   private:
 
   /**
-   * Stores the device type that this memory space belongs to
-   */
-  const ascend::deviceType_t _deviceType;
-
-  /**
-   * Stores the device identifier that hold this memory space. This might need to be removed in favor of defining
-   * a device class
+   * Stores the device that owns this compute resource
   */
- const ascend::deviceIdentifier_t _deviceId;
+  const ascend::L0::Device* _device;
 };
 
 } // namespace L0

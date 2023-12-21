@@ -8,8 +8,8 @@ using namespace HiCR::backend;
 int main(int argc, char **argv)
 {
   // Initialize ACL runtime
-  ascend::Core ascendCore;
-  ascendCore.init();
+  aclError err = aclInit(_configPath);
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
   // Instantiating Memory manager
   ascend::L1::MemoryManager m(ascendCore);
@@ -51,6 +51,8 @@ int main(int argc, char **argv)
   m.freeLocalMemorySlot(input);
 
   // Finalize ACL
-  ascendCore.finalize();
+  aclError err = aclFinalize();
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize Ascend Computing Language. Error %d", err);
+
   return 0;
 }

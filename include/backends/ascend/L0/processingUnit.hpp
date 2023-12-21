@@ -6,7 +6,7 @@
 /**
  * @file processingUnit.hpp
  * @brief Implements the processing unit class for the ascend backend.
- * @author S. M. Martin & L. Terracciano
+ * @author L. Terracciano & S. M. Martin
  * @date 1/11/2023
  */
 

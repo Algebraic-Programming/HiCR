@@ -5,15 +5,15 @@
 
 /**
  * @file memorySlot.hpp
- * @brief Provides a definition for the memory slot class for the Ascend backend
- * @author S. M. Martin and L.Terracciano
+ * @brief Provides a definition for the local memory slot class for the Ascend backend
+ * @author L. Terracciano & S. M. Martin
  * @date 19/10/2023
  */
 #pragma once
 
 #include <acl/acl.h>
 #include <backends/ascend/common.hpp>
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 
 namespace HiCR
@@ -29,11 +29,9 @@ namespace L0
 {
 
 /**
- * This class represents an abstract definition for a Memory Slot resource in HiCR that:
- *
- * Represents a contiguous segment within a memory space, with a starting address, a size, and the Ascend device id
+ * This class represents an abstract definition for a Local Memory Slot resource for the Ascend backend
  */
-class MemorySlot final : public HiCR::L0::MemorySlot
+class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
 {
   public:
 
@@ -47,26 +45,16 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    * \param globalTag for global memory slots, indicates the subset of global memory slots this belongs to
    * \param globalKey unique identifier for that memory slot that this slot occupies.
    */
-  MemorySlot(
-    deviceIdentifier_t deviceId,
+  LocalMemorySlot(
     void *const pointer,
     size_t size,
     const aclDataBuffer *dataBuffer,
-    HiCR::L0::MemorySpace* memorySpace,
-    const tag_t globalTag = 0,
-    const globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, memorySpace, globalTag, globalKey), _deviceId(deviceId), _dataBuffer(dataBuffer){};
+    HiCR::L0::MemorySpace* memorySpace) : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace), _dataBuffer(dataBuffer){};
 
   /**
    * Default destructor
    */
-  ~MemorySlot() = default;
-
-  /**
-   * Return the Ascend device id to which this memory slot belongs
-   *
-   * \return the Ascend device id to which this memory slot belongs
-   */
-  __USED__ inline const deviceIdentifier_t getDeviceId() const { return _deviceId; }
+  ~LocalMemorySlot() = default;
 
   /**
    * Return the ACL data buffer associated to the memory slot
@@ -76,11 +64,6 @@ class MemorySlot final : public HiCR::L0::MemorySlot
   __USED__ inline const aclDataBuffer *getDataBuffer() const { return _dataBuffer; }
 
   private:
-
-  /**
-   * The Ascend Device ID in which the memory slot is created
-   */
-  const deviceIdentifier_t _deviceId;
 
   /**
    * The Ascend Data Buffer associated with the memory slot

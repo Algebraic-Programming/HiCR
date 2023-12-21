@@ -38,8 +38,8 @@ void doPrintMatrix(const aclFloat16 *matrix, uint32_t numRows, uint32_t numCols)
 int main(int argc, char **argv)
 {
   // Initialize ACL runtime
-  ascend::Core ascendCore;
-  ascendCore.init();
+  aclError err = aclInit(_configPath);
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
   //////////////////////// This part of the code will be greatly simplified once we add the device class 
 
@@ -209,6 +209,8 @@ int main(int argc, char **argv)
   memoryManager.freeLocalMemorySlot(outputHost);
   memoryManager.freeLocalMemorySlot(outputDevice);
 
-  ascendCore.finalize();
+  aclError err = aclFinalize();
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize Ascend Computing Language. Error %d", err);
+  
   return 0;
 }
