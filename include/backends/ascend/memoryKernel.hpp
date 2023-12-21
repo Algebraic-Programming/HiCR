@@ -13,7 +13,7 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <backends/ascend/L1/memoryManager.hpp>
+#include <backends/ascend/L1/communicationManager.hpp>
 #include <backends/ascend/kernel.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -40,7 +40,7 @@ class MemoryKernel final : public Kernel
   /**
    * Constructor for the execution unit class of the ascend backend
    *
-   * \param memManager the Ascend memory manager
+   * \param commManager the Ascend communication manager
    * \param destination destination pointer
    * \param destinationOffset destination offset
    * \param source source pointer
@@ -48,7 +48,7 @@ class MemoryKernel final : public Kernel
    * \param size the number of bytes to copy
    */
   MemoryKernel(
-   ascend::L1::MemoryManager *memManager,
+   ascend::L1::CommunicationManager *commManager,
    HiCR::L0::LocalMemorySlot *destination,
    const size_t destinationOffset,
    HiCR::L0::LocalMemorySlot *source,
@@ -60,7 +60,7 @@ class MemoryKernel final : public Kernel
     _dstOffset(destinationOffset),
     _srcOffset(sourceOffset),
     _size(size),
-    _memManager(memManager){};
+    _commManager(commManager){};
 
   MemoryKernel() = delete;
 
@@ -74,11 +74,9 @@ class MemoryKernel final : public Kernel
    *
    * \param stream ACL stream on which memcpy is executed
    */
-  __USED__ inline void start(const aclrtStream stream) override
+  __USED__ inline void start(const aclrtStream stream) override 
   {
-    _memManager->setMemcpyStream(stream);
-    _memManager->memcpy(_dst, _dstOffset, _src, _srcOffset, _size);
-    _memManager->resetMemcpyStream();
+    _commManager->memcpyAsync(_dst, _dstOffset, _src, _srcOffset, _size, stream);
   }
 
   private:
@@ -109,7 +107,7 @@ class MemoryKernel final : public Kernel
   /**
    * Ascend memory manager
    */
-  L1::MemoryManager *_memManager;
+  ascend::L1::CommunicationManager *_commManager;
 };
 
 } // namespace ascend

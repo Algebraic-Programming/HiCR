@@ -187,7 +187,7 @@ class ComputationKernel final : public Kernel
   }
 };
 
-} // namespace ascend
+} // namespace ascend 
 
 } // namespace backend
 

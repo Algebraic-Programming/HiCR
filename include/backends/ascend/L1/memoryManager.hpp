@@ -19,7 +19,6 @@
 #include <backends/ascend/common.hpp>
 #include <backends/ascend/core.hpp>
 #include <hicr/L1/memoryManager.hpp>
-#include <unordered_map>
 
 namespace HiCR
 {
@@ -48,32 +47,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   MemoryManager() : HiCR::L1::MemoryManager() {}
   ~MemoryManager() = default;
 
-  /**
-   * Set the ACL \p stream in which the next memcpy operations needs to be executed.
-   *
-   * \param stream ACL stream on which future memcpy will be executed
-   */
-  __USED__ inline void setMemcpyStream(const aclrtStream stream)
-  {
-    _stream = stream;
-  }
-
-  /**
-   * Reset the ACL \p stream to its default value.
-   *
-   */
-  __USED__ inline void resetMemcpyStream()
-  {
-    _stream = NULL;
-  }
-
-
   private:
-
-  /**
-   * Stream on which memcpy operations are executed. The default value is NULL (use the default ACL stream)
-   */
-  aclrtStream _stream = NULL;
 
   /**
    * Backend-internal implementation of the queryLocalMemorySlot function

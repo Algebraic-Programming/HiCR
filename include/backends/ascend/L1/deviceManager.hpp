@@ -88,10 +88,10 @@ class DeviceManager final : public HiCR::L1::DeviceManager
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d. Error %d", deviceId, err);
 
       // Creating new Ascend device
-      auto ascendDevice = new ascend::L0::Device(deviceId, deviceContext, {}, {});
+      auto ascendDevice = new ascend::L0::Device(deviceId, stream, deviceContext, {}, {});
       
       // Creating Device's memory space
-      auto ascendDeviceMemorySpace = new ascend::L0::MemorySpace(ascendDevice, stream, ascendMemorySize); 
+      auto ascendDeviceMemorySpace = new ascend::L0::MemorySpace(ascendDevice, ascendMemorySize); 
 
       // Creating Device's compute resource
       auto ascendDeviceComputeResource = new ascend::L0::ComputeResource(ascendDevice);

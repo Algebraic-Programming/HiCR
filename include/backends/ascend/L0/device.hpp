@@ -48,9 +48,10 @@ class Device final : public HiCR::L0::Device
   Device(
     const deviceIdentifier_t id,
     const aclrtContext context,
+    const aclrtStream stream,
     const computeResourceList_t& computeResources,
     const memorySpaceList_t& memorySpaces
-    ) : HiCR::L0::Device(computeResources, memorySpaces),  _id (id), _context(context)
+    ) : HiCR::L0::Device(computeResources, memorySpaces),  _id (id), _context(context), _stream(stream)
     {};
 
   /**
@@ -59,7 +60,7 @@ class Device final : public HiCR::L0::Device
    * \param deviceContext the device ACL context
    * \param deviceId the device identifier
    */
-  __USED__ inline void selectDevice(const aclrtContext deviceContext, const deviceIdentifier_t deviceId)
+  __USED__ static inline void selectDevice(const aclrtContext deviceContext, const deviceIdentifier_t deviceId)
   {
     // select the device context on which operations shoud be executed
     aclError err = aclrtSetCurrentContext(deviceContext);
@@ -95,6 +96,11 @@ class Device final : public HiCR::L0::Device
    * The internal Ascend context associated to the device
    */
   const aclrtContext _context;
+
+ /**
+ * Stream object for operations in this memory space
+ */
+ const aclrtStream _stream;
 
 };
 
