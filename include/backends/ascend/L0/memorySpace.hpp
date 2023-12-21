@@ -44,8 +44,8 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   /**
    * Constructor for the compute resource class of the sequential backend
    */
-  MemorySpace(const size_t size) :
-   HiCR::L0::MemorySpace(size)
+  MemorySpace(const ascend::L0::Device* device, const aclrtStream stream, const size_t size) :
+   HiCR::L0::MemorySpace(size), _device(device), _stream(stream)
      {};
 
   /**
@@ -62,17 +62,19 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   */
   __USED__ inline const ascend::L0::Device* getDevice() const  { return _device; }
 
-  /**
-  * Function to set the ascend device associated to this memory space
-  */
-  __USED__ inline void setDevice(const ascend::L0::Device* device)  { _device = device; }
 
   private:
 
   /**
    * Stores the device that owns this memory space
   */
- const ascend::L0::Device* _device;
+ const ascend::L0::Device* const _device;
+
+ /**
+  * Stream object for operations in this memory space
+ */
+const aclrtStream _stream;
+
 };
 
 } // namespace L0

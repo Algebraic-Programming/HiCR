@@ -15,7 +15,7 @@
 #include <acl/acl.h>
 #include <backends/ascend/L1/memoryManager.hpp>
 #include <backends/ascend/kernel.hpp>
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/common/exceptions.hpp>
 
 namespace HiCR
@@ -36,7 +36,7 @@ namespace ascend
 class MemoryKernel final : public Kernel
 {
   public:
-
+ 
   /**
    * Constructor for the execution unit class of the ascend backend
    *
@@ -47,13 +47,21 @@ class MemoryKernel final : public Kernel
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(L1::MemoryManager *memManager, HiCR::L0::MemorySlot *destination, const size_t destinationOffset, HiCR::L0::MemorySlot *source, const size_t sourceOffset, size_t size) : ascend::Kernel(),
-                                                                                                                                                                                         _dst(destination),
-                                                                                                                                                                                         _src(source),
-                                                                                                                                                                                         _dstOffset(destinationOffset),
-                                                                                                                                                                                         _srcOffset(sourceOffset),
-                                                                                                                                                                                         _size(size),
-                                                                                                                                                                                         _memManager(memManager){};
+  MemoryKernel(
+   ascend::L1::MemoryManager *memManager,
+   HiCR::L0::LocalMemorySlot *destination,
+   const size_t destinationOffset,
+   HiCR::L0::LocalMemorySlot *source,
+   const size_t sourceOffset,
+   size_t size) :
+     ascend::Kernel(),
+    _dst(destination),
+    _src(source),
+    _dstOffset(destinationOffset),
+    _srcOffset(sourceOffset),
+    _size(size),
+    _memManager(memManager){};
+
   MemoryKernel() = delete;
 
   /**
@@ -78,11 +86,11 @@ class MemoryKernel final : public Kernel
   /**
    * Destionation memory slot
    */
-  HiCR::L0::MemorySlot *_dst;
+  HiCR::L0::LocalMemorySlot *_dst;
   /**
    * Source memory slot
    */
-  HiCR::L0::MemorySlot *_src;
+  HiCR::L0::LocalMemorySlot *_src;
 
   /**
    * Destination offset

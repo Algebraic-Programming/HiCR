@@ -45,8 +45,9 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   /**
    * Constructor for the compute resource class of the sequential backend
    */
-  ComputeResource() :
-   HiCR::L0::ComputeResource() {};
+  ComputeResource(const ascend::L0::Device* device) :
+   HiCR::L0::ComputeResource(),
+   _device(device) {};
 
   /**
    * Default destructor
@@ -65,18 +66,13 @@ class ComputeResource final : public HiCR::L0::ComputeResource
     return _device;
   }
 
-  /**
-  * Function to set the ascend device associated to this memory space
-  */
-  __USED__ inline void setDevice(const ascend::L0::Device* device)  { _device = device; }
-
 
   private:
 
   /**
    * Stores the device that owns this compute resource
   */
-  const ascend::L0::Device* _device;
+  const ascend::L0::Device* const _device;
 };
 
 } // namespace L0

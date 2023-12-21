@@ -66,6 +66,7 @@ class DeviceManager final : public HiCR::L1::DeviceManager
     size_t ascendFreeMemory, ascendMemorySize;
     aclrtContext deviceContext;
 
+
     // add as many memory spaces as devices
     for (int32_t deviceId = 0; deviceId < (int32_t)deviceCount; deviceId++)
     {
@@ -81,18 +82,23 @@ class DeviceManager final : public HiCR::L1::DeviceManager
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 
-      // Creating Device's memory space
-      auto ascendDeviceMemorySpace = new ascend::L0::MemorySpace(ascendMemorySize);
-
-      // Creating Device's compute resource
-      auto ascendDeviceComputeResource = new ascend::L0::ComputeResource;
+      // Creating stream for memcpys
+      aclrtStream stream;
+      err = aclrtCreateStream(&stream);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d. Error %d", deviceId, err);
 
       // Creating new Ascend device
-      auto ascendDevice = new ascend::L0::Device(deviceId, deviceContext, {ascendDeviceComputeResource}, {ascendDeviceMemorySpace});
+      auto ascendDevice = new ascend::L0::Device(deviceId, deviceContext, {}, {});
+      
+      // Creating Device's memory space
+      auto ascendDeviceMemorySpace = new ascend::L0::MemorySpace(ascendDevice, stream, ascendMemorySize); 
 
-      // Setting backward pointers to the memory space and compute resources. This circular reference is not ideal, but is the only solution so far
-      ascendDeviceMemorySpace->setDevice(ascendDevice);
-      ascendDeviceComputeResource->setDevice(ascendDevice);
+      // Creating Device's compute resource
+      auto ascendDeviceComputeResource = new ascend::L0::ComputeResource(ascendDevice);
+
+      // Now adding resources to the device
+      ascendDevice->addComputeResource(ascendDeviceComputeResource);
+      ascendDevice->addMemorySpace(ascendDeviceMemorySpace);
 
       // Adding new device
       ascendDeviceList.insert(ascendDevice);
@@ -127,7 +133,8 @@ __USED__ inline void setupInterDeviceCommunication(std::unordered_set<ascend::L0
 
         if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dst, src, err);
 
-        selectDevice(dst->getContext(), dst->getId());
+        // Selecting device
+        ascend::L0::Device::selectDevice(dst->getContext(), dst->getId());
 
         // enable the communication
         err = aclrtDeviceEnablePeerAccess(src->getId(), 0);

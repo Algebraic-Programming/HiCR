@@ -59,6 +59,16 @@ class Device
    */
   __USED__ inline const memorySpaceList_t& getMemorySpaceList()  { return _memorySpaces; }
 
+/**
+   * This function allows the deferred addition of compute resources
+   */
+  __USED__ inline void addComputeResource(HiCR::L0::ComputeResource* const computeResource)  { _computeResources.insert(computeResource); }
+
+  /**
+   * This function allows the deferred addition of memory spaces
+   */
+  __USED__ inline void addMemorySpace(HiCR::L0::MemorySpace* const memorySpace)  { _memorySpaces.insert(memorySpace); }
+
   /**
    * Default destructor
    */
@@ -77,12 +87,12 @@ class Device
   /**
   * Set of compute resources contained in this device.
   */
-  const computeResourceList_t _computeResources;
+  computeResourceList_t _computeResources;
 
   /**
   * Set of memory spaces contained in this device.
   */
-  const memorySpaceList_t _memorySpaces;
+  memorySpaceList_t _memorySpaces;
 };
 
 } // namespace L0

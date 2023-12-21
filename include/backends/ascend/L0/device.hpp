@@ -54,6 +54,27 @@ class Device final : public HiCR::L0::Device
     {};
 
   /**
+   * Set the device on which the operations needs to be executed
+   *
+   * \param deviceContext the device ACL context
+   * \param deviceId the device identifier
+   */
+  __USED__ inline void selectDevice(const aclrtContext deviceContext, const deviceIdentifier_t deviceId)
+  {
+    // select the device context on which operations shoud be executed
+    aclError err = aclrtSetCurrentContext(deviceContext);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set the device %ld context. Error %d", deviceId, err);
+  }
+
+  /**
+   * Set this device as the one on which the operations needs to be executed
+   */
+  __USED__ inline void select() const
+  {
+    selectDevice(_context, _id);
+  }
+
+  /**
    * Default destructor
    */
   ~Device() = default;
