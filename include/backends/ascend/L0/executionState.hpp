@@ -53,16 +53,9 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType());
 
     _executionUnit = e;
-
-    aclError err = aclrtCreateEvent(&_syncEvent);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
   }
 
-  ~ExecutionState()
-  {
-    aclError err = aclrtDestroyEvent(_syncEvent);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to free synchronize bit");
-  };
+  ~ExecutionState() = default;
 
   /**
    * Synchronize and destroy the currently used stream
@@ -79,6 +72,10 @@ class ExecutionState final : public HiCR::L0::ExecutionState
       err = aclrtDestroyStream(_stream);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
 
+      // Destroy the related event
+      aclError err = aclrtDestroyEvent(_syncEvent);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to free synchronize bit");
+
       // avoid deleting the stream more than once
       _isStreamActive = false;
     }
@@ -91,6 +88,9 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    */
   __USED__ inline void resumeImpl() override
   {
+    aclError err = aclrtCreateEvent(&_syncEvent);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
+
     // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
     // that reuse the same stream
     aclError err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
