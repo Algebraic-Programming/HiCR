@@ -50,9 +50,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
       // Checking whether the execution unit passed is compatible with this backend
       if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
-
-      // Checking the processing unit does not reference the host device
-      if (c->getDeviceType() == deviceType_t::Host) HICR_THROW_RUNTIME("Ascend backend can not create a processing unit on the host.");
    };
 
   /**
@@ -65,9 +62,9 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
     // Getting device id associated to the underlying compute resource (ascend)
-    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDeviceId();
+    auto device = ((ascend::L0::ComputeResource*)getComputeResource())->getDevice();
 
-    return std::make_unique<L0::ExecutionState>(executionUnit, _context, deviceId);
+    return std::make_unique<ascend::L0::ExecutionState>(executionUnit, device);
   }
 
   protected:
@@ -77,7 +74,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __USED__ inline void initializeImpl() override
   {
-    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDeviceId();
+    // Getting device id associated to the underlying compute resource (ascend)
+    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDevice()->getId();
     aclError err = aclrtCreateContext(&_context, deviceId);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create ACL context on device %d. Error %d", deviceId, err);
   }
@@ -128,7 +126,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline void awaitImpl() override
   {
     // Getting device id associated to the underlying compute resource (ascend)
-    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDeviceId();
+    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDevice()->getId();
 
     // force the execution state to finalize
     _executionState.get()->finalizeStream();

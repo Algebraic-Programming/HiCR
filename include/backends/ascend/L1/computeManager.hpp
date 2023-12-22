@@ -15,8 +15,6 @@
 #include <acl/acl.h>
 #include <backends/ascend/L0/executionUnit.hpp>
 #include <backends/ascend/L0/processingUnit.hpp>
-#include <backends/ascend/common.hpp>
-#include <backends/ascend/core.hpp>
 #include <backends/ascend/kernel.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <unordered_map>
@@ -44,12 +42,8 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 
   /**
    * Constructor for the Compute Manager class for the ascend backend
-   *
-   * \param[in] i ACL initializer
-   *
    */
-  ComputeManager(const Core &i) : HiCR::L1::ComputeManager(), _deviceStatusMap(i.getContexts()){};
-
+  ComputeManager() : HiCR::L1::ComputeManager() {};
   ~ComputeManager() = default;
 
   /**
@@ -78,37 +72,6 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   }
 
   private:
-
-  /**
-   * Keep track of the device context for each computeResourceId/deviceId
-   */
-  const std::unordered_map<deviceIdentifier_t, ascendState_t> &_deviceStatusMap;
-
-  /**
-   * Internal implementaion of queryComputeResource routine.
-   *
-   * \return list of compute resources detected by ACL
-   */
-  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
-  {
-    // new compute resources list to return
-    computeResourceList_t computeResourceList;
-
-    // Add as many memory spaces as devices
-    for (const auto [deviceId, deviceState] : _deviceStatusMap)
-    {
-       // Getting device's type
-      auto deviceType = deviceState.deviceType;
-
-      // Creating new Memory Space object
-      auto deviceComputeResource = new ascend::L0::ComputeResource(deviceType, deviceId);
-
-      // Adding it to the list
-      computeResourceList.insert(deviceComputeResource);
-    } 
-
-    return computeResourceList;
-  }
 
   /**
    * Create a new processing unit for the specified \p resource (device)

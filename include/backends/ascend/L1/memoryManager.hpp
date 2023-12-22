@@ -16,8 +16,6 @@
 #include <backends/ascend/L0/device.hpp>
 #include <backends/ascend/L0/memorySpace.hpp>
 #include <backends/ascend/L0/localMemorySlot.hpp>
-#include <backends/ascend/common.hpp>
-#include <backends/ascend/core.hpp>
 #include <hicr/L1/memoryManager.hpp>
 
 namespace HiCR
@@ -134,7 +132,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     aclError err = aclrtFree(memorySlotPointer);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while freeing device %d memory. Error %d", memorySlotDeviceId, err);
 
-    aclError err = aclDestroyDataBuffer(m->getDataBuffer());
+    err = aclDestroyDataBuffer(m->getDataBuffer());
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy data buffer. Error %d", err);
   }
 

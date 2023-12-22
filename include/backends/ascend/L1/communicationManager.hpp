@@ -16,8 +16,6 @@
 #include <backends/ascend/L0/memorySpace.hpp>
 #include <backends/ascend/L0/device.hpp>
 #include <backends/ascend/L0/localMemorySlot.hpp>
-#include <backends/ascend/common.hpp>
-#include <backends/ascend/core.hpp>
 #include <hicr/L1/communicationManager.hpp>
 #include <hicr/L0/globalMemorySlot.hpp>
 
@@ -139,7 +137,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (sh != NULL) srcType = deviceType_t::host;
     if (dh != NULL) dstType = deviceType_t::host;
 
-    // Checking whether the execution unit passed is compatible with this backend
+    // Checking whether the memory slot unit passed is compatible with this backend
     if (srcType == deviceType_t::none) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
     if (dstType == deviceType_t::none) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
 
@@ -156,14 +154,14 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Determining which device context to use for copying
     ascend::L0::LocalMemorySlot *deviceMemSlot = NULL;
-    if (ACL_MEMCPY_HOST_TO_HOST)     { deviceMemSlot = NULL; srcPtr = sh->getPointer(); dstPtr = dh->getPointer(); }
-    if (ACL_MEMCPY_HOST_TO_DEVICE)   { deviceMemSlot = dd;   srcPtr = sh->getPointer(); dstPtr = dd->getPointer(); }
-    if (ACL_MEMCPY_DEVICE_TO_HOST)   { deviceMemSlot = sd;   srcPtr = sd->getPointer(); dstPtr = dh->getPointer(); }
-    if (ACL_MEMCPY_DEVICE_TO_DEVICE) { deviceMemSlot = dd;   srcPtr = sd->getPointer(); dstPtr = dd->getPointer(); }
+    if (memcpyKind == ACL_MEMCPY_HOST_TO_HOST)     { deviceMemSlot = NULL; srcPtr = sh->getPointer(); dstPtr = dh->getPointer(); }
+    if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE)   { deviceMemSlot = dd;   srcPtr = sh->getPointer(); dstPtr = dd->getPointer(); }
+    if (memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)   { deviceMemSlot = sd;   srcPtr = sd->getPointer(); dstPtr = dh->getPointer(); }
+    if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE) { deviceMemSlot = dd;   srcPtr = sd->getPointer(); dstPtr = dd->getPointer(); }
 
     // Calculating actual offsets
     const auto actualSrcPtr = (const void *)((uint8_t *)srcPtr + src_offset);
-    const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
+    const auto actualDstPtr = (void *)      ((uint8_t *)dstPtr + dst_offset);
 
     // If a device is involved in this operation, select it and use its stream to perform the operation
     if (deviceMemSlot != NULL)

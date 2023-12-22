@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <backends/ascend/common.hpp>
 #include <backends/ascend/L0/localMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp> 
 #include <hicr/common/definitions.hpp>

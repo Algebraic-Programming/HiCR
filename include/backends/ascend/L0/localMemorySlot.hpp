@@ -12,7 +12,6 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <backends/ascend/common.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 

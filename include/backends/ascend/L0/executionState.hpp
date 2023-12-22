@@ -14,7 +14,7 @@
 
 #include <acl/acl.h>
 #include <backends/ascend/L0/executionUnit.hpp>
-#include <backends/ascend/common.hpp>
+#include <backends/ascend/L0/device.hpp>
 #include <hicr/L0/executionState.hpp>
 #include <hicr/common/exceptions.hpp>
 
@@ -42,13 +42,14 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    * Constructor for an ascend execution state
    *
    * \param executionUnit execution unit containing the kernel to execute
-   * \param context ACL context associated to the device
-   * \param deviceId ascend device id
+   * \param device ascend device id
    */
-  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit, const aclrtContext context, const deviceIdentifier_t deviceId) : HiCR::L0::ExecutionState(executionUnit), _context(context), _deviceId(deviceId)
+  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit, const ascend::L0::Device* device) :
+   HiCR::L0::ExecutionState(executionUnit),
+   _device(device)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_cast<const ExecutionUnit *>(executionUnit);
+    auto e = dynamic_cast<const ascend::L0::ExecutionUnit *>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType());
@@ -93,12 +94,12 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   __USED__ inline void resumeImpl() override
   {
     // select the ascend card
-    selectDevice(_context, _deviceId);
+    _device->select();
 
     // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
     // that reuse the same stream
     aclError err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d", _deviceId);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d", _device->getId());
 
     _isStreamActive = true;
 
@@ -140,27 +141,24 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   private:
 
   /**
-   * ACL context associated to the ascend device
+   * Ascend device
    */
-  const aclrtContext _context;
+  const ascend::L0::Device* _device;
 
-  /**
-   * Ascend device id
-   */
-  const deviceIdentifier_t _deviceId;
   /**
    * Execution unit containing the kernel operations to execute
    */
   const ExecutionUnit *_executionUnit;
-  /**
-   * Stream on which the execution unit kernels are scheduled.
-   */
-  aclrtStream _stream;
 
   /**
    * Synchronization event to check for stream completion
    */
   aclrtEvent _syncEvent;
+
+  /**
+   * Stream on which the execution unit kernels are scheduled.
+   */
+  aclrtStream _stream;
 
   /**
    * Keep track of the stream status

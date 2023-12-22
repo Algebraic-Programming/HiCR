@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include "hwloc.h"
-#include <backends/ascend/common.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
