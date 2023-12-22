@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   // Creating MPI-based instance manager
-  HiCR::backend::mpi::L1::InstanceManager instanceManager(&communicationManager, &memoryManager, *memSpaces.begin());
+  HiCR::backend::mpi::L1::InstanceManager instanceManager(&communicationManager, &computeManager,  &memoryManager, *memSpaces.begin());
 
   // Differentiating between coordinator and worker functions using the rank number
   if (rank == 0)

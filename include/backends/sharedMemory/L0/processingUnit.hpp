@@ -100,12 +100,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
   };
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
-  {
-    // Creating and returning new execution state
-    return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
-  }
-
   private:
 
   /**

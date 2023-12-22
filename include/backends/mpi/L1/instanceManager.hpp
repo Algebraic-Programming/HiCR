@@ -50,9 +50,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    * \param[in] memoryManager The memory manager to use for internal data passing
    */
   InstanceManager(HiCR::L1::CommunicationManager *const communicationManager,
+                  HiCR::L1::ComputeManager *const computeManager,
                   HiCR::L1::MemoryManager *const memoryManager,
                   HiCR::L0::MemorySpace* const bufferMemorySpace) :
-                   HiCR::L1::InstanceManager(communicationManager, memoryManager, bufferMemorySpace),
+                   HiCR::L1::InstanceManager(communicationManager, computeManager, memoryManager, bufferMemorySpace),
                   _MPICommunicationManager(dynamic_cast<mpi::L1::CommunicationManager *const>(communicationManager))
   {
     // Checking whether the execution unit passed is compatible with this backend

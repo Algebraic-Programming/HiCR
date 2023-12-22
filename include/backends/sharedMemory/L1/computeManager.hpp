@@ -57,6 +57,12 @@ class ComputeManager final : public HiCR::L1::ComputeManager
     return new sequential::L0::ExecutionUnit(executionUnit);
   }
 
+  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
+  {
+    // Creating and returning new execution state
+    return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
+  }
+  
   private:
 
   __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource* computeResource) const override

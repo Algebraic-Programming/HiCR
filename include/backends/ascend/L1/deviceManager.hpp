@@ -62,33 +62,27 @@ class DeviceManager final : public HiCR::L1::DeviceManager
     err = aclrtGetDeviceCount((uint32_t *)&deviceCount);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
 
-    // Creating new devices
-    size_t ascendFreeMemory, ascendMemorySize;
-    aclrtContext deviceContext;
-
-
     // add as many memory spaces as devices
     for (int32_t deviceId = 0; deviceId < (int32_t)deviceCount; deviceId++)
     {
+      // Creating new devices
+      size_t ascendFreeMemory, ascendMemorySize;
+      auto deviceContext = new aclrtContext;
+
       // set the device
       err = aclrtSetDevice(deviceId);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not select the ascend device %d. Error %d", deviceId, err);
 
       // retrieve the default device context
-      err = aclrtGetCurrentContext(&deviceContext);
+      err = aclrtGetCurrentContext(deviceContext);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
 
       // get the memory info
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 
-      // Creating stream for memcpys
-      aclrtStream stream;
-      err = aclrtCreateStream(&stream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d. Error %d", deviceId, err);
-
       // Creating new Ascend device
-      auto ascendDevice = new ascend::L0::Device(deviceId, stream, deviceContext, {}, {});
+      auto ascendDevice = new ascend::L0::Device(deviceId, deviceContext, {}, {});
       
       // Creating Device's memory space
       auto ascendDeviceMemorySpace = new ascend::L0::MemorySpace(ascendDevice, ascendMemorySize); 

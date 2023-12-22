@@ -88,8 +88,8 @@ TEST(Task, Run)
   // Initializing processing unit
   processingUnit->initialize();
 
-  // First, creating processing unit
-  auto executionState = processingUnit->createExecutionState(u);
+  // Creating execution state
+  auto executionState = m.createExecutionState(u);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -172,11 +172,11 @@ TEST(Task, Events)
   // Creating processing unit from the compute resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 
+  // Creating execution state
+  auto executionState = m.createExecutionState(u);
+
   // Initializing processing unit
   processingUnit->initialize();
-
-  // First, creating processing unit
-  auto executionState = processingUnit->createExecutionState(u);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -198,8 +198,8 @@ TEST(Task, Events)
   // Creating a task with an event map to make sure the functions are ran
   t = new HiCR::L2::tasking::Task(u);
 
-  // First, creating processing unit
-  executionState = processingUnit->createExecutionState(t->getExecutionUnit());
+  // Creating execution state
+  executionState = m.createExecutionState(t->getExecutionUnit());
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));

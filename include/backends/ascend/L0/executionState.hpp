@@ -42,11 +42,9 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    * Constructor for an ascend execution state
    *
    * \param executionUnit execution unit containing the kernel to execute
-   * \param device ascend device id
    */
-  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit, const ascend::L0::Device* device) :
-   HiCR::L0::ExecutionState(executionUnit),
-   _device(device)
+  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit) :
+   HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_cast<const ascend::L0::ExecutionUnit *>(executionUnit);
@@ -93,13 +91,10 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    */
   __USED__ inline void resumeImpl() override
   {
-    // select the ascend card
-    _device->select();
-
     // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
     // that reuse the same stream
     aclError err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d", _device->getId());
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not create stream");
 
     _isStreamActive = true;
 
@@ -139,11 +134,6 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   }
 
   private:
-
-  /**
-   * Ascend device
-   */
-  const ascend::L0::Device* _device;
 
   /**
    * Execution unit containing the kernel operations to execute

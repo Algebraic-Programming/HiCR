@@ -12,8 +12,10 @@
 
 #pragma once
 
+#include <memory>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
+#include <hicr/L0/executionState.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -64,6 +66,16 @@ class ComputeManager
     // Calling internal implementation
     return value;
   }
+
+  /**
+   * This function enables the creation of an empty execution state object.
+   *
+   * The instantiation of its internal memory structures is delayed until explicit initialization to reduce memory usage when, for example, scheduling many tasks that do not need to execute at the same time.
+   *
+   * \param[in] executionUnit The replicable state-less execution unit to instantiate into an execution state
+   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
+   */
+  virtual std::unique_ptr<L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) = 0;
 
   protected:
 

@@ -19,6 +19,7 @@
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/communicationManager.hpp>
+#include <hicr/L1/computeManager.hpp>
 #include <map>
 #include <memory>
 #include <set>
@@ -83,6 +84,12 @@ class InstanceManager
    * \return A pointer to the communication manager used to instantiate this instance manager
    */
   __USED__ inline HiCR::L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
+
+  /**
+   * Function to retrieve the internal compute manager for this instance manager
+   * \return A pointer to the compute manager used to instantiate this instance manager
+   */
+  __USED__ inline HiCR::L1::ComputeManager *getComputeManager() const { return _computeManager; }
 
    /**
    * Function to retrieve the internal memory space used for creating buffers in this instance manager
@@ -149,9 +156,11 @@ class InstanceManager
    * \param memoryManager The memory manager to use for exchange of data (state, return values) between instances
    */
   InstanceManager(HiCR::L1::CommunicationManager *const communicationManager,
+                  HiCR::L1::ComputeManager *const computeManager,
                   HiCR::L1::MemoryManager *const memoryManager,
                   HiCR::L0::MemorySpace *const bufferMemorySpace) :
                   _communicationManager(communicationManager),
+                  _computeManager(computeManager),
                   _memoryManager(memoryManager),
                   _bufferMemorySpace(bufferMemorySpace)
   { };
@@ -172,7 +181,7 @@ class InstanceManager
     auto &e = _executionUnitMap[eIdx];
 
     // Creating execution state
-    auto s = p->createExecutionState(e);
+    auto s = _computeManager->createExecutionState(e);
 
     // Running execution state
     p->start(std::move(s));
@@ -200,6 +209,11 @@ class InstanceManager
   * Communication manager for exchanging information among HiCR instances
   */
   HiCR::L1::CommunicationManager *const _communicationManager;
+
+  /**
+  * Compute manager for running incoming RPCs
+  */
+  HiCR::L1::ComputeManager *const _computeManager;
 
   /**
    * Memory manager for allocating internal buffers

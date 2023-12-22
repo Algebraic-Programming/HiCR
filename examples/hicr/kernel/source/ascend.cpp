@@ -119,7 +119,7 @@ int main(int argc, char **argv)
   processingUnit->initialize();
 
   // Create an execution state and initialize it
-  auto executionState = processingUnit->createExecutionState(executionUnit);
+  auto executionState = ascendComputeManager.createExecutionState(executionUnit);
 
   // Execute the kernel stream
   processingUnit->start(std::move(executionState));

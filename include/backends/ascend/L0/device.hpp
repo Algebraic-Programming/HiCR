@@ -47,11 +47,10 @@ class Device final : public HiCR::L0::Device
    */
   Device(
     const deviceIdentifier_t id,
-    const aclrtContext context,
-    const aclrtStream stream,
+    aclrtContext* context,
     const computeResourceList_t& computeResources,
     const memorySpaceList_t& memorySpaces
-    ) : HiCR::L0::Device(computeResources, memorySpaces),  _id (id), _context(context), _stream(stream)
+    ) : HiCR::L0::Device(computeResources, memorySpaces),  _id (id), _context(context)
     {};
 
   /**
@@ -72,7 +71,7 @@ class Device final : public HiCR::L0::Device
    */
   __USED__ inline void select() const
   {
-    selectDevice(_context, _id);
+    selectDevice(*_context, _id);
   }
 
   /**
@@ -83,7 +82,7 @@ class Device final : public HiCR::L0::Device
   __USED__ inline std::string getType() const override { return "Ascend Device"; }
 
   __USED__ inline deviceIdentifier_t getId() const { return _id; }
-  __USED__ inline aclrtContext getContext() const { return _context; }
+  __USED__ inline aclrtContext* getContext() const { return _context; }
 
   private:
 
@@ -95,12 +94,7 @@ class Device final : public HiCR::L0::Device
   /**
    * The internal Ascend context associated to the device
    */
-  const aclrtContext _context;
-
- /**
- * Stream object for operations in this memory space
- */
- const aclrtStream _stream;
+  aclrtContext* _context;
 
 };
 
