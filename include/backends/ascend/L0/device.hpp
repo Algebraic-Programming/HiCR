@@ -59,10 +59,10 @@ class Device final : public HiCR::L0::Device
    * \param deviceContext the device ACL context
    * \param deviceId the device identifier
    */
-  __USED__ static inline void selectDevice(const aclrtContext deviceContext, const deviceIdentifier_t deviceId)
+  __USED__ static inline void selectDevice(const aclrtContext *deviceContext, const deviceIdentifier_t deviceId)
   {
     // select the device context on which operations shoud be executed
-    aclError err = aclrtSetCurrentContext(deviceContext);
+    aclError err = aclrtSetCurrentContext(*deviceContext);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set the device %ld context. Error %d", deviceId, err);
   }
 
@@ -71,7 +71,7 @@ class Device final : public HiCR::L0::Device
    */
   __USED__ inline void select() const
   {
-    selectDevice(*_context, _id);
+    selectDevice(_context, _id);
   }
 
   /**
