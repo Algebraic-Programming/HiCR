@@ -17,7 +17,6 @@
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <unistd.h>
 
 namespace HiCR 
 {

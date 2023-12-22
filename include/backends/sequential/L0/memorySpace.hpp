@@ -14,6 +14,7 @@
 
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
+#include <unistd.h>
 
 namespace HiCR
 {
