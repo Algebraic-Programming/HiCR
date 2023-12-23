@@ -131,11 +131,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto dd = dynamic_cast<ascend::L0::LocalMemorySlot *>(destination);
     auto sh = dynamic_cast<HiCR::L0::LocalMemorySlot *>(source);
     auto dh = dynamic_cast<HiCR::L0::LocalMemorySlot *>(destination);
-
-    if (sd != NULL) srcType = deviceType_t::device;
-    if (dd != NULL) dstType = deviceType_t::device;
+    
     if (sh != NULL) srcType = deviceType_t::host;
     if (dh != NULL) dstType = deviceType_t::host;
+    if (sd != NULL) srcType = deviceType_t::device;
+    if (dd != NULL) dstType = deviceType_t::device;
 
     // Checking whether the memory slot unit passed is compatible with this backend
     if (srcType == deviceType_t::none) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");

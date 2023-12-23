@@ -43,8 +43,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    *
    * \param executionUnit execution unit containing the kernel to execute
    */
-  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit) :
-   HiCR::L0::ExecutionState(executionUnit)
+  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit) : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_cast<const ascend::L0::ExecutionUnit *>(executionUnit);
@@ -71,10 +70,10 @@ class ExecutionState final : public HiCR::L0::ExecutionState
       // destroy the stream
       err = aclrtDestroyStream(_stream);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
-
+      
       // Destroy the related event
-      aclError err = aclrtDestroyEvent(_syncEvent);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to free synchronize bit");
+      err = aclrtDestroyEvent(_syncEvent);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy event");
 
       // avoid deleting the stream more than once
       _isStreamActive = false;
@@ -93,7 +92,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
     // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
     // that reuse the same stream
-    aclError err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
+    err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not create stream");
 
     _isStreamActive = true;
