@@ -253,8 +253,11 @@ class ComputeResource final : public HiCR::L0::ComputeResource
             hwloc_obj_t child = cache->children[i];
             std::vector<int> puIds;
             detectThreadPUs(topology, child, 0, puIds);
-            for (int id : puIds)
-              type += " " + std::to_string(id);
+            for (auto& id : puIds)
+            {
+              type += " ";
+              type += std::to_string(id);
+            }
           }
         }
         else

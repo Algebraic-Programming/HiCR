@@ -102,7 +102,7 @@ class Consumer final : public L2::channel::Base
     if (pos >= _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBuffer->getCapacity());
 
     // Updating channel depth
-    checkReceivedTokens();
+    updateDepth();
 
     // Check if there are enough tokens in the buffer to satisfy the request
     if (pos >= _circularBuffer->getDepth()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, _circularBuffer->getDepth());
@@ -132,7 +132,7 @@ class Consumer final : public L2::channel::Base
     if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
 
     // Updating channel depth
-    checkReceivedTokens();
+    updateDepth();
 
     // If the exchange buffer does not have n tokens pushed, reject operation
     if (n > _circularBuffer->getDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _circularBuffer->getDepth());
@@ -142,26 +142,15 @@ class Consumer final : public L2::channel::Base
 
     // Notifying producer(s) of buffer liberation
     _communicationManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
-
-    // Re-syncing coordination buffer
-    _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
   }
 
   /**
    * This function updates the internal value of the channel depth
-   */
-  __USED__ inline void updateDepth()
-  {
-    checkReceivedTokens();
-  }
-
-  private:
-
-  /**
+   * 
    * This is a non-blocking non-collective function that requests the channel (and its underlying backend)
    * to check for the arrival of new messages. If this function is not called, then updates are not registered.
    */
-  __USED__ inline void checkReceivedTokens()
+  __USED__ inline void updateDepth()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
     _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
