@@ -45,7 +45,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource The associated compute resource (CPU) from which this processing unit will be instantiated
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* computeResource) : HiCR::L0::ProcessingUnit(computeResource)
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource *computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the MPI instance
     auto c = dynamic_cast<L0::ComputeResource *>(computeResource);

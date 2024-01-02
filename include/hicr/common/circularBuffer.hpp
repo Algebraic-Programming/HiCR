@@ -216,23 +216,23 @@ class CircularBuffer
   }
 
   /**
-  * @returns The absolute counter for the number of times the head was advanced
-  */
+   * @returns The absolute counter for the number of times the head was advanced
+   */
   __USED__ inline size_t getHeadAdvanceCounter() const noexcept
   {
     return *_headAdvanceCounter;
   }
 
   /**
-  * @returns The absolute counter for the number of times the tail was advanced
-  */
+   * @returns The absolute counter for the number of times the tail was advanced
+   */
   __USED__ inline size_t getTailAdvanceCounter() const noexcept
   {
     return *_tailAdvanceCounter;
   }
 
   private:
-  
+
   /**
    * How many tokens fit in the buffer
    */

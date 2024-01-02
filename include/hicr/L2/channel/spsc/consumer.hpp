@@ -55,12 +55,12 @@ class Consumer final : public L2::channel::Base
    */
   Consumer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
-           L0::LocalMemorySlot  *const internalCoordinationBuffer,
+           L0::LocalMemorySlot *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity) : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-           _tokenBuffer(tokenBuffer),
-           _producerCoordinationBuffer(producerCoordinationBuffer)
+                                    _tokenBuffer(tokenBuffer),
+                                    _producerCoordinationBuffer(producerCoordinationBuffer)
 
   {
     // Checking whether the memory slot is local. This backend only supports local data transfers
@@ -146,7 +146,7 @@ class Consumer final : public L2::channel::Base
 
   /**
    * This function updates the internal value of the channel depth
-   * 
+   *
    * This is a non-blocking non-collective function that requests the channel (and its underlying backend)
    * to check for the arrival of new messages. If this function is not called, then updates are not registered.
    */
@@ -165,15 +165,14 @@ class Consumer final : public L2::channel::Base
   /**
    * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
    * for updates (received messages) from the remote producer.
-  */
-  HiCR::L0::GlobalMemorySlot* const _tokenBuffer;
+   */
+  HiCR::L0::GlobalMemorySlot *const _tokenBuffer;
 
   /**
    * The memory slot pertaining to the producer's coordination buffer. This is a global slot to enable remote
    * update of the producer's internal circular buffer when doing a pop() operation
-  */
+   */
   HiCR::L0::GlobalMemorySlot *const _producerCoordinationBuffer;
-
 };
 
 } // namespace SPSC

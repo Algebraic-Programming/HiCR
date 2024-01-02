@@ -70,7 +70,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
       // destroy the stream
       err = aclrtDestroyStream(_stream);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
-      
+
       // Destroy the related event
       err = aclrtDestroyEvent(_syncEvent);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy event");

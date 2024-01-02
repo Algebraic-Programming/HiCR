@@ -15,7 +15,7 @@
 #include <acl/acl.h>
 #include <hicr/L0/device.hpp>
 #include <backends/ascend/L0/computeResource.hpp>
-#include <backends/ascend/L0/memorySpace.hpp> 
+#include <backends/ascend/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
@@ -30,7 +30,7 @@ namespace ascend
 namespace L0
 {
 
-/** 
+/**
  * This class represents a device, as visible by the shared memory backend. That is, an assumed SMP processor plus a shared RAM that all process have access to.
  */
 class Device final : public HiCR::L0::Device
@@ -44,7 +44,7 @@ class Device final : public HiCR::L0::Device
 
   /**
    * Constructor for an Ascend device
-   * 
+   *
    * \param id Internal unique identifier for the device
    * \param context The ACL context corresponding to this device
    * \param computeResources The compute resources associated to this device (typically just one, the main Ascend processor)
@@ -52,11 +52,9 @@ class Device final : public HiCR::L0::Device
    */
   Device(
     const deviceIdentifier_t id,
-    aclrtContext* context,
-    const computeResourceList_t& computeResources,
-    const memorySpaceList_t& memorySpaces
-    ) : HiCR::L0::Device(computeResources, memorySpaces),  _id (id), _context(context)
-    {};
+    aclrtContext *context,
+    const computeResourceList_t &computeResources,
+    const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(context){};
 
   /**
    * Set the device on which the operations needs to be executed
@@ -88,30 +86,29 @@ class Device final : public HiCR::L0::Device
 
   /**
    * Returns the internal id of the current Ascend device
-   * 
-   * \return The id of the ascend device 
-  */
+   *
+   * \return The id of the ascend device
+   */
   __USED__ inline deviceIdentifier_t getId() const { return _id; }
 
   /**
    * Returns the ACL context corresponding to this compute resource
-   * 
+   *
    * \return The ACL context
-  */
-  __USED__ inline aclrtContext* getContext() const { return _context; }
+   */
+  __USED__ inline aclrtContext *getContext() const { return _context; }
 
   private:
 
   /**
    * Individual identifier for the ascend device
-  */
+   */
   const deviceIdentifier_t _id;
 
   /**
    * The internal Ascend context associated to the device
    */
-  aclrtContext* _context;
-
+  aclrtContext *_context;
 };
 
 } // namespace L0

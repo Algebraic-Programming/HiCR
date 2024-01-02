@@ -32,7 +32,7 @@ namespace L1
 {
 
 /**
- * Implementation of the Memory Manager for the Ascend backend. 
+ * Implementation of the Memory Manager for the Ascend backend.
  *
  * It stores the memory spaces detected by the Ascend computing language
  */

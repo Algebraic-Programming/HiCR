@@ -29,7 +29,7 @@ namespace sharedMemory
 namespace L0
 {
 
-/** 
+/**
  * This class represents a memory space, as visible by the sequential backend. That is, the entire RAM that the running CPU has access to.
  */
 class MemorySpace final : public HiCR::L0::MemorySpace
@@ -38,15 +38,14 @@ class MemorySpace final : public HiCR::L0::MemorySpace
 
   /**
    * Constructor for the memory space class of the shared memory backend
-   * 
+   *
    * \param size The maximum allocatable size detected for this memory space
    * \param hwlocObject HWLoc object for associated to this memory space
    * \param bindingSupport The HWLoc binding type supported by this memory space
    */
-  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::L0::LocalMemorySlot::binding_type bindingSupport) :
-   HiCR::L0::MemorySpace(size),
-   _hwlocObject(hwlocObject),
-   _bindingSupport(bindingSupport) {};
+  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::L0::LocalMemorySlot::binding_type bindingSupport) : HiCR::L0::MemorySpace(size),
+                                                                                                                                        _hwlocObject(hwlocObject),
+                                                                                                                                        _bindingSupport(bindingSupport){};
 
   /**
    * Default destructor

@@ -37,7 +37,7 @@ namespace L2
 {
 
 namespace machineModel
-{ 
+{
 
 /**
  * Class definition for the HiCR machine model builder.

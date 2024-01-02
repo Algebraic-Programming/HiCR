@@ -43,7 +43,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   /**
    * Constructor for the Compute Manager class for the ascend backend
    */
-  ComputeManager() : HiCR::L1::ComputeManager() {};
+  ComputeManager() : HiCR::L1::ComputeManager(){};
   ~ComputeManager() = default;
 
   /**
@@ -92,7 +92,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return a pointer to the new processing unit
    */
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource* resource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *resource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }

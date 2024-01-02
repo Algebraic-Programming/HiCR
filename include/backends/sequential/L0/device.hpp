@@ -29,7 +29,7 @@ namespace sequential
 namespace L0
 {
 
-/** 
+/**
  * This class represents a device, as visible by the sequential backend. That is, an assumed single core processor plus the entire RAM that the CPU has access to.
  */
 class Device final : public HiCR::L0::Device
@@ -38,11 +38,11 @@ class Device final : public HiCR::L0::Device
 
   /**
    * Constructor for the device class of the sequential backend
-   * 
+   *
    * \param[in] computeResources The compute resources associated to this device (just one, the CPU as a whole)
    * \param[in] memorySpaces The memory spaces associated to this device (just one, the host RAM)
    */
-  Device(const computeResourceList_t& computeResources, const memorySpaceList_t& memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces) {};
+  Device(const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces){};
 
   /**
    * Default destructor

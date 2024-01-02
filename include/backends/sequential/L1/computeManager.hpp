@@ -63,7 +63,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 
   private:
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource* resource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *resource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }

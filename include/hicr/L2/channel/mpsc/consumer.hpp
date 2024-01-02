@@ -55,12 +55,13 @@ class Consumer final : public L2::channel::Base
    */
   Consumer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
-           L0::LocalMemorySlot  *const internalCoordinationBuffer,
+           L0::LocalMemorySlot *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity) : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-           _consumerCoordinationBuffer (consumerCoordinationBuffer)
-  {  }
+                                    _consumerCoordinationBuffer(consumerCoordinationBuffer)
+  {
+  }
   ~Consumer() = default;
 
   /**
@@ -151,11 +152,11 @@ class Consumer final : public L2::channel::Base
     return successFlag;
   }
 
-private:
+  private:
 
- /*
-  * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
-  */
+  /*
+   * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
+   */
   HiCR::L0::GlobalMemorySlot *const _consumerCoordinationBuffer;
 };
 

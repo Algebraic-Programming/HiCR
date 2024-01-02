@@ -54,7 +54,7 @@ class Producer final : public L2::channel::Base
    */
   Producer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
-           L0::LocalMemorySlot  *const internalCoordinationBuffer,
+           L0::LocalMemorySlot *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity) : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
@@ -119,7 +119,7 @@ class Producer final : public L2::channel::Base
       // Adding flush operation to ensure buffers are ready for re-use
       _communicationManager->flush();
 
-      // Mark operation as successful 
+      // Mark operation as successful
       successFlag = true;
     }
 
@@ -133,13 +133,13 @@ class Producer final : public L2::channel::Base
   private:
 
   /**
-  * Memory slot that represents the token buffer that producer sends data to
-  */
+   * Memory slot that represents the token buffer that producer sends data to
+   */
   L0::GlobalMemorySlot *const _tokenBuffer;
 
   /*
-  * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
-  */
+   * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
+   */
   HiCR::L0::GlobalMemorySlot *const _consumerCoordinationBuffer;
 };
 

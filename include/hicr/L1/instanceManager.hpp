@@ -79,7 +79,7 @@ class InstanceManager
    */
   __USED__ inline HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
 
-   /**
+  /**
    * Function to retrieve the internal communication manager for this instance manager
    * \return A pointer to the communication manager used to instantiate this instance manager
    */
@@ -91,11 +91,11 @@ class InstanceManager
    */
   __USED__ inline HiCR::L1::ComputeManager *getComputeManager() const { return _computeManager; }
 
-   /**
+  /**
    * Function to retrieve the internal memory space used for creating buffers in this instance manager
    * \return The internal memory space
    */
-  __USED__ inline HiCR::L0::MemorySpace* getBufferMemorySpace() const { return _bufferMemorySpace; }
+  __USED__ inline HiCR::L0::MemorySpace *getBufferMemorySpace() const { return _bufferMemorySpace; }
 
   /**
    * Function to add a new execution unit, assigned to a unique identifier
@@ -161,12 +161,10 @@ class InstanceManager
   InstanceManager(HiCR::L1::CommunicationManager *const communicationManager,
                   HiCR::L1::ComputeManager *const computeManager,
                   HiCR::L1::MemoryManager *const memoryManager,
-                  HiCR::L0::MemorySpace *const bufferMemorySpace) :
-                  _communicationManager(communicationManager),
-                  _computeManager(computeManager),
-                  _memoryManager(memoryManager),
-                  _bufferMemorySpace(bufferMemorySpace)
-  { };
+                  HiCR::L0::MemorySpace *const bufferMemorySpace) : _communicationManager(communicationManager),
+                                                                    _computeManager(computeManager),
+                                                                    _memoryManager(memoryManager),
+                                                                    _bufferMemorySpace(bufferMemorySpace){};
 
   /**
    * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
@@ -209,13 +207,13 @@ class InstanceManager
   virtual void listenImpl() = 0;
 
   /**
-  * Communication manager for exchanging information among HiCR instances
-  */
+   * Communication manager for exchanging information among HiCR instances
+   */
   HiCR::L1::CommunicationManager *const _communicationManager;
 
   /**
-  * Compute manager for running incoming RPCs
-  */
+   * Compute manager for running incoming RPCs
+   */
   HiCR::L1::ComputeManager *const _computeManager;
 
   /**
@@ -223,7 +221,7 @@ class InstanceManager
    */
   HiCR::L1::MemoryManager *const _memoryManager;
 
-    /**
+  /**
    * Memory space to store the information bufer into
    */
   HiCR::L0::MemorySpace *const _bufferMemorySpace;

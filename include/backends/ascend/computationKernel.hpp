@@ -71,8 +71,7 @@ class ComputationKernel final : public Kernel
     const std::vector<tensorData_t> &inputs,
     const std::vector<tensorData_t> &outputs,
     const aclopAttr *kernelAttrs)
-     : 
-       Kernel(),
+    : Kernel(),
       _kernelName(kernelName),
       _kernelAttrs(kernelAttrs)
   {
@@ -93,7 +92,7 @@ class ComputationKernel final : public Kernel
    * \param tensorDescriptor Ascend-specific metadata about the passed memory slot
    * \return The new Ascend tensor data object
    */
-  static tensorData_t createTensorData (HiCR::L0::LocalMemorySlot* memorySlot, aclTensorDesc * tensorDescriptor)
+  static tensorData_t createTensorData(HiCR::L0::LocalMemorySlot *memorySlot, aclTensorDesc *tensorDescriptor)
   {
     // Using up-casting to determine device types
     auto ascendSlot = dynamic_cast<ascend::L0::LocalMemorySlot *>(memorySlot);
@@ -208,7 +207,7 @@ class ComputationKernel final : public Kernel
   }
 };
 
-} // namespace ascend 
+} // namespace ascend
 
 } // namespace backend
 

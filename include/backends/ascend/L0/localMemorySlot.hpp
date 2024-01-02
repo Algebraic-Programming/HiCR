@@ -46,7 +46,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
     void *const pointer,
     size_t size,
     const aclDataBuffer *dataBuffer,
-    HiCR::L0::MemorySpace* memorySpace) : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace), _dataBuffer(dataBuffer){};
+    HiCR::L0::MemorySpace *memorySpace) : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace), _dataBuffer(dataBuffer){};
 
   /**
    * Default destructor

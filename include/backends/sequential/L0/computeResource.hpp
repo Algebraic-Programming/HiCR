@@ -27,7 +27,7 @@ namespace sequential
 namespace L0
 {
 
-/** 
+/**
  * This class represents a compute resource, as visible by the sequential backend. That is, a sequential process(or) with no information about locality and no assumption of multi-processing support.
  */
 class ComputeResource final : public HiCR::L0::ComputeResource
@@ -37,7 +37,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   /**
    * Constructor for the compute resource class of the sequential backend
    */
-  ComputeResource() : HiCR::L0::ComputeResource() {};
+  ComputeResource() : HiCR::L0::ComputeResource(){};
 
   /**
    * Default destructor

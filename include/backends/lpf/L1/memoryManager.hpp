@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstring>
-#include <backends/lpf/L0/localMemorySlot.hpp> 
+#include <backends/lpf/L0/localMemorySlot.hpp>
 #include <backends/sequential/L0/memorySpace.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <lpf/collectives.h>
@@ -59,7 +59,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * On the other hand, the resize message queue could also be locally
    * made, and placed elsewhere.
    */
-  MemoryManager(lpf_t lpf) : HiCR::L1::MemoryManager(), _lpf(lpf) { }
+  MemoryManager(lpf_t lpf) : HiCR::L1::MemoryManager(), _lpf(lpf) {}
 
   /**
    * Associates a pointer locally-allocated manually and creates a local memory slot with it
@@ -69,7 +69,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] memorySpace The memory space onto which to register the new memory slot
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, void *const ptr, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_cast<const sequential::L0::MemorySpace *>(memorySpace);
@@ -105,7 +105,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The address of the newly allocated memory slot
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the LPF instance
     auto m = dynamic_cast<const sequential::L0::MemorySpace *>(memorySpace);
@@ -127,7 +127,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    */
   __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *memorySlot) override
   {
-        // Getting up-casted pointer for the memory slot
+    // Getting up-casted pointer for the memory slot
     auto slot = dynamic_cast<lpf::L0::LocalMemorySlot *>(memorySlot);
 
     // Checking whether the memory slot is compatible with this backend
@@ -145,7 +145,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // Deallocating memory
     free(pointer);
   }
-
 };
 
 } // namespace L1

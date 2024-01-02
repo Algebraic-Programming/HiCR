@@ -30,7 +30,7 @@ namespace L0
 
 /**
  * Forward declaration of the ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
-*/
+ */
 class Device;
 
 /**
@@ -42,12 +42,11 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 
   /**
    * Constructor for the compute resource class of the sequential backend
-   * 
+   *
    * \param device The Ascend device that contains this compute resource
    */
-  ComputeResource(const ascend::L0::Device* device) :
-   HiCR::L0::ComputeResource(),
-   _device(device) {};
+  ComputeResource(const ascend::L0::Device *device) : HiCR::L0::ComputeResource(),
+                                                      _device(device){};
 
   /**
    * Default destructor
@@ -57,22 +56,21 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   __USED__ inline std::string getType() const override { return "Ascend Processor"; }
 
   /**
-  * Function to get the device id associated to this memory space
-  *
-  * @return The device id corresponding to this memory space
-  */
-  __USED__ inline const ascend::L0::Device* getDevice() const
+   * Function to get the device id associated to this memory space
+   *
+   * @return The device id corresponding to this memory space
+   */
+  __USED__ inline const ascend::L0::Device *getDevice() const
   {
     return _device;
   }
-
 
   private:
 
   /**
    * Stores the device that owns this compute resource
-  */
-  const ascend::L0::Device* const _device;
+   */
+  const ascend::L0::Device *const _device;
 };
 
 } // namespace L0

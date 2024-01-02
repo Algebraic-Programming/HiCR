@@ -91,7 +91,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource Represents the compute resource (core) affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* computeResource) : HiCR::L0::ProcessingUnit(computeResource)
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource *computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the MPI instance
     auto c = dynamic_cast<L0::ComputeResource *>(computeResource);
@@ -128,7 +128,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     auto thread = (sharedMemory::L0::ProcessingUnit *)p;
 
     // Getting associated compute unit reference
-    auto computeResource = (sharedMemory::L0::ComputeResource*)thread->getComputeResource();
+    auto computeResource = (sharedMemory::L0::ComputeResource *)thread->getComputeResource();
 
     // Storing current thread pointer
     _currentThread = thread;
@@ -137,7 +137,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
 
     // Setting initial thread affinity
-    thread->updateAffinity(std::set<int>({ computeResource->getProcessorId() }));
+    thread->updateAffinity(std::set<int>({computeResource->getProcessorId()}));
 
     // Yielding execution to allow affinity to refresh
     sched_yield();

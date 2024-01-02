@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <hicr/L0/localMemorySlot.hpp>  
-#include <hicr/L0/globalMemorySlot.hpp> 
+#include <hicr/L0/localMemorySlot.hpp>
+#include <hicr/L0/globalMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>

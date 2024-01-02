@@ -58,20 +58,20 @@ class Cache
    * will appear here. There is currently redunduncy in the representation,
    * as all cores that share the cache will keep a copy of this information
    */
-  std::vector<HiCR::L0::ComputeResource*> _associatedComputeUnits;
+  std::vector<HiCR::L0::ComputeResource *> _associatedComputeUnits;
 
   public:
 
   /**
    * Constructor for the cache class
-   *  
+   *
    * @param[in] level The level (L1, L2, L3...) detected for this cache instance
    * @param[in] size The size of the detected cache
-  */
-  Cache(const cacheType_t level, const size_t size) : 
-    _cacheSize(size),
-     _level(level)
-     {}
+   */
+  Cache(const cacheType_t level, const size_t size) : _cacheSize(size),
+                                                      _level(level)
+  {
+  }
 
   /**
    * Obtain the size of the cache object
@@ -141,7 +141,7 @@ class Cache
    *
    * \return An std::vector of the CPU IDs
    */
-  inline std::vector<HiCR::L0::ComputeResource*> getAssociatedComputeUnits() const
+  inline std::vector<HiCR::L0::ComputeResource *> getAssociatedComputeUnits() const
   {
     return _associatedComputeUnits;
   }
@@ -152,7 +152,7 @@ class Cache
    *
    * \param[in] computeUnit The hicr compute unit that contains or uses this cache
    */
-  inline void setAssociatedComputeUnit(HiCR::L0::ComputeResource* computeUnit)
+  inline void setAssociatedComputeUnit(HiCR::L0::ComputeResource *computeUnit)
   {
     _associatedComputeUnits.resize(1);
     _associatedComputeUnits[0] = computeUnit;
@@ -164,7 +164,7 @@ class Cache
    *
    * \param[in] computeUnit The hicr compute unit that contains or uses this cache
    */
-  inline void addAssociatedComputeUnit(HiCR::L0::ComputeResource* computeUnit)
+  inline void addAssociatedComputeUnit(HiCR::L0::ComputeResource *computeUnit)
   {
     _associatedComputeUnits.push_back(computeUnit);
   }

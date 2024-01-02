@@ -51,8 +51,8 @@ class DeviceManager final : public HiCR::L1::DeviceManager
   __USED__ inline deviceList_t queryDevicesImpl()
   {
     // Storage for device list
-    std::unordered_set<ascend::L0::Device*> ascendDeviceList;
-    std::unordered_set<HiCR::L0::Device*> HiCRDeviceList;
+    std::unordered_set<ascend::L0::Device *> ascendDeviceList;
+    std::unordered_set<HiCR::L0::Device *> HiCRDeviceList;
 
     // Storage for getting the ascend device count
     uint32_t deviceCount = 0;
@@ -83,9 +83,9 @@ class DeviceManager final : public HiCR::L1::DeviceManager
 
       // Creating new Ascend device
       auto ascendDevice = new ascend::L0::Device(deviceId, deviceContext, {}, {});
-      
+
       // Creating Device's memory space
-      auto ascendDeviceMemorySpace = new ascend::L0::MemorySpace(ascendDevice, ascendMemorySize); 
+      auto ascendDeviceMemorySpace = new ascend::L0::MemorySpace(ascendDevice, ascendMemorySize);
 
       // Creating Device's compute resource
       auto ascendDeviceComputeResource = new ascend::L0::ComputeResource(ascendDevice);
@@ -99,67 +99,66 @@ class DeviceManager final : public HiCR::L1::DeviceManager
       HiCRDeviceList.insert(ascendDevice);
     }
 
-   // Setting up communication between the local ascend devices
-   setupInterDeviceCommunication(ascendDeviceList);
+    // Setting up communication between the local ascend devices
+    setupInterDeviceCommunication(ascendDeviceList);
 
-   // Returning device list
-   return HiCRDeviceList;
+    // Returning device list
+    return HiCRDeviceList;
   }
 
-private:
+  private:
 
-/**
- * Setup inter device communication in the ACL runtime.
- */
-__USED__ inline void setupInterDeviceCommunication(std::unordered_set<ascend::L0::Device*>& ascendDeviceList)
-{
-  int32_t canAccessPeer = 0;
-  aclError err;
+  /**
+   * Setup inter device communication in the ACL runtime.
+   */
+  __USED__ inline void setupInterDeviceCommunication(std::unordered_set<ascend::L0::Device *> &ascendDeviceList)
+  {
+    int32_t canAccessPeer = 0;
+    aclError err;
 
-  // enable communication among each pair of ascend cards
-  for (const auto src : ascendDeviceList) 
-    for (const auto dst : ascendDeviceList)
-     if (src->getId() != dst->getId())
-      {
-        // verify that the two cards can see each other
-        err = aclrtDeviceCanAccessPeer(&canAccessPeer, src->getId(), dst->getId());
-        if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine peer accessibility to device %ld from device %ld.. Error %d", dst, src, err);
+    // enable communication among each pair of ascend cards
+    for (const auto src : ascendDeviceList)
+      for (const auto dst : ascendDeviceList)
+        if (src->getId() != dst->getId())
+        {
+          // verify that the two cards can see each other
+          err = aclrtDeviceCanAccessPeer(&canAccessPeer, src->getId(), dst->getId());
+          if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine peer accessibility to device %ld from device %ld.. Error %d", dst, src, err);
 
-        if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dst, src, err);
+          if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dst, src, err);
 
-        // Selecting device
-        ascend::L0::Device::selectDevice(dst->getContext(), dst->getId());
+          // Selecting device
+          ascend::L0::Device::selectDevice(dst->getContext(), dst->getId());
 
-        // enable the communication
-        err = aclrtDeviceEnablePeerAccess(src->getId(), 0);
-        if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable peer access from device %ld to device %ld. Error %d", dst->getId(), src->getId(), err);
-      }
-}
+          // enable the communication
+          err = aclrtDeviceEnablePeerAccess(src->getId(), 0);
+          if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable peer access from device %ld to device %ld. Error %d", dst->getId(), src->getId(), err);
+        }
+  }
 
-/**
- * Hwloc implementation of the queryComputeResources() function. This will add one compute resource object per HW Thread / Processing Unit (PU) found
- */
-__USED__ inline HiCR::L0::Device::computeResourceList_t queryComputeResources()
-{
-  // New compute resource list to return
-  HiCR::L0::Device::computeResourceList_t computeResourceList;
+  /**
+   * Hwloc implementation of the queryComputeResources() function. This will add one compute resource object per HW Thread / Processing Unit (PU) found
+   */
+  __USED__ inline HiCR::L0::Device::computeResourceList_t queryComputeResources()
+  {
+    // New compute resource list to return
+    HiCR::L0::Device::computeResourceList_t computeResourceList;
 
-  // Returning new compute resource list
-  return computeResourceList;
-}
+    // Returning new compute resource list
+    return computeResourceList;
+  }
 
-/**
- * Hwloc implementation of the Backend queryMemorySpaces() function. This will add one memory space object per NUMA domain found
- */
-__USED__ inline HiCR::L0::Device::memorySpaceList_t queryMemorySpaces()
-{
-  // New memory space list to return
-  HiCR::L0::Device::memorySpaceList_t memorySpaceList;
+  /**
+   * Hwloc implementation of the Backend queryMemorySpaces() function. This will add one memory space object per NUMA domain found
+   */
+  __USED__ inline HiCR::L0::Device::memorySpaceList_t queryMemorySpaces()
+  {
+    // New memory space list to return
+    HiCR::L0::Device::memorySpaceList_t memorySpaceList;
 
-  // Returning new memory space list
-  return memorySpaceList;
-}
-
+    // Returning new memory space list
+    return memorySpaceList;
+  }
 };
 
 } // namespace L1

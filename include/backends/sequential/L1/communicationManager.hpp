@@ -18,7 +18,7 @@
 #include <hicr/common/exceptions.hpp>
 #include <unistd.h>
 
-namespace HiCR 
+namespace HiCR
 {
 
 namespace backend
@@ -132,7 +132,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     std::memcpy(actualDstPtr, actualSrcPtr, size);
   }
 
-    __USED__ inline void memcpyImpl(HiCR::L0::GlobalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::GlobalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
     auto dst = dynamic_cast<HiCR::L0::GlobalMemorySlot *>(destination);
@@ -150,7 +150,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     dst->increaseMessagesRecv();
   }
 
-   __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
     auto src = dynamic_cast<HiCR::L0::GlobalMemorySlot *>(source);
@@ -160,7 +160,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Checking whether the memory slot is local. This backend only supports local data transfers
     if (src->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed source memory slot is not local (required by this backend)\n");
-    
+
     // Executing actual memcpy
     memcpy(destination, dst_offset, src->getSourceLocalMemorySlot(), src_offset, size);
 

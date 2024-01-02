@@ -30,7 +30,7 @@ namespace machineModel
  *
  * This class provides an overview of the entire system (compute and memory elements) and their connectivity
  */
-class Model 
+class Model
 {
   public:
 
@@ -39,7 +39,7 @@ class Model
    *
    * The internal data can be updated upon explicit initialization
    */
-  Model() 
+  Model()
   {
   }
 
@@ -48,7 +48,7 @@ class Model
    *
    * @param[in] serialData The serial representation of the model's internal state to deserialize (parse)
    */
-  Model(const std::string &serialData) 
+  Model(const std::string &serialData)
   {
     deserialize(serialData);
   }
@@ -79,9 +79,9 @@ class Model
    */
   __USED__ inline void deserialize(const std::string &serialData)
   {
-    //nlohmann::json data = nlohmann::json::parse(serialData);
-    // auto d = new machineModel::HostDevice(data);
-    // _devices.push_back(d);
+    // nlohmann::json data = nlohmann::json::parse(serialData);
+    //  auto d = new machineModel::HostDevice(data);
+    //  _devices.push_back(d);
   }
 
   /**

@@ -28,7 +28,7 @@ namespace sequential
 namespace L0
 {
 
-/** 
+/**
  * This class represents a memory space, as visible by the sequential backend. That is, the entire RAM that the running CPU has access to.
  */
 class MemorySpace final : public HiCR::L0::MemorySpace
@@ -52,7 +52,7 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   /**
    * Constructor for the compute resource class of the sequential backend
    */
-  MemorySpace() : HiCR::L0::MemorySpace(getTotalSystemMemory()) {};
+  MemorySpace() : HiCR::L0::MemorySpace(getTotalSystemMemory()){};
 
   /**
    * Default destructor

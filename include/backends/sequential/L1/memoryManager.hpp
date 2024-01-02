@@ -18,7 +18,7 @@
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 
-namespace HiCR 
+namespace HiCR
 {
 
 namespace backend
@@ -52,7 +52,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly allocated memory slot
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_cast<const L0::MemorySpace *>(memorySpace);
@@ -67,7 +67,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
 
     // Creating and returning new memory slot
-    return  new HiCR::L0::LocalMemorySlot(ptr, size, memorySpace);
+    return new HiCR::L0::LocalMemorySlot(ptr, size, memorySpace);
   }
 
   /**
@@ -77,7 +77,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, void *const ptr, const size_t size) override
   {
     // Returning new memory slot pointer
     return new HiCR::L0::LocalMemorySlot(ptr, size, memorySpace);

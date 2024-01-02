@@ -48,17 +48,17 @@ class DeviceManager final : public HiCR::L1::DeviceManager
 
   __USED__ inline deviceList_t queryDevicesImpl()
   {
-   // Creating single computing unit space representing a single core processor
-   auto hostCPU = new sequential::L0::ComputeResource();
+    // Creating single computing unit space representing a single core processor
+    auto hostCPU = new sequential::L0::ComputeResource();
 
-   // Creating single memory space representing host memory
-   auto hostRam = new sequential::L0::MemorySpace();
+    // Creating single memory space representing host memory
+    auto hostRam = new sequential::L0::MemorySpace();
 
-   // Creating a single new device representing a single CPU plus host memory (RAM)
-   auto hostDevice = new sequential::L0::Device({hostCPU}, {hostRam});
+    // Creating a single new device representing a single CPU plus host memory (RAM)
+    auto hostDevice = new sequential::L0::Device({hostCPU}, {hostRam});
 
-   // Returning single device
-   return { hostDevice };
+    // Returning single device
+    return {hostDevice};
   }
 };
 

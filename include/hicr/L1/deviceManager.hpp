@@ -23,9 +23,9 @@ namespace L1
 
 /**
  * Encapsulates a HiCR Backend Device Manager.
- * 
+ *
  * The purpose of this class is to discover the computing topology for a given device type.
- * E.g., if this is a backend for an NPU device and the system contains 8 such devices, it will discover an 
+ * E.g., if this is a backend for an NPU device and the system contains 8 such devices, it will discover an
  * array of Device type of size 8.
  *
  * Backends need to fulfill the abstract virtual functions described here, so that HiCR can detect hardware devices
@@ -37,7 +37,7 @@ class DeviceManager
   /**
    * Common type for a collection of devices
    */
-  typedef std::unordered_set<L0::Device*> deviceList_t;
+  typedef std::unordered_set<L0::Device *> deviceList_t;
 
   /**
    * Default constructor is allowed, as no default argument are expected for the creation of this class
@@ -58,7 +58,7 @@ class DeviceManager
    */
   __USED__ inline void queryDevices()
   {
-        // Clearing existing compute units
+    // Clearing existing compute units
     _deviceList.clear();
 
     // Calling backend-internal implementation
@@ -75,9 +75,9 @@ class DeviceManager
 
   /**
    * Backend-specific implementation of queryDevices
-   * 
+   *
    * \return The list of devices detected by this backend
-  */
+   */
   virtual deviceList_t queryDevicesImpl() = 0;
 
   private:

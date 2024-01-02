@@ -40,28 +40,29 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
   /**
    * Enumeration to indicate a type of device involved in data communication operations
-  */
-  enum deviceType_t {
+   */
+  enum deviceType_t
+  {
     /**
      * No device -- used as safeguard to detect errors
-    */
-     none, 
-
-     /**
-      * Host -- Involves the main host memory (RAM) in the operation 
      */
-     host,
+    none,
 
-     /**
-      * Device -- Involves an Ascend device memory (DRAM) in the operation
+    /**
+     * Host -- Involves the main host memory (RAM) in the operation
      */
-     device
+    host,
+
+    /**
+     * Device -- Involves an Ascend device memory (DRAM) in the operation
+     */
+    device
   };
 
   /**
    * Constructor for the ascend communication manager class for the ascend backend.
    */
-  CommunicationManager() : HiCR::L1::CommunicationManager() {};
+  CommunicationManager() : HiCR::L1::CommunicationManager(){};
   ~CommunicationManager() = default;
 
   /**
@@ -69,16 +70,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] stream ACL stream on which future memcpy will be executed
    */
-  __USED__ inline void setMemcpyStream(const aclrtStream stream) {  _stream = stream; }
+  __USED__ inline void setMemcpyStream(const aclrtStream stream) { _stream = stream; }
 
   /**
    * Reset the ACL \p stream to its default value.
    */
-  __USED__ inline void resetMemcpyStream() { _stream = NULL;  }
+  __USED__ inline void resetMemcpyStream() { _stream = NULL; }
 
   /**
    * Backend-internal asyncrhonous implementation of the memcpy operation. It passes a stream as context for later asynchrounous check for completion
-   * 
+   *
    * For more information, see: memcpyImpl
    *
    * \param[in] destination destination memory slot
@@ -90,7 +91,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   __USED__ inline void memcpyAsync(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size, const aclrtStream stream)
   {
-    memcpyInternal(destination,  dst_offset, source, src_offset, size, stream);
+    memcpyInternal(destination, dst_offset, source, src_offset, size, stream);
   }
 
   private:
@@ -147,7 +148,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) override
   {
-    memcpyInternal(destination,  dst_offset, source, src_offset, size, NULL);
+    memcpyInternal(destination, dst_offset, source, src_offset, size, NULL);
   }
 
   __USED__ inline void memcpyInternal(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size, const aclrtStream stream)
@@ -161,7 +162,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto dd = dynamic_cast<ascend::L0::LocalMemorySlot *>(destination);
     auto sh = dynamic_cast<HiCR::L0::LocalMemorySlot *>(source);
     auto dh = dynamic_cast<HiCR::L0::LocalMemorySlot *>(destination);
-    
+
     if (sh != NULL) srcType = deviceType_t::host;
     if (dh != NULL) dstType = deviceType_t::host;
     if (sd != NULL) srcType = deviceType_t::device;
@@ -173,36 +174,56 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Determining memcpy kind
     aclrtMemcpyKind memcpyKind;
-    if (srcType == deviceType_t::host   && dstType == deviceType_t::host)   memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
-    if (srcType == deviceType_t::host   && dstType == deviceType_t::device) memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
-    if (srcType == deviceType_t::device && dstType == deviceType_t::host)   memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
+    if (srcType == deviceType_t::host && dstType == deviceType_t::host) memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
+    if (srcType == deviceType_t::host && dstType == deviceType_t::device) memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
+    if (srcType == deviceType_t::device && dstType == deviceType_t::host) memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
     if (srcType == deviceType_t::device && dstType == deviceType_t::device) memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
 
     // Storage for pointers
-    const void* srcPtr = NULL;
-    void* dstPtr       = NULL;
+    const void *srcPtr = NULL;
+    void *dstPtr = NULL;
 
     // Determining which device context to use for copying
     ascend::L0::LocalMemorySlot *deviceMemSlot = NULL;
-    if (memcpyKind == ACL_MEMCPY_HOST_TO_HOST)     { deviceMemSlot = NULL; srcPtr = sh->getPointer(); dstPtr = dh->getPointer(); }
-    if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE)   { deviceMemSlot = dd;   srcPtr = sh->getPointer(); dstPtr = dd->getPointer(); }
-    if (memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)   { deviceMemSlot = sd;   srcPtr = sd->getPointer(); dstPtr = dh->getPointer(); }
-    if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE) { deviceMemSlot = dd;   srcPtr = sd->getPointer(); dstPtr = dd->getPointer(); }
+    if (memcpyKind == ACL_MEMCPY_HOST_TO_HOST)
+    {
+      deviceMemSlot = NULL;
+      srcPtr = sh->getPointer();
+      dstPtr = dh->getPointer();
+    }
+    if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE)
+    {
+      deviceMemSlot = dd;
+      srcPtr = sh->getPointer();
+      dstPtr = dd->getPointer();
+    }
+    if (memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)
+    {
+      deviceMemSlot = sd;
+      srcPtr = sd->getPointer();
+      dstPtr = dh->getPointer();
+    }
+    if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE)
+    {
+      deviceMemSlot = dd;
+      srcPtr = sd->getPointer();
+      dstPtr = dd->getPointer();
+    }
 
     // Calculating actual offsets
     const auto actualSrcPtr = (const void *)((uint8_t *)srcPtr + src_offset);
-    const auto actualDstPtr = (void *)      ((uint8_t *)dstPtr + dst_offset);
+    const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
 
     // If a device is involved in this operation, select it and use its stream to perform the operation
     if (deviceMemSlot != NULL)
     {
       // Getting memory slot info
-      const auto memorySlotMemorySpace = (ascend::L0::MemorySpace *) deviceMemSlot->getMemorySpace();
+      const auto memorySlotMemorySpace = (ascend::L0::MemorySpace *)deviceMemSlot->getMemorySpace();
       const auto memorySlotDevice = memorySlotMemorySpace->getDevice();
- 
+
       // Selecting device
       memorySlotDevice->select();
-    } 
+    }
 
     // Now executing memcpy depending on whether a stream was specified
     aclError err;
@@ -212,7 +233,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Check for errors
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not perform memcpy of type %d. Error %d", memcpyKind, err);
   }
-
 
   /**
    * Backend-internal implementation of the fence function.

@@ -36,7 +36,7 @@ namespace ascend
 class MemoryKernel final : public Kernel
 {
   public:
- 
+
   /**
    * Constructor for the execution unit class of the ascend backend
    *
@@ -48,19 +48,18 @@ class MemoryKernel final : public Kernel
    * \param size the number of bytes to copy
    */
   MemoryKernel(
-   ascend::L1::CommunicationManager *commManager,
-   HiCR::L0::LocalMemorySlot *destination,
-   const size_t destinationOffset,
-   HiCR::L0::LocalMemorySlot *source,
-   const size_t sourceOffset,
-   size_t size) :
-     ascend::Kernel(),
-    _dst(destination),
-    _src(source),
-    _dstOffset(destinationOffset),
-    _srcOffset(sourceOffset),
-    _size(size),
-    _commManager(commManager){};
+    ascend::L1::CommunicationManager *commManager,
+    HiCR::L0::LocalMemorySlot *destination,
+    const size_t destinationOffset,
+    HiCR::L0::LocalMemorySlot *source,
+    const size_t sourceOffset,
+    size_t size) : ascend::Kernel(),
+                   _dst(destination),
+                   _src(source),
+                   _dstOffset(destinationOffset),
+                   _srcOffset(sourceOffset),
+                   _size(size),
+                   _commManager(commManager){};
 
   MemoryKernel() = delete;
 
@@ -74,7 +73,7 @@ class MemoryKernel final : public Kernel
    *
    * \param stream ACL stream on which memcpy is executed
    */
-  __USED__ inline void start(const aclrtStream stream) override 
+  __USED__ inline void start(const aclrtStream stream) override
   {
     _commManager->memcpyAsync(_dst, _dstOffset, _src, _srcOffset, _size, stream);
   }

@@ -14,7 +14,7 @@
 
 #include <backends/mpi/L0/globalMemorySlot.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
-#include <hicr/L1/communicationManager.hpp> 
+#include <hicr/L1/communicationManager.hpp>
 #include <hicr/common/definitions.hpp>
 #include <mpi.h>
 

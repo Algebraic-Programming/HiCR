@@ -39,10 +39,9 @@ class LocalMemorySlot
   LocalMemorySlot(
     void *const pointer,
     const size_t size,
-    HiCR::L0::MemorySpace* memorySpace = NULL) :
-     _pointer(pointer),
-     _size(size),
-     _memorySpace(memorySpace)
+    HiCR::L0::MemorySpace *memorySpace = NULL) : _pointer(pointer),
+                                                 _size(size),
+                                                 _memorySpace(memorySpace)
   {
   }
 
@@ -67,7 +66,7 @@ class LocalMemorySlot
    * Getter function for the memory slot's associated memory space
    * \returns The memory slot's associated memory space
    */
-  __USED__ inline HiCR::L0::MemorySpace* getMemorySpace() const noexcept { return _memorySpace; }
+  __USED__ inline HiCR::L0::MemorySpace *getMemorySpace() const noexcept { return _memorySpace; }
 
   private:
 
@@ -84,7 +83,7 @@ class LocalMemorySlot
   /**
    * Memory space that this memory slot belongs to
    */
-  L0::MemorySpace* const _memorySpace;
+  L0::MemorySpace *const _memorySpace;
 };
 
 } // namespace L0

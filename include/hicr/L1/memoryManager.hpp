@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <hicr/L0/localMemorySlot.hpp>  
-#include <hicr/L0/globalMemorySlot.hpp> 
+#include <hicr/L0/localMemorySlot.hpp>
+#include <hicr/L0/globalMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -49,7 +49,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly allocated memory slot
    */
-  __USED__ inline L0::LocalMemorySlot *allocateLocalMemorySlot(L0::MemorySpace* memorySpace, const size_t size)
+  __USED__ inline L0::LocalMemorySlot *allocateLocalMemorySlot(L0::MemorySpace *memorySpace, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -69,7 +69,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly registered memory slot
    */
-  virtual L0::LocalMemorySlot *registerLocalMemorySlot(L0::MemorySpace* memorySpace, void *const ptr, const size_t size)
+  virtual L0::LocalMemorySlot *registerLocalMemorySlot(L0::MemorySpace *memorySpace, void *const ptr, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -118,7 +118,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  virtual L0::LocalMemorySlot *allocateLocalMemorySlotImpl(L0::MemorySpace* memorySpace, const size_t size) = 0;
+  virtual L0::LocalMemorySlot *allocateLocalMemorySlotImpl(L0::MemorySpace *memorySpace, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
@@ -128,7 +128,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual L0::LocalMemorySlot *registerLocalMemorySlotImpl(L0::MemorySpace* memorySpace, void *const ptr, const size_t size) = 0;
+  virtual L0::LocalMemorySlot *registerLocalMemorySlotImpl(L0::MemorySpace *memorySpace, void *const ptr, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function

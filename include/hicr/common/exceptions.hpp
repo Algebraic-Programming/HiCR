@@ -150,20 +150,21 @@ __USED__ inline void throwException [[noreturn]] (const common::exceptions::exce
   va_list ap;
   va_start(ap, format);
   auto res = vasprintf(&outstr, format, ap);
-  
+
   if (res < 0)
   {
     auto errorMsg = std::string("Error in exceptions.hpp, throwLogic() function\n");
 
-    #ifdef HICR_EXCEPTION_USE_STDEXCEPTION
-     throw std::runtime_error(errorMsg.c_str());
-    #endif
+#ifdef HICR_EXCEPTION_USE_STDEXCEPTION
+    throw std::runtime_error(errorMsg.c_str());
+#endif
 
-    #ifdef HICR_EXCEPTION_USE_ABORT
-     fprintf(stderr, "%s", errorMsg.c_str()); fflush(stderr);
-     std::abort();
-    #endif
-  } 
+#ifdef HICR_EXCEPTION_USE_ABORT
+    fprintf(stderr, "%s", errorMsg.c_str());
+    fflush(stderr);
+    std::abort();
+#endif
+  }
 
   std::string typeString = "Undefined";
   switch (type)
@@ -180,7 +181,7 @@ __USED__ inline void throwException [[noreturn]] (const common::exceptions::exce
   snprintf(info, sizeof(info) - 1, " + From %s:%d\n", fileName, lineNumber);
   outString += info;
 
-  #ifdef HICR_EXCEPTION_USE_STDEXCEPTION
+#ifdef HICR_EXCEPTION_USE_STDEXCEPTION
 
   switch (type)
   {
@@ -192,16 +193,15 @@ __USED__ inline void throwException [[noreturn]] (const common::exceptions::exce
 
   throw std::runtime_error(outString.c_str());
 
-  #endif
+#endif
 
-  #ifdef HICR_EXCEPTION_USE_ABORT
+#ifdef HICR_EXCEPTION_USE_ABORT
 
-  fprintf(stderr, "%s", outString.c_str()); fflush(stderr);
+  fprintf(stderr, "%s", outString.c_str());
+  fflush(stderr);
   std::abort();
 
-  #endif
-
-  
+#endif
 }
 
 } // namespace common

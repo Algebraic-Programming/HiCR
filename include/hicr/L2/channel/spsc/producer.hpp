@@ -54,13 +54,13 @@ class Producer final : public L2::channel::Base
    */
   Producer(L1::CommunicationManager *communicationManager,
            L0::GlobalMemorySlot *const tokenBuffer,
-           L0::LocalMemorySlot  *const internalCoordinationBuffer,
+           L0::LocalMemorySlot *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const producerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity)
-       : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-       _tokenBuffer(tokenBuffer),
-       _producerCoordinationBuffer(producerCoordinationBuffer) {  } 
+    : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+      _tokenBuffer(tokenBuffer),
+      _producerCoordinationBuffer(producerCoordinationBuffer) {}
 
   ~Producer() = default;
 
@@ -119,13 +119,13 @@ class Producer final : public L2::channel::Base
   private:
 
   /**
-  * Memory slot that represents the token buffer that producer sends data to
-  */
+   * Memory slot that represents the token buffer that producer sends data to
+   */
   L0::GlobalMemorySlot *const _tokenBuffer;
 
   /*
-  * Global Memory slot pointing to the producer's own coordination buffer
-  */
+   * Global Memory slot pointing to the producer's own coordination buffer
+   */
   L0::GlobalMemorySlot *const _producerCoordinationBuffer;
 };
 

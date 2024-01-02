@@ -29,7 +29,7 @@ namespace sharedMemory
 namespace L0
 {
 
-/** 
+/**
  * This class represents a device, as visible by the shared memory backend. That is, an assumed SMP processor plus a shared RAM that all process have access to.
  */
 class Device final : public HiCR::L0::Device
@@ -38,11 +38,11 @@ class Device final : public HiCR::L0::Device
 
   /**
    * Constructor for the device class of the sequential backend
-   * 
+   *
    * @param[in] computeResources The compute resources (cores or hyperthreads) detected in this device (CPU)
    * @param[in] memorySpaces The memory spaces (e.g., NUMA domains) detected in this device (CPU)
    */
-  Device(const computeResourceList_t& computeResources, const memorySpaceList_t& memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces) {};
+  Device(const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces){};
 
   /**
    * Default destructor

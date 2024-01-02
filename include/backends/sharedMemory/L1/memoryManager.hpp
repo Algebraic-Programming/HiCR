@@ -65,9 +65,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, const size_t size) override
+  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, const size_t size) override
   {
-        // Getting up-casted pointer for the MPI instance
+    // Getting up-casted pointer for the MPI instance
     auto m = dynamic_cast<const L0::MemorySpace *>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
@@ -105,7 +105,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
     auto memorySlot = new L0::LocalMemorySlot(L0::LocalMemorySlot::binding_type::strict_non_binding, ptr, size, memorySpace);

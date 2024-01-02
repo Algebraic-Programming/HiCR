@@ -55,9 +55,8 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   InstanceManager(HiCR::L1::CommunicationManager *const communicationManager,
                   HiCR::L1::ComputeManager *const computeManager,
                   HiCR::L1::MemoryManager *const memoryManager,
-                  HiCR::L0::MemorySpace* const bufferMemorySpace) :
-                   HiCR::L1::InstanceManager(communicationManager, computeManager, memoryManager, bufferMemorySpace),
-                  _MPICommunicationManager(dynamic_cast<mpi::L1::CommunicationManager *const>(communicationManager))
+                  HiCR::L0::MemorySpace *const bufferMemorySpace) : HiCR::L1::InstanceManager(communicationManager, computeManager, memoryManager, bufferMemorySpace),
+                                                                    _MPICommunicationManager(dynamic_cast<mpi::L1::CommunicationManager *const>(communicationManager))
   {
     // Checking whether the execution unit passed is compatible with this backend
     if (_MPICommunicationManager == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");

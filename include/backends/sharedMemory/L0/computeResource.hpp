@@ -39,17 +39,17 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 
   /**
    * System-given logical processor (core or hyperthread) identifier that this class instance represents
-  */
+   */
   typedef int logicalProcessorId_t;
 
   /**
    * System-given physical processor identifier that this class instance represents
-  */
+   */
   typedef int physicalProcessorId_t;
 
   /**
    * System-given NUMA affinity identifier
-  */
+   */
   typedef int numaAffinity_t;
 
   /**
@@ -57,14 +57,12 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * \param topology HWLoc topology object for discovery
    * \param logicalProcessorId Os-determied core affinity assigned to this compute resource
    */
-  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) :
-   HiCR::L0::ComputeResource(),
-    _logicalProcessorId(logicalProcessorId),
-    _physicalProcessorId(detectPhysicalProcessorId(topology, logicalProcessorId)),
-    _numaAffinity(detectCoreNUMAffinity(topology, logicalProcessorId)),
-    _caches(detectCpuCaches(topology, logicalProcessorId)),
-    _siblings(detectCPUSiblings(topology, logicalProcessorId))
-     {};
+  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) : HiCR::L0::ComputeResource(),
+                                                                                              _logicalProcessorId(logicalProcessorId),
+                                                                                              _physicalProcessorId(detectPhysicalProcessorId(topology, logicalProcessorId)),
+                                                                                              _numaAffinity(detectCoreNUMAffinity(topology, logicalProcessorId)),
+                                                                                              _caches(detectCpuCaches(topology, logicalProcessorId)),
+                                                                                              _siblings(detectCPUSiblings(topology, logicalProcessorId)){};
   ComputeResource() = delete;
 
   /**
@@ -76,9 +74,9 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 
   /**
    * Function to return the compute resource processor id
-   * 
+   *
    * @returns The processor id
-  */
+   */
   __USED__ inline int getProcessorId() const { return _logicalProcessorId; }
 
   /**
@@ -103,7 +101,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
     for (unsigned int i = 0; i < obj->arity; i++) detectThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
   }
 
-   /**
+  /**
    * Uses HWloc to discover the (physical) processor ID, associated with a given logical processor ID
    *
    * \param[in] topology An HWLoc topology object, already initialized
@@ -113,13 +111,13 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   __USED__ inline static physicalProcessorId_t detectPhysicalProcessorId(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
-    if (!obj)  HICR_THROW_RUNTIME( "Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
+    if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
 
     // Acquire the parent core object
     // There is an asumption here that a HWLOC_OBJ_PU type always has a parent of type HWLOC_OBJ_CORE,
     // which is consistent with current HWloc, but maybe reconsider it.
     obj = obj->parent;
-    if (obj->type != HWLOC_OBJ_CORE)  HICR_THROW_RUNTIME("Unexpected hwloc object type while trying to access Core/CPU (%lu)", logicalProcessorId);
+    if (obj->type != HWLOC_OBJ_CORE) HICR_THROW_RUNTIME("Unexpected hwloc object type while trying to access Core/CPU (%lu)", logicalProcessorId);
 
     return obj->logical_index;
   }
@@ -171,7 +169,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
     return ret;
   }
 
-/**
+  /**
    * Uses HWloc to discover all caches associated with a given logical processor ID
    *
    * \param[in] topology An HWLoc topology object, already initialized
@@ -221,7 +219,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
           type = "L4";
           break;
         case HWLOC_OBJ_L5CACHE:
-          type = "L5"; 
+          type = "L5";
           break;
         // We never expect to get here; this is for compiler warning suppresion
         default:
@@ -256,7 +254,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
             hwloc_obj_t child = cache->children[i];
             std::vector<int> puIds;
             detectThreadPUs(topology, child, 0, puIds);
-            for (auto& id : puIds)
+            for (auto &id : puIds)
             {
               type += " ";
               type += std::to_string(id);
@@ -267,7 +265,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
           type += "Private";
 
         // Get size
-        size = cache->attr->cache.size; 
+        size = cache->attr->cache.size;
 
         // Insert element to our return container
         ret.push_back(backend::sharedMemory::Cache(type, size));
@@ -314,27 +312,26 @@ class ComputeResource final : public HiCR::L0::ComputeResource
     return ret;
   }
 
-
   private:
 
-   /**
+  /**
    * The logical ID of the hardware core / processing unit
    */
   const logicalProcessorId_t _logicalProcessorId;
 
-   /**
+  /**
    * The ID of the hardware core; in SMT systems that will mean the core ID,
    * which may also have other HW threads. In non SMT systems it is expected
    * for logical and system IDs to be 1-to-1.
    */
   const physicalProcessorId_t _physicalProcessorId;
 
-   /**
+  /**
    * The ID of the hardware NUMA domain that this core is associated to
    */
   const numaAffinity_t _numaAffinity;
 
-   /**
+  /**
    * List of Cache objects associated with the CPU. There is the assumption
    * that only one cache object of each type can be associated with a CPU.
    */

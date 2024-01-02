@@ -60,7 +60,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline void initializeImpl() override
   {
     // Getting device id associated to the underlying compute resource (ascend)
-    auto deviceId = ((ascend::L0::ComputeResource*)getComputeResource())->getDevice()->getId();
+    auto deviceId = ((ascend::L0::ComputeResource *)getComputeResource())->getDevice()->getId();
 
     aclError err = aclrtCreateContext(&_context, deviceId);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create ACL context on device %d. Error %d", deviceId, err);
@@ -128,7 +128,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
     // select the curent Ascend card before starting the execution state
     c->getDevice()->select();
-    
+
     // force the execution state to finalize
     _executionState.get()->finalizeStream();
 

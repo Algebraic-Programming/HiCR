@@ -116,7 +116,7 @@ class Base
     return tokenSize * capacity;
   }
 
-    /**
+  /**
    * Returns the current channel depth.
    *
    * If the current channel is a consumer, it corresponds to how many tokens
@@ -183,9 +183,9 @@ class Base
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
   Base(L1::CommunicationManager *communicationManager,
-       L0::LocalMemorySlot  *const coordinationBuffer,
+       L0::LocalMemorySlot *const coordinationBuffer,
        const size_t tokenSize,
-       const size_t capacity) :  _communicationManager(communicationManager),
+       const size_t capacity) : _communicationManager(communicationManager),
                                 _coordinationBuffer(coordinationBuffer),
                                 _tokenSize(tokenSize)
   {
@@ -198,9 +198,9 @@ class Base
     if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a local coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
 
     // Creating internal circular buffer
-    _circularBuffer = std::make_unique<common::CircularBuffer>(capacity, 
-         (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
-         (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
+    _circularBuffer = std::make_unique<common::CircularBuffer>(capacity,
+                                                               (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
+                                                               (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
   }
 
   virtual ~Base() = default;
@@ -223,8 +223,8 @@ class Base
   const size_t _tokenSize;
 
   /**
-  * Internal channel (logical) circular buffer
-  */
+   * Internal channel (logical) circular buffer
+   */
   std::unique_ptr<common::CircularBuffer> _circularBuffer;
 };
 

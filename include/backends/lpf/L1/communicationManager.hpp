@@ -35,7 +35,7 @@ namespace L1
 {
 
 /**
- * Implementation of the HiCR LPF communication manager 
+ * Implementation of the HiCR LPF communication manager
  *
  * The only LPF engine currently of interest is the IB Verbs engine (see above for branch and hash)
  */
@@ -59,7 +59,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * It is important to know the initial count per slot so as to avoid
    * incrementing the messagesRecv at the beginning without need.
    */
-  std::map<L0::GlobalMemorySlot*, size_t> initMsgCnt;
+  std::map<L0::GlobalMemorySlot *, size_t> initMsgCnt;
 
   /**
    * Constructor of the LPF memory manager
@@ -72,7 +72,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * On the other hand, the resize message queue could also be locally
    * made, and placed elsewhere.
    */
-  CommunicationManager(size_t size, size_t rank, lpf_t lpf) : HiCR::L1::CommunicationManager(), _size(size), _rank(rank), _lpf(lpf) {  }
+  CommunicationManager(size_t size, size_t rank, lpf_t lpf) : HiCR::L1::CommunicationManager(), _size(size), _rank(rank), _lpf(lpf) {}
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
@@ -215,13 +215,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
   __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destinationSlotPtr, const size_t dstOffset, HiCR::L0::GlobalMemorySlot *sourceSlotPtr, const size_t srcOffset, const size_t size) override
   {
-    // Getting up-casted pointer 
+    // Getting up-casted pointer
     auto source = dynamic_cast<lpf::L0::GlobalMemorySlot *>(sourceSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (source == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
 
-    // Getting up-casted pointer 
+    // Getting up-casted pointer
     auto dest = dynamic_cast<lpf::L0::LocalMemorySlot *>(destinationSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
@@ -238,15 +238,15 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     lpf_get(_lpf, srcSlot, srcOffset, remoteRank, dstSlot, dstOffset, size, LPF_MSG_DEFAULT);
   }
 
-    __USED__ inline void memcpyImpl(HiCR::L0::GlobalMemorySlot *destinationSlotPtr, const size_t dstOffset, HiCR::L0::LocalMemorySlot *sourceSlotPtr, const size_t srcOffset, const size_t size) override
+  __USED__ inline void memcpyImpl(HiCR::L0::GlobalMemorySlot *destinationSlotPtr, const size_t dstOffset, HiCR::L0::LocalMemorySlot *sourceSlotPtr, const size_t srcOffset, const size_t size) override
   {
-    // Getting up-casted pointer 
+    // Getting up-casted pointer
     auto source = dynamic_cast<lpf::L0::LocalMemorySlot *>(sourceSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (source == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
 
-    // Getting up-casted pointer 
+    // Getting up-casted pointer
     auto dest = dynamic_cast<lpf::L0::GlobalMemorySlot *>(destinationSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
@@ -276,7 +276,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
   __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
-    // Getting up-casted pointer 
+    // Getting up-casted pointer
     auto slot = dynamic_cast<lpf::L0::GlobalMemorySlot *>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
