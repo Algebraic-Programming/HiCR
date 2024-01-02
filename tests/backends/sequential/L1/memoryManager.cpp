@@ -43,12 +43,12 @@ TEST(MemoryManager, Memory)
   auto memSpaces = d->getMemorySpaceList();
 
   // Define the order of mem spaces for the telephone game
-  auto memSpaceOrder = std::vector<HiCR::L0::MemorySpace*>(memSpaces.begin(), memSpaces.end());
+  auto memSpaceOrder = std::vector<HiCR::L0::MemorySpace *>(memSpaces.begin(), memSpaces.end());
 
   // Instantiating sequential backend's memory manager
   HiCR::backend::sequential::L1::MemoryManager m;
 
-    // Instantiating sequential backend's communication manager
+  // Instantiating sequential backend's communication manager
   HiCR::backend::sequential::L1::CommunicationManager c;
 
   // Getting memory resource list (should be size 1)

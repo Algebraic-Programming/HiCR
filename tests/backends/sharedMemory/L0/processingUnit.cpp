@@ -41,7 +41,7 @@ TEST(ProcessingUnit, Construction)
   auto computeResources = d->getComputeResourceList();
 
   // Getting first compute resource
-  auto computeResource = *computeResources.begin(); 
+  auto computeResource = *computeResources.begin();
 
   EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(computeResource));
   EXPECT_FALSE(p == nullptr);
@@ -88,7 +88,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   auto computeResources = d->getComputeResourceList();
 
   // Casting compute resource correctly
-  auto computeResource = (backend::L0::ComputeResource*) *computeResources.begin();
+  auto computeResource = (backend::L0::ComputeResource *)*computeResources.begin();
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(computeResource);
@@ -166,7 +166,7 @@ TEST(ProcessingUnit, LifeCycle)
   auto computeResources = d->getComputeResourceList();
 
   // Casting compute resource correctly
-  auto computeUnit = (backend::L0::ComputeResource*) *computeResources.begin();
+  auto computeUnit = (backend::L0::ComputeResource *)*computeResources.begin();
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(computeUnit);

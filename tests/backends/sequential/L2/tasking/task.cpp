@@ -70,7 +70,7 @@ TEST(Task, Run)
   // Creating task
   t = new HiCR::L2::tasking::Task(u);
 
- // Initializing Sequential backend's device manager
+  // Initializing Sequential backend's device manager
   HiCR::backend::sequential::L1::DeviceManager dm;
 
   // Asking backend to check the available devices

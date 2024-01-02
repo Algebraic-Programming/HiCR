@@ -47,7 +47,7 @@ TEST(ProcessingUnit, LifeCycle)
   // Initializing sequential backend
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
- // Initializing Sequential backend's device manager
+  // Initializing Sequential backend's device manager
   HiCR::backend::sequential::L1::DeviceManager dm;
 
   // Asking backend to check the available devices
@@ -60,13 +60,13 @@ TEST(ProcessingUnit, LifeCycle)
   auto computeResources = d->getComputeResourceList();
 
   // Getting first compute resource
-  auto computeResource = *computeResources.begin(); 
+  auto computeResource = *computeResources.begin();
 
   // Creating processin gunit
   backend::L0::ProcessingUnit p(computeResource);
 
   // Checking that the correct resourceId was used
-  HiCR::L0::ComputeResource* pIdAlt = NULL;
+  HiCR::L0::ComputeResource *pIdAlt = NULL;
   EXPECT_NO_THROW(pIdAlt = p.getComputeResource());
   EXPECT_EQ(pIdAlt, computeResource);
 
@@ -91,7 +91,7 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Creating execution unit
   auto executionUnit = m.createExecutionUnit(fc);
-  
+
   // Creating execution state
   auto executionState = m.createExecutionState(executionUnit);
 

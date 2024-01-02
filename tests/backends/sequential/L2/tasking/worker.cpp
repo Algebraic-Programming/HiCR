@@ -39,7 +39,7 @@ TEST(Task, SetterAndGetters)
 
   // Now adding something to the lists/sets
   auto dispatcher = HiCR::L2::tasking::Dispatcher([]()
-                                         { return (HiCR::L2::tasking::Task *)NULL; });
+                                                  { return (HiCR::L2::tasking::Task *)NULL; });
 
   // Subscribing worker to dispatcher
   w.subscribe(&dispatcher);
@@ -151,7 +151,7 @@ TEST(Worker, LifeCycle)
 
   // Creating task dispatcher
   auto dispatcher = HiCR::L2::tasking::Dispatcher([&t]()
-                                         { return &t; });
+                                                  { return &t; });
 
   // Suscribing worker to dispatcher
   EXPECT_NO_THROW(w.subscribe(&dispatcher));
