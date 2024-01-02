@@ -262,6 +262,7 @@ class Task
    * @return A pointer
    */
   __USED__ inline void *getBackwardReferencePointer() const { return _backwardReferencePointer; }
+  
   /**
    * Sets a backward reference pointer
    * @param[in] backwardReferencePointer address to set pointer to
