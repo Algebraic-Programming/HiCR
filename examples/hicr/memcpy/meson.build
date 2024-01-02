@@ -7,8 +7,8 @@ if get_option('buildTests')
 endif
 
 
-if 'sharedMemory' in enabledBackends
-	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep])
+if 'sharedMemory/hwloc' in enabledBackends
+	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep])
 
 	if get_option('buildTests')
 	  test('sharedMemory', sharedMemory, args : [ ], suite: testSuite )

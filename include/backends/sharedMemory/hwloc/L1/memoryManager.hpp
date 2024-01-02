@@ -14,9 +14,9 @@
 
 #include "hwloc.h"
 #include "pthread.h"
-#include <backends/sharedMemory/L0/memorySpace.hpp>
-#include <backends/sharedMemory/L0/localMemorySlot.hpp>
-#include <backends/sharedMemory/L0/globalMemorySlot.hpp>
+#include <backends/sharedMemory/hwloc/L0/memorySpace.hpp>
+#include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
+#include <backends/sharedMemory/hwloc/L0/globalMemorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
 
 namespace HiCR
@@ -26,6 +26,9 @@ namespace backend
 {
 
 namespace sharedMemory
+{
+
+namespace hwloc
 {
 
 namespace L1
@@ -161,6 +164,8 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 };
 
 } // namespace L1
+
+} // namespace hwloc
 
 } // namespace sharedMemory
 

@@ -22,6 +22,9 @@ namespace backend
 namespace sharedMemory
 {
 
+namespace hwloc
+{
+
 namespace L0
 {
 
@@ -85,6 +88,8 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
 };
 
 } // namespace L0
+
+} // namespace hwloc
 
 } // namespace sharedMemory
 

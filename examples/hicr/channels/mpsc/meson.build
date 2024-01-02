@@ -5,8 +5,8 @@ exampleBuildIncludes = include_directories([
    'source/include'
   ])
   
-if 'sharedMemory' in enabledBackends
-	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep], include_directories: [exampleBuildIncludes])
+if 'sharedMemory/hwloc' in enabledBackends
+	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep ], include_directories: [exampleBuildIncludes])
 
 	if get_option('buildTests')
 	  test('sharedMemory', sharedMemory, args : [ '3', '15' ], timeout: test_timeout, suite: testSuite )

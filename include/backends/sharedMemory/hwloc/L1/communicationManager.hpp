@@ -14,8 +14,8 @@
 
 #include "hwloc.h"
 #include "pthread.h"
-#include <backends/sharedMemory/L0/localMemorySlot.hpp>
-#include <backends/sharedMemory/L0/globalMemorySlot.hpp>
+#include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
+#include <backends/sharedMemory/hwloc/L0/globalMemorySlot.hpp>
 #include <hicr/L1/communicationManager.hpp>
 
 namespace HiCR
@@ -25,6 +25,9 @@ namespace backend
 {
 
 namespace sharedMemory
+{
+
+namespace hwloc
 {
 
 namespace L1
@@ -226,6 +229,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 };
 
 } // namespace L1
+
+} // namespace hwloc
 
 } // namespace sharedMemory
 

@@ -1,3 +1,8 @@
-subdir('L0')
-subdir('L1')
+if 'sharedMemory/hwloc' in enabledBackends
+  subdir('hwloc')
+endif
+
+if 'shardMemory/pthreads' in enabledBackends
+  subdir('pthreads')
+endif
 

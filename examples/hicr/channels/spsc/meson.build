@@ -12,8 +12,8 @@ if get_option('buildTests')
   test('sequential', sequential, args : [ '3' ], timeout: test_timeout, suite: testSuite )
 endif
 
-if 'sharedMemory' in enabledBackends
-	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryBackendDep], include_directories: [exampleBuildIncludes])
+if 'sharedMemory/hwloc' in enabledBackends
+	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep], include_directories: [exampleBuildIncludes])
 
 	if get_option('buildTests')
 	 test('sharedMemory', sharedMemory, args : [ '2' ], timeout: test_timeout, suite: testSuite )

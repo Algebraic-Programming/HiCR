@@ -11,16 +11,13 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sharedMemory/L0/processingUnit.hpp>
-#include <backends/sharedMemory/L1/computeManager.hpp>
-#include <backends/sharedMemory/L1/deviceManager.hpp>
+#include <backends/sharedMemory/pthreads/L0/processingUnit.hpp>
+#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
 #include <set>
-
-namespace backend = HiCR::backend::sharedMemory;
 
 TEST(ProcessingUnit, Construction)
 {
-  backend::L0::ProcessingUnit *p = NULL;
+  HiCR::backend::sharedMemory::pthreads::L0::ProcessingUnit *p = NULL;
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -29,7 +26,7 @@ TEST(ProcessingUnit, Construction)
   hwloc_topology_init(&topology);
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
+  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -43,7 +40,7 @@ TEST(ProcessingUnit, Construction)
   // Getting first compute resource
   auto computeResource = *computeResources.begin();
 
-  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(computeResource));
+  EXPECT_NO_THROW(p = new HiCR::backend::sharedMemory::pthreads::L0::ProcessingUnit(computeResource));
   EXPECT_FALSE(p == nullptr);
   delete p;
 }
@@ -52,16 +49,16 @@ TEST(ProcessingUnit, AffinityFunctions)
 {
   // Storing current affinity set
   std::set<int> originalAffinitySet;
-  EXPECT_NO_THROW(originalAffinitySet = backend::L0::ProcessingUnit::getAffinity());
+  EXPECT_NO_THROW(originalAffinitySet = HiCR::backend::sharedMemory::pthreads::L0::ProcessingUnit::getAffinity());
 
   // Attempting to set and check new affinity set
   std::set<int> newAffinitySet({0, 1});
-  EXPECT_NO_THROW(backend::L0::ProcessingUnit::updateAffinity(newAffinitySet));
-  EXPECT_EQ(newAffinitySet, backend::L0::ProcessingUnit::getAffinity());
+  EXPECT_NO_THROW(HiCR::backend::sharedMemory::pthreads::L0::ProcessingUnit::updateAffinity(newAffinitySet));
+  EXPECT_EQ(newAffinitySet, HiCR::backend::sharedMemory::pthreads::L0::ProcessingUnit::getAffinity());
 
   // Re-setting affinity set
-  EXPECT_NO_THROW(backend::L0::ProcessingUnit::updateAffinity(originalAffinitySet));
-  EXPECT_EQ(originalAffinitySet, backend::L0::ProcessingUnit::getAffinity());
+  EXPECT_NO_THROW(HiCR::backend::sharedMemory::pthreads::L0::ProcessingUnit::updateAffinity(originalAffinitySet));
+  EXPECT_EQ(originalAffinitySet, HiCR::backend::sharedMemory::pthreads::L0::ProcessingUnit::getAffinity());
 }
 
 TEST(ProcessingUnit, ThreadAffinity)
@@ -73,22 +70,10 @@ TEST(ProcessingUnit, ThreadAffinity)
   hwloc_topology_init(&topology);
 
   // Instantiating default compute manager
-  backend::L1::ComputeManager m;
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m;
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
-
-  // Asking backend to check the available devices
-  dm.queryDevices();
-
-  // Getting first device found
-  auto d = *dm.getDevices().begin();
-
-  // Updating the compute resource list
-  auto computeResources = d->getComputeResourceList();
-
-  // Casting compute resource correctly
-  auto computeResource = (backend::L0::ComputeResource *)*computeResources.begin();
+  // Creating compute resource (core) manually
+  auto computeResource = new HiCR::backend::sharedMemory::Core(0, 0, 0, {}, {});
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(computeResource);
@@ -109,7 +94,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]()
   {
     // Getting actual affinity set from the running thread
-    auto actualThreadAffinity = backend::L0::ProcessingUnit::getAffinity();
+    auto actualThreadAffinity = HiCR::backend::sharedMemory::pthreads::L0::ProcessingUnit::getAffinity();
 
     // Checking whether the one detected corresponds to the resource id
     if (actualThreadAffinity == threadAffinitySet) hasCorrectAffinity = true;
@@ -151,25 +136,13 @@ TEST(ProcessingUnit, LifeCycle)
   hwloc_topology_init(&topology);
 
   // Instantiating default compute manager
-  backend::L1::ComputeManager m;
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m;
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
-
-  // Asking backend to check the available devices
-  dm.queryDevices();
-
-  // Getting first device found
-  auto d = *dm.getDevices().begin();
-
-  // Updating the compute resource list
-  auto computeResources = d->getComputeResourceList();
-
-  // Casting compute resource correctly
-  auto computeUnit = (backend::L0::ComputeResource *)*computeResources.begin();
+  // Creating compute resource (core) manually
+  auto computeResource = new HiCR::backend::sharedMemory::Core(0, 0, 0, {}, {});
 
   // Creating processing unit from resource
-  auto processingUnit = m.createProcessingUnit(computeUnit);
+  auto processingUnit = m.createProcessingUnit(computeResource);
 
   // Values for correct suspension/resume checking
   __volatile__ int suspendCounter = 0;

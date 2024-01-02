@@ -13,9 +13,9 @@
 #pragma once
 
 #include "hwloc.h"
-#include <backends/sharedMemory/L0/device.hpp>
-#include <backends/sharedMemory/L0/computeResource.hpp>
-#include <backends/sharedMemory/L0/memorySpace.hpp>
+#include <backends/sharedMemory/hwloc/L0/device.hpp>
+#include <backends/sharedMemory/hwloc/L0/computeResource.hpp>
+#include <backends/sharedMemory/hwloc/L0/memorySpace.hpp>
 #include <hicr/L1/deviceManager.hpp>
 
 namespace HiCR
@@ -25,6 +25,9 @@ namespace backend
 {
 
 namespace sharedMemory
+{
+
+namespace hwloc
 {
 
 namespace L1
@@ -60,7 +63,7 @@ class DeviceManager final : public HiCR::L1::DeviceManager
     hwloc_topology_load(*_topology);
 
     // Creating a single new device representing an SMP system (multicore + shared RAM)
-    auto hostDevice = new sharedMemory::L0::Device(queryComputeResources(), queryMemorySpaces());
+    auto hostDevice = new sharedMemory::hwloc::L0::Device(queryComputeResources(), queryMemorySpaces());
 
     // Returning single device
     return {hostDevice};
@@ -125,7 +128,7 @@ class DeviceManager final : public HiCR::L1::DeviceManager
       auto memSpaceSize = hwlocObj->attr->cache.size;
 
       // Creating new memory space object
-      auto memorySpace = new sharedMemory::L0::MemorySpace(memSpaceSize, hwlocObj, bindingSupport);
+      auto memorySpace = new sharedMemory::hwloc::L0::MemorySpace(memSpaceSize, hwlocObj, bindingSupport);
 
       // Storing new memory space
       memorySpaceList.insert(memorySpace);
@@ -142,6 +145,8 @@ class DeviceManager final : public HiCR::L1::DeviceManager
 };
 
 } // namespace L1
+
+} // namespace hwloc
 
 } // namespace sharedMemory
 

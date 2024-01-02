@@ -11,12 +11,12 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sharedMemory/L1/memoryManager.hpp>
-#include <backends/sharedMemory/L1/communicationManager.hpp>
-#include <backends/sharedMemory/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/communicationManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
 #include <limits>
 
-namespace backend = HiCR::backend::sharedMemory;
+namespace backend = HiCR::backend::sharedMemory::hwloc;
 
 TEST(MemoryManager, Construction)
 {
@@ -44,7 +44,7 @@ TEST(MemoryManager, Memory)
   backend::L1::CommunicationManager c;
 
   // Initializing backend's device manager
-  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
+  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
 
   // Asking backend to check the available devices
   EXPECT_NO_THROW(dm.queryDevices());

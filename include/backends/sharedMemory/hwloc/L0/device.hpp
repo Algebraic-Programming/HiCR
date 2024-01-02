@@ -13,8 +13,8 @@
 #pragma once
 
 #include <hicr/L0/device.hpp>
-#include <backends/sharedMemory/L0/computeResource.hpp>
-#include <backends/sharedMemory/L0/memorySpace.hpp>
+#include <backends/sharedMemory/hwloc/L0/computeResource.hpp>
+#include <backends/sharedMemory/hwloc/L0/memorySpace.hpp>
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
@@ -24,6 +24,9 @@ namespace backend
 {
 
 namespace sharedMemory
+{
+
+namespace hwloc
 {
 
 namespace L0
@@ -53,6 +56,8 @@ class Device final : public HiCR::L0::Device
 };
 
 } // namespace L0
+
+} // namespace hwloc
 
 } // namespace sharedMemory
 

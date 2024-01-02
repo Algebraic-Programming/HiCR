@@ -12,10 +12,9 @@
 
 #pragma once
 
-#include "hwloc.h"
 #include <backends/sequential/L0/executionUnit.hpp>
-#include <backends/sharedMemory/L0/computeResource.hpp>
-#include <backends/sharedMemory/L0/processingUnit.hpp>
+#include <backends/sharedMemory/hwloc/L0/computeResource.hpp>
+#include <backends/sharedMemory/pthreads/L0/processingUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <memory>
 
@@ -28,13 +27,14 @@ namespace backend
 namespace sharedMemory
 {
 
+namespace pthreads
+{
+
 namespace L1
 {
 
 /**
- * Implementation of the HWloc-based HiCR Shared Memory backend's compute manager.
- *
- * It detects and returns the processing units detected by the HWLoc library
+ * Implementation of the pthread-based HiCR Shared Memory backend's compute manager.
  */
 class ComputeManager final : public HiCR::L1::ComputeManager
 {
@@ -70,6 +70,8 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 };
 
 } // namespace L1
+
+} // namespace pthreads
 
 } // namespace sharedMemory
 

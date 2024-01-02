@@ -6,8 +6,8 @@ if get_option('buildTests')
   test('sequential', sequential, args : [ ], suite: testSuite )
 endif
 
-if 'sharedMemory' in enabledBackends
-	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ taskrBuildDep, hicrSharedMemoryBackendDep])
+if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enabledBackends
+	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ taskrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep] )
 
 	if get_option('buildTests')
 	  test('sharedMemory', sharedMemory, args : [ ], suite: testSuite )

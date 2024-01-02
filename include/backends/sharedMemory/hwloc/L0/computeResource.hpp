@@ -13,7 +13,7 @@
 #pragma once
 
 #include "hwloc.h"
-#include <backends/sharedMemory/cache.hpp>
+#include <backends/sharedMemory/core.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
@@ -27,13 +27,16 @@ namespace backend
 namespace sharedMemory
 {
 
+namespace hwloc
+{
+
 namespace L0
 {
 
 /**
  * This class represents a compute resource, visible by the sequential backend. That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
  */
-class ComputeResource final : public HiCR::L0::ComputeResource
+class ComputeResource final : public HiCR::backend::sharedMemory::Core
 {
   public:
 
@@ -57,13 +60,12 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * \param topology HWLoc topology object for discovery
    * \param logicalProcessorId Os-determied core affinity assigned to this compute resource
    */
-  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) : HiCR::L0::ComputeResource(),
-                                                                                              _logicalProcessorId(logicalProcessorId),
-                                                                                              _physicalProcessorId(detectPhysicalProcessorId(topology, logicalProcessorId)),
-                                                                                              _numaAffinity(detectCoreNUMAffinity(topology, logicalProcessorId)),
-                                                                                              _caches(detectCpuCaches(topology, logicalProcessorId)),
-                                                                                              _siblings(detectCPUSiblings(topology, logicalProcessorId)){};
-  ComputeResource() = delete;
+  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) :
+   HiCR::backend::sharedMemory::Core(logicalProcessorId,
+   detectPhysicalProcessorId(topology, logicalProcessorId),
+   detectCoreNUMAffinity(topology, logicalProcessorId),
+   detectCpuCaches(topology, logicalProcessorId),
+   detectCPUSiblings(topology, logicalProcessorId) ) {};
 
   /**
    * Default destructor
@@ -71,21 +73,6 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   ~ComputeResource() = default;
 
   __USED__ inline std::string getType() const override { return "CPU Core"; }
-
-  /**
-   * Function to return the compute resource processor id
-   *
-   * @returns The processor id
-   */
-  __USED__ inline int getProcessorId() const { return _logicalProcessorId; }
-
-  /**
-   * Obtains the Core ID of the CPU; in non SMT systems that will be the actual id;
-   * in SMT it is the id of the actual core the thread belongs to.
-   *
-   * \return The physical ID of the hardware Core
-   */
-  __USED__ inline unsigned int detectPhysicalProcessorId() const { return _physicalProcessorId; }
 
   /**
    * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
@@ -312,38 +299,11 @@ class ComputeResource final : public HiCR::L0::ComputeResource
     return ret;
   }
 
-  private:
-
-  /**
-   * The logical ID of the hardware core / processing unit
-   */
-  const logicalProcessorId_t _logicalProcessorId;
-
-  /**
-   * The ID of the hardware core; in SMT systems that will mean the core ID,
-   * which may also have other HW threads. In non SMT systems it is expected
-   * for logical and system IDs to be 1-to-1.
-   */
-  const physicalProcessorId_t _physicalProcessorId;
-
-  /**
-   * The ID of the hardware NUMA domain that this core is associated to
-   */
-  const numaAffinity_t _numaAffinity;
-
-  /**
-   * List of Cache objects associated with the CPU. There is the assumption
-   * that only one cache object of each type can be associated with a CPU.
-   */
-  const std::vector<backend::sharedMemory::Cache> _caches;
-
-  /**
-   * List of sibling threads/cores, if applicable.
-   */
-  const std::vector<L0::ComputeResource::logicalProcessorId_t> _siblings;
 };
 
 } // namespace L0
+
+} // namespace hwloc
 
 } // namespace sharedMemory
 
