@@ -11,6 +11,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
 #include <hicr/L2/tasking/task.hpp>
 
@@ -69,11 +70,17 @@ TEST(Task, Run)
   // Creating task
   t = new HiCR::L2::tasking::Task(u);
 
-  // Querying compute resources
-  m.queryComputeResources();
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Creating processing unit from the compute resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
@@ -81,8 +88,8 @@ TEST(Task, Run)
   // Initializing processing unit
   processingUnit->initialize();
 
-  // First, creating processing unit
-  auto executionState = processingUnit->createExecutionState(u);
+  // Creating execution state
+  auto executionState = m.createExecutionState(u);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -150,23 +157,26 @@ TEST(Task, Events)
   // Creating task
   t = new HiCR::L2::tasking::Task(u);
 
-  // Querying compute resources
-  m.queryComputeResources();
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Getting compute resources
-  auto computeResources = m.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
 
-  // Querying compute resources
-  m.queryComputeResources();
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Creating processing unit from the compute resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
 
+  // Creating execution state
+  auto executionState = m.createExecutionState(u);
+
   // Initializing processing unit
   processingUnit->initialize();
-
-  // First, creating processing unit
-  auto executionState = processingUnit->createExecutionState(u);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -188,8 +198,8 @@ TEST(Task, Events)
   // Creating a task with an event map to make sure the functions are ran
   t = new HiCR::L2::tasking::Task(u);
 
-  // First, creating processing unit
-  executionState = processingUnit->createExecutionState(t->getExecutionUnit());
+  // Creating execution state
+  executionState = m.createExecutionState(t->getExecutionUnit());
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));

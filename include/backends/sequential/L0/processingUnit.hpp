@@ -14,6 +14,8 @@
 
 #include <backends/sequential/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
+#include <backends/sequential/L0/computeResource.hpp>
+#include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/common/coroutine.hpp>
@@ -41,15 +43,16 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Constructor for the Process class
    *
-   * \param process An id for the process (should be zero)
+   * \param computeResource The associated compute resource (CPU) from which this processing unit will be instantiated
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::computeResourceId_t process) : HiCR::L0::ProcessingUnit(process){};
-
-  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource *computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {
-    // Creating and returning new execution state
-    return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
-  }
+    // Getting up-casted pointer for the MPI instance
+    auto c = dynamic_cast<L0::ComputeResource *>(computeResource);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+  };
 
   private:
 

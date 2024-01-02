@@ -15,8 +15,6 @@
 #include <acl/acl.h>
 #include <backends/ascend/L0/executionUnit.hpp>
 #include <backends/ascend/L0/processingUnit.hpp>
-#include <backends/ascend/common.hpp>
-#include <backends/ascend/core.hpp>
 #include <backends/ascend/kernel.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <unordered_map>
@@ -44,12 +42,8 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 
   /**
    * Constructor for the Compute Manager class for the ascend backend
-   *
-   * \param[in] i ACL initializer
-   *
    */
-  ComputeManager(const Core &i) : HiCR::L1::ComputeManager(), _deviceStatusMap(i.getContexts()){};
-
+  ComputeManager() : HiCR::L1::ComputeManager(){};
   ~ComputeManager() = default;
 
   /**
@@ -78,42 +72,18 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   }
 
   /**
-   * Get the device id associated with the host system
+   * Creates an execution state using the device context information and the exection unit to run on the ascend
    *
-   * \param computeResources the collection of computeResources
+   * \param executionUnit rxecution Unit to launch on the ascend
    *
-   * \return the id associated with the host system
+   * \return return a unique pointer to the newly created Execution State
    */
-  __USED__ inline const HiCR::L0::computeResourceId_t getHostId(computeResourceList_t computeResources)
+  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
-    for (const auto c : computeResources)
-      if (_deviceStatusMap.at(c).deviceType == deviceType_t::Host) return c;
-
-    HICR_THROW_RUNTIME("No ID associated with the host system");
+    return std::make_unique<ascend::L0::ExecutionState>(executionUnit);
   }
 
   private:
-
-  /**
-   * Keep track of the device context for each computeResourceId/deviceId
-   */
-  const std::unordered_map<HiCR::L0::computeResourceId_t, ascendState_t> &_deviceStatusMap;
-
-  /**
-   * Internal implementaion of queryComputeResource routine.
-   *
-   * \return list of compute resources detected by ACL
-   */
-  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
-  {
-    // new compute resources list to return
-    computeResourceList_t computeResourceList;
-
-    // add as many computing resources as devices
-    for (const auto [deviceId, _] : _deviceStatusMap) computeResourceList.insert(deviceId);
-
-    return computeResourceList;
-  }
 
   /**
    * Create a new processing unit for the specified \p resource (device)
@@ -122,9 +92,8 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return a pointer to the new processing unit
    */
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::computeResourceId_t resource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *resource) const override
   {
-    if (_deviceStatusMap.at(resource).deviceType == deviceType_t::Host) HICR_THROW_RUNTIME("Ascend backend can not create a processing unit on the host.");
     return std::make_unique<L0::ProcessingUnit>(resource);
   }
 };

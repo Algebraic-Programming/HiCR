@@ -16,6 +16,7 @@
 #include <backends/sequential/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
 #include <backends/sequential/L0/processingUnit.hpp>
+#include <hicr/L0/computeResource.hpp>
 #include <hicr/L1/computeManager.hpp>
 
 namespace HiCR
@@ -54,18 +55,15 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    */
   ~ComputeManager() = default;
 
-  private:
-
-  /**
-   * Sequential backend implementation that returns a single compute element.
-   */
-  __USED__ inline computeResourceList_t queryComputeResourcesImpl() override
+  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
   {
-    // Only a single processing unit is created
-    return computeResourceList_t({0});
+    // Creating and returning new execution state
+    return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
   }
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::computeResourceId_t resource) const override
+  private:
+
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *resource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }

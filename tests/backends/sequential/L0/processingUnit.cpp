@@ -11,8 +11,10 @@
  */
 
 #include "gtest/gtest.h"
+#include <backends/sequential/L0/computeResource.hpp>
 #include <backends/sequential/L0/processingUnit.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
+#include <backends/sequential/L1/deviceManager.hpp>
 
 namespace backend = HiCR::backend::sequential;
 
@@ -20,20 +22,53 @@ TEST(ProcessingUnit, Construction)
 {
   backend::L0::ProcessingUnit *p = NULL;
 
-  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(0));
+  // Initializing sequential backend
+  HiCR::backend::sequential::L1::ComputeManager computeManager;
+
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
+
+  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(*computeResources.begin()));
   EXPECT_FALSE(p == nullptr);
   delete p;
 }
 
 TEST(ProcessingUnit, LifeCycle)
 {
-  HiCR::L0::computeResourceId_t pId = 0;
-  backend::L0::ProcessingUnit p(pId);
+  // Initializing sequential backend
+  HiCR::backend::sequential::L1::ComputeManager computeManager;
+
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
+
+  // Getting first compute resource
+  auto computeResource = *computeResources.begin();
+
+  // Creating processin gunit
+  backend::L0::ProcessingUnit p(computeResource);
 
   // Checking that the correct resourceId was used
-  HiCR::L0::computeResourceId_t pIdAlt = pId + 1;
-  EXPECT_NO_THROW(pIdAlt = p.getComputeResourceId());
-  EXPECT_EQ(pIdAlt, pId);
+  HiCR::L0::ComputeResource *pIdAlt = NULL;
+  EXPECT_NO_THROW(pIdAlt = p.getComputeResource());
+  EXPECT_EQ(pIdAlt, computeResource);
 
   // Counter for execution times
   int executionTimes = 0;
@@ -57,8 +92,11 @@ TEST(ProcessingUnit, LifeCycle)
   // Creating execution unit
   auto executionUnit = m.createExecutionUnit(fc);
 
+  // Creating execution state
+  auto executionState = m.createExecutionState(executionUnit);
+
   // Testing forbidden transitions
-  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit))), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(executionState)), HiCR::common::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
@@ -75,15 +113,16 @@ TEST(ProcessingUnit, LifeCycle)
   EXPECT_THROW(p.await(), HiCR::common::RuntimeException);
 
   // Running
-  auto executionState = p.createExecutionState(executionUnit);
+  executionState = m.createExecutionState(executionUnit);
   EXPECT_NO_THROW(p.start(std::move(executionState)));
 
   // Waiting for execution times to update
   EXPECT_EQ(executionTimes, 1);
 
   // Testing forbidden transitions
+  executionState = m.createExecutionState(executionUnit);
   EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit))), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(executionState)), HiCR::common::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
 
@@ -91,15 +130,17 @@ TEST(ProcessingUnit, LifeCycle)
   EXPECT_NO_THROW(p.resume());
 
   // Testing forbidden transitions
+  executionState = m.createExecutionState(executionUnit);
   EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit))), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(executionState)), HiCR::common::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
 
   // Awaiting termination
   EXPECT_NO_THROW(p.await());
-  EXPECT_THROW(p.start(std::move(p.createExecutionState(executionUnit))), HiCR::common::RuntimeException);
+  executionState = m.createExecutionState(executionUnit);
+  EXPECT_THROW(p.start(std::move(executionState)), HiCR::common::RuntimeException);
   EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
   EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
@@ -109,7 +150,7 @@ TEST(ProcessingUnit, LifeCycle)
   EXPECT_NO_THROW(p.initialize());
 
   // Re-running
-  auto executionState2 = p.createExecutionState(executionUnit);
+  auto executionState2 = m.createExecutionState(executionUnit);
   EXPECT_NO_THROW(p.start(std::move(executionState2)));
 
   // Waiting for execution times to update

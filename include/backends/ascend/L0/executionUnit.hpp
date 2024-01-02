@@ -6,7 +6,7 @@
 /**
  * @file executionUnit.hpp
  * @brief This file implements the execution unit class for the ascend backend
- * @author S. M. Martin & L. Terracciano
+ * @author L. Terracciano
  * @date 30/10/2023
  */
 

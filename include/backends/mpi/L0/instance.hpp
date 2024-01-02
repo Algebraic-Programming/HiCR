@@ -11,9 +11,7 @@
  */
 #pragma once
 
-#include <backends/mpi/L1/memoryManager.hpp>
 #include <hicr/L0/instance.hpp>
-#include <hicr/L0/memorySlot.hpp>
 #include <mpi.h>
 
 namespace HiCR
@@ -67,11 +65,8 @@ class Instance final : public HiCR::L0::Instance
   /**
    * Constructor for a Instance class for the MPI backend
    * \param[in] rank The MPI rank corresponding to this HiCR instance
-   * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
-  Instance(const int rank, mpi::L1::MemoryManager *const memoryManager) : HiCR::L0::Instance((instanceId_t)rank),
-                                                                          _stateLocalMemorySlot(memoryManager->registerLocalMemorySlot(&_state, sizeof(state_t))),
-                                                                          _rank(rank)
+  Instance(const int rank) : HiCR::L0::Instance((instanceId_t)rank), _rank(rank)
   {
   }
 
@@ -85,36 +80,6 @@ class Instance final : public HiCR::L0::Instance
    * \return The MPI rank corresponding to this instance
    */
   __USED__ inline int getRank() const { return _rank; }
-
-  /**
-   * Gets the local memory slot storing the instance's state
-   * \return A pointer to said memory slot
-   */
-  __USED__ inline HiCR::L0::MemorySlot *getStateLocalMemorySlot() const { return _stateLocalMemorySlot; }
-
-  /**
-   * Sets the global memory slot storing the instance's state
-   * \param[in] globalSlot A pointer to the global slot to assign
-   */
-  __USED__ inline void setStateGlobalMemorySlot(HiCR::L0::MemorySlot *const globalSlot) { _stateGlobalMemorySlot = globalSlot; }
-
-  /**
-   * Gets the global memory slot storing the instance's state
-   * \return A pointer to said memory slot
-   */
-  __USED__ inline HiCR::L0::MemorySlot *getStateGlobalMemorySlot() const { return _stateGlobalMemorySlot; }
-
-  private:
-
-  /**
-   * Local memory slot that represents the instance status
-   */
-  HiCR::L0::MemorySlot *const _stateLocalMemorySlot;
-
-  /**
-   * Global memory slot that represents the instance status
-   */
-  HiCR::L0::MemorySlot *_stateGlobalMemorySlot;
 
   /**
    * Remembers the MPI rank this instance belongs to

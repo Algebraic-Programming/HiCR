@@ -1,9 +1,7 @@
-#include <backends/sharedMemory/L1/memoryManager.hpp>
 #include "include/telephoneGame.hpp"
-
-#define BUFFER_SIZE 256
-#define DST_OFFSET 0
-#define SRC_OFFSET 0
+#include <backends/sharedMemory/L1/memoryManager.hpp>
+#include <backends/sharedMemory/L1/communicationManager.hpp>
+#include <backends/sharedMemory/L1/deviceManager.hpp>
 
 int main(int argc, char **argv)
 {
@@ -13,20 +11,26 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Instantiating Shared Memory backend
+  // Initializing backend's device manager
+  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
+
+  // Instantiating shared memory backend's memory manager
   HiCR::backend::sharedMemory::L1::MemoryManager m(&topology);
 
-  // Asking backend to check the available resources
-  m.queryMemorySpaces();
+  // Instantiating shared memory backend's communication manager
+  HiCR::backend::sharedMemory::L1::CommunicationManager c;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
 
   // Obtaining memory spaces
-  auto memSpaces = m.getMemorySpaceList();
+  auto memSpaces = d->getMemorySpaceList();
 
   // Define the order of mem spaces for the telephone game
-  auto memSpaceOrder = std::vector<HiCR::L1::MemoryManager::memorySpaceId_t>(memSpaces.begin(), memSpaces.end());
-
-  // Specific to the shared memory backend: Adjusting memory binding support to the system's
-  m.setRequestedBindingType(m.getSupportedBindingType(*memSpaces.begin()));
+  auto memSpaceOrder = std::vector<HiCR::L0::MemorySpace*>(memSpaces.begin(), memSpaces.end());
 
   // Allocating memory slots in different NUMA domains
   auto input = m.allocateLocalMemorySlot(*memSpaces.begin(), BUFFER_SIZE); // First NUMA Domain
@@ -35,7 +39,7 @@ int main(int argc, char **argv)
   sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 
   // Run the telephone game
-  telephoneGame(m, input, memSpaceOrder, 3);
+  telephoneGame(m, c, input, memSpaceOrder, ITERATIONS);
 
   // Free input memory slot
   m.freeLocalMemorySlot(input);

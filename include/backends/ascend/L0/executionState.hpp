@@ -6,7 +6,7 @@
 /**
  * @file executionState.hpp
  * @brief This file implements the execution state class for the ascend backend
- * @author S. M. Martin & L. Terracciano
+ * @author L. Terracciano
  * @date 1/11/2023
  */
 
@@ -14,7 +14,7 @@
 
 #include <acl/acl.h>
 #include <backends/ascend/L0/executionUnit.hpp>
-#include <backends/ascend/common.hpp>
+#include <backends/ascend/L0/device.hpp>
 #include <hicr/L0/executionState.hpp>
 #include <hicr/common/exceptions.hpp>
 
@@ -42,28 +42,19 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    * Constructor for an ascend execution state
    *
    * \param executionUnit execution unit containing the kernel to execute
-   * \param context ACL context associated to the device
-   * \param deviceId ascend device id
    */
-  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit, const aclrtContext context, const deviceIdentifier_t deviceId) : HiCR::L0::ExecutionState(executionUnit), _context(context), _deviceId(deviceId)
+  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit) : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_cast<const ExecutionUnit *>(executionUnit);
+    auto e = dynamic_cast<const ascend::L0::ExecutionUnit *>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType());
 
     _executionUnit = e;
-
-    aclError err = aclrtCreateEvent(&_syncEvent);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
   }
 
-  ~ExecutionState()
-  {
-    aclError err = aclrtDestroyEvent(_syncEvent);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to free synchronize bit");
-  };
+  ~ExecutionState() = default;
 
   /**
    * Synchronize and destroy the currently used stream
@@ -80,6 +71,10 @@ class ExecutionState final : public HiCR::L0::ExecutionState
       err = aclrtDestroyStream(_stream);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
 
+      // Destroy the related event
+      err = aclrtDestroyEvent(_syncEvent);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy event");
+
       // avoid deleting the stream more than once
       _isStreamActive = false;
     }
@@ -92,13 +87,13 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    */
   __USED__ inline void resumeImpl() override
   {
-    // select the ascend card
-    selectDevice(_context, _deviceId);
+    aclError err = aclrtCreateEvent(&_syncEvent);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
 
     // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
     // that reuse the same stream
-    aclError err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create stream on device %d", _deviceId);
+    err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not create stream");
 
     _isStreamActive = true;
 
@@ -140,27 +135,19 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   private:
 
   /**
-   * ACL context associated to the ascend device
-   */
-  const aclrtContext _context;
-
-  /**
-   * Ascend device id
-   */
-  const deviceIdentifier_t _deviceId;
-  /**
    * Execution unit containing the kernel operations to execute
    */
   const ExecutionUnit *_executionUnit;
-  /**
-   * Stream on which the execution unit kernels are scheduled.
-   */
-  aclrtStream _stream;
 
   /**
    * Synchronization event to check for stream completion
    */
   aclrtEvent _syncEvent;
+
+  /**
+   * Stream on which the execution unit kernels are scheduled.
+   */
+  aclrtStream _stream;
 
   /**
    * Keep track of the stream status

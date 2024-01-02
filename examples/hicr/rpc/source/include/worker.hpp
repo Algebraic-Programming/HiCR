@@ -1,60 +1,57 @@
 #pragma once
 
-#include <hicr/L1/instanceManager.hpp>
-#include <backends/sequential/L1/computeManager.hpp>
 #include "common.hpp"
+#include <hicr/L1/computeManager.hpp>
+#include <hicr/L1/instanceManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
+#include <hicr/L0/computeResource.hpp>
+#include <hicr/L0/memorySpace.hpp>
 
-void workerFc(HiCR::L1::InstanceManager& instanceManager)
+void workerFc(HiCR::L1::InstanceManager &instanceManager,
+              HiCR::L1::ComputeManager &computeManager,
+              HiCR::L0::MemorySpace* bufferMemorySpace, 
+              HiCR::L0::ComputeResource* rpcExecutor)
 {
- // Initializing sequential backend
- HiCR::backend::sequential::L1::ComputeManager computeManager;
+  // Fetching memory manager
+  auto memoryManager = instanceManager.getMemoryManager();
 
- // Fetching memory manager
- auto memoryManager = instanceManager.getMemoryManager();
+  // Getting current instance
+  auto currentInstance = instanceManager.getCurrentInstance();
 
- // Getting current instance
- auto currentInstance = instanceManager.getCurrentInstance();
+  // Creating worker function
+  auto fcLambda = [currentInstance, memoryManager, &instanceManager, bufferMemorySpace]()
+  {
+    // Creating simple message
+    auto message = std::string("Hello, I am a worker! ");
 
- // Creating worker function
- auto fcLambda = [currentInstance, memoryManager, &instanceManager]()
- {
-  // Creating simple message
-  auto message = std::string("Hello, I am a worker! ");
+    // Adding n characters to make the return values of variable length
+    for (size_t i = 0; i < currentInstance->getId(); i++) message += std::string("*");
 
-  // Adding n characters to make the return values of variable length
-  for (size_t i = 0; i < currentInstance->getId(); i++) message += std::string("*");
+    // Registering memory slot at the first available memory space as source buffer to send the return value from
+    auto sendBuffer = memoryManager->registerLocalMemorySlot(bufferMemorySpace, message.data(), message.size() + 1);
 
-  // Registering memory slot at the first available memory space as source buffer to send the return value from
-  auto sendBuffer = memoryManager->registerLocalMemorySlot(message.data(), message.size()+1);
+    // Registering return value
+    instanceManager.submitReturnValue(sendBuffer);
 
-  // Registering return value
-  instanceManager.submitReturnValue(sendBuffer);
+    // Deregistering memory slot
+    memoryManager->deregisterLocalMemorySlot(sendBuffer);
+  };
 
-  // Deregistering memory slot
-  memoryManager->deregisterLocalMemorySlot(sendBuffer);
- };
+  // Creating execution unit
+  auto executionUnit = computeManager.createExecutionUnit(fcLambda);
 
- // Creating execution unit
- auto executionUnit = computeManager.createExecutionUnit(fcLambda);
+  // Creating processing unit from the compute resource
+  auto processingUnit = computeManager.createProcessingUnit(rpcExecutor);
 
- // Querying compute resources
- computeManager.queryComputeResources();
+  // Initialize processing unit
+  processingUnit->initialize();
 
- // Getting compute resources
- auto computeResources = computeManager.getComputeResourceList();
+  // Assigning processing unit to the instance manager
+  instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
 
- // Creating processing unit from the compute resource
- auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
+  // Assigning processing unit to the instance manager
+  instanceManager.addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
 
- // Initialize processing unit
- processingUnit->initialize();
-
- // Assigning processing unit to the instance manager
- instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
-
- // Assigning processing unit to the instance manager
- instanceManager.addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
-
- // Listening for RPC requests
- instanceManager.listen();
+  // Listening for RPC requests
+  instanceManager.listen();
 }

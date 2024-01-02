@@ -11,6 +11,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
 #include <hicr/L2/tasking/task.hpp>
 #include <hicr/L2/tasking/worker.hpp>
@@ -37,17 +38,23 @@ TEST(Task, SetterAndGetters)
   EXPECT_TRUE(w.getDispatchers().empty());
 
   // Now adding something to the lists/sets
-  auto d = HiCR::L2::tasking::Dispatcher([]()
-                                         { return (HiCR::L2::tasking::Task *)NULL; });
+  auto dispatcher = HiCR::L2::tasking::Dispatcher([]()
+                                                  { return (HiCR::L2::tasking::Task *)NULL; });
 
   // Subscribing worker to dispatcher
-  w.subscribe(&d);
+  w.subscribe(&dispatcher);
 
-  // Querying backend for its resources
-  m.queryComputeResources();
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Gathering compute resources from backend
-  auto computeResources = m.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
@@ -73,11 +80,17 @@ TEST(Worker, LifeCycle)
   // Attempting to run without any assigned resources
   EXPECT_THROW(w.initialize(), HiCR::common::LogicException);
 
-  // Querying backend for its resources
-  m.queryComputeResources();
+  // Initializing Sequential backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
 
-  // Gathering compute resources from backend
-  auto computeResources = m.getComputeResourceList();
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(*computeResources.begin());
@@ -137,11 +150,11 @@ TEST(Worker, LifeCycle)
   HiCR::L2::tasking::Task t(u);
 
   // Creating task dispatcher
-  auto d = HiCR::L2::tasking::Dispatcher([&t]()
-                                         { return &t; });
+  auto dispatcher = HiCR::L2::tasking::Dispatcher([&t]()
+                                                  { return &t; });
 
   // Suscribing worker to dispatcher
-  EXPECT_NO_THROW(w.subscribe(&d));
+  EXPECT_NO_THROW(w.subscribe(&dispatcher));
 
   // Starting worker
   EXPECT_FALSE(runningStateFound);

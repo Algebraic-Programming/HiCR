@@ -41,63 +41,10 @@ class Instance
   virtual ~Instance() = default;
 
   /**
-   * Complete state set that a worker can be in
-   */
-  enum state_t
-  {
-    /**
-     * The instance is online but not listening (detached mode)
-     */
-    detached,
-
-    /**
-     * The instance is currently running
-     */
-    running,
-
-    /**
-     * The instance is listening for incoming RPCs (attached)
-     */
-    listening,
-
-    /**
-     * The instance has reached its end
-     */
-    finished
-  };
-
-  /**
-   * State getter
-   * \return The internal state of the instance
-   */
-  state_t getState() const { return _state; }
-
-  /**
-   * Convenience function to print the state as a string
-   * \param[in] state The value of the state (enumeration)
-   * \return The string corresponding to the passed state
-   */
-  static std::string getStateString(const state_t state)
-  {
-    if (state == state_t::detached) return std::string("Detached");
-    if (state == state_t::listening) return std::string("Listening");
-    if (state == state_t::running) return std::string("Running");
-    if (state == state_t::finished) return std::string("Finished");
-
-    HICR_THROW_LOGIC("Unrecognized instance state (0x%lX).\n", state);
-  }
-
-  /**
    * This function returns the (hopefully) unique identifier of the current instance
    * @return The instance identifier
    */
   __USED__ inline instanceId_t getId() const { return _id; }
-
-  /**
-   * State setter. Only used internally to update the state
-   * \param[in] state The new value of the state to be set
-   */
-  __USED__ inline void setState(const state_t state) { _state = state; }
 
   protected:
 
@@ -110,11 +57,6 @@ class Instance
    *
    */
   __USED__ Instance(instanceId_t id) : _id(id){};
-
-  /**
-   * Represents the internal state of the instance. Inactive upon creation.
-   */
-  state_t _state = state_t::detached;
 
   private:
 

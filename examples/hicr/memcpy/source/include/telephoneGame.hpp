@@ -1,50 +1,41 @@
-#include <vector>
+#include <hicr/L0/memorySpace.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L1/communicationManager.hpp>
+#include <vector>
 
 #define BUFFER_SIZE 256
+#define ITERATIONS 3
 #define DST_OFFSET 0
 #define SRC_OFFSET 0
 
-void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L0::MemorySlot *input, std::vector<HiCR::L1::MemoryManager::memorySpaceId_t> memSpaces, int memcpyInMemspace)
+void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L1::CommunicationManager &c, HiCR::L0::LocalMemorySlot *input, std::vector<HiCR::L0::MemorySpace*> memSpaces, int iterations)
 {
-  // Asking Memory manager to check the available resources
-  m.queryMemorySpaces();
-
-  // Obtaining memory spaces
-  // TODO: what do we do with these
-  auto memSpacesO = m.getMemorySpaceList();
-  (void)memSpacesO;
-
   // Collect the newly created memory slots
-  auto memSlots = std::vector<HiCR::L0::MemorySlot *>{};
+  auto memSlots = std::vector<HiCR::L0::LocalMemorySlot *>{};
 
   // iterate all over the memory spaces and create multiple memory slots in each one
-  for (HiCR::L1::MemoryManager::memorySpaceId_t memSpace : memSpaces)
-  {
-    for (int i = 0; i < memcpyInMemspace; i++)
-    {
-      auto memSlot = m.allocateLocalMemorySlot(memSpace, BUFFER_SIZE);
+  for (const auto memSpace : memSpaces) 
+   for (int i = 0; i < iterations; i++)
+    memSlots.emplace_back(m.allocateLocalMemorySlot(memSpace, BUFFER_SIZE));
+ 
+  // Getting input memory slot
+  auto *srcMemSlot = input;
 
-      memSlots.emplace_back(memSlot);
-    }
-  }
-
-  HiCR::L0::MemorySlot *srcMemSlot = input;
-  HiCR::L0::MemorySlot *output = *memSlots.rbegin();
-  int memcpyCount = 0;
-  // perform the memcpy operations
+  // Perform the memcpy operations
   for (const auto dstMemSlot : memSlots)
   {
-    m.memcpy(dstMemSlot, DST_OFFSET, srcMemSlot, SRC_OFFSET, BUFFER_SIZE);
+    c.memcpy(dstMemSlot, DST_OFFSET, srcMemSlot, SRC_OFFSET, BUFFER_SIZE);
 
     // fence when the memcpy happens between two different memory spaces
-    if (memcpyCount % memcpyInMemspace == 0 && memcpyCount > 0) m.fence(0);
+    c.fence(0);
 
     // update source memory slot
     srcMemSlot = dstMemSlot;
-    memcpyCount++;
   }
+
+  // Getting output memory slot (the last one in the list)
+  auto *output = *memSlots.rbegin();
 
   // print the output of the telephone game
   printf("Input: %s\n", (const char *)input->getPointer());

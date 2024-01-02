@@ -13,6 +13,8 @@
 #pragma once
 
 #include <acl/acl.h>
+#include <hicr/L0/localMemorySlot.hpp>
+#include <backends/ascend/L0/localMemorySlot.hpp>
 #include <backends/ascend/kernel.hpp>
 #include <filesystem>
 #include <fstream>
@@ -63,9 +65,15 @@ class ComputationKernel final : public Kernel
    * \param outputs kernel output tensor data descriptors
    * \param kernelAttrs kernel attributes
    */
-  ComputationKernel(const char *kernelPath, const char *kernelName, const std::vector<tensorData_t> &inputs, const std::vector<tensorData_t> &outputs, const aclopAttr *kernelAttrs) : Kernel(),
-                                                                                                                                                                                       _kernelName(kernelName),
-                                                                                                                                                                                       _kernelAttrs(kernelAttrs)
+  ComputationKernel(
+    const char *kernelPath,
+    const char *kernelName,
+    const std::vector<tensorData_t> &inputs,
+    const std::vector<tensorData_t> &outputs,
+    const aclopAttr *kernelAttrs)
+    : Kernel(),
+      _kernelName(kernelName),
+      _kernelAttrs(kernelAttrs)
   {
     // populate internal data structure with input and output tensor data
     initializeDataBuffersAndDescriptors(inputs, _inputTensorDescriptors, _inputDataBuffers);
@@ -76,6 +84,25 @@ class ComputationKernel final : public Kernel
   ComputationKernel() = delete;
 
   ~ComputationKernel() { delete _kernelPtr; }
+
+  /**
+   * Creates the Ascend-specific Tensor data to be used as input/output parameter to Ascend kernels
+   *
+   * \param memorySlot The memory slot to be used as input/output
+   * \param tensorDescriptor Ascend-specific metadata about the passed memory slot
+   * \return The new Ascend tensor data object
+   */
+  static tensorData_t createTensorData(HiCR::L0::LocalMemorySlot *memorySlot, aclTensorDesc *tensorDescriptor)
+  {
+    // Using up-casting to determine device types
+    auto ascendSlot = dynamic_cast<ascend::L0::LocalMemorySlot *>(memorySlot);
+
+    // Checking whether the memory slot passed is compatible with this backend
+    if (ascendSlot == NULL) HICR_THROW_LOGIC("Attempting to create Ascend tensor data with a memory slot that is not supported by this backend\n");
+
+    // Creating and returning new tensor
+    return ascend::ComputationKernel::tensorData_t{.dataBuffer = ascendSlot->getDataBuffer(), .tensorDescriptor = tensorDescriptor};
+  }
 
   /**
    * Start the kernel using the given ACL \p stream
@@ -145,7 +172,10 @@ class ComputationKernel final : public Kernel
    * \param[out] descriptors vector of tensor descriptors
    * \param[out] dataBuffers vector of data buffers
    */
-  __USED__ inline void initializeDataBuffersAndDescriptors(const std::vector<tensorData_t> tensors, std::vector<const aclTensorDesc *> &descriptors, std::vector<const aclDataBuffer *> &dataBuffers)
+  __USED__ inline void initializeDataBuffersAndDescriptors(
+    const std::vector<tensorData_t> tensors,
+    std::vector<const aclTensorDesc *> &descriptors,
+    std::vector<const aclDataBuffer *> &dataBuffers)
   {
     for (const auto &tensor : tensors)
     {

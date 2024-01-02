@@ -1,27 +1,60 @@
-#include <mpi.h>
+#include "include/consumer.hpp"
+#include "include/producer.hpp"
+#include <backends/lpf/L1/memoryManager.hpp>
+#include <backends/lpf/L1/communicationManager.hpp>
+#include <backends/sequential/L1/deviceManager.hpp>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
-#include <backends/lpf/L1/memoryManager.hpp>
-#include "include/producer.hpp"
-#include "include/consumer.hpp"
+#include <mpi.h>
 
 // flag needed when using MPI to launch
 const int LPF_MPI_AUTO_INITIALIZE = 0;
+
+/**
+ * #DEFAULT_MEMSLOTS The memory slots used by LPF
+ * in lpf_resize_memory_register . This value is currently
+ * guessed as sufficiently large for a program
+ */
+#define DEFAULT_MEMSLOTS 100
+
+/**
+ * #DEFAULT_MSGSLOTS The message slots used by LPF
+ * in lpf_resize_message_queue . This value is currently
+ * guessed as sufficiently large for a program
+ */
+#define DEFAULT_MSGSLOTS 100 
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
   // Capacity must be larger than zero
   int channelCapacity = (*(int *)args.input);
-  if (channelCapacity == 0) if (pid == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
+  if (channelCapacity == 0)
+    if (pid == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
 
-  HiCR::backend::lpf::L1::MemoryManager m(nprocs, pid, lpf);
+  // Initializing LPF
+  CHECK(lpf_resize_message_queue(lpf, DEFAULT_MSGSLOTS));
+  CHECK(lpf_resize_memory_register(lpf, DEFAULT_MEMSLOTS));
+  CHECK(lpf_sync(lpf, LPF_SYNC_DEFAULT));
 
-  // Asking memory manager to check the available memory spaces
-  m.queryMemorySpaces();
+  // Initializing backend's device manager
+  HiCR::backend::sequential::L1::DeviceManager dm;
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Obtaining memory spaces
+  auto memSpaces = d->getMemorySpaceList();
+
+  // Creating LPF memory and communication managers
+  HiCR::backend::lpf::L1::MemoryManager m(lpf);
+  HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
 
   // Rank 0 is producer, Rank 1 is consumer
-  if (pid == 0) producerFc(&m, channelCapacity);
-  if (pid == 1) consumerFc(&m, channelCapacity);
+  if (pid == 0) producerFc(&m, &c, *memSpaces.begin(), channelCapacity);
+  if (pid == 1) consumerFc(&m, &c, *memSpaces.begin(), channelCapacity);
 }
 
 int main(int argc, char **argv)

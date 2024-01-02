@@ -4,14 +4,15 @@
  */
 
 /**
- * @file memorySlot.hpp
- * @brief Provides a definition for the memory slot class for the MPI backend
+ * @file mpi/L0/globalMemorySlot.hpp
+ * @brief Provides a definition for the global memory slot class for the MPI backend
  * @author S. M. Martin
  * @date 19/10/2023
  */
 #pragma once
 
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
+#include <hicr/L0/globalMemorySlot.hpp>
 #include <mpi.h>
 
 namespace HiCR
@@ -23,12 +24,13 @@ namespace backend
 namespace mpi
 {
 
+namespace L0
+{
+
 /**
- * This class represents an abstract definition for a Memory Slot resource in HiCR that:
- *
- * - Represents a contiguous segment within a memory space, with a starting address and a size
+ * This class represents the  definition for a Global Memory Slot resource for the MPI backend:
  */
-class MemorySlot final : public HiCR::L0::MemorySlot
+class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
 {
   public:
 
@@ -36,25 +38,23 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    * Constructor for a MemorySlot class for the MPI backend
    *
    * \param[in] rank Rank to which this memory slot belongs
-   * \param[in] pointer If this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
-   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
    * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
    * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   * \param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
    */
-  MemorySlot(
+  GlobalMemorySlot(
     int rank,
-    void *const pointer,
-    const size_t size,
-    const HiCR::L0::MemorySlot::tag_t globalTag = 0,
-    const HiCR::L0::MemorySlot::globalKey_t globalKey = 0) : HiCR::L0::MemorySlot(pointer, size, globalTag, globalKey),
-                                                             _rank(rank)
+    const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
+    const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
+    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
+                                                                  _rank(rank)
   {
   }
 
   /**
    * Default destructor
    */
-  ~MemorySlot() = default;
+  ~GlobalMemorySlot() = default;
 
   /**
    * Returns the rank to which this memory slot belongs
@@ -125,6 +125,8 @@ class MemorySlot final : public HiCR::L0::MemorySlot
    */
   MPI_Win *_sentMessageCountWindow = NULL;
 };
+
+} // namespace L0
 
 } // namespace mpi
 

@@ -1,4 +1,4 @@
-testSuite = [ 'examples', 'hicr', 'channel']
+testSuite = [ 'examples', 'hicr', 'channel', 'spsc']
 test_timeout = 180
 
 exampleBuildIncludes = include_directories([

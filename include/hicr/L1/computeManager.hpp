@@ -12,12 +12,13 @@
 
 #pragma once
 
+#include <memory>
+#include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
+#include <hicr/L0/executionState.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
-#include <memory>
-#include <unordered_set>
 
 namespace HiCR
 {
@@ -33,11 +34,6 @@ namespace L1
 class ComputeManager
 {
   public:
-
-  /**
-   * Common type for a collection of compute resources
-   */
-  typedef std::unordered_set<L0::computeResourceId_t> computeResourceList_t;
 
   /**
    * Default destructor
@@ -56,54 +52,30 @@ class ComputeManager
   virtual L0::ExecutionUnit *createExecutionUnit(L0::ExecutionUnit::function_t executionUnit) = 0;
 
   /**
-   * This function prompts the backend to perform the necessary steps to discover and list the compute resources provided by the library which it supports.
-   *
-   * In case of change in resource availability during runtime, users need to re-run this function to be able to see the changes.
-   *
-   * \internal It does not return anything because we want to allow users to run only once, and then consult it many times without having to make a copy.
-   */
-  __USED__ inline void queryComputeResources()
-  {
-    // Clearing existing compute resources
-    _computeResourceList.clear();
-
-    // Calling backend-internal implementation
-    _computeResourceList = queryComputeResourcesImpl();
-  }
-
-  /**
-   * This function returns the list of queried compute resources, as visible by the backend.
-   *
-   * If this function is called before queryResources, then it will return an empty container.
-   *
-   * @return The list of compute resources, as detected the last time \a queryResources was executed.
-   */
-  __USED__ inline const computeResourceList_t getComputeResourceList()
-  {
-    // Getting value by copy
-    const auto value = _computeResourceList;
-
-    return value;
-  }
-
-  /**
    * Creates a new processing unit from the provided compute resource
    *
    * \param[in] resource This is the identifier of the compute resource to use to instantiate into a processing unit. The identifier should be one of those provided by the backend. Providing an arbitrary identifier may lead to unexpected behavior.
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnit(L0::computeResourceId_t resource)
+  __USED__ inline std::unique_ptr<L0::ProcessingUnit> createProcessingUnit(L0::ComputeResource *resource)
   {
-    // Checking whether the referenced compute resource actually exists
-    if (_computeResourceList.contains(resource) == false) HICR_THROW_RUNTIME("Attempting to create processing unit from a compute resource that does not exist (%lu) in this backend", resource);
-
     // Getting value by copy
     auto value = createProcessingUnitImpl(resource);
 
     // Calling internal implementation
     return value;
   }
+
+  /**
+   * This function enables the creation of an empty execution state object.
+   *
+   * The instantiation of its internal memory structures is delayed until explicit initialization to reduce memory usage when, for example, scheduling many tasks that do not need to execute at the same time.
+   *
+   * \param[in] executionUnit The replicable state-less execution unit to instantiate into an execution state
+   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
+   */
+  virtual std::unique_ptr<L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) = 0;
 
   protected:
 
@@ -114,21 +86,7 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::computeResourceId_t resource) const = 0;
-
-  /**
-   * Backend-internal implementation of the queryComputeResources function
-   *
-   * @return A list of compute resources
-   */
-  virtual computeResourceList_t queryComputeResourcesImpl() = 0;
-
-  private:
-
-  /**
-   * The internal container for the queried compute resources.
-   */
-  computeResourceList_t _computeResourceList;
+  virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::ComputeResource *resource) const = 0;
 };
 
 } // namespace L1

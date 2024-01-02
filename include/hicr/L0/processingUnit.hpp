@@ -11,8 +11,9 @@
  */
 #pragma once
 
-#include <hicr/L0/executionState.hpp>
+#include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
+#include <hicr/L0/executionState.hpp>
 #include <hicr/common/definitions.hpp>
 #include <set>
 
@@ -23,16 +24,12 @@ namespace L0
 {
 
 /**
- * Type definition for a generic memory space identifier
- */
-typedef uint64_t computeResourceId_t;
-
-/**
  * This class represents an abstract definition for a Processing Unit resource in HiCR that:
  *
- * - Represents a single computational resource that has been instantiated for execution (as opposed of those who shall remain unused or unassigned).
+ * - Represents a single compute resource that has been instantiated for execution (as opposed of those who shall remain unused or unassigned).
  * - Is capable of executing or contributing to the execution of tasks.
- * - Is assigned to a worker to perform the work necessary to execute a task.
+ * - Is assigned, for example, to a worker to perform the work necessary to execute a task.
+ * - This is a non-copy-able class
  */
 class ProcessingUnit
 {
@@ -80,11 +77,11 @@ class ProcessingUnit
   ProcessingUnit() = delete;
 
   /**
-   * A processing unit is created to instantiate a single compute resource
+   * Constructor for a processing unit
    *
-   * \param computeResourceId The identifier of the compute resource to instantiate, as indicated by the backend
+   * \param computeResource The instance of the compute resource to instantiate, as indicated by the backend
    */
-  __USED__ inline ProcessingUnit(computeResourceId_t computeResourceId) : _computeResourceId(computeResourceId){};
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource *computeResource) : _computeResource(computeResource){};
 
   virtual ~ProcessingUnit() = default;
 
@@ -196,17 +193,7 @@ class ProcessingUnit
    *
    * \return The identifier of the compute resource associated to this processing unit.
    */
-  __USED__ inline computeResourceId_t getComputeResourceId() { return _computeResourceId; }
-
-  /**
-   * This function enables the creation of an empty execution state object.
-   *
-   * The instantiation of its internal memory structures is delayed until explicit initialization to reduce memory usage when, for example, scheduling many tasks that do not need to execute at the same time.
-   *
-   * \param[in] executionUnit The replicable state-less execution unit to instantiate into an execution state
-   * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
-   */
-  virtual std::unique_ptr<ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) = 0;
+  __USED__ inline ComputeResource *getComputeResource() { return _computeResource; }
 
   protected:
 
@@ -252,7 +239,7 @@ class ProcessingUnit
   /**
    * Identifier of the compute resource associated to this processing unit
    */
-  computeResourceId_t _computeResourceId;
+  HiCR::L0::ComputeResource *_computeResource;
 };
 
 } // namespace L0

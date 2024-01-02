@@ -13,9 +13,9 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <backends/ascend/L1/memoryManager.hpp>
+#include <backends/ascend/L1/communicationManager.hpp>
 #include <backends/ascend/kernel.hpp>
-#include <hicr/L0/memorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/common/exceptions.hpp>
 
 namespace HiCR
@@ -40,20 +40,27 @@ class MemoryKernel final : public Kernel
   /**
    * Constructor for the execution unit class of the ascend backend
    *
-   * \param memManager the Ascend memory manager
+   * \param commManager the Ascend communication manager
    * \param destination destination pointer
    * \param destinationOffset destination offset
    * \param source source pointer
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(L1::MemoryManager *memManager, HiCR::L0::MemorySlot *destination, const size_t destinationOffset, HiCR::L0::MemorySlot *source, const size_t sourceOffset, size_t size) : ascend::Kernel(),
-                                                                                                                                                                                         _dst(destination),
-                                                                                                                                                                                         _src(source),
-                                                                                                                                                                                         _dstOffset(destinationOffset),
-                                                                                                                                                                                         _srcOffset(sourceOffset),
-                                                                                                                                                                                         _size(size),
-                                                                                                                                                                                         _memManager(memManager){};
+  MemoryKernel(
+    ascend::L1::CommunicationManager *commManager,
+    HiCR::L0::LocalMemorySlot *destination,
+    const size_t destinationOffset,
+    HiCR::L0::LocalMemorySlot *source,
+    const size_t sourceOffset,
+    size_t size) : ascend::Kernel(),
+                   _dst(destination),
+                   _src(source),
+                   _dstOffset(destinationOffset),
+                   _srcOffset(sourceOffset),
+                   _size(size),
+                   _commManager(commManager){};
+
   MemoryKernel() = delete;
 
   /**
@@ -68,9 +75,7 @@ class MemoryKernel final : public Kernel
    */
   __USED__ inline void start(const aclrtStream stream) override
   {
-    _memManager->setMemcpyStream(stream);
-    _memManager->memcpy(_dst, _dstOffset, _src, _srcOffset, _size);
-    _memManager->resetMemcpyStream();
+    _commManager->memcpyAsync(_dst, _dstOffset, _src, _srcOffset, _size, stream);
   }
 
   private:
@@ -78,11 +83,11 @@ class MemoryKernel final : public Kernel
   /**
    * Destionation memory slot
    */
-  HiCR::L0::MemorySlot *_dst;
+  HiCR::L0::LocalMemorySlot *_dst;
   /**
    * Source memory slot
    */
-  HiCR::L0::MemorySlot *_src;
+  HiCR::L0::LocalMemorySlot *_src;
 
   /**
    * Destination offset
@@ -101,7 +106,7 @@ class MemoryKernel final : public Kernel
   /**
    * Ascend memory manager
    */
-  L1::MemoryManager *_memManager;
+  ascend::L1::CommunicationManager *_commManager;
 };
 
 } // namespace ascend

@@ -11,15 +11,16 @@
  */
 #pragma once
 
-#include <hicr/L0/processingUnit.hpp>
+#include <vector>
+#include <hicr/L0/computeResource.hpp>
 
 namespace HiCR
 {
 
-namespace L2
+namespace backend
 {
 
-namespace machineModel
+namespace sharedMemory
 {
 
 /**
@@ -32,28 +33,7 @@ class Cache
   /**
    * Set of cache types commonly encountered
    */
-  typedef enum
-  {
-    /**
-     *  L1 instruction Cache
-     */
-    L1i,
-
-    /**
-     *  L1 data Cache
-     */
-    L1d,
-
-    /**
-     *  L2 Cache
-     */
-    L2,
-
-    /**
-     *  L3 Cache
-     */
-    L3
-  } cacheType;
+  typedef std::string cacheType_t;
 
   protected:
 
@@ -70,7 +50,7 @@ class Cache
   /**
    * Type of the Cache object
    */
-  cacheType _level;
+  cacheType_t _level;
 
   /**
    * Storage of Compute Units associated with the Cache;
@@ -78,9 +58,20 @@ class Cache
    * will appear here. There is currently redunduncy in the representation,
    * as all cores that share the cache will keep a copy of this information
    */
-  std::vector<HiCR::L0::computeResourceId_t> _associatedComputeUnit;
+  std::vector<HiCR::L0::ComputeResource *> _associatedComputeUnits;
 
   public:
+
+  /**
+   * Constructor for the cache class
+   *
+   * @param[in] level The level (L1, L2, L3...) detected for this cache instance
+   * @param[in] size The size of the detected cache
+   */
+  Cache(const cacheType_t level, const size_t size) : _cacheSize(size),
+                                                      _level(level)
+  {
+  }
 
   /**
    * Obtain the size of the cache object
@@ -127,9 +118,9 @@ class Cache
   /**
    * Obtain the type of the cache object
    *
-   * \return The cache type in as a cacheType enum value
+   * \return The cache type in as a cacheType_t enum value
    */
-  inline cacheType getCacheType() const
+  inline cacheType_t getCacheType() const
   {
     return _level;
   }
@@ -138,9 +129,9 @@ class Cache
    * Set the cache type with information obtained from the backend.
    * This should be used only during initialization / resource detection.
    *
-   * \param[in] t The type of the cache as a cacheType enum value
+   * \param[in] t The type of the cache as a cacheType_t enum value
    */
-  inline void setCacheType(cacheType t)
+  inline void setCacheType(cacheType_t t)
   {
     _level = t;
   }
@@ -150,32 +141,32 @@ class Cache
    *
    * \return An std::vector of the CPU IDs
    */
-  inline std::vector<HiCR::L0::computeResourceId_t> getAssociatedComputeUnit() const
+  inline std::vector<HiCR::L0::ComputeResource *> getAssociatedComputeUnits() const
   {
-    return _associatedComputeUnit;
+    return _associatedComputeUnits;
   }
 
   /**
    * Set compute resource ID associated with a cache; used for private caches
    * This should be used only during initialization / resource detection.
    *
-   * \param[in] id The HiCR::L0::computeResourceId_t ID of the Processing Unit the cache belongs to
+   * \param[in] computeUnit The hicr compute unit that contains or uses this cache
    */
-  inline void setAssociatedComputeUnit(HiCR::L0::computeResourceId_t id)
+  inline void setAssociatedComputeUnit(HiCR::L0::ComputeResource *computeUnit)
   {
-    _associatedComputeUnit.resize(1);
-    _associatedComputeUnit[0] = id;
+    _associatedComputeUnits.resize(1);
+    _associatedComputeUnits[0] = computeUnit;
   }
 
   /**
    * Add compute resource ID associated with a cache; used for shared caches
    * This should be used only during initialization / resource detection.
    *
-   * \param[in] id The HiCR::L0::computeResourceId_t ID of a Processing Unit sharing the cache
+   * \param[in] computeUnit The hicr compute unit that contains or uses this cache
    */
-  inline void addAssociatedComputeUnit(HiCR::L0::computeResourceId_t id)
+  inline void addAssociatedComputeUnit(HiCR::L0::ComputeResource *computeUnit)
   {
-    _associatedComputeUnit.push_back(id);
+    _associatedComputeUnits.push_back(computeUnit);
   }
 
   /**
@@ -185,13 +176,13 @@ class Cache
    */
   inline bool isShared() const
   {
-    return (_associatedComputeUnit.size() > 1);
+    return (_associatedComputeUnits.size() > 1);
   }
 
 }; // class Cache
 
-} // namespace machineModel
+} // namespace sharedMemory
 
-} // namespace L2
+} // namespace backend
 
 } // namespace HiCR

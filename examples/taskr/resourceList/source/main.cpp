@@ -1,9 +1,10 @@
+#include "source/workTask.hpp"
+#include <backends/sharedMemory/L1/computeManager.hpp>
+#include <backends/sharedMemory/L1/deviceManager.hpp>
 #include <chrono>
 #include <cstdio>
-#include <hwloc.h>
-#include <backends/sharedMemory/L1/computeManager.hpp>
 #include <frontends/taskr/runtime.hpp>
-#include "source/workTask.hpp"
+#include <hwloc.h>
 
 int main(int argc, char **argv)
 {
@@ -14,10 +15,19 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::L1::ComputeManager computeManager(&topology);
+  HiCR::backend::sharedMemory::L1::ComputeManager computeManager;
 
-  // Querying computational resources
-  computeManager.queryComputeResources();
+// Initializing Sequential backend's device manager
+  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
+
+  // Asking backend to check the available devices
+  dm.queryDevices();
+
+  // Getting first device found
+  auto d = *dm.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Initializing taskr
   taskr::Runtime taskr;
@@ -40,18 +50,24 @@ int main(int argc, char **argv)
   }
 
   // Create processing units from the detected compute resource list and giving them to taskr
-  for (auto &coreId : coreSubset)
+  for (auto computeResource : computeResources) 
   {
-    // Creating a processing unit out of the computational resource
-    auto processingUnit = computeManager.createProcessingUnit(coreId);
+    // Interpreting compute resource as core
+    auto core = (HiCR::backend::sharedMemory::L0::ComputeResource*) computeResource;
 
-    // Assigning resource to the taskr
-    taskr.addProcessingUnit(std::move(processingUnit));
+    // If the core affinity is included in the list, create new processing unit
+    if (coreSubset.contains(core->getProcessorId()))
+    {
+      // Creating a processing unit out of the computational resource
+      auto processingUnit = computeManager.createProcessingUnit(core);
+
+      // Assigning resource to the taskr
+      taskr.addProcessingUnit(std::move(processingUnit));
+    }
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]()
-                                                              { work(iterations); });
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]() { work(iterations); });
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());

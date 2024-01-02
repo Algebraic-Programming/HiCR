@@ -44,19 +44,22 @@ class Consumer final : public L2::channel::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] memoryManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
-   * \param[in] consumerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer
+   * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
+   * \param[in] consumerCoordinationBuffer A global reference to the channel's internal coordination buffer, used to check for updates (incoming messages)
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::MemoryManager *memoryManager,
-           L0::MemorySlot *const tokenBuffer,
-           L0::MemorySlot *const consumerCoordinationBuffer,
+  Consumer(L1::CommunicationManager *communicationManager,
+           L0::GlobalMemorySlot *const tokenBuffer,
+           L0::LocalMemorySlot *const internalCoordinationBuffer,
+           L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(memoryManager, tokenBuffer, consumerCoordinationBuffer, tokenSize, capacity)
+           const size_t capacity) : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+                                    _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {
   }
   ~Consumer() = default;
@@ -87,22 +90,22 @@ class Consumer final : public L2::channel::Base
   __USED__ inline ssize_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos + 1, getCapacity());
+    if (pos >= _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos + 1, _circularBuffer->getCapacity());
 
     // Value to return, initially set as -1 as default (not able to find the requested value)
     ssize_t bufferPos = -1;
 
     // Obtaining coordination buffer slot lock
-    if (_memoryManager->acquireGlobalLock(_coordinationBuffer) == false) return bufferPos;
+    if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return bufferPos;
 
     // Calculating current channel depth
     const auto curDepth = getDepth();
 
     // Calculating buffer position, if there are enough tokens in the buffer to satisfy the request
-    if (pos < curDepth) bufferPos = (getTailPosition() + pos) % getCapacity();
+    if (pos < curDepth) bufferPos = (_circularBuffer->getTailPosition() + pos) % _circularBuffer->getCapacity();
 
     // Releasing coordination buffer slot lock
-    _memoryManager->releaseGlobalLock(_coordinationBuffer);
+    _communicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -124,30 +127,37 @@ class Consumer final : public L2::channel::Base
    */
   __USED__ inline bool pop(const size_t n = 1)
   {
-    if (n > getCapacity()) HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, getCapacity());
+    if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
 
     // Flag to indicate whether the operaton was successful
     bool successFlag = false;
 
     // Obtaining coordination buffer slot lock
-    if (_memoryManager->acquireGlobalLock(_coordinationBuffer) == false) return successFlag;
+    if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
 
     // If the exchange buffer does not have n tokens pushed, reject operation, otherwise succeed
     if (n <= getDepth())
     {
       // Advancing tail (removes elements from the circular buffer)
-      advanceTail(n);
+      _circularBuffer->advanceTail(n);
 
       // Setting success flag
       successFlag = true;
     }
 
     // Releasing coordination buffer slot lock
-    _memoryManager->releaseGlobalLock(_coordinationBuffer);
+    _communicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Operation was successful
     return successFlag;
   }
+
+  private:
+
+  /*
+   * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
+   */
+  HiCR::L0::GlobalMemorySlot *const _consumerCoordinationBuffer;
 };
 
 } // namespace MPSC

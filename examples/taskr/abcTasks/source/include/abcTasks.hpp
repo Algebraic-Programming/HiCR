@@ -1,23 +1,18 @@
 #include <cstdio>
-#include <hicr/L1/computeManager.hpp>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
+#include <hicr/L1/computeManager.hpp>
+#include <hicr/L1/deviceManager.hpp>
 
 #define ITERATIONS 10
 
-void abcTasks(HiCR::L1::ComputeManager *computeManager)
+void abcTasks(HiCR::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t& computeResources)
 {
-  // Querying computational resources
-  computeManager->queryComputeResources();
-
-  // Updating the compute resource list
-  auto computeResources = computeManager->getComputeResourceList();
-
   // Initializing taskr
   taskr::Runtime taskr;
 
-  // Assigning processing units to TaskR
-  for (auto &resource : computeResources) taskr.addProcessingUnit(std::move(computeManager->createProcessingUnit(resource)));
+  // Assigning processing Re to TaskR
+  for (const auto &computeResource : computeResources) taskr.addProcessingUnit(std::move(computeManager->createProcessingUnit(computeResource)));
 
   // Creating task functions
   auto taskAfc = computeManager->createExecutionUnit([&taskr]() { printf("Task A %lu\n", taskr.getCurrentTask()->getLabel()); });

@@ -14,6 +14,7 @@
 
 #include <backends/sequential/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
+#include <backends/sharedMemory/L0/computeResource.hpp>
 #include <csignal>
 #include <fcntl.h>
 #include <hicr/L0/processingUnit.hpp>
@@ -88,15 +89,16 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Constructor for the ProcessingUnit class
    *
-   * \param core Represents the core affinity to associate this processing unit to
+   * \param computeResource Represents the compute resource (core) affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::computeResourceId_t core) : HiCR::L0::ProcessingUnit(core){};
-
-  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
+  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource *computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {
-    // Creating and returning new execution state
-    return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
-  }
+    // Getting up-casted pointer for the MPI instance
+    auto c = dynamic_cast<L0::ComputeResource *>(computeResource);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+  };
 
   private:
 
@@ -123,7 +125,10 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline static void *launchWrapper(void *p)
   {
     // Gathering thread object
-    auto thread = (ProcessingUnit *)p;
+    auto thread = (sharedMemory::L0::ProcessingUnit *)p;
+
+    // Getting associated compute unit reference
+    auto computeResource = (sharedMemory::L0::ComputeResource *)thread->getComputeResource();
 
     // Storing current thread pointer
     _currentThread = thread;
@@ -132,7 +137,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
 
     // Setting initial thread affinity
-    thread->updateAffinity(std::set<int>({(int)thread->getComputeResourceId()}));
+    thread->updateAffinity(std::set<int>({computeResource->getProcessorId()}));
 
     // Yielding execution to allow affinity to refresh
     sched_yield();
