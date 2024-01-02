@@ -32,15 +32,16 @@ pages:
   
 build:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv:latest
+  variables:
+  GIT_SUBMODULE_STRATEGY: recursive
   tags:
   - docker
   - high-core 
   - x86
   - infiniband
   script:
-  - echo "Getting LPF..."
-  - git clone -b hicr https://github.com/Algebraic-Programming/LPF.git
-  - mkdir LPF/build; pushd LPF/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j8; make install; popd
+  - echo "Compiling LPF..."
+  - mkdir extern/lpf/build; pushd lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j8; make install; popd
   - echo "Building..."
   - mkdir build
   - meson setup build -Db_coverage=true -Dbackends=sharedMemory,mpi,lpf -DbuildTests=true -DbuildExamples=true 

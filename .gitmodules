@@ -1,0 +1,3 @@
+[submodule "extern/lpf"]
+	path = extern/lpf
+	url = https://github.com/Algebraic-Programming/LPF.git
