@@ -36,12 +36,7 @@ void consumerFc(HiCR::L1::MemoryManager *memoryManager, HiCR::L1::CommunicationM
   auto consumer = HiCR::L2::channel::SPSC::Consumer(communicationManager, globalTokenBufferSlot, coordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Getting a single value from the channel
-  while (consumer.isEmpty())
-  {
-    consumer.updateDepth();
-    printf("Consumer depth: %lu\n", consumer.getDepth());
-    usleep(10000);
-  } 
+  while (consumer.isEmpty()) consumer.updateDepth();
 
   // Getting internal pointer of the token buffer slot
   auto tokenBuffer = (ELEMENT_TYPE *)tokenBufferSlot->getPointer();
