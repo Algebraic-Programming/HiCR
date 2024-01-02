@@ -33,7 +33,7 @@ pages:
 build:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv:latest
   variables:
-  GIT_SUBMODULE_STRATEGY: recursive
+    GIT_SUBMODULE_STRATEGY: recursive
   tags:
   - docker
   - high-core 
