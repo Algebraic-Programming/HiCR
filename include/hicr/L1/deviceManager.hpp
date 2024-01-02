@@ -75,6 +75,8 @@ class DeviceManager
 
   /**
    * Backend-specific implementation of queryDevices
+   * 
+   * \return The list of devices detected by this backend
   */
   virtual deviceList_t queryDevicesImpl() = 0;
 

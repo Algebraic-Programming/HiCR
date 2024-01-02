@@ -38,7 +38,25 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 {
   public:
 
-  enum deviceType_t { none, host, device };
+  /**
+   * Enumeration to indicate a type of device involved in data communication operations
+  */
+  enum deviceType_t {
+    /**
+     * No device -- used as safeguard to detect errors
+    */
+     none, 
+
+     /**
+      * Host -- Involves the main host memory (RAM) in the operation 
+     */
+     host,
+
+     /**
+      * Device -- Involves an Ascend device memory (DRAM) in the operation
+     */
+     device
+  };
 
   /**
    * Constructor for the ascend communication manager class for the ascend backend.
@@ -49,7 +67,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * Set the ACL \p stream in which the next memcpy operations needs to be executed.
    *
-   * \param stream ACL stream on which future memcpy will be executed
+   * \param[in] stream ACL stream on which future memcpy will be executed
    */
   __USED__ inline void setMemcpyStream(const aclrtStream stream) {  _stream = stream; }
 
@@ -58,6 +76,18 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   __USED__ inline void resetMemcpyStream() { _stream = NULL;  }
 
+  /**
+   * Backend-internal asyncrhonous implementation of the memcpy operation. It passes a stream as context for later asynchrounous check for completion
+   * 
+   * For more information, see: memcpyImpl
+   *
+   * \param[in] destination destination memory slot
+   * \param[in] dst_offset destination offset
+   * \param[in] source source memory slot
+   * \param[in] src_offset source offset
+   * \param[in] size the number of bytes to copy
+   * \param[in] stream stream containing the state of the operation for later check
+   */
   __USED__ inline void memcpyAsync(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size, const aclrtStream stream)
   {
     memcpyInternal(destination,  dst_offset, source, src_offset, size, stream);
@@ -73,7 +103,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * Backend-internal implementation of the deregisterGlobalMemorySlotImpl function
    *
-   * \param memorySlot memory slot to deregister.
+   * \param[in] memorySlot memory slot to deregister.
    */
   __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
@@ -83,8 +113,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
-   * \param tag identifies a particular subset of global memory slots
-   * \param memorySlots array of local memory slots to make globally accessible
+   * \param[in] tag identifies a particular subset of global memory slots
+   * \param[in] memorySlots array of local memory slots to make globally accessible
    */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
@@ -94,7 +124,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
    *
-   * \param memorySlot memory slot to query updates for.
+   * \param[in] memorySlot memory slot to query updates for.
    */
   __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
@@ -109,11 +139,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * Restrictions:
    * - Only memory copying between devices in the same thread or between different threads in the same process is supported. Memory copying between Devices in different processes is not supported.
    *
-   * \param destination destination memory slot
-   * \param dst_offset destination offset
-   * \param source source memory slot
-   * \param src_offset source offset
-   * \param size the number of bytes to copy
+   * \param[in] destination destination memory slot
+   * \param[in] dst_offset destination offset
+   * \param[in] source source memory slot
+   * \param[in] src_offset source offset
+   * \param[in] size the number of bytes to copy
    */
   __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) override
   {
@@ -187,7 +217,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * Backend-internal implementation of the fence function.
    *
-   * \param tag A tag that releases all processes that share the same value once they have arrived at it
+   * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    *
    */
   __USED__ inline void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override

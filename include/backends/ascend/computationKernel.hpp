@@ -86,6 +86,13 @@ class ComputationKernel final : public Kernel
 
   ~ComputationKernel() { delete _kernelPtr; }
 
+  /**
+   * Creates the Ascend-specific Tensor data to be used as input/output parameter to Ascend kernels
+   *
+   * \param memorySlot The memory slot to be used as input/output
+   * \param tensorDescriptor Ascend-specific metadata about the passed memory slot
+   * \return The new Ascend tensor data object
+   */
   static tensorData_t createTensorData (HiCR::L0::LocalMemorySlot* memorySlot, aclTensorDesc * tensorDescriptor)
   {
     // Using up-casting to determine device types

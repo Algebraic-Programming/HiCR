@@ -42,6 +42,9 @@ class MemorySpace final : public HiCR::L0::MemorySpace
 
   /**
    * Constructor for the compute resource class of the sequential backend
+   * 
+   * \param device The ascend device in which this memory space was detected
+   * \param size The size of this memory space
    */
   MemorySpace(const ascend::L0::Device* device, const size_t size) :
    HiCR::L0::MemorySpace(size), _device(device)

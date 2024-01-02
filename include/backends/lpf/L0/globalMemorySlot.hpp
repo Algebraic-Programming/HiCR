@@ -38,10 +38,9 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * Constructor for a MemorySlot class for the LPF backend
    * @param[in] rank  Rank
    * @param[in] lpfMemSlot LPF slot this HiCR slot is associated with
-   * @param[in] pointer Pointer to the memory address associated with this HiCR slot
-   * @param[in] size Comm size
-   * @param[in] globalTag
-   * @param[in] globalKey
+   * @param[in] globalTag The global tag associated to this global memory slot (for exchange purposes)
+   * @param[in] globalKey The global key associated to this global memory slot (for exchange purposes
+   * @param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
    */
   GlobalMemorySlot(
     size_t rank,

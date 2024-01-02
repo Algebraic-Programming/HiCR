@@ -38,6 +38,9 @@ class Device final : public HiCR::L0::Device
 
   /**
    * Constructor for the device class of the sequential backend
+   * 
+   * \param[in] computeResources The compute resources associated to this device (just one, the CPU as a whole)
+   * \param[in] memorySpaces The memory spaces associated to this device (just one, the host RAM)
    */
   Device(const computeResourceList_t& computeResources, const memorySpaceList_t& memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces) {};
 

@@ -66,6 +66,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] ptr Pointer to the local memory space
    * \param[in] size Size of the memory slot to register
+   * \param[in] memorySpace The memory space onto which to register the new memory slot
    * \return A newly created memory slot
    */
   __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override

@@ -39,8 +39,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   /**
    * The constructor is employed to create the barriers required to coordinate threads
-   *
-   * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
   MemoryManager() : HiCR::L1::MemoryManager() {}
   ~MemoryManager() = default;
@@ -74,6 +72,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   /**
    * Associates a pointer locally-allocated manually and creates a local memory slot with it
+   * \param[in] memorySpace The memory space to register the new memory slot in
    * \param[in] ptr Pointer to the local memory space
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot

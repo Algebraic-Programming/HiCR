@@ -42,8 +42,6 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 
   /**
    * Constructor for the compute manager class for the shared memory backend
-   *
-   * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
   ComputeManager() : HiCR::L1::ComputeManager() {}
 

@@ -56,8 +56,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * \param[in] bindingType The binding type requested (and employed) for this memory slot
    * \param[in] pointer If this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
    * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
-   * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
-   * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   * \param[in] memorySpace The memory space from whence this memory slot was created
    */
   LocalMemorySlot(
     binding_type bindingType,

@@ -4,7 +4,7 @@
  */
 
 /**
- * @file memorySlot.hpp
+ * @file ascend/L0/localMemorySlot.hpp
  * @brief Provides a definition for the local memory slot class for the Ascend backend
  * @author L. Terracciano & S. M. Martin
  * @date 19/10/2023
@@ -37,12 +37,10 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
   /**
    * Constructor for a MemorySlot class for the Ascend backend
    *
-   * \param deviceId ascend device id this memory slot belongs
    * \param pointer if this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
    * \param size the size of the memory slot, assumed to be contiguous
    * \param dataBuffer the ACL data buffer created for the memory slot
-   * \param globalTag for global memory slots, indicates the subset of global memory slots this belongs to
-   * \param globalKey unique identifier for that memory slot that this slot occupies.
+   * \param memorySpace the Ascend memory from which this memory slot was obtained
    */
   LocalMemorySlot(
     void *const pointer,

@@ -42,10 +42,10 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
 
   /**
    * Constructor for a MemorySlot class for the LPF backend
-   * @param[in] rank  Rank
    * @param[in] lpfMemSlot LPF slot this HiCR slot is associated with
    * @param[in] pointer Pointer to the memory address associated with this HiCR slot
    * @param[in] size Comm size
+   * @param[in] memorySpace The memory space from whence this memory slot was created
    */
   LocalMemorySlot(
     lpf_memslot_t lpfMemSlot,

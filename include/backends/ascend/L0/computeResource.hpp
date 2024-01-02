@@ -42,6 +42,8 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 
   /**
    * Constructor for the compute resource class of the sequential backend
+   * 
+   * \param device The Ascend device that contains this compute resource
    */
   ComputeResource(const ascend::L0::Device* device) :
    HiCR::L0::ComputeResource(),

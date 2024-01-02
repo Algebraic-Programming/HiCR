@@ -171,9 +171,6 @@ class Base
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
    * \param[in] communicationManager The backend's memory manager to facilitate communication between the producer and consumer sides
-   * \param[in] tokenBuffer The memory slot pertaining to the data exchange buffer. This buffer needs to be allocated
-   *            at the consumer side. The producer will push new tokens into this buffer, while there is enough space.
-   *            This buffer should be big enough to hold the required capacity * tokenSize.
    * \param[in] coordinationBuffer This is a small buffer that needs to be allocated at the producer side.
    *            enables the consumer to signal how many tokens it has popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
@@ -225,7 +222,7 @@ class Base
    */
   const size_t _tokenSize;
 
-  /*
+  /**
   * Internal channel (logical) circular buffer
   */
   std::unique_ptr<common::CircularBuffer> _circularBuffer;

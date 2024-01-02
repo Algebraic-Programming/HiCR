@@ -47,7 +47,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   /**
    * Constructor for the MPI instance manager
    *
-   * \param[in] memoryManager The memory manager to use for internal data passing
+   * \param[in] memoryManager The memory manager to use for buffer allocations
+   * \param[in] communicationManager The communication manager to use for internal data passing
+   * \param[in] computeManager The compute manager to use for RPC running
+   * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
   InstanceManager(HiCR::L1::CommunicationManager *const communicationManager,
                   HiCR::L1::ComputeManager *const computeManager,

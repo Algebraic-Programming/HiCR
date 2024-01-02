@@ -54,9 +54,16 @@ class MemorySpace
    * In conjunction with the total size above, the user may deduce
    * information like, usage%, if a particular allocation will be
    * possible etc.
+   * 
+   * \return The current memory usage for this memory space
    */
   __USED__ virtual inline size_t getUsage() const { return _usage; }; 
 
+  /**
+   * Registers an increase in the used memory size of the current memory space, either by allocation or manual registering
+   * 
+   * \param delta How much (in bytes) has the memory usage increased
+   */
   __USED__ inline void increaseUsage(const size_t delta)
    { 
      if (_usage + delta > _size) HICR_THROW_LOGIC("Increasing memory space usage beyond its capacity (current_usage + increase > capacity | %lu + %lu > %lu)\n", _usage, delta, _size);
@@ -64,6 +71,11 @@ class MemorySpace
     _usage += delta;
    }
 
+/**
+   * Registers a decrease in the used memory size of the current memory space, either by freeing or manual deregistering
+   * 
+   * \param delta How much (in bytes) has the memory usage decreased
+   */
   __USED__ inline void decreaseUsage(const size_t delta)
    {
     if (delta > _usage) HICR_THROW_LOGIC("Decreasing memory space usage below zero (probably a bug in HiCR) (current_usage - decrease < 0 | %lu - %lu < 0)\n", _usage, delta);

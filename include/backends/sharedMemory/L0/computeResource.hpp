@@ -54,8 +54,8 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 
   /**
    * Constructor for the compute resource class of the sequential backend
-   *
-   * \param affinity Os-determied core affinity assigned to this compute resource
+   * \param topology HWLoc topology object for discovery
+   * \param logicalProcessorId Os-determied core affinity assigned to this compute resource
    */
   ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) :
    HiCR::L0::ComputeResource(),
@@ -106,6 +106,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    /**
    * Uses HWloc to discover the (physical) processor ID, associated with a given logical processor ID
    *
+   * \param[in] topology An HWLoc topology object, already initialized
    * \param[in] logicalProcessorId The logical ID of the processor we are doing the search for
    * \returns The ID of the associated physical identifier related to the passed logical processor id
    */
@@ -126,7 +127,8 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   /**
    * Uses HWloc to discover the NUMA node associated with a given logical processor ID
    *
-   * \param[in] cpuId The ID of the processor we are doing the search for
+   * \param[in] topology An HWLoc topology object, already initialized
+   * \param[in] logicalProcessorId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
   __USED__ static numaAffinity_t detectCoreNUMAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
@@ -172,6 +174,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 /**
    * Uses HWloc to discover all caches associated with a given logical processor ID
    *
+   * \param[in] topology An HWLoc topology object, already initialized
    * \param[in] logicalProcessorId The logical ID of the processor we are doing the search for
    * \returns A vector of (type,size) entries, where type is a string describing
    *          the cache and size is the respective size in Bytes
@@ -280,7 +283,8 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   /**
    * Uses HWloc to discover the sibling logical processors associated with a given logical processor ID
    *
-   * \param[in] cpuId The ID of the processor we are doing the search for
+   * \param[in] topology An HWLoc topology object, already initialized
+   * \param[in] logicalProcessorId The ID of the processor we are doing the search for
    * \returns A vector of processor IDs, siblings of cpuId (expected to have up to 1 in most archs)
    */
   __USED__ static inline std::vector<L0::ComputeResource::logicalProcessorId_t> detectCPUSiblings(hwloc_topology_t topology, L0::ComputeResource::logicalProcessorId_t logicalProcessorId)

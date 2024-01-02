@@ -32,7 +32,7 @@ namespace L1
 {
 
 /**
- * Implementation of the Memory Manager for the Ascend backend.
+ * Implementation of the Memory Manager for the Ascend backend. 
  *
  * It stores the memory spaces detected by the Ascend computing language
  */
@@ -51,7 +51,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Backend-internal implementation of the queryLocalMemorySlot function
    *
-   * \param[in] memorySpaceId memory space to allocate memory in
+   * \param[in] memorySpace memory space to allocate memory in
    * \param[in] size size of the memory slot to create
    * \return the internal pointer associated to the local memory slot
    */
@@ -100,8 +100,8 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Allocate memory on the Ascend memory through Ascend-dedicated functions.
    *
-   * \param memorySpace device id where memory is allocated
-   * \param size allocation size
+   * \param[in] memorySpace device id where memory is allocated
+   * \param[in] size allocation size
    */
   __USED__ inline void *deviceAlloc(const ascend::L0::MemorySpace *memorySpace, const size_t size)
   {
@@ -125,8 +125,8 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Allocate memory on the host memory through Ascend-dedicated functions.
    *
-   * \param memorySpace device id where memory is allocated
-   * \param size allocation size
+   * \param[in] memorySpace device id where memory is allocated
+   * \param[in] size allocation size
    */
   __USED__ inline void *hostAlloc(const sequential::L0::MemorySpace *memorySpace, const size_t size)
   {
@@ -140,11 +140,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // Returning allocated pointer
     return ptr;
   }
+
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function. Not implemented.
    *
-   * \param ptr pointer to the start of the memory slot
-   * \param size size of the memory slot to create
+   * \param[in] memorySpace The memory space to register the new memory slot in
+   * \param[in] ptr pointer to the start of the memory slot
+   * \param[in] size size of the memory slot to create
    * \return a newly created memory slot
    */
   __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, void *const ptr, const size_t size) override
@@ -155,7 +157,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function
    *
-   * \param memorySlot local memory slot to free up. It becomes unusable after freeing.
+   * \param[in] memorySlot local memory slot to free up. It becomes unusable after freeing.
    */
   __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *memorySlot) override
   {
@@ -197,7 +199,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Backend-internal implementation of the deregisterMemorySlot function
    *
-   * \param memorySlot memory slot to deregister.
+   * \param[in] memorySlot memory slot to deregister.
    */
   __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *memorySlot) override
   {

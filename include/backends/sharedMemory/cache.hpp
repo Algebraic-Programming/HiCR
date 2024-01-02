@@ -62,6 +62,12 @@ class Cache
 
   public:
 
+  /**
+   * Constructor for the cache class
+   *  
+   * @param[in] level The level (L1, L2, L3...) detected for this cache instance
+   * @param[in] size The size of the detected cache
+  */
   Cache(const cacheType_t level, const size_t size) : 
     _cacheSize(size),
      _level(level)
@@ -144,7 +150,7 @@ class Cache
    * Set compute resource ID associated with a cache; used for private caches
    * This should be used only during initialization / resource detection.
    *
-   * \param[in] id The HiCR::L0::computeResourceId_t ID of the Processing Unit the cache belongs to
+   * \param[in] computeUnit The hicr compute unit that contains or uses this cache
    */
   inline void setAssociatedComputeUnit(HiCR::L0::ComputeResource* computeUnit)
   {
@@ -156,7 +162,7 @@ class Cache
    * Add compute resource ID associated with a cache; used for shared caches
    * This should be used only during initialization / resource detection.
    *
-   * \param[in] id The HiCR::L0::computeResourceId_t ID of a Processing Unit sharing the cache
+   * \param[in] computeUnit The hicr compute unit that contains or uses this cache
    */
   inline void addAssociatedComputeUnit(HiCR::L0::ComputeResource* computeUnit)
   {

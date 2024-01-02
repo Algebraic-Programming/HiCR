@@ -43,7 +43,12 @@ class Device final : public HiCR::L0::Device
   typedef uint64_t deviceIdentifier_t;
 
   /**
-   * Constructor for the device class of the sequential backend
+   * Constructor for an Ascend device
+   * 
+   * \param id Internal unique identifier for the device
+   * \param context The ACL context corresponding to this device
+   * \param computeResources The compute resources associated to this device (typically just one, the main Ascend processor)
+   * \param memorySpaces The memory spaces associated to this device (DRAM + other use-specific or high-bandwidth memories)
    */
   Device(
     const deviceIdentifier_t id,
@@ -81,7 +86,18 @@ class Device final : public HiCR::L0::Device
 
   __USED__ inline std::string getType() const override { return "Ascend Device"; }
 
+  /**
+   * Returns the internal id of the current Ascend device
+   * 
+   * \return The id of the ascend device 
+  */
   __USED__ inline deviceIdentifier_t getId() const { return _id; }
+
+  /**
+   * Returns the ACL context corresponding to this compute resource
+   * 
+   * \return The ACL context
+  */
   __USED__ inline aclrtContext* getContext() const { return _context; }
 
   private:

@@ -48,8 +48,8 @@ class Consumer final : public L2::channel::Base
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
-   * \param[in] producerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer of the producer
-                It needs to be a global reference to the remote producer.
+   * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
+   * \param[in] producerCoordinationBuffer A global reference to the producer channel's internal coordination buffer, used for remote updates on pop()
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
@@ -162,8 +162,16 @@ class Consumer final : public L2::channel::Base
     _circularBuffer->setHead(receivedTokenCount);
   }
 
+  /**
+   * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
+   * for updates (received messages) from the remote producer.
+  */
   HiCR::L0::GlobalMemorySlot* const _tokenBuffer;
 
+  /**
+   * The memory slot pertaining to the producer's coordination buffer. This is a global slot to enable remote
+   * update of the producer's internal circular buffer when doing a pop() operation
+  */
   HiCR::L0::GlobalMemorySlot *const _producerCoordinationBuffer;
 
 };

@@ -4,7 +4,7 @@
  */
 
 /**
- * @file memorySlot.hpp
+ * @file sharedMemory/L0/globalMemorySlot.hpp
  * @brief Provides a definition for the memory slot class for the shared memory backend
  * @author S. M. Martin
  * @date 19/10/2023
@@ -39,16 +39,14 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   /**
    * Constructor for a MemorySlot class for the MPI backend
    *
-   * \param[in] bindingType The binding type requested (and employed) for this memory slot
-   * \param[in] pointer If this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
-   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
    * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
    * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   * \param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
    */
   GlobalMemorySlot(
     const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
     const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
-    HiCR::L0::LocalMemorySlot* localMemorySlot = NULL) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, localMemorySlot)
+    HiCR::L0::LocalMemorySlot* sourceLocalMemorySlot = NULL) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot)
   {
     pthread_mutex_init(&_mutex, NULL);
   }

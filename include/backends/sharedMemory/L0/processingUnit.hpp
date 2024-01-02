@@ -89,7 +89,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Constructor for the ProcessingUnit class
    *
-   * \param core Represents the core affinity to associate this processing unit to
+   * \param computeResource Represents the compute resource (core) affinity to associate this processing unit to
    */
   __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {

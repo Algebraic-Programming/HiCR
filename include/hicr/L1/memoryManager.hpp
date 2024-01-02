@@ -45,9 +45,9 @@ class MemoryManager
   /**
    * Allocates a local memory slot in the specified memory space
    *
-   * \param[in] memorySpaceId Memory space to allocate memory in
+   * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
-   * \return A newly allocated memory slot in the specified memory space
+   * \returns The pointer of the newly allocated memory slot
    */
   __USED__ inline L0::LocalMemorySlot *allocateLocalMemorySlot(L0::MemorySpace* memorySpace, const size_t size)
   {
@@ -64,9 +64,10 @@ class MemoryManager
   /**
    * Registers a local memory slot from a given address
    *
+   * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] ptr Pointer to the start of the memory slot
    * \param[in] size Size of the memory slot to create
-   * \return A newly created memory slot
+   * \returns The pointer of the newly registered memory slot
    */
   virtual L0::LocalMemorySlot *registerLocalMemorySlot(L0::MemorySpace* memorySpace, void *const ptr, const size_t size)
   {
@@ -113,7 +114,7 @@ class MemoryManager
   /**
    * Backend-internal implementation of the queryLocalMemorySlot function
    *
-   * \param[in] memorySpace Memory space to allocate memory in
+   * \param[in] memorySpace Memory space to allocate memory from
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
@@ -122,6 +123,7 @@ class MemoryManager
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
    *
+   * \param[in] memorySpace Memory space to register memory in
    * \param[in] ptr Pointer to the start of the memory slot
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot

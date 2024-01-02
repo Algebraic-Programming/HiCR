@@ -37,7 +37,11 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   public:
 
   /**
-   * Constructor for the compute resource class of the sequential backend
+   * Constructor for the memory space class of the shared memory backend
+   * 
+   * \param size The maximum allocatable size detected for this memory space
+   * \param hwlocObject HWLoc object for associated to this memory space
+   * \param bindingSupport The HWLoc binding type supported by this memory space
    */
   MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::L0::LocalMemorySlot::binding_type bindingSupport) :
    HiCR::L0::MemorySpace(size),

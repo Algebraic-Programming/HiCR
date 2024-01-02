@@ -51,21 +51,29 @@ class Device
 
   /**
    * This function returns the list of queried compute resources, as visible by the device.
+   * 
+   * \return The list of compute resources contained in this device
    */
   __USED__ inline const computeResourceList_t& getComputeResourceList()  { return _computeResources; }
 
   /**
    * This function returns the list of queried memory spaces, as visible by the device.
+   * 
+   * \return The list of memory spaces contained in this device
    */
   __USED__ inline const memorySpaceList_t& getMemorySpaceList()  { return _memorySpaces; }
 
-/**
-   * This function allows the deferred addition of compute resources
+  /**
+   * This function allows the deferred addition (post construction) of compute resources
+   * 
+   * \param[in] computeResource The compute resource to add
    */
   __USED__ inline void addComputeResource(HiCR::L0::ComputeResource* const computeResource)  { _computeResources.insert(computeResource); }
 
   /**
-   * This function allows the deferred addition of memory spaces
+   * This function allows the deferred addition (post construction) of memory spaces
+   * 
+   * \param[in] memorySpace The compute resource to add
    */
   __USED__ inline void addMemorySpace(HiCR::L0::MemorySpace* const memorySpace)  { _memorySpaces.insert(memorySpace); }
 
@@ -76,6 +84,9 @@ class Device
 
  /**
   *  Constructor requires at least to provide the initial set of compute resources and memory spaces
+  * 
+  * \param[in] computeResources The list of detected compute resources contained in this device
+  * \param[in] memorySpaces The list of detected memory spaces contained in this device
   */
   Device(const computeResourceList_t& computeResources, const memorySpaceList_t& memorySpaces)
     : _computeResources(computeResources),

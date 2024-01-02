@@ -61,7 +61,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Backend-internal implementation of the queryLocalMemorySlot function
    *
-   * \param[in] memorySpaceId Memory space to allocate memory in
+   * \param[in] memorySpace Memory space to allocate memory in
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
@@ -100,6 +100,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
    *
+   * \param[in] memorySpace The memory space to register the new memory slot in
    * \param[in] ptr Pointer to the local memory space
    * \param[in] size Size of the memory slot to register
    * \return A newly created memory slot

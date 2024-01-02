@@ -48,7 +48,8 @@ class Consumer final : public L2::channel::Base
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
-   * \param[in] consumerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer
+   * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
+   * \param[in] consumerCoordinationBuffer A global reference to the channel's internal coordination buffer, used to check for updates (incoming messages)
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */

@@ -65,7 +65,6 @@ class Instance final : public HiCR::L0::Instance
   /**
    * Constructor for a Instance class for the MPI backend
    * \param[in] rank The MPI rank corresponding to this HiCR instance
-   * \param[in] memoryManager The MPI memory manager to use for exchanging data
    */
   Instance(const int rank) : HiCR::L0::Instance((instanceId_t)rank), _rank(rank)
   {

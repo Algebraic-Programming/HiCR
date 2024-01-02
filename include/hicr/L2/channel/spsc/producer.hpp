@@ -47,7 +47,8 @@ class Producer final : public L2::channel::Base
    * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    *            tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
-   * \param[in] producerCoordinationBuffer This is a small buffer to hold the internal state of the circular buffer of the producer
+   * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
+   * \param[in] producerCoordinationBuffer A global reference of the producer's own coordination buffer to check for pop updates produced by the remote consumer
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */

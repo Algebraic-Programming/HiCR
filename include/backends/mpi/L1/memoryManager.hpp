@@ -41,9 +41,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   /**
    * Constructor for the mpi backend.
-   *
-   * \param[in] comm The MPI subcommunicator to use in the communication operations in this backend.
-   * If not specified, it will use MPI_COMM_WORLD
    */
   MemoryManager() : HiCR::L1::MemoryManager() {}
   ~MemoryManager() = default;
@@ -101,6 +98,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] ptr Pointer to the local memory space
    * \param[in] size Size of the memory slot to register
+   * \param[in] memorySpace The memory space onto which to register the new local memory slot
    * \return A newly created memory slot
    */
   __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace* memorySpace, void *const ptr, const size_t size) override

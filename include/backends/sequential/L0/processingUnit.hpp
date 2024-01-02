@@ -43,7 +43,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Constructor for the Process class
    *
-   * \param processor An id for the process (should be zero)
+   * \param computeResource The associated compute resource (CPU) from which this processing unit will be instantiated
    */
   __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource* computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {

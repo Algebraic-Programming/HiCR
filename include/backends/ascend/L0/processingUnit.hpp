@@ -41,7 +41,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Constructor for the Processing Unit (kernel) class
    *
-   * \param device device ID
+   * \param computeResource The compute resource from which this processing unit is instantiated
    */
   __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource *computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {

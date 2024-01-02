@@ -4,7 +4,7 @@
  */
 
 /**
- * @file memorySlot.hpp
+ * @file mpi/L0/globalMemorySlot.hpp
  * @brief Provides a definition for the global memory slot class for the MPI backend
  * @author S. M. Martin
  * @date 19/10/2023
@@ -38,10 +38,9 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * Constructor for a MemorySlot class for the MPI backend
    *
    * \param[in] rank Rank to which this memory slot belongs
-   * \param[in] pointer If this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
-   * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
    * \param[in] globalTag For global memory slots, indicates the subset of global memory slots this belongs to
    * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
+   * \param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
    */
   GlobalMemorySlot(
     int rank,
