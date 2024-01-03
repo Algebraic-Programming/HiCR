@@ -12,8 +12,8 @@
 
 #pragma once
 
+#include <hicr/definitions.hpp>
 #include <hicr/L0/computeResource.hpp>
-#include <hicr/common/definitions.hpp>
 
 namespace HiCR
 {

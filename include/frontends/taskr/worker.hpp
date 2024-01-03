@@ -12,16 +12,17 @@
 
 #pragma once
 
+#include <memory>
+#include <vector>
+#include <set>
+#include <pthread.h>
+#include <unistd.h>
+#include <hicr/definitions.hpp>
+#include <hicr/exceptions.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <frontends/taskr/dispatcher.hpp>
 #include <frontends/taskr/hicrTask.hpp>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
-#include <memory>
-#include <pthread.h>
-#include <unistd.h>
-#include <vector>
 
 namespace taskr
 {

@@ -10,11 +10,11 @@
  * @date 13/9/2023
  */
 
+#include <limits>
 #include "gtest/gtest.h"
 #include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
 #include <backends/sharedMemory/hwloc/L1/communicationManager.hpp>
 #include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
-#include <limits>
 
 namespace backend = HiCR::backend::sharedMemory::hwloc;
 
@@ -69,7 +69,7 @@ TEST(MemoryManager, Memory)
   EXPECT_GE(totalMem, testMemAllocSize);
 
   // Trying to allocate more than allowed
-  EXPECT_THROW(m.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::common::LogicException);
+  EXPECT_THROW(m.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::LogicException);
 
   // Allocating memory correctly now
   HiCR::L0::LocalMemorySlot *s1 = NULL;

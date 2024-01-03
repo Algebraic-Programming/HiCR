@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include <boost/context/continuation.hpp>
 #include <functional>
-#include <hicr/common/exceptions.hpp>
+#include <boost/context/continuation.hpp>
+#include <hicr/exceptions.hpp>
 
 namespace HiCR
 {

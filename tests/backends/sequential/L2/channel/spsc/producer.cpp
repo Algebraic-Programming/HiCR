@@ -10,13 +10,13 @@
  * @date 19/9/2023
  */
 
+#include <thread>
 #include "gtest/gtest.h"
+#include <hicr/L2/channel/spsc/consumer.hpp>
+#include <hicr/L2/channel/spsc/producer.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 #include <backends/sequential/L1/communicationManager.hpp>
 #include <backends/sequential/L1/deviceManager.hpp>
-#include <hicr/L2/channel/spsc/consumer.hpp>
-#include <hicr/L2/channel/spsc/producer.hpp>
-#include <thread>
 
 #define CHANNEL_TAG 0
 #define TOKEN_BUFFER_KEY 0
@@ -69,7 +69,7 @@ TEST(ProducerChannel, Construction)
   auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
 
   // Creating with incorrect parameters
-  EXPECT_THROW(new HiCR::L2::channel::SPSC::Producer(&c, globalTokenBuffer, badCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
+  EXPECT_THROW(new HiCR::L2::channel::SPSC::Producer(&c, globalTokenBuffer, badCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::LogicException);
 
   // Creating with correct parameters
   EXPECT_NO_THROW(new HiCR::L2::channel::SPSC::Producer(&c, globalTokenBuffer, correctProducerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));
@@ -130,16 +130,16 @@ TEST(ProducerChannel, Push)
   EXPECT_NO_THROW(producer.push(sendBuffer, 0));
 
   // Attempting to push more tokens than buffer size (should throw exception)
-  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity + 1), HiCR::common::LogicException);
+  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity + 1), HiCR::LogicException);
 
   // Trying to push more tokens than capacity (should fail)
-  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity), HiCR::common::RuntimeException);
+  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity), HiCR::RuntimeException);
 
   // Trying to push one token
   EXPECT_NO_THROW(producer.push(sendBuffer, 1));
 
   // Trying to push capacity, but after having pushed one, should fail
-  EXPECT_THROW(producer.push(sendBuffer, channelCapacity), HiCR::common::RuntimeException);
+  EXPECT_THROW(producer.push(sendBuffer, channelCapacity), HiCR::RuntimeException);
 
   // Trying to push to capacity, should't fail
   EXPECT_NO_THROW(producer.push(sendBuffer, channelCapacity - 1));
@@ -148,7 +148,7 @@ TEST(ProducerChannel, Push)
   EXPECT_NO_THROW(producer.push(sendBuffer, 0));
 
   // Channel is full and trying to push one more should fail
-  EXPECT_THROW(producer.push(sendBuffer, 1), HiCR::common::RuntimeException);
+  EXPECT_THROW(producer.push(sendBuffer, 1), HiCR::RuntimeException);
 }
 
 TEST(ProducerChannel, PushWait)
@@ -204,7 +204,7 @@ TEST(ProducerChannel, PushWait)
   auto sendBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
   // Attempting to push more tokens than buffer size (should throw exception)
-  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity + 1), HiCR::common::LogicException);
+  EXPECT_THROW(producer.push(sendBuffer, sendBufferCapacity + 1), HiCR::LogicException);
 
   // Trying to fill send buffer (shouldn't wait)
   EXPECT_NO_THROW(producer.push(sendBuffer, channelCapacity));

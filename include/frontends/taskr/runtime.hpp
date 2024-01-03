@@ -60,7 +60,7 @@ class Runtime
   /**
    * Hash map for quick location of tasks based on their hashed names
    */
-  HiCR::parallelHashSet_t<taskLabel_t> _finishedTaskHashMap;
+  taskr::parallelHashSet_t<taskLabel_t> _finishedTaskHashMap;
 
   /**
    * Mutex for the active worker queue, required for the max active workers mechanism

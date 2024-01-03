@@ -12,10 +12,10 @@
 
 #pragma once
 
+#include <hicr/definitions.hpp>
 #include <hicr/L0/device.hpp>
 #include <backends/sequential/L0/computeResource.hpp>
 #include <backends/sequential/L0/memorySpace.hpp>
-#include <hicr/common/definitions.hpp>
 
 namespace HiCR
 {

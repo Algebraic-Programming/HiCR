@@ -10,14 +10,15 @@
  * @date 19/9/2023
  */
 
+
+#include <thread>
 #include "gtest/gtest.h"
+#include <hicr/exceptions.hpp>
+#include <hicr/L2/channel/spsc/consumer.hpp>
+#include <hicr/L2/channel/spsc/producer.hpp>
 #include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/communicationManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
-#include <hicr/L2/channel/spsc/consumer.hpp>
-#include <hicr/L2/channel/spsc/producer.hpp>
-#include <hicr/common/exceptions.hpp>
-#include <thread>
 
 #define CHANNEL_TAG 0
 #define TOKEN_BUFFER_KEY 0
@@ -75,8 +76,8 @@ TEST(ConsumerChannel, Construction)
   auto badGlobalTokenBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, BAD_TOKEN_BUFFER_KEY);
 
   // Creating with incorrect parameters
-  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&c, globalTokenBuffer, badConsumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
-  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&c, badGlobalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::common::LogicException);
+  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&c, globalTokenBuffer, badConsumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::LogicException);
+  EXPECT_THROW(new HiCR::L2::channel::SPSC::Consumer(&c, badGlobalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::LogicException);
 
   // Creating with correct parameters
   EXPECT_NO_THROW(new HiCR::L2::channel::SPSC::Consumer(&c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));
@@ -135,32 +136,32 @@ TEST(ConsumerChannel, PeekPop)
   auto sendBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
   // Attempting pop and peek
-  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
-  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.pop(), HiCR::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::RuntimeException);
 
   // Attempting to pop/peek more than capacity
-  EXPECT_THROW(consumer.pop(channelCapacity + 1), HiCR::common::LogicException);
-  EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::common::LogicException);
+  EXPECT_THROW(consumer.pop(channelCapacity + 1), HiCR::LogicException);
+  EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::LogicException);
 
   // Attempting to pop on an empty channel
-  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
-  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.pop(), HiCR::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::RuntimeException);
 
   // Pushing zero tokens and attempting pop again
   producer.push(sendBuffer, 0);
-  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
-  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.pop(), HiCR::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::RuntimeException);
 
   // Pushing one token and attempting pop again
   producer.push(sendBuffer, 1);
   EXPECT_NO_THROW(consumer.peek());
-  EXPECT_THROW(consumer.peek(2), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.peek(2), HiCR::RuntimeException);
   EXPECT_NO_THROW(consumer.pop());
-  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::RuntimeException);
 
   // Attempting to pop again
-  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
-  EXPECT_THROW(consumer.peek(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.pop(), HiCR::RuntimeException);
+  EXPECT_THROW(consumer.peek(), HiCR::RuntimeException);
 }
 
 TEST(ConsumerChannel, PeekWait)
@@ -214,7 +215,7 @@ TEST(ConsumerChannel, PeekWait)
   HiCR::L2::channel::SPSC::Consumer consumer(&c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Attempting to push more tokens than channel size (should throw exception)
-  EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::common::LogicException);
+  EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::LogicException);
 
   // Producer function
   const size_t expectedValue = 42;
@@ -265,5 +266,5 @@ TEST(ConsumerChannel, PeekWait)
   // Check passed value is correct
   EXPECT_TRUE(hasConsumed);
   EXPECT_EQ(readValue, expectedValue);
-  EXPECT_THROW(consumer.pop(), HiCR::common::RuntimeException);
+  EXPECT_THROW(consumer.pop(), HiCR::RuntimeException);
 }

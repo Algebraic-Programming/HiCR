@@ -12,15 +12,15 @@
 
 #pragma once
 
-#include <hicr/L0/executionState.hpp>
-#include <hicr/L0/executionUnit.hpp>
-#include <hicr/L0/processingUnit.hpp>
-#include <hicr/common/definitions.hpp>
-#include <frontends/taskr/eventMap.hpp>
-#include <hicr/common/exceptions.hpp>
 #include <memory>
 #include <pthread.h>
 #include <queue>
+#include <hicr/definitions.hpp>
+#include <hicr/exceptions.hpp>
+#include <hicr/L0/executionState.hpp>
+#include <hicr/L0/executionUnit.hpp>
+#include <hicr/L0/processingUnit.hpp>
+#include <frontends/taskr/eventMap.hpp>
 
 namespace HiCR
 {

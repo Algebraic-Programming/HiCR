@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include <hicr/definitions.hpp>
+#include <hicr/exceptions.hpp>
 #include <hicr/L2/channel/base.hpp>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {

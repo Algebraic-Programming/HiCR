@@ -11,7 +11,7 @@
  */
 #pragma once
 
-#include <hicr/common/exceptions.hpp>
+#include <hicr/exceptions.hpp>
 #include <string>
 
 namespace HiCR

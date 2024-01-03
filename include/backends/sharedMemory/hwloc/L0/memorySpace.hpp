@@ -13,9 +13,9 @@
 #pragma once
 
 #include "hwloc.h"
-#include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
+#include <hicr/definitions.hpp>
 #include <hicr/L0/memorySpace.hpp>
-#include <hicr/common/definitions.hpp>
+#include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
 
 namespace HiCR
 {

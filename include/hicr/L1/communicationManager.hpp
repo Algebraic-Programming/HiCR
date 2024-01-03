@@ -12,12 +12,13 @@
 
 #pragma once
 
+#include <map>
+#include <vector>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L0/globalMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
-#include <map>
+#include <hicr/definitions.hpp>
+#include <hicr/exceptions.hpp>
 
 namespace HiCR
 {
@@ -45,12 +46,12 @@ class CommunicationManager
   /**
    * Type definition for an array that stores sets of memory slots, separated by global key
    */
-  typedef parallelHashMap_t<L0::GlobalMemorySlot::globalKey_t, L0::GlobalMemorySlot *> globalKeyToMemorySlotMap_t;
+  typedef std::map<L0::GlobalMemorySlot::globalKey_t, L0::GlobalMemorySlot *> globalKeyToMemorySlotMap_t;
 
   /**
    * Type definition for a tag-mapped set of key-mapped memory slot arrays
    */
-  typedef parallelHashMap_t<L0::GlobalMemorySlot::tag_t, globalKeyToMemorySlotMap_t> globalMemorySlotTagKeyMap_t;
+  typedef std::map<L0::GlobalMemorySlot::tag_t, globalKeyToMemorySlotMap_t> globalMemorySlotTagKeyMap_t;
   
 
   /**

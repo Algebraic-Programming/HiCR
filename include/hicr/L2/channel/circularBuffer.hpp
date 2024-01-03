@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <hicr/common/exceptions.hpp>
+#include <hicr/exceptions.hpp>
 
 namespace HiCR
 {

@@ -12,11 +12,12 @@
 
 #pragma once
 
+#include <cstring>
 #include "hwloc.h"
 #include "pthread.h"
+#include <hicr/L1/communicationManager.hpp>
 #include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
 #include <backends/sharedMemory/hwloc/L0/globalMemorySlot.hpp>
-#include <hicr/L1/communicationManager.hpp>
 
 namespace HiCR
 {

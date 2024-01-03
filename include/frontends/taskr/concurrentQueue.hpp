@@ -12,8 +12,8 @@
 
 #pragma once
 
+#include <hicr/definitions.hpp>
 #include <atomic_queue/atomic_queue.h>
-#include <hicr/common/definitions.hpp>
 
 namespace taskr
 {

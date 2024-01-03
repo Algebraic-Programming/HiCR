@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include <backends/sharedMemory/cache.hpp>
+#include <hicr/definitions.hpp>
+#include <hicr/exceptions.hpp>
 #include <hicr/L0/computeResource.hpp>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
+#include <backends/sharedMemory/cache.hpp>
 
 namespace HiCR
 {

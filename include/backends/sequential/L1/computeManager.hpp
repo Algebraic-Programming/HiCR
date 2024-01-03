@@ -13,11 +13,11 @@
 #pragma once
 
 #include "hwloc.h"
+#include <hicr/L0/computeResource.hpp>
+#include <hicr/L1/computeManager.hpp>
 #include <backends/sequential/L0/executionState.hpp>
 #include <backends/sequential/L0/executionUnit.hpp>
 #include <backends/sequential/L0/processingUnit.hpp>
-#include <hicr/L0/computeResource.hpp>
-#include <hicr/L1/computeManager.hpp>
 
 namespace HiCR
 {

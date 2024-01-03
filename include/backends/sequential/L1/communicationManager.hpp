@@ -13,10 +13,11 @@
 #pragma once
 
 #include <atomic>
-#include <hicr/L1/communicationManager.hpp>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
+#include <cstring>
 #include <unistd.h>
+#include <hicr/definitions.hpp>
+#include <hicr/exceptions.hpp>
+#include <hicr/L1/communicationManager.hpp>
 
 namespace HiCR
 {

@@ -108,7 +108,7 @@ TEST(Task, Run)
   EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::finished);
 
   // The task has now finished, so a third run should fail
-  EXPECT_THROW(t->run(), HiCR::common::RuntimeException);
+  EXPECT_THROW(t->run(), HiCR::RuntimeException);
 }
 
 TEST(Task, Events)

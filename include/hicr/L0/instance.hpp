@@ -12,8 +12,7 @@
 
 #pragma once
 
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
+#include <hicr/definitions.hpp>
 
 namespace HiCR
 {

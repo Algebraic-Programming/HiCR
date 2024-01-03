@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/common/definitions.hpp>
 #include <unistd.h>
+#include <hicr/definitions.hpp>
+#include <hicr/L0/memorySpace.hpp>
 
 namespace HiCR
 {
