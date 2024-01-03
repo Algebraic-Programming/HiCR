@@ -11,9 +11,9 @@
  */
 #pragma once
 
+#include <mutex>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L0/globalMemorySlot.hpp>
-#include <pthread.h>
 
 namespace HiCR
 {
@@ -49,16 +49,9 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   GlobalMemorySlot(
     const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
     const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
-    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = NULL) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot)
-  {
-    pthread_mutex_init(&_mutex, NULL);
-  }
+    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = NULL) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot) { }
 
-  ~GlobalMemorySlot()
-  {
-    // Freeing mutex memory
-    pthread_mutex_destroy(&_mutex);
-  }
+  ~GlobalMemorySlot() = default;
 
   /**
    * Attempts to lock memory lock using its pthread mutex object
@@ -67,26 +60,26 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    *
    * @return True, if successful; false, otherwise.
    */
-  __USED__ inline bool trylock() { return pthread_mutex_trylock(&_mutex) == 0; }
+  __USED__ inline bool trylock() { return _mutex.try_lock(); }
 
   /**
    * Attempts to lock memory lock using its pthread mutex object
    *
    * This function might block the caller if the memory slot is already locked
    */
-  __USED__ inline void lock() { pthread_mutex_lock(&_mutex); }
+  __USED__ inline void lock() { _mutex.lock(); }
 
   /**
    * Unlocks the memory slot, if previously locked by the caller
    */
-  __USED__ inline void unlock() { pthread_mutex_unlock(&_mutex); }
+  __USED__ inline void unlock() { _mutex.unlock(); }
 
   private:
 
   /**
    * Internal memory slot mutex to enforce lock acquisition
    */
-  pthread_mutex_t _mutex;
+  std::mutex _mutex;
 };
 
 } // namespace L0
