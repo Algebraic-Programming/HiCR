@@ -5,7 +5,7 @@
 
 /**
  * @file memoryManager.cpp
- * @brief Unit tests for the HiCR shared memory memory manager backend class
+ * @brief Unit tests for the HiCR shared memory memory manager HiCR::backend::sharedMemory::hwloc class
  * @author S. M. Martin
  * @date 13/9/2023
  */
@@ -13,10 +13,8 @@
 #include <limits>
 #include "gtest/gtest.h"
 #include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/communicationManager.hpp>
+#include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
 #include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
-
-namespace backend = HiCR::backend::sharedMemory::hwloc;
 
 TEST(MemoryManager, Construction)
 {
@@ -26,9 +24,9 @@ TEST(MemoryManager, Construction)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  backend::L1::MemoryManager *m = NULL;
+  HiCR::backend::sharedMemory::hwloc::L1::MemoryManager *m = NULL;
 
-  EXPECT_NO_THROW(m = new backend::L1::MemoryManager(&topology));
+  EXPECT_NO_THROW(m = new HiCR::backend::sharedMemory::hwloc::L1::MemoryManager(&topology));
   EXPECT_FALSE(m == nullptr);
   delete m;
 }
@@ -40,13 +38,13 @@ TEST(MemoryManager, Memory)
 
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
-  backend::L1::MemoryManager m(&topology);
-  backend::L1::CommunicationManager c;
+  HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c;
 
-  // Initializing backend's device manager
+  // Initializing HiCR::backend::sharedMemory::hwloc's device manager
   HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
 
-  // Asking backend to check the available devices
+  // Asking HiCR::backend::sharedMemory::hwloc to check the available devices
   EXPECT_NO_THROW(dm.queryDevices());
 
   // Getting first device found

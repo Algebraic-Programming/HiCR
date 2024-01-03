@@ -13,11 +13,10 @@
 #pragma once
 
 #include <cstring>
-#include "hwloc.h"
 #include "pthread.h"
 #include <hicr/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
-#include <backends/sharedMemory/hwloc/L0/globalMemorySlot.hpp>
+#include <hicr/L0/localMemorySlot.hpp>
+#include <backends/sharedMemory/L0/globalMemorySlot.hpp>
 
 namespace HiCR
 {
@@ -28,7 +27,7 @@ namespace backend
 namespace sharedMemory
 {
 
-namespace hwloc
+namespace pthreads
 {
 
 namespace L1
@@ -196,7 +195,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<L0::GlobalMemorySlot *>(memorySlot);
+    auto m = dynamic_cast<sharedMemory::L0::GlobalMemorySlot *>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -208,7 +207,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __USED__ inline void releaseGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<L0::GlobalMemorySlot *>(memorySlot);
+    auto m = dynamic_cast<sharedMemory::L0::GlobalMemorySlot *>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -232,7 +231,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
 } // namespace L1
 
-} // namespace hwloc
+} // namespace pthreads
 
 } // namespace sharedMemory
 

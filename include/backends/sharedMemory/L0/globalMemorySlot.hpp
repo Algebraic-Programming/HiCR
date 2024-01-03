@@ -24,16 +24,13 @@ namespace backend
 namespace sharedMemory
 {
 
-namespace hwloc
-{
-
 namespace L0
 {
 
 /**
  * This class represents an abstract definition for a global Memory Slot resource for the shared memory backend
  *
- * It uses pthread mutex to enforce the mutual exclusion logic
+ * It uses mutexes to enforce the mutual exclusion logic
  */
 class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
 {
@@ -54,7 +51,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   ~GlobalMemorySlot() = default;
 
   /**
-   * Attempts to lock memory lock using its pthread mutex object
+   * Attempts to lock memory lock using its mutex object
    *
    * This function never blocks the caller
    *
@@ -63,7 +60,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   __USED__ inline bool trylock() { return _mutex.try_lock(); }
 
   /**
-   * Attempts to lock memory lock using its pthread mutex object
+   * Attempts to lock memory lock using its mutex object
    *
    * This function might block the caller if the memory slot is already locked
    */
@@ -83,8 +80,6 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
 };
 
 } // namespace L0
-
-} // namespace hwloc
 
 } // namespace sharedMemory
 

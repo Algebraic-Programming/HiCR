@@ -13,7 +13,7 @@
 #pragma once
 
 #include "hwloc.h"
-#include <backends/sharedMemory/hwloc/L0/device.hpp>
+#include <backends/sharedMemory/L0/device.hpp>
 #include <backends/sharedMemory/hwloc/L0/computeResource.hpp>
 #include <backends/sharedMemory/hwloc/L0/memorySpace.hpp>
 #include <hicr/L1/deviceManager.hpp>
@@ -63,7 +63,7 @@ class DeviceManager final : public HiCR::L1::DeviceManager
     hwloc_topology_load(*_topology);
 
     // Creating a single new device representing an SMP system (multicore + shared RAM)
-    auto hostDevice = new sharedMemory::hwloc::L0::Device(queryComputeResources(), queryMemorySpaces());
+    auto hostDevice = new sharedMemory::L0::Device(queryComputeResources(), queryMemorySpaces());
 
     // Returning single device
     return {hostDevice};

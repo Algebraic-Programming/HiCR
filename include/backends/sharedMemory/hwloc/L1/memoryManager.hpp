@@ -16,7 +16,6 @@
 #include "pthread.h"
 #include <backends/sharedMemory/hwloc/L0/memorySpace.hpp>
 #include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
-#include <backends/sharedMemory/hwloc/L0/globalMemorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
 
 namespace HiCR

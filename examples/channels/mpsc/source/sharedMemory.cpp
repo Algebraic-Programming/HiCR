@@ -1,5 +1,5 @@
 #include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/communicationManager.hpp>
+#include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
 #include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
 
     // Instantiating Shared Memory communication backend
-  HiCR::backend::sharedMemory::hwloc::L1::CommunicationManager c(producerCount + 1);
+  HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(producerCount + 1);
 
 // Initializing Sequential backend's device manager
   HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
