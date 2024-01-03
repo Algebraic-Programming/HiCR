@@ -13,10 +13,10 @@
 #pragma once
 
 #include <acl/acl.h>
+#include <hicr/exceptions.hpp>
+#include <hicr/L0/executionState.hpp>
 #include <backends/ascend/L0/executionUnit.hpp>
 #include <backends/ascend/L0/device.hpp>
-#include <hicr/L0/executionState.hpp>
-#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {

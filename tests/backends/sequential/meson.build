@@ -1,6 +1,5 @@
 subdir('L0')
 subdir('L1')
-subdir('L2')
 
 testSuite = [ 'tests', 'backends', 'sequential']
 testDependencies = [ testDeps, hicrSequentialBackendDep ]

@@ -12,16 +12,16 @@
 
 #pragma once
 
-#include <acl/acl.h>
-#include <hicr/L0/localMemorySlot.hpp>
-#include <backends/ascend/L0/localMemorySlot.hpp>
-#include <backends/ascend/kernel.hpp>
 #include <filesystem>
 #include <fstream>
-#include <hicr/common/exceptions.hpp>
 #include <iostream>
 #include <regex>
 #include <vector>
+#include <acl/acl.h>
+#include <hicr/L0/localMemorySlot.hpp>
+#include <hicr/exceptions.hpp>
+#include <backends/ascend/L0/localMemorySlot.hpp>
+#include <backends/ascend/kernel.hpp>
 
 namespace HiCR
 {

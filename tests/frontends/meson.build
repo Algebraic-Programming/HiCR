@@ -1,1 +1,2 @@
 subdir('taskr')
+subdir('channel')

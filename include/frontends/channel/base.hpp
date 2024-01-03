@@ -19,7 +19,7 @@
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/globalMemorySlot.hpp>
 #include <hicr/L1/communicationManager.hpp>
-#include <hicr/L2/channel/circularBuffer.hpp>
+#include <frontends/channel/circularBuffer.hpp>
 
 /**
  * Establishes how many elements are required in the base coordination buffer
@@ -42,9 +42,6 @@
 #define _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX 1
 
 namespace HiCR
-{
-
-namespace L2
 {
 
 namespace channel
@@ -230,7 +227,5 @@ class Base
 };
 
 } // namespace channel
-
-} // namespace L2
 
 } // namespace HiCR

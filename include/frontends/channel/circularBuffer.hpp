@@ -17,9 +17,6 @@
 namespace HiCR
 {
 
-namespace L2
-{
-
 namespace channel
 {
 
@@ -259,7 +256,5 @@ class CircularBuffer
 };
 
 } // namespace channel
-
-} // namespace L2
 
 } // namespace HiCR

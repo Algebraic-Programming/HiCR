@@ -15,12 +15,9 @@
 
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
-#include <hicr/L2/channel/base.hpp>
+#include <frontends/channel/base.hpp>
 
 namespace HiCR
-{
-
-namespace L2
 {
 
 namespace channel
@@ -35,7 +32,7 @@ namespace MPSC
  * It exposes the functionality to be expected for a consumer channel
  *
  */
-class Consumer final : public L2::channel::Base
+class Consumer final : public channel::Base
 {
   public:
 
@@ -58,7 +55,7 @@ class Consumer final : public L2::channel::Base
            L0::LocalMemorySlot *const internalCoordinationBuffer,
            L0::GlobalMemorySlot *const consumerCoordinationBuffer,
            const size_t tokenSize,
-           const size_t capacity) : L2::channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+           const size_t capacity) : channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
                                     _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {
   }
@@ -163,7 +160,5 @@ class Consumer final : public L2::channel::Base
 } // namespace MPSC
 
 } // namespace channel
-
-} // namespace L2
 
 } // namespace HiCR
