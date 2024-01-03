@@ -12,9 +12,8 @@
 
 #pragma once
 
-#include <hicr/L2/tasking/task.hpp>
-#include <hicr/common/concurrentQueue.hpp>
-#include <hicr/common/definitions.hpp>
+#include <frontends/taskr/hicrTask.hpp>
+#include <frontends/taskr/concurrentQueue.hpp>
 #include <vector>
 
 namespace HiCR

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic_queue/atomic_queue.h>
 #include <parallel_hashmap/phmap.h>
 
 namespace HiCR
@@ -13,12 +12,6 @@ namespace HiCR
 #else
   #define __USED__
 #endif
-
-/**
- * Templated Lockfree queue definition
- */
-template <class T, unsigned int N>
-using lockFreeQueue_t = atomic_queue::AtomicQueue<T, N, (T)NULL>;
 
 /**
  * Template definition for parallel hash set

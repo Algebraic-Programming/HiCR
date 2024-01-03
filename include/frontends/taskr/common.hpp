@@ -13,6 +13,7 @@
 #pragma once
 
 #include <functional>
+#include <frontends/taskr/concurrentQueue.hpp>
 #include <hicr/common/definitions.hpp>
 
 namespace taskr

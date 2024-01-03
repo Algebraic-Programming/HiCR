@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 #include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
-#include <hicr/L2/tasking/task.hpp>
+#include <frontends/taskr/hicrTask.hpp>
 
 TEST(Task, Construction)
 {

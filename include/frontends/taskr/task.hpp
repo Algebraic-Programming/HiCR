@@ -14,7 +14,7 @@
 
 #include <frontends/taskr/common.hpp>
 #include <hicr/L0/executionUnit.hpp>
-#include <hicr/L2/tasking/task.hpp>
+#include <frontends/taskr/hicrTask.hpp>
 #include <vector>
 
 namespace taskr

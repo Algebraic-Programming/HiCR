@@ -89,6 +89,14 @@ class ComputeManager
   virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::ComputeResource *resource) const = 0;
 };
 
+static ComputeManager* _defaultComputeManager = nullptr; 
+__USED__ static inline ComputeManager* getDefaultComputeManager() 
+{ 
+  if (_defaultComputeManager == nullptr) HICR_THROW_FATAL("The default compute manager was not yet defined.");
+  
+  return _defaultComputeManager;
+}
+
 } // namespace L1
 
 } // namespace HiCR

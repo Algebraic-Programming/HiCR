@@ -11,17 +11,17 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sequential/L1/deviceManager.hpp>
-#include <backends/sequential/L1/computeManager.hpp>
-#include <hicr/L2/tasking/task.hpp>
-#include <hicr/L2/tasking/worker.hpp>
+#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
+#include <frontends/taskr/hicrTask.hpp>
+#include <frontends/taskr/worker.hpp>
 
 TEST(Worker, Construction)
 {
-  HiCR::L2::tasking::Worker *w = NULL;
+  taskr::Worker *w = NULL;
   HiCR::L1::ComputeManager *m = NULL;
 
-  EXPECT_NO_THROW(w = new HiCR::L2::tasking::Worker(m));
+  EXPECT_NO_THROW(w = new taskr::Worker(m));
   EXPECT_FALSE(w == nullptr);
   delete w;
 }
@@ -29,9 +29,10 @@ TEST(Worker, Construction)
 TEST(Task, SetterAndGetters)
 {
   // Instantiating default compute manager
-  HiCR::backend::sequential::L1::ComputeManager m;
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m;
 
-  HiCR::L2::tasking::Worker w(&m);
+  // Creating taskr worker
+  taskr::Worker w(&m);
 
   // Getting empty lists
   EXPECT_TRUE(w.getProcessingUnits().empty());
@@ -44,8 +45,10 @@ TEST(Task, SetterAndGetters)
   // Subscribing worker to dispatcher
   w.subscribe(&dispatcher);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing HWLoc backend's device manager
+  hwloc_topology_t topology;
+  hwloc_topology_init(&topology);
+  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -70,18 +73,21 @@ TEST(Task, SetterAndGetters)
 TEST(Worker, LifeCycle)
 {
   // Instantiating default compute manager
-  HiCR::backend::sequential::L1::ComputeManager m;
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m;
 
-  HiCR::L2::tasking::Worker w(&m);
+  // Creating taskr worker
+  taskr::Worker w(&m);
 
   // Worker state should in an uninitialized state first
-  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::uninitialized);
+  EXPECT_EQ(w.getState(), taskr::Worker::state_t::uninitialized);
 
   // Attempting to run without any assigned resources
   EXPECT_THROW(w.initialize(), HiCR::common::LogicException);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing HWLoc backend's device manager
+  hwloc_topology_t topology;
+  hwloc_topology_init(&topology);
+  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -117,30 +123,22 @@ TEST(Worker, LifeCycle)
   EXPECT_THROW(w.initialize(), HiCR::common::RuntimeException);
 
   // Worker state should be ready now
-  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::ready);
+  EXPECT_EQ(w.getState(), taskr::Worker::state_t::ready);
 
   // Flag to check running state
-  bool runningStateFound = false;
+  __volatile__ bool runningStateFound = false;
 
   // Creating task function
   auto f = [&runningStateFound]()
   {
     // Getting worker pointer
-    auto w = HiCR::L2::tasking::Worker::getCurrentWorker();
-
-    // Getting worker pointer
-    auto t = HiCR::L2::tasking::Task::getCurrentTask();
+    auto w = taskr::Worker::getCurrentWorker();
 
     // Checking running state
-    if (w->getState() == HiCR::L2::tasking::Worker::state_t::running) runningStateFound = true;
+    if (w->getState() == taskr::Worker::state_t::running) runningStateFound = true;
 
     // suspending worker and yielding task
     w->suspend();
-    t->suspend();
-
-    // Terminating worker and yielding task
-    w->terminate();
-    t->suspend();
   };
 
   // Creating execution unit
@@ -159,10 +157,10 @@ TEST(Worker, LifeCycle)
   // Starting worker
   EXPECT_FALSE(runningStateFound);
   ASSERT_NO_THROW(w.start());
-  EXPECT_TRUE(runningStateFound);
+  while (runningStateFound == false);
 
   // Checking the worker is suspended
-  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::suspended);
+  EXPECT_EQ(w.getState(), taskr::Worker::state_t::suspended);
 
   // Fail on trying to terminate when not running
   EXPECT_THROW(w.terminate(), HiCR::common::RuntimeException);
@@ -170,12 +168,15 @@ TEST(Worker, LifeCycle)
   // Testing resume function
   EXPECT_NO_THROW(w.resume());
 
+  // Fail on trying to terminate when not running
+  EXPECT_NO_THROW(w.terminate());
+
   // Checking the worker is terminating
-  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::terminating);
+  EXPECT_EQ(w.getState(), taskr::Worker::state_t::terminating);
 
   // Awaiting for worker termination
   EXPECT_NO_THROW(w.await());
 
   // Checking the worker is terminated
-  EXPECT_EQ(w.getState(), HiCR::L2::tasking::Worker::state_t::terminated);
+  EXPECT_EQ(w.getState(), taskr::Worker::state_t::terminated);
 }

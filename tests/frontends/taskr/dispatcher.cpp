@@ -11,8 +11,8 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/L2/tasking/dispatcher.hpp>
-#include <hicr/L2/tasking/task.hpp>
+#include <frontends/taskr/dispatcher.hpp>
+#include <frontends/taskr/hicrTask.hpp>
 
 TEST(Dispatcher, Construction)
 {

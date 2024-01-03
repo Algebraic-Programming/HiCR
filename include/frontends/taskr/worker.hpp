@@ -14,8 +14,8 @@
 
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
-#include <hicr/L2/tasking/dispatcher.hpp>
-#include <hicr/L2/tasking/task.hpp>
+#include <frontends/taskr/dispatcher.hpp>
+#include <frontends/taskr/hicrTask.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <memory>
@@ -23,19 +23,13 @@
 #include <unistd.h>
 #include <vector>
 
-namespace HiCR
-{
-
-namespace L2
-{
-
-namespace tasking
+namespace taskr
 {
 
 /**
  * Type definition for the set of dispatchers a worker is subscribed to
  */
-typedef std::set<Dispatcher *> dispatcherSet_t;
+typedef std::set<HiCR::L2::tasking::Dispatcher *> dispatcherSet_t;
 
 /**
  * Key identifier for thread-local identification of currently running worker
@@ -68,7 +62,7 @@ class Worker
    *
    * @return A pointer to the current HiCR worker, NULL if this function is called outside the context of a task run() function
    */
-  __USED__ static inline Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
+  __USED__ static inline taskr::Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
 
   /**
    * Constructor for the worker class.
@@ -192,7 +186,7 @@ class Worker
   __USED__ inline void resume()
   {
     // Checking state
-    if (_state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state");
+    if (_state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state (Expected state: %u, found: %u)", state_t::suspended, _state);
 
     // Transitioning state
     _state = state_t::running;
@@ -233,7 +227,7 @@ class Worker
    *
    * @param[in] dispatcher The dispatcher to subscribe the worker to
    */
-  __USED__ inline void subscribe(Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
+  __USED__ inline void subscribe(HiCR::L2::tasking::Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
 
   /**
    * Adds a processing unit to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
@@ -271,7 +265,7 @@ class Worker
   /**
    * Group of resources the worker can freely use
    */
-  std::vector<std::unique_ptr<L0::ProcessingUnit>> _processingUnits;
+  std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnits;
 
   /**
    * Compute manager to use to instantiate and manage the worker's and task execution states
@@ -297,7 +291,7 @@ class Worker
         if (task != NULL) [[likely]]
         {
           // If the task hasn't been initialized yet, we need to do it now
-          if (task->getState() == L0::ExecutionState::state_t::uninitialized)
+          if (task->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
           {
             // First, create new execution state for the processing unit
             auto executionState = _computeManager->createExecutionState(task->getExecutionUnit());
@@ -337,8 +331,4 @@ class Worker
   }
 };
 
-} // namespace tasking
-
-} // namespace L2
-
-} // namespace HiCR
+} // namespace taskr

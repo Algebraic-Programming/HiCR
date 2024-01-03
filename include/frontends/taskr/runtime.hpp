@@ -14,8 +14,8 @@
 #include <atomic>
 #include <frontends/taskr/common.hpp>
 #include <frontends/taskr/task.hpp>
-#include <hicr/L2/tasking/task.hpp>
-#include <hicr/L2/tasking/worker.hpp>
+#include <frontends/taskr/hicrTask.hpp>
+#include <frontends/taskr/worker.hpp>
 #include <map>
 #include <mutex>
 
@@ -44,7 +44,7 @@ class Runtime
   /**
    * Set of workers assigned to execute tasks
    */
-  std::vector<HiCR::L2::tasking::Worker *> _workers;
+  std::vector<taskr::Worker *> _workers;
 
   /**
    * Stores the current number of active tasks. This is an atomic counter that, upon reaching zero,
@@ -55,7 +55,7 @@ class Runtime
   /**
    * Lock-free queue for waiting tasks.
    */
-  HiCR::lockFreeQueue_t<Task *, MAX_SIMULTANEOUS_TASKS> _waitingTaskQueue;
+  taskr::ConcurrentQueue<Task *, MAX_SIMULTANEOUS_TASKS> _waitingTaskQueue;
 
   /**
    * Hash map for quick location of tasks based on their hashed names
@@ -81,7 +81,7 @@ class Runtime
   /**
    * Lock-free queue storing workers that remain in suspension. Required for the max active workers mechanism
    */
-  HiCR::lockFreeQueue_t<HiCR::L2::tasking::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
+  taskr::ConcurrentQueue<taskr::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
 
   /**
    * The processing units assigned to taskr to run workers from
@@ -116,7 +116,7 @@ class Runtime
   __USED__ inline void checkMaximumActiveWorkerCount()
   {
     // Getting a pointer to the currently executing worker
-    auto worker = HiCR::L2::tasking::Worker::getCurrentWorker();
+    auto worker = taskr::Worker::getCurrentWorker();
 
     // Try to get the active worker queue lock, otherwise keep going
     if (_activeWorkerQueueLock.try_lock())
@@ -147,20 +147,21 @@ class Runtime
       // If the new maximum is higher than the number of active workers, we need
       // to re-awaken some of them
       while ((_maximumActiveWorkers == 0 ||
-              (ssize_t)_maximumActiveWorkers > _activeWorkerCount) &&
-             _suspendedWorkerQueue.was_size() > 0)
+              (ssize_t)_maximumActiveWorkers > _activeWorkerCount) && _suspendedWorkerQueue.isEmpty() == false)
       {
-        // Pointer to the worker to wake up
-        HiCR::L2::tasking::Worker *w = NULL;
-
         // Getting the worker from the queue of suspended workers
-        _suspendedWorkerQueue.try_pop(w);
+        auto w = _suspendedWorkerQueue.pop();
 
-        // Increase the active worker count
-        _activeWorkerCount++;
+        // Do the following if a worker was obtained
+        if (w != NULL)
+        {
 
-        // Resuming worker
-        w->resume();
+          // Increase the active worker count
+          _activeWorkerCount++;
+
+          // Resuming worker
+          if (w != NULL) w->resume();
+        } 
       }
 
       // Releasing lock
@@ -248,14 +249,11 @@ class Runtime
    */
   __USED__ inline HiCR::L2::tasking::Task *checkWaitingTasks()
   {
-    // Pointer to the next task to execute
-    Task *task;
-
     // If all tasks finished, then terminate execution immediately
     if (_taskCount == 0)
     {
       // Getting a pointer to the currently executing worker
-      auto worker = HiCR::L2::tasking::Worker::getCurrentWorker();
+      auto worker = taskr::Worker::getCurrentWorker();
 
       // Terminating worker.
       worker->terminate();
@@ -268,11 +266,10 @@ class Runtime
     checkMaximumActiveWorkerCount();
 
     // Poping next task from the lock-free queue
-    bool foundTask = _waitingTaskQueue.try_pop(task);
+    auto task = _waitingTaskQueue.pop();
 
     // If no task was found (queue was empty), then return an empty task
-    if (foundTask == false)
-      return NULL;
+    if (task == NULL) return NULL;
 
     // Check if task is ready now
     bool isTaskReady = checkTaskReady(task);
@@ -316,7 +313,7 @@ class Runtime
     for (auto &pu : _processingUnits)
     {
       // Creating new worker
-      auto worker = new HiCR::L2::tasking::Worker(computeManager);
+      auto worker = new taskr::Worker(computeManager);
 
       // Assigning resource to the thread
       worker->addProcessingUnit(std::move(pu));

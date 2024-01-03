@@ -12,13 +12,17 @@
 
 #pragma once
 
+#include <atomic_queue/atomic_queue.h>
 #include <hicr/common/definitions.hpp>
 
-namespace HiCR
+namespace taskr
 {
 
-namespace common
-{
+/**
+ * Templated Lockfree queue definition
+ */
+template <class T, unsigned int N>
+using lockFreeQueue_t = atomic_queue::AtomicQueue<T, N, (T)NULL>;
 
 /**
  * @brief Generic class type for concurrent queues
@@ -60,6 +64,16 @@ class ConcurrentQueue
     return obj;
   }
 
+  /**
+   * Function to determine whether the queue is currently empty or not
+   *
+   * \return True, if it is empty; false if its not
+   */
+  __USED__ inline bool isEmpty()
+  {
+    return _queue.was_empty();
+  }
+
   private:
 
   /**
@@ -67,7 +81,5 @@ class ConcurrentQueue
    */
   lockFreeQueue_t<P, N> _queue;
 };
-
-} // namespace common
 
 } // namespace HiCR
