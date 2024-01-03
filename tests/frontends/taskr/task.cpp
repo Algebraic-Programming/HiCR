@@ -13,14 +13,14 @@
 #include "gtest/gtest.h"
 #include <backends/sequential/L1/deviceManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
-#include <frontends/taskr/hicrTask.hpp>
+#include <frontends/taskr/task.hpp>
 
 TEST(Task, Construction)
 {
-  HiCR::L2::tasking::Task *t = NULL;
+  taskr::Task *t = NULL;
   HiCR::L0::ExecutionUnit *u = NULL;
 
-  EXPECT_NO_THROW(t = new HiCR::L2::tasking::Task(u, NULL));
+  EXPECT_NO_THROW(t = new taskr::Task(0, u, NULL));
   EXPECT_FALSE(t == nullptr);
   delete t;
 }
@@ -28,9 +28,9 @@ TEST(Task, Construction)
 TEST(Task, SetterAndGetters)
 {
   HiCR::L0::ExecutionUnit *u = NULL;
-  HiCR::L2::tasking::Task t(u, NULL);
+  taskr::Task t(0, u, NULL);
 
-  HiCR::L2::tasking::Task::taskEventMap_t e;
+  taskr::Task::taskEventMap_t e;
   EXPECT_NO_THROW(t.setEventMap(&e));
   EXPECT_EQ(t.getEventMap(), &e);
 
@@ -46,7 +46,7 @@ TEST(Task, Run)
   bool hasCorrectTaskPointer = false;
 
   // Pointer for the task to create
-  HiCR::L2::tasking::Task *t = NULL;
+  taskr::Task *t = NULL;
 
   // Creating task function
   auto f = [&t, &hasRunningState, &hasCorrectTaskPointer]()
@@ -55,7 +55,7 @@ TEST(Task, Run)
     if (t->getState() == HiCR::L0::ExecutionState::state_t::running) hasRunningState = true;
 
     // Checking whether the current task pointer is the correct one
-    if (HiCR::L2::tasking::Task::getCurrentTask() == t) hasCorrectTaskPointer = true;
+    if (taskr::Task::getCurrentTask() == t) hasCorrectTaskPointer = true;
 
     // Yielding as many times as necessary
     t->suspend();
@@ -68,7 +68,7 @@ TEST(Task, Run)
   auto u = m.createExecutionUnit(f);
 
   // Creating task
-  t = new HiCR::L2::tasking::Task(u);
+  t = new taskr::Task(0, u);
 
   // Initializing Sequential backend's device manager
   HiCR::backend::sequential::L1::DeviceManager dm;
@@ -100,11 +100,11 @@ TEST(Task, Run)
   EXPECT_TRUE(hasRunningState);
   EXPECT_TRUE(hasCorrectTaskPointer);
   EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::suspended);
-  EXPECT_EQ(HiCR::L2::tasking::Task::getCurrentTask(), (HiCR::L2::tasking::Task *)NULL);
+  EXPECT_EQ(taskr::Task::getCurrentTask(), (taskr::Task *)NULL);
 
   // A second run should resume the task
   EXPECT_NO_THROW(t->run());
-  EXPECT_EQ(HiCR::L2::tasking::Task::getCurrentTask(), (HiCR::L2::tasking::Task *)NULL);
+  EXPECT_EQ(taskr::Task::getCurrentTask(), (taskr::Task *)NULL);
   EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::finished);
 
   // The task has now finished, so a third run should fail
@@ -120,23 +120,23 @@ TEST(Task, Events)
   bool onFinishHasRun = false;
 
   // Creating callbacks
-  auto onExecuteCallback = [&onExecuteHasRun](HiCR::L2::tasking::Task *t)
+  auto onExecuteCallback = [&onExecuteHasRun](taskr::Task *t)
   { onExecuteHasRun = true; };
-  auto onSuspendCallback = [&onSuspendHasRun](HiCR::L2::tasking::Task *t)
+  auto onSuspendCallback = [&onSuspendHasRun](taskr::Task *t)
   { onSuspendHasRun = true; };
-  auto onFinishCallback = [&onFinishHasRun](HiCR::L2::tasking::Task *t)
+  auto onFinishCallback = [&onFinishHasRun](taskr::Task *t)
   { onFinishHasRun = true; delete t ; };
 
   // Creating event map
-  HiCR::L2::tasking::Task::taskEventMap_t eventMap;
+  taskr::Task::taskEventMap_t eventMap;
 
   // Associating events to the map
-  eventMap.setEvent(HiCR::L2::tasking::Task::event_t::onTaskExecute, onExecuteCallback);
-  eventMap.setEvent(HiCR::L2::tasking::Task::event_t::onTaskSuspend, onSuspendCallback);
-  eventMap.setEvent(HiCR::L2::tasking::Task::event_t::onTaskFinish, onFinishCallback);
+  eventMap.setEvent(taskr::Task::event_t::onTaskExecute, onExecuteCallback);
+  eventMap.setEvent(taskr::Task::event_t::onTaskSuspend, onSuspendCallback);
+  eventMap.setEvent(taskr::Task::event_t::onTaskFinish, onFinishCallback);
 
   // Declaring task pointer
-  HiCR::L2::tasking::Task *t = NULL;
+  taskr::Task *t = NULL;
 
   // Creating task function
   auto f = [&t, &onExecuteHasRun, &onExecuteUpdated]()
@@ -155,7 +155,7 @@ TEST(Task, Events)
   auto u = m.createExecutionUnit(f);
 
   // Creating task
-  t = new HiCR::L2::tasking::Task(u);
+  t = new taskr::Task(0, u);
 
   // Initializing Sequential backend's device manager
   HiCR::backend::sequential::L1::DeviceManager dm;
@@ -196,7 +196,7 @@ TEST(Task, Events)
   EXPECT_EXIT({ delete t; fprintf(stderr, "Delete worked"); exit(0); }, ::testing::ExitedWithCode(0), "Delete worked");
 
   // Creating a task with an event map to make sure the functions are ran
-  t = new HiCR::L2::tasking::Task(u);
+  t = new taskr::Task(1, u);
 
   // Creating execution state
   executionState = m.createExecutionState(t->getExecutionUnit());

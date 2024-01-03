@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 #include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
 #include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
-#include <frontends/taskr/hicrTask.hpp>
+#include <frontends/taskr/task.hpp>
 #include <frontends/taskr/worker.hpp>
 
 TEST(Worker, Construction)
@@ -39,8 +39,7 @@ TEST(Task, SetterAndGetters)
   EXPECT_TRUE(w.getDispatchers().empty());
 
   // Now adding something to the lists/sets
-  auto dispatcher = HiCR::L2::tasking::Dispatcher([]()
-                                                  { return (HiCR::L2::tasking::Task *)NULL; });
+  auto dispatcher = taskr::Dispatcher([]() { return (taskr::Task *)NULL; });
 
   // Subscribing worker to dispatcher
   w.subscribe(&dispatcher);
@@ -145,11 +144,10 @@ TEST(Worker, LifeCycle)
   auto u = m.createExecutionUnit(f);
 
   // Creating task to run, and setting function to run
-  HiCR::L2::tasking::Task t(u);
+  taskr::Task t(0, u);
 
   // Creating task dispatcher
-  auto dispatcher = HiCR::L2::tasking::Dispatcher([&t]()
-                                                  { return &t; });
+  auto dispatcher = taskr::Dispatcher([&t]() { return &t; });
 
   // Suscribing worker to dispatcher
   EXPECT_NO_THROW(w.subscribe(&dispatcher));

@@ -14,7 +14,6 @@
 #include <atomic>
 #include <frontends/taskr/common.hpp>
 #include <frontends/taskr/task.hpp>
-#include <frontends/taskr/hicrTask.hpp>
 #include <frontends/taskr/worker.hpp>
 #include <map>
 #include <mutex>
@@ -34,12 +33,12 @@ class Runtime
   /**
    * Pointer to the internal HiCR event map, required to capture finishing or yielding tasks
    */
-  HiCR::L2::tasking::Task::taskEventMap_t *_eventMap;
+  taskr::Task::taskEventMap_t *_eventMap;
 
   /**
    * Single dispatcher that distributes pending tasks to idle workers as they become idle
    */
-  HiCR::L2::tasking::Dispatcher *_dispatcher;
+  taskr::Dispatcher *_dispatcher;
 
   /**
    * Set of workers assigned to execute tasks
@@ -223,11 +222,8 @@ class Runtime
    *
    * \param[in] hicrTask Task to add.
    */
-  __USED__ inline void onTaskFinish(HiCR::L2::tasking::Task *hicrTask)
+  __USED__ inline void onTaskFinish(taskr::Task *task)
   {
-    // Getting TaskR task from HiCR task
-    auto task = (Task *)hicrTask->getBackwardReferencePointer();
-
     // Decreasing overall task count
     _taskCount--;
 
@@ -247,7 +243,7 @@ class Runtime
    *
    * \return A pointer to a HiCR task to execute. NULL if there are no pending tasks.
    */
-  __USED__ inline HiCR::L2::tasking::Task *checkWaitingTasks()
+  __USED__ inline taskr::Task *checkWaitingTasks()
   {
     // If all tasks finished, then terminate execution immediately
     if (_taskCount == 0)
@@ -279,9 +275,10 @@ class Runtime
     {
       // If a task was found (queue was not empty), then execute and manage the
       // task depending on its state
-      auto hicrTask = task->getHiCRTask();
-      hicrTask->setEventMap(_eventMap);
-      return hicrTask;
+      task->setEventMap(_eventMap);
+
+      // Returning ready task
+      return task;
     }
 
     // Otherwise, put it at the back of the waiting task pile and return
@@ -300,13 +297,13 @@ class Runtime
    */
   __USED__ inline void run(HiCR::L1::ComputeManager *computeManager)
   {
-    _dispatcher = new HiCR::L2::tasking::Dispatcher([this]()
+    _dispatcher = new taskr::Dispatcher([this]()
                                                     { return checkWaitingTasks(); });
 
-    _eventMap = new HiCR::L2::tasking::Task::taskEventMap_t();
+    _eventMap = new taskr::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::L2::tasking::Task::event_t::onTaskFinish, [this](HiCR::L2::tasking::Task *task)
+    _eventMap->setEvent(taskr::Task::event_t::onTaskFinish, [this](taskr::Task *task)
                         { onTaskFinish(task); });
 
     // Creating one worker per processung unit in the list
@@ -349,7 +346,7 @@ class Runtime
    *
    * \return A pointer to the currently executing TaskR task
    */
-  __USED__ inline Task *getCurrentTask() { return (Task *)HiCR::L2::tasking::Task::getCurrentTask()->getBackwardReferencePointer(); }
+  __USED__ inline taskr::Task *getCurrentTask() { return taskr::Task::getCurrentTask(); }
 
 }; // class Runtime
 

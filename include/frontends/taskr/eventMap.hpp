@@ -15,10 +15,7 @@
 #include <map>
 #include <hicr/definitions.hpp>
 
-namespace HiCR
-{
-
-namespace common
+namespace taskr
 {
 
 /**
@@ -85,6 +82,4 @@ class EventMap
   std::map<E, eventCallback_t<T>> _eventMap;
 };
 
-} // namespace common
-
-} // namespace HiCR
+} // namespace taskr

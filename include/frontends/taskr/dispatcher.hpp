@@ -12,17 +12,11 @@
 
 #pragma once
 
-#include <frontends/taskr/hicrTask.hpp>
+#include <frontends/taskr/task.hpp>
 #include <frontends/taskr/concurrentQueue.hpp>
 #include <vector>
 
-namespace HiCR
-{
-
-namespace L2
-{
-
-namespace tasking
+namespace taskr
 {
 
 class Worker;
@@ -30,7 +24,7 @@ class Worker;
 /**
  * Defines a standard type for a pull function.
  */
-typedef std::function<Task *()> pullFunction_t;
+typedef std::function<taskr::Task *()> pullFunction_t;
 
 /**
  * Class definition for a pull-only task dispatcher object.
@@ -72,8 +66,4 @@ class Dispatcher
   }
 };
 
-} // namespace tasking
-
-} // namespace L2
-
-} // namespace HiCR
+} // namespace taskr

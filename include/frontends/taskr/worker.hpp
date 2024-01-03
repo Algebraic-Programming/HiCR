@@ -22,7 +22,7 @@
 #include <hicr/L0/processingUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
 #include <frontends/taskr/dispatcher.hpp>
-#include <frontends/taskr/hicrTask.hpp>
+#include <frontends/taskr/task.hpp>
 
 namespace taskr
 {
@@ -30,7 +30,7 @@ namespace taskr
 /**
  * Type definition for the set of dispatchers a worker is subscribed to
  */
-typedef std::set<HiCR::L2::tasking::Dispatcher *> dispatcherSet_t;
+typedef std::set<taskr::Dispatcher *> dispatcherSet_t;
 
 /**
  * Key identifier for thread-local identification of currently running worker
@@ -228,7 +228,7 @@ class Worker
    *
    * @param[in] dispatcher The dispatcher to subscribe the worker to
    */
-  __USED__ inline void subscribe(HiCR::L2::tasking::Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
+  __USED__ inline void subscribe(taskr::Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
 
   /**
    * Adds a processing unit to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
