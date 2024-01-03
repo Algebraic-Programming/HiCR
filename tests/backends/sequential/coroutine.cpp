@@ -14,6 +14,7 @@
 #include <backends/sequential/coroutine.hpp>
 #include <pthread.h>
 #include <unistd.h>
+#include <mutex>
 
 TEST(Coroutine, Construction)
 {
