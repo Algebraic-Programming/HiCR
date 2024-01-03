@@ -1,14 +1,14 @@
 #pragma once
 
 #include "common.hpp"
-#include <hicr/L1/computeManager.hpp>
 #include <hicr/L1/instanceManager.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/memorySpace.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
 
 void workerFc(HiCR::L1::InstanceManager &instanceManager,
-              HiCR::L1::ComputeManager &computeManager,
+              HiCR::backend::sequential::L1::ComputeManager &computeManager,
               HiCR::L0::MemorySpace* bufferMemorySpace, 
               HiCR::L0::ComputeResource* rpcExecutor)
 {

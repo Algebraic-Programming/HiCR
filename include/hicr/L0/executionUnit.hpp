@@ -11,7 +11,6 @@
  */
 #pragma once
 
-#include <functional>
 #include <string>
 
 namespace HiCR
@@ -29,11 +28,6 @@ namespace L0
 class ExecutionUnit
 {
   public:
-
-  /**
-   * Defines the default function type to be accepted by most compute managers, when possible.
-   */
-  typedef std::function<void()> function_t;
 
   /**
    * Indicates what type of execution unit is contained in this instance

@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include <functional>
 #include <hicr/definitions.hpp>
 #include <hicr/L0/executionUnit.hpp>
+#include <backends/sequential/coroutine.hpp>
 
 namespace HiCR
 {
@@ -40,7 +40,7 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    *
    * \param fc A replicable C++ function to run in this execution unit
    */
-  ExecutionUnit(function_t fc) : HiCR::L0::ExecutionUnit(), _fc(fc){};
+  ExecutionUnit(Coroutine::coroutineFc_t fc) : HiCR::L0::ExecutionUnit(), _fc(fc){};
   ExecutionUnit() = delete;
 
   /**
@@ -55,14 +55,14 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    *
    * \return The internal function stored inside this execution unit
    */
-  __USED__ inline const function_t &getFunction() const { return _fc; }
+  __USED__ inline const Coroutine::coroutineFc_t &getFunction() const { return _fc; }
 
   private:
 
   /**
    * Replicable internal C++ function to run in this execution unit
    */
-  const function_t _fc;
+  const Coroutine::coroutineFc_t _fc;
 };
 
 } // namespace L0

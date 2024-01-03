@@ -20,7 +20,7 @@
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/processingUnit.hpp>
-#include <hicr/L1/computeManager.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
 #include <frontends/taskr/dispatcher.hpp>
 #include <frontends/taskr/task.hpp>
 
@@ -70,8 +70,11 @@ class Worker
    *
    * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
    */
-  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(computeManager)
+  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(dynamic_cast<HiCR::backend::sequential::L1::ComputeManager*>(computeManager))
   {
+    // Checking the passed compute manager is of a supported type
+    if (_computeManager == NULL) HICR_THROW_LOGIC("TaskR workers can only be instantiated with sequential or shared memory compute managers.");
+
     // Making sure the worker-identifying key is created (only once) with the first created task
     pthread_once(&_workerPointerKeyConfig, createWorkerPointerKey);
   }
@@ -271,7 +274,7 @@ class Worker
   /**
    * Compute manager to use to instantiate and manage the worker's and task execution states
    */
-  HiCR::L1::ComputeManager *const _computeManager;
+  HiCR::backend::sequential::L1::ComputeManager *const _computeManager;
 
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run

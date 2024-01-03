@@ -13,6 +13,7 @@
 #pragma once
 
 #include <backends/sequential/L0/executionUnit.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
 #include <backends/sharedMemory/hwloc/L0/computeResource.hpp>
 #include <backends/sharedMemory/pthreads/L0/processingUnit.hpp>
 #include <hicr/L1/computeManager.hpp>
@@ -36,36 +37,25 @@ namespace L1
 /**
  * Implementation of the pthread-based HiCR Shared Memory backend's compute manager.
  */
-class ComputeManager final : public HiCR::L1::ComputeManager
+class ComputeManager final : public sequential::L1::ComputeManager
 {
   public:
 
   /**
    * Constructor for the compute manager class for the shared memory backend
    */
-  ComputeManager() : HiCR::L1::ComputeManager() {}
+  ComputeManager() : sequential::L1::ComputeManager() {}
 
   /**
    * Default destructor
    */
   ~ComputeManager() = default;
 
-  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(sequential::L0::ExecutionUnit::function_t executionUnit) override
-  {
-    return new sequential::L0::ExecutionUnit(executionUnit);
-  }
-
-  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
-  {
-    // Creating and returning new execution state
-    return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
-  }
-
   private:
 
   __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *computeResource) const override
   {
-    return std::make_unique<L0::ProcessingUnit>(computeResource);
+    return std::make_unique<sharedMemory::pthreads::L0::ProcessingUnit>(computeResource);
   }
 };
 

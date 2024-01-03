@@ -1,12 +1,12 @@
 #include <cstdio>
+#include <hicr/L1/deviceManager.hpp>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
-#include <hicr/L1/computeManager.hpp>
-#include <hicr/L1/deviceManager.hpp>
+#include <backends/sequential/L1/computeManager.hpp>
 
 #define ITERATIONS 10
 
-void abcTasks(HiCR::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t& computeResources)
+void abcTasks(HiCR::backend::sequential::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t& computeResources)
 {
   // Initializing taskr
   taskr::Runtime taskr;

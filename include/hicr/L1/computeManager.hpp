@@ -41,17 +41,6 @@ class ComputeManager
   virtual ~ComputeManager() = default;
 
   /**
-   * This function enables the creation of an execution unit.
-   *
-   * Its default constructor takes a simple function (supported by most backends), but this method can be overriden to support the execution
-   * of other replicable heterogeneous kernels (e.g., GPU, NPU, etc).
-   *
-   * \param[in] executionUnit The replicable function to execute
-   * \return Returns a pointer to the newly created execution unit. The user needs to delete it to free up its allocated memory.
-   */
-  virtual L0::ExecutionUnit *createExecutionUnit(L0::ExecutionUnit::function_t executionUnit) = 0;
-
-  /**
    * Creates a new processing unit from the provided compute resource
    *
    * \param[in] resource This is the identifier of the compute resource to use to instantiate into a processing unit. The identifier should be one of those provided by the backend. Providing an arbitrary identifier may lead to unexpected behavior.
@@ -88,14 +77,6 @@ class ComputeManager
    */
   virtual std::unique_ptr<L0::ProcessingUnit> createProcessingUnitImpl(L0::ComputeResource *resource) const = 0;
 };
-
-static ComputeManager *_defaultComputeManager = nullptr;
-__USED__ static inline ComputeManager *getDefaultComputeManager()
-{
-  if (_defaultComputeManager == nullptr) HICR_THROW_FATAL("The default compute manager was not yet defined.");
-
-  return _defaultComputeManager;
-}
 
 } // namespace L1
 

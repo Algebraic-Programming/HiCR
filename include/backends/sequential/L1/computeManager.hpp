@@ -36,13 +36,21 @@ namespace L1
  *
  * It detects and returns the processing units detected by the HWLoc library
  */
-class ComputeManager final : public HiCR::L1::ComputeManager
+class ComputeManager : public HiCR::L1::ComputeManager
 {
   public:
 
-  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(HiCR::L0::ExecutionUnit::function_t executionUnit) override
+   /** This function enables the creation of an execution unit.
+   *
+   * Its default constructor takes a simple function (supported by most backends), but this method can be overriden to support the execution
+   * of other replicable heterogeneous kernels (e.g., GPU, NPU, etc).
+   *
+   * \param[in] executionUnit The replicable function to execute
+   * @return The newly created execution unit
+  */ 
+  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(Coroutine::coroutineFc_t executionUnit)
   {
-    return new L0::ExecutionUnit(executionUnit);
+    return new sequential::L0::ExecutionUnit(executionUnit);
   }
 
   /**
@@ -63,7 +71,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
 
   private:
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *resource) const override
+  virtual __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *resource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }

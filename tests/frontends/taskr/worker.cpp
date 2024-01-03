@@ -19,9 +19,11 @@
 TEST(Worker, Construction)
 {
   taskr::Worker *w = NULL;
-  HiCR::L1::ComputeManager *m = NULL;
+  HiCR::L1::ComputeManager *m1 = NULL;
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m2;
 
-  EXPECT_NO_THROW(w = new taskr::Worker(m));
+  EXPECT_THROW(w = new taskr::Worker(m1), HiCR::LogicException);
+  EXPECT_NO_THROW(w = new taskr::Worker(&m2));
   EXPECT_FALSE(w == nullptr);
   delete w;
 }
