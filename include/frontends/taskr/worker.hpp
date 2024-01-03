@@ -121,8 +121,6 @@ class Worker
    * Queries the worker's internal state.
    *
    * @return The worker's internal state
-   *
-   * \internal This is not a thread safe operation.
    */
   __USED__ inline const state_t getState() { return _state; }
 
@@ -259,7 +257,7 @@ class Worker
   /**
    * Represents the internal state of the worker. Uninitialized upon construction.
    */
-  state_t _state = state_t::uninitialized;
+  __volatile__ state_t _state = state_t::uninitialized;
 
   /**
    * Dispatchers that this resource is subscribed to
