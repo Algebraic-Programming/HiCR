@@ -13,8 +13,10 @@
 #pragma once
 
 #include <cstring>
+#include <barrier>
+#include <mutex>
+#include <functional>
 #include "hwloc.h"
-#include "pthread.h"
 #include <hicr/L1/communicationManager.hpp>
 #include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
 #include <backends/sharedMemory/hwloc/L0/globalMemorySlot.hpp>
@@ -46,38 +48,24 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
-  CommunicationManager(const size_t fenceCount = 1) : HiCR::L1::CommunicationManager()
-  {
-    // Initializing barrier for fence operation
-    pthread_barrier_init(&_barrier, NULL, fenceCount);
-
-    // Initializing mutex object
-    pthread_mutex_init(&_mutex, NULL);
-  }
+  CommunicationManager(const size_t fenceCount = 1) : HiCR::L1::CommunicationManager(), _barrier(std::barrier(fenceCount)) {}
 
   /**
    * The destructor deletes all created barrier/mutex locks
    */
-  ~CommunicationManager()
-  {
-    // Freeing barrier memory
-    pthread_barrier_destroy(&_barrier);
-
-    // Freeing mutex memory
-    pthread_mutex_destroy(&_mutex);
-  }
+  ~CommunicationManager() = default;
 
   private:
 
   /**
    * Stores a barrier object to check on a barrier operation
    */
-  pthread_barrier_t _barrier;
+  std::barrier<std::__empty_completion> _barrier;
 
   /**
    * A mutex to make sure threads do not bother each other during certain operations
    */
-  pthread_mutex_t _mutex;
+  std::mutex _mutex;
 
   /**
    * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
@@ -135,7 +123,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   __USED__ inline void barrier()
   {
-    pthread_barrier_wait(&_barrier);
+    _barrier.arrive_and_wait();
   }
 
   /**
@@ -225,13 +213,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __USED__ inline void lock() override
   {
     // Locking the pthread mutex
-    pthread_mutex_lock(&_mutex);
+    _mutex.lock();
   }
 
   __USED__ inline void unlock() override
   {
     // Locking the pthread mutex
-    pthread_mutex_unlock(&_mutex);
+    _mutex.unlock();
   }
 };
 
