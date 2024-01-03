@@ -11,13 +11,13 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/common/coroutine.hpp>
+#include <backends/sequential/coroutine.hpp>
 #include <pthread.h>
 #include <unistd.h>
 
 TEST(Coroutine, Construction)
 {
-  auto c = new HiCR::common::Coroutine();
+  auto c = new HiCR::backend::sequential::Coroutine();
   EXPECT_FALSE(c == nullptr);
 }
 
@@ -44,7 +44,7 @@ std::vector<std::mutex *> _mutexes;
 bool falseRead = false;
 
 // Storage for the coroutine array
-HiCR::common::Coroutine *coroutines[COROUTINE_COUNT];
+HiCR::backend::sequential::Coroutine *coroutines[COROUTINE_COUNT];
 
 static void make_key() { (void)pthread_key_create(&key, NULL); }
 
@@ -85,7 +85,7 @@ void *threadFc(void *arg)
 TEST(Coroutine, TLS)
 {
   // Creating new HiCR coroutine
-  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::common::Coroutine();
+  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::backend::sequential::Coroutine();
 
   // Creating per-coroutine mutexes
   _mutexes.resize(COROUTINE_COUNT);
@@ -95,7 +95,7 @@ TEST(Coroutine, TLS)
   auto fc = [](void *arg)
   {
     // Recovering a pointer to the coroutine
-    auto coroutine = (HiCR::common::Coroutine *)arg;
+    auto coroutine = (HiCR::backend::sequential::Coroutine *)arg;
 
     // Executing coroutine yield cycle as many times as necessary
     while (true)

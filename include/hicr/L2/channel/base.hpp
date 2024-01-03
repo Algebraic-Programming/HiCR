@@ -16,7 +16,7 @@
 #include <memory>
 #include <hicr/L0/globalMemorySlot.hpp>
 #include <hicr/L1/communicationManager.hpp>
-#include <hicr/common/circularBuffer.hpp>
+#include <hicr/L2/channel/circularBuffer.hpp>
 #include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 
@@ -198,7 +198,7 @@ class Base
     if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a local coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
 
     // Creating internal circular buffer
-    _circularBuffer = std::make_unique<common::CircularBuffer>(capacity,
+    _circularBuffer = std::make_unique<channel::CircularBuffer>(capacity,
                                                                (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
                                                                (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
   }
@@ -225,7 +225,7 @@ class Base
   /**
    * Internal channel (logical) circular buffer
    */
-  std::unique_ptr<common::CircularBuffer> _circularBuffer;
+  std::unique_ptr<channel::CircularBuffer> _circularBuffer;
 };
 
 } // namespace channel

@@ -15,9 +15,8 @@
 #include <hicr/L0/executionState.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
-#include <hicr/common/coroutine.hpp>
 #include <hicr/common/definitions.hpp>
-#include <hicr/common/eventMap.hpp>
+#include <frontends/taskr/eventMap.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <memory>
 #include <pthread.h>

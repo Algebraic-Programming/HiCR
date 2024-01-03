@@ -5,13 +5,6 @@ exampleBuildIncludes = include_directories([
    'source/include'
   ])
   
-sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: [ hicrBuildDep, hicrSequentialBackendDep, dependency('threads', required: true)], include_directories: [exampleBuildIncludes] )
-
-if get_option('buildTests')
-  test('sequential', sequential, args : [ '2' ], timeout: test_timeout, suite: testSuite )
-  test('sequential', sequential, args : [ '3' ], timeout: test_timeout, suite: testSuite )
-endif
-
 if 'sharedMemory/hwloc' in enabledBackends
 	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep], include_directories: [exampleBuildIncludes])
 

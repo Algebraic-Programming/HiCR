@@ -10,7 +10,6 @@ if (exceptionModel == 'abort')
 endif
 
 hicrBuildDeps = [
-    dependency('boost',  modules : ['context'],  required : true)
    ]
 
 hicrBuildCppArgs = [

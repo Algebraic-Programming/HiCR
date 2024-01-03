@@ -19,7 +19,10 @@
 namespace HiCR
 {
 
-namespace common
+namespace backend
+{
+
+namespace sequential
 {
 
 /**
@@ -132,6 +135,9 @@ class Coroutine
   boost::context::continuation _context;
 };
 
-} // namespace common
+
+} // namespace sequential
+
+} // namespace backend
 
 } // namespace HiCR

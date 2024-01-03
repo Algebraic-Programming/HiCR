@@ -99,9 +99,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Synchronize all intervening threads in this call
     barrier();
 
-    // Doing the promotion of memory slots as a critical section
-    pthread_mutex_lock(&_mutex);
-
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
     {
@@ -117,9 +114,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
     }
-
-    // Releasing mutex
-    pthread_mutex_unlock(&_mutex);
 
     // Do not allow any thread to continue until the exchange is made
     barrier();
@@ -225,6 +219,18 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Locking mutex
     m->unlock();
+  }
+
+  __USED__ inline void lock() override 
+  {
+    // Locking the pthread mutex
+    pthread_mutex_lock(&_mutex);
+  }
+
+  __USED__ inline void unlock() override 
+  {
+    // Locking the pthread mutex
+    pthread_mutex_unlock(&_mutex);
   }
 };
 

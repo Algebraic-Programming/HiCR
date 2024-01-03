@@ -15,7 +15,7 @@
 #include <backends/sequential/L0/executionUnit.hpp>
 #include <functional>
 #include <hicr/L0/executionState.hpp>
-#include <hicr/common/coroutine.hpp>
+#include <backends/sequential/coroutine.hpp>
 #include <hicr/common/definitions.hpp>
 
 namespace HiCR
@@ -79,7 +79,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   /**
    *  Task context preserved as a coroutine
    */
-  common::Coroutine _coroutine;
+  sequential::Coroutine _coroutine;
 };
 
 } // namespace L0

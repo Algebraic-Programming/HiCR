@@ -12,13 +12,15 @@
 
 #pragma once
 
-#include <hicr/common/definitions.hpp>
 #include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
 
-namespace common
+namespace L2
+{
+
+namespace channel
 {
 
 /**
@@ -256,6 +258,8 @@ class CircularBuffer
   }
 };
 
-} // namespace common
+} // namespace channel
+
+} // namespace L2
 
 } // namespace HiCR
