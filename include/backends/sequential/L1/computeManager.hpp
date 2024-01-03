@@ -40,14 +40,14 @@ class ComputeManager : public HiCR::L1::ComputeManager
 {
   public:
 
-   /** This function enables the creation of an execution unit.
+  /** This function enables the creation of an execution unit.
    *
    * Its default constructor takes a simple function (supported by most backends), but this method can be overriden to support the execution
    * of other replicable heterogeneous kernels (e.g., GPU, NPU, etc).
    *
    * \param[in] executionUnit The replicable function to execute
    * @return The newly created execution unit
-  */ 
+   */
   __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(Coroutine::coroutineFc_t executionUnit)
   {
     return new sequential::L0::ExecutionUnit(executionUnit);
