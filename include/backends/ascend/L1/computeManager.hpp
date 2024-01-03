@@ -47,19 +47,6 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   ~ComputeManager() = default;
 
   /**
-   * Creates a new execution unit encapsulating a function.
-   * This function is currently not supported and throws a runtime exception.
-   *
-   * \param[in] executionUnit function to be executed
-   *
-   * \return throws exception
-   */
-  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(HiCR::L0::ExecutionUnit::function_t executionUnit) override
-  {
-    HICR_THROW_RUNTIME("Ascend backend currently does not support this API");
-  }
-
-  /**
    * Creates an execution unit given a stream/vector of \p kernelOperations to be executed on the device
    *
    * \param[in] kernelOperations the sequence of kernel operations to executed
