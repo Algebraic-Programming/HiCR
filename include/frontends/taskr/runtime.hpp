@@ -220,7 +220,7 @@ class Runtime
    * (required for dependency management of any tasks that depend on this task) and terminates execution of the current worker if all tasks have
    * finished.
    *
-   * \param[in] hicrTask Task to add.
+   * \param[in] task Task to add.
    */
   __USED__ inline void onTaskFinish(taskr::Task *task)
   {
@@ -297,14 +297,11 @@ class Runtime
    */
   __USED__ inline void run(HiCR::L1::ComputeManager *computeManager)
   {
-    _dispatcher = new taskr::Dispatcher([this]()
-                                                    { return checkWaitingTasks(); });
-
+    _dispatcher = new taskr::Dispatcher([this]() { return checkWaitingTasks(); }); //
     _eventMap = new taskr::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(taskr::Task::event_t::onTaskFinish, [this](taskr::Task *task)
-                        { onTaskFinish(task); });
+    _eventMap->setEvent(taskr::Task::event_t::onTaskFinish, [this](taskr::Task *task) { onTaskFinish(task); }); //
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)

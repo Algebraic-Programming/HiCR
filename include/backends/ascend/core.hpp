@@ -37,8 +37,9 @@ class Core final
 
   /**
    * Constructor for the core class for the ascend backend. It inizialies ACL
+   * 
+   * @param[in] configPath Path to the configuration file to use for ACL. NULL sets a default configuration.
    *
-
    */
   Core(const char *configPath = NULL) : _configPath(configPath){};
 
@@ -57,7 +58,7 @@ class Core final
   /**
    * Discover available ascend devices, get memory information (HBM per single card), and create dedicated ACL contexts per device
    *
-   * \param configPath configuration file to initialize ACL
+   * @param[in] configPath configuration file to initialize ACL
    */
   void init(const char *configPath = NULL)
   {

@@ -4,7 +4,7 @@
  */
 
 /**
- * @file sharedMemory/L0/globalMemorySlot.hpp
+ * @file sharedMemory/hwloc/L0/globalMemorySlot.hpp
  * @brief Provides a definition for the memory slot class for the shared memory backend
  * @author S. M. Martin
  * @date 19/10/2023
