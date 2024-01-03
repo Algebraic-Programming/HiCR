@@ -79,11 +79,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   pthread_mutex_t _mutex;
 
-  /**
-   * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
-   */
-  L0::LocalMemorySlot::binding_type _hwlocBindingRequested = L0::LocalMemorySlot::binding_type::strict_binding;
-
   __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
   {
     // Nothing to do here
