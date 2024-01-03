@@ -1,35 +1,3 @@
-docs:
-  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
-  tags:
-  - docker
-  - tiny 
-  script:
-  - echo "Checking HiCR source and test formatting..."
-  - .build-tools/style/check-style.sh check include
-  - .build-tools/style/check-style.sh check tests
-  - echo "Building code documentation..."
-  - make -j1 -C docs
-  only: 
-  - master
-  - develop
-  - merge_requests
-  - tags
-
-pages:
-  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
-  tags:
-  - docker
-  - tiny 
-  script:
-  - echo "Building code documentation..."
-  - make -j1 -C docs
-  - mv docs/build/html public
-  artifacts:
-    paths:
-    - public
-  only:
-  - master
-  
 build:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv:latest
   variables:
@@ -92,3 +60,36 @@ build-ascend:
   - develop 
   - merge_requests
   - tags
+  
+docs:
+  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
+  tags:
+  - docker
+  - tiny 
+  script:
+  - echo "Checking HiCR source and test formatting..."
+  - .build-tools/style/check-style.sh check include
+  - .build-tools/style/check-style.sh check tests
+  - echo "Building code documentation..."
+  - make -j1 -C docs
+  only: 
+  - master
+  - develop
+  - merge_requests
+  - tags
+
+pages:
+  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
+  tags:
+  - docker
+  - tiny 
+  script:
+  - echo "Building code documentation..."
+  - make -j1 -C docs
+  - mv docs/build/html public
+  artifacts:
+    paths:
+    - public
+  only:
+  - master
+  
