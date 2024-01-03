@@ -9,7 +9,7 @@ build:
   - infiniband
   script:
   - echo "Compiling LPF..."
-  - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j8; make install; popd
+  - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j24; make install; popd
   - echo "Building..."
   - mkdir build
   - meson setup build -Db_coverage=true -Dbackends=sharedMemory/hwloc,sharedMemory/pthreads,mpi,lpf -DbuildTests=true -DbuildExamples=true 
@@ -60,7 +60,7 @@ build-ascend:
   - develop 
   - merge_requests
   - tags
-  
+
 docs:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
   tags:

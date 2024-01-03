@@ -159,7 +159,8 @@ TEST(Worker, LifeCycle)
   // Starting worker
   EXPECT_FALSE(runningStateFound);
   ASSERT_NO_THROW(w.start());
-  while (w.getState() != taskr::Worker::state_t::suspended);
+  while (w.getState() != taskr::Worker::state_t::suspended)
+    ;
   EXPECT_TRUE(runningStateFound);
 
   // Checking the worker is suspended
