@@ -8,7 +8,8 @@ endif
 
 
 if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enabledBackends
-	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep])
+    sharedMemoryDependencies = [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep ]
+	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: sharedMemoryDependencies )
 
 	if get_option('buildTests')
 	  test('sharedMemory', sharedMemory, args : [ ], suite: testSuite )
