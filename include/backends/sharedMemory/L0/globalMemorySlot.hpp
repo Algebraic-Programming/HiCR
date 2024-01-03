@@ -4,7 +4,7 @@
  */
 
 /**
- * @file sharedMemory/hwloc/L0/globalMemorySlot.hpp
+ * @file sharedMemory/L0/globalMemorySlot.hpp
  * @brief Provides a definition for the memory slot class for the shared memory backend
  * @author S. M. Martin
  * @date 19/10/2023
@@ -46,7 +46,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   GlobalMemorySlot(
     const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
     const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
-    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = NULL) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot) { }
+    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = NULL) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot) {}
 
   ~GlobalMemorySlot() = default;
 
