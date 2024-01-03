@@ -13,12 +13,12 @@
 #pragma once
 
 #include <memory>
+#include <hicr/definitions.hpp>
+#include <hicr/exceptions.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/executionState.hpp>
 #include <hicr/L0/processingUnit.hpp>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
 
 namespace HiCR
 {
@@ -39,17 +39,6 @@ class ComputeManager
    * Default destructor
    */
   virtual ~ComputeManager() = default;
-
-  /**
-   * This function enables the creation of an execution unit.
-   *
-   * Its default constructor takes a simple function (supported by most backends), but this method can be overriden to support the execution
-   * of other replicable heterogeneous kernels (e.g., GPU, NPU, etc).
-   *
-   * \param[in] executionUnit The replicable function to execute
-   * \return Returns a pointer to the newly created execution unit. The user needs to delete it to free up its allocated memory.
-   */
-  virtual L0::ExecutionUnit *createExecutionUnit(L0::ExecutionUnit::function_t executionUnit) = 0;
 
   /**
    * Creates a new processing unit from the provided compute resource

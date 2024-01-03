@@ -1,5 +1,6 @@
-option('backends', type : 'array', choices : ['sharedMemory', 'mpi', 'lpf',  'ascend'], value : [ ],
-       description : 'Specifies which backends to enable for compilation with HiCR'
+option('backends', type : 'array', choices : ['sharedMemory/hwloc', 'sharedMemory/pthreads', 'mpi', 'lpf',  'ascend'], value : [ ],
+       description : 'Specifies which backends to enable for compilation with HiCR',
+       value: [ 'sharedMemory/hwloc', 'sharedMemory/pthreads' ]
        )
       
 option('buildTests', type : 'boolean', value : false,

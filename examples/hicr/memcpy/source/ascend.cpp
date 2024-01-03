@@ -8,10 +8,6 @@
 
 int main(int argc, char **argv)
 {
-  // Initialize ACL runtime
-  aclError err = aclInit(NULL);
-  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
-
   // Initializing host device manager
   HiCR::backend::sequential::L1::DeviceManager hostDeviceManager;
   hostDeviceManager.queryDevices();
@@ -19,6 +15,10 @@ int main(int argc, char **argv)
 
   // Getting access to the host memory space
   auto hostMemorySpace = *hostDevice->getMemorySpaceList().begin();
+
+  // Initialize (Ascend's) ACL runtime
+  aclError err = aclInit(NULL);
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
   // Initializing ascend device manager
   HiCR::backend::ascend::L1::DeviceManager ascendDeviceManager;

@@ -13,10 +13,10 @@
 #pragma once
 
 #include <acl/acl.h>
+#include <hicr/definitions.hpp>
 #include <hicr/L0/device.hpp>
 #include <backends/ascend/L0/computeResource.hpp>
 #include <backends/ascend/L0/memorySpace.hpp>
-#include <hicr/common/definitions.hpp>
 
 namespace HiCR
 {

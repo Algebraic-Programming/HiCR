@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include <backends/sequential/L0/executionState.hpp>
-#include <backends/sequential/L0/executionUnit.hpp>
-#include <backends/sequential/L0/computeResource.hpp>
+#include <hicr/exceptions.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/processingUnit.hpp>
-#include <hicr/common/coroutine.hpp>
-#include <hicr/common/exceptions.hpp>
+#include <backends/sequential/coroutine.hpp>
+#include <backends/sequential/L0/executionState.hpp>
+#include <backends/sequential/L0/executionUnit.hpp>
+#include <backends/sequential/L0/computeResource.hpp>
 
 namespace HiCR
 {

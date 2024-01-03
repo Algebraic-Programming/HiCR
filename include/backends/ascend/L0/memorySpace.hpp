@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include <backends/ascend/L0/localMemorySlot.hpp>
+#include <hicr/definitions.hpp>
 #include <hicr/L0/memorySpace.hpp>
-#include <hicr/common/definitions.hpp>
+#include <backends/ascend/L0/localMemorySlot.hpp>
 
 namespace HiCR
 {

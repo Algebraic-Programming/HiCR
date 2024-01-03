@@ -96,21 +96,21 @@ TEST(ProcessingUnit, LifeCycle)
   auto executionState = m.createExecutionState(executionUnit);
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.start(std::move(executionState)), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.await(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(executionState)), HiCR::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
+  EXPECT_THROW(p.await(), HiCR::RuntimeException);
 
   // Initializing
   EXPECT_NO_THROW(p.initialize());
 
   // Testing forbidden transitions
-  EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.await(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
+  EXPECT_THROW(p.await(), HiCR::RuntimeException);
 
   // Running
   executionState = m.createExecutionState(executionUnit);
@@ -121,30 +121,30 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Testing forbidden transitions
   executionState = m.createExecutionState(executionUnit);
-  EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.start(std::move(executionState)), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(std::move(executionState)), HiCR::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
 
   // Resuming to terminate function
   EXPECT_NO_THROW(p.resume());
 
   // Testing forbidden transitions
   executionState = m.createExecutionState(executionUnit);
-  EXPECT_THROW(p.initialize(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.start(std::move(executionState)), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.initialize(), HiCR::RuntimeException);
+  EXPECT_THROW(p.start(std::move(executionState)), HiCR::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
 
   // Awaiting termination
   EXPECT_NO_THROW(p.await());
   executionState = m.createExecutionState(executionUnit);
-  EXPECT_THROW(p.start(std::move(executionState)), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.resume(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.suspend(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.terminate(), HiCR::common::RuntimeException);
-  EXPECT_THROW(p.await(), HiCR::common::RuntimeException);
+  EXPECT_THROW(p.start(std::move(executionState)), HiCR::RuntimeException);
+  EXPECT_THROW(p.resume(), HiCR::RuntimeException);
+  EXPECT_THROW(p.suspend(), HiCR::RuntimeException);
+  EXPECT_THROW(p.terminate(), HiCR::RuntimeException);
+  EXPECT_THROW(p.await(), HiCR::RuntimeException);
 
   // Reinitializing
   EXPECT_NO_THROW(p.initialize());

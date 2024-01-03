@@ -11,7 +11,7 @@
  */
 #pragma once
 
-#include <hicr/common/definitions.hpp>
+#include <hicr/definitions.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
 
 namespace HiCR

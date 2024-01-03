@@ -1,3 +1,0 @@
-test('task',       executable('task',       'task.cpp',       dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'backends', 'sequential', 'L2', 'tasking' ] )
-test('worker',     executable('worker',     'worker.cpp',     dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'backends', 'sequential', 'L2', 'tasking' ] )
-test('dispatcher', executable('dispatcher', 'dispatcher.cpp', dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'backends', 'sequential', 'L2', 'tasking' ] )

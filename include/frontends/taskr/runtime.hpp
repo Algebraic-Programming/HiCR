@@ -14,8 +14,7 @@
 #include <atomic>
 #include <frontends/taskr/common.hpp>
 #include <frontends/taskr/task.hpp>
-#include <hicr/L2/tasking/task.hpp>
-#include <hicr/L2/tasking/worker.hpp>
+#include <frontends/taskr/worker.hpp>
 #include <map>
 #include <mutex>
 
@@ -34,17 +33,17 @@ class Runtime
   /**
    * Pointer to the internal HiCR event map, required to capture finishing or yielding tasks
    */
-  HiCR::L2::tasking::Task::taskEventMap_t *_eventMap;
+  taskr::Task::taskEventMap_t *_eventMap;
 
   /**
    * Single dispatcher that distributes pending tasks to idle workers as they become idle
    */
-  HiCR::L2::tasking::Dispatcher *_dispatcher;
+  taskr::Dispatcher *_dispatcher;
 
   /**
    * Set of workers assigned to execute tasks
    */
-  std::vector<HiCR::L2::tasking::Worker *> _workers;
+  std::vector<taskr::Worker *> _workers;
 
   /**
    * Stores the current number of active tasks. This is an atomic counter that, upon reaching zero,
@@ -55,12 +54,12 @@ class Runtime
   /**
    * Lock-free queue for waiting tasks.
    */
-  HiCR::lockFreeQueue_t<Task *, MAX_SIMULTANEOUS_TASKS> _waitingTaskQueue;
+  taskr::ConcurrentQueue<Task *, MAX_SIMULTANEOUS_TASKS> _waitingTaskQueue;
 
   /**
    * Hash map for quick location of tasks based on their hashed names
    */
-  HiCR::parallelHashSet_t<taskLabel_t> _finishedTaskHashMap;
+  taskr::parallelHashSet_t<taskLabel_t> _finishedTaskHashMap;
 
   /**
    * Mutex for the active worker queue, required for the max active workers mechanism
@@ -81,7 +80,7 @@ class Runtime
   /**
    * Lock-free queue storing workers that remain in suspension. Required for the max active workers mechanism
    */
-  HiCR::lockFreeQueue_t<HiCR::L2::tasking::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
+  taskr::ConcurrentQueue<taskr::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
 
   /**
    * The processing units assigned to taskr to run workers from
@@ -116,7 +115,7 @@ class Runtime
   __USED__ inline void checkMaximumActiveWorkerCount()
   {
     // Getting a pointer to the currently executing worker
-    auto worker = HiCR::L2::tasking::Worker::getCurrentWorker();
+    auto worker = taskr::Worker::getCurrentWorker();
 
     // Try to get the active worker queue lock, otherwise keep going
     if (_activeWorkerQueueLock.try_lock())
@@ -148,19 +147,20 @@ class Runtime
       // to re-awaken some of them
       while ((_maximumActiveWorkers == 0 ||
               (ssize_t)_maximumActiveWorkers > _activeWorkerCount) &&
-             _suspendedWorkerQueue.was_size() > 0)
+             _suspendedWorkerQueue.isEmpty() == false)
       {
-        // Pointer to the worker to wake up
-        HiCR::L2::tasking::Worker *w = NULL;
-
         // Getting the worker from the queue of suspended workers
-        _suspendedWorkerQueue.try_pop(w);
+        auto w = _suspendedWorkerQueue.pop();
 
-        // Increase the active worker count
-        _activeWorkerCount++;
+        // Do the following if a worker was obtained
+        if (w != NULL)
+        {
+          // Increase the active worker count
+          _activeWorkerCount++;
 
-        // Resuming worker
-        w->resume();
+          // Resuming worker
+          if (w != NULL) w->resume();
+        }
       }
 
       // Releasing lock
@@ -220,13 +220,10 @@ class Runtime
    * (required for dependency management of any tasks that depend on this task) and terminates execution of the current worker if all tasks have
    * finished.
    *
-   * \param[in] hicrTask Task to add.
+   * \param[in] task Task to add.
    */
-  __USED__ inline void onTaskFinish(HiCR::L2::tasking::Task *hicrTask)
+  __USED__ inline void onTaskFinish(taskr::Task *task)
   {
-    // Getting TaskR task from HiCR task
-    auto task = (Task *)hicrTask->getBackwardReferencePointer();
-
     // Decreasing overall task count
     _taskCount--;
 
@@ -246,16 +243,13 @@ class Runtime
    *
    * \return A pointer to a HiCR task to execute. NULL if there are no pending tasks.
    */
-  __USED__ inline HiCR::L2::tasking::Task *checkWaitingTasks()
+  __USED__ inline taskr::Task *checkWaitingTasks()
   {
-    // Pointer to the next task to execute
-    Task *task;
-
     // If all tasks finished, then terminate execution immediately
     if (_taskCount == 0)
     {
       // Getting a pointer to the currently executing worker
-      auto worker = HiCR::L2::tasking::Worker::getCurrentWorker();
+      auto worker = taskr::Worker::getCurrentWorker();
 
       // Terminating worker.
       worker->terminate();
@@ -268,11 +262,10 @@ class Runtime
     checkMaximumActiveWorkerCount();
 
     // Poping next task from the lock-free queue
-    bool foundTask = _waitingTaskQueue.try_pop(task);
+    auto task = _waitingTaskQueue.pop();
 
     // If no task was found (queue was empty), then return an empty task
-    if (foundTask == false)
-      return NULL;
+    if (task == NULL) return NULL;
 
     // Check if task is ready now
     bool isTaskReady = checkTaskReady(task);
@@ -282,9 +275,10 @@ class Runtime
     {
       // If a task was found (queue was not empty), then execute and manage the
       // task depending on its state
-      auto hicrTask = task->getHiCRTask();
-      hicrTask->setEventMap(_eventMap);
-      return hicrTask;
+      task->setEventMap(_eventMap);
+
+      // Returning ready task
+      return task;
     }
 
     // Otherwise, put it at the back of the waiting task pile and return
@@ -303,20 +297,19 @@ class Runtime
    */
   __USED__ inline void run(HiCR::L1::ComputeManager *computeManager)
   {
-    _dispatcher = new HiCR::L2::tasking::Dispatcher([this]()
-                                                    { return checkWaitingTasks(); });
-
-    _eventMap = new HiCR::L2::tasking::Task::taskEventMap_t();
+    _dispatcher = new taskr::Dispatcher([this]()
+                                        { return checkWaitingTasks(); }); //
+    _eventMap = new taskr::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::L2::tasking::Task::event_t::onTaskFinish, [this](HiCR::L2::tasking::Task *task)
-                        { onTaskFinish(task); });
+    _eventMap->setEvent(taskr::Task::event_t::onTaskFinish, [this](taskr::Task *task)
+                        { onTaskFinish(task); }); //
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)
     {
       // Creating new worker
-      auto worker = new HiCR::L2::tasking::Worker(computeManager);
+      auto worker = new taskr::Worker(computeManager);
 
       // Assigning resource to the thread
       worker->addProcessingUnit(std::move(pu));
@@ -352,7 +345,7 @@ class Runtime
    *
    * \return A pointer to the currently executing TaskR task
    */
-  __USED__ inline Task *getCurrentTask() { return (Task *)HiCR::L2::tasking::Task::getCurrentTask()->getBackwardReferencePointer(); }
+  __USED__ inline taskr::Task *getCurrentTask() { return taskr::Task::getCurrentTask(); }
 
 }; // class Runtime
 

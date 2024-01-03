@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include <backends/mpi/L0/globalMemorySlot.hpp>
+#include <mpi.h>
+#include <hicr/definitions.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L1/communicationManager.hpp>
-#include <hicr/common/definitions.hpp>
-#include <mpi.h>
+#include <backends/mpi/L0/globalMemorySlot.hpp>
 
 namespace HiCR
 {

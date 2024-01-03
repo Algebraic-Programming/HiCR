@@ -1,6 +1,6 @@
 #include "include/abcTasks.hpp"
-#include <backends/sharedMemory/L1/computeManager.hpp>
-#include <backends/sharedMemory/L1/deviceManager.hpp>
+#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
 #include <hwloc.h>
 
 int main(int argc, char **argv)
@@ -12,7 +12,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
 // Initializing Sequential backend's device manager
-  HiCR::backend::sharedMemory::L1::DeviceManager dm(&topology);
+  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
   auto computeResources = d->getComputeResourceList();
 
   // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::L1::ComputeManager computeManager;
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
   // Running ABCtasks example
   abcTasks(&computeManager, computeResources);

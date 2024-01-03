@@ -16,8 +16,13 @@ enabledBackends = get_option('backends')
 subdir('include/backends/sequential')
 
 # Including selected optional backends
-if 'sharedMemory' in enabledBackends
-  subdir('include/backends/sharedMemory')
+
+if 'sharedMemory/hwloc' in enabledBackends
+  subdir('include/backends/sharedMemory/hwloc')
+endif
+
+if 'sharedMemory/pthreads' in enabledBackends
+  subdir('include/backends/sharedMemory/pthreads')
 endif
 
 if 'mpi' in enabledBackends

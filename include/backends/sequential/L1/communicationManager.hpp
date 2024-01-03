@@ -13,10 +13,11 @@
 #pragma once
 
 #include <atomic>
-#include <hicr/L1/communicationManager.hpp>
-#include <hicr/common/definitions.hpp>
-#include <hicr/common/exceptions.hpp>
+#include <cstring>
 #include <unistd.h>
+#include <hicr/definitions.hpp>
+#include <hicr/exceptions.hpp>
+#include <hicr/L1/communicationManager.hpp>
 
 namespace HiCR
 {
@@ -91,12 +92,12 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * Specifies how many times a fence has to be called for it to release callers
    */
-  const std::atomic<size_t> _fenceCount;
+  const size_t _fenceCount;
 
   /**
    * Common definition of a collection of memory slots
    */
-  typedef parallelHashMap_t<HiCR::L0::GlobalMemorySlot::tag_t, size_t> fenceCountTagMap_t;
+  typedef std::map<HiCR::L0::GlobalMemorySlot::tag_t, size_t> fenceCountTagMap_t;
 
   /**
    * Counter for calls to fence, filtered per tag
@@ -104,9 +105,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   fenceCountTagMap_t _fenceCountTagMap;
 
   /**
-   * Implementation of the fence operation for the shared memory backend. In this case, nothing needs to be done, as
-   * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
-   * ensures its completion.
+   * Implementation of the fence operation for the sequential memory backend. The assumption here is that no concurrency
+   * is present, so we don't need any mutual exclusion mechanisms to increase the counters
    */
   __USED__ inline void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
   {

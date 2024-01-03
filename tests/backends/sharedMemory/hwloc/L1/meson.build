@@ -1,0 +1,1 @@
+test('memoryManager', executable('memoryManager', 'memoryManager.cpp', dependencies: [  testDeps, hicrSharedMemoryHWLocBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'backends', 'sharedMemory', 'hwloc', 'L1' ] )

@@ -1,7 +1,8 @@
 # Define TaskR dependencies
 
 taskrBuildDeps = [
-    hicrBuildDep
+    hicrBuildDep,
+    dependency('threads', required: true)
    ]
 
 taskrBuildCppArgs = [
