@@ -39,7 +39,8 @@ TEST(Task, SetterAndGetters)
   EXPECT_TRUE(w.getDispatchers().empty());
 
   // Now adding something to the lists/sets
-  auto dispatcher = taskr::Dispatcher([]() { return (taskr::Task *)NULL; });
+  auto dispatcher = taskr::Dispatcher([]()
+                                      { return (taskr::Task *)NULL; });
 
   // Subscribing worker to dispatcher
   w.subscribe(&dispatcher);
@@ -147,7 +148,8 @@ TEST(Worker, LifeCycle)
   taskr::Task t(0, u);
 
   // Creating task dispatcher
-  auto dispatcher = taskr::Dispatcher([&t]() { return &t; });
+  auto dispatcher = taskr::Dispatcher([&t]()
+                                      { return &t; });
 
   // Suscribing worker to dispatcher
   EXPECT_NO_THROW(w.subscribe(&dispatcher));
@@ -155,7 +157,8 @@ TEST(Worker, LifeCycle)
   // Starting worker
   EXPECT_FALSE(runningStateFound);
   ASSERT_NO_THROW(w.start());
-  while (runningStateFound == false);
+  while (runningStateFound == false)
+    ;
 
   // Checking the worker is suspended
   EXPECT_EQ(w.getState(), taskr::Worker::state_t::suspended);

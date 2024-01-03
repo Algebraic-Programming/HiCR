@@ -54,18 +54,18 @@ class Core : public HiCR::L0::ComputeResource
    * \param[in] numaAffinity The NUMA domain associated to this core
    * \param[in] caches The set of caches contained to or accessible by this core
    * \param[in] siblings The set of other cores local to this core (either in the same socket or NUMA domain)
-   * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS 
+   * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
   Core(const logicalProcessorId_t logicalProcessorId,
-                  const physicalProcessorId_t physicalProcessorId,
-                  const numaAffinity_t numaAffinity,
-                  const std::vector<backend::sharedMemory::Cache>& caches,
-                  const std::vector<logicalProcessorId_t>& siblings ) : HiCR::L0::ComputeResource(),
-                  _logicalProcessorId(logicalProcessorId),
-                  _physicalProcessorId(physicalProcessorId),
-                  _numaAffinity(numaAffinity),
-                  _caches(caches),
-                  _siblings(siblings){};
+       const physicalProcessorId_t physicalProcessorId,
+       const numaAffinity_t numaAffinity,
+       const std::vector<backend::sharedMemory::Cache> &caches,
+       const std::vector<logicalProcessorId_t> &siblings) : HiCR::L0::ComputeResource(),
+                                                            _logicalProcessorId(logicalProcessorId),
+                                                            _physicalProcessorId(physicalProcessorId),
+                                                            _numaAffinity(numaAffinity),
+                                                            _caches(caches),
+                                                            _siblings(siblings){};
   Core() = delete;
 
   /**

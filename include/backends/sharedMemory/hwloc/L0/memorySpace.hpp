@@ -46,10 +46,9 @@ class MemorySpace final : public HiCR::L0::MemorySpace
    * \param hwlocObject HWLoc object for associated to this memory space
    * \param bindingSupport The HWLoc binding type supported by this memory space
    */
-  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::hwloc::L0::LocalMemorySlot::binding_type bindingSupport) :
-   HiCR::L0::MemorySpace(size),
-  _hwlocObject(hwlocObject),
-  _bindingSupport(bindingSupport){};
+  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::hwloc::L0::LocalMemorySlot::binding_type bindingSupport) : HiCR::L0::MemorySpace(size),
+                                                                                                                                               _hwlocObject(hwlocObject),
+                                                                                                                                               _bindingSupport(bindingSupport){};
 
   /**
    * Default destructor

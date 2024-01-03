@@ -37,7 +37,7 @@ class Core final
 
   /**
    * Constructor for the core class for the ascend backend. It inizialies ACL
-   * 
+   *
    * @param[in] configPath Path to the configuration file to use for ACL. NULL sets a default configuration.
    *
    */
@@ -87,9 +87,7 @@ class Core final
    */
   __USED__ inline void createContexts()
   {
-
   }
-
 };
 
 } // namespace ascend

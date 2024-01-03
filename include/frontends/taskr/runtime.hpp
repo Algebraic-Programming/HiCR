@@ -146,7 +146,8 @@ class Runtime
       // If the new maximum is higher than the number of active workers, we need
       // to re-awaken some of them
       while ((_maximumActiveWorkers == 0 ||
-              (ssize_t)_maximumActiveWorkers > _activeWorkerCount) && _suspendedWorkerQueue.isEmpty() == false)
+              (ssize_t)_maximumActiveWorkers > _activeWorkerCount) &&
+             _suspendedWorkerQueue.isEmpty() == false)
       {
         // Getting the worker from the queue of suspended workers
         auto w = _suspendedWorkerQueue.pop();
@@ -154,13 +155,12 @@ class Runtime
         // Do the following if a worker was obtained
         if (w != NULL)
         {
-
           // Increase the active worker count
           _activeWorkerCount++;
 
           // Resuming worker
           if (w != NULL) w->resume();
-        } 
+        }
       }
 
       // Releasing lock
@@ -297,11 +297,13 @@ class Runtime
    */
   __USED__ inline void run(HiCR::L1::ComputeManager *computeManager)
   {
-    _dispatcher = new taskr::Dispatcher([this]() { return checkWaitingTasks(); }); //
+    _dispatcher = new taskr::Dispatcher([this]()
+                                        { return checkWaitingTasks(); }); //
     _eventMap = new taskr::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(taskr::Task::event_t::onTaskFinish, [this](taskr::Task *task) { onTaskFinish(task); }); //
+    _eventMap->setEvent(taskr::Task::event_t::onTaskFinish, [this](taskr::Task *task)
+                        { onTaskFinish(task); }); //
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)

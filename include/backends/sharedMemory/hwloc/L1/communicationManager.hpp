@@ -222,13 +222,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     m->unlock();
   }
 
-  __USED__ inline void lock() override 
+  __USED__ inline void lock() override
   {
     // Locking the pthread mutex
     pthread_mutex_lock(&_mutex);
   }
 
-  __USED__ inline void unlock() override 
+  __USED__ inline void unlock() override
   {
     // Locking the pthread mutex
     pthread_mutex_unlock(&_mutex);

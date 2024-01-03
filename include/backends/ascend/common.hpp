@@ -24,8 +24,6 @@ namespace backend
 namespace ascend
 {
 
-
-
 } // namespace ascend
 
 } // namespace backend

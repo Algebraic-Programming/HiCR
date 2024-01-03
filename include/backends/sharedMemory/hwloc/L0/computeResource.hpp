@@ -60,12 +60,11 @@ class ComputeResource final : public HiCR::backend::sharedMemory::Core
    * \param topology HWLoc topology object for discovery
    * \param logicalProcessorId Os-determied core affinity assigned to this compute resource
    */
-  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) :
-   HiCR::backend::sharedMemory::Core(logicalProcessorId,
-   detectPhysicalProcessorId(topology, logicalProcessorId),
-   detectCoreNUMAffinity(topology, logicalProcessorId),
-   detectCpuCaches(topology, logicalProcessorId),
-   detectCPUSiblings(topology, logicalProcessorId) ) {};
+  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) : HiCR::backend::sharedMemory::Core(logicalProcessorId,
+                                                                                                                                detectPhysicalProcessorId(topology, logicalProcessorId),
+                                                                                                                                detectCoreNUMAffinity(topology, logicalProcessorId),
+                                                                                                                                detectCpuCaches(topology, logicalProcessorId),
+                                                                                                                                detectCPUSiblings(topology, logicalProcessorId)){};
 
   /**
    * Default destructor
@@ -298,7 +297,6 @@ class ComputeResource final : public HiCR::backend::sharedMemory::Core
 
     return ret;
   }
-
 };
 
 } // namespace L0

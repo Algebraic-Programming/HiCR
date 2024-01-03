@@ -135,7 +135,6 @@ class Coroutine
   boost::context::continuation _context;
 };
 
-
 } // namespace sequential
 
 } // namespace backend

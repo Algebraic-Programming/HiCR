@@ -28,8 +28,8 @@ namespace taskr
 {
 
 /**
-* Key identifier for thread-local identification of currently running task
-*/
+ * Key identifier for thread-local identification of currently running task
+ */
 static pthread_key_t _taskPointerKey;
 
 /**
@@ -84,8 +84,8 @@ class Task
   };
 
   /**
-  * Type definition for the task's event map
-  */
+   * Type definition for the task's event map
+   */
   typedef taskr::EventMap<Task, event_t> taskEventMap_t;
 
   /**
@@ -281,7 +281,7 @@ class Task
   {
     return _taskDependencies;
   }
-  
+
   private:
 
   /**
@@ -294,9 +294,9 @@ class Task
    */
   std::vector<taskLabel_t> _taskDependencies;
 
- /**
-  * Execution unit that will be instantiated and executed by this task
-  */
+  /**
+   * Execution unit that will be instantiated and executed by this task
+   */
   HiCR::L0::ExecutionUnit *const _executionUnit;
 
   /**

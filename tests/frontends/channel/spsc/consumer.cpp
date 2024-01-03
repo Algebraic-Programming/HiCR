@@ -10,7 +10,6 @@
  * @date 19/9/2023
  */
 
-
 #include <thread>
 #include "gtest/gtest.h"
 #include <hicr/exceptions.hpp>

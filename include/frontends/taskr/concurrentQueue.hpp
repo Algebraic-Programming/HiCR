@@ -82,4 +82,4 @@ class ConcurrentQueue
   lockFreeQueue_t<P, N> _queue;
 };
 
-} // namespace HiCR
+} // namespace taskr

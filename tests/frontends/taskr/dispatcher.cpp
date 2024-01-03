@@ -17,17 +17,20 @@
 TEST(Dispatcher, Construction)
 {
   // Creating by context
-  EXPECT_NO_THROW(taskr::Dispatcher([]() { return (taskr::Task *)NULL; }));
+  EXPECT_NO_THROW(taskr::Dispatcher([]()
+                                    { return (taskr::Task *)NULL; }));
 
   // Creating by new
   taskr::Dispatcher *d = NULL;
-  EXPECT_NO_THROW(d = new taskr::Dispatcher([]() { return (taskr::Task *)NULL; }));
+  EXPECT_NO_THROW(d = new taskr::Dispatcher([]()
+                                            { return (taskr::Task *)NULL; }));
   delete d;
 }
 
 TEST(Dispatcher, Pull)
 {
-  taskr::Dispatcher d([]() { return (taskr::Task *)NULL; });
+  taskr::Dispatcher d([]()
+                      { return (taskr::Task *)NULL; });
   taskr::Task *t = NULL;
   EXPECT_NO_THROW(t = d.pull());
   EXPECT_EQ(t, (taskr::Task *)NULL);

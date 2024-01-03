@@ -52,7 +52,6 @@ class CommunicationManager
    * Type definition for a tag-mapped set of key-mapped memory slot arrays
    */
   typedef std::map<L0::GlobalMemorySlot::tag_t, globalKeyToMemorySlotMap_t> globalMemorySlotTagKeyMap_t;
-  
 
   /**
    * Default destructor
@@ -84,8 +83,16 @@ class CommunicationManager
     this->lock();
 
     // If the requested tag and key are not found, return empty storage
-    if (_globalMemorySlotTagKeyMap.contains(tag) == false) { this->unlock(); HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag); }
-    if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false) { this->unlock(); HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag); }
+    if (_globalMemorySlotTagKeyMap.contains(tag) == false)
+    {
+      this->unlock();
+      HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
+    }
+    if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false)
+    {
+      this->unlock();
+      HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
+    }
 
     // Getting requested memory slot
     auto value = _globalMemorySlotTagKeyMap.at(tag).at(globalKey);
@@ -112,7 +119,11 @@ class CommunicationManager
     this->lock();
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) { this->unlock(); HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag/key pair is not registered in this backend"); }
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
+    {
+      this->unlock();
+      HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag/key pair is not registered in this backend");
+    }
 
     // Removing memory slot from the global memory slot map
     _globalMemorySlotTagKeyMap.at(memorySlotTag).erase(memorySlotGlobalKey);
@@ -303,10 +314,18 @@ class CommunicationManager
     this->lock();
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) { this->unlock(); HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend"); }
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
+    {
+      this->unlock();
+      HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
+    }
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) { this->unlock(); HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend"); }
+    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false)
+    {
+      this->unlock();
+      HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
+    }
 
     // Releasing lock
     this->unlock();
@@ -339,7 +358,11 @@ class CommunicationManager
     this->lock();
 
     // Sanity check: tag/globalkey collision
-    if (_globalMemorySlotTagKeyMap.contains(tag) && _globalMemorySlotTagKeyMap.at(tag).contains(globalKey)) { this->unlock(); HICR_THROW_RUNTIME("Detected collision on global slots tag/globalKey (%lu/%lu). Another global slot was registered with that pair before.", tag, globalKey); }
+    if (_globalMemorySlotTagKeyMap.contains(tag) && _globalMemorySlotTagKeyMap.at(tag).contains(globalKey))
+    {
+      this->unlock();
+      HICR_THROW_RUNTIME("Detected collision on global slots tag/globalKey (%lu/%lu). Another global slot was registered with that pair before.", tag, globalKey);
+    }
 
     // Adding memory slot to the global map (based on tag and key)
     _globalMemorySlotTagKeyMap[tag][globalKey] = memorySlot;
@@ -373,12 +396,12 @@ class CommunicationManager
   /**
    * Backend-internal implementation of the locking of a mutual exclusion mechanism. By default, no concurrency is assumed
    */
-  virtual void lock() {};
+  virtual void lock(){};
 
   /**
    * Backend-internal implementation of the unlocking of a mutual exclusion mechanism
    */
-  virtual void unlock() {};
+  virtual void unlock(){};
 
   /**
    * Backend-internal implementation of the memcpy function
@@ -434,9 +457,9 @@ class CommunicationManager
    */
   virtual void releaseGlobalLockImpl(L0::GlobalMemorySlot *memorySlot) = 0;
 
- /**
-  * Storage for global tag/key associated global memory slot exchange
-  */
+  /**
+   * Storage for global tag/key associated global memory slot exchange
+   */
   globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
 };
 
