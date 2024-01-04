@@ -131,9 +131,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     std::vector<size_t> localSlotProcessId(localSlotCount);
     std::vector<size_t> globalSlotSizes(globalSlotCount);
     std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t> globalSlotKeys(globalSlotCount);
-    std::vector<void *> globalSlotPointers(globalSlotCount);
     std::vector<size_t> globalSlotProcessId(globalSlotCount);
-    std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot> > globalSourceSlots(globalSlotCount);
+    
 
     for (size_t i = 0; i < localSlotCount; i++)
     {
@@ -178,22 +177,23 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     for (size_t i = 0; i < globalSlotCount; i++)
     {
       // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
+      void* globalSlotPointer = nullptr;
+      std::shared_ptr<HiCR::L0::LocalMemorySlot> globalSourceSlot = nullptr;
 
       // Memory for this slot not yet allocated or registered
       if (globalSlotProcessId[i] != _rank)
       {
-        globalSlotPointers[i] = malloc(globalSlotSizes[i]);
-        globalSourceSlots[i] = nullptr;
+        globalSlotSizes[i] = 0;
       }
       else
       {
         auto memorySlot = memorySlots[localPointerPos++].second;
-        globalSlotPointers[i] = memorySlot->getPointer();
-        globalSourceSlots[i] = memorySlot;
+        globalSlotPointer = memorySlot->getPointer();
+        globalSourceSlot = memorySlot;
       }
 
       lpf_memslot_t newSlot = LPF_INVALID_MEMSLOT;
-      CHECK(lpf_register_global(_lpf, globalSlotPointers[i], globalSlotSizes[i], &newSlot));
+      CHECK(lpf_register_global(_lpf, globalSlotPointer, globalSlotSizes[i], &newSlot));
 
       // Creating new memory slot object
       auto memorySlot = std::make_shared<lpf::L0::GlobalMemorySlot>(
@@ -201,7 +201,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         newSlot,
         tag,
         globalSlotKeys[i],
-        globalSourceSlots[i]);
+        globalSourceSlot);
 
       CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
 
