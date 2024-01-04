@@ -53,7 +53,7 @@ class ComputeManager final : public sequential::L1::ComputeManager
 
   private:
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *computeResource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
   {
     return std::make_unique<sharedMemory::pthreads::L0::ProcessingUnit>(computeResource);
   }

@@ -43,7 +43,7 @@ TEST(MemoryManager, Memory)
   auto memSpaces = d->getMemorySpaceList();
 
   // Define the order of mem spaces for the telephone game
-  auto memSpaceOrder = std::vector<HiCR::L0::MemorySpace *>(memSpaces.begin(), memSpaces.end());
+  auto memSpaceOrder = std::vector<std::shared_ptr<HiCR::L0::MemorySpace>>(memSpaces.begin(), memSpaces.end());
 
   // Instantiating sequential backend's memory manager
   HiCR::backend::sequential::L1::MemoryManager m;
@@ -71,7 +71,7 @@ TEST(MemoryManager, Memory)
   EXPECT_THROW(m.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::LogicException);
 
   // Allocating memory correctly now
-  HiCR::L0::LocalMemorySlot *s1 = NULL;
+  std::shared_ptr<HiCR::L0::LocalMemorySlot> s1 = NULL;
   EXPECT_NO_THROW(s1 = m.allocateLocalMemorySlot(r, testMemAllocSize));
   EXPECT_EQ(s1->getSize(), testMemAllocSize);
 
@@ -81,7 +81,7 @@ TEST(MemoryManager, Memory)
   memset(s1LocalPtr, 0, testMemAllocSize);
 
   // Creating memory slot from a previous allocation
-  HiCR::L0::LocalMemorySlot *s2 = NULL;
+  std::shared_ptr<HiCR::L0::LocalMemorySlot> s2 = NULL;
   EXPECT_NO_THROW(s2 = m.registerLocalMemorySlot(r, malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(s2->getSize(), testMemAllocSize);
 

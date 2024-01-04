@@ -43,10 +43,10 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource The compute resource from which this processing unit is instantiated
    */
-  __USED__ inline ProcessingUnit(HiCR::L0::ComputeResource *computeResource) : HiCR::L0::ProcessingUnit(computeResource)
+  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the instance
-    auto c = dynamic_cast<ascend::L0::ComputeResource *>(computeResource);
+    auto c = dynamic_cast<ascend::L0::ComputeResource *>(computeResource.get());
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
@@ -60,7 +60,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline void initializeImpl() override
   {
     // Getting device id associated to the underlying compute resource (ascend)
-    auto deviceId = ((ascend::L0::ComputeResource *)getComputeResource())->getDevice()->getId();
+    auto deviceId = ((ascend::L0::ComputeResource *)getComputeResource().get())->getDevice().lock()->getId();
 
     aclError err = aclrtCreateContext(&_context, deviceId);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create ACL context on device %d. Error %d", deviceId, err);
@@ -99,10 +99,10 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     _executionState = std::move(e);
 
     // Getting up-casted pointer for the instance
-    auto c = static_cast<ascend::L0::ComputeResource *>(getComputeResource());
+    auto c = static_cast<ascend::L0::ComputeResource *>(getComputeResource().get());
 
     // select the curent Ascend card before starting the execution state
-    c->getDevice()->select();
+    c->getDevice().lock()->select();
 
     // Staring execution state
     _executionState.get()->resume();
@@ -121,13 +121,13 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline void awaitImpl() override
   {
     // Getting device id associated to the underlying compute resource (ascend)
-    auto deviceId = ((ascend::L0::ComputeResource *)getComputeResource())->getDevice()->getId();
+    auto deviceId = ((ascend::L0::ComputeResource *)getComputeResource().get())->getDevice().lock()->getId();
 
     // Getting up-casted pointer for the instance
-    auto c = static_cast<ascend::L0::ComputeResource *>(getComputeResource());
+    auto c = static_cast<ascend::L0::ComputeResource *>(getComputeResource().get());
 
     // select the curent Ascend card before starting the execution state
-    c->getDevice()->select();
+    c->getDevice().lock()->select();
 
     // force the execution state to finalize
     _executionState.get()->finalizeStream();

@@ -53,13 +53,13 @@ int main(int argc, char **argv)
   for (auto computeResource : computeResources) 
   {
     // Interpreting compute resource as core
-    auto core = (HiCR::backend::sharedMemory::Core*) computeResource;
+    auto core = (HiCR::backend::sharedMemory::Core*) computeResource.get();
 
     // If the core affinity is included in the list, create new processing unit
     if (coreSubset.contains(core->getProcessorId()))
     {
       // Creating a processing unit out of the computational resource
-      auto processingUnit = computeManager.createProcessingUnit(core);
+      auto processingUnit = computeManager.createProcessingUnit(computeResource);
 
       // Assigning resource to the taskr
       taskr.addProcessingUnit(std::move(processingUnit));
@@ -82,7 +82,6 @@ int main(int argc, char **argv)
   printf("Finished in %.3f seconds.\n", (double)dt * 1.0e-9);
 
   // Freeing up memory
-  delete taskExecutionUnit;
   hwloc_topology_destroy(topology);
 
   return 0;

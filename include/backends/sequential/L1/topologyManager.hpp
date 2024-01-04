@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <memory>
 #include <backends/sequential/L0/device.hpp>
 #include <hicr/L1/topologyManager.hpp>
 
@@ -49,13 +50,13 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   __USED__ inline deviceList_t queryDevicesImpl()
   {
     // Creating single computing unit space representing a single core processor
-    auto hostCPU = new sequential::L0::ComputeResource();
+    auto hostCPU = std::make_shared<sequential::L0::ComputeResource>();
 
     // Creating single memory space representing host memory
-    auto hostRam = new sequential::L0::MemorySpace();
+    auto hostRam = std::make_shared<sequential::L0::MemorySpace>();
 
     // Creating a single new device representing a single CPU plus host memory (RAM)
-    auto hostDevice = new sequential::L0::Device({hostCPU}, {hostRam});
+    auto hostDevice = std::make_shared<sequential::L0::Device>(L0::Device::computeResourceList_t({hostCPU}), L0::Device::memorySpaceList_t({hostRam}));
 
     // Returning single device
     return {hostDevice};

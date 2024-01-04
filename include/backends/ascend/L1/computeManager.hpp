@@ -53,9 +53,9 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return a pointer to the new execution unit
    */
-  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(const std::vector<ascend::Kernel *> &kernelOperations)
+  __USED__ inline std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(const std::vector<ascend::Kernel *> &kernelOperations)
   {
-    return new L0::ExecutionUnit(kernelOperations);
+    return std::make_shared<L0::ExecutionUnit>(kernelOperations);
   }
 
   /**
@@ -65,7 +65,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return return a unique pointer to the newly created Execution State
    */
-  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
+  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) override
   {
     return std::make_unique<ascend::L0::ExecutionState>(executionUnit);
   }
@@ -79,7 +79,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return a pointer to the new processing unit
    */
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *resource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(std::shared_ptr<HiCR::L0::ComputeResource> resource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }

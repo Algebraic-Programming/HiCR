@@ -45,7 +45,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    *
    * \param device The Ascend device that contains this compute resource
    */
-  ComputeResource(const ascend::L0::Device *device) : HiCR::L0::ComputeResource(),
+  ComputeResource(const std::shared_ptr<const ascend::L0::Device> device) : HiCR::L0::ComputeResource(),
                                                       _device(device){};
 
   /**
@@ -60,7 +60,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    *
    * @return The device id corresponding to this memory space
    */
-  __USED__ inline const ascend::L0::Device *getDevice() const
+  __USED__ inline const std::weak_ptr<const ascend::L0::Device> getDevice() const
   {
     return _device;
   }
@@ -70,7 +70,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   /**
    * Stores the device that owns this compute resource
    */
-  const ascend::L0::Device *const _device;
+  const std::weak_ptr<const ascend::L0::Device> _device;
 };
 
 } // namespace L0

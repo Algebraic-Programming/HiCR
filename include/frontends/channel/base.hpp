@@ -87,7 +87,7 @@ class Base
    *
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __USED__ static inline void initializeCoordinationBuffer(L0::LocalMemorySlot *coordinationBuffer)
+  __USED__ static inline void initializeCoordinationBuffer(std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer)
   {
     // Checking for correct size
     auto requiredSize = getCoordinationBufferSize();
@@ -180,10 +180,10 @@ class Base
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(L1::CommunicationManager *communicationManager,
-       L0::LocalMemorySlot *const coordinationBuffer,
+  Base(L1::CommunicationManager& communicationManager,
+       std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer,
        const size_t tokenSize,
-       const size_t capacity) : _communicationManager(communicationManager),
+       const size_t capacity) : _communicationManager(&communicationManager),
                                 _coordinationBuffer(coordinationBuffer),
                                 _tokenSize(tokenSize)
   {
@@ -213,7 +213,7 @@ class Base
   /**
    * Local storage of coordination metadata
    */
-  L0::LocalMemorySlot *const _coordinationBuffer;
+  const std::shared_ptr<L0::LocalMemorySlot> _coordinationBuffer;
 
   /**
    * Token size

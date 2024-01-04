@@ -63,7 +63,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     hwloc_topology_load(*_topology);
 
     // Creating a single new device representing an SMP system (multicore + shared RAM)
-    auto hostDevice = new sharedMemory::L0::Device(queryComputeResources(), queryMemorySpaces());
+    auto hostDevice = std::make_shared<sharedMemory::L0::Device>(queryComputeResources(), queryMemorySpaces());
 
     // Returning single device
     return {hostDevice};
@@ -86,7 +86,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     for (const auto id : logicalProcessorIds)
     {
       // Creating new compute resource class (of CPU core/processor type)
-      auto processor = new L0::ComputeResource(*_topology, id);
+      auto processor = std::make_shared<L0::ComputeResource>(*_topology, id);
 
       // Adding new resource to the list
       computeResourceList.insert(processor);
@@ -128,7 +128,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
       auto memSpaceSize = hwlocObj->attr->cache.size;
 
       // Creating new memory space object
-      auto memorySpace = new sharedMemory::hwloc::L0::MemorySpace(memSpaceSize, hwlocObj, bindingSupport);
+      auto memorySpace = std::make_shared<sharedMemory::hwloc::L0::MemorySpace>(memSpaceSize, hwlocObj, bindingSupport);
 
       // Storing new memory space
       memorySpaceList.insert(memorySpace);

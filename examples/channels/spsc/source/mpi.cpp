@@ -56,9 +56,12 @@ int main(int argc, char **argv)
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();
 
+  // Getting a reference to the first memory space
+  auto firstMemorySpace = *memSpaces.begin();
+
   // Rank 0 is producer, Rank 1 is consumer
-  if (rankId == 0) producerFc(&m, &c, *memSpaces.begin(), channelCapacity);
-  if (rankId == 1) consumerFc(&m, &c, *memSpaces.begin(), channelCapacity);
+  if (rankId == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
+  if (rankId == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
 
   // Finalizing MPI
   MPI_Finalize();

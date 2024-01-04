@@ -111,7 +111,7 @@ class Task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(const taskLabel_t label, HiCR::L0::ExecutionUnit *executionUnit, taskEventMap_t *eventMap = NULL) : _label(label), _executionUnit(executionUnit), _eventMap(eventMap)
+  __USED__ Task(const taskLabel_t label, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskEventMap_t *eventMap = NULL) : _label(label), _executionUnit(executionUnit), _eventMap(eventMap)
   {
     // Making sure the task-identifying key is created (only once) with the first created task
     pthread_once(&_taskPointerKeyConfig, createTaskPointerKey);
@@ -152,7 +152,7 @@ class Task
    *
    * \return The execution unit assigned to this task
    */
-  __USED__ inline HiCR::L0::ExecutionUnit *getExecutionUnit() const { return _executionUnit; }
+  __USED__ inline std::shared_ptr<HiCR::L0::ExecutionUnit> getExecutionUnit() const { return _executionUnit; }
 
   /**
    * Registers an operation that has been started by the task but has not yet finished
@@ -297,7 +297,7 @@ class Task
   /**
    * Execution unit that will be instantiated and executed by this task
    */
-  HiCR::L0::ExecutionUnit *const _executionUnit;
+  const std::shared_ptr<HiCR::L0::ExecutionUnit> _executionUnit;
 
   /**
    *  Map of events to trigger

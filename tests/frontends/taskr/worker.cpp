@@ -61,8 +61,11 @@ TEST(Task, SetterAndGetters)
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
 
+  // Getting first compute resource
+  auto firstComputeResource = *computeResources.begin();
+
   // Creating processing unit from resource
-  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = m.createProcessingUnit(firstComputeResource);
 
   // Assigning processing unit to worker
   w.addProcessingUnit(std::move(processingUnit));
@@ -100,8 +103,11 @@ TEST(Worker, LifeCycle)
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
 
+  // Getting first compute resource
+  auto firstComputeResource = *computeResources.begin();
+
   // Creating processing unit from resource
-  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = m.createProcessingUnit(firstComputeResource);
 
   // Assigning processing unit to worker
   w.addProcessingUnit(std::move(processingUnit));

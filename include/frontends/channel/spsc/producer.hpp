@@ -49,10 +49,10 @@ class Producer final : public channel::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager *communicationManager,
-           L0::GlobalMemorySlot *const tokenBuffer,
-           L0::LocalMemorySlot *const internalCoordinationBuffer,
-           L0::GlobalMemorySlot *const producerCoordinationBuffer,
+  Producer(L1::CommunicationManager& communicationManager,
+           std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
+           std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity)
     : channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
@@ -78,7 +78,7 @@ class Producer final : public channel::Base
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline void push(L0::LocalMemorySlot *sourceSlot, const size_t n = 1)
+  __USED__ inline void push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
@@ -118,12 +118,12 @@ class Producer final : public channel::Base
   /**
    * Memory slot that represents the token buffer that producer sends data to
    */
-  L0::GlobalMemorySlot *const _tokenBuffer;
+  const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
 
   /*
    * Global Memory slot pointing to the producer's own coordination buffer
    */
-  L0::GlobalMemorySlot *const _producerCoordinationBuffer;
+  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBuffer;
 };
 
 } // namespace SPSC

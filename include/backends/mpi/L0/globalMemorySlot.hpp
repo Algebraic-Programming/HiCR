@@ -46,7 +46,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
     int rank,
     const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
     const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
-    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
                                                                   _rank(rank)
   {
   }
@@ -68,7 +68,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    *
    * \return A pointer to the MPI window for the actual memory slot data
    */
-  __USED__ inline MPI_Win *&getDataWindow() { return _dataWindow; }
+  __USED__ inline MPI_Win *&getDataWindow() { return _dataWindow; } 
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the received message count

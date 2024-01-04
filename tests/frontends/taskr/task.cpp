@@ -18,7 +18,7 @@
 TEST(Task, Construction)
 {
   taskr::Task *t = NULL;
-  HiCR::L0::ExecutionUnit *u = NULL;
+  std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
 
   EXPECT_NO_THROW(t = new taskr::Task(0, u, NULL));
   EXPECT_FALSE(t == nullptr);
@@ -27,7 +27,7 @@ TEST(Task, Construction)
 
 TEST(Task, SetterAndGetters)
 {
-  HiCR::L0::ExecutionUnit *u = NULL;
+  std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
   taskr::Task t(0, u, NULL);
 
   taskr::Task::taskEventMap_t e;
@@ -82,8 +82,11 @@ TEST(Task, Run)
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
 
+  // Getting reference to the first compute resource found
+  auto firstComputeResource = *computeResources.begin();
+
   // Creating processing unit from the compute resource
-  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = m.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
   processingUnit->initialize();
@@ -169,8 +172,11 @@ TEST(Task, Events)
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
 
+  // Getting reference to the first compute resource found
+  auto firstComputeResource = *computeResources.begin();
+
   // Creating processing unit from the compute resource
-  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = m.createProcessingUnit(firstComputeResource);
 
   // Creating execution state
   auto executionState = m.createExecutionState(u);

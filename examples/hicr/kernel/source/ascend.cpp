@@ -7,7 +7,7 @@
 #include <backends/ascend/L0/executionUnit.hpp>
 #include <backends/ascend/L0/processingUnit.hpp>
 #include <backends/ascend/L1/memoryManager.hpp>
-#include <backends/ascend/L1/deviceManager.hpp>
+#include <backends/ascend/L1/topologyManager.hpp>
 #include <backends/ascend/L1/communicationManager.hpp>
 #include <backends/ascend/L1/computeManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
@@ -17,7 +17,7 @@
 
 namespace ascend = HiCR::backend::ascend;
 
-void populateMemorySlot(HiCR::L0::LocalMemorySlot *memorySlot, float value)
+void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, float value)
 {
   for (int i = 0; i < BUFF_SIZE; i++) ((aclFloat16 *)memorySlot->getPointer())[i] = aclFloatToFloat16(value);
 }
@@ -43,15 +43,15 @@ int main(int argc, char **argv)
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
   // Initializing host topology manager
-  HiCR::backend::sequential::L1::TopologyManager hostDeviceManager;
-  hostDeviceManager.queryDevices();
-  auto hostDevice = *hostDeviceManager.getDevices().begin();
+  HiCR::backend::sequential::L1::TopologyManager hostTopologyManager;
+  hostTopologyManager.queryDevices();
+  auto hostDevice = *hostTopologyManager.getDevices().begin();
   auto hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing ascend topology manager
-  HiCR::backend::ascend::L1::TopologyManager ascendDeviceManager;
-  ascendDeviceManager.queryDevices();
-  auto ascendDevice = *ascendDeviceManager.getDevices().begin();
+  HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
+  ascendTopologyManager.queryDevices();
+  auto ascendDevice = *ascendTopologyManager.getDevices().begin();
   auto deviceMemSpace = *ascendDevice->getMemorySpaceList().begin();
 
   // Instantiating Ascend memory manager

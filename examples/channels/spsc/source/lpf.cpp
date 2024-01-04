@@ -52,9 +52,12 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   HiCR::backend::lpf::L1::MemoryManager m(lpf);
   HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
 
+  // Getting reference to the first memory space detected
+  auto firstMemorySpace = *memSpaces.begin();
+
   // Rank 0 is producer, Rank 1 is consumer
-  if (pid == 0) producerFc(&m, &c, *memSpaces.begin(), channelCapacity);
-  if (pid == 1) consumerFc(&m, &c, *memSpaces.begin(), channelCapacity);
+  if (pid == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
+  if (pid == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
 }
 
 int main(int argc, char **argv)

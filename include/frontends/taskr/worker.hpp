@@ -162,9 +162,6 @@ class Worker
 
     // Launching worker in the lead resource (first one to be added)
     _processingUnits[0]->start(std::move(executionState));
-
-    // Free up memory
-    delete executionUnit;
   }
 
   /**

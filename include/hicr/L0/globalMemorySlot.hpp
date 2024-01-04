@@ -50,7 +50,7 @@ class GlobalMemorySlot
   GlobalMemorySlot(
     const tag_t globalTag = 0,
     const globalKey_t globalKey = 0,
-    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = nullptr) : _globalTag(globalTag),
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : _globalTag(globalTag),
                                                                   _globalKey(globalKey),
                                                                   _sourceLocalMemorySlot(sourceLocalMemorySlot)
   {
@@ -112,7 +112,7 @@ class GlobalMemorySlot
    *
    * \return A pointer to the local memory slot from which this global memory slot was created, if one exists. A null pointer, otherwise.
    */
-  __USED__ HiCR::L0::LocalMemorySlot *getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
+  __USED__ std::shared_ptr<HiCR::L0::LocalMemorySlot> getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
 
   private:
 
@@ -129,7 +129,7 @@ class GlobalMemorySlot
   /**
    * Pointer to the associated local memory slot (if one exists)
    */
-  HiCR::L0::LocalMemorySlot *const _sourceLocalMemorySlot = 0;
+  std::shared_ptr<HiCR::L0::LocalMemorySlot> const _sourceLocalMemorySlot = 0;
 
   /**
    * Messages received into this slot

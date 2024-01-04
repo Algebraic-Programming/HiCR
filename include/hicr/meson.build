@@ -20,7 +20,8 @@ hicrBuildDeps = [
 
 hicrBuildCppArgs = [
  '-Wfatal-errors',
-  hicrExceptionCppArgs
+  hicrExceptionCppArgs,
+  warningAsErrorFlags
  ]
 
 hicrBuildIncludes = include_directories([

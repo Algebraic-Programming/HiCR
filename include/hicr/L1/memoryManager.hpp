@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <memory>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L0/globalMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
@@ -49,7 +50,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly allocated memory slot
    */
-  __USED__ inline L0::LocalMemorySlot *allocateLocalMemorySlot(L0::MemorySpace *memorySpace, const size_t size)
+  __USED__ inline std::shared_ptr<L0::LocalMemorySlot> allocateLocalMemorySlot(std::shared_ptr<L0::MemorySpace> memorySpace, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -69,7 +70,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly registered memory slot
    */
-  virtual L0::LocalMemorySlot *registerLocalMemorySlot(L0::MemorySpace *memorySpace, void *const ptr, const size_t size)
+  virtual std::shared_ptr<L0::LocalMemorySlot> registerLocalMemorySlot(std::shared_ptr<L0::MemorySpace> memorySpace, void *const ptr, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -86,7 +87,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlot(L0::LocalMemorySlot *const memorySlot)
+  __USED__ inline void deregisterLocalMemorySlot(std::shared_ptr<L0::LocalMemorySlot> memorySlot)
   {
     // Decreasing memory space usage
     memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
@@ -100,7 +101,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlot(L0::LocalMemorySlot *memorySlot)
+  __USED__ inline void freeLocalMemorySlot(std::shared_ptr<L0::LocalMemorySlot> memorySlot)
   {
     // Decreasing memory space usage
     memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
@@ -118,7 +119,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return The internal pointer associated to the local memory slot
    */
-  virtual L0::LocalMemorySlot *allocateLocalMemorySlotImpl(L0::MemorySpace *memorySpace, const size_t size) = 0;
+  virtual std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the registerLocalMemorySlot function
@@ -128,21 +129,21 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \return A newly created memory slot
    */
-  virtual L0::LocalMemorySlot *registerLocalMemorySlotImpl(L0::MemorySpace *memorySpace, void *const ptr, const size_t size) = 0;
+  virtual std::shared_ptr<L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<L0::MemorySpace> memorySpace, void *const ptr, const size_t size) = 0;
 
   /**
    * Backend-internal implementation of the freeLocalMemorySlot function
    *
    * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  virtual void freeLocalMemorySlotImpl(L0::LocalMemorySlot *memorySlot) = 0;
+  virtual void freeLocalMemorySlotImpl(std::shared_ptr<L0::LocalMemorySlot> memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the deregisterMemorySlot function
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  virtual void deregisterLocalMemorySlotImpl(L0::LocalMemorySlot *memorySlot) = 0;
+  virtual void deregisterLocalMemorySlotImpl(std::shared_ptr<L0::LocalMemorySlot> memorySlot) = 0;
 };
 
 } // namespace L1

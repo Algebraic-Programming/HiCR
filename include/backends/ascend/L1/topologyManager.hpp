@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <memory>
 #include <backends/ascend/L0/device.hpp>
 #include <backends/ascend/L0/computeResource.hpp>
 #include <backends/ascend/L0/memorySpace.hpp>
@@ -51,8 +52,8 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   __USED__ inline deviceList_t queryDevicesImpl()
   {
     // Storage for device list
-    std::unordered_set<ascend::L0::Device *> ascendDeviceList;
-    std::unordered_set<HiCR::L0::Device *> HiCRDeviceList;
+    std::unordered_set<std::shared_ptr<ascend::L0::Device>> ascendDeviceList;
+    std::unordered_set<std::shared_ptr<HiCR::L0::Device>> HiCRDeviceList;
 
     // Storage for getting the ascend device count
     uint32_t deviceCount = 0;
@@ -82,13 +83,13 @@ class TopologyManager final : public HiCR::L1::TopologyManager
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
 
       // Creating new Ascend device
-      auto ascendDevice = new ascend::L0::Device(deviceId, deviceContext, {}, {});
+      auto ascendDevice = std::make_shared<ascend::L0::Device>(deviceId, deviceContext, HiCR::L0::Device::computeResourceList_t({}), HiCR::L0::Device::memorySpaceList_t({}));
 
       // Creating Device's memory space
-      auto ascendDeviceMemorySpace = new ascend::L0::MemorySpace(ascendDevice, ascendMemorySize);
+      auto ascendDeviceMemorySpace = std::make_shared<ascend::L0::MemorySpace>(ascendDevice, ascendMemorySize);
 
       // Creating Device's compute resource
-      auto ascendDeviceComputeResource = new ascend::L0::ComputeResource(ascendDevice);
+      auto ascendDeviceComputeResource = std::make_shared<ascend::L0::ComputeResource>(ascendDevice);
 
       // Now adding resources to the device
       ascendDevice->addComputeResource(ascendDeviceComputeResource);
@@ -111,14 +112,14 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * Setup inter device communication in the ACL runtime.
    */
-  __USED__ inline void setupInterDeviceCommunication(std::unordered_set<ascend::L0::Device *> &ascendDeviceList)
+  __USED__ inline void setupInterDeviceCommunication(std::unordered_set<std::shared_ptr<ascend::L0::Device>> &ascendDeviceList)
   {
     int32_t canAccessPeer = 0;
     aclError err;
 
     // enable communication among each pair of ascend cards
-    for (const auto src : ascendDeviceList)
-      for (const auto dst : ascendDeviceList)
+    for (const auto& src : ascendDeviceList)
+      for (const auto& dst : ascendDeviceList)
         if (src->getId() != dst->getId())
         {
           // verify that the two cards can see each other

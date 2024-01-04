@@ -9,8 +9,8 @@
 
 void workerFc(HiCR::L1::InstanceManager &instanceManager,
               HiCR::backend::sequential::L1::ComputeManager &computeManager,
-              HiCR::L0::MemorySpace* bufferMemorySpace, 
-              HiCR::L0::ComputeResource* rpcExecutor)
+              std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, 
+              std::shared_ptr<HiCR::L0::ComputeResource> rpcExecutor)
 {
   // Fetching memory manager
   auto memoryManager = instanceManager.getMemoryManager();
@@ -19,7 +19,7 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager,
   auto currentInstance = instanceManager.getCurrentInstance();
 
   // Creating worker function
-  auto fcLambda = [currentInstance, memoryManager, &instanceManager, bufferMemorySpace]()
+  auto fcLambda = [&]()
   {
     // Creating simple message
     auto message = std::string("Hello, I am a worker! ");

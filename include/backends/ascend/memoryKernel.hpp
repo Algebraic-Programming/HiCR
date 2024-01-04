@@ -49,9 +49,9 @@ class MemoryKernel final : public Kernel
    */
   MemoryKernel(
     ascend::L1::CommunicationManager *commManager,
-    HiCR::L0::LocalMemorySlot *destination,
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
     const size_t destinationOffset,
-    HiCR::L0::LocalMemorySlot *source,
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
     const size_t sourceOffset,
     size_t size) : ascend::Kernel(),
                    _dst(destination),
@@ -83,11 +83,11 @@ class MemoryKernel final : public Kernel
   /**
    * Destionation memory slot
    */
-  HiCR::L0::LocalMemorySlot *_dst;
+  const std::shared_ptr<HiCR::L0::LocalMemorySlot> _dst;
   /**
    * Source memory slot
    */
-  HiCR::L0::LocalMemorySlot *_src;
+  const std::shared_ptr<HiCR::L0::LocalMemorySlot> _src;
 
   /**
    * Destination offset
@@ -106,7 +106,7 @@ class MemoryKernel final : public Kernel
   /**
    * Ascend memory manager
    */
-  ascend::L1::CommunicationManager *_commManager;
+  ascend::L1::CommunicationManager * const _commManager;
 };
 
 } // namespace ascend

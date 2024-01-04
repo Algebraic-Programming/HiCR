@@ -59,7 +59,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 
   // Creating new destination buffer
   auto msgBuffer = (char*) malloc(BUFFER_SIZE);
-  auto dstSlot = m.registerLocalMemorySlot(*memSpaces.begin(), msgBuffer, BUFFER_SIZE);
+  auto firstMemSpace = *memSpaces.begin();
+  auto dstSlot = m.registerLocalMemorySlot(firstMemSpace, msgBuffer, BUFFER_SIZE);
 
   // Performing all pending local to global memory slot promotions now
   c.exchangeGlobalMemorySlots(CHANNEL_TAG, { { myProcess, dstSlot } });
@@ -74,7 +75,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   {
     char *buffer2 = new char[BUFFER_SIZE];
     sprintf(static_cast<char *>(buffer2), "Hello, HiCR user!\n");
-    auto srcSlot = m.registerLocalMemorySlot(*memSpaces.begin(), buffer2, BUFFER_SIZE);
+    auto srcSlot = m.registerLocalMemorySlot(firstMemSpace, buffer2, BUFFER_SIZE);
     c.memcpy(myPromotedSlot, DST_OFFSET, srcSlot, SRC_OFFSET, BUFFER_SIZE);
     c.fence(CHANNEL_TAG);
   }
@@ -84,8 +85,10 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
     c.queryMemorySlotUpdates(myPromotedSlot);
     auto recvMsgs = myPromotedSlot->getMessagesRecv();
     std::cout << "Received messages (before fence) = " << recvMsgs << std::endl;
+    
     c.fence(CHANNEL_TAG);
     std::cout << "Received buffer = " << msgBuffer;
+
     c.queryMemorySlotUpdates(myPromotedSlot);
     recvMsgs = myPromotedSlot->getMessagesRecv();
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;

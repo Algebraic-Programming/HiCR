@@ -27,8 +27,11 @@ int main(int argc, char **argv)
   // Asking the processing unit to create a new execution state from the given execution unit (stateless)
   auto executionState = computeManager.createExecutionState(executionUnit);
 
+  // Selecting the first compute resource found
+  auto firstComputeResource = *computeResources.begin();
+
   // Creating processing unit from the compute resource
-  auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = computeManager.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
   processingUnit->initialize();

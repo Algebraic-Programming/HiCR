@@ -56,12 +56,15 @@ int main(int argc, char **argv)
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();
 
+  // Getting reference to the first memory space detected
+  auto firstMemorySpace = *memSpaces.begin();
+
   // Calculating the number of producer processes
   size_t producerCount = rankCount - 1;
 
   // Rank 0 is consumer, the rest are producers
-  if (rankId == 0) consumerFc(&m, &c, *memSpaces.begin(), channelCapacity, producerCount);
-  if (rankId >= 1) producerFc(&m, &c, *memSpaces.begin(), channelCapacity, rankId);
+  if (rankId == 0) consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);
+  if (rankId >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, rankId);
 
   // Finalizing MPI
   MPI_Finalize();
