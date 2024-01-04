@@ -11,7 +11,7 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
 #include <frontends/taskr/task.hpp>
 
@@ -70,8 +70,8 @@ TEST(Task, Run)
   // Creating task
   t = new taskr::Task(0, u);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing Sequential backend's topology manager
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -158,7 +158,7 @@ TEST(Task, Events)
   t = new taskr::Task(0, u);
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();

@@ -1,6 +1,6 @@
 #include <backends/lpf/L1/memoryManager.hpp>
 #include <backends/lpf/L1/communicationManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <iostream>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
@@ -39,7 +39,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   CHECK(lpf_sync(lpf, LPF_SYNC_DEFAULT));
 
   // Initializing backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();

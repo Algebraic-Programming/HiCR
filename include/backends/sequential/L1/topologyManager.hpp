@@ -4,7 +4,7 @@
  */
 
 /**
- * @file deviceManager.hpp
+ * @file topologyManager.hpp
  * @brief This file implements support for device management of single processor systems
  * @author S. M. Martin
  * @date 18/12/2023
@@ -13,7 +13,7 @@
 #pragma once
 
 #include <backends/sequential/L0/device.hpp>
-#include <hicr/L1/deviceManager.hpp>
+#include <hicr/L1/topologyManager.hpp>
 
 namespace HiCR
 {
@@ -28,21 +28,21 @@ namespace L1
 {
 
 /**
- * Implementation of the device manager for single processor host systems.
+ * Implementation of the topology manager for single processor host systems.
  */
-class DeviceManager final : public HiCR::L1::DeviceManager
+class TopologyManager final : public HiCR::L1::TopologyManager
 {
   public:
 
   /**
    * The constructor is employed to reserve memory required for hwloc
    */
-  DeviceManager() : HiCR::L1::DeviceManager() {}
+  TopologyManager() : HiCR::L1::TopologyManager() {}
 
   /**
    * The constructor is employed to free memory required for hwloc
    */
-  ~DeviceManager() = default;
+  ~TopologyManager() = default;
 
   protected:
 

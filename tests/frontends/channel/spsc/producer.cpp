@@ -14,7 +14,7 @@
 #include "gtest/gtest.h"
 #include <backends/sequential/L1/memoryManager.hpp>
 #include <backends/sequential/L1/communicationManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <frontends/channel/spsc/consumer.hpp>
 #include <frontends/channel/spsc/producer.hpp>
 
@@ -32,7 +32,7 @@ TEST(ProducerChannel, Construction)
   HiCR::backend::sequential::L1::CommunicationManager c(1);
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -84,7 +84,7 @@ TEST(ProducerChannel, Push)
   HiCR::backend::sequential::L1::CommunicationManager c(1);
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -160,7 +160,7 @@ TEST(ProducerChannel, PushWait)
   HiCR::backend::sequential::L1::CommunicationManager c(1);
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();

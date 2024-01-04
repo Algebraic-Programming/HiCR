@@ -14,7 +14,7 @@
 #include <backends/sequential/L0/computeResource.hpp>
 #include <backends/sequential/L0/processingUnit.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 
 namespace backend = HiCR::backend::sequential;
 
@@ -26,7 +26,7 @@ TEST(ProcessingUnit, Construction)
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -48,7 +48,7 @@ TEST(ProcessingUnit, LifeCycle)
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();

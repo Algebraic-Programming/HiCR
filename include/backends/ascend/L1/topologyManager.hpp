@@ -4,8 +4,8 @@
  */
 
 /**
- * @file deviceManager.hpp
- * @brief This file implements the DeviceManager class for the Ascend Backend
+ * @file topologyManager.hpp
+ * @brief This file implements the TopologyManager class for the Ascend Backend
  * @author L. Terracciano & S. M. Martin
  * @date 18/12/2023
  */
@@ -15,7 +15,7 @@
 #include <backends/ascend/L0/device.hpp>
 #include <backends/ascend/L0/computeResource.hpp>
 #include <backends/ascend/L0/memorySpace.hpp>
-#include <hicr/L1/deviceManager.hpp>
+#include <hicr/L1/topologyManager.hpp>
 
 namespace HiCR
 {
@@ -30,21 +30,21 @@ namespace L1
 {
 
 /**
- * Implementation of the device manager for the discovery and use of Ascend devices
+ * Implementation of the topology manager for the discovery and use of Ascend devices
  */
-class DeviceManager final : public HiCR::L1::DeviceManager
+class TopologyManager final : public HiCR::L1::TopologyManager
 {
   public:
 
   /**
    * Default constructor
    */
-  DeviceManager() : HiCR::L1::DeviceManager() {}
+  TopologyManager() : HiCR::L1::TopologyManager() {}
 
   /**
    * Default destructor
    */
-  ~DeviceManager() = default;
+  ~TopologyManager() = default;
 
   protected:
 

@@ -15,7 +15,7 @@
 #include <hicr/exceptions.hpp>
 #include <frontends/channel/spsc/consumer.hpp>
 #include <frontends/channel/spsc/producer.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <backends/sequential/L1/communicationManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 
@@ -33,8 +33,8 @@ TEST(ConsumerChannel, Construction)
   // Instantiating backend
   HiCR::backend::sequential::L1::CommunicationManager c(1);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing Sequential backend's topology manager
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -91,7 +91,7 @@ TEST(ConsumerChannel, PeekPop)
   HiCR::backend::sequential::L1::CommunicationManager c(1);
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -172,7 +172,7 @@ TEST(ConsumerChannel, PeekWait)
   HiCR::backend::sequential::L1::CommunicationManager c(1);
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();

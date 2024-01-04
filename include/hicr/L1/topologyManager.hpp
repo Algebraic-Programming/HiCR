@@ -30,7 +30,7 @@ namespace L1
  *
  * Backends need to fulfill the abstract virtual functions described here, so that HiCR can detect hardware devices
  */
-class DeviceManager
+class TopologyManager
 {
   public:
 
@@ -42,12 +42,12 @@ class DeviceManager
   /**
    * Default constructor is allowed, as no default argument are expected for the creation of this class
    */
-  DeviceManager() = default;
+  TopologyManager() = default;
 
   /**
    * Default destructor
    */
-  virtual ~DeviceManager() = default;
+  virtual ~TopologyManager() = default;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute units provided by the library which it supports.

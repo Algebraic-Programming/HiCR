@@ -1,12 +1,12 @@
 #include "include/telephoneGame.hpp"
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 #include <backends/sequential/L1/communicationManager.hpp>
 
 int main(int argc, char **argv)
 {
   // Initializing backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Instantiating sequential backend's memory manager
   HiCR::backend::sequential::L1::MemoryManager m;

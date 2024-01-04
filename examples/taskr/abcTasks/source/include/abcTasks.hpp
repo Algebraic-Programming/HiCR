@@ -1,5 +1,5 @@
 #include <cstdio>
-#include <hicr/L1/deviceManager.hpp>
+#include <hicr/L0/device.hpp>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
 #include <backends/sequential/L1/computeManager.hpp>

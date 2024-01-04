@@ -11,7 +11,7 @@
 #include <backends/ascend/L1/communicationManager.hpp>
 #include <backends/ascend/L1/computeManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 
 #define BUFF_SIZE 192
 
@@ -42,14 +42,14 @@ int main(int argc, char **argv)
   aclError err = aclInit(NULL);
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
-  // Initializing host device manager
-  HiCR::backend::sequential::L1::DeviceManager hostDeviceManager;
+  // Initializing host topology manager
+  HiCR::backend::sequential::L1::TopologyManager hostDeviceManager;
   hostDeviceManager.queryDevices();
   auto hostDevice = *hostDeviceManager.getDevices().begin();
   auto hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
-  // Initializing ascend device manager
-  HiCR::backend::ascend::L1::DeviceManager ascendDeviceManager;
+  // Initializing ascend topology manager
+  HiCR::backend::ascend::L1::TopologyManager ascendDeviceManager;
   ascendDeviceManager.queryDevices();
   auto ascendDevice = *ascendDeviceManager.getDevices().begin();
   auto deviceMemSpace = *ascendDevice->getMemorySpaceList().begin();

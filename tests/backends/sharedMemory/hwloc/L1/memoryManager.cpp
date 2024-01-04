@@ -5,7 +5,7 @@
 
 /**
  * @file memoryManager.cpp
- * @brief Unit tests for the HiCR shared memory memory manager HiCR::backend::sharedMemory::hwloc class
+ * @brief Unit tests for the hwloc backend
  * @author S. M. Martin
  * @date 13/9/2023
  */
@@ -14,7 +14,7 @@
 #include "gtest/gtest.h"
 #include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
 #include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 
 TEST(MemoryManager, Construction)
 {
@@ -41,10 +41,10 @@ TEST(MemoryManager, Memory)
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c;
 
-  // Initializing HiCR::backend::sharedMemory::hwloc's device manager
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+  // Initializing hwloc-based topology manager
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
-  // Asking HiCR::backend::sharedMemory::hwloc to check the available devices
+  // Asking hwloc to check the available devices
   EXPECT_NO_THROW(dm.queryDevices());
 
   // Getting first device found

@@ -11,7 +11,7 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 #include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
 #include <frontends/taskr/task.hpp>
 #include <frontends/taskr/worker.hpp>
@@ -47,10 +47,10 @@ TEST(Task, SetterAndGetters)
   // Subscribing worker to dispatcher
   w.subscribe(&dispatcher);
 
-  // Initializing HWLoc backend's device manager
+  // Initializing HWLoc backend's topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -89,7 +89,7 @@ TEST(Worker, LifeCycle)
   // Initializing HWLoc backend's device manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

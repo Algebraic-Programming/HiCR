@@ -1,6 +1,6 @@
 #include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
 #include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 #include <hwloc.h>
@@ -48,8 +48,8 @@ int main(int argc, char **argv)
     // Instantiating Shared Memory communication backend
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(producerCount + 1);
 
-// Initializing Sequential backend's device manager
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+// Initializing Sequential backend's topology manager
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

@@ -15,7 +15,7 @@
 #include <hicr/exceptions.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
 #include <backends/sequential/L1/communicationManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 
 namespace backend = HiCR::backend::sequential;
 
@@ -30,8 +30,8 @@ TEST(MemoryManager, Construction)
 
 TEST(MemoryManager, Memory)
 {
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing Sequential backend's topology manager
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();

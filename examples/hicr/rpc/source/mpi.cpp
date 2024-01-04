@@ -1,6 +1,6 @@
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
 #include <backends/mpi/L1/instanceManager.hpp>
 #include <mpi.h>
@@ -14,12 +14,13 @@ int main(int argc, char **argv)
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing default topology manager
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
 
-  // Getting first device found
+  // Getting first device (CPU) found
   auto d = *dm.getDevices().begin();
 
   // Obtaining memory spaces and compute resources
