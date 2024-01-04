@@ -153,10 +153,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto destinationPointer = (void *)(((uint8_t *)destinationSlot->getPointer()) + dst_offset);
 
     // Getting data window for the involved processes
-    auto sourceDataWindow = source->getDataWindow();
+    auto sourceDataWindow = source->getDataWindow().get();
 
     // Getting recv message count window for the involved processes
-    auto sourceSentMessageWindow = source->getSentMessageCountWindow();
+    auto sourceSentMessageWindow = source->getSentMessageCountWindow().get();
 
     // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
     if (isSourceSlotLockAcquired == false) lockMPIWindow(sourceRank, sourceDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
@@ -195,10 +195,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto sourcePointer = (void *)(((uint8_t *)sourceSlot->getPointer()) + sourceOffset);
 
     // Getting data window for the involved processes
-    auto destinationDataWindow = destination->getDataWindow();
+    auto destinationDataWindow = destination->getDataWindow().get();
 
     // Getting recv message count windows for the involved process
-    auto destinationRecvMessageWindow = destination->getRecvMessageCountWindow();
+    auto destinationRecvMessageWindow = destination->getRecvMessageCountWindow().get();
 
     // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
     if (isDestinationSlotLockAcquired == false) lockMPIWindow(destinationRank, destinationDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
@@ -275,13 +275,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Checking whether the execution unit passed is compatible with this backend
     if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
 
-    auto status = MPI_Win_free(memorySlot->getDataWindow());
+    auto status = MPI_Win_free(memorySlot->getDataWindow().get());
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI data window");
 
-    status = MPI_Win_free(memorySlot->getRecvMessageCountWindow());
+    status = MPI_Win_free(memorySlot->getRecvMessageCountWindow().get());
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI recv message count window");
 
-    status = MPI_Win_free(memorySlot->getSentMessageCountWindow());
+    status = MPI_Win_free(memorySlot->getSentMessageCountWindow().get());
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI sent message count window");
   }
 
@@ -367,9 +367,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         globalSourceSlots[i]);
 
       // Allocating MPI windows
-      memorySlot->getDataWindow() = new MPI_Win;
-      memorySlot->getRecvMessageCountWindow() = new MPI_Win;
-      memorySlot->getSentMessageCountWindow() = new MPI_Win;
+      memorySlot->getDataWindow() = std::make_unique<MPI_Win>();
+      memorySlot->getRecvMessageCountWindow() = std::make_unique<MPI_Win>();
+      memorySlot->getSentMessageCountWindow() = std::make_unique<MPI_Win>();
 
       // Debug info
       // printf("Rank: %u, Pos %lu, GlobalSlot %lu, Key: %lu, Size: %lu, LocalPtr: 0x%lX, %s\n", _rank, i, globalSlotId, globalSlotKeys[i], globalSlotSizes[i], (uint64_t)globalSlotPointers[i], globalSlotProcessId[i] == _rank ? "x" : "");
@@ -381,7 +381,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         1,
         MPI_INFO_NULL,
         _comm,
-        memorySlot->getDataWindow());
+        memorySlot->getDataWindow().get());
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
 
@@ -392,7 +392,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         1,
         MPI_INFO_NULL,
         _comm,
-        memorySlot->getRecvMessageCountWindow());
+        memorySlot->getRecvMessageCountWindow().get());
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
 
@@ -403,7 +403,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         1,
         MPI_INFO_NULL,
         _comm,
-        memorySlot->getSentMessageCountWindow());
+        memorySlot->getSentMessageCountWindow().get());
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI sent message count window on exchange global memory slots.");
 
@@ -421,7 +421,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
     // Locking access to all relevant memory slot windows
-    lockMPIWindow(m->getRank(), m->getDataWindow(), MPI_LOCK_EXCLUSIVE, 0);
+    lockMPIWindow(m->getRank(), m->getDataWindow().get(), MPI_LOCK_EXCLUSIVE, 0);
 
     // Setting memory slot lock as aquired
     m->setLockAcquiredValue(true);
@@ -439,7 +439,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
     // Releasing access to all relevant memory slot windows
-    unlockMPIWindow(m->getRank(), m->getDataWindow());
+    unlockMPIWindow(m->getRank(), m->getDataWindow().get());
 
     // Setting memory slot lock as released
     m->setLockAcquiredValue(false);

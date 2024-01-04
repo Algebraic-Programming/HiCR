@@ -11,9 +11,10 @@
  */
 #pragma once
 
+#include <memory>
+#include <mpi.h>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L0/globalMemorySlot.hpp>
-#include <mpi.h>
 
 namespace HiCR
 {
@@ -68,21 +69,21 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    *
    * \return A pointer to the MPI window for the actual memory slot data
    */
-  __USED__ inline MPI_Win *&getDataWindow() { return _dataWindow; } 
+  __USED__ inline std::unique_ptr<MPI_Win> &getDataWindow() { return _dataWindow; } 
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the received message count
    *
    * \return A pointer to the MPI window for the received message count
    */
-  __USED__ inline MPI_Win *&getRecvMessageCountWindow() { return _recvMessageCountWindow; }
+  __USED__ inline std::unique_ptr<MPI_Win>& getRecvMessageCountWindow() { return _recvMessageCountWindow; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the sent message count
    *
    * \return A pointer to the MPI window for the sent message count
    */
-  __USED__ inline MPI_Win *&getSentMessageCountWindow() { return _sentMessageCountWindow; }
+  __USED__ inline std::unique_ptr<MPI_Win> &getSentMessageCountWindow() { return _sentMessageCountWindow; }
 
   /**
    * Returns whether the memory slot lock has been acquired by the current MPI instance
@@ -113,17 +114,17 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   /**
    * Stores the MPI window to use with this slot to move the actual data
    */
-  MPI_Win *_dataWindow = NULL;
+  std::unique_ptr<MPI_Win> _dataWindow = NULL;
 
   /**
    * Stores the MPI window to use with this slot to update received message count
    */
-  MPI_Win *_recvMessageCountWindow = NULL;
+  std::unique_ptr<MPI_Win>_recvMessageCountWindow = NULL;
 
   /**
    * Stores the MPI window to use with this slot to update sent message count
    */
-  MPI_Win *_sentMessageCountWindow = NULL;
+  std::unique_ptr<MPI_Win>_sentMessageCountWindow = NULL;
 };
 
 } // namespace L0

@@ -82,8 +82,7 @@ class ComputationKernel final : public Kernel
     loadKernel(std::string(kernelPath));
   };
   ComputationKernel() = delete;
-
-  ~ComputationKernel() { delete _kernelPtr; }
+  ~ComputationKernel() = default;
 
   /**
    * Creates the Ascend-specific Tensor data to be used as input/output parameter to Ascend kernels
@@ -112,7 +111,7 @@ class ComputationKernel final : public Kernel
   __USED__ inline void start(const aclrtStream stream) override
   {
     // register the operator in the ACL runtime
-    aclError err = aclopLoad(_kernelPtr, _kernelSize);
+    aclError err = aclopLoad(_kernelPtr.data(), _kernelSize);
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to load kernel into memory. Error %d", err);
 
@@ -159,7 +158,7 @@ class ComputationKernel final : public Kernel
   /**
    * Pointer to where the kernel resides in memory after reading it from .om file
    */
-  const char *_kernelPtr;
+  std::string _kernelPtr;
   /**
    * Kernel size in memory
    */
@@ -196,11 +195,11 @@ class ComputationKernel final : public Kernel
     _kernelSize = filesize;
 
     // allocate buffer to hold file
-    _kernelPtr = new char[_kernelSize];
+    _kernelPtr.resize(_kernelSize);
 
     // read file
     std::ifstream fin(kernelPath, std::ios::binary);
-    fin.read((char *)_kernelPtr, _kernelSize);
+    fin.read((char *)_kernelPtr.data(), _kernelSize);
     if (!fin) HICR_THROW_RUNTIME("Error reading file could only read %d bytes", fin.gcount());
 
     fin.close();
