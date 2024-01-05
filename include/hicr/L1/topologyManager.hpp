@@ -4,7 +4,7 @@
  */
 
 /**
- * @file deviceManager.hpp
+ * @file topologyManager.hpp
  * @brief Provides a definition for the abstract device manager class
  * @author S. M. Martin
  * @date 18/12/2023

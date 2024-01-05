@@ -85,6 +85,18 @@ class GlobalMemorySlot
    */
   __USED__ inline size_t getMessagesSent() const noexcept { return _messagesSent; }
 
+    /**
+   * Setter function for the memory slot's received message counter
+   * @param[in] count The memory slot's recv message counter to set
+   */
+  __USED__ inline void setMessagesRecv(const size_t count) noexcept { _messagesRecv = count; }
+
+  /**
+   * Setter function for the memory slot's sent message counter
+   * @param[in] count The memory slot's sent message counter to set
+   */
+  __USED__ inline void setMessagesSent(const size_t count) noexcept { _messagesSent = count; }
+
   /**
    * Increase counter function for the memory slot's received message counter
    */
