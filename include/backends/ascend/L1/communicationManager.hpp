@@ -140,57 +140,25 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Storage for pointers and memcpy kind
     aclrtMemcpyKind memcpyKind;
-    const void *srcPtr = NULL;
-    void *dstPtr = NULL;
+    auto srcPtr = source->getPointer();
+    auto dstPtr = destination->getPointer();
 
     // Determining which device context to use for copying
     std::shared_ptr<ascend::L0::LocalMemorySlot> deviceMemSlot = NULL;
-
-    // Host -> Host
-    if (srcType == deviceType_t::host && dstType == deviceType_t::host)
-    {
-      deviceMemSlot = NULL;
-      srcPtr = sh->getPointer();
-      dstPtr = dh->getPointer();
-      memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
-    }
-
-    // Host -> Device
-    if (srcType == deviceType_t::host && dstType == deviceType_t::device)
-    {
-      deviceMemSlot = dd;
-      srcPtr = sh->getPointer();
-      dstPtr = dd->getPointer();
-      memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
-    }
-    
-    // Device -> Host
-    if (srcType == deviceType_t::device && dstType == deviceType_t::host)
-    {
-      deviceMemSlot = sd;
-      srcPtr = sd->getPointer();
-      dstPtr = dh->getPointer();
-      memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
-    }
-
-    // Device -> Device
-    if (srcType == deviceType_t::device && dstType == deviceType_t::device)
-    {
-      deviceMemSlot = dd;
-      srcPtr = sd->getPointer();
-      dstPtr = dd->getPointer();
-      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
-    }
+    if (srcType == deviceType_t::host   && dstType == deviceType_t::host)   { deviceMemSlot = NULL; memcpyKind = ACL_MEMCPY_HOST_TO_HOST; }
+    if (srcType == deviceType_t::host   && dstType == deviceType_t::device) { deviceMemSlot = dd;   memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE; }
+    if (srcType == deviceType_t::device && dstType == deviceType_t::host)   { deviceMemSlot = sd;   memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST; }
+    if (srcType == deviceType_t::device && dstType == deviceType_t::device) { deviceMemSlot = dd;   memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE; }
 
     // Calculating actual offsets
-    const auto actualSrcPtr = (const void *)((uint8_t *)srcPtr + src_offset);
-    const auto actualDstPtr = (void *)((uint8_t *)dstPtr + dst_offset);
+    const auto actualSrcPtr = (uint8_t *)srcPtr + src_offset;
+    const auto actualDstPtr = (uint8_t *)dstPtr + dst_offset;
 
     // If a device is involved in this operation, select it and use its stream to perform the operation
     if (deviceMemSlot != NULL)
     {
       // Getting memory slot info
-      const auto memorySlotMemorySpace = (ascend::L0::MemorySpace *)deviceMemSlot->getMemorySpace().get();
+      const auto memorySlotMemorySpace = dynamic_pointer_cast<ascend::L0::MemorySpace>(deviceMemSlot->getMemorySpace());
       const auto memorySlotDevice = memorySlotMemorySpace->getDevice().lock();
 
       // Selecting device
