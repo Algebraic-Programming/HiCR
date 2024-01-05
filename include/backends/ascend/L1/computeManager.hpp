@@ -83,6 +83,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }
+
+  __USED__ inline void serializeImpl(nlohmann::json& output) const
+  {
+  }
 };
 
 } // namespace L1

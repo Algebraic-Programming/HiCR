@@ -41,30 +41,15 @@ class ComputeResource final : public HiCR::backend::sharedMemory::Core
   public:
 
   /**
-   * System-given logical processor (core or hyperthread) identifier that this class instance represents
-   */
-  typedef int logicalProcessorId_t;
-
-  /**
-   * System-given physical processor identifier that this class instance represents
-   */
-  typedef int physicalProcessorId_t;
-
-  /**
-   * System-given NUMA affinity identifier
-   */
-  typedef int numaAffinity_t;
-
-  /**
    * Constructor for the compute resource class of the sequential backend
    * \param topology HWLoc topology object for discovery
    * \param logicalProcessorId Os-determied core affinity assigned to this compute resource
    */
-  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId) : HiCR::backend::sharedMemory::Core(logicalProcessorId,
-                                                                                                                                detectPhysicalProcessorId(topology, logicalProcessorId),
-                                                                                                                                detectCoreNUMAffinity(topology, logicalProcessorId),
-                                                                                                                                detectCpuCaches(topology, logicalProcessorId),
-                                                                                                                                detectCPUSiblings(topology, logicalProcessorId)){};
+  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+   : HiCR::backend::sharedMemory::Core(logicalProcessorId,
+      detectPhysicalProcessorId(topology, logicalProcessorId),
+      detectCoreNUMAffinity(topology, logicalProcessorId),
+      detectCpuCaches(topology, logicalProcessorId)){};
 
   /**
    * Default destructor
@@ -177,12 +162,14 @@ class ComputeResource final : public HiCR::backend::sharedMemory::Core
     if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
 
     std::vector<backend::sharedMemory::Cache> ret;
-    std::string type;
-    size_t size;
 
     // Start from 1 level above our leaf/PU
     hwloc_obj_t cache = obj->parent;
-    do {
+    while (cache)
+    {
+      Cache::cacheLevel_t level;
+      std::string type;
+
       // Check if the current object is a cache-type object
       if (cache->type == HWLOC_OBJ_L1CACHE || cache->type == HWLOC_OBJ_L2CACHE || cache->type == HWLOC_OBJ_L3CACHE || cache->type == HWLOC_OBJ_L4CACHE || cache->type == HWLOC_OBJ_L5CACHE || cache->type == HWLOC_OBJ_L1ICACHE || cache->type == HWLOC_OBJ_L2ICACHE || cache->type == HWLOC_OBJ_L3ICACHE)
       {
@@ -191,111 +178,64 @@ class ComputeResource final : public HiCR::backend::sharedMemory::Core
         {
         case HWLOC_OBJ_L1CACHE:
         case HWLOC_OBJ_L1ICACHE:
-          type = "L1";
+          level = 1;
           break;
         case HWLOC_OBJ_L2CACHE:
         case HWLOC_OBJ_L2ICACHE:
-          type = "L2";
+          level = 2;
           break;
         case HWLOC_OBJ_L3CACHE:
         case HWLOC_OBJ_L3ICACHE:
-          type = "L3";
+          level = 3;
           break;
         case HWLOC_OBJ_L4CACHE:
-          type = "L4";
+          level = 4;
           break;
         case HWLOC_OBJ_L5CACHE:
-          type = "L5";
+          level = 5;
           break;
         // We never expect to get here; this is for compiler warning suppresion
         default:
-          type = "Unknown level";
+          level = 0;
         }
 
-        type += " ";
+        // Storage for cache type
+        std::string type = "Unknown";
 
         // Discover the type: Instruction, Data or Unified
         switch (cache->attr->cache.type)
         {
         case HWLOC_OBJ_CACHE_UNIFIED:
-          type += "Unified";
+          type = "Unified";
           break;
         case HWLOC_OBJ_CACHE_INSTRUCTION:
-          type += "Instruction";
+          type = "Instruction";
           break;
         case HWLOC_OBJ_CACHE_DATA:
-          type += "Data";
+          type = "Data";
           break;
         }
 
-        type += " ";
-
-        // Discover if the cache is private to a core or shared, via the arity field
-        // If shared, discover and export the PU IDs that share it
-        if (cache->arity > 1)
-        {
-          type += "Shared";
-          for (size_t i = 0; i < cache->arity; i++)
-          {
-            hwloc_obj_t child = cache->children[i];
-            std::vector<int> puIds;
-            detectThreadPUs(topology, child, 0, puIds);
-            for (auto &id : puIds)
-            {
-              type += " ";
-              type += std::to_string(id);
-            }
-          }
-        }
-        else
-          type += "Private";
-
-        // Get size
-        size = cache->attr->cache.size;
+        // Storage for more cache information
+        const bool shared = cache->arity > 1;
+        const auto size = cache->attr->cache.size;
+        const auto lineSize = cache->attr->cache.linesize;
 
         // Insert element to our return container
-        ret.push_back(backend::sharedMemory::Cache(type, size));
+        ret.push_back(backend::sharedMemory::Cache(level, type, size, lineSize, shared));
       }
 
       // Repeat the search 1 level above
       cache = cache->parent;
-    } while (cache);
+    } 
 
     return ret;
   }
 
-  /**
-   * Uses HWloc to discover the sibling logical processors associated with a given logical processor ID
-   *
-   * \param[in] topology An HWLoc topology object, already initialized
-   * \param[in] logicalProcessorId The ID of the processor we are doing the search for
-   * \returns A vector of processor IDs, siblings of cpuId (expected to have up to 1 in most archs)
-   */
-  __USED__ static inline std::vector<L0::ComputeResource::logicalProcessorId_t> detectCPUSiblings(hwloc_topology_t topology, L0::ComputeResource::logicalProcessorId_t logicalProcessorId)
+  __USED__ inline void serializeImpl(nlohmann::json& output) const override
   {
-    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
-    hwloc_obj_t obj = pu;
-    if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
-
-    std::vector<L0::ComputeResource::logicalProcessorId_t> ret;
-
-    // Probe if there are *next* siblings
-    while (obj->next_sibling)
-    {
-      ret.push_back(obj->next_sibling->logical_index);
-      obj = obj->next_sibling;
-    }
-
-    // Return to initial PU object
-    obj = pu;
-    // Probe if there are *previous* siblings
-    while (obj->prev_sibling)
-    {
-      ret.push_back(obj->prev_sibling->logical_index);
-      obj = obj->prev_sibling;
-    }
-
-    return ret;
+    // Calling the base class serializer
+    this->HiCR::backend::sharedMemory::Core::serializeImpl(output);
   }
 };
 

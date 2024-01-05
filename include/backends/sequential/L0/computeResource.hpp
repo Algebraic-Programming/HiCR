@@ -45,6 +45,10 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   ~ComputeResource() = default;
 
   __USED__ inline std::string getType() const override { return "Sequential Process"; }
+
+  __USED__ inline void serializeImpl(nlohmann::json& output) const
+  {
+  }
 };
 
 } // namespace L0

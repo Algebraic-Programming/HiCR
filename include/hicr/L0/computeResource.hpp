@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#include <nlohmann_json/json.hpp>
+#include <hicr/definitions.hpp>
 #include <string>
 
 namespace HiCR
@@ -41,9 +43,37 @@ class ComputeResource
    */
   virtual ~ComputeResource() = default;
 
+  /**
+   * Serialization function to enable sharing compute resource information
+   *
+   * @return JSON-formatted serialized compute resource information
+   */
+  __USED__ inline nlohmann::json serialize() const
+  {
+    // Storage for newly created serialized output
+    nlohmann::json output;
+
+    // Getting information from the derived class
+    serializeImpl(output);
+
+    // Getting compute resource type
+    output["Type"] = getType();
+
+    // Returning serialized information
+    return output;
+  }
+
   protected:
 
   ComputeResource() = default;
+
+  /**
+  * Backend-specific implemtation of the serialize function that allows adding more information than the one
+  * provided by default by HiCR
+  *
+  * @return JSON-formatted serialized compute resource information
+  */
+  virtual void serializeImpl(nlohmann::json& output) const = 0;
 };
 
 } // namespace L0

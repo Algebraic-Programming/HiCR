@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <nlohmann_json/json.hpp>
 #include <hicr/exceptions.hpp>
 #include <string>
 
@@ -87,6 +88,30 @@ class MemorySpace
    * Default destructor
    */
   virtual ~MemorySpace() = default;
+
+  /**
+   * Serialization function to enable sharing memory space information
+   *
+   * @return JSON-formatted serialized memory space information
+   */
+  __USED__ inline nlohmann::json serialize() const
+  {
+    // Storage for newly created serialized output
+    nlohmann::json output;
+
+    // Getting memory space type
+    output["Type"] = getType();
+
+    // Getting size
+    output["Size"] = getSize();
+  
+    // Getting current usage
+    output["Usage"] = getUsage();
+
+    // Returning serialized information
+    return output;
+  }
+
 
   protected:
 

@@ -59,13 +59,11 @@ class Core : public HiCR::L0::ComputeResource
   Core(const logicalProcessorId_t logicalProcessorId,
        const physicalProcessorId_t physicalProcessorId,
        const numaAffinity_t numaAffinity,
-       const std::vector<backend::sharedMemory::Cache> &caches,
-       const std::vector<logicalProcessorId_t> &siblings) : HiCR::L0::ComputeResource(),
+       const std::vector<backend::sharedMemory::Cache> &caches) : HiCR::L0::ComputeResource(),
                                                             _logicalProcessorId(logicalProcessorId),
                                                             _physicalProcessorId(physicalProcessorId),
                                                             _numaAffinity(numaAffinity),
-                                                            _caches(caches),
-                                                            _siblings(siblings){};
+                                                            _caches(caches){};
   Core() = delete;
 
   /**
@@ -89,6 +87,19 @@ class Core : public HiCR::L0::ComputeResource
    * \return The physical ID of the hardware Core
    */
   __USED__ inline physicalProcessorId_t getPhysicalProcessorId() const { return _physicalProcessorId; }
+
+  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  {
+   // Writing core's information into the serialized object
+   output["Logical Processor Id"] = _logicalProcessorId;
+   output["Physical Processor Id"] = _physicalProcessorId;
+   output["Numa Affinity"] = _numaAffinity;
+
+   // Writing Cache information
+   std::string cachesKey = "Caches";
+   output[cachesKey] = std::vector<nlohmann::json>();
+   for (const auto& cache : _caches) output[cachesKey] += cache.serialize();
+  }
 
   private:
 
@@ -114,11 +125,6 @@ class Core : public HiCR::L0::ComputeResource
    * that only one cache object of each type can be associated with a CPU.
    */
   const std::vector<backend::sharedMemory::Cache> _caches;
-
-  /**
-   * List of sibling threads/cores, if applicable.
-   */
-  const std::vector<logicalProcessorId_t> _siblings;
 };
 
 } // namespace sharedMemory

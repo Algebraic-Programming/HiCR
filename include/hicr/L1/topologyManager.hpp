@@ -61,6 +61,12 @@ class TopologyManager
     // Storage for newly created serialized output
     nlohmann::json output;
 
+    // Adding serialized devices information into the array
+    std::string devicesKey = "Devices";
+    output[devicesKey] = std::vector<nlohmann::json>();
+    for (const auto& device : _deviceList) output[devicesKey] += device->serialize();
+
+    // Returning topology
     return output;
   }
 

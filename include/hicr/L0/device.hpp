@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <unordered_set>
+#include <nlohmann_json/json.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/memorySpace.hpp>
 
@@ -92,6 +93,33 @@ class Device
   Device(const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces)
     : _computeResources(computeResources),
       _memorySpaces(memorySpaces){};
+
+  /**
+   * Serialization function to enable sharing device information
+   *
+   * @return JSON-formatted serialized device information
+   */
+  __USED__ inline nlohmann::json serialize() const
+  {
+    // Storage for newly created serialized output
+    nlohmann::json output;
+
+    // Getting device type
+    output["Type"] = getType();
+
+    // Serializing compute resource information
+    std::string computeResourceKey = "Compute Resources";
+    output[computeResourceKey] = std::vector<nlohmann::json>();
+    for (const auto& computeResource : _computeResources) output[computeResourceKey] += computeResource->serialize();
+
+    // Serializing memory space information
+    std::string memorySpaceKey = "Memory Spaces";
+    output[memorySpaceKey] = std::vector<nlohmann::json>();
+    for (const auto& memorySpace : _memorySpaces) output[memorySpaceKey] += memorySpace->serialize();
+
+    // Returning serialized information
+    return output;
+  }
 
   private:
 

@@ -12,6 +12,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include <hicr/L0/computeResource.hpp>
 
 namespace HiCR
@@ -30,46 +31,23 @@ class Cache
 {
   public:
 
-  /**
-   * Set of cache types commonly encountered
-   */
-  typedef std::string cacheType_t;
-
-  protected:
-
-  /**
-   * Size of the Cache, in Bytes
-   */
-  size_t _cacheSize;
-
-  /**
-   * Size of the Cache Line, in Bytes
-   */
-  size_t _lineSize;
-
-  /**
-   * Type of the Cache object
-   */
-  cacheType_t _level;
-
-  /**
-   * Storage of Compute Units associated with the Cache;
-   * If the cache is shared among multiple cores, the multiple IDs
-   * will appear here. There is currently redunduncy in the representation,
-   * as all cores that share the cache will keep a copy of this information
-   */
-  std::vector<HiCR::L0::ComputeResource *> _associatedComputeUnits;
-
-  public:
+  typedef unsigned int cacheLevel_t;
 
   /**
    * Constructor for the cache class
    *
-   * @param[in] level The level (L1, L2, L3...) detected for this cache instance
+   * @param[in] level The level (L1, L1, L2, L3...) detected for this cache instance
+   * @param[in] Type The type (instruction, data, unified) for this cache
+   * @param[in] lineSize The size of each cache line contained within
+   * @param[in] shared Indicates whether this cache is shared among others
    * @param[in] size The size of the detected cache
    */
-  Cache(const cacheType_t level, const size_t size) : _cacheSize(size),
-                                                      _level(level)
+  Cache(const cacheLevel_t level, const std::string& type, const size_t size, const size_t lineSize, const bool shared) :
+   _level(level),
+   _type(type),
+   _cacheSize(size),
+   _lineSize(lineSize),
+   _shared(shared)
   {
   }
 
@@ -78,20 +56,9 @@ class Cache
    *
    * \return The cache size in Bytes
    */
-  inline size_t getCacheSize() const
+  __USED__ inline size_t getSize() const
   {
     return _cacheSize;
-  }
-
-  /**
-   * Set the cache size with information obtained from the backend.
-   * This should be used only during initialization / resource detection.
-   *
-   * \param[in] size The size of the cache in Bytes
-   */
-  inline void setCacheSize(size_t size)
-  {
-    _cacheSize = size;
   }
 
   /**
@@ -99,20 +66,9 @@ class Cache
    *
    * \return The cache line size in Bytes
    */
-  inline size_t getLineSize() const
+  __USED__ inline size_t getLineSize() const
   {
     return _lineSize;
-  }
-
-  /**
-   * Set the cache line size with information obtained from the backend (or 64 Bytes by default).
-   * This should be used only during initialization / resource detection.
-   *
-   * \param[in] lsize The size of the cache line in Bytes
-   */
-  inline void setLineSize(size_t lsize = 64)
-  {
-    _lineSize = lsize;
   }
 
   /**
@@ -120,64 +76,78 @@ class Cache
    *
    * \return The cache type in as a cacheType_t enum value
    */
-  inline cacheType_t getCacheType() const
+  __USED__ inline cacheLevel_t getLevel() const
   {
     return _level;
   }
 
-  /**
-   * Set the cache type with information obtained from the backend.
-   * This should be used only during initialization / resource detection.
+   /**
+   * Indicates whether the cache is shared among other procesing units
    *
-   * \param[in] t The type of the cache as a cacheType_t enum value
+   * \return True, if the cache is shared; false, otherwise
    */
-  inline void setCacheType(cacheType_t t)
+  __USED__ inline bool getShared() const
   {
-    _level = t;
+    return _shared;
   }
 
   /**
-   * Obtain the associated CPU ID(s) of the cache object
-   *
-   * \return An std::vector of the CPU IDs
-   */
-  inline std::vector<HiCR::L0::ComputeResource *> getAssociatedComputeUnits() const
+  * Returns the cache type
+  *
+  * \return The cache type (instruction, data, unified)
+  */
+  __USED__ inline const std::string& getType() const
   {
-    return _associatedComputeUnits;
+    return _type;
   }
 
   /**
-   * Set compute resource ID associated with a cache; used for private caches
-   * This should be used only during initialization / resource detection.
+   * Serialization function to enable sharing device information
    *
-   * \param[in] computeUnit The hicr compute unit that contains or uses this cache
+   * @return JSON-formatted serialized device information
    */
-  inline void setAssociatedComputeUnit(HiCR::L0::ComputeResource *computeUnit)
+  __USED__ inline nlohmann::json serialize() const
   {
-    _associatedComputeUnits.resize(1);
-    _associatedComputeUnits[0] = computeUnit;
+    // Storage for newly created serialized output
+    nlohmann::json output;
+
+    // Getting Cache information
+    output["Size (Bytes)"] = getSize();
+    output["Line Size (Bytes)"] = getLineSize();
+    output["Level"] = getLevel();
+    output["Type"] = getType();
+    output["Shared"] = getShared();
+
+    // Returning serialized information
+    return output;
   }
 
-  /**
-   * Add compute resource ID associated with a cache; used for shared caches
-   * This should be used only during initialization / resource detection.
-   *
-   * \param[in] computeUnit The hicr compute unit that contains or uses this cache
-   */
-  inline void addAssociatedComputeUnit(HiCR::L0::ComputeResource *computeUnit)
-  {
-    _associatedComputeUnits.push_back(computeUnit);
-  }
+ private:
 
   /**
-   * This function checks if a cache object is shared among multiple cores or is private.
-   *
-   * \return True, if the cache is shared; False if it is private.
+   * Cache level
    */
-  inline bool isShared() const
-  {
-    return (_associatedComputeUnits.size() > 1);
-  }
+  const cacheLevel_t _level;
+
+  /**
+   * Type of cache (Instruction, Data, Unified)
+  */
+  const std::string _type;
+
+  /**
+   * Size of the Cache, in Bytes
+   */
+  const size_t _cacheSize;
+
+  /**
+   * Size of the Cache Line, in Bytes
+   */
+  const size_t _lineSize;
+
+  /**
+   * Flag to indicate whether the flag is of exclusive core use or shared among others
+  */
+  const bool _shared;
 
 }; // class Cache
 
