@@ -132,6 +132,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     CHECK(lpf_register_local(_lpf, localSlotSizes.data(), localSlotCount * sizeof(size_t), &slot_local_sizes));
     CHECK(lpf_register_global(_lpf, globalSlotSizes.data(), globalSlotCount * sizeof(size_t), &slot_global_sizes));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+
     // start allgatherv for global slot counts in bytes
     CHECK(lpf_collectives_init(_lpf, _rank, _size, 2 /* will call gatherv 2 times */, 0, sizeof(size_t) * globalSlotCount, &coll));
     CHECK(lpf_allgatherv(coll, slot_local_sizes, slot_global_sizes, globalSlotCountsInBytes.data(), false /*exclude myself*/));
@@ -139,6 +140,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     CHECK(lpf_register_local(_lpf, localSlotProcessId.data(), localSlotCount * sizeof(size_t), &slot_local_process_ids));
     CHECK(lpf_register_global(_lpf, globalSlotProcessId.data(), globalSlotCount * sizeof(size_t), &slot_global_process_ids));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+    
     // start allgatherv for process IDs assigned to each global slot
     CHECK(lpf_allgatherv(coll, slot_local_process_ids, slot_global_process_ids, globalSlotCountsInBytes.data(), false /*exclude myself*/));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
@@ -165,21 +167,24 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
       void* globalSlotPointer = nullptr;
       std::shared_ptr<HiCR::L0::LocalMemorySlot> globalSourceSlot = nullptr;
-
-      // Memory for this slot not yet allocated or registered
-      if (globalSlotProcessId[i] != _rank)
-      {
-        globalSlotSizes[i] = 0;
-      }
-      else
+      
+      // If the slot is remote, do not specify any local size assigned to it
+      if (globalSlotProcessId[i] != _rank) globalSlotSizes[i] = 0;
+    
+      // If it's local, then assign the local information to it
+      if (globalSlotProcessId[i] == _rank)
       {
         auto memorySlot = memorySlots[localPointerPos++].second;
         globalSlotPointer = memorySlot->getPointer();
         globalSourceSlot = memorySlot;
       }
 
+      // Registering with the LPF library
       lpf_memslot_t newSlot = LPF_INVALID_MEMSLOT;
       CHECK(lpf_register_global(_lpf, globalSlotPointer, globalSlotSizes[i], &newSlot));
+
+      // Synchronizing with others
+      CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
 
       // Creating new memory slot object
       auto memorySlot = std::make_shared<lpf::L0::GlobalMemorySlot>(
@@ -188,8 +193,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         tag,
         globalSlotKeys[i],
         globalSourceSlot);
-
-      CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
 
       // Finally, registering the new global memory slot
       registerGlobalMemorySlot(memorySlot);
