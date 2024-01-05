@@ -83,12 +83,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Nothing to do here
   }
 
-  /**
-   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
-   *
-   * \param[in] tag Identifies a particular subset of global memory slots
-   * \param[in] memorySlots Array of local memory slots to make globally accessible
-   */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Synchronize all intervening threads in this call
@@ -114,11 +108,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     barrier();
   }
 
-  /**
-   * Backend-internal implementation of the queryMemorySlotUpdates function
-   *
-   * \param[in] memorySlot Memory slot to query updates for.
-   */
   __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // This function should check and update the abstract class for completed memcpy operations

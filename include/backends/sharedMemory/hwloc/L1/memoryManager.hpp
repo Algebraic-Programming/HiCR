@@ -60,13 +60,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    */
   const hwloc_topology_t *const _topology;
 
-  /**
-   * Backend-internal implementation of the queryLocalMemorySlot function
-   *
-   * \param[in] memorySpace Memory space to allocate memory in
-   * \param[in] size Size of the memory slot to create
-   * \return The internal pointer associated to the local memory slot
-   */
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
@@ -99,14 +92,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return memorySlot;
   }
 
-  /**
-   * Backend-internal implementation of the registerLocalMemorySlot function
-   *
-   * \param[in] memorySpace The memory space to register the new memory slot in
-   * \param[in] ptr Pointer to the local memory space
-   * \param[in] size Size of the memory slot to register
-   * \return A newly created memory slot
-   */
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
@@ -116,21 +101,11 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return memorySlot;
   }
 
-  /**
-   * Backend-internal implementation of the deregisterMemorySlot function
-   *
-   * \param[in] memorySlot Memory slot to deregister.
-   */
   __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Nothing to do here
   }
 
-  /**
-   * Backend-internal implementation of the freeLocalMemorySlot function
-   *
-   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
-   */
   __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit

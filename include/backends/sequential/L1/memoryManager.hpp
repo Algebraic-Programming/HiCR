@@ -45,13 +45,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   private:
 
-  /**
-   * Allocates memory in the current memory space (whole system)
-   *
-   * \param[in] memorySpace Memory space in which to perform the allocation.
-   * \param[in] size Size of the memory slot to create
-   * \returns The pointer of the newly allocated memory slot
-   */
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
@@ -70,34 +63,17 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return std::make_shared<HiCR::L0::LocalMemorySlot>(ptr, size, memorySpace);
   }
 
-  /**
-   * Associates a pointer locally-allocated manually and creates a local memory slot with it
-   * \param[in] memorySpace The memory space to register the new memory slot in
-   * \param[in] ptr Pointer to the local memory space
-   * \param[in] size Size of the memory slot to register
-   * \return A newly created memory slot
-   */
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     // Returning new memory slot pointer
     return std::make_shared<HiCR::L0::LocalMemorySlot>(ptr, size, memorySpace);
   }
 
-  /**
-   * De-registers a memory slot previously registered
-   *
-   * \param[in] memorySlot Memory slot to deregister.
-   */
   __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Nothing to do here for this backend
   }
 
-  /**
-   * Backend-internal implementation of the freeLocalMemorySlot function
-   *
-   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
-   */
   __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     if (memorySlot->getPointer() == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exit or represents a NULL pointer.");

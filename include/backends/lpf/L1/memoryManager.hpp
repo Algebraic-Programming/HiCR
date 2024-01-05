@@ -99,13 +99,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     lpf_deregister(_lpf, slot->getLPFSlot());
   }
 
-  /**
-   * Allocates memory in the current memory space (whole system)
-   *
-   * \param[in] memorySpace Memory space in which to perform the allocation.
-   * \param[in] size Size of the memory slot to create
-   * \returns The address of the newly allocated memory slot
-   */
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the LPF instance
@@ -121,11 +114,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return registerLocalMemorySlotImpl(memorySpace, ptr, size);
   }
 
-  /**
-   * Frees up a local memory slot reserved from this memory space
-   *
-   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
-   */
   __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the memory slot

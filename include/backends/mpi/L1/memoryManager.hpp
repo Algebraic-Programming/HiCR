@@ -46,7 +46,8 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   ~MemoryManager() = default;
 
   /**
-   * Allocates memory in the current memory space (whole system)
+   * Allocates memory in the current memory space (whole system) using MPI_Alloc_mem 
+   * This method, as opposed to a normal malloc ensures portability for all MPI implementations
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.
    * \param[in] size Size of the memory slot to create
@@ -73,11 +74,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return registerLocalMemorySlotImpl(memorySpace, ptr, size);
   }
 
-  /**
-   * Frees up a local memory slot reserved from this memory space
-   *
-   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
-   */
   __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting memory slot pointer
@@ -93,14 +89,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Could not free memory slot (ptr: 0x%lX, size: %lu)", pointer, memorySlot->getSize());
   }
 
-  /**
-   * Associates a pointer locally-allocated manually and creates a local memory slot with it
-   *
-   * \param[in] ptr Pointer to the local memory space
-   * \param[in] size Size of the memory slot to register
-   * \param[in] memorySpace The memory space onto which to register the new local memory slot
-   * \return A newly created memory slot
-   */
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
@@ -110,11 +98,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return memorySlot;
   }
 
-  /**
-   * De-registers a memory slot previously registered
-   *
-   * \param[in] memorySlot Pointer to the memory slot to deregister.
-   */
   __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Nothing to do here for this backend

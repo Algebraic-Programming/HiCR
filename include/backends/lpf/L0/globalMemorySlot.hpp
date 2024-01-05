@@ -71,24 +71,6 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    */
   lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
 
-  /**
-   * @param[in] slot Right-hand side slot in comparison
-   * @return true if left-hand side is smaller according to (tag,key) comparison
-   * The comparison operator is provided for the hash table
-   * MemoryManager::initMsgCnt
-   */
-  bool operator<(const GlobalMemorySlot &slot) const
-  {
-    if (this->getGlobalTag() < slot.getGlobalTag())
-      return true;
-    else if (this->getGlobalTag() > slot.getGlobalTag())
-      return false;
-    else
-    {
-      return (this->getGlobalKey() < slot.getGlobalKey());
-    }
-  }
-
   private:
 
   /**

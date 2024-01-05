@@ -285,12 +285,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI sent message count window");
   }
 
-  /**
-   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
-   *
-   * \param[in] tag Identifies a particular subset of global memory slots
-   * \param[in] memorySlots Array of local memory slots to make globally accessible
-   */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange

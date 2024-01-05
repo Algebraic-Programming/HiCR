@@ -48,13 +48,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   private:
 
-  /**
-   * Backend-internal implementation of the queryLocalMemorySlot function
-   *
-   * \param[in] memorySpace memory space to allocate memory in
-   * \param[in] size size of the memory slot to create
-   * \return the internal pointer associated to the local memory slot
-   */
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
@@ -142,24 +135,11 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return ptr;
   }
 
-  /**
-   * Backend-internal implementation of the registerLocalMemorySlot function. Not implemented.
-   *
-   * \param[in] memorySpace The memory space to register the new memory slot in
-   * \param[in] ptr pointer to the start of the memory slot
-   * \param[in] size size of the memory slot to create
-   * \return a newly created memory slot
-   */
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
-  /**
-   * Backend-internal implementation of the freeLocalMemorySlot function
-   *
-   * \param[in] memorySlot local memory slot to free up. It becomes unusable after freeing.
-   */
   __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit

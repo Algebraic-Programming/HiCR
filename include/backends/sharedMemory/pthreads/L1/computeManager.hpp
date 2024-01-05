@@ -45,10 +45,6 @@ class ComputeManager final : public sequential::L1::ComputeManager
    * Constructor for the compute manager class for the shared memory backend
    */
   ComputeManager() : sequential::L1::ComputeManager() {}
-
-  /**
-   * Default destructor
-   */
   ~ComputeManager() = default;
 
   private:

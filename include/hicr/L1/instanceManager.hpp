@@ -51,6 +51,9 @@ class InstanceManager
    */
   typedef uint64_t processingUnitIndex_t;
 
+ /**
+ * Type definition for an unsorted set of unique pointers to the detected instances
+ */
   typedef std::unordered_set<std::unique_ptr<HiCR::L0::Instance>> instanceList_t;
 
   /**
