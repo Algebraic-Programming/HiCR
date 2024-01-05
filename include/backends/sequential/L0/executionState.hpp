@@ -45,7 +45,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   __USED__ inline ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_cast<const sequential::L0::ExecutionUnit* >(executionUnit.get());
+    auto e = dynamic_pointer_cast<sequential::L0::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());

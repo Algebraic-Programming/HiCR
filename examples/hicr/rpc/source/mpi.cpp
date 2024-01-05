@@ -2,6 +2,7 @@
 #include "include/worker.hpp"
 #include <backends/sequential/L1/topologyManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
+#include <backends/mpi/L1/memoryManager.hpp>
 #include <backends/mpi/L1/instanceManager.hpp>
 #include <mpi.h>
 

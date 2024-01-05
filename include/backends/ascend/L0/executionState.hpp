@@ -46,7 +46,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_cast<const ascend::L0::ExecutionUnit *>(executionUnit.get());
+    auto e = dynamic_pointer_cast<ascend::L0::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType());
@@ -137,7 +137,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   /**
    * Execution unit containing the kernel operations to execute
    */
-  const ExecutionUnit *_executionUnit;
+  std::shared_ptr<ExecutionUnit> _executionUnit;
 
   /**
    * Synchronization event to check for stream completion

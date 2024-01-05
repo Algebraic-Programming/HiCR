@@ -158,10 +158,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     deviceType_t dstType = deviceType_t::none;
 
     // Using up-casting to determine device types
-    auto sd = dynamic_cast<ascend::L0::LocalMemorySlot *>(source.get());
-    auto dd = dynamic_cast<ascend::L0::LocalMemorySlot *>(destination.get());
-    auto sh = dynamic_cast<HiCR::L0::LocalMemorySlot* >(source.get());
-    auto dh = dynamic_cast<HiCR::L0::LocalMemorySlot* >(destination.get());
+    auto sd = dynamic_pointer_cast<ascend::L0::LocalMemorySlot>(source);
+    auto dd = dynamic_pointer_cast<ascend::L0::LocalMemorySlot>(destination);
+    auto sh = dynamic_pointer_cast<HiCR::L0::LocalMemorySlot>(source);
+    auto dh = dynamic_pointer_cast<HiCR::L0::LocalMemorySlot>(destination);
 
     if (sh != NULL) srcType = deviceType_t::host;
     if (dh != NULL) dstType = deviceType_t::host;
@@ -184,7 +184,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     void *dstPtr = NULL;
 
     // Determining which device context to use for copying
-    ascend::L0::LocalMemorySlot *deviceMemSlot = NULL;
+    std::shared_ptr<ascend::L0::LocalMemorySlot> deviceMemSlot = NULL;
     if (memcpyKind == ACL_MEMCPY_HOST_TO_HOST)
     {
       deviceMemSlot = NULL;

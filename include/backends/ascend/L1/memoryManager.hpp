@@ -58,13 +58,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
-    auto ascendMemSpace = dynamic_cast<const ascend::L0::MemorySpace *>(memorySpace.get());
+    auto ascendMemSpace = dynamic_pointer_cast<const ascend::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (ascendMemSpace != NULL) return allocateLocalDeviceMemorySlot(memorySpace, size);
 
     // Getting up-casted pointer for the MPI instance
-    auto hostMemSpace = dynamic_cast<const sequential::L0::MemorySpace *>(memorySpace.get());
+    auto hostMemSpace = dynamic_pointer_cast<const sequential::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (hostMemSpace != NULL) return allocateLocalHostMemorySlot(memorySpace, size);
@@ -78,7 +78,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     aclDataBuffer *dataBuffer;
 
     // do a malloc on the ascend and create the databuffer
-    auto ascendMemSpace = dynamic_cast<const ascend::L0::MemorySpace *>(memorySpace.get());
+    auto ascendMemSpace = dynamic_pointer_cast<ascend::L0::MemorySpace>(memorySpace);
     ptr = deviceAlloc(ascendMemSpace, size);
     dataBuffer = aclCreateDataBuffer(ptr, size);
     if (dataBuffer == NULL) HICR_THROW_RUNTIME("Can not create data buffer in device");
@@ -92,7 +92,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     void *ptr = NULL;
 
     // do a malloc on the ascend and create the databuffer
-    ptr = hostAlloc(memorySpace.get(), size);
+    ptr = hostAlloc(memorySpace, size);
 
     // create the new memory slot
     return std::make_shared<HiCR::L0::LocalMemorySlot>(ptr, size, memorySpace);
@@ -104,7 +104,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] memorySpace device id where memory is allocated
    * \param[in] size allocation size
    */
-  __USED__ inline void *deviceAlloc(const ascend::L0::MemorySpace* memorySpace, const size_t size)
+  __USED__ inline void *deviceAlloc(std::shared_ptr<ascend::L0::MemorySpace> memorySpace, const size_t size)
   {
     // Getting device associated with this memory space
     auto device = memorySpace->getDevice().lock();
@@ -129,7 +129,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] memorySpace device id where memory is allocated
    * \param[in] size allocation size
    */
-  __USED__ inline void *hostAlloc(const HiCR::L0::MemorySpace* memorySpace, const size_t size)
+  __USED__ inline void *hostAlloc(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size)
   {
     // Storage for the allocation pointer
     void *ptr = nullptr;
@@ -163,24 +163,18 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<ascend::L0::LocalMemorySlot *>(memorySlot.get());
+    auto m = dynamic_pointer_cast<ascend::L0::LocalMemorySlot>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (m != NULL)
-    {
-      freeLocalDeviceMemorySlot(m);
-    }
-    else
-    {
-      freeLocalHostMemorySlot(memorySlot.get());
-    }
+    if (m == NULL) freeLocalHostMemorySlot(memorySlot);
+    if (m != NULL) freeLocalDeviceMemorySlot(m);
   }
 
-  __USED__ inline void freeLocalDeviceMemorySlot(L0::LocalMemorySlot* memorySlot)
+  __USED__ inline void freeLocalDeviceMemorySlot(std::shared_ptr<L0::LocalMemorySlot> memorySlot)
   {
     // Getting memory slot info
     const auto memorySlotPointer = memorySlot->getPointer();
-    const auto memorySlotMemorySpace = dynamic_cast<HiCR::backend::ascend::L0::MemorySpace*>(memorySlot->getMemorySpace().get());
+    const auto memorySlotMemorySpace = dynamic_pointer_cast<HiCR::backend::ascend::L0::MemorySpace>(memorySlot->getMemorySpace());
     const auto memorySlotDevice = memorySlotMemorySpace->getDevice().lock();
     const auto memorySlotDeviceId = memorySlotDevice->getId();
 
@@ -191,7 +185,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy data buffer. Error %d", err);
   }
 
-  __USED__ inline void freeLocalHostMemorySlot(HiCR::L0::LocalMemorySlot* memorySlot)
+  __USED__ inline void freeLocalHostMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
   {
     aclError err = aclrtFreeHost(memorySlot->getPointer());
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while freeing host memory. Error %d", err);

@@ -100,14 +100,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     size_t globalSlotCount = 0;
     for (size_t i = 0; i < _size; i++)
-    {
       globalSlotCount += globalSlotCounts[i];
-    }
+      
     std::vector<size_t> globalSlotCountsInBytes(globalSlotCount);
     for (size_t i = 0; i < globalSlotCount; i++)
-    {
       globalSlotCountsInBytes[i] = globalSlotCounts[i] * sizeof(size_t);
-    }
 
     // globalSlotSizes will hold exactly the union of all slot sizes at
     // each process (zero or more) to become global.

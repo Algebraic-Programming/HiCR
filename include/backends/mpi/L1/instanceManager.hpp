@@ -16,8 +16,9 @@
 #include <hicr/definitions.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/L1/instanceManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
+#include <hicr/L1/computeManager.hpp>
 #include <backends/mpi/L0/instance.hpp>
-#include <backends/mpi/L1/memoryManager.hpp>
 #include <backends/mpi/L1/communicationManager.hpp>
 
 namespace HiCR
@@ -52,11 +53,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    * \param[in] computeManager The compute manager to use for RPC running
    * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
-  InstanceManager(HiCR::L1::CommunicationManager& communicationManager,
+  InstanceManager(HiCR::backend::mpi::L1::CommunicationManager& communicationManager,
                   HiCR::L1::ComputeManager& computeManager,
                   HiCR::L1::MemoryManager& memoryManager,
                   std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) :
-                   HiCR::L1::InstanceManager(communicationManager, computeManager, memoryManager, bufferMemorySpace),
+                   HiCR::L1::InstanceManager(&communicationManager, &computeManager, &memoryManager, bufferMemorySpace),
                   _MPICommunicationManager(dynamic_cast<mpi::L1::CommunicationManager *const>(&communicationManager))
   {
     // Checking whether the execution unit passed is compatible with this backend

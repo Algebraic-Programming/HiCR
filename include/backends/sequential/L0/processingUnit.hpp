@@ -49,7 +49,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the MPI instance
-    auto c = dynamic_cast<L0::ComputeResource *>(computeResource.get());
+    auto c = dynamic_pointer_cast<L0::ComputeResource>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");

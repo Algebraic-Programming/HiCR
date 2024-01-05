@@ -160,12 +160,12 @@ class InstanceManager
    * \param[in] computeManager The compute manager to use for RPC running
    * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
-  InstanceManager(HiCR::L1::CommunicationManager& communicationManager,
-                  HiCR::L1::ComputeManager& computeManager,
-                  HiCR::L1::MemoryManager& memoryManager,
-                  std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) : _communicationManager(&communicationManager),
-                                                              _computeManager(&computeManager),
-                                                              _memoryManager(&memoryManager),
+  InstanceManager(HiCR::L1::CommunicationManager* communicationManager,
+                  HiCR::L1::ComputeManager* computeManager,
+                  HiCR::L1::MemoryManager* memoryManager,
+                  std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) : _communicationManager(communicationManager),
+                                                              _computeManager(computeManager),
+                                                              _memoryManager(memoryManager),
                                                               _bufferMemorySpace(bufferMemorySpace){};
 
   /**

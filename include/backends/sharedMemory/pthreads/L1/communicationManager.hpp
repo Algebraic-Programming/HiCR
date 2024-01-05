@@ -159,7 +159,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
-    auto dst = dynamic_cast<HiCR::L0::GlobalMemorySlot* >(destination.get());
+    auto dst = dynamic_pointer_cast<HiCR::L0::GlobalMemorySlot>(destination);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (dst == NULL) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
@@ -177,7 +177,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::GlobalMemorySlot> source, const size_t src_offset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
-    auto src = dynamic_cast<HiCR::L0::GlobalMemorySlot* >(source.get());
+    auto src = dynamic_pointer_cast<HiCR::L0::GlobalMemorySlot>(source);
 
     // Checking whether the memory slot is compatible with this backend
     if (src == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
@@ -195,7 +195,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<sharedMemory::L0::GlobalMemorySlot *>(memorySlot.get());
+    auto m = dynamic_pointer_cast<sharedMemory::L0::GlobalMemorySlot>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -207,7 +207,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __USED__ inline void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<sharedMemory::L0::GlobalMemorySlot *>(memorySlot.get());
+    auto m = dynamic_pointer_cast<sharedMemory::L0::GlobalMemorySlot>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");

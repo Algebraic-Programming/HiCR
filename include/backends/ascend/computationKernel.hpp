@@ -94,7 +94,7 @@ class ComputationKernel final : public Kernel
   static tensorData_t createTensorData(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, aclTensorDesc *tensorDescriptor)
   {
     // Using up-casting to determine device types
-    auto ascendSlot = dynamic_cast<ascend::L0::LocalMemorySlot *>(memorySlot.get());
+    auto ascendSlot = dynamic_pointer_cast<ascend::L0::LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot passed is compatible with this backend
     if (ascendSlot == NULL) HICR_THROW_LOGIC("Attempting to create Ascend tensor data with a memory slot that is not supported by this backend\n");

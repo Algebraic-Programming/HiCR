@@ -46,7 +46,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the instance
-    auto c = dynamic_cast<ascend::L0::ComputeResource *>(computeResource.get());
+    auto c = dynamic_pointer_cast<ascend::L0::ComputeResource>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
@@ -60,7 +60,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline void initializeImpl() override
   {
     // Getting device id associated to the underlying compute resource (ascend)
-    auto deviceId = ((ascend::L0::ComputeResource *)getComputeResource().get())->getDevice().lock()->getId();
+    auto deviceId = dynamic_pointer_cast<ascend::L0::ComputeResource>(getComputeResource())->getDevice().lock()->getId();
 
     aclError err = aclrtCreateContext(&_context, deviceId);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create ACL context on device %d. Error %d", deviceId, err);
@@ -90,7 +90,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
   {
     // Getting up-casted pointer for the execution unit
-    std::unique_ptr<ExecutionState> e = std::unique_ptr<ExecutionState>(dynamic_cast<ExecutionState *>(executionState.release()));
+    auto e = std::unique_ptr<ExecutionState>(dynamic_cast<ExecutionState *>(executionState.release()));
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The execution state is not supported by this backend\n");
