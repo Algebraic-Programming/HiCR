@@ -10,11 +10,11 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
 
   // Getting the pointer to our own (coordinator) instance
   auto coordinator = instanceManager.getCurrentInstance();
-  
+
   // Printing instance information and invoking a simple RPC if its not ourselves
   for (const auto &instance : instances)
     if (instance->getId() != coordinator->getId())
-     instanceManager.execute(*instance, TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
+      instanceManager.execute(*instance, TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
 
   // Getting return values from the RPCs
   for (auto &instance : instances)

@@ -118,8 +118,8 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     aclError err;
 
     // enable communication among each pair of ascend cards
-    for (const auto& src : ascendDeviceList)
-      for (const auto& dst : ascendDeviceList)
+    for (const auto &src : ascendDeviceList)
+      for (const auto &dst : ascendDeviceList)
         if (src->getId() != dst->getId())
         {
           // verify that the two cards can see each other

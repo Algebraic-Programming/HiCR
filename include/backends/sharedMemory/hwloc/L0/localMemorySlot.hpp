@@ -66,7 +66,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
     void *const pointer,
     const size_t size,
     std::shared_ptr<HiCR::L0::MemorySpace> memorySpace) : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
-                                          _bindingType(bindingType)
+                                                          _bindingType(bindingType)
   {
   }
 

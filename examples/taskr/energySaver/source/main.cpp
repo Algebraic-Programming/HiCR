@@ -52,7 +52,7 @@ int main(int argc, char **argv)
   // Initializing Pthreads backend to run in parallel
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
-// Initializing HWLoc backend's topology manager
+  // Initializing HWLoc backend's topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices

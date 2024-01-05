@@ -48,8 +48,8 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
     const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
     const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
     std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
-                                                                  _rank(rank),
-                                                                  _lpfMemSlot(lpfMemSlot)
+                                                                                  _rank(rank),
+                                                                                  _lpfMemSlot(lpfMemSlot)
   {
   }
 

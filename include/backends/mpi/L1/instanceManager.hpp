@@ -53,12 +53,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    * \param[in] computeManager The compute manager to use for RPC running
    * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
-  InstanceManager(HiCR::backend::mpi::L1::CommunicationManager& communicationManager,
-                  HiCR::L1::ComputeManager& computeManager,
-                  HiCR::L1::MemoryManager& memoryManager,
-                  std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) :
-                   HiCR::L1::InstanceManager(&communicationManager, &computeManager, &memoryManager, bufferMemorySpace),
-                  _MPICommunicationManager(dynamic_cast<mpi::L1::CommunicationManager *const>(&communicationManager))
+  InstanceManager(HiCR::backend::mpi::L1::CommunicationManager &communicationManager,
+                  HiCR::L1::ComputeManager &computeManager,
+                  HiCR::L1::MemoryManager &memoryManager,
+                  std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) : HiCR::L1::InstanceManager(&communicationManager, &computeManager, &memoryManager, bufferMemorySpace),
+                                                                              _MPICommunicationManager(dynamic_cast<mpi::L1::CommunicationManager *const>(&communicationManager))
   {
     // Checking whether the execution unit passed is compatible with this backend
     if (_MPICommunicationManager == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");
@@ -79,7 +78,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
   ~InstanceManager() = default;
 
-  __USED__ inline void execute(HiCR::L0::Instance& instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const override
+  __USED__ inline void execute(HiCR::L0::Instance &instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const override
   {
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *>(&instance);
@@ -95,14 +94,14 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _MPICommunicationManager->getComm());
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance& instance) const override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance &instance) const override
   {
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *const>(&instance);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (MPIInstance == NULL) HICR_THROW_LOGIC("The passed instance is not supported by this instance manager\n");
- 
+
     // Buffer to store the size
     size_t size = 0;
 

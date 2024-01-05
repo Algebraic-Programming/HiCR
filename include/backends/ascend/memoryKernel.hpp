@@ -106,7 +106,7 @@ class MemoryKernel final : public Kernel
   /**
    * Ascend memory manager
    */
-  ascend::L1::CommunicationManager * const _commManager;
+  ascend::L1::CommunicationManager *const _commManager;
 };
 
 } // namespace ascend

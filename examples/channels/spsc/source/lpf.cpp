@@ -22,7 +22,7 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
  * in lpf_resize_message_queue . This value is currently
  * guessed as sufficiently large for a program
  */
-#define DEFAULT_MSGSLOTS 100 
+#define DEFAULT_MSGSLOTS 100
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {

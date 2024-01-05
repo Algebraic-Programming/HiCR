@@ -46,7 +46,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * \param device The Ascend device that contains this compute resource
    */
   ComputeResource(const std::shared_ptr<const ascend::L0::Device> device) : HiCR::L0::ComputeResource(),
-                                                      _device(device){};
+                                                                            _device(device){};
 
   /**
    * Default destructor

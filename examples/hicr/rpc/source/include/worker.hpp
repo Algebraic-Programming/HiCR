@@ -9,7 +9,7 @@
 
 void workerFc(HiCR::L1::InstanceManager &instanceManager,
               HiCR::backend::sequential::L1::ComputeManager &computeManager,
-              std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, 
+              std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
               std::shared_ptr<HiCR::L0::ComputeResource> rpcExecutor)
 {
   // Fetching memory manager

@@ -50,10 +50,10 @@ int main(int argc, char **argv)
   }
 
   // Create processing units from the detected compute resource list and giving them to taskr
-  for (auto computeResource : computeResources) 
+  for (auto computeResource : computeResources)
   {
     // Interpreting compute resource as core
-    auto core = (HiCR::backend::sharedMemory::Core*) computeResource.get();
+    auto core = (HiCR::backend::sharedMemory::Core *)computeResource.get();
 
     // If the core affinity is included in the list, create new processing unit
     if (coreSubset.contains(core->getProcessorId()))
@@ -67,7 +67,8 @@ int main(int argc, char **argv)
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]() { work(iterations); });
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]()
+                                                              { work(iterations); });
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());

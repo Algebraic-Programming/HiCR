@@ -50,7 +50,7 @@ class Consumer final : public channel::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::CommunicationManager& communicationManager,
+  Consumer(L1::CommunicationManager &communicationManager,
            std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
            std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBuffer,
