@@ -155,15 +155,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     const auto actualDstPtr = (uint8_t *)dstPtr + dst_offset;
 
     // If a device is involved in this operation, select it and use its stream to perform the operation
-    if (deviceMemSlot != NULL)
-    {
-      // Getting memory slot info
-      const auto memorySlotMemorySpace = dynamic_pointer_cast<ascend::L0::MemorySpace>(deviceMemSlot->getMemorySpace());
-      const auto memorySlotDevice = memorySlotMemorySpace->getDevice().lock();
-
-      // Selecting device
-      memorySlotDevice->select();
-    }
+    if (deviceMemSlot != NULL) dynamic_pointer_cast<ascend::L0::MemorySpace>(deviceMemSlot->getMemorySpace())->getDevice().lock()->select();
 
     // Now executing memcpy depending on whether a stream was specified
     aclError err;
