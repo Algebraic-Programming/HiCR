@@ -9,13 +9,19 @@ if (exceptionModel == 'abort')
  hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_ABORT' ]
 endif
 
+# Warning handling option
+warningAsErrorFlags=[]
+if get_option('compileWarningsAsErrors') == true
+  warningAsErrorFlags=[ '-Werror' ]
+endif
+
 hicrBuildDeps = [
    ]
 
 hicrBuildCppArgs = [
  '-Wfatal-errors',
- '-Werror',
- hicrExceptionCppArgs
+  hicrExceptionCppArgs,
+  warningAsErrorFlags
  ]
 
 hicrBuildIncludes = include_directories([

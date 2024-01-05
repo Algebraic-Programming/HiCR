@@ -46,7 +46,7 @@ class MemorySpace final : public HiCR::L0::MemorySpace
    * \param device The ascend device in which this memory space was detected
    * \param size The size of this memory space
    */
-  MemorySpace(const ascend::L0::Device *device, const size_t size) : HiCR::L0::MemorySpace(size), _device(device){};
+  MemorySpace(const std::weak_ptr<const ascend::L0::Device> device, const size_t size) : HiCR::L0::MemorySpace(size), _device(device){};
 
   /**
    * Default destructor
@@ -60,14 +60,14 @@ class MemorySpace final : public HiCR::L0::MemorySpace
    *
    * @return The ascend device corresponding to this memory space
    */
-  __USED__ inline const ascend::L0::Device *getDevice() const { return _device; }
+  __USED__ inline const std::weak_ptr<const ascend::L0::Device> getDevice() const { return _device; }
 
   private:
 
   /**
    * Stores the device that owns this memory space
    */
-  const ascend::L0::Device *const _device;
+  const std::weak_ptr<const ascend::L0::Device> _device;
 };
 
 } // namespace L0

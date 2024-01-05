@@ -1,11 +1,11 @@
 #include <backends/sequential/L1/computeManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <stdio.h>
 
 int main(int argc, char **argv)
 {
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing Sequential backend's topology manager
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -16,7 +16,8 @@ int main(int argc, char **argv)
   // Initializing sequential backend
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
-  auto fcLambda = []() { printf("Hello, World!\n"); };
+  auto fcLambda = []()
+  { printf("Hello, World!\n"); };
 
   // Creating execution unit
   auto executionUnit = computeManager.createExecutionUnit(fcLambda);
@@ -27,8 +28,11 @@ int main(int argc, char **argv)
   // Asking the processing unit to create a new execution state from the given execution unit (stateless)
   auto executionState = computeManager.createExecutionState(executionUnit);
 
+  // Selecting the first compute resource found
+  auto firstComputeResource = *computeResources.begin();
+
   // Creating processing unit from the compute resource
-  auto processingUnit = computeManager.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = computeManager.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
   processingUnit->initialize();

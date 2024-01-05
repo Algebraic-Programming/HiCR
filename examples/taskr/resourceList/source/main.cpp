@@ -1,6 +1,6 @@
 #include "source/workTask.hpp"
 #include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 #include <chrono>
 #include <cstdio>
 #include <frontends/taskr/runtime.hpp>
@@ -17,8 +17,8 @@ int main(int argc, char **argv)
   // Initializing Pthreads backend to run in parallel
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
-  // Initializing HWLoc backend's device manager
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+  // Initializing HWLoc backend's topology manager
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -50,16 +50,16 @@ int main(int argc, char **argv)
   }
 
   // Create processing units from the detected compute resource list and giving them to taskr
-  for (auto computeResource : computeResources) 
+  for (auto computeResource : computeResources)
   {
     // Interpreting compute resource as core
-    auto core = (HiCR::backend::sharedMemory::Core*) computeResource;
+    auto core = (HiCR::backend::sharedMemory::Core *)computeResource.get();
 
     // If the core affinity is included in the list, create new processing unit
     if (coreSubset.contains(core->getProcessorId()))
     {
       // Creating a processing unit out of the computational resource
-      auto processingUnit = computeManager.createProcessingUnit(core);
+      auto processingUnit = computeManager.createProcessingUnit(computeResource);
 
       // Assigning resource to the taskr
       taskr.addProcessingUnit(std::move(processingUnit));
@@ -67,7 +67,8 @@ int main(int argc, char **argv)
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]() { work(iterations); });
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]()
+                                                              { work(iterations); });
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());
@@ -82,7 +83,6 @@ int main(int argc, char **argv)
   printf("Finished in %.3f seconds.\n", (double)dt * 1.0e-9);
 
   // Freeing up memory
-  delete taskExecutionUnit;
   hwloc_topology_destroy(topology);
 
   return 0;

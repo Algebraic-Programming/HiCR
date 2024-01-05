@@ -4,7 +4,7 @@
  */
 
 /**
- * @file deviceManager.hpp
+ * @file topologyManager.hpp
  * @brief This file implements support for device management of SMP systems
  * @author S. M. Martin
  * @date 18/12/2023
@@ -16,7 +16,7 @@
 #include <backends/sharedMemory/L0/device.hpp>
 #include <backends/sharedMemory/hwloc/L0/computeResource.hpp>
 #include <backends/sharedMemory/hwloc/L0/memorySpace.hpp>
-#include <hicr/L1/deviceManager.hpp>
+#include <hicr/L1/topologyManager.hpp>
 
 namespace HiCR
 {
@@ -34,9 +34,9 @@ namespace L1
 {
 
 /**
- * Implementation of the device manager for SMP systems.
+ * Implementation of the topology manager for shared memory, multicore systems.
  */
-class DeviceManager final : public HiCR::L1::DeviceManager
+class TopologyManager final : public HiCR::L1::TopologyManager
 {
   public:
 
@@ -45,12 +45,12 @@ class DeviceManager final : public HiCR::L1::DeviceManager
    *
    * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
-  DeviceManager(hwloc_topology_t *topology) : HiCR::L1::DeviceManager(), _topology(topology) {}
+  TopologyManager(hwloc_topology_t *topology) : HiCR::L1::TopologyManager(), _topology(topology) {}
 
   /**
    * The constructor is employed to free memory required for hwloc
    */
-  ~DeviceManager() = default;
+  ~TopologyManager() = default;
 
   protected:
 
@@ -63,7 +63,7 @@ class DeviceManager final : public HiCR::L1::DeviceManager
     hwloc_topology_load(*_topology);
 
     // Creating a single new device representing an SMP system (multicore + shared RAM)
-    auto hostDevice = new sharedMemory::L0::Device(queryComputeResources(), queryMemorySpaces());
+    auto hostDevice = std::make_shared<sharedMemory::L0::Device>(queryComputeResources(), queryMemorySpaces());
 
     // Returning single device
     return {hostDevice};
@@ -86,7 +86,7 @@ class DeviceManager final : public HiCR::L1::DeviceManager
     for (const auto id : logicalProcessorIds)
     {
       // Creating new compute resource class (of CPU core/processor type)
-      auto processor = new L0::ComputeResource(*_topology, id);
+      auto processor = std::make_shared<L0::ComputeResource>(*_topology, id);
 
       // Adding new resource to the list
       computeResourceList.insert(processor);
@@ -128,7 +128,7 @@ class DeviceManager final : public HiCR::L1::DeviceManager
       auto memSpaceSize = hwlocObj->attr->cache.size;
 
       // Creating new memory space object
-      auto memorySpace = new sharedMemory::hwloc::L0::MemorySpace(memSpaceSize, hwlocObj, bindingSupport);
+      auto memorySpace = std::make_shared<sharedMemory::hwloc::L0::MemorySpace>(memSpaceSize, hwlocObj, bindingSupport);
 
       // Storing new memory space
       memorySpaceList.insert(memorySpace);

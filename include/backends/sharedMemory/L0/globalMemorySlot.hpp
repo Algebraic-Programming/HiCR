@@ -46,7 +46,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   GlobalMemorySlot(
     const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
     const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
-    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = NULL) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot) {}
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = NULL) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot) {}
 
   ~GlobalMemorySlot() = default;
 

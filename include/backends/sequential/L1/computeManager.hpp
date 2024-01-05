@@ -48,9 +48,9 @@ class ComputeManager : public HiCR::L1::ComputeManager
    * \param[in] executionUnit The replicable function to execute
    * @return The newly created execution unit
    */
-  __USED__ inline HiCR::L0::ExecutionUnit *createExecutionUnit(Coroutine::coroutineFc_t executionUnit)
+  __USED__ inline std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(Coroutine::coroutineFc_t executionUnit)
   {
-    return new sequential::L0::ExecutionUnit(executionUnit);
+    return std::make_shared<sequential::L0::ExecutionUnit>(executionUnit);
   }
 
   /**
@@ -63,7 +63,7 @@ class ComputeManager : public HiCR::L1::ComputeManager
    */
   ~ComputeManager() = default;
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(HiCR::L0::ExecutionUnit *executionUnit) override
+  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) override
   {
     // Creating and returning new execution state
     return std::make_unique<sequential::L0::ExecutionState>(executionUnit);
@@ -71,7 +71,7 @@ class ComputeManager : public HiCR::L1::ComputeManager
 
   private:
 
-  virtual __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *resource) const override
+  virtual __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(std::shared_ptr<HiCR::L0::ComputeResource> resource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }

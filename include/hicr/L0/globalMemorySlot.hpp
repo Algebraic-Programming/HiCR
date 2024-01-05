@@ -50,9 +50,9 @@ class GlobalMemorySlot
   GlobalMemorySlot(
     const tag_t globalTag = 0,
     const globalKey_t globalKey = 0,
-    HiCR::L0::LocalMemorySlot *sourceLocalMemorySlot = nullptr) : _globalTag(globalTag),
-                                                                  _globalKey(globalKey),
-                                                                  _sourceLocalMemorySlot(sourceLocalMemorySlot)
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : _globalTag(globalTag),
+                                                                                  _globalKey(globalKey),
+                                                                                  _sourceLocalMemorySlot(sourceLocalMemorySlot)
   {
   }
 
@@ -86,6 +86,18 @@ class GlobalMemorySlot
   __USED__ inline size_t getMessagesSent() const noexcept { return _messagesSent; }
 
   /**
+   * Setter function for the memory slot's received message counter
+   * @param[in] count The memory slot's recv message counter to set
+   */
+  __USED__ inline void setMessagesRecv(const size_t count) noexcept { _messagesRecv = count; }
+
+  /**
+   * Setter function for the memory slot's sent message counter
+   * @param[in] count The memory slot's sent message counter to set
+   */
+  __USED__ inline void setMessagesSent(const size_t count) noexcept { _messagesSent = count; }
+
+  /**
    * Increase counter function for the memory slot's received message counter
    */
   __USED__ inline void increaseMessagesRecv() noexcept { _messagesRecv = _messagesRecv + 1; }
@@ -112,7 +124,7 @@ class GlobalMemorySlot
    *
    * \return A pointer to the local memory slot from which this global memory slot was created, if one exists. A null pointer, otherwise.
    */
-  __USED__ HiCR::L0::LocalMemorySlot *getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
+  __USED__ std::shared_ptr<HiCR::L0::LocalMemorySlot> getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
 
   private:
 
@@ -129,7 +141,7 @@ class GlobalMemorySlot
   /**
    * Pointer to the associated local memory slot (if one exists)
    */
-  HiCR::L0::LocalMemorySlot *const _sourceLocalMemorySlot = 0;
+  std::shared_ptr<HiCR::L0::LocalMemorySlot> const _sourceLocalMemorySlot = 0;
 
   /**
    * Messages received into this slot

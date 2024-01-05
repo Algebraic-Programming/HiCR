@@ -50,10 +50,10 @@ class Consumer final : public channel::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::CommunicationManager *communicationManager,
-           L0::GlobalMemorySlot *const tokenBuffer,
-           L0::LocalMemorySlot *const internalCoordinationBuffer,
-           L0::GlobalMemorySlot *const consumerCoordinationBuffer,
+  Consumer(L1::CommunicationManager &communicationManager,
+           std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
+           std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBuffer,
            const size_t tokenSize,
            const size_t capacity) : channel::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
                                     _consumerCoordinationBuffer(consumerCoordinationBuffer)
@@ -154,7 +154,7 @@ class Consumer final : public channel::Base
   /*
    * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
    */
-  HiCR::L0::GlobalMemorySlot *const _consumerCoordinationBuffer;
+  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _consumerCoordinationBuffer;
 };
 
 } // namespace MPSC

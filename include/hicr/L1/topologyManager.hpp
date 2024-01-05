@@ -4,7 +4,7 @@
  */
 
 /**
- * @file deviceManager.hpp
+ * @file topologyManager.hpp
  * @brief Provides a definition for the abstract device manager class
  * @author S. M. Martin
  * @date 18/12/2023
@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <memory>
 #include <hicr/L0/device.hpp>
 #include <hicr/L1/memoryManager.hpp>
 
@@ -30,24 +31,24 @@ namespace L1
  *
  * Backends need to fulfill the abstract virtual functions described here, so that HiCR can detect hardware devices
  */
-class DeviceManager
+class TopologyManager
 {
   public:
 
   /**
    * Common type for a collection of devices
    */
-  typedef std::unordered_set<L0::Device *> deviceList_t;
+  typedef std::unordered_set<std::shared_ptr<L0::Device>> deviceList_t;
 
   /**
    * Default constructor is allowed, as no default argument are expected for the creation of this class
    */
-  DeviceManager() = default;
+  TopologyManager() = default;
 
   /**
    * Default destructor
    */
-  virtual ~DeviceManager() = default;
+  virtual ~TopologyManager() = default;
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute units provided by the library which it supports.

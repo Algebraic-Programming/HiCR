@@ -2,7 +2,7 @@
 #include "include/producer.hpp"
 #include <backends/lpf/L1/memoryManager.hpp>
 #include <backends/lpf/L1/communicationManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <mpi.h>
@@ -22,7 +22,7 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
  * in lpf_resize_message_queue . This value is currently
  * guessed as sufficiently large for a program
  */
-#define DEFAULT_MSGSLOTS 100 
+#define DEFAULT_MSGSLOTS 100
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
@@ -36,8 +36,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   CHECK(lpf_resize_memory_register(lpf, DEFAULT_MEMSLOTS));
   CHECK(lpf_sync(lpf, LPF_SYNC_DEFAULT));
 
-  // Initializing backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing backend's topology manager
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -52,9 +52,12 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   HiCR::backend::lpf::L1::MemoryManager m(lpf);
   HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
 
+  // Getting reference to the first memory space detected
+  auto firstMemorySpace = *memSpaces.begin();
+
   // Rank 0 is producer, Rank 1 is consumer
-  if (pid == 0) producerFc(&m, &c, *memSpaces.begin(), channelCapacity);
-  if (pid == 1) consumerFc(&m, &c, *memSpaces.begin(), channelCapacity);
+  if (pid == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
+  if (pid == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
 }
 
 int main(int argc, char **argv)

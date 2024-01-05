@@ -1,5 +1,5 @@
 #include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 #include <cstdio>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
@@ -52,8 +52,8 @@ int main(int argc, char **argv)
   // Initializing Pthreads backend to run in parallel
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
-// Initializing HWLoc backend's device manager
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+  // Initializing HWLoc backend's topology manager
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

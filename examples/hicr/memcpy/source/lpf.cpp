@@ -1,6 +1,6 @@
 #include <backends/lpf/L1/memoryManager.hpp>
 #include <backends/lpf/L1/communicationManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <iostream>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
@@ -29,7 +29,7 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
  * in lpf_resize_message_queue . This value is currently
  * guessed as sufficiently large for a program
  */
-#define DEFAULT_MSGSLOTS 100 
+#define DEFAULT_MSGSLOTS 100
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
@@ -39,7 +39,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   CHECK(lpf_sync(lpf, LPF_SYNC_DEFAULT));
 
   // Initializing backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -58,11 +58,12 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   size_t myProcess = pid;
 
   // Creating new destination buffer
-  auto msgBuffer = (char*) malloc(BUFFER_SIZE);
-  auto dstSlot = m.registerLocalMemorySlot(*memSpaces.begin(), msgBuffer, BUFFER_SIZE);
+  auto msgBuffer = (char *)malloc(BUFFER_SIZE);
+  auto firstMemSpace = *memSpaces.begin();
+  auto dstSlot = m.registerLocalMemorySlot(firstMemSpace, msgBuffer, BUFFER_SIZE);
 
   // Performing all pending local to global memory slot promotions now
-  c.exchangeGlobalMemorySlots(CHANNEL_TAG, { { myProcess, dstSlot } });
+  c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{myProcess, dstSlot}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   c.fence(CHANNEL_TAG);
@@ -74,7 +75,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   {
     char *buffer2 = new char[BUFFER_SIZE];
     sprintf(static_cast<char *>(buffer2), "Hello, HiCR user!\n");
-    auto srcSlot = m.registerLocalMemorySlot(*memSpaces.begin(), buffer2, BUFFER_SIZE);
+    auto srcSlot = m.registerLocalMemorySlot(firstMemSpace, buffer2, BUFFER_SIZE);
     c.memcpy(myPromotedSlot, DST_OFFSET, srcSlot, SRC_OFFSET, BUFFER_SIZE);
     c.fence(CHANNEL_TAG);
   }
@@ -84,8 +85,10 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
     c.queryMemorySlotUpdates(myPromotedSlot);
     auto recvMsgs = myPromotedSlot->getMessagesRecv();
     std::cout << "Received messages (before fence) = " << recvMsgs << std::endl;
+
     c.fence(CHANNEL_TAG);
     std::cout << "Received buffer = " << msgBuffer;
+
     c.queryMemorySlotUpdates(myPromotedSlot);
     recvMsgs = myPromotedSlot->getMessagesRecv();
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
@@ -104,7 +107,7 @@ int main(int argc, char **argv)
   MPI_Init(&argc, &argv);
   lpf_init_t init;
   lpf_args_t args;
- 
+
   CHECK(lpf_mpi_initialize_with_mpicomm(MPI_COMM_WORLD, &init));
   CHECK(lpf_hook(init, &spmd, args));
   CHECK(lpf_mpi_finalize(init));

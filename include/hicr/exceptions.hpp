@@ -193,13 +193,13 @@ __USED__ inline void throwException [[noreturn]] (const exceptions::exception_t 
 
 #endif
 
-#ifdef HICR_EXCEPTION_USE_ABORT
+  // #ifdef HICR_EXCEPTION_USE_ABORT
 
   fprintf(stderr, "%s", outString.c_str());
   fflush(stderr);
   std::abort();
 
-#endif
+  // #endif
 }
 
 } // namespace HiCR

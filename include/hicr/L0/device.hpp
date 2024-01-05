@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <memory>
 #include <unordered_set>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/memorySpace.hpp>
@@ -35,12 +36,12 @@ class Device
   /**
    * Common type for a collection of compute resources
    */
-  typedef std::unordered_set<L0::ComputeResource *> computeResourceList_t;
+  typedef std::unordered_set<std::shared_ptr<L0::ComputeResource>> computeResourceList_t;
 
   /**
    * Common definition of a collection of memory spaces
    */
-  typedef std::unordered_set<L0::MemorySpace *> memorySpaceList_t;
+  typedef std::unordered_set<std::shared_ptr<L0::MemorySpace>> memorySpaceList_t;
 
   /**
    * Indicates what type of device is represented in this instance
@@ -68,14 +69,14 @@ class Device
    *
    * \param[in] computeResource The compute resource to add
    */
-  __USED__ inline void addComputeResource(HiCR::L0::ComputeResource *const computeResource) { _computeResources.insert(computeResource); }
+  __USED__ inline void addComputeResource(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) { _computeResources.insert(computeResource); }
 
   /**
    * This function allows the deferred addition (post construction) of memory spaces
    *
    * \param[in] memorySpace The compute resource to add
    */
-  __USED__ inline void addMemorySpace(HiCR::L0::MemorySpace *const memorySpace) { _memorySpaces.insert(memorySpace); }
+  __USED__ inline void addMemorySpace(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace) { _memorySpaces.insert(memorySpace); }
 
   /**
    * Default destructor

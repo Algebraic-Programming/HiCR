@@ -60,17 +60,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    */
   const hwloc_topology_t *const _topology;
 
-  /**
-   * Backend-internal implementation of the queryLocalMemorySlot function
-   *
-   * \param[in] memorySpace Memory space to allocate memory in
-   * \param[in] size Size of the memory slot to create
-   * \return The internal pointer associated to the local memory slot
-   */
-  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, const size_t size) override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
-    auto m = dynamic_cast<const L0::MemorySpace *>(memorySpace);
+    auto m = dynamic_pointer_cast<L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
@@ -93,48 +86,30 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory (size %lu) in the requested memory space", size);
 
     // Creating new memory slot object
-    auto memorySlot = new L0::LocalMemorySlot(supportedBindingType, ptr, size, memorySpace);
+    auto memorySlot = std::make_shared<L0::LocalMemorySlot>(supportedBindingType, ptr, size, memorySpace);
 
     // Assinging new entry in the memory slot map
     return memorySlot;
   }
 
-  /**
-   * Backend-internal implementation of the registerLocalMemorySlot function
-   *
-   * \param[in] memorySpace The memory space to register the new memory slot in
-   * \param[in] ptr Pointer to the local memory space
-   * \param[in] size Size of the memory slot to register
-   * \return A newly created memory slot
-   */
-  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
-    auto memorySlot = new L0::LocalMemorySlot(L0::LocalMemorySlot::binding_type::strict_non_binding, ptr, size, memorySpace);
+    auto memorySlot = std::make_shared<L0::LocalMemorySlot>(L0::LocalMemorySlot::binding_type::strict_non_binding, ptr, size, memorySpace);
 
     // Returning new memory slot pointer
     return memorySlot;
   }
 
-  /**
-   * Backend-internal implementation of the deregisterMemorySlot function
-   *
-   * \param[in] memorySlot Memory slot to deregister.
-   */
-  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *const memorySlot) override
+  __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Nothing to do here
   }
 
-  /**
-   * Backend-internal implementation of the freeLocalMemorySlot function
-   *
-   * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
-   */
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<L0::LocalMemorySlot *>(memorySlot);
+    auto m = dynamic_pointer_cast<L0::LocalMemorySlot>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");

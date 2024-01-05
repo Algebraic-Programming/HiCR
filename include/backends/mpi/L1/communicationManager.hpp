@@ -135,10 +135,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     unlockMPIWindow(rank, window);
   }
 
-  __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destinationSlot, const size_t dst_offset, HiCR::L0::GlobalMemorySlot *sourceSlotPtr, const size_t sourceOffset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destinationSlot, const size_t dst_offset, std::shared_ptr<HiCR::L0::GlobalMemorySlot> sourceSlotPtr, const size_t sourceOffset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
-    auto source = dynamic_cast<mpi::L0::GlobalMemorySlot *>(sourceSlotPtr);
+    auto source = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(sourceSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (source == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
@@ -153,10 +153,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto destinationPointer = (void *)(((uint8_t *)destinationSlot->getPointer()) + dst_offset);
 
     // Getting data window for the involved processes
-    auto sourceDataWindow = source->getDataWindow();
+    auto sourceDataWindow = source->getDataWindow().get();
 
     // Getting recv message count window for the involved processes
-    auto sourceSentMessageWindow = source->getSentMessageCountWindow();
+    auto sourceSentMessageWindow = source->getSentMessageCountWindow().get();
 
     // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
     if (isSourceSlotLockAcquired == false) lockMPIWindow(sourceRank, sourceDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
@@ -177,10 +177,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     increaseWindowCounter(sourceRank, sourceSentMessageWindow);
   }
 
-  __USED__ inline void memcpyImpl(HiCR::L0::GlobalMemorySlot *destinationSlotPtr, const size_t dst_offset, HiCR::L0::LocalMemorySlot *sourceSlot, const size_t sourceOffset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destinationSlotPtr, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceSlot, const size_t sourceOffset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
-    auto destination = dynamic_cast<mpi::L0::GlobalMemorySlot *>(destinationSlotPtr);
+    auto destination = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(destinationSlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (destination == NULL) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
@@ -195,10 +195,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto sourcePointer = (void *)(((uint8_t *)sourceSlot->getPointer()) + sourceOffset);
 
     // Getting data window for the involved processes
-    auto destinationDataWindow = destination->getDataWindow();
+    auto destinationDataWindow = destination->getDataWindow().get();
 
     // Getting recv message count windows for the involved process
-    auto destinationRecvMessageWindow = destination->getRecvMessageCountWindow();
+    auto destinationRecvMessageWindow = destination->getRecvMessageCountWindow().get();
 
     // Locking MPI window to ensure the messages arrives before returning. This will not exclude other processes from accessing the data (MPI_LOCK_SHARED)
     if (isDestinationSlotLockAcquired == false) lockMPIWindow(destinationRank, destinationDataWindow, MPI_LOCK_SHARED, MPI_MODE_NOCHECK);
@@ -225,7 +225,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
   }
 
@@ -242,7 +242,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       auto memorySlotPtr = entry.second;
 
       // Getting up-casted pointer for the execution unit
-      auto memorySlot = dynamic_cast<mpi::L0::GlobalMemorySlot *>(memorySlotPtr);
+      auto memorySlot = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlotPtr);
 
       // Checking whether the execution unit passed is compatible with this backend
       if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
@@ -267,30 +267,24 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot *memorySlotPtr) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
   {
     // Getting up-casted pointer for the execution unit
-    auto memorySlot = dynamic_cast<mpi::L0::GlobalMemorySlot *>(memorySlotPtr);
+    auto memorySlot = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlotPtr);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
 
-    auto status = MPI_Win_free(memorySlot->getDataWindow());
+    auto status = MPI_Win_free(memorySlot->getDataWindow().get());
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI data window");
 
-    status = MPI_Win_free(memorySlot->getRecvMessageCountWindow());
+    status = MPI_Win_free(memorySlot->getRecvMessageCountWindow().get());
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI recv message count window");
 
-    status = MPI_Win_free(memorySlot->getSentMessageCountWindow());
+    status = MPI_Win_free(memorySlot->getSentMessageCountWindow().get());
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI sent message count window");
   }
 
-  /**
-   * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
-   *
-   * \param[in] tag Identifies a particular subset of global memory slots
-   * \param[in] memorySlots Array of local memory slots to make globally accessible
-   */
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange
@@ -338,7 +332,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Now also creating pointer vector to remember local pointers, when required for memcpys
     std::vector<void *> globalSlotPointers(globalSlotCount);
-    std::vector<HiCR::L0::LocalMemorySlot *> globalSourceSlots(globalSlotCount);
+    std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> globalSourceSlots(globalSlotCount);
     size_t localPointerPos = 0;
     for (size_t i = 0; i < globalSlotPointers.size(); i++)
     {
@@ -360,16 +354,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     for (size_t i = 0; i < globalSlotProcessId.size(); i++)
     {
       // Creating new memory slot object
-      auto memorySlot = new mpi::L0::GlobalMemorySlot(
+      auto memorySlot = std::make_shared<mpi::L0::GlobalMemorySlot>(
         globalSlotProcessId[i],
         tag,
         globalSlotKeys[i],
         globalSourceSlots[i]);
 
       // Allocating MPI windows
-      memorySlot->getDataWindow() = new MPI_Win;
-      memorySlot->getRecvMessageCountWindow() = new MPI_Win;
-      memorySlot->getSentMessageCountWindow() = new MPI_Win;
+      memorySlot->getDataWindow() = std::make_unique<MPI_Win>();
+      memorySlot->getRecvMessageCountWindow() = std::make_unique<MPI_Win>();
+      memorySlot->getSentMessageCountWindow() = std::make_unique<MPI_Win>();
 
       // Debug info
       // printf("Rank: %u, Pos %lu, GlobalSlot %lu, Key: %lu, Size: %lu, LocalPtr: 0x%lX, %s\n", _rank, i, globalSlotId, globalSlotKeys[i], globalSlotSizes[i], (uint64_t)globalSlotPointers[i], globalSlotProcessId[i] == _rank ? "x" : "");
@@ -381,7 +375,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         1,
         MPI_INFO_NULL,
         _comm,
-        memorySlot->getDataWindow());
+        memorySlot->getDataWindow().get());
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
 
@@ -392,7 +386,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         1,
         MPI_INFO_NULL,
         _comm,
-        memorySlot->getRecvMessageCountWindow());
+        memorySlot->getRecvMessageCountWindow().get());
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
 
@@ -403,7 +397,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         1,
         MPI_INFO_NULL,
         _comm,
-        memorySlot->getSentMessageCountWindow());
+        memorySlot->getSentMessageCountWindow().get());
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI sent message count window on exchange global memory slots.");
 
@@ -412,16 +406,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<mpi::L0::GlobalMemorySlot *>(memorySlot);
+    auto m = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
     // Locking access to all relevant memory slot windows
-    lockMPIWindow(m->getRank(), m->getDataWindow(), MPI_LOCK_EXCLUSIVE, 0);
+    lockMPIWindow(m->getRank(), m->getDataWindow().get(), MPI_LOCK_EXCLUSIVE, 0);
 
     // Setting memory slot lock as aquired
     m->setLockAcquiredValue(true);
@@ -430,16 +424,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     return true;
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
-    auto m = dynamic_cast<mpi::L0::GlobalMemorySlot *>(memorySlot);
+    auto m = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
     // Releasing access to all relevant memory slot windows
-    unlockMPIWindow(m->getRank(), m->getDataWindow());
+    unlockMPIWindow(m->getRank(), m->getDataWindow().get());
 
     // Setting memory slot lock as released
     m->setLockAcquiredValue(false);

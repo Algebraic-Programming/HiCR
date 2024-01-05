@@ -42,10 +42,10 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    * Creates a new suspendable execution state (coroutine) for execution based on a sequential execution unit
    * \param[in] executionUnit The replicable stateless execution unit to instantiate
    */
-  __USED__ inline ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit) : HiCR::L0::ExecutionState(executionUnit)
+  __USED__ inline ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_cast<const sequential::L0::ExecutionUnit *>(executionUnit);
+    auto e = dynamic_pointer_cast<sequential::L0::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());

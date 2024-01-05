@@ -13,17 +13,17 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
 
   // Printing instance information and invoking a simple RPC if its not ourselves
   for (const auto &instance : instances)
-    if (instance != coordinator)
-     instanceManager.execute(instance, TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
+    if (instance->getId() != coordinator->getId())
+      instanceManager.execute(*instance, TEST_RPC_PROCESSING_UNIT_ID, TEST_RPC_EXECUTION_UNIT_ID);
 
   // Getting return values from the RPCs
-  for (const auto &instance : instances)
+  for (auto &instance : instances)
   {
     // If it is a worker instance, then get return value size
-    if (instance != coordinator)
+    if (instance.get() != coordinator)
     {
       // Getting return value as a memory slot
-      auto returnValue = instanceManager.getReturnValue(instance);
+      auto returnValue = instanceManager.getReturnValue(*instance);
 
       // Printing value
       printf("Received Return value: '%s'\n", (char *)returnValue->getPointer());

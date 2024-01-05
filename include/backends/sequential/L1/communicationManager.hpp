@@ -55,11 +55,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
+  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
+  __USED__ inline void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Nothing to do here
   }
@@ -82,7 +82,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       auto memorySlot = entry.second;
 
       // Creating new memory slot
-      auto globalMemorySlot = new HiCR::L0::GlobalMemorySlot(tag, globalKey, memorySlot);
+      auto globalMemorySlot = std::make_shared<HiCR::L0::GlobalMemorySlot>(tag, globalKey, memorySlot);
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
@@ -118,7 +118,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       ;
   }
 
-  __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size) override
   {
     // Getting slot pointers
     const auto srcPtr = source->getPointer();
@@ -132,10 +132,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     std::memcpy(actualDstPtr, actualSrcPtr, size);
   }
 
-  __USED__ inline void memcpyImpl(HiCR::L0::GlobalMemorySlot *destination, const size_t dst_offset, HiCR::L0::LocalMemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
-    auto dst = dynamic_cast<HiCR::L0::GlobalMemorySlot *>(destination);
+    auto dst = dynamic_pointer_cast<HiCR::L0::GlobalMemorySlot>(destination);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (dst == NULL) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
@@ -150,10 +150,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     dst->increaseMessagesRecv();
   }
 
-  __USED__ inline void memcpyImpl(HiCR::L0::LocalMemorySlot *destination, const size_t dst_offset, HiCR::L0::GlobalMemorySlot *source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::GlobalMemorySlot> source, const size_t src_offset, const size_t size) override
   {
     // Getting up-casted pointer for the execution unit
-    auto src = dynamic_cast<HiCR::L0::GlobalMemorySlot *>(source);
+    auto src = dynamic_pointer_cast<HiCR::L0::GlobalMemorySlot>(source);
 
     // Checking whether the memory slot is compatible with this backend
     if (src == NULL) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
@@ -168,7 +168,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     src->increaseMessagesSent();
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
+  __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // This function does not do anything because sequential applications
     // do not incur concurrency issues.
@@ -176,7 +176,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     return true;
   }
 
-  __USED__ inline void releaseGlobalLockImpl(HiCR::L0::GlobalMemorySlot *memorySlot) override
+  __USED__ inline void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // This function does not do anything because sequential applications
     // do not incur concurrency issues.

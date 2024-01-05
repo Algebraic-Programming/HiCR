@@ -12,6 +12,10 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+#include <unordered_set>
+#include <utility>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/instance.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
@@ -20,10 +24,6 @@
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/communicationManager.hpp>
 #include <hicr/L1/computeManager.hpp>
-#include <map>
-#include <memory>
-#include <set>
-#include <utility>
 
 namespace HiCR
 {
@@ -52,6 +52,11 @@ class InstanceManager
   typedef uint64_t processingUnitIndex_t;
 
   /**
+   * Type definition for an unsorted set of unique pointers to the detected instances
+   */
+  typedef std::unordered_set<std::unique_ptr<HiCR::L0::Instance>> instanceList_t;
+
+  /**
    * Default constructor is deleted, this class requires the passing of a memory manager
    */
   InstanceManager() = delete;
@@ -65,7 +70,7 @@ class InstanceManager
    * This function prompts the backend to perform the necessary steps to discover and list the currently created (active or not)
    * \return A set of pointers to HiCR instances that refer to both local and remote instances
    */
-  __USED__ inline const std::set<HiCR::L0::Instance *> &getInstances() const { return _instances; }
+  __USED__ inline const instanceList_t &getInstances() const { return _instances; }
 
   /**
    * Function to retrieve the currently executing instance
@@ -95,14 +100,14 @@ class InstanceManager
    * Function to retrieve the internal memory space used for creating buffers in this instance manager
    * \return The internal memory space
    */
-  __USED__ inline HiCR::L0::MemorySpace *getBufferMemorySpace() const { return _bufferMemorySpace; }
+  __USED__ inline std::shared_ptr<HiCR::L0::MemorySpace> getBufferMemorySpace() const { return _bufferMemorySpace; }
 
   /**
    * Function to add a new execution unit, assigned to a unique identifier
    * \param[in] index Indicates the index to assign to the added execution unit
    * \param[in] executionUnit The execution unit to add
    */
-  __USED__ inline void addExecutionUnit(const executionUnitIndex_t index, HiCR::L0::ExecutionUnit *executionUnit) { _executionUnitMap[index] = executionUnit; }
+  __USED__ inline void addExecutionUnit(const executionUnitIndex_t index, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnitMap[index] = executionUnit; }
 
   /**
    * Function to add a new processing unit, assigned to a unique identifier
@@ -126,13 +131,13 @@ class InstanceManager
    * \param[in] eIdx Index to the execution unit to run
    * \param[in] instance Instance on which to run the RPC
    */
-  virtual void execute(HiCR::L0::Instance *instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const = 0;
+  virtual void execute(HiCR::L0::Instance &instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const = 0;
 
   /**
    * Function to submit a return value for the currently running RPC
    * \param[in] value The memory slot containing the RPC's return value
    */
-  __USED__ inline void submitReturnValue(HiCR::L0::LocalMemorySlot *value) const
+  __USED__ inline void submitReturnValue(std::shared_ptr<HiCR::L0::LocalMemorySlot> value) const
   {
     // Calling backend-specific implementation of this function
     submitReturnValueImpl(value);
@@ -143,7 +148,7 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *getReturnValue(HiCR::L0::Instance *instance) const
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValue(HiCR::L0::Instance &instance) const
   {
     // Calling backend-specific implementation of this function
     return getReturnValueImpl(instance);
@@ -158,13 +163,13 @@ class InstanceManager
    * \param[in] computeManager The compute manager to use for RPC running
    * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
-  InstanceManager(HiCR::L1::CommunicationManager *const communicationManager,
-                  HiCR::L1::ComputeManager *const computeManager,
-                  HiCR::L1::MemoryManager *const memoryManager,
-                  HiCR::L0::MemorySpace *const bufferMemorySpace) : _communicationManager(communicationManager),
-                                                                    _computeManager(computeManager),
-                                                                    _memoryManager(memoryManager),
-                                                                    _bufferMemorySpace(bufferMemorySpace){};
+  InstanceManager(HiCR::L1::CommunicationManager *communicationManager,
+                  HiCR::L1::ComputeManager *computeManager,
+                  HiCR::L1::MemoryManager *memoryManager,
+                  std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) : _communicationManager(communicationManager),
+                                                                              _computeManager(computeManager),
+                                                                              _memoryManager(memoryManager),
+                                                                              _bufferMemorySpace(bufferMemorySpace){};
 
   /**
    * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
@@ -193,13 +198,13 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  virtual HiCR::L0::LocalMemorySlot *getReturnValueImpl(HiCR::L0::Instance *instance) const = 0;
+  virtual std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance &instance) const = 0;
 
   /**
    * Backend-specific implementation of the submitReturnValue
    * \param[in] value The memory slot containing the RPC's return value
    */
-  virtual void submitReturnValueImpl(HiCR::L0::LocalMemorySlot *value) const = 0;
+  virtual void submitReturnValueImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> value) const = 0;
 
   /**
    * Backend-specific implementation of the listen function
@@ -224,12 +229,12 @@ class InstanceManager
   /**
    * Memory space to store the information bufer into
    */
-  HiCR::L0::MemorySpace *const _bufferMemorySpace;
+  const std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
 
   /**
    * Collection of instances
    */
-  std::set<HiCR::L0::Instance *> _instances;
+  instanceList_t _instances;
 
   /**
    * Pointer to current instance
@@ -246,7 +251,7 @@ class InstanceManager
   /**
    * Map of execution units, representing potential RPC requests
    */
-  std::map<executionUnitIndex_t, HiCR::L0::ExecutionUnit *> _executionUnitMap;
+  std::map<executionUnitIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _executionUnitMap;
 };
 
 } // namespace L1

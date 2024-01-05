@@ -7,17 +7,17 @@
 #include <backends/ascend/L0/executionUnit.hpp>
 #include <backends/ascend/L0/processingUnit.hpp>
 #include <backends/ascend/L1/memoryManager.hpp>
-#include <backends/ascend/L1/deviceManager.hpp>
+#include <backends/ascend/L1/topologyManager.hpp>
 #include <backends/ascend/L1/communicationManager.hpp>
 #include <backends/ascend/L1/computeManager.hpp>
 #include <backends/sequential/L1/memoryManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 
 #define BUFF_SIZE 192
 
 namespace ascend = HiCR::backend::ascend;
 
-void populateMemorySlot(HiCR::L0::LocalMemorySlot *memorySlot, float value)
+void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, float value)
 {
   for (int i = 0; i < BUFF_SIZE; i++) ((aclFloat16 *)memorySlot->getPointer())[i] = aclFloatToFloat16(value);
 }
@@ -42,16 +42,16 @@ int main(int argc, char **argv)
   aclError err = aclInit(NULL);
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
-  // Initializing host device manager
-  HiCR::backend::sequential::L1::DeviceManager hostDeviceManager;
-  hostDeviceManager.queryDevices();
-  auto hostDevice = *hostDeviceManager.getDevices().begin();
+  // Initializing host topology manager
+  HiCR::backend::sequential::L1::TopologyManager hostTopologyManager;
+  hostTopologyManager.queryDevices();
+  auto hostDevice = *hostTopologyManager.getDevices().begin();
   auto hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
-  // Initializing ascend device manager
-  HiCR::backend::ascend::L1::DeviceManager ascendDeviceManager;
-  ascendDeviceManager.queryDevices();
-  auto ascendDevice = *ascendDeviceManager.getDevices().begin();
+  // Initializing ascend topology manager
+  HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
+  ascendTopologyManager.queryDevices();
+  auto ascendDevice = *ascendTopologyManager.getDevices().begin();
   auto deviceMemSpace = *ascendDevice->getMemorySpaceList().begin();
 
   // Instantiating Ascend memory manager
@@ -86,15 +86,11 @@ int main(int argc, char **argv)
   if (tensorDesc == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
 
   // Prepare kernel input tensor data
-  std::vector<ascend::ComputationKernel::tensorData_t> inputs({
-    ascend::ComputationKernel::createTensorData(input1Device, tensorDesc),
-    ascend::ComputationKernel::createTensorData(input2Device, tensorDesc)
-    });
+  std::vector<ascend::ComputationKernel::tensorData_t> inputs({ascend::ComputationKernel::createTensorData(input1Device, tensorDesc),
+                                                               ascend::ComputationKernel::createTensorData(input2Device, tensorDesc)});
 
   // Prepare kernel output tensor data
-  std::vector<ascend::ComputationKernel::tensorData_t> outputs({
-     ascend::ComputationKernel::createTensorData(outputDevice, tensorDesc)
-    });
+  std::vector<ascend::ComputationKernel::tensorData_t> outputs({ascend::ComputationKernel::createTensorData(outputDevice, tensorDesc)});
 
   // Create the vector addition ComputeKernel
   auto currentPath = std::filesystem::current_path().string();
@@ -105,7 +101,7 @@ int main(int argc, char **argv)
   ascend::MemoryKernel copyOutputMemoryKernel(&ascendCommunicationManager, outputHost, 0, outputDevice, 0, size);
 
   // create the stream of Kernel operations to be executed on the device
-  std::vector<ascend::Kernel *> operations({ &copyInput1MemoryKernel, &copyInput2MemoryKernel, &kernel, &copyOutputMemoryKernel});
+  std::vector<ascend::Kernel *> operations({&copyInput1MemoryKernel, &copyInput2MemoryKernel, &kernel, &copyOutputMemoryKernel});
 
   // Instantiating Ascend computation manager
   HiCR::backend::ascend::L1::ComputeManager ascendComputeManager;
@@ -148,6 +144,6 @@ int main(int argc, char **argv)
 
   err = aclFinalize();
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize Ascend Computing Language. Error %d", err);
-  
+
   return 0;
 }

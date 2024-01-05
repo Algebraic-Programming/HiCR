@@ -2,7 +2,7 @@
 #include "include/producer.hpp"
 #include <backends/mpi/L1/memoryManager.hpp>
 #include <backends/mpi/L1/communicationManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <mpi.h>
 
 int main(int argc, char **argv)
@@ -44,8 +44,8 @@ int main(int argc, char **argv)
   HiCR::backend::mpi::L1::MemoryManager m;
   HiCR::backend::mpi::L1::CommunicationManager c(MPI_COMM_WORLD);
 
-// Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing Sequential backend's topology manager
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -56,12 +56,15 @@ int main(int argc, char **argv)
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();
 
+  // Getting reference to the first memory space detected
+  auto firstMemorySpace = *memSpaces.begin();
+
   // Calculating the number of producer processes
   size_t producerCount = rankCount - 1;
 
   // Rank 0 is consumer, the rest are producers
-  if (rankId == 0) consumerFc(&m, &c, *memSpaces.begin(), channelCapacity, producerCount);
-  if (rankId >= 1) producerFc(&m, &c, *memSpaces.begin(), channelCapacity, rankId);
+  if (rankId == 0) consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);
+  if (rankId >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, rankId);
 
   // Finalizing MPI
   MPI_Finalize();

@@ -129,7 +129,7 @@ class ExecutionState
    *
    * \param[in] executionUnit Represents a replicable executable unit (e.g., function, kernel) to execute
    */
-  ExecutionState(const HiCR::L0::ExecutionUnit *executionUnit){};
+  ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit){};
 
   /**
    * Backend-specific implementation of the resume function

@@ -14,7 +14,7 @@
 #include <backends/sequential/L0/computeResource.hpp>
 #include <backends/sequential/L0/processingUnit.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 
 namespace backend = HiCR::backend::sequential;
 
@@ -26,7 +26,7 @@ TEST(ProcessingUnit, Construction)
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -37,7 +37,10 @@ TEST(ProcessingUnit, Construction)
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
 
-  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(*computeResources.begin()));
+  // Getting reference to the first compute resource found
+  auto firstComputeResource = *computeResources.begin();
+
+  EXPECT_NO_THROW(p = new backend::L0::ProcessingUnit(firstComputeResource));
   EXPECT_FALSE(p == nullptr);
   delete p;
 }
@@ -48,7 +51,7 @@ TEST(ProcessingUnit, LifeCycle)
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -66,7 +69,7 @@ TEST(ProcessingUnit, LifeCycle)
   backend::L0::ProcessingUnit p(computeResource);
 
   // Checking that the correct resourceId was used
-  HiCR::L0::ComputeResource *pIdAlt = NULL;
+  std::shared_ptr<HiCR::L0::ComputeResource> pIdAlt = NULL;
   EXPECT_NO_THROW(pIdAlt = p.getComputeResource());
   EXPECT_EQ(pIdAlt, computeResource);
 

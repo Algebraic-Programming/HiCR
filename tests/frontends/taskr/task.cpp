@@ -11,14 +11,14 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sequential/L1/deviceManager.hpp>
+#include <backends/sequential/L1/topologyManager.hpp>
 #include <backends/sequential/L1/computeManager.hpp>
 #include <frontends/taskr/task.hpp>
 
 TEST(Task, Construction)
 {
   taskr::Task *t = NULL;
-  HiCR::L0::ExecutionUnit *u = NULL;
+  std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
 
   EXPECT_NO_THROW(t = new taskr::Task(0, u, NULL));
   EXPECT_FALSE(t == nullptr);
@@ -27,7 +27,7 @@ TEST(Task, Construction)
 
 TEST(Task, SetterAndGetters)
 {
-  HiCR::L0::ExecutionUnit *u = NULL;
+  std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
   taskr::Task t(0, u, NULL);
 
   taskr::Task::taskEventMap_t e;
@@ -70,8 +70,8 @@ TEST(Task, Run)
   // Creating task
   t = new taskr::Task(0, u);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  // Initializing Sequential backend's topology manager
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -82,8 +82,11 @@ TEST(Task, Run)
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
 
+  // Getting reference to the first compute resource found
+  auto firstComputeResource = *computeResources.begin();
+
   // Creating processing unit from the compute resource
-  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = m.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
   processingUnit->initialize();
@@ -158,7 +161,7 @@ TEST(Task, Events)
   t = new taskr::Task(0, u);
 
   // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::DeviceManager dm;
+  HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -169,8 +172,11 @@ TEST(Task, Events)
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
 
+  // Getting reference to the first compute resource found
+  auto firstComputeResource = *computeResources.begin();
+
   // Creating processing unit from the compute resource
-  auto processingUnit = m.createProcessingUnit(*computeResources.begin());
+  auto processingUnit = m.createProcessingUnit(firstComputeResource);
 
   // Creating execution state
   auto executionState = m.createExecutionState(u);

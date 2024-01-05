@@ -4,7 +4,7 @@
  */
 
 /**
- * @file deviceManager.hpp
+ * @file topologyManager.hpp
  * @brief This file implements support for device management of single processor systems
  * @author S. M. Martin
  * @date 18/12/2023
@@ -12,8 +12,9 @@
 
 #pragma once
 
+#include <memory>
 #include <backends/sequential/L0/device.hpp>
-#include <hicr/L1/deviceManager.hpp>
+#include <hicr/L1/topologyManager.hpp>
 
 namespace HiCR
 {
@@ -28,34 +29,34 @@ namespace L1
 {
 
 /**
- * Implementation of the device manager for single processor host systems.
+ * Implementation of the topology manager for single processor host systems.
  */
-class DeviceManager final : public HiCR::L1::DeviceManager
+class TopologyManager final : public HiCR::L1::TopologyManager
 {
   public:
 
   /**
    * The constructor is employed to reserve memory required for hwloc
    */
-  DeviceManager() : HiCR::L1::DeviceManager() {}
+  TopologyManager() : HiCR::L1::TopologyManager() {}
 
   /**
    * The constructor is employed to free memory required for hwloc
    */
-  ~DeviceManager() = default;
+  ~TopologyManager() = default;
 
   protected:
 
   __USED__ inline deviceList_t queryDevicesImpl()
   {
     // Creating single computing unit space representing a single core processor
-    auto hostCPU = new sequential::L0::ComputeResource();
+    auto hostCPU = std::make_shared<sequential::L0::ComputeResource>();
 
     // Creating single memory space representing host memory
-    auto hostRam = new sequential::L0::MemorySpace();
+    auto hostRam = std::make_shared<sequential::L0::MemorySpace>();
 
     // Creating a single new device representing a single CPU plus host memory (RAM)
-    auto hostDevice = new sequential::L0::Device({hostCPU}, {hostRam});
+    auto hostDevice = std::make_shared<sequential::L0::Device>(L0::Device::computeResourceList_t({hostCPU}), L0::Device::memorySpaceList_t({hostRam}));
 
     // Returning single device
     return {hostDevice};

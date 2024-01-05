@@ -69,10 +69,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] memorySpace The memory space onto which to register the new memory slot
    * \return A newly created memory slot
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *registerLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
-    auto m = dynamic_cast<const sequential::L0::MemorySpace *>(memorySpace);
+    auto m = dynamic_pointer_cast<sequential::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
@@ -82,14 +82,20 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (rc != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Memory Manager: lpf_register_local failed");
 
     // Creating new memory slot object
-    auto memorySlot = new lpf::L0::LocalMemorySlot(lpfSlot, ptr, size, memorySpace);
+    auto memorySlot = std::make_shared<lpf::L0::LocalMemorySlot>(lpfSlot, ptr, size, memorySpace);
+
     return memorySlot;
   }
 
-  __USED__ inline void deregisterLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *memorySlot) override
+  /**
+   * De-registers a memory slot previously registered
+   *
+   * \param[in] memorySlot Pointer to the memory slot to deregister.
+   */
+  __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the memory slot
-    auto slot = dynamic_cast<lpf::L0::LocalMemorySlot *>(memorySlot);
+    auto slot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot is compatible with this backend
     if (slot == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -105,10 +111,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The address of the newly allocated memory slot
    */
-  __USED__ inline HiCR::L0::LocalMemorySlot *allocateLocalMemorySlotImpl(HiCR::L0::MemorySpace *memorySpace, const size_t size) override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the LPF instance
-    auto m = dynamic_cast<const sequential::L0::MemorySpace *>(memorySpace);
+    auto m = dynamic_pointer_cast<sequential::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
@@ -125,10 +131,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] memorySlot Local memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlotImpl(HiCR::L0::LocalMemorySlot *memorySlot) override
+  __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the memory slot
-    auto slot = dynamic_cast<lpf::L0::LocalMemorySlot *>(memorySlot);
+    auto slot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot is compatible with this backend
     if (slot == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
@@ -140,7 +146,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (slot == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
 
     // First, deregistering LPF memory slot
-    deregisterLocalMemorySlotImpl(slot);
+    deregisterLocalMemorySlotImpl(memorySlot);
 
     // Deallocating memory
     free(pointer);

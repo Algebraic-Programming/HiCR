@@ -1,6 +1,6 @@
 #include "include/abcTasks.hpp"
 #include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 #include <hwloc.h>
 
 int main(int argc, char **argv)
@@ -11,8 +11,8 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-// Initializing Sequential backend's device manager
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+  // Initializing Sequential backend's topology manager
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

@@ -1,6 +1,6 @@
 #include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
 #include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 #include <hwloc.h>
@@ -45,11 +45,11 @@ int main(int argc, char **argv)
   // Instantiating Shared Memory backend
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
 
-    // Instantiating Shared Memory communication backend
+  // Instantiating Shared Memory communication backend
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(producerCount + 1);
 
-// Initializing Sequential backend's device manager
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+  // Initializing Sequential backend's topology manager
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -60,12 +60,17 @@ int main(int argc, char **argv)
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();
 
+  // Getting reference to the first memory space detected
+  auto firstMemorySpace = *memSpaces.begin();
+
   // Creating single consumer thread
-  auto consumerThread = std::thread(consumerFc, &m, &c, *memSpaces.begin(), channelCapacity, producerCount);
+  auto consumerThread = std::thread([&]()
+                                    { consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount); });
 
   // Creating producer threads
   std::vector<std::thread *> producerThreads(producerCount);
-  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread(producerFc, &m, &c, *memSpaces.begin(), channelCapacity, i);
+  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&]()
+                                                                                  { producerFc(m, c, firstMemorySpace, channelCapacity, i); });
 
   // Waiting on threads
   consumerThread.join();

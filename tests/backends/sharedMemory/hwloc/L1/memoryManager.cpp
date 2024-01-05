@@ -5,7 +5,7 @@
 
 /**
  * @file memoryManager.cpp
- * @brief Unit tests for the HiCR shared memory memory manager HiCR::backend::sharedMemory::hwloc class
+ * @brief Unit tests for the hwloc backend
  * @author S. M. Martin
  * @date 13/9/2023
  */
@@ -14,7 +14,7 @@
 #include "gtest/gtest.h"
 #include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
 #include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/deviceManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 
 TEST(MemoryManager, Construction)
 {
@@ -41,10 +41,10 @@ TEST(MemoryManager, Memory)
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c;
 
-  // Initializing HiCR::backend::sharedMemory::hwloc's device manager
-  HiCR::backend::sharedMemory::hwloc::L1::DeviceManager dm(&topology);
+  // Initializing hwloc-based topology manager
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
-  // Asking HiCR::backend::sharedMemory::hwloc to check the available devices
+  // Asking hwloc to check the available devices
   EXPECT_NO_THROW(dm.queryDevices());
 
   // Getting first device found
@@ -70,7 +70,7 @@ TEST(MemoryManager, Memory)
   EXPECT_THROW(m.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::LogicException);
 
   // Allocating memory correctly now
-  HiCR::L0::LocalMemorySlot *s1 = NULL;
+  std::shared_ptr<HiCR::L0::LocalMemorySlot> s1 = NULL;
   EXPECT_NO_THROW(s1 = m.allocateLocalMemorySlot(r, testMemAllocSize));
   EXPECT_EQ(s1->getSize(), testMemAllocSize);
 
@@ -80,7 +80,7 @@ TEST(MemoryManager, Memory)
   memset(s1LocalPtr, 0, testMemAllocSize);
 
   // Creating memory slot from a previous allocation
-  HiCR::L0::LocalMemorySlot *s2 = NULL;
+  std::shared_ptr<HiCR::L0::LocalMemorySlot> s2 = NULL;
   EXPECT_NO_THROW(s2 = m.registerLocalMemorySlot(r, malloc(testMemAllocSize), testMemAllocSize));
   EXPECT_EQ(s2->getSize(), testMemAllocSize);
 

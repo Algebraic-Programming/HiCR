@@ -45,15 +45,11 @@ class ComputeManager final : public sequential::L1::ComputeManager
    * Constructor for the compute manager class for the shared memory backend
    */
   ComputeManager() : sequential::L1::ComputeManager() {}
-
-  /**
-   * Default destructor
-   */
   ~ComputeManager() = default;
 
   private:
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(HiCR::L0::ComputeResource *computeResource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
   {
     return std::make_unique<sharedMemory::pthreads::L0::ProcessingUnit>(computeResource);
   }
