@@ -51,8 +51,8 @@ class GlobalMemorySlot
     const tag_t globalTag = 0,
     const globalKey_t globalKey = 0,
     std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : _globalTag(globalTag),
-                                                                  _globalKey(globalKey),
-                                                                  _sourceLocalMemorySlot(sourceLocalMemorySlot)
+                                                                                  _globalKey(globalKey),
+                                                                                  _sourceLocalMemorySlot(sourceLocalMemorySlot)
   {
   }
 
@@ -85,7 +85,7 @@ class GlobalMemorySlot
    */
   __USED__ inline size_t getMessagesSent() const noexcept { return _messagesSent; }
 
-    /**
+  /**
    * Setter function for the memory slot's received message counter
    * @param[in] count The memory slot's recv message counter to set
    */

@@ -48,7 +48,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
     const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
     const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
     std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
-                                                                  _rank(rank)
+                                                                                  _rank(rank)
   {
   }
 
@@ -69,14 +69,14 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    *
    * \return A pointer to the MPI window for the actual memory slot data
    */
-  __USED__ inline std::unique_ptr<MPI_Win> &getDataWindow() { return _dataWindow; } 
+  __USED__ inline std::unique_ptr<MPI_Win> &getDataWindow() { return _dataWindow; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the received message count
    *
    * \return A pointer to the MPI window for the received message count
    */
-  __USED__ inline std::unique_ptr<MPI_Win>& getRecvMessageCountWindow() { return _recvMessageCountWindow; }
+  __USED__ inline std::unique_ptr<MPI_Win> &getRecvMessageCountWindow() { return _recvMessageCountWindow; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the sent message count
@@ -119,12 +119,12 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   /**
    * Stores the MPI window to use with this slot to update received message count
    */
-  std::unique_ptr<MPI_Win>_recvMessageCountWindow = NULL;
+  std::unique_ptr<MPI_Win> _recvMessageCountWindow = NULL;
 
   /**
    * Stores the MPI window to use with this slot to update sent message count
    */
-  std::unique_ptr<MPI_Win>_sentMessageCountWindow = NULL;
+  std::unique_ptr<MPI_Win> _sentMessageCountWindow = NULL;
 };
 
 } // namespace L0

@@ -45,10 +45,10 @@ int main(int argc, char **argv)
   // Instantiating Shared Memory backend
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
 
-    // Instantiating Shared Memory communication backend
+  // Instantiating Shared Memory communication backend
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(producerCount + 1);
 
-// Initializing Sequential backend's topology manager
+  // Initializing Sequential backend's topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
@@ -64,11 +64,13 @@ int main(int argc, char **argv)
   auto firstMemorySpace = *memSpaces.begin();
 
   // Creating single consumer thread
-  auto consumerThread = std::thread([&](){ consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);});
+  auto consumerThread = std::thread([&]()
+                                    { consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount); });
 
   // Creating producer threads
   std::vector<std::thread *> producerThreads(producerCount);
-  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&](){producerFc(m, c, firstMemorySpace, channelCapacity, i);});
+  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&]()
+                                                                                  { producerFc(m, c, firstMemorySpace, channelCapacity, i); });
 
   // Waiting on threads
   consumerThread.join();

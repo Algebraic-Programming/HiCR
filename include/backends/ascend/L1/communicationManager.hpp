@@ -145,10 +145,26 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Determining which device context to use for copying
     std::shared_ptr<ascend::L0::LocalMemorySlot> deviceMemSlot = NULL;
-    if (srcType == deviceType_t::host   && dstType == deviceType_t::host)   { deviceMemSlot = NULL; memcpyKind = ACL_MEMCPY_HOST_TO_HOST; }
-    if (srcType == deviceType_t::host   && dstType == deviceType_t::device) { deviceMemSlot = dd;   memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE; }
-    if (srcType == deviceType_t::device && dstType == deviceType_t::host)   { deviceMemSlot = sd;   memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST; }
-    if (srcType == deviceType_t::device && dstType == deviceType_t::device) { deviceMemSlot = dd;   memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE; }
+    if (srcType == deviceType_t::host && dstType == deviceType_t::host)
+    {
+      deviceMemSlot = NULL;
+      memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
+    }
+    if (srcType == deviceType_t::host && dstType == deviceType_t::device)
+    {
+      deviceMemSlot = dd;
+      memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
+    }
+    if (srcType == deviceType_t::device && dstType == deviceType_t::host)
+    {
+      deviceMemSlot = sd;
+      memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
+    }
+    if (srcType == deviceType_t::device && dstType == deviceType_t::device)
+    {
+      deviceMemSlot = dd;
+      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
+    }
 
     // Calculating actual offsets
     const auto actualSrcPtr = (uint8_t *)srcPtr + src_offset;

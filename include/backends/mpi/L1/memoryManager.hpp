@@ -46,7 +46,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   ~MemoryManager() = default;
 
   /**
-   * Allocates memory in the current memory space (whole system) using MPI_Alloc_mem 
+   * Allocates memory in the current memory space (whole system) using MPI_Alloc_mem
    * This method, as opposed to a normal malloc ensures portability for all MPI implementations
    *
    * \param[in] memorySpace Memory space in which to perform the allocation.

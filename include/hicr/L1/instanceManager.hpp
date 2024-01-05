@@ -51,9 +51,9 @@ class InstanceManager
    */
   typedef uint64_t processingUnitIndex_t;
 
- /**
- * Type definition for an unsorted set of unique pointers to the detected instances
- */
+  /**
+   * Type definition for an unsorted set of unique pointers to the detected instances
+   */
   typedef std::unordered_set<std::unique_ptr<HiCR::L0::Instance>> instanceList_t;
 
   /**
@@ -131,7 +131,7 @@ class InstanceManager
    * \param[in] eIdx Index to the execution unit to run
    * \param[in] instance Instance on which to run the RPC
    */
-  virtual void execute(HiCR::L0::Instance& instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const = 0;
+  virtual void execute(HiCR::L0::Instance &instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const = 0;
 
   /**
    * Function to submit a return value for the currently running RPC
@@ -148,7 +148,7 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValue(HiCR::L0::Instance& instance) const
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValue(HiCR::L0::Instance &instance) const
   {
     // Calling backend-specific implementation of this function
     return getReturnValueImpl(instance);
@@ -163,13 +163,13 @@ class InstanceManager
    * \param[in] computeManager The compute manager to use for RPC running
    * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
-  InstanceManager(HiCR::L1::CommunicationManager* communicationManager,
-                  HiCR::L1::ComputeManager* computeManager,
-                  HiCR::L1::MemoryManager* memoryManager,
+  InstanceManager(HiCR::L1::CommunicationManager *communicationManager,
+                  HiCR::L1::ComputeManager *computeManager,
+                  HiCR::L1::MemoryManager *memoryManager,
                   std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) : _communicationManager(communicationManager),
-                                                              _computeManager(computeManager),
-                                                              _memoryManager(memoryManager),
-                                                              _bufferMemorySpace(bufferMemorySpace){};
+                                                                              _computeManager(computeManager),
+                                                                              _memoryManager(memoryManager),
+                                                                              _bufferMemorySpace(bufferMemorySpace){};
 
   /**
    * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
@@ -198,7 +198,7 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  virtual std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance& instance) const = 0;
+  virtual std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance &instance) const = 0;
 
   /**
    * Backend-specific implementation of the submitReturnValue
@@ -246,12 +246,12 @@ class InstanceManager
   /**
    * Map of assigned processing units in charge of executing a execution units
    */
-  std::map<processingUnitIndex_t, std::unique_ptr<HiCR::L0::ProcessingUnit> > _processingUnitMap;
+  std::map<processingUnitIndex_t, std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnitMap;
 
   /**
    * Map of execution units, representing potential RPC requests
    */
-  std::map<executionUnitIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit> > _executionUnitMap;
+  std::map<executionUnitIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _executionUnitMap;
 };
 
 } // namespace L1

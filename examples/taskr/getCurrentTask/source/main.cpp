@@ -11,7 +11,7 @@ int main(int argc, char **argv)
   // Initializing sequential backend
   HiCR::backend::sequential::L1::ComputeManager computeManager;
 
-// Initializing Sequential backend's topology manager
+  // Initializing Sequential backend's topology manager
   HiCR::backend::sequential::L1::TopologyManager dm;
 
   // Asking backend to check the available devices
@@ -38,11 +38,10 @@ int main(int argc, char **argv)
 
   // Creating task  execution unit
   auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr]()
-  {
+                                                              {
    // Printing associated task label
    const auto taskrLabel = taskr.getCurrentTask()->getLabel();
-   printf("Current TaskR Task   label:    %lu\n", taskrLabel);
-  });
+   printf("Current TaskR Task   label:    %lu\n", taskrLabel); });
 
   // Creating a single task to print the internal references
   taskr.addTask(new taskr::Task(TASK_LABEL, taskExecutionUnit));

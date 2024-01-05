@@ -86,15 +86,11 @@ int main(int argc, char **argv)
   if (tensorDesc == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
 
   // Prepare kernel input tensor data
-  std::vector<ascend::ComputationKernel::tensorData_t> inputs({
-    ascend::ComputationKernel::createTensorData(input1Device, tensorDesc),
-    ascend::ComputationKernel::createTensorData(input2Device, tensorDesc)
-    });
+  std::vector<ascend::ComputationKernel::tensorData_t> inputs({ascend::ComputationKernel::createTensorData(input1Device, tensorDesc),
+                                                               ascend::ComputationKernel::createTensorData(input2Device, tensorDesc)});
 
   // Prepare kernel output tensor data
-  std::vector<ascend::ComputationKernel::tensorData_t> outputs({
-     ascend::ComputationKernel::createTensorData(outputDevice, tensorDesc)
-    });
+  std::vector<ascend::ComputationKernel::tensorData_t> outputs({ascend::ComputationKernel::createTensorData(outputDevice, tensorDesc)});
 
   // Create the vector addition ComputeKernel
   auto currentPath = std::filesystem::current_path().string();
@@ -105,7 +101,7 @@ int main(int argc, char **argv)
   ascend::MemoryKernel copyOutputMemoryKernel(&ascendCommunicationManager, outputHost, 0, outputDevice, 0, size);
 
   // create the stream of Kernel operations to be executed on the device
-  std::vector<ascend::Kernel *> operations({ &copyInput1MemoryKernel, &copyInput2MemoryKernel, &kernel, &copyOutputMemoryKernel});
+  std::vector<ascend::Kernel *> operations({&copyInput1MemoryKernel, &copyInput2MemoryKernel, &kernel, &copyOutputMemoryKernel});
 
   // Instantiating Ascend computation manager
   HiCR::backend::ascend::L1::ComputeManager ascendComputeManager;
@@ -148,6 +144,6 @@ int main(int argc, char **argv)
 
   err = aclFinalize();
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize Ascend Computing Language. Error %d", err);
-  
+
   return 0;
 }

@@ -160,12 +160,12 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     for (size_t i = 0; i < globalSlotCount; i++)
     {
       // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
-      void* globalSlotPointer = nullptr;
+      void *globalSlotPointer = nullptr;
       std::shared_ptr<HiCR::L0::LocalMemorySlot> globalSourceSlot = nullptr;
-      
+
       // If the slot is remote, do not specify any local size assigned to it
       if (globalSlotProcessId[i] != _rank) globalSlotSizes[i] = 0;
-    
+
       // If it's local, then assign the local information to it
       if (globalSlotProcessId[i] == _rank)
       {

@@ -16,10 +16,10 @@ void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L1::CommunicationManager &c
   auto memSlots = std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>{};
 
   // iterate all over the memory spaces and create multiple memory slots in each one
-  for (const auto& memSpace : memSpaces) 
-   for (int i = 0; i < iterations; i++)
-    memSlots.emplace_back(m.allocateLocalMemorySlot(memSpace, BUFFER_SIZE));
- 
+  for (const auto &memSpace : memSpaces)
+    for (int i = 0; i < iterations; i++)
+      memSlots.emplace_back(m.allocateLocalMemorySlot(memSpace, BUFFER_SIZE));
+
   // Getting input memory slot
   auto srcMemSlot = input;
 
@@ -28,7 +28,7 @@ void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L1::CommunicationManager &c
   {
     // Perform the memcpy operations
     c.memcpy(dstMemSlot, DST_OFFSET, srcMemSlot, SRC_OFFSET, BUFFER_SIZE);
-    
+
     // fence when the memcpy happens between two different memory spaces
     c.fence(0);
 
@@ -44,5 +44,5 @@ void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L1::CommunicationManager &c
   printf("Output: %s\n", (const char *)output->getPointer());
 
   // free the memory slots
-  for (auto& memSlot : memSlots) m.freeLocalMemorySlot(memSlot);
+  for (auto &memSlot : memSlots) m.freeLocalMemorySlot(memSlot);
 }

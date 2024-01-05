@@ -41,8 +41,8 @@ class LocalMemorySlot
     void *const pointer,
     const size_t size,
     std::shared_ptr<HiCR::L0::MemorySpace> memorySpace = NULL) : _pointer(pointer),
-                                                 _size(size),
-                                                 _memorySpace(memorySpace)
+                                                                 _size(size),
+                                                                 _memorySpace(memorySpace)
   {
   }
 

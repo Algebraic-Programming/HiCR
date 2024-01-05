@@ -36,11 +36,11 @@ int main(int argc, char **argv)
   // Getting first accesible memory space for buffering
   auto firstMemorySpace = *memSpaces.begin();
 
-// Getting first compute resource for running the RPCs
+  // Getting first compute resource for running the RPCs
   auto firstComputeResource = *computeResources.begin();
 
   // Creating MPI-based instance manager
-  HiCR::backend::mpi::L1::InstanceManager instanceManager(communicationManager, computeManager,  memoryManager, firstMemorySpace);
+  HiCR::backend::mpi::L1::InstanceManager instanceManager(communicationManager, computeManager, memoryManager, firstMemorySpace);
 
   // Differentiating between coordinator and worker functions using the rank number
   if (rank == 0)

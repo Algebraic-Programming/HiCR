@@ -332,7 +332,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Now also creating pointer vector to remember local pointers, when required for memcpys
     std::vector<void *> globalSlotPointers(globalSlotCount);
-    std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot> > globalSourceSlots(globalSlotCount);
+    std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> globalSourceSlots(globalSlotCount);
     size_t localPointerPos = 0;
     for (size_t i = 0; i < globalSlotPointers.size(); i++)
     {
