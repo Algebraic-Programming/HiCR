@@ -101,9 +101,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     size_t globalSlotCount = 0;
     for (size_t i = 0; i < _size; i++)
       globalSlotCount += globalSlotCounts[i];
-      
-    std::vector<size_t> globalSlotCountsInBytes(globalSlotCount);
-    for (size_t i = 0; i < globalSlotCount; i++)
+
+    std::vector<size_t> globalSlotCountsInBytes(_size);
+    for (size_t i = 0; i < _size; i++)
       globalSlotCountsInBytes[i] = globalSlotCounts[i] * sizeof(size_t);
 
     // globalSlotSizes will hold exactly the union of all slot sizes at
@@ -115,7 +115,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     std::vector<size_t> globalSlotSizes(globalSlotCount);
     std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t> globalSlotKeys(globalSlotCount);
     std::vector<size_t> globalSlotProcessId(globalSlotCount);
-    
 
     for (size_t i = 0; i < localSlotCount; i++)
     {
@@ -137,7 +136,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     CHECK(lpf_register_local(_lpf, localSlotProcessId.data(), localSlotCount * sizeof(size_t), &slot_local_process_ids));
     CHECK(lpf_register_global(_lpf, globalSlotProcessId.data(), globalSlotCount * sizeof(size_t), &slot_global_process_ids));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
-    
     // start allgatherv for process IDs assigned to each global slot
     CHECK(lpf_allgatherv(coll, slot_local_process_ids, slot_global_process_ids, globalSlotCountsInBytes.data(), false /*exclude myself*/));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
@@ -254,18 +252,40 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   __USED__ inline void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
   {
-    lpf_sync(_lpf, LPF_SYNC_DEFAULT);
+    globalKeyToMemorySlotMap_t slotsForTag = getGlobalMemorySlots(tag);
+    for (auto &i : slotsForTag)
+    {
+      auto hicrSlot = i.second;
+      fenceImpl(hicrSlot);
+    }
   }
 
-  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  /**
+   * gets global memory slots associated with a tag
+   * \param[in] tag Tag associated with a set of memory slots
+   * \return The global memory slots associated with this tag
+   */
+  __USED__ inline globalKeyToMemorySlotMap_t getGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag)
   {
-    // Getting up-casted pointer
-    auto slot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
+    // If the requested tag and key are not found, return empty storage
+    if (_globalMemorySlotTagKeyMap.contains(tag) == false) HICR_THROW_LOGIC("getGlobalMemorySlots: Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
+    globalKeyToMemorySlotMap_t slotsForTag = _globalMemorySlotTagKeyMap.at(tag);
+    return slotsForTag;
+  }
 
-    // Checking whether the execution unit passed is compatible with this backend
-    if (slot == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
-
-    pullMessagesRecv(slot);
+  /**
+   * Fence on a specific global memory slot. The semantic
+   * of the fence operation for the LPF backend is to complete
+   * via polling all started put and get operations on that slot
+   * \param[in] hicrSlot global memory slot to fence on
+   */
+  __USED__ inline void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> hicrSlot)
+  {
+    auto memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(hicrSlot);
+    lpf_memslot_t slot = memorySlot->getLPFSlot();
+    CHECK(lpf_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, slot));
+    updateMessagesRecv(memorySlot);
+    updateMessagesSent(memorySlot);
   }
 
   __USED__ inline void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
@@ -281,17 +301,38 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   }
 
   /**
-   * This function pulls the received message count via LPF
-   * from an LPF IB Verbs slot and sets the messagesRecv field of
-   * a HiCR memory slot
-   * @param[inout] memorySlot whose messageRecv should be updated
+   * This method passively updates the received message count
+   * on a memory slot from LPF. It does not ask LPF to do any
+   * additional polling on messages.
+   * \param[out] memorySlot HiCr memory slot to update
    */
-  __USED__ inline void pullMessagesRecv(std::shared_ptr<lpf::L0::GlobalMemorySlot> memorySlot)
+  __USED__ inline void updateMessagesRecv(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot)
   {
-    size_t receivedMessageCount = 0;;
-    lpf_memslot_t lpfSlot = memorySlot->getLPFSlot();
-    lpf_get_rcvd_msg_count_per_slot(_lpf, &receivedMessageCount, lpfSlot);
-    memorySlot->setMessagesRecv(receivedMessageCount);
+    size_t msg_cnt;
+    auto memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
+    lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
+    lpf_get_rcvd_msg_count_per_slot(_lpf, &msg_cnt, lpfSlot);
+    memSlot->setMessagesRecv(msg_cnt);
+  }
+
+  /**
+   * This method passively updates the sent message count
+   * on a memory slot from LPF. It does not ask LPF to do any
+   * additional polling on messages.
+   * \param[out] memorySlot HiCr memory slot to update
+   */
+  __USED__ inline void updateMessagesSent(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot)
+  {
+    size_t msg_cnt;
+    auto memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
+    lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
+    lpf_get_sent_msg_count_per_slot(_lpf, &msg_cnt, lpfSlot);
+    memSlot->setMessagesSent(msg_cnt);
+  }
+
+  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  {
+    fenceImpl(memorySlot->getGlobalTag());
   }
 
   __USED__ inline void flush() override

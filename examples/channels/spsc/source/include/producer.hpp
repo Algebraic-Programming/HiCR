@@ -5,7 +5,7 @@
 #include <hicr/L1/communicationManager.hpp>
 #include <frontends/channel/spsc/producer.hpp>
 
-void producerFc(HiCR::L1::MemoryManager& memoryManager, HiCR::L1::CommunicationManager& communicationManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, const size_t channelCapacity)
+void producerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManager &communicationManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, const size_t channelCapacity)
 {
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::channel::Base::getCoordinationBufferSize();
@@ -63,5 +63,6 @@ void producerFc(HiCR::L1::MemoryManager& memoryManager, HiCR::L1::CommunicationM
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffer);
 
   // Freeing up local memory
-  memoryManager.freeLocalMemorySlot(coordinationBuffer);
+  // Currently investigating why following line causes issue #33
+  // memoryManager.freeLocalMemorySlot(coordinationBuffer);
 }
