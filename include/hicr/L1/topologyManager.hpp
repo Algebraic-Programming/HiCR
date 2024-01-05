@@ -51,9 +51,11 @@ class TopologyManager
    */
   virtual ~TopologyManager() = default;
 
-  /*
+  /**
    * Serialization function to enable sharing topology information across different HiCR instances (or any other purposes)
-  */
+   *
+   * @return JSON-formatted serialized topology, as detected by this topology manager
+   */
   nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
