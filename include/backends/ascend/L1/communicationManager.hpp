@@ -138,42 +138,48 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (srcType == deviceType_t::none) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
     if (dstType == deviceType_t::none) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
 
-    // Determining memcpy kind
+    // Storage for pointers and memcpy kind
     aclrtMemcpyKind memcpyKind;
-    if (srcType == deviceType_t::host && dstType == deviceType_t::host) memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
-    if (srcType == deviceType_t::host && dstType == deviceType_t::device) memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
-    if (srcType == deviceType_t::device && dstType == deviceType_t::host) memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
-    if (srcType == deviceType_t::device && dstType == deviceType_t::device) memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
-
-    // Storage for pointers
     const void *srcPtr = NULL;
     void *dstPtr = NULL;
 
     // Determining which device context to use for copying
     std::shared_ptr<ascend::L0::LocalMemorySlot> deviceMemSlot = NULL;
-    if (memcpyKind == ACL_MEMCPY_HOST_TO_HOST)
+
+    // Host -> Host
+    if (srcType == deviceType_t::host && dstType == deviceType_t::host)
     {
       deviceMemSlot = NULL;
       srcPtr = sh->getPointer();
       dstPtr = dh->getPointer();
+      memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
     }
-    if (memcpyKind == ACL_MEMCPY_HOST_TO_DEVICE)
+
+    // Host -> Device
+    if (srcType == deviceType_t::host && dstType == deviceType_t::device)
     {
       deviceMemSlot = dd;
       srcPtr = sh->getPointer();
       dstPtr = dd->getPointer();
+      memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
     }
-    if (memcpyKind == ACL_MEMCPY_DEVICE_TO_HOST)
+    
+    // Device -> Host
+    if (srcType == deviceType_t::device && dstType == deviceType_t::host)
     {
       deviceMemSlot = sd;
       srcPtr = sd->getPointer();
       dstPtr = dh->getPointer();
+      memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
     }
-    if (memcpyKind == ACL_MEMCPY_DEVICE_TO_DEVICE)
+
+    // Device -> Device
+    if (srcType == deviceType_t::device && dstType == deviceType_t::device)
     {
       deviceMemSlot = dd;
       srcPtr = sd->getPointer();
       dstPtr = dd->getPointer();
+      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
     }
 
     // Calculating actual offsets
