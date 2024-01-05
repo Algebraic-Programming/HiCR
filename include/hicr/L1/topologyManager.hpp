@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <nlohmann_json/json.hpp>
 #include <memory>
 #include <hicr/L0/device.hpp>
 #include <hicr/L1/memoryManager.hpp>
@@ -49,6 +50,17 @@ class TopologyManager
    * Default destructor
    */
   virtual ~TopologyManager() = default;
+
+  /*
+   * Serialization function to enable sharing topology information across different HiCR instances (or any other purposes)
+  */
+  nlohmann::json serialize() const
+  {
+    // Storage for newly created serialized output
+    nlohmann::json output;
+
+    return output;
+  }
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute units provided by the library which it supports.
