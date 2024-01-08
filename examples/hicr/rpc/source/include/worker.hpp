@@ -5,10 +5,10 @@
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/memorySpace.hpp>
-#include <backends/sharedMemory/L1/computeManager.hpp>
+#include <backends/host/L1/computeManager.hpp>
 
 void workerFc(HiCR::L1::InstanceManager &instanceManager,
-              HiCR::backend::sharedMemory::L1::ComputeManager &computeManager,
+              HiCR::backend::host::L1::ComputeManager &computeManager,
               std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
               std::shared_ptr<HiCR::L0::ComputeResource> rpcExecutor)
 {

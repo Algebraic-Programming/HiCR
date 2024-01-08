@@ -1,6 +1,6 @@
 #include <backends/lpf/L1/memoryManager.hpp>
 #include <backends/lpf/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <iostream>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
@@ -45,7 +45,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

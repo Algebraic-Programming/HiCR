@@ -1,5 +1,5 @@
-#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <stdio.h>
 
 int main(int argc, char **argv)
@@ -10,8 +10,8 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Instantiating Shared Memory backend
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager t(&topology);
+  // Instantiating HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager t(&topology);
 
   // Asking backend to check the available devices
   t.queryDevices();
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   auto d = *t.getDevices().begin();
 
   // Initializing Pthread-based host (CPU) compute manager
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
+  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
   auto fcLambda = []()
   { printf("Hello, World!\n"); };

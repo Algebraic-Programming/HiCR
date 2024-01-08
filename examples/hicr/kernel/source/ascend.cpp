@@ -11,7 +11,7 @@
 #include <backends/ascend/L1/topologyManager.hpp>
 #include <backends/ascend/L1/communicationManager.hpp>
 #include <backends/ascend/L1/computeManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 
 #define BUFF_SIZE 192
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager hostTopologyManager(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager hostTopologyManager(&topology);
   hostTopologyManager.queryDevices();
   auto hostDevice = *hostTopologyManager.getDevices().begin();
   auto hostMemSpace = *hostDevice->getMemorySpaceList().begin();

@@ -1,6 +1,6 @@
 #include <cstdio>
-#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
 
@@ -15,10 +15,10 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing Pthread-based compute manager to run tasks in parallel
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
+  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager topologyManager(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager topologyManager(&topology);
 
   // Asking backend to check the available devices
   topologyManager.queryDevices();

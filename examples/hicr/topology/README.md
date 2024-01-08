@@ -1,6 +1,4 @@
-HiCR Memcpy Examples
-=====================
+HiCR Topology Examples
+=======================
 
-Simple examples for memcpy using HiCR, showing how to transfer a message from one resource to another and then printing it to screen.
-
-* Shared memory backend: it allocates memory in different NUMA domains and transfers the message from one to the other.
+These examples show how HiCR can be used to discover, print, serialize, transfer, and deserialize a system's hardware topology

@@ -1,6 +1,6 @@
-#include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
-#include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/memoryManager.hpp>
+#include <backends/host/pthreads/L1/communicationManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 #include <hwloc.h>
@@ -12,7 +12,7 @@ int main(int argc, char **argv)
   if (argc != 3)
   {
     fprintf(stderr, "Error: Must provide the channel capacity and producer count as arguments.\n");
-    fprintf(stderr, "Example: ./sharedMemory 3 4 # Creates a channel of capacity 3, and 4 producers.\n");
+    fprintf(stderr, "Example: ./host 3 4 # Creates a channel of capacity 3, and 4 producers.\n");
     return -1;
   }
 
@@ -43,13 +43,13 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Instantiating Host (CPU) memory manager
-  HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
 
   // Instantiating Host (CPU) communication manager
-  HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(producerCount + 1);
+  HiCR::backend::host::pthreads::L1::CommunicationManager c(producerCount + 1);
 
   // Initializing Host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

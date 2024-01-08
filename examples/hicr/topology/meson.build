@@ -3,9 +3,9 @@ testSuite = [ 'examples', 'hicr' ]
 topologyCPPArgs = []
 topologyDependencies = [ hicrBuildDep]
 
-if 'sharedMemory/hwloc' in enabledBackends
+if 'hwloc' in enabledBackends
   topologyCPPArgs += '-D_USE_HWLOC_'
-  topologyDependencies += hicrSharedMemoryHWLocBackendDep
+  topologyDependencies += hicrHWLocBackendDep
 endif
 
 if 'ascend' in enabledBackends 

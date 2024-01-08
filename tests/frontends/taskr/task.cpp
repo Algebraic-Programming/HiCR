@@ -11,8 +11,8 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
-#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <backends/host/pthreads/L1/computeManager.hpp>
 #include <frontends/taskr/task.hpp>
 
 TEST(Task, Construction)
@@ -68,7 +68,7 @@ TEST(Task, Run)
   };
 
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager c;
+  HiCR::backend::host::pthreads::L1::ComputeManager c;
 
   // Creating execution unit
   auto u = c.createExecutionUnit(f);
@@ -77,7 +77,7 @@ TEST(Task, Run)
   t = new taskr::Task(0, u);
 
   // Initializing HWLoc-based host (CPU)  topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   tm.queryDevices();
@@ -164,7 +164,7 @@ TEST(Task, Events)
   };
 
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager c;
+  HiCR::backend::host::pthreads::L1::ComputeManager c;
 
   // Creating execution unit
   auto u = c.createExecutionUnit(f);
@@ -173,7 +173,7 @@ TEST(Task, Events)
   t = new taskr::Task(0, u);
 
   // Initializing HWLoc-based host (CPU)  topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   tm.queryDevices();

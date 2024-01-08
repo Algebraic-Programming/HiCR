@@ -1,4 +1,4 @@
-subdir('sharedMemory')
+subdir('host')
 
 
 

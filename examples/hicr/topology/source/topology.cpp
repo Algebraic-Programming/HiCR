@@ -8,7 +8,7 @@
 
 #ifdef _USE_HWLOC_
 #include <hwloc.h>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #endif // _USE_HWLOC
 
 int main(int argc, char **argv)
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager hwlocTopologyManager(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager hwlocTopologyManager(&topology);
 
   // Adding topology manager to the list
   topologyManagerList.push_back(&hwlocTopologyManager);

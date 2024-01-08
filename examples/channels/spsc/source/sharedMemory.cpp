@@ -1,8 +1,8 @@
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
-#include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
-#include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/memoryManager.hpp>
+#include <backends/host/pthreads/L1/communicationManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <thread>
 
 #define CONCURRENT_THREADS 2
@@ -33,13 +33,13 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Instantiating HWLoc-based host (CPU) memory manager
-  HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(CONCURRENT_THREADS);
+  HiCR::backend::host::pthreads::L1::CommunicationManager c(CONCURRENT_THREADS);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

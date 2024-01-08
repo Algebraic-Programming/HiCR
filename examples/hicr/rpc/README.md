@@ -1,5 +1,5 @@
-HiCR Channel Examples
+HiCR RPC Examples
 =====================
 
-Simple examples for channel using HiCR, showing how to transfer messages through a producer/consumer channel
+Simple examples that use HiCR to send and execute RPCs across different HiCR instances and getting their return values
 

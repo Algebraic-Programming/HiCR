@@ -15,9 +15,9 @@
 #include <hicr/exceptions.hpp>
 #include <frontends/channel/spsc/consumer.hpp>
 #include <frontends/channel/spsc/producer.hpp>
-#include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
-#include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/memoryManager.hpp>
+#include <backends/host/pthreads/L1/communicationManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 
 #define CHANNEL_TAG 0
 #define TOKEN_BUFFER_KEY 0
@@ -34,13 +34,13 @@ TEST(ConsumerChannel, Construction)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(1);
+  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -97,13 +97,13 @@ TEST(ConsumerChannel, PeekPop)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(1);
+  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -184,13 +184,13 @@ TEST(ConsumerChannel, PeekWait)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(1);
+  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

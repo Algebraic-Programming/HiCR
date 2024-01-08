@@ -2,7 +2,7 @@
 #include "include/producer.hpp"
 #include <backends/mpi/L1/memoryManager.hpp>
 #include <backends/mpi/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <mpi.h>
 
 int main(int argc, char **argv)
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing hwloc-based host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

@@ -1,7 +1,7 @@
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
-#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <backends/host/pthreads/L1/computeManager.hpp>
 #include <backends/mpi/L1/memoryManager.hpp>
 #include <backends/mpi/L1/instanceManager.hpp>
 #include <mpi.h>
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   tm.queryDevices();
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
   HiCR::backend::mpi::L1::MemoryManager memoryManager;
 
   // Initializing host (CPU) compute manager (for running incoming RPCs)
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
+  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
   // Getting first accesible memory space for buffering
   auto firstMemorySpace = *memSpaces.begin();

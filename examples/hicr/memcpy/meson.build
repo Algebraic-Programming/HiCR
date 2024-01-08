@@ -1,7 +1,7 @@
 testSuite = [ 'examples', 'hicr', 'memcpy' ]
 
-if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enabledBackends
-    sharedMemoryDependencies = [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep ]
+if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
+    sharedMemoryDependencies = [ hicrBuildDep, hicrHWLocBackendDep, hicrPthreadsBackendDep ]
 	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: sharedMemoryDependencies )
 
 	if get_option('buildTests')
@@ -9,8 +9,8 @@ if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enable
 	endif
 endif
 
-if 'lpf' in enabledBackends and 'sharedMemory/hwloc' in enabledBackends 
-	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep, hicrSharedMemoryHWLocBackendDep])
+if 'lpf' in enabledBackends and 'hwloc' in enabledBackends 
+	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep, hicrHWLocBackendDep])
 
 	if get_option('buildTests')
 	  test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'ibverbs', lpf.full_path() ], suite: testSuite ) 
@@ -18,8 +18,8 @@ if 'lpf' in enabledBackends and 'sharedMemory/hwloc' in enabledBackends
 endif
 
 
-if 'ascend' in enabledBackends and 'sharedMemory/hwloc' in enabledBackends
-	ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: [ hicrBuildDep, hicrAscendBackendDep, hicrSharedMemoryHWLocBackendDep])
+if 'ascend' in enabledBackends and 'hwloc' in enabledBackends
+	ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: [ hicrBuildDep, hicrAscendBackendDep, hicrHWLocBackendDep])
 
 	if get_option('buildTests')
 	  test('ascend', ascend, args : [ ], is_parallel: false, suite: testSuite ) 

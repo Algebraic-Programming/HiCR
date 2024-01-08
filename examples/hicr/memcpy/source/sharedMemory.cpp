@@ -1,7 +1,7 @@
 #include "include/telephoneGame.hpp"
-#include <backends/sharedMemory/hwloc/L1/memoryManager.hpp>
-#include <backends/sharedMemory/pthreads/L1/communicationManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/memoryManager.hpp>
+#include <backends/host/pthreads/L1/communicationManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 
 int main(int argc, char **argv)
 {
@@ -12,13 +12,13 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Instantiating host (CPU) memory manager
-  HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
 
   // Instantiating host (CPU) communication manager
-  HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c;
+  HiCR::backend::host::pthreads::L1::CommunicationManager c;
 
   // Asking backend to check the available devices
   dm.queryDevices();
