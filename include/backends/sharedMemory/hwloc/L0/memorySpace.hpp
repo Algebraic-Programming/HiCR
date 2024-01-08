@@ -52,6 +52,14 @@ class MemorySpace final : public HiCR::backend::sharedMemory::L0::MemorySpace
   _bindingSupport(bindingSupport){};
 
   /**
+   * Deserializing constructor
+  */
+  MemorySpace(const nlohmann::json& input) : HiCR::backend::sharedMemory::L0::MemorySpace()
+  {
+    deserialize(input);
+  }
+
+  /**
    * Default destructor
    */
   ~MemorySpace() = default;
@@ -78,15 +86,29 @@ class MemorySpace final : public HiCR::backend::sharedMemory::L0::MemorySpace
 
   private:
 
+  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  {
+     // Writing HWLoc-specific information into the serialized object
+     output["Binding Support"] = _bindingSupport;
+  }
+
+  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  {
+    std::string key = "Binding Support";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _bindingSupport = input[key].get<sharedMemory::hwloc::L0::LocalMemorySlot::binding_type>();
+  }
+
   /**
    * HWloc object representing this memory space
    */
-  const hwloc_obj_t _hwlocObject;
+  hwloc_obj_t _hwlocObject;
 
   /**
    * Stores whether it is possible to allocate bound memory in this memory space
    */
-  const sharedMemory::hwloc::L0::LocalMemorySlot::binding_type _bindingSupport;
+  sharedMemory::hwloc::L0::LocalMemorySlot::binding_type _bindingSupport;
 };
 
 } // namespace L0

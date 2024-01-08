@@ -12,8 +12,8 @@ int main(int argc, char **argv)
   // Initializing backend's device manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager t(&topology);
 
-  // Run the telephone game
-  topologyPrinter(t);
+  // Run the topology exchange example
+  topologyExchange(t);
 
   return 0;
 }

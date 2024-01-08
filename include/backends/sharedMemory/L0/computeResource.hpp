@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <memory>
+#include <unordered_set>
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/computeResource.hpp>
@@ -24,7 +26,7 @@ namespace backend
 {
 
 namespace sharedMemory
-{
+{ 
 
 namespace L0
 {
@@ -62,12 +64,11 @@ class ComputeResource : public HiCR::L0::ComputeResource
   ComputeResource(const logicalProcessorId_t logicalProcessorId,
        const physicalProcessorId_t physicalProcessorId,
        const numaAffinity_t numaAffinity,
-       const std::vector<backend::sharedMemory::Cache> &caches) : HiCR::L0::ComputeResource(),
+       const std::unordered_set<std::shared_ptr<backend::sharedMemory::Cache>> &caches) : HiCR::L0::ComputeResource(),
                                                             _logicalProcessorId(logicalProcessorId),
                                                             _physicalProcessorId(physicalProcessorId),
                                                             _numaAffinity(numaAffinity),
                                                             _caches(caches){};
-  ComputeResource() = delete;
   ~ComputeResource() = default;
 
   __USED__ inline std::string getType() const override { return "CPU Core"; }
@@ -87,17 +88,56 @@ class ComputeResource : public HiCR::L0::ComputeResource
    */
   __USED__ inline physicalProcessorId_t getPhysicalProcessorId() const { return _physicalProcessorId; }
 
+  protected: 
+
+  /**
+   * Protected default constructor for deserialization
+   */
+   ComputeResource() = default;
+
   __USED__ inline void serializeImpl(nlohmann::json& output) const override
   {
    // Writing core's information into the serialized object
    output["Logical Processor Id"] = _logicalProcessorId;
    output["Physical Processor Id"] = _physicalProcessorId;
-   output["Numa Affinity"] = _numaAffinity;
+   output["NUMA Affinity"] = _numaAffinity;
 
    // Writing Cache information
    std::string cachesKey = "Caches";
    output[cachesKey] = std::vector<nlohmann::json>();
-   for (const auto& cache : _caches) output[cachesKey] += cache.serialize();
+   for (const auto& cache : _caches) output[cachesKey] += cache->serialize();
+  }
+
+  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  {
+    std::string key = "Logical Processor Id";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _logicalProcessorId = input[key].get<logicalProcessorId_t>();
+
+    key = "Physical Processor Id";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _physicalProcessorId = input[key].get<physicalProcessorId_t>();
+
+    key = "NUMA Affinity";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _numaAffinity = input[key].get<numaAffinity_t>();
+
+    key = "Caches";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_array() == false) HICR_THROW_LOGIC("The '%s' entry is not an array", key.c_str());
+
+    _caches.clear();
+    for (const auto& c : input[key])
+    {
+      // Deserializing cache
+      auto cache = std::make_shared<backend::sharedMemory::Cache>(c);
+
+      // Adding it to the list
+      _caches.insert(cache);
+    }
   }
 
   private:
@@ -105,25 +145,25 @@ class ComputeResource : public HiCR::L0::ComputeResource
   /**
    * The logical ID of the hardware core / processing unit
    */
-  const logicalProcessorId_t _logicalProcessorId;
+  logicalProcessorId_t _logicalProcessorId;
 
   /**
    * The ID of the hardware core; in SMT systems that will mean the core ID,
    * which may also have other HW threads. In non SMT systems it is expected
    * for logical and system IDs to be 1-to-1.
    */
-  const physicalProcessorId_t _physicalProcessorId;
+  physicalProcessorId_t _physicalProcessorId;
 
   /**
    * The ID of the hardware NUMA domain that this core is associated to
    */
-  const numaAffinity_t _numaAffinity;
+  numaAffinity_t _numaAffinity;
 
   /**
    * List of Cache objects associated with the CPU. There is the assumption
    * that only one cache object of each type can be associated with a CPU.
    */
-  const std::vector<backend::sharedMemory::Cache> _caches;
+  std::unordered_set<std::shared_ptr<backend::sharedMemory::Cache>> _caches;
 };
 
 } // namespace L0

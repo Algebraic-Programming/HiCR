@@ -13,7 +13,7 @@
 #pragma once
 
 #include "hwloc.h"
-#include <backends/sharedMemory/L0/device.hpp>
+#include <backends/sharedMemory/hwloc/L0/device.hpp>
 #include <backends/sharedMemory/hwloc/L0/computeResource.hpp>
 #include <backends/sharedMemory/hwloc/L0/memorySpace.hpp>
 #include <hicr/L1/topologyManager.hpp>
@@ -62,11 +62,22 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     // Loading topology
     hwloc_topology_load(*_topology);
 
-    // Creating a single new device representing an SMP system (multicore + shared RAM)
-    auto hostDevice = std::make_shared<sharedMemory::L0::Device>(queryComputeResources(), queryMemorySpaces());
+    // Storage for the new device list 
+    deviceList_t deviceList;
 
-    // Returning single device
-    return {hostDevice};
+    // Ask hwloc about number of NUMA nodes and add as many devices as NUMA domains
+    auto n = hwloc_get_nbobjs_by_type(*_topology, HWLOC_OBJ_NUMANODE);
+    for (int i = 0; i < n; i++)
+    {
+      // Creating new device for the current NUMA domain
+      auto device = std::make_shared<sharedMemory::hwloc::L0::Device>(i, queryComputeResources(i), queryMemorySpaces(i));
+
+      // Inserting new device into the list
+      deviceList.insert(device);
+    }  
+
+    // Returning device list
+    return deviceList;
   }
 
   private:
@@ -74,7 +85,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * Hwloc implementation of the queryComputeResources() function. This will add one compute resource object per HW Thread / Processing Unit (PU) found
    */
-  __USED__ inline HiCR::L0::Device::computeResourceList_t queryComputeResources()
+  __USED__ inline HiCR::L0::Device::computeResourceList_t queryComputeResources(const sharedMemory::L0::Device::NUMADomainID_t numaDomainId)
   {
     // New compute resource list to return
     HiCR::L0::Device::computeResourceList_t computeResourceList;
@@ -83,7 +94,8 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     std::vector<int> logicalProcessorIds;
     L0::ComputeResource::detectThreadPUs(*_topology, hwloc_get_root_obj(*_topology), 0, logicalProcessorIds);
 
-    for (const auto id : logicalProcessorIds)
+    // Adding detected PUs as long they belong to this numa domain
+    for (const auto id : logicalProcessorIds) if (L0::ComputeResource::getCpuNumaAffinity(*_topology, id) == numaDomainId)
     {
       // Creating new compute resource class (of CPU core/processor type)
       auto processor = std::make_shared<L0::ComputeResource>(*_topology, id);
@@ -99,43 +111,57 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * Hwloc implementation of the Backend queryMemorySpaces() function. This will add one memory space object per NUMA domain found
    */
-  __USED__ inline HiCR::L0::Device::memorySpaceList_t queryMemorySpaces()
+  __USED__ inline HiCR::L0::Device::memorySpaceList_t queryMemorySpaces(const sharedMemory::L0::Device::NUMADomainID_t numaDomainId)
   {
     // New memory space list to return
     HiCR::L0::Device::memorySpaceList_t memorySpaceList;
 
-    // Ask hwloc about number of NUMA nodes and add as many memory spaces as NUMA domains
-    auto n = hwloc_get_nbobjs_by_type(*_topology, HWLOC_OBJ_NUMANODE);
-    for (int i = 0; i < n; i++)
+    // Getting HWLoc object related to this NUMA domain
+    auto hwlocObj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, numaDomainId);
+
+    // Checking whther bound memory allocation and freeing is supported
+    auto bindingSupport = L0::LocalMemorySlot::binding_type::strict_non_binding;
+    size_t size = 1024;
+    auto ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+    if (ptr != NULL)
     {
-      // Getting HWLoc object related to this NUMA domain
-      auto hwlocObj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, i);
+      // Attempting to free with hwloc
+      auto status = hwloc_free(*_topology, ptr, size);
 
-      // Checking whther bound memory allocation and freeing is supported
-      auto bindingSupport = L0::LocalMemorySlot::binding_type::strict_non_binding;
-      size_t size = 1024;
-      auto ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
-      if (ptr != NULL)
-      {
-        // Attempting to free with hwloc
-        auto status = hwloc_free(*_topology, ptr, size);
-
-        // Freeing was successful, then strict binding is supported
-        if (status == 0) bindingSupport = L0::LocalMemorySlot::binding_type::strict_binding;
-      }
-
-      // Getting memory space size
-      auto memSpaceSize = hwlocObj->attr->cache.size;
-
-      // Creating new memory space object
-      auto memorySpace = std::make_shared<sharedMemory::hwloc::L0::MemorySpace>(memSpaceSize, hwlocObj, bindingSupport);
-
-      // Storing new memory space
-      memorySpaceList.insert(memorySpace);
+      // Freeing was successful, then strict binding is supported
+      if (status == 0) bindingSupport = L0::LocalMemorySlot::binding_type::strict_binding;
     }
+
+    // Getting memory space size
+    auto memSpaceSize = hwlocObj->attr->cache.size;
+
+    // Creating new memory space object
+    auto memorySpace = std::make_shared<sharedMemory::hwloc::L0::MemorySpace>(memSpaceSize, hwlocObj, bindingSupport);
+
+    // Storing new memory space
+    memorySpaceList.insert(memorySpace);
 
     // Returning new memory space list
     return memorySpaceList;
+  }
+
+  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  {
+    // Iterating over the device list entries in the serialized input
+    for (const auto& device : input["Devices"])
+    {
+      // Getting device type
+      const auto type = device["Type"].get<std::string>();
+
+      // Checking whether the type is correct
+      if (type != "NUMA Domain") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+
+      // Deserializing new device
+      auto deviceObj = std::make_shared<sharedMemory::hwloc::L0::Device>(device);
+      
+      // Inserting device into the list
+      _deviceList.insert(deviceObj);
+    }
   }
 
   /**

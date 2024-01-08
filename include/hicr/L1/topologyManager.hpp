@@ -47,6 +47,11 @@ class TopologyManager
   TopologyManager() = default;
 
   /**
+   * Deserializing constructor is used to build a new instance of this topology manager based on serialized information
+   */
+  TopologyManager(const nlohmann::json& input) { deserialize(input); };
+
+  /**
    * Default destructor
    */
   virtual ~TopologyManager() = default;
@@ -56,7 +61,7 @@ class TopologyManager
    *
    * @return JSON-formatted serialized topology, as detected by this topology manager
    */
-  nlohmann::json serialize() const
+  __USED__ inline nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -69,6 +74,33 @@ class TopologyManager
     // Returning topology
     return output;
   }
+
+    /**
+   * De-serialization function to re-construct the serialized topology information coming (typically) from remote instances
+   *
+   * @return JSON-formatted serialized topology, as detected by a remote topology manager
+   */
+  __USED__ inline void deserialize(const nlohmann::json& input)
+  {
+    // First, discard all existing information
+    _deviceList.clear();
+
+    // Sanity checks
+    if (input.contains("Devices") == false) HICR_THROW_LOGIC("Serialized topology manager information is invalid, as it lacks the 'Devices' entry");
+    if (input["Devices"].is_array() == false) HICR_THROW_LOGIC("Serialized topology manager 'Devices' entry is not an array.");
+
+    for (auto device : input["Devices"])
+    {
+     if (device.contains("Type") == false) HICR_THROW_LOGIC("Serialized device information is invalid, as it lacks the 'Type' entry");
+     if (device["Type"].is_string() == false) HICR_THROW_LOGIC("Serialized device information is invalid, as the 'Type' entry is not a string");
+    }
+
+    // Then call the backend-specific deserialization function
+    deserializeImpl(input);
+
+    // Checking whether the deserialization was successful
+    if (_deviceList.size() != input["Devices"].size()) HICR_THROW_LOGIC("Deserialization failed, as the number of devices created (%lu) differs from the ones provided in the serialized input (%lu)", _deviceList.size(),  input["Devices"].size());
+  };
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute units provided by the library which it supports.
@@ -101,10 +133,15 @@ class TopologyManager
    */
   virtual deviceList_t queryDevicesImpl() = 0;
 
-  private:
+  /**
+   * Backend-specific implementation of the deserialize function
+   *
+   * @param[in] input Serialized topology information corresponding to the specific backend's topology manager
+   */
+  virtual void deserializeImpl(const nlohmann::json& input) = 0;
 
   /**
-   * Map of execution units, representing potential RPC requests
+   * Map of devices queried by this topology manager
    */
   deviceList_t _deviceList;
 };

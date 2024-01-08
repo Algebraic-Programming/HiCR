@@ -48,8 +48,14 @@ class MemorySpace : public HiCR::L0::MemorySpace
    */
   ~MemorySpace() = default;
 
-  __USED__ inline std::string getType() const override { return "NUMA Domain"; }
+  __USED__ inline std::string getType() const override { return "Host RAM"; }
 
+  protected:
+
+  /**
+   * Default constructor for deserialization purposes
+  */
+  MemorySpace() = default;
 };
 
 } // namespace L0

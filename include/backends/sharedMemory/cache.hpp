@@ -52,6 +52,14 @@ class Cache
   }
 
   /**
+   * Deserializing constructor
+  */
+  Cache(const nlohmann::json& input)
+  {
+    deserialize(input);
+  }
+
+  /**
    * Obtain the size of the cache object
    *
    * \return The cache size in Bytes
@@ -102,9 +110,9 @@ class Cache
   }
 
   /**
-   * Serialization function to enable sharing device information
+   * Serialization function to enable sharing cache information
    *
-   * @return JSON-formatted serialized device information
+   * @return JSON-formatted serialized cache information
    */
   __USED__ inline nlohmann::json serialize() const
   {
@@ -122,32 +130,65 @@ class Cache
     return output;
   }
 
- private:
+    /**
+   * De-serialization function to obtain the cache values from a serialized JSON object
+   *
+   * @param[in] JSON-formatted serialized cache information
+   */
+  __USED__ inline void deserialize(const nlohmann::json& input)
+  {
+    std::string key = "Size (Bytes)";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _cacheSize = input[key].get<size_t>();
+
+    key = "Line Size (Bytes)";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _lineSize = input[key].get<size_t>();
+
+    key = "Level";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _level = input[key].get<cacheLevel_t>();
+
+    key = "Type";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_string() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _type = input[key].get<std::string>();
+
+    key = "Shared";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_boolean() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _shared = input[key].get<bool>();
+  }
+
+ protected:
 
   /**
    * Cache level
    */
-  const cacheLevel_t _level;
+  cacheLevel_t _level;
 
   /**
    * Type of cache (Instruction, Data, Unified)
   */
-  const std::string _type;
+  std::string _type;
 
   /**
    * Size of the Cache, in Bytes
    */
-  const size_t _cacheSize;
+  size_t _cacheSize;
 
   /**
    * Size of the Cache Line, in Bytes
    */
-  const size_t _lineSize;
+  size_t _lineSize;
 
   /**
    * Flag to indicate whether the flag is of exclusive core use or shared among others
   */
-  const bool _shared;
+  bool _shared;
 
 }; // class Cache
 

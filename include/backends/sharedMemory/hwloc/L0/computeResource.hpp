@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <unordered_set>
 #include "hwloc.h"
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
@@ -49,6 +50,14 @@ class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeRes
       detectPhysicalProcessorId(topology, logicalProcessorId),
       detectCoreNUMAffinity(topology, logicalProcessorId),
       detectCpuCaches(topology, logicalProcessorId)){};
+
+  /**
+   * Deserializing constructor
+  */
+  ComputeResource(const nlohmann::json& input)
+  {
+    deserialize(input);
+  }
 
   /**
    * Default destructor
@@ -151,14 +160,14 @@ class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeRes
    *          P/S:   may be "Private" or "Shared"
    *          associated IDs: (optional, for Shared cache) a list of core IDs, e.g. "0 1 2 3"
    */
-  __USED__ static inline std::vector<backend::sharedMemory::Cache> detectCpuCaches(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __USED__ static inline std::unordered_set<std::shared_ptr<backend::sharedMemory::Cache>> detectCpuCaches(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
 
     if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
 
-    std::vector<backend::sharedMemory::Cache> ret;
+    std::unordered_set<std::shared_ptr<backend::sharedMemory::Cache>> ret;
 
     // Start from 1 level above our leaf/PU
     hwloc_obj_t cache = obj->parent;
@@ -219,7 +228,7 @@ class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeRes
         const auto lineSize = cache->attr->cache.linesize;
 
         // Insert element to our return container
-        ret.push_back(backend::sharedMemory::Cache(level, type, size, lineSize, shared));
+        ret.insert(std::make_shared<backend::sharedMemory::Cache>(level, type, size, lineSize, shared));
       }
 
       // Repeat the search 1 level above
@@ -234,6 +243,59 @@ class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeRes
     // Calling the base class serializer
     this->HiCR::backend::sharedMemory::L0::ComputeResource::serializeImpl(output);
   }
+  
+
+  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  {
+    // Calling the base class deserializer
+    this->HiCR::backend::sharedMemory::L0::ComputeResource::deserializeImpl(input);
+  }
+  
+    /**
+   * Uses HWloc to discover the NUMA node associated with a given logical processor ID
+   *
+   * \param[in] cpuId The ID of the processor we are doing the search for
+   * \returns The ID of the associated memory space
+   */
+  __USED__ inline static int getCpuNumaAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  {
+    // Sanitize input? So far we only call it internally so assume ID given is safe?
+    hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
+
+    if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
+
+    int ret = -1;
+
+    // obj is a leaf/PU; get to its parents to discover the hwloc memory space it belongs to
+    hwloc_obj_t ancestor = obj->parent;
+    hwloc_obj_t nodeNUMA = nullptr;
+    bool found = false;
+
+    // iterate over parents until we find a memory node
+    while (ancestor && !ancestor->memory_arity)
+        ancestor = ancestor->parent;
+
+    // iterate over potential sibling nodes (the likely behavior though is to run only once)
+    for (size_t memChild = 0; memChild < ancestor->memory_arity; memChild++) {
+      if (memChild == 0)
+        nodeNUMA = ancestor->memory_first_child;
+      else
+        if (nodeNUMA)
+          nodeNUMA = nodeNUMA->next_sibling;
+
+      if (hwloc_obj_type_is_memory(nodeNUMA->type) && hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
+      {
+          found = true;
+          ret = nodeNUMA->logical_index;
+          break;
+      }
+    }
+
+    if (found == false) HICR_THROW_RUNTIME("NUMA Node not detected for compute resource (%lu)", logicalProcessorId);
+
+    return ret;
+  }
+
 };
 
 } // namespace L0
