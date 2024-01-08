@@ -48,12 +48,23 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   MemoryManager(const hwloc_topology_t *topology) : HiCR::L1::MemoryManager(), _topology{topology} {}
   ~MemoryManager() = default;
 
+  /**
+  * Sets the desired memory binding type before running an allocation attempt
+  */
+  void setRequestedBindingType(const L0::LocalMemorySlot::binding_type type) { _hwlocBindingRequested = type; }
+
+  /**
+  * Gets the currently set desired memory binding type
+  */
+  L0::LocalMemorySlot::binding_type getRequestedBindingType() const { return _hwlocBindingRequested; } 
+
   private:
 
   /**
-   * Specifies the biding support requested by the user. It should be by default strictly binding to follow HiCR's design, but can be relaxed upon request, when binding does not matter or a first touch policy is followed
+   * Specifies the biding support requested by the user.
+   * This is set to relaxed binding by default, to try to accomplish the request but falling back to the non-binding on failure.
    */
-  L0::LocalMemorySlot::binding_type _hwlocBindingRequested = L0::LocalMemorySlot::binding_type::strict_binding;
+  L0::LocalMemorySlot::binding_type _hwlocBindingRequested = L0::LocalMemorySlot::binding_type::relaxed_binding;
 
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
@@ -71,7 +82,16 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // Getting binding type supported by the memory space
     const auto supportedBindingType = m->getSupportedBindingType();
 
+    // Determining binding type to use
+    L0::LocalMemorySlot::binding_type bindingTypeToUse;
+
     // Checking whether the operation requested is supported by the HWLoc on this memory space
+    if (_hwlocBindingRequested == L0::LocalMemorySlot::binding_type::strict_binding) bindingTypeToUse = L0::LocalMemorySlot::binding_type::strict_binding;
+    if (_hwlocBindingRequested == L0::LocalMemorySlot::binding_type::relaxed_binding && supportedBindingType == L0::LocalMemorySlot::binding_type::strict_binding) bindingTypeToUse = L0::LocalMemorySlot::binding_type::strict_binding;
+    if (_hwlocBindingRequested == L0::LocalMemorySlot::binding_type::relaxed_binding && supportedBindingType == L0::LocalMemorySlot::binding_type::strict_non_binding) bindingTypeToUse = L0::LocalMemorySlot::binding_type::strict_non_binding;
+    if (_hwlocBindingRequested == L0::LocalMemorySlot::binding_type::strict_non_binding) bindingTypeToUse = L0::LocalMemorySlot::binding_type::strict_non_binding;
+
+    // Check for failure to provide strict binding
     if (_hwlocBindingRequested > supportedBindingType) HICR_THROW_LOGIC("Requesting an allocation binding support level (%u) not supported by the operating system (HWLoc max support: %u)", _hwlocBindingRequested, supportedBindingType);
 
     // Getting memory space's HWLoc object to perform the operation with
@@ -79,8 +99,8 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
     // Allocating memory in the reqested memory space
     void *ptr = NULL;
-    if (supportedBindingType == L0::LocalMemorySlot::binding_type::strict_binding) ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
-    if (supportedBindingType == L0::LocalMemorySlot::binding_type::strict_non_binding) ptr = malloc(size);
+    if (bindingTypeToUse == L0::LocalMemorySlot::binding_type::strict_binding) ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+    if (bindingTypeToUse == L0::LocalMemorySlot::binding_type::strict_non_binding) ptr = malloc(size);
 
     // Error checking
     if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory (size %lu) in the requested memory space", size);
