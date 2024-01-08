@@ -15,8 +15,7 @@
 #include "hwloc.h"
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
-#include <hicr/L0/computeResource.hpp>
-#include <backends/sharedMemory/core.hpp>
+#include <backends/sharedMemory/L0/computeResource.hpp>
 
 namespace HiCR
 {
@@ -36,7 +35,7 @@ namespace L0
 /**
  * This class represents a compute resource, visible by the sequential backend. That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
  */
-class ComputeResource final : public HiCR::backend::sharedMemory::Core
+class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeResource
 {
   public:
 
@@ -46,7 +45,7 @@ class ComputeResource final : public HiCR::backend::sharedMemory::Core
    * \param logicalProcessorId Os-determied core affinity assigned to this compute resource
    */
   ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
-   : HiCR::backend::sharedMemory::Core(logicalProcessorId,
+   : HiCR::backend::sharedMemory::L0::ComputeResource(logicalProcessorId,
       detectPhysicalProcessorId(topology, logicalProcessorId),
       detectCoreNUMAffinity(topology, logicalProcessorId),
       detectCpuCaches(topology, logicalProcessorId)){};
@@ -55,8 +54,6 @@ class ComputeResource final : public HiCR::backend::sharedMemory::Core
    * Default destructor
    */
   ~ComputeResource() = default;
-
-  __USED__ inline std::string getType() const override { return "CPU Core"; }
 
   /**
    * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
@@ -235,7 +232,7 @@ class ComputeResource final : public HiCR::backend::sharedMemory::Core
   __USED__ inline void serializeImpl(nlohmann::json& output) const override
   {
     // Calling the base class serializer
-    this->HiCR::backend::sharedMemory::Core::serializeImpl(output);
+    this->HiCR::backend::sharedMemory::L0::ComputeResource::serializeImpl(output);
   }
 };
 

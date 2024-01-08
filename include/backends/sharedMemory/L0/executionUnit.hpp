@@ -14,7 +14,7 @@
 
 #include <hicr/definitions.hpp>
 #include <hicr/L0/executionUnit.hpp>
-#include <backends/sequential/coroutine.hpp>
+#include <backends/sharedMemory/coroutine.hpp>
 
 namespace HiCR
 {
@@ -22,7 +22,7 @@ namespace HiCR
 namespace backend
 {
 
-namespace sequential
+namespace sharedMemory
 {
 
 namespace L0
@@ -67,7 +67,7 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
 
 } // namespace L0
 
-} // namespace sequential
+} // namespace sharedMemory
 
 } // namespace backend
 

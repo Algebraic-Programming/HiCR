@@ -22,7 +22,7 @@ namespace HiCR
 namespace backend
 {
 
-namespace sequential
+namespace sharedMemory
 {
 
 /**
@@ -135,7 +135,7 @@ class Coroutine
   boost::context::continuation _context;
 };
 
-} // namespace sequential
+} // namespace sharedMemory
 
 } // namespace backend
 

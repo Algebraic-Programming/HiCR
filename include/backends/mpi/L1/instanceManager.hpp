@@ -66,10 +66,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     for (int i = 0; i < _MPICommunicationManager->getSize(); i++)
     {
       // Creating new MPI-based HiCR instance
-      std::unique_ptr<HiCR::L0::Instance> instance = std::make_unique<HiCR::backend::mpi::L0::Instance>(i);
+      auto instance = std::make_shared<HiCR::backend::mpi::L0::Instance>(i);
 
       // If this is the current rank, set it as current instance
-      if (i == _MPICommunicationManager->getRank()) _currentInstance = instance.get();
+      if (i == _MPICommunicationManager->getRank()) _currentInstance = instance;
 
       // Adding instance to the collection
       _instances.insert(std::move(instance));

@@ -14,7 +14,7 @@
 
 #include "hwloc.h"
 #include <hicr/definitions.hpp>
-#include <hicr/L0/memorySpace.hpp>
+#include <backends/sharedMemory/L0/memorySpace.hpp>
 #include <backends/sharedMemory/hwloc/L0/localMemorySlot.hpp>
 
 namespace HiCR
@@ -35,7 +35,7 @@ namespace L0
 /**
  * This class represents a memory space, as visible by the sequential backend. That is, the entire RAM that the running CPU has access to.
  */
-class MemorySpace final : public HiCR::L0::MemorySpace
+class MemorySpace final : public HiCR::backend::sharedMemory::L0::MemorySpace
 {
   public:
 
@@ -46,16 +46,15 @@ class MemorySpace final : public HiCR::L0::MemorySpace
    * \param hwlocObject HWLoc object for associated to this memory space
    * \param bindingSupport The HWLoc binding type supported by this memory space
    */
-  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::hwloc::L0::LocalMemorySlot::binding_type bindingSupport) : HiCR::L0::MemorySpace(size),
-                                                                                                                                               _hwlocObject(hwlocObject),
-                                                                                                                                               _bindingSupport(bindingSupport){};
+  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const sharedMemory::hwloc::L0::LocalMemorySlot::binding_type bindingSupport) :
+   HiCR::backend::sharedMemory::L0::MemorySpace(size),
+  _hwlocObject(hwlocObject),
+  _bindingSupport(bindingSupport){};
 
   /**
    * Default destructor
    */
   ~MemorySpace() = default;
-
-  __USED__ inline std::string getType() const override { return "NUMA Domain"; }
 
   /**
    * Function to determine whether the memory space supports strictly bound memory allocations

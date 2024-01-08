@@ -5,7 +5,7 @@
 
 /**
  * @file executionState.hpp
- * @brief This file implements the execution state class for the sequential backend
+ * @brief This file implements the execution state class for the shared memory backends
  * @author S. M. Martin
  * @date 9/10/2023
  */
@@ -15,8 +15,8 @@
 #include <functional>
 #include <hicr/definitions.hpp>
 #include <hicr/L0/executionState.hpp>
-#include <backends/sequential/coroutine.hpp>
-#include <backends/sequential/L0/executionUnit.hpp>
+#include <backends/sharedMemory/coroutine.hpp>
+#include <backends/sharedMemory/L0/executionUnit.hpp>
 
 namespace HiCR
 {
@@ -24,7 +24,7 @@ namespace HiCR
 namespace backend
 {
 
-namespace sequential
+namespace sharedMemory
 {
 
 namespace L0
@@ -45,7 +45,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   __USED__ inline ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_pointer_cast<sequential::L0::ExecutionUnit>(executionUnit);
+    auto e = dynamic_pointer_cast<sharedMemory::L0::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
@@ -79,12 +79,12 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   /**
    *  Task context preserved as a coroutine
    */
-  sequential::Coroutine _coroutine;
+  sharedMemory::Coroutine _coroutine;
 };
 
 } // namespace L0
 
-} // namespace sequential
+} // namespace sharedMemory
 
 } // namespace backend
 

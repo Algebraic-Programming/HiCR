@@ -1,9 +1,12 @@
 testSuite = [ 'examples', 'hicr', 'kernel' ]
 
-sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: [ hicrBuildDep, hicrSequentialBackendDep])
+if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enabledBackends
+    sharedMemoryDependencies = [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep] 
+	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp' ], dependencies: sharedMemoryDependencies)
 
-if get_option('buildTests')
-  test('sequential', sequential, args : [ ], suite: testSuite )
+	if get_option('buildTests')
+	 test('sharedMemory', sharedMemory, suite: testSuite )
+	endif
 endif
 
 if 'ascend' in enabledBackends

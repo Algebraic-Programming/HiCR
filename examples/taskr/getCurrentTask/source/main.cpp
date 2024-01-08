@@ -1,6 +1,6 @@
 #include <cstdio>
-#include <backends/sequential/L1/computeManager.hpp>
-#include <backends/sequential/L1/topologyManager.hpp>
+#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 #include <frontends/taskr/runtime.hpp>
 #include <frontends/taskr/task.hpp>
 
@@ -8,17 +8,23 @@
 
 int main(int argc, char **argv)
 {
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
   // Initializing sequential backend
-  HiCR::backend::sequential::L1::ComputeManager computeManager;
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
   // Initializing Sequential backend's topology manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager topologyManager(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  topologyManager.queryDevices();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *topologyManager.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();

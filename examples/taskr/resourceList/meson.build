@@ -1,4 +1,4 @@
-testSuite = [ 'examples', 'taskr', 'resourceList' ]
+testSuite = [ 'examples', 'taskr' ]
 
 if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enabledBackends
 	resourceList = executable('resourceList', [ 'source/main.cpp'], dependencies: [ taskrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep ])

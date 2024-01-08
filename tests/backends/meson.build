@@ -1,3 +1,4 @@
-subdir('sequential')
 subdir('sharedMemory')
+
+
 

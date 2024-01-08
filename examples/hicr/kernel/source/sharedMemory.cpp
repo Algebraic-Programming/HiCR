@@ -1,20 +1,26 @@
-#include <backends/sequential/L1/computeManager.hpp>
-#include <backends/sequential/L1/topologyManager.hpp>
+#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
 #include <stdio.h>
 
 int main(int argc, char **argv)
 {
-  // Initializing Sequential backend's topology manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  // Instantiating Shared Memory backend
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager t(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  t.queryDevices();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
-  // Initializing sequential backend
-  HiCR::backend::sequential::L1::ComputeManager computeManager;
+  // Initializing shared memory compute manager
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
   auto fcLambda = []()
   { printf("Hello, World!\n"); };
@@ -39,6 +45,9 @@ int main(int argc, char **argv)
 
   // Running compute unit with the newly created execution state
   processingUnit->start(std::move(executionState));
+
+  // Waiting for thread to finish
+  processingUnit->await();
 
   return 0;
 }

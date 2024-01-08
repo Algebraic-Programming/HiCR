@@ -1,13 +1,19 @@
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
-#include <backends/sequential/L1/topologyManager.hpp>
-#include <backends/sequential/L1/computeManager.hpp>
+#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
 #include <backends/mpi/L1/memoryManager.hpp>
 #include <backends/mpi/L1/instanceManager.hpp>
 #include <mpi.h>
 
 int main(int argc, char **argv)
 {
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
   // Initializing MPI
   MPI_Init(&argc, &argv);
 
@@ -16,13 +22,13 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Initializing default topology manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  tm.queryDevices();
 
   // Getting first device (CPU) found
-  auto d = *dm.getDevices().begin();
+  auto d = *tm.getDevices().begin();
 
   // Obtaining memory spaces and compute resources
   auto memSpaces = d->getMemorySpaceList();
@@ -31,7 +37,7 @@ int main(int argc, char **argv)
   // Creating MPI-based memory manager (necessary for passing data around between instances)
   HiCR::backend::mpi::L1::CommunicationManager communicationManager(MPI_COMM_WORLD);
   HiCR::backend::mpi::L1::MemoryManager memoryManager;
-  HiCR::backend::sequential::L1::ComputeManager computeManager;
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
   // Getting first accesible memory space for buffering
   auto firstMemorySpace = *memSpaces.begin();

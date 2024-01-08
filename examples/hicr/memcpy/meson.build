@@ -1,12 +1,5 @@
 testSuite = [ 'examples', 'hicr', 'memcpy' ]
 
-sequential = executable('sequential', [ 'source/sequential.cpp'], dependencies: [ hicrBuildDep, hicrSequentialBackendDep])
-
-if get_option('buildTests')
-  test('sequential', sequential, args : [ ], suite: testSuite ) 
-endif
-
-
 if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enabledBackends
     sharedMemoryDependencies = [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep ]
 	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: sharedMemoryDependencies )
@@ -16,8 +9,8 @@ if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enable
 	endif
 endif
 
-if 'lpf' in enabledBackends
-	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep])
+if 'lpf' in enabledBackends and 'sharedMemory/hwloc' in enabledBackends 
+	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep, hicrSharedMemoryHWLocBackendDep])
 
 	if get_option('buildTests')
 	  test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'ibverbs', lpf.full_path() ], suite: testSuite ) 

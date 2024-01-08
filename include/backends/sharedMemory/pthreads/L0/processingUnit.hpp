@@ -20,9 +20,9 @@
 #include <pthread.h>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/processingUnit.hpp>
-#include <backends/sequential/L0/executionState.hpp>
-#include <backends/sequential/L0/executionUnit.hpp>
-#include <backends/sharedMemory/core.hpp>
+#include <backends/sharedMemory/L0/executionState.hpp>
+#include <backends/sharedMemory/L0/executionUnit.hpp>
+#include <backends/sharedMemory/L0/computeResource.hpp>
 
 namespace HiCR
 {
@@ -97,7 +97,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the MPI instance
-    auto c = dynamic_pointer_cast<HiCR::backend::sharedMemory::Core>(computeResource);
+    auto c = dynamic_pointer_cast<HiCR::backend::sharedMemory::L0::ComputeResource>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
@@ -131,7 +131,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     auto thread = (sharedMemory::pthreads::L0::ProcessingUnit *)p;
 
     // Getting associated compute unit reference
-    auto computeResource = dynamic_pointer_cast<HiCR::backend::sharedMemory::Core>(thread->getComputeResource());
+    auto computeResource = dynamic_pointer_cast<HiCR::backend::sharedMemory::L0::ComputeResource>(thread->getComputeResource());
 
     // Storing current thread pointer
     _currentThread = thread;

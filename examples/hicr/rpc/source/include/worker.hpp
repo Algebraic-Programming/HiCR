@@ -5,22 +5,22 @@
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/memorySpace.hpp>
-#include <backends/sequential/L1/computeManager.hpp>
+#include <backends/sharedMemory/L1/computeManager.hpp>
 
 void workerFc(HiCR::L1::InstanceManager &instanceManager,
-              HiCR::backend::sequential::L1::ComputeManager &computeManager,
+              HiCR::backend::sharedMemory::L1::ComputeManager &computeManager,
               std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
               std::shared_ptr<HiCR::L0::ComputeResource> rpcExecutor)
 {
-  // Fetching memory manager
-  auto memoryManager = instanceManager.getMemoryManager();
-
-  // Getting current instance
-  auto currentInstance = instanceManager.getCurrentInstance();
-
   // Creating worker function
   auto fcLambda = [&]()
   {
+    // Fetching memory manager
+    auto memoryManager = instanceManager.getMemoryManager();
+    
+    // Getting current instance
+    auto currentInstance = instanceManager.getCurrentInstance();
+
     // Creating simple message
     auto message = std::string("Hello, I am a worker! ");
 

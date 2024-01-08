@@ -20,7 +20,7 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
   for (auto &instance : instances)
   {
     // If it is a worker instance, then get return value size
-    if (instance.get() != coordinator)
+    if (instance != coordinator)
     {
       // Getting return value as a memory slot
       auto returnValue = instanceManager.getReturnValue(*instance);
