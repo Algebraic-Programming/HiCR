@@ -14,10 +14,10 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing sequential backend
+  // Initializing Pthread-based compute manager to run tasks in parallel
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
-  // Initializing Sequential backend's topology manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager topologyManager(&topology);
 
   // Asking backend to check the available devices

@@ -5,7 +5,7 @@
 
 /**
  * @file computeManager.hpp
- * @brief This is a minimal backend for compute management of (multi-threaded) shared memory systems
+ * @brief This file implements the pthread-based compute manager for host (CPU) backends
  * @authors S. M. Martin, O. Korakitis
  * @date 10/12/2023
  */

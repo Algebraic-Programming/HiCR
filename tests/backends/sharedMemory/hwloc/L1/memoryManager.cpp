@@ -5,7 +5,7 @@
 
 /**
  * @file memoryManager.cpp
- * @brief Unit tests for the hwloc backend
+ * @brief Unit tests for the HWLoc-based memory manager backend
  * @author S. M. Martin
  * @date 13/9/2023
  */

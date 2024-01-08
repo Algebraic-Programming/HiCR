@@ -5,7 +5,7 @@
 
 /**
  * @file device.hpp
- * @brief This file implements the Device class for the shared memory backend
+ * @brief This file implements the Device class for the HWLoc
  * @author S. M. Martin
  * @date 18/12/2023
  */
@@ -73,7 +73,7 @@ class Device final : public HiCR::backend::sharedMemory::L0::Device
   {
     // Nothing extra to serialize here
   }
-  
+
   __USED__ inline void deserializeImpl(const nlohmann::json& input) override
   {
     // Iterating over the compute resource list
@@ -83,7 +83,7 @@ class Device final : public HiCR::backend::sharedMemory::L0::Device
       const auto type = computeResource["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "CPU Core") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+      if (type != "Processing Unit") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
 
       // Deserializing new device
       auto computeResourceObj = std::make_shared<sharedMemory::hwloc::L0::ComputeResource>(computeResource);
@@ -99,7 +99,7 @@ class Device final : public HiCR::backend::sharedMemory::L0::Device
       const auto type = memorySpace["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "Host RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+      if (type != "RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
 
       // Deserializing new device
       auto memorySpaceObj = std::make_shared<sharedMemory::hwloc::L0::MemorySpace>(memorySpace);

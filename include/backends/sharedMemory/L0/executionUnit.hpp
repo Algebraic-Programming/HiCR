@@ -5,7 +5,7 @@
 
 /**
  * @file executionUnit.hpp
- * @brief This file implements the execution unit class for the sequential backend
+ * @brief This file implements the abstract execution unit class for the host (CPU) backends
  * @author S. M. Martin
  * @date 9/10/2023
  */
@@ -29,7 +29,7 @@ namespace L0
 {
 
 /**
- * This class represents a replicable C++ executable function for the sequential (and shared memory) backends.
+ * This class represents a replicable C++ executable function for the CPU-based backends
  */
 class ExecutionUnit final : public HiCR::L0::ExecutionUnit
 {

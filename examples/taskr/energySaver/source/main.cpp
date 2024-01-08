@@ -49,10 +49,10 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing Pthreads backend to run in parallel
+  // Initializing Pthreads-based compute manager to run tasks in parallel
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
-  // Initializing HWLoc backend's topology manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices

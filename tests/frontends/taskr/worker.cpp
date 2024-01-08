@@ -30,11 +30,11 @@ TEST(Worker, Construction)
 
 TEST(Task, SetterAndGetters)
 {
-  // Instantiating default compute manager
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m;
+  // Instantiating Pthread-based host (CPU) compute manager
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
-  taskr::Worker w(&m);
+  taskr::Worker w(&c);
 
   // Getting empty lists
   EXPECT_TRUE(w.getProcessingUnits().empty());
@@ -47,7 +47,7 @@ TEST(Task, SetterAndGetters)
   // Subscribing worker to dispatcher
   w.subscribe(&dispatcher);
 
-  // Initializing HWLoc backend's topology manager
+  // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
@@ -65,7 +65,7 @@ TEST(Task, SetterAndGetters)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating processing unit from resource
-  auto processingUnit = m.createProcessingUnit(firstComputeResource);
+  auto processingUnit = c.createProcessingUnit(firstComputeResource);
 
   // Assigning processing unit to worker
   w.addProcessingUnit(std::move(processingUnit));
@@ -77,11 +77,11 @@ TEST(Task, SetterAndGetters)
 
 TEST(Worker, LifeCycle)
 {
-  // Instantiating default compute manager
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m;
+  // Instantiating Pthread-based host (CPU) compute manager
+  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
-  taskr::Worker w(&m);
+  taskr::Worker w(&c);
 
   // Worker state should in an uninitialized state first
   EXPECT_EQ(w.getState(), taskr::Worker::state_t::uninitialized);
@@ -89,7 +89,7 @@ TEST(Worker, LifeCycle)
   // Attempting to run without any assigned resources
   EXPECT_THROW(w.initialize(), HiCR::LogicException);
 
-  // Initializing HWLoc backend's device manager
+  // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
@@ -107,7 +107,7 @@ TEST(Worker, LifeCycle)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating processing unit from resource
-  auto processingUnit = m.createProcessingUnit(firstComputeResource);
+  auto processingUnit = c.createProcessingUnit(firstComputeResource);
 
   // Assigning processing unit to worker
   w.addProcessingUnit(std::move(processingUnit));
@@ -150,7 +150,7 @@ TEST(Worker, LifeCycle)
   };
 
   // Creating execution unit
-  auto u = m.createExecutionUnit(f);
+  auto u = c.createExecutionUnit(f);
 
   // Creating task to run, and setting function to run
   taskr::Task t(0, u);

@@ -5,7 +5,7 @@
 
 /**
  * @file device.hpp
- * @brief This file implements the Device class for the shared memory backend
+ * @brief This file implements the abstract device class for the host (CPU) backends
  * @author S. M. Martin
  * @date 18/12/2023
  */
@@ -30,7 +30,7 @@ namespace L0
 {
 
 /**
- * This class represents a device, as visible by the shared memory backend. That is, an assumed SMP processor plus a shared RAM that all process have access to.
+ * This class represents a host (CPU) NUMA Domain containing within itself a subset of the whole host RAM and processing units with uniform access time to it
  */
 class Device : public HiCR::L0::Device
 {

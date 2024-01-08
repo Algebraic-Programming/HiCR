@@ -5,7 +5,7 @@
 
 /**
  * @file executionState.hpp
- * @brief This file implements the execution state class for the shared memory backends
+ * @brief This file implements the abstract execution state class for the host (CPU) memory backends
  * @author S. M. Martin
  * @date 9/10/2023
  */

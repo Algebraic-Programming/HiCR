@@ -5,7 +5,7 @@
 
 /**
  * @file sharedMemory/L0/globalMemorySlot.hpp
- * @brief Provides a definition for the memory slot class for the shared memory backend
+ * @brief Provides a definition for the global memory slot class for the host (CPU) memory backends
  * @author S. M. Martin
  * @date 19/10/2023
  */
@@ -28,7 +28,7 @@ namespace L0
 {
 
 /**
- * This class represents an abstract definition for a global Memory Slot resource for the shared memory backend
+ * This class represents an abstract definition for a global Memory Slot resource for the host (CPU) backends
  *
  * It uses mutexes to enforce the mutual exclusion logic
  */

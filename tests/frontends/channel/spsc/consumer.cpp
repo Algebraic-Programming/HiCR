@@ -33,13 +33,13 @@ TEST(ConsumerChannel, Construction)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Instantiating backend
+  // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
 
-  // Instantiating backend
+  // Instantiating Pthread-based host (CPU) communication manager
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(1);
 
-  // Initializing Sequential backend's device manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
@@ -96,13 +96,13 @@ TEST(ConsumerChannel, PeekPop)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Instantiating backend
+  // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
 
-  // Instantiating backend
+  // Instantiating Pthread-based host (CPU) communication manager
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(1);
 
-  // Initializing Sequential backend's device manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
@@ -183,13 +183,13 @@ TEST(ConsumerChannel, PeekWait)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Instantiating backend
+  // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
 
-  // Instantiating backend
+  // Instantiating Pthread-based host (CPU) communication manager
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(1);
 
-  // Initializing Sequential backend's device manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices

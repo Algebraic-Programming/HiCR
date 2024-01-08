@@ -2,7 +2,7 @@ if 'sharedMemory/hwloc' in enabledBackends
   subdir('hwloc')
 endif
 
-if 'shardMemory/pthreads' in enabledBackends
+if 'sharedMemory/pthreads' in enabledBackends
   subdir('pthreads')
 endif
 

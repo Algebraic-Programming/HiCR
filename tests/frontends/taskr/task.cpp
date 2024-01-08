@@ -67,7 +67,7 @@ TEST(Task, Run)
     t->suspend();
   };
 
-  // Instantiating default compute manager
+  // Instantiating Pthread-based host (CPU) compute manager
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager c;
 
   // Creating execution unit
@@ -76,7 +76,7 @@ TEST(Task, Run)
   // Creating task
   t = new taskr::Task(0, u);
 
-  // Initializing Sequential backend's topology manager
+  // Initializing HWLoc-based host (CPU)  topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
@@ -163,7 +163,7 @@ TEST(Task, Events)
     t->suspend();
   };
 
-  // Instantiating default compute manager
+  // Instantiating Pthread-based host (CPU) compute manager
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager c;
 
   // Creating execution unit
@@ -172,7 +172,7 @@ TEST(Task, Events)
   // Creating task
   t = new taskr::Task(0, u);
 
-  // Initializing Sequential backend's device manager
+  // Initializing HWLoc-based host (CPU)  topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices

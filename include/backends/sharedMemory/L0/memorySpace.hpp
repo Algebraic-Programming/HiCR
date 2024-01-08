@@ -5,7 +5,7 @@
 
 /**
  * @file memorySpace.hpp
- * @brief This file implements the memory space class for the shared memory backend
+ * @brief This file implements the memory space class for the host (CPU) backends
  * @author S. M. Martin
  * @date 12/12/2023
  */
@@ -28,7 +28,7 @@ namespace L0
 {
 
 /**
- * This class represents a NUMA domain, i.e., addressable memory in a multi-core system with non-uniform access times
+ * This class represents a segment of addressable memory space within a NUMA domain
  */
 class MemorySpace : public HiCR::L0::MemorySpace
 {
@@ -48,7 +48,7 @@ class MemorySpace : public HiCR::L0::MemorySpace
    */
   ~MemorySpace() = default;
 
-  __USED__ inline std::string getType() const override { return "Host RAM"; }
+  __USED__ inline std::string getType() const override { return "RAM"; }
 
   protected:
 

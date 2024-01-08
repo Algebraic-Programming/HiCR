@@ -5,7 +5,7 @@
 
 /**
  * @file processingUnit.hpp
- * @brief Implements the processing unit class for the shared memory backend.
+ * @brief Implements the processing unit class for the pthread-based host (CPU) backend.
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -52,9 +52,9 @@ class ProcessingUnit;
 thread_local ProcessingUnit *_currentThread;
 
 /**
- * Implementation of a kernel-level thread as processing unit for the shared memory backend.
+ * Implementation of a kernel-level thread as processing unit for the pthread-based host (CPU) backend.
  *
- * This implementation uses PThreads as backend for the creation and management of OS threads..
+ * This implementation uses PThreads as backend for the creation and management of OS threads.
  */
 class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 {

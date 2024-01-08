@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing host topology manager
+  // Initializing HWLoc-based host topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager hostTopologyManager(&topology);
   hostTopologyManager.queryDevices();
   auto hostDevice = *hostTopologyManager.getDevices().begin();

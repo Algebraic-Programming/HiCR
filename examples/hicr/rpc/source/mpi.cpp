@@ -21,7 +21,7 @@ int main(int argc, char **argv)
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  // Initializing default topology manager
+  // Initializing host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
@@ -37,6 +37,8 @@ int main(int argc, char **argv)
   // Creating MPI-based memory manager (necessary for passing data around between instances)
   HiCR::backend::mpi::L1::CommunicationManager communicationManager(MPI_COMM_WORLD);
   HiCR::backend::mpi::L1::MemoryManager memoryManager;
+
+  // Initializing host (CPU) compute manager (for running incoming RPCs)
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
   // Getting first accesible memory space for buffering

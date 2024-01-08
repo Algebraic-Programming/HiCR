@@ -5,7 +5,7 @@
 
 /**
  * @file memoryManager.hpp
- * @brief This file implements the memory manager support for the shared memory backend
+ * @brief This file implements the memory manager class for the HWLoc-based backend
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -34,7 +34,7 @@ namespace L1
 {
 
 /**
- * Implementation of the SharedMemory/HWloc-based HiCR Shared Memory Backend.
+ * Implementation of the HWloc-based memory manager for allocation of memory in the host (CPU) 
  */
 class MemoryManager final : public HiCR::L1::MemoryManager
 {

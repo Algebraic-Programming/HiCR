@@ -5,7 +5,7 @@
 
 /**
  * @file localMemorySlot.hpp
- * @brief Provides a definition for the local memory slot class for the shared memory backend
+ * @brief Provides a definition for the local memory slot class for the HWLoc-based backend
  * @author S. M. Martin
  * @date 19/10/2023
  */

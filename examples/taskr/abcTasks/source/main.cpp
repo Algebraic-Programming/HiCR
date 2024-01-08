@@ -11,7 +11,7 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing Sequential backend's topology manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
 
-  // Initializing Pthreads backend to run in parallel
+  // Initializing Pthreads-based compute manager to run tasks in parallel
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
   // Running ABCtasks example

@@ -5,7 +5,7 @@
 
 /**
  * @file computeManager.hpp
- * @brief This is a minimal backend for compute management of (multi-threaded) shared memory systems
+ * @brief This file contains the abstract definition of the compute manager for host (CPU) backends
  * @authors S. M. Martin, O. Korakitis
  * @date 10/12/2023
  */
@@ -32,7 +32,7 @@ namespace L1
 {
 
 /**
- * Abstract common implementation of HiCR Shared Memory backend's compute managers.
+ * Abstract common implementation of HiCR host (CPU) backend's compute managers.
  */
 class ComputeManager : public HiCR::L1::ComputeManager
 {

@@ -5,7 +5,7 @@
 
 /**
  * @file memorySpace.hpp
- * @brief This file implements the memory space class for the shared memory backend
+ * @brief This file implements the memory space class for the HWLoc-based backend
  * @author S. M. Martin
  * @date 12/12/2023
  */

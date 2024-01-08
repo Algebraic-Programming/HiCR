@@ -19,7 +19,7 @@ int main(int argc, char **argv)
   // Getting first device found
   auto d = *t.getDevices().begin();
 
-  // Initializing shared memory compute manager
+  // Initializing Pthread-based host (CPU) compute manager
   HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
 
   auto fcLambda = []()

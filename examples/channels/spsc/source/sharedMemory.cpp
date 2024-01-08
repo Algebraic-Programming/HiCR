@@ -32,13 +32,13 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Instantiating Shared Memory backend
+  // Instantiating HWLoc-based host (CPU) memory manager
   HiCR::backend::sharedMemory::hwloc::L1::MemoryManager m(&topology);
 
-  // Instantiating shared memory backend's communication manager
+  // Instantiating Pthread-based host (CPU) communication manager
   HiCR::backend::sharedMemory::pthreads::L1::CommunicationManager c(CONCURRENT_THREADS);
 
-  // Initializing Sequential backend's device manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices

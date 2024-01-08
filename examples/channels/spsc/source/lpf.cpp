@@ -42,7 +42,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing hwloc-based topology manager
+  // Initializing hwloc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices

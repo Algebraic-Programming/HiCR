@@ -24,7 +24,7 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing backend's device manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::sharedMemory::hwloc::L1::TopologyManager hwlocTopologyManager(&topology);
 
   // Adding topology manager to the list

@@ -5,7 +5,7 @@
 
 /**
  * @file core.hpp
- * @brief This file implements the compute resource class for the shared memory backend
+ * @brief This file implements the abstract compute resource class for the host (CPU) backends
  * @author O. Korakitis & S. M. Martin
  * @date 12/12/2023
  */
@@ -32,7 +32,8 @@ namespace L0
 {
 
 /**
- * This class represents a compute resource, visible by the sequential backend. That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
+ * This class represents a compute resource, visible by the host backend.
+ * That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
  */
 class ComputeResource : public HiCR::L0::ComputeResource
 {
@@ -71,7 +72,7 @@ class ComputeResource : public HiCR::L0::ComputeResource
                                                             _caches(caches){};
   ~ComputeResource() = default;
 
-  __USED__ inline std::string getType() const override { return "CPU Core"; }
+  __USED__ inline std::string getType() const override { return "Processing Unit"; }
 
   /**
    * Function to return the compute resource processor id

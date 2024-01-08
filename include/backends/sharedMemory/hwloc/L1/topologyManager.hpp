@@ -5,7 +5,7 @@
 
 /**
  * @file topologyManager.hpp
- * @brief This file implements support for device management of SMP systems
+ * @brief This file implements the topology manager class for the HWLoc-based backend
  * @author S. M. Martin
  * @date 18/12/2023
  */
@@ -34,7 +34,7 @@ namespace L1
 {
 
 /**
- * Implementation of the topology manager for shared memory, multicore systems.
+ * Implementation of the HWLoc-based topology manager for host (CPU) resource detection
  */
 class TopologyManager final : public HiCR::L1::TopologyManager
 {

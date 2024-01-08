@@ -5,7 +5,7 @@
 
 /**
  * @file computeResource.hpp
- * @brief This file implements the compute resource class for the shared memory backend
+ * @brief This file implements the compute resource class for the HWLoc-based backend
  * @author O. Korakitis & S. M. Martin
  * @date 12/12/2023
  */
@@ -34,7 +34,8 @@ namespace L0
 {
 
 /**
- * This class represents a compute resource, visible by the sequential backend. That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
+ * This class represents a compute resource, visible by HWLoc. 
+ * That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
  */
 class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeResource
 {
@@ -65,7 +66,7 @@ class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeRes
   ~ComputeResource() = default;
 
   /**
-   * Uses HWloc to recursively (tree-like) identify the system's basic processing units (PUs)
+   * Uses HWloc to recursively (tree-like) identify the host's basic processing units (PUs)
    *
    * \param[in] topology An HWLoc topology object, already initialized
    * \param[in] obj The root HWLoc object for the start of the exploration tree at every recursion level
@@ -141,7 +142,7 @@ class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeRes
       }
     }
 
-    if (!found) HICR_THROW_RUNTIME("NUMA Node not detected for compute resource (%lu)", logicalProcessorId);
+    if (!found) HICR_THROW_RUNTIME("NUMA Domain not detected for compute resource (%lu)", logicalProcessorId);
 
     return ret;
   }
@@ -291,7 +292,7 @@ class ComputeResource final : public HiCR::backend::sharedMemory::L0::ComputeRes
       }
     }
 
-    if (found == false) HICR_THROW_RUNTIME("NUMA Node not detected for compute resource (%lu)", logicalProcessorId);
+    if (found == false) HICR_THROW_RUNTIME("NUMA Domain not detected for compute resource (%lu)", logicalProcessorId);
 
     return ret;
   }

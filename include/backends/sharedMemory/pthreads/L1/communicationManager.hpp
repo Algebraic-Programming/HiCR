@@ -5,7 +5,7 @@
 
 /**
  * @file communicationManager.hpp
- * @brief This file implements the communication manager support for the shared memory backend
+ * @brief This file implements the pthread-based communication manager support for the host (CPU) memory backend
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -35,6 +35,8 @@ namespace L1
 
 /**
  * Implementation of the SharedMemory/HWloc-based communication manager for the HiCR Shared Memory Backend.
+ * 
+ * This backend uses pthread-based mutexes and barriers to prevent concurrent access violations
  */
 class CommunicationManager final : public HiCR::L1::CommunicationManager
 {
