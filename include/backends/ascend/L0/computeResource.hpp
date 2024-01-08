@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <nlohmann_json/json.hpp>
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/computeResource.hpp>
@@ -45,13 +46,24 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    *
    * \param device The Ascend device that contains this compute resource
    */
-  ComputeResource(const std::shared_ptr<const ascend::L0::Device> device) : HiCR::L0::ComputeResource(),
-                                                                            _device(device){};
+  ComputeResource(const std::shared_ptr<ascend::L0::Device> device) : HiCR::L0::ComputeResource(), _device(device){};
 
   /**
    * Default destructor
    */
   ~ComputeResource() = default;
+
+  /**
+  * Deserializing constructor
+  * 
+  * @param[in] input Serialized resource information
+  * 
+  * \note Backwards reference to device is null when deserializing. Do not try to use this class for any operations.
+  */
+  ComputeResource(const nlohmann::json& input) : HiCR::L0::ComputeResource()
+  {
+    deserialize(input);
+  }
 
   __USED__ inline std::string getType() const override { return "Ascend Processor"; }
 
@@ -67,10 +79,22 @@ class ComputeResource final : public HiCR::L0::ComputeResource
 
   private:
 
+  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  {
+    // Nothing extra to serialize here
+  }
+
+  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  {
+    // Nothing extra  to deserialize here
+  }
+  
   /**
    * Stores the device that owns this compute resource
+   * 
+   * \note If this class has been created through deserialization, it is not meant to be used as this pointer remains undefined
    */
-  const std::weak_ptr<const ascend::L0::Device> _device;
+  std::weak_ptr<ascend::L0::Device> _device;
 };
 
 } // namespace L0

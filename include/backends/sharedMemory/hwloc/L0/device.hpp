@@ -69,6 +69,11 @@ class Device final : public HiCR::backend::sharedMemory::L0::Device
 
   private:
 
+  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  {
+    // Nothing extra to serialize here
+  }
+  
   __USED__ inline void deserializeImpl(const nlohmann::json& input) override
   {
     // Iterating over the compute resource list

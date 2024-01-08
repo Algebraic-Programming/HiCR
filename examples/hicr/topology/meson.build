@@ -1,10 +1,20 @@
-testSuite = [ 'examples', 'hicr', 'topology' ]
+testSuite = [ 'examples', 'hicr' ]
+
+topologyCPPArgs = []
+topologyDependencies = [ hicrBuildDep]
 
 if 'sharedMemory/hwloc' in enabledBackends
-    sharedMemoryDependencies = [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep  ]
-	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: sharedMemoryDependencies )
+  topologyCPPArgs += '-D_USE_HWLOC_'
+  topologyDependencies += hicrSharedMemoryHWLocBackendDep
+endif
 
-	if get_option('buildTests')
-	  test('sharedMemory', sharedMemory, args : [ ], suite: testSuite )
-	endif
+if 'ascend' in enabledBackends 
+	topologyCPPArgs += '-D_USE_ASCEND_'
+	topologyDependencies += hicrAscendBackendDep
+endif
+
+topology = executable('topology', [ 'source/topology.cpp'], dependencies: topologyDependencies, cpp_args : topologyCPPArgs )
+
+if get_option('buildTests')
+	test('topology', topology, args : [ ], suite: testSuite )
 endif

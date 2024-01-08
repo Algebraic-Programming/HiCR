@@ -128,6 +128,9 @@ class Device
    * De-serialization function to re-construct the serialized device information coming (typically) from remote instances
    *
    * @return JSON-formatted serialized device information
+   * 
+   * \note Important: Deserialized devices are not meant to be used in any from other than printing or reporting its topology. 
+   *       Any attempt of actually using them for computation or data transfers will result in undefined behavior.
    */
   __USED__ inline void deserialize(const nlohmann::json& input)
   {
@@ -169,6 +172,13 @@ class Device
   */
   Device() = default;
   
+    /**
+   * Backend-specific implementation of the serialize function
+   *
+   * @param[in] input Serialized device information
+   */
+  virtual void serializeImpl(nlohmann::json& output) const = 0;
+
   /**
    * Backend-specific implementation of the deserialize function
    *
