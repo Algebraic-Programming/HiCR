@@ -56,6 +56,11 @@ class Device final : public HiCR::backend::host::L0::Device
 
   /**
    * Deserializing constructor
+   * 
+   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed NUMA domain
+   * This instance should NOT be used for anything else than reporting/printing the contained resources
+   * 
+   * @param[in] input A JSON-encoded serialized NUMA domain information
   */
   Device(const nlohmann::json& input) : HiCR::backend::host::L0::Device()
   {

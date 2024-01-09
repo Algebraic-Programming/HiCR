@@ -31,13 +31,16 @@ class Cache
 {
   public:
 
+  /**
+   * Type definition for a cache level (L1, L2, L3...)
+  */
   typedef unsigned int cacheLevel_t;
 
   /**
    * Constructor for the cache class
    *
    * @param[in] level The level (L1, L1, L2, L3...) detected for this cache instance
-   * @param[in] Type The type (instruction, data, unified) for this cache
+   * @param[in] type The type (instruction, data, unified) for this cache
    * @param[in] lineSize The size of each cache line contained within
    * @param[in] shared Indicates whether this cache is shared among others
    * @param[in] size The size of the detected cache
@@ -53,6 +56,11 @@ class Cache
 
   /**
    * Deserializing constructor
+   * 
+   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed cache
+   * This instance should NOT be used for anything else than reporting/printing the contained resources
+   * 
+   * @param[in] input A JSON-encoded serialized cache information
   */
   Cache(const nlohmann::json& input)
   {
@@ -133,7 +141,7 @@ class Cache
     /**
    * De-serialization function to obtain the cache values from a serialized JSON object
    *
-   * @param[in] JSON-formatted serialized cache information
+   * @param[in] input JSON-formatted serialized cache information
    */
   __USED__ inline void deserialize(const nlohmann::json& input)
   {

@@ -54,6 +54,11 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
 
   /**
    * Deserializing constructor
+   * 
+   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed processing unit
+   * This instance should NOT be used for anything else than reporting/printing the contained resources
+   * 
+   * @param[in] input A JSON-encoded serialized  processing unit information
   */
   ComputeResource(const nlohmann::json& input)
   {
@@ -255,7 +260,8 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
     /**
    * Uses HWloc to discover the NUMA node associated with a given logical processor ID
    *
-   * \param[in] cpuId The ID of the processor we are doing the search for
+   * \param[in] topology HWLoc topology object
+   * \param[in] logicalProcessorId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
   __USED__ inline static int getCpuNumaAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)

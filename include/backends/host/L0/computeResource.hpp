@@ -59,7 +59,6 @@ class ComputeResource : public HiCR::L0::ComputeResource
    * \param[in] logicalProcessorId Unique identifier for the core assigned to this compute resource
    * \param[in] numaAffinity The NUMA domain associated to this core
    * \param[in] caches The set of caches contained to or accessible by this core
-   * \param[in] siblings The set of other cores local to this core (either in the same socket or NUMA domain)
    * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
   ComputeResource(const logicalProcessorId_t logicalProcessorId,

@@ -50,11 +50,15 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   /**
   * Sets the desired memory binding type before running an allocation attempt
+  * 
+  * @param[in] type The new requested binding type to use
   */
   void setRequestedBindingType(const L0::LocalMemorySlot::binding_type type) { _hwlocBindingRequested = type; }
 
   /**
   * Gets the currently set desired memory binding type
+  * 
+  * @return The currently requested binding type
   */
   L0::LocalMemorySlot::binding_type getRequestedBindingType() const { return _hwlocBindingRequested; } 
 

@@ -53,6 +53,11 @@ class MemorySpace final : public HiCR::backend::host::L0::MemorySpace
 
   /**
    * Deserializing constructor
+   * 
+   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed host RAM
+   * This instance should NOT be used for anything else than reporting/printing the contained resources
+   * 
+   * @param[in] input A JSON-encoded serialized host RAM information
   */
   MemorySpace(const nlohmann::json& input) : HiCR::backend::host::L0::MemorySpace()
   {

@@ -66,7 +66,7 @@ class ComputeResource
    /**
    * De-serialization function to re-construct the serialized compute resource information coming (typically) from remote instances
    *
-   * @return JSON-formatted serialized compute resource information
+   * @param[in] input JSON-formatted serialized compute resource information
    */
   __USED__ inline void deserialize(const nlohmann::json& input)
   {
@@ -82,7 +82,7 @@ class ComputeResource
   * Backend-specific implemtation of the serialize function that allows adding more information than the one
   * provided by default by HiCR
   *
-  * @return JSON-formatted serialized compute resource information
+  * @param[out] output JSON-formatted serialized compute resource information
   */
   virtual void serializeImpl(nlohmann::json& output) const = 0;
 

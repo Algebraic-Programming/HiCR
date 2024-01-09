@@ -48,6 +48,10 @@ class TopologyManager
 
   /**
    * Deserializing constructor is used to build a new instance of this topology manager based on serialized information
+   * 
+   * \note The instance created by this constructor should only be used to print/query the topology. It cannot be used to operate (memcpy, compute, etc).
+   * 
+   * @param[in] input JSON-formatted serialized topology, as detected by a remote topology manager
    */
   TopologyManager(const nlohmann::json& input) { deserialize(input); };
 
@@ -78,7 +82,7 @@ class TopologyManager
     /**
    * De-serialization function to re-construct the serialized topology information coming (typically) from remote instances
    *
-   * @return JSON-formatted serialized topology, as detected by a remote topology manager
+   * @param[in] input JSON-formatted serialized topology, as detected by a remote topology manager
    */
   __USED__ inline void deserialize(const nlohmann::json& input)
   {

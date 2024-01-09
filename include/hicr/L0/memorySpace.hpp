@@ -115,10 +115,10 @@ class MemorySpace
     return output;
   }
 
-    /**
+   /**
    * Serialization function to enable sharing memory space information
    *
-   * @return JSON-formatted serialized memory space information
+   * @param[in] input JSON-formatted serialized memory space information
    */
   __USED__ inline void deserialize(const nlohmann::json& input)
   {
@@ -156,7 +156,7 @@ class MemorySpace
   * Backend-specific implemtation of the serialize function that allows adding more information than the one
   * provided by default by HiCR
   *
-  * @return JSON-formatted serialized compute resource information
+  * @param[out] output JSON-formatted serialized compute resource information
   */
   virtual void serializeImpl(nlohmann::json& output) const = 0;
 

@@ -17,7 +17,14 @@
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/memorySpace.hpp>
 
+/**
+ * HiCR standard denomination of the compute resources key
+*/
 #define _HICR_DEVICE_COMPUTE_RESOURCES_KEY_ "Compute Resources"
+
+/**
+ * HiCR standard denomination of the memory spaces key
+*/
 #define _HICR_DEVICE_MEMORY_SPACES_KEY_ "Memory Spaces"
 
 namespace HiCR
@@ -127,7 +134,7 @@ class Device
     /**
    * De-serialization function to re-construct the serialized device information coming (typically) from remote instances
    *
-   * @return JSON-formatted serialized device information
+   * @param[in] input JSON-formatted serialized device information
    * 
    * \note Important: Deserialized devices are not meant to be used in any from other than printing or reporting its topology. 
    *       Any attempt of actually using them for computation or data transfers will result in undefined behavior.
@@ -175,7 +182,7 @@ class Device
     /**
    * Backend-specific implementation of the serialize function
    *
-   * @param[in] input Serialized device information
+   * @param[out] output Serialized device information
    */
   virtual void serializeImpl(nlohmann::json& output) const = 0;
 
