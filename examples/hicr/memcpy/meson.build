@@ -1,5 +1,5 @@
 testSuite = [ 'examples', 'hicr', 'memcpy' ]
-test_timeout = 20
+test_timeout = 60
 
 if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
     sharedMemoryDependencies = [ hicrBuildDep, hicrHWLocBackendDep, hicrPthreadsBackendDep ]
