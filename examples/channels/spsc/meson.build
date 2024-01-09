@@ -1,5 +1,5 @@
 testSuite = [ 'examples', 'channels', 'spsc']
-test_timeout = 180
+test_timeout = 20
 
 exampleBuildIncludes = include_directories([
    'source/include'
