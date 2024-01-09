@@ -41,8 +41,8 @@ class Device final : public HiCR::backend::host::L0::Device
 
   /**
    * Type definition for a NUMA Domain identifier
-  */
-  typedef int NUMADomainID_t; 
+   */
+  typedef int NUMADomainID_t;
 
   /**
    * Constructor for the device class of the sequential backend
@@ -51,18 +51,17 @@ class Device final : public HiCR::backend::host::L0::Device
    * @param[in] computeResources The compute resources (cores or hyperthreads) detected in this device (CPU)
    * @param[in] memorySpaces The memory spaces (e.g., NUMA domains) detected in this device (CPU)
    */
-  Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : 
-  HiCR::backend::host::L0::Device(NUMADomainId, computeResources, memorySpaces) {};
+  Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : HiCR::backend::host::L0::Device(NUMADomainId, computeResources, memorySpaces){};
 
   /**
    * Deserializing constructor
-   * 
+   *
    * The instance created will contain all information, if successful in deserializing it, corresponding to the passed NUMA domain
    * This instance should NOT be used for anything else than reporting/printing the contained resources
-   * 
+   *
    * @param[in] input A JSON-encoded serialized NUMA domain information
-  */
-  Device(const nlohmann::json& input) : HiCR::backend::host::L0::Device()
+   */
+  Device(const nlohmann::json &input) : HiCR::backend::host::L0::Device()
   {
     deserialize(input);
   }
@@ -74,41 +73,41 @@ class Device final : public HiCR::backend::host::L0::Device
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
     // Nothing extra to serialize here
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
     // Iterating over the compute resource list
-    for (const auto& computeResource : input["Compute Resources"])
+    for (const auto &computeResource : input["Compute Resources"])
     {
       // Getting device type
       const auto type = computeResource["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "Processing Unit") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+      if (type != "Processing Unit") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
 
       // Deserializing new device
       auto computeResourceObj = std::make_shared<host::hwloc::L0::ComputeResource>(computeResource);
-      
+
       // Inserting device into the list
       _computeResources.insert(computeResourceObj);
     }
 
     // Iterating over the memory space list
-    for (const auto& memorySpace : input["Memory Spaces"])
+    for (const auto &memorySpace : input["Memory Spaces"])
     {
       // Getting device type
       const auto type = memorySpace["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+      if (type != "RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
 
       // Deserializing new device
       auto memorySpaceObj = std::make_shared<host::hwloc::L0::MemorySpace>(memorySpace);
-      
+
       // Inserting device into the list
       _memorySpaces.insert(memorySpaceObj);
     }

@@ -52,7 +52,7 @@ class MemorySpace : public HiCR::L0::MemorySpace
 
   /**
    * Default constructor for deserialization purposes
-  */
+   */
   MemorySpace() = default;
 };
 

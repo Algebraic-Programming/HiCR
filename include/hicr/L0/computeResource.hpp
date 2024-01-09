@@ -63,35 +63,35 @@ class ComputeResource
     return output;
   }
 
-   /**
+  /**
    * De-serialization function to re-construct the serialized compute resource information coming (typically) from remote instances
    *
    * @param[in] input JSON-formatted serialized compute resource information
    */
-  __USED__ inline void deserialize(const nlohmann::json& input)
+  __USED__ inline void deserialize(const nlohmann::json &input)
   {
     // Then call the backend-specific deserialization function
     deserializeImpl(input);
   };
 
   protected:
-  
+
   ComputeResource() = default;
 
   /**
-  * Backend-specific implemtation of the serialize function that allows adding more information than the one
-  * provided by default by HiCR
-  *
-  * @param[out] output JSON-formatted serialized compute resource information
-  */
-  virtual void serializeImpl(nlohmann::json& output) const = 0;
+   * Backend-specific implemtation of the serialize function that allows adding more information than the one
+   * provided by default by HiCR
+   *
+   * @param[out] output JSON-formatted serialized compute resource information
+   */
+  virtual void serializeImpl(nlohmann::json &output) const = 0;
 
   /**
    * Backend-specific implementation of the deserialize function
    *
    * @param[in] input Serialized compute resource information corresponding to the specific backend's topology manager
    */
-  virtual void deserializeImpl(const nlohmann::json& input) = 0;
+  virtual void deserializeImpl(const nlohmann::json &input) = 0;
 };
 
 } // namespace L0

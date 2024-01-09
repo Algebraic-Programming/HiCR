@@ -34,7 +34,7 @@ namespace L0
 {
 
 /**
- * This class represents a compute resource, visible by HWLoc. 
+ * This class represents a compute resource, visible by HWLoc.
  * That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
  */
 class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
@@ -47,20 +47,20 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    * \param logicalProcessorId Os-determied core affinity assigned to this compute resource
    */
   ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
-   : HiCR::backend::host::L0::ComputeResource(logicalProcessorId,
-      detectPhysicalProcessorId(topology, logicalProcessorId),
-      detectCoreNUMAffinity(topology, logicalProcessorId),
-      detectCpuCaches(topology, logicalProcessorId)){};
+    : HiCR::backend::host::L0::ComputeResource(logicalProcessorId,
+                                               detectPhysicalProcessorId(topology, logicalProcessorId),
+                                               detectCoreNUMAffinity(topology, logicalProcessorId),
+                                               detectCpuCaches(topology, logicalProcessorId)){};
 
   /**
    * Deserializing constructor
-   * 
+   *
    * The instance created will contain all information, if successful in deserializing it, corresponding to the passed processing unit
    * This instance should NOT be used for anything else than reporting/printing the contained resources
-   * 
+   *
    * @param[in] input A JSON-encoded serialized  processing unit information
-  */
-  ComputeResource(const nlohmann::json& input)
+   */
+  ComputeResource(const nlohmann::json &input)
   {
     deserialize(input);
   }
@@ -239,25 +239,24 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
 
       // Repeat the search 1 level above
       cache = cache->parent;
-    } 
+    }
 
     return ret;
   }
 
-  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
     // Calling the base class serializer
     this->HiCR::backend::host::L0::ComputeResource::serializeImpl(output);
   }
-  
 
-  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
     // Calling the base class deserializer
     this->HiCR::backend::host::L0::ComputeResource::deserializeImpl(input);
   }
-  
-    /**
+
+  /**
    * Uses HWloc to discover the NUMA node associated with a given logical processor ID
    *
    * \param[in] topology HWLoc topology object
@@ -280,21 +279,21 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
 
     // iterate over parents until we find a memory node
     while (ancestor && !ancestor->memory_arity)
-        ancestor = ancestor->parent;
+      ancestor = ancestor->parent;
 
     // iterate over potential sibling nodes (the likely behavior though is to run only once)
-    for (size_t memChild = 0; memChild < ancestor->memory_arity; memChild++) {
+    for (size_t memChild = 0; memChild < ancestor->memory_arity; memChild++)
+    {
       if (memChild == 0)
         nodeNUMA = ancestor->memory_first_child;
-      else
-        if (nodeNUMA)
-          nodeNUMA = nodeNUMA->next_sibling;
+      else if (nodeNUMA)
+        nodeNUMA = nodeNUMA->next_sibling;
 
       if (hwloc_obj_type_is_memory(nodeNUMA->type) && hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
       {
-          found = true;
-          ret = nodeNUMA->logical_index;
-          break;
+        found = true;
+        ret = nodeNUMA->logical_index;
+        break;
       }
     }
 
@@ -302,7 +301,6 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
 
     return ret;
   }
-
 };
 
 } // namespace L0

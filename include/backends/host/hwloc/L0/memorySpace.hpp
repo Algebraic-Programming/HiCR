@@ -46,20 +46,19 @@ class MemorySpace final : public HiCR::backend::host::L0::MemorySpace
    * \param hwlocObject HWLoc object for associated to this memory space
    * \param bindingSupport The HWLoc binding type supported by this memory space
    */
-  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const host::hwloc::L0::LocalMemorySlot::binding_type bindingSupport) :
-   HiCR::backend::host::L0::MemorySpace(size),
-  _hwlocObject(hwlocObject),
-  _bindingSupport(bindingSupport){};
+  MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const host::hwloc::L0::LocalMemorySlot::binding_type bindingSupport) : HiCR::backend::host::L0::MemorySpace(size),
+                                                                                                                                       _hwlocObject(hwlocObject),
+                                                                                                                                       _bindingSupport(bindingSupport){};
 
   /**
    * Deserializing constructor
-   * 
+   *
    * The instance created will contain all information, if successful in deserializing it, corresponding to the passed host RAM
    * This instance should NOT be used for anything else than reporting/printing the contained resources
-   * 
+   *
    * @param[in] input A JSON-encoded serialized host RAM information
-  */
-  MemorySpace(const nlohmann::json& input) : HiCR::backend::host::L0::MemorySpace()
+   */
+  MemorySpace(const nlohmann::json &input) : HiCR::backend::host::L0::MemorySpace()
   {
     deserialize(input);
   }
@@ -91,13 +90,13 @@ class MemorySpace final : public HiCR::backend::host::L0::MemorySpace
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
-     // Writing HWLoc-specific information into the serialized object
-     output["Binding Support"] = _bindingSupport;
+    // Writing HWLoc-specific information into the serialized object
+    output["Binding Support"] = _bindingSupport;
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
     std::string key = "Binding Support";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());

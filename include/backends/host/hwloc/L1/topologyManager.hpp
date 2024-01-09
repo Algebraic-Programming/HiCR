@@ -62,7 +62,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     // Loading topology
     hwloc_topology_load(*_topology);
 
-    // Storage for the new device list 
+    // Storage for the new device list
     deviceList_t deviceList;
 
     // Ask hwloc about number of NUMA nodes and add as many devices as NUMA domains
@@ -74,7 +74,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
       // Inserting new device into the list
       deviceList.insert(device);
-    }  
+    }
 
     // Returning device list
     return deviceList;
@@ -95,14 +95,15 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     L0::ComputeResource::detectThreadPUs(*_topology, hwloc_get_root_obj(*_topology), 0, logicalProcessorIds);
 
     // Adding detected PUs as long they belong to this numa domain
-    for (const auto id : logicalProcessorIds) if (L0::ComputeResource::getCpuNumaAffinity(*_topology, id) == numaDomainId)
-    {
-      // Creating new compute resource class (of CPU core/processor type)
-      auto processor = std::make_shared<L0::ComputeResource>(*_topology, id);
+    for (const auto id : logicalProcessorIds)
+      if (L0::ComputeResource::getCpuNumaAffinity(*_topology, id) == numaDomainId)
+      {
+        // Creating new compute resource class (of CPU core/processor type)
+        auto processor = std::make_shared<L0::ComputeResource>(*_topology, id);
 
-      // Adding new resource to the list
-      computeResourceList.insert(processor);
-    }
+        // Adding new resource to the list
+        computeResourceList.insert(processor);
+      }
 
     // Returning new compute resource list
     return computeResourceList;
@@ -145,20 +146,20 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return memorySpaceList;
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
     // Iterating over the device list entries in the serialized input
-    for (const auto& device : input["Devices"])
+    for (const auto &device : input["Devices"])
     {
       // Getting device type
       const auto type = device["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "NUMA Domain") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+      if (type != "NUMA Domain") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
 
       // Deserializing new device
       auto deviceObj = std::make_shared<host::hwloc::L0::Device>(device);
-      
+
       // Inserting device into the list
       _deviceList.insert(deviceObj);
     }

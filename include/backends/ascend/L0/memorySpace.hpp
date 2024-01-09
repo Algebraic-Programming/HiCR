@@ -55,13 +55,13 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   ~MemorySpace() = default;
 
   /**
-  * Deserializing constructor
-  * 
-  * @param[in] input Serialized resource information
-  * 
-  * \note Backwards reference to device is null when deserializing. Do not try to use this class for any operations.
-  */
-  MemorySpace(const nlohmann::json& input) : HiCR::L0::MemorySpace()
+   * Deserializing constructor
+   *
+   * @param[in] input Serialized resource information
+   *
+   * \note Backwards reference to device is null when deserializing. Do not try to use this class for any operations.
+   */
+  MemorySpace(const nlohmann::json &input) : HiCR::L0::MemorySpace()
   {
     deserialize(input);
   }
@@ -77,20 +77,19 @@ class MemorySpace final : public HiCR::L0::MemorySpace
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
-     // No additional information to serialize for now
+    // No additional information to serialize for now
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
     // No additional information to deserialize for now
   }
 
-
   /**
    * Stores the device that owns this memory space
-   * 
+   *
    * \note If this class has been created through deserialization, it is not meant to be used as this pointer remains undefined
    */
   std::weak_ptr<ascend::L0::Device> _device;

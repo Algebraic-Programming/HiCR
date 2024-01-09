@@ -38,8 +38,8 @@ class Device : public HiCR::L0::Device
 
   /**
    * Type definition for a NUMA Domain identifier
-  */
-  typedef int NUMADomainID_t; 
+   */
+  typedef int NUMADomainID_t;
 
   /**
    * Constructor for the device class of the sequential backend
@@ -48,16 +48,15 @@ class Device : public HiCR::L0::Device
    * @param[in] computeResources The compute resources (cores or hyperthreads) detected in this device (CPU)
    * @param[in] memorySpaces The memory spaces (e.g., NUMA domains) detected in this device (CPU)
    */
-  Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : 
-  HiCR::L0::Device(computeResources, memorySpaces),
-  _NUMADomainId(NUMADomainId) {};
+  Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces),
+                                                                                                                                    _NUMADomainId(NUMADomainId){};
 
   protected:
 
   /**
    * Protected empty constructor for deserialization
-  */
-  Device() :  HiCR::L0::Device() {};
+   */
+  Device() : HiCR::L0::Device(){};
 
   /**
    * Default destructor
@@ -68,7 +67,7 @@ class Device : public HiCR::L0::Device
 
   /**
    * Identifier for the NUMA domain represented by this class
-  */
+   */
   NUMADomainID_t _NUMADomainId;
 };
 

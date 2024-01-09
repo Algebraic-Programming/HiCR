@@ -35,7 +35,7 @@ namespace L1
 
 /**
  * Implementation of the SharedMemory/HWloc-based communication manager for the HiCR Shared Memory Backend.
- * 
+ *
  * This backend uses pthread-based mutexes and barriers to prevent concurrent access violations
  */
 class CommunicationManager final : public HiCR::L1::CommunicationManager

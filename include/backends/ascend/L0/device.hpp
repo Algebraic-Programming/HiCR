@@ -58,13 +58,13 @@ class Device final : public HiCR::L0::Device
 
   /**
    * Deserializing constructor
-   * 
+   *
    * The instance created will contain all information, if successful in deserializing it, corresponding to the passed Ascend device
    * This instance should NOT be used for anything else than reporting/printing the contained resources
-   * 
+   *
    * @param[in] input A JSON-encoded serialized Ascend device information
-  */
-  Device(const nlohmann::json& input) : HiCR::L0::Device()
+   */
+  Device(const nlohmann::json &input) : HiCR::L0::Device()
   {
     deserialize(input);
   }
@@ -113,13 +113,13 @@ class Device final : public HiCR::L0::Device
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
     // Storing device identifier
     output["Device Identifier"] = _id;
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
     // Getting device id
     std::string key = "Device Identifier";
@@ -128,33 +128,33 @@ class Device final : public HiCR::L0::Device
     _id = input[key].get<deviceIdentifier_t>();
 
     // Iterating over the compute resource list
-    for (const auto& computeResource : input["Compute Resources"])
+    for (const auto &computeResource : input["Compute Resources"])
     {
       // Getting device type
       const auto type = computeResource["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "Ascend Processor") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+      if (type != "Ascend Processor") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
 
       // Deserializing new device
       auto computeResourceObj = std::make_shared<ascend::L0::ComputeResource>(computeResource);
-      
+
       // Inserting device into the list
       _computeResources.insert(computeResourceObj);
     }
 
     // Iterating over the memory space list
-    for (const auto& memorySpace : input["Memory Spaces"])
+    for (const auto &memorySpace : input["Memory Spaces"])
     {
       // Getting device type
       const auto type = memorySpace["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "Ascend Device RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+      if (type != "Ascend Device RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
 
       // Deserializing new device
       auto memorySpaceObj = std::make_shared<ascend::L0::MemorySpace>(memorySpace);
-      
+
       // Inserting device into the list
       _memorySpaces.insert(memorySpaceObj);
     }

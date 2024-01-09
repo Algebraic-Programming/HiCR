@@ -26,7 +26,7 @@ namespace backend
 {
 
 namespace host
-{ 
+{
 
 namespace L0
 {
@@ -62,13 +62,13 @@ class ComputeResource : public HiCR::L0::ComputeResource
    * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
   ComputeResource(const logicalProcessorId_t logicalProcessorId,
-       const physicalProcessorId_t physicalProcessorId,
-       const numaAffinity_t numaAffinity,
-       const std::unordered_set<std::shared_ptr<backend::host::Cache>> &caches) : HiCR::L0::ComputeResource(),
-                                                            _logicalProcessorId(logicalProcessorId),
-                                                            _physicalProcessorId(physicalProcessorId),
-                                                            _numaAffinity(numaAffinity),
-                                                            _caches(caches){};
+                  const physicalProcessorId_t physicalProcessorId,
+                  const numaAffinity_t numaAffinity,
+                  const std::unordered_set<std::shared_ptr<backend::host::Cache>> &caches) : HiCR::L0::ComputeResource(),
+                                                                                             _logicalProcessorId(logicalProcessorId),
+                                                                                             _physicalProcessorId(physicalProcessorId),
+                                                                                             _numaAffinity(numaAffinity),
+                                                                                             _caches(caches){};
   ~ComputeResource() = default;
 
   __USED__ inline std::string getType() const override { return "Processing Unit"; }
@@ -88,27 +88,27 @@ class ComputeResource : public HiCR::L0::ComputeResource
    */
   __USED__ inline physicalProcessorId_t getPhysicalProcessorId() const { return _physicalProcessorId; }
 
-  protected: 
+  protected:
 
   /**
    * Protected default constructor for deserialization
    */
-   ComputeResource() = default;
+  ComputeResource() = default;
 
-  __USED__ inline void serializeImpl(nlohmann::json& output) const override
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
-   // Writing core's information into the serialized object
-   output["Logical Processor Id"] = _logicalProcessorId;
-   output["Physical Processor Id"] = _physicalProcessorId;
-   output["NUMA Affinity"] = _numaAffinity;
+    // Writing core's information into the serialized object
+    output["Logical Processor Id"] = _logicalProcessorId;
+    output["Physical Processor Id"] = _physicalProcessorId;
+    output["NUMA Affinity"] = _numaAffinity;
 
-   // Writing Cache information
-   std::string cachesKey = "Caches";
-   output[cachesKey] = std::vector<nlohmann::json>();
-   for (const auto& cache : _caches) output[cachesKey] += cache->serialize();
+    // Writing Cache information
+    std::string cachesKey = "Caches";
+    output[cachesKey] = std::vector<nlohmann::json>();
+    for (const auto &cache : _caches) output[cachesKey] += cache->serialize();
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
     std::string key = "Logical Processor Id";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
@@ -130,7 +130,7 @@ class ComputeResource : public HiCR::L0::ComputeResource
     if (input[key].is_array() == false) HICR_THROW_LOGIC("The '%s' entry is not an array", key.c_str());
 
     _caches.clear();
-    for (const auto& c : input[key])
+    for (const auto &c : input[key])
     {
       // Deserializing cache
       auto cache = std::make_shared<backend::host::Cache>(c);

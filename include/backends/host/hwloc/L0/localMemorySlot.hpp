@@ -42,7 +42,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    */
   enum binding_type
   {
-        /**
+    /**
      * With strict binding, the memory is allocated strictly in the specified memory space
      */
     strict_binding = 2,
@@ -53,8 +53,8 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
     strict_non_binding = 1,
 
     /**
-    * With relaxed binding, the memory manager attempts to allocate the memory with a binding, but defaults to non-binding if not supported
-    */
+     * With relaxed binding, the memory manager attempts to allocate the memory with a binding, but defaults to non-binding if not supported
+     */
     relaxed_binding = 0
   };
 

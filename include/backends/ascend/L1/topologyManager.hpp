@@ -161,20 +161,20 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return memorySpaceList;
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json& input) override
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
     // Iterating over the device list entries in the serialized input
-    for (const auto& device : input["Devices"])
+    for (const auto &device : input["Devices"])
     {
       // Getting device type
       const auto type = device["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "Ascend Device") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());   
+      if (type != "Ascend Device") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
 
       // Deserializing new device
       auto deviceObj = std::make_shared<ascend::L0::Device>(device);
-      
+
       // Inserting device into the list
       _deviceList.insert(deviceObj);
     }

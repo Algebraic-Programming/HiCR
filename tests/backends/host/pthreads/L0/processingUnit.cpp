@@ -22,7 +22,7 @@ TEST(ProcessingUnit, Construction)
   auto computeResource = HiCR::backend::host::L0::ComputeResource(0, 0, 0, {});
   auto cPtr = std::make_shared<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
-  HiCR::backend::host::pthreads::L0::ProcessingUnit* p = nullptr;
+  HiCR::backend::host::pthreads::L0::ProcessingUnit *p = nullptr;
   EXPECT_NO_THROW(p = new HiCR::backend::host::pthreads::L0::ProcessingUnit(cPtr));
   EXPECT_FALSE(p == nullptr);
   delete p;
@@ -172,7 +172,7 @@ TEST(ProcessingUnit, LifeCycle)
   EXPECT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
   EXPECT_THROW(processingUnit->terminate(), HiCR::RuntimeException);
   EXPECT_THROW(processingUnit->await(), HiCR::RuntimeException);
-  
+
   // Initializing
   EXPECT_NO_THROW(processingUnit->initialize());
 

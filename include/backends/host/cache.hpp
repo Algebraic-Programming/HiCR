@@ -33,7 +33,7 @@ class Cache
 
   /**
    * Type definition for a cache level (L1, L2, L3...)
-  */
+   */
   typedef unsigned int cacheLevel_t;
 
   /**
@@ -45,24 +45,23 @@ class Cache
    * @param[in] shared Indicates whether this cache is shared among others
    * @param[in] size The size of the detected cache
    */
-  Cache(const cacheLevel_t level, const std::string& type, const size_t size, const size_t lineSize, const bool shared) :
-   _level(level),
-   _type(type),
-   _cacheSize(size),
-   _lineSize(lineSize),
-   _shared(shared)
+  Cache(const cacheLevel_t level, const std::string &type, const size_t size, const size_t lineSize, const bool shared) : _level(level),
+                                                                                                                          _type(type),
+                                                                                                                          _cacheSize(size),
+                                                                                                                          _lineSize(lineSize),
+                                                                                                                          _shared(shared)
   {
   }
 
   /**
    * Deserializing constructor
-   * 
+   *
    * The instance created will contain all information, if successful in deserializing it, corresponding to the passed cache
    * This instance should NOT be used for anything else than reporting/printing the contained resources
-   * 
+   *
    * @param[in] input A JSON-encoded serialized cache information
-  */
-  Cache(const nlohmann::json& input)
+   */
+  Cache(const nlohmann::json &input)
   {
     deserialize(input);
   }
@@ -97,7 +96,7 @@ class Cache
     return _level;
   }
 
-   /**
+  /**
    * Indicates whether the cache is shared among other procesing units
    *
    * \return True, if the cache is shared; false, otherwise
@@ -108,11 +107,11 @@ class Cache
   }
 
   /**
-  * Returns the cache type
-  *
-  * \return The cache type (instruction, data, unified)
-  */
-  __USED__ inline const std::string& getType() const
+   * Returns the cache type
+   *
+   * \return The cache type (instruction, data, unified)
+   */
+  __USED__ inline const std::string &getType() const
   {
     return _type;
   }
@@ -138,12 +137,12 @@ class Cache
     return output;
   }
 
-    /**
+  /**
    * De-serialization function to obtain the cache values from a serialized JSON object
    *
    * @param[in] input JSON-formatted serialized cache information
    */
-  __USED__ inline void deserialize(const nlohmann::json& input)
+  __USED__ inline void deserialize(const nlohmann::json &input)
   {
     std::string key = "Size (Bytes)";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
@@ -171,7 +170,7 @@ class Cache
     _shared = input[key].get<bool>();
   }
 
- protected:
+  protected:
 
   /**
    * Cache level
@@ -180,7 +179,7 @@ class Cache
 
   /**
    * Type of cache (Instruction, Data, Unified)
-  */
+   */
   std::string _type;
 
   /**
@@ -195,7 +194,7 @@ class Cache
 
   /**
    * Flag to indicate whether the flag is of exclusive core use or shared among others
-  */
+   */
   bool _shared;
 
 }; // class Cache

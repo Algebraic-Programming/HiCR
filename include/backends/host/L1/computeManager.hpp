@@ -18,7 +18,6 @@
 #include <backends/host/hwloc/L0/computeResource.hpp>
 #include <backends/host/pthreads/L0/processingUnit.hpp>
 
-
 namespace HiCR
 {
 
@@ -37,7 +36,7 @@ namespace L1
 class ComputeManager : public HiCR::L1::ComputeManager
 {
   public:
-  
+
   /**
    * The constructor is employed to reserve memory required for hwloc
    */

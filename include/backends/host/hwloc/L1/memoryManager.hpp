@@ -34,7 +34,7 @@ namespace L1
 {
 
 /**
- * Implementation of the HWloc-based memory manager for allocation of memory in the host (CPU) 
+ * Implementation of the HWloc-based memory manager for allocation of memory in the host (CPU)
  */
 class MemoryManager final : public HiCR::L1::MemoryManager
 {
@@ -49,18 +49,18 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   ~MemoryManager() = default;
 
   /**
-  * Sets the desired memory binding type before running an allocation attempt
-  * 
-  * @param[in] type The new requested binding type to use
-  */
+   * Sets the desired memory binding type before running an allocation attempt
+   *
+   * @param[in] type The new requested binding type to use
+   */
   void setRequestedBindingType(const L0::LocalMemorySlot::binding_type type) { _hwlocBindingRequested = type; }
 
   /**
-  * Gets the currently set desired memory binding type
-  * 
-  * @return The currently requested binding type
-  */
-  L0::LocalMemorySlot::binding_type getRequestedBindingType() const { return _hwlocBindingRequested; } 
+   * Gets the currently set desired memory binding type
+   *
+   * @return The currently requested binding type
+   */
+  L0::LocalMemorySlot::binding_type getRequestedBindingType() const { return _hwlocBindingRequested; }
 
   private:
 
