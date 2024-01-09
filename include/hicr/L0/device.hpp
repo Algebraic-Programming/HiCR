@@ -117,6 +117,9 @@ class Device
     // Getting device type
     output["Type"] = getType();
 
+    // Getting device-specific serialization information
+    serializeImpl(output);
+
     // Serializing compute resource information
     std::string computeResourceKey = _HICR_DEVICE_COMPUTE_RESOURCES_KEY_;
     output[computeResourceKey] = std::vector<nlohmann::json>();
