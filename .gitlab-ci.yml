@@ -45,7 +45,7 @@ build-ascend:
   - echo "Building..."
   - mkdir build
   - cd build
-  - meson setup .. -Dbackends=hwloc,ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+  - meson setup .. -Dbackends=hwloc,mpi,ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
   - meson compile -C .
   - echo "Running tests..."
   - meson test

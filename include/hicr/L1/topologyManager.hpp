@@ -42,20 +42,6 @@ class TopologyManager
   typedef std::unordered_set<std::shared_ptr<L0::Device>> deviceList_t;
 
   /**
-   * Default constructor is allowed, as no default argument are expected for the creation of this class
-   */
-  TopologyManager() = default;
-
-  /**
-   * Deserializing constructor is used to build a new instance of this topology manager based on serialized information
-   *
-   * \note The instance created by this constructor should only be used to print/query the topology. It cannot be used to operate (memcpy, compute, etc).
-   *
-   * @param[in] input JSON-formatted serialized topology, as detected by a remote topology manager
-   */
-  TopologyManager(const nlohmann::json &input) { deserialize(input); };
-
-  /**
    * Default destructor
    */
   virtual ~TopologyManager() = default;
@@ -129,6 +115,13 @@ class TopologyManager
   __USED__ inline const deviceList_t &getDevices() const { return _deviceList; }
 
   protected:
+
+  /**
+   * Protected default constructor  used to build a new instance of this topology manager based on serialized information
+   *
+   * \note The instance created by this constructor should only be used to print/query the topology. It cannot be used to operate (memcpy, compute, etc).
+   */
+  TopologyManager() = default;
 
   /**
    * Backend-specific implementation of queryDevices

@@ -127,10 +127,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     const auto data = value->getPointer();
 
     // Sending message size
-    MPI_Send(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPICommunicationManager->getComm());
+    MPI_Rsend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPICommunicationManager->getComm());
 
     // Getting RPC execution unit index
-    MPI_Send(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPICommunicationManager->getComm());
+    MPI_Rsend(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPICommunicationManager->getComm());
   }
 
   __USED__ inline void listenImpl() override

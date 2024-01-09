@@ -1,22 +1,21 @@
 #include <hicr/L1/topologyManager.hpp>
 
-#ifdef _USE_ASCEND_
+#ifdef _HICR_USE_ASCEND_BACKEND_
 #include <acl/acl.h>
 #include <backends/ascend/L1/topologyManager.hpp>
-#endif // _USE_ASCEND_
+#endif // _HICR_USE_ASCEND_BACKEND_
 
-
-#ifdef _USE_HWLOC_
+#ifdef _HICR_USE_HWLOC_BACKEND_
 #include <hwloc.h>
 #include <backends/host/hwloc/L1/topologyManager.hpp>
-#endif // _USE_HWLOC
+#endif // _HICR_USE_HWLOC_BACKEND_
 
 int main(int argc, char **argv)
 {
   // Storage to gather all topology managers to use in this example
   std::vector<HiCR::L1::TopologyManager*> topologyManagerList;
 
-  #ifdef _USE_HWLOC_
+  #ifdef _HICR_USE_HWLOC_BACKEND_
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -30,9 +29,9 @@ int main(int argc, char **argv)
   // Adding topology manager to the list
   topologyManagerList.push_back(&hwlocTopologyManager);
 
-  #endif // _USE_HWLOC_
+  #endif // _HICR_USE_HWLOC_BACKEND_
 
-  #ifdef _USE_ASCEND_
+  #ifdef _HICR_USE_ASCEND_BACKEND_
 
   // Initialize (Ascend's) ACL runtime
   aclError err = aclInit(NULL);
@@ -44,9 +43,10 @@ int main(int argc, char **argv)
   // Adding topology manager to the list
   topologyManagerList.push_back(&ascendTopologyManager);
 
-  #endif // _USE_ASCEND_
+  #endif // _HICR_USE_ASCEND_BACKEND_
 
   // Printing device list
+  printf("Gathering device information from %lu topology manager(s)...\n", topologyManagerList.size());
   printf("Devices: \n");
 
   // Now iterating over all registered topology managers

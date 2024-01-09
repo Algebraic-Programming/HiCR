@@ -43,6 +43,15 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   TopologyManager() : HiCR::L1::TopologyManager() {}
 
   /**
+   * Deserializing constructor is used to build a new instance of this topology manager based on serialized information
+   *
+   * \note The instance created by this constructor should only be used to print/query the topology. It cannot be used to operate (memcpy, compute, etc).
+   *
+   * @param[in] input JSON-formatted serialized topology, as detected by a remote topology manager
+   */
+  TopologyManager(const nlohmann::json &input) : HiCR::L1::TopologyManager() { deserialize(input); };
+
+  /**
    * Default destructor
    */
   ~TopologyManager() = default;
