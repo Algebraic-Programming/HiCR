@@ -1,4 +1,4 @@
-testSuite = [ 'examples', 'hicr', 'rpc']
+testSuite = [ 'examples', 'hicr', 'topoogyRPC' ]
 test_timeout = 180
 
 topologyDependencies = [ hicrHWLocBackendDep ] 
