@@ -1,22 +1,25 @@
 # HiCR Ascend Backend Configuration
 
-
-aclIncludes = include_directories([
+backendIncludes = include_directories([
    '/usr/local/Ascend/ascend-toolkit/latest/include'
 ])
 
-aclDep = [ ]
+backendDependencies = [ ]
     
+backendCppArgs = [
+   '-D_HICR_USE_ASCEND_BACKEND_'
+ ]
 
-aclLinkArgs = [
+backendLinkArgs = [
    '-L/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64/stub',
    '-lascendcl',
 ]
 
-aclDeps = declare_dependency(
-    dependencies: aclDep,
-    link_args : aclLinkArgs,
-    include_directories : aclIncludes
+backendDep = declare_dependency(
+    dependencies: backendDependencies,
+    compile_args : backendCppArgs,
+    link_args : backendLinkArgs,
+    include_directories : backendIncludes
 )    
 
-hicrAscendBackendDep = [ aclDeps ]
+hicrAscendBackendDep = [ backendDep ]

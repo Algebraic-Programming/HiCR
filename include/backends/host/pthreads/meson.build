@@ -1,13 +1,25 @@
 # HiCR Pthreads-based Backend Configuration
 
-hicrPthreadsBackendDeps = [
+backendIncludes = include_directories([
+])
+
+backendDependencies = [
     dependency('threads', required: true),
     dependency('boost',  modules : ['context'],  required : true)
-   ]
+]
     
-hicrPthreadsBackendDep = declare_dependency(
-    dependencies:  hicrPthreadsBackendDeps
-    )    
-    
+backendCppArgs = [
+   '-D_HICR_USE_PTHREADS_BACKEND_'
+ ]
 
+backendLinkArgs = [
+]
 
+backendDep = declare_dependency(
+    dependencies: backendDependencies,
+    compile_args : backendCppArgs,
+    link_args : backendLinkArgs,
+    include_directories : backendIncludes
+)    
+
+hicrPthreadsBackendDep = [ backendDep ]

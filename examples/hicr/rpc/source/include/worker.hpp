@@ -7,6 +7,16 @@
 #include <hicr/L0/memorySpace.hpp>
 #include <backends/host/L1/computeManager.hpp>
 
+#ifdef _USE_ASCEND_
+#include <acl/acl.h>
+#include <backends/ascend/L1/topologyManager.hpp>
+#endif // _USE_ASCEND_
+
+#ifdef _USE_HWLOC_
+#include <hwloc.h>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
+#endif // _USE_HWLOC
+
 void workerFc(HiCR::L1::InstanceManager &instanceManager,
               HiCR::backend::host::L1::ComputeManager &computeManager,
               std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
