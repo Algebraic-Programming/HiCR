@@ -54,7 +54,7 @@ class InstanceManager
   /**
    * Type definition for an unsorted set of unique pointers to the detected instances
    */
-  typedef std::unordered_set<std::unique_ptr<HiCR::L0::Instance>> instanceList_t;
+  typedef std::unordered_set<std::shared_ptr<HiCR::L0::Instance>> instanceList_t;
 
   /**
    * Default constructor is deleted, this class requires the passing of a memory manager
@@ -76,7 +76,7 @@ class InstanceManager
    * Function to retrieve the currently executing instance
    * \return A pointer to the local HiCR instance (in other words, the one running this function)
    */
-  __USED__ inline HiCR::L0::Instance *getCurrentInstance() const { return _currentInstance; }
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> getCurrentInstance() const { return _currentInstance; }
 
   /**
    * Function to retrieve the internal memory manager for this instance manager
@@ -239,7 +239,7 @@ class InstanceManager
   /**
    * Pointer to current instance
    */
-  HiCR::L0::Instance *_currentInstance = NULL;
+  std::shared_ptr<HiCR::L0::Instance> _currentInstance;
 
   private:
 

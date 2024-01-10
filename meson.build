@@ -12,17 +12,14 @@ subdir('include/frontends/taskr')
 # Getting selected backends
 enabledBackends = get_option('backends')
 
-# The sequential backend is the default for HiCR
-subdir('include/backends/sequential')
-
 # Including selected optional backends
 
-if 'sharedMemory/hwloc' in enabledBackends
-  subdir('include/backends/sharedMemory/hwloc')
+if 'hwloc' in enabledBackends
+  subdir('include/backends/host/hwloc')
 endif
 
-if 'sharedMemory/pthreads' in enabledBackends
-  subdir('include/backends/sharedMemory/pthreads')
+if 'pthreads' in enabledBackends
+  subdir('include/backends/host/pthreads')
 endif
 
 if 'mpi' in enabledBackends

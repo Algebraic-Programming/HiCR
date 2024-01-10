@@ -8,14 +8,33 @@ if mpiDep.found() == false
   mpiDep = dependency('mpich', required: false)
 endif
 
+# Now looking for LPF-specific libraries
 lpfrunExecutable = find_program('lpfrun', '/usr/bin/lpfrun', '/usr/local/bin/lpfrun', required : true)
-
 cc = meson.get_compiler('cpp')
 lib_lpfcore = cc.find_library('lpf_core_univ_ibverbs_generic')
 lib_lpfhl = cc.find_library('lpf_hl')
-hicrLPFBackendDep = declare_dependency( 
-dependencies: [lib_lpfcore,lib_lpfhl, mpiDep]
- )    
+
+backendIncludes = include_directories([
+])
+
+backendDependencies = [
+    lib_lpfcore,
+    lib_lpfhl,
+    mpiDep
+]
     
+backendCppArgs = [
+   '-D_HICR_USE_LPF_BACKEND_'
+ ]
 
+backendLinkArgs = [
+]
 
+backendDep = declare_dependency(
+    dependencies: backendDependencies,
+    compile_args : backendCppArgs,
+    link_args : backendLinkArgs,
+    include_directories : backendIncludes
+)    
+
+hicrLPFBackendDep = [ backendDep ]

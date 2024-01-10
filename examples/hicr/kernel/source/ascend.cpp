@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <stdio.h>
+#include <acl/acl.h>
 #include <backends/ascend/computationKernel.hpp>
 #include <backends/ascend/kernel.hpp>
 #include <backends/ascend/memoryKernel.hpp>
@@ -10,8 +11,7 @@
 #include <backends/ascend/L1/topologyManager.hpp>
 #include <backends/ascend/L1/communicationManager.hpp>
 #include <backends/ascend/L1/computeManager.hpp>
-#include <backends/sequential/L1/memoryManager.hpp>
-#include <backends/sequential/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 
 #define BUFF_SIZE 192
 
@@ -42,8 +42,14 @@ int main(int argc, char **argv)
   aclError err = aclInit(NULL);
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
-  // Initializing host topology manager
-  HiCR::backend::sequential::L1::TopologyManager hostTopologyManager;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  // Initializing HWLoc-based host topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager hostTopologyManager(&topology);
   hostTopologyManager.queryDevices();
   auto hostDevice = *hostTopologyManager.getDevices().begin();
   auto hostMemSpace = *hostDevice->getMemorySpaceList().begin();

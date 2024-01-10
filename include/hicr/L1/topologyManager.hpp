@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <nlohmann_json/json.hpp>
 #include <memory>
 #include <hicr/L0/device.hpp>
 #include <hicr/L1/memoryManager.hpp>
@@ -41,14 +42,55 @@ class TopologyManager
   typedef std::unordered_set<std::shared_ptr<L0::Device>> deviceList_t;
 
   /**
-   * Default constructor is allowed, as no default argument are expected for the creation of this class
-   */
-  TopologyManager() = default;
-
-  /**
    * Default destructor
    */
   virtual ~TopologyManager() = default;
+
+  /**
+   * Serialization function to enable sharing topology information across different HiCR instances (or any other purposes)
+   *
+   * @return JSON-formatted serialized topology, as detected by this topology manager
+   */
+  __USED__ inline nlohmann::json serialize() const
+  {
+    // Storage for newly created serialized output
+    nlohmann::json output;
+
+    // Adding serialized devices information into the array
+    std::string devicesKey = "Devices";
+    output[devicesKey] = std::vector<nlohmann::json>();
+    for (const auto &device : _deviceList) output[devicesKey] += device->serialize();
+
+    // Returning topology
+    return output;
+  }
+
+  /**
+   * De-serialization function to re-construct the serialized topology information coming (typically) from remote instances
+   *
+   * @param[in] input JSON-formatted serialized topology, as detected by a remote topology manager
+   */
+  __USED__ inline void deserialize(const nlohmann::json &input)
+  {
+    // First, discard all existing information
+    _deviceList.clear();
+
+    // Sanity checks
+    if (input.contains("Devices") == false) HICR_THROW_LOGIC("Serialized topology manager information is invalid, as it lacks the 'Devices' entry");
+    if (input["Devices"].is_array() == false) HICR_THROW_LOGIC("Serialized topology manager 'Devices' entry is not an array.");
+
+    for (auto device : input["Devices"])
+    {
+      if (device.contains("Type") == false) HICR_THROW_LOGIC("Serialized device information is invalid, as it lacks the 'Type' entry");
+      if (device["Type"].is_string() == false) HICR_THROW_LOGIC("Serialized device information is invalid, as the 'Type' entry is not a string");
+    }
+
+    // Then call the backend-specific deserialization function
+    deserializeImpl(input);
+
+    // Checking whether the deserialization was successful
+    if (_deviceList.size() != input["Devices"].size()) HICR_THROW_LOGIC("Deserialization failed, as the number of devices created (%lu) differs from the ones provided in the serialized input (%lu)", _deviceList.size(), input["Devices"].size());
+  };
 
   /**
    * This function prompts the backend to perform the necessary steps to discover and list the compute units provided by the library which it supports.
@@ -75,16 +117,28 @@ class TopologyManager
   protected:
 
   /**
+   * Protected default constructor  used to build a new instance of this topology manager based on serialized information
+   *
+   * \note The instance created by this constructor should only be used to print/query the topology. It cannot be used to operate (memcpy, compute, etc).
+   */
+  TopologyManager() = default;
+
+  /**
    * Backend-specific implementation of queryDevices
    *
    * \return The list of devices detected by this backend
    */
   virtual deviceList_t queryDevicesImpl() = 0;
 
-  private:
+  /**
+   * Backend-specific implementation of the deserialize function
+   *
+   * @param[in] input Serialized topology information corresponding to the specific backend's topology manager
+   */
+  virtual void deserializeImpl(const nlohmann::json &input) = 0;
 
   /**
-   * Map of execution units, representing potential RPC requests
+   * Map of devices queried by this topology manager
    */
   deviceList_t _deviceList;
 };

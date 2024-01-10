@@ -1,12 +1,12 @@
 testSuite = [ 'examples', 'channels', 'spsc']
-test_timeout = 180
+test_timeout = 60
 
 exampleBuildIncludes = include_directories([
    'source/include'
   ])
   
-if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enabledBackends
-    sharedMemoryDependencies = [ hicrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep] 
+if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
+    sharedMemoryDependencies = [ hicrBuildDep, hicrHWLocBackendDep, hicrPthreadsBackendDep] 
 	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp' ], dependencies: sharedMemoryDependencies, include_directories: [exampleBuildIncludes])
 
 	if get_option('buildTests')
@@ -15,16 +15,16 @@ if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enable
 	endif
 endif
 
-if 'mpi' in enabledBackends
-	mpi = executable('mpi', [ 'source/mpi.cpp' ], dependencies: [ hicrBuildDep, hicrMPIBackendDep], include_directories: [exampleBuildIncludes] )
+if 'mpi' in enabledBackends and 'hwloc' in enabledBackends
+	mpi = executable('mpi', [ 'source/mpi.cpp' ], dependencies: [ hicrBuildDep, hicrMPIBackendDep, hicrHWLocBackendDep], include_directories: [exampleBuildIncludes] )
 
 	if get_option('buildTests')
 	  test('mpi', mpirunExecutable, args : [ '-n', '2', mpi.full_path(), '3' ], timeout: test_timeout, suite: testSuite )
     endif
 endif
 
-if 'lpf' in enabledBackends
-	lpf = executable('lpf', [ 'source/lpf.cpp' ], dependencies: [ hicrBuildDep, hicrLPFBackendDep], include_directories: [exampleBuildIncludes] )
+if 'lpf' in enabledBackends and 'hwloc' in enabledBackends
+	lpf = executable('lpf', [ 'source/lpf.cpp' ], dependencies: [ hicrBuildDep, hicrLPFBackendDep, hicrHWLocBackendDep], include_directories: [exampleBuildIncludes] )
 
 	if get_option('buildTests')
 	  test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'ibverbs', lpf.full_path(), '3' ], timeout: test_timeout, suite: testSuite )

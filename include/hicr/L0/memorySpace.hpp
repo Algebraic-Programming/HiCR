@@ -11,6 +11,7 @@
  */
 #pragma once
 
+#include <nlohmann_json/json.hpp>
 #include <hicr/exceptions.hpp>
 #include <string>
 
@@ -88,6 +89,55 @@ class MemorySpace
    */
   virtual ~MemorySpace() = default;
 
+  /**
+   * Serialization function to enable sharing memory space information
+   *
+   * @return JSON-formatted serialized memory space information
+   */
+  __USED__ inline nlohmann::json serialize() const
+  {
+    // Storage for newly created serialized output
+    nlohmann::json output;
+
+    // Adding backend-specific information
+    serializeImpl(output);
+
+    // Getting memory space type
+    output["Type"] = getType();
+
+    // Getting size
+    output["Size"] = getSize();
+
+    // Getting current usage
+    output["Usage"] = getUsage();
+
+    // Returning serialized information
+    return output;
+  }
+
+  /**
+   * Serialization function to enable sharing memory space information
+   *
+   * @param[in] input JSON-formatted serialized memory space information
+   */
+  __USED__ inline void deserialize(const nlohmann::json &input)
+  {
+    // Obtaining backend-specific information
+    deserializeImpl(input);
+
+    // Deserializing size
+    std::string key = "Size";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _size = input[key].get<size_t>();
+
+    // Deserializing usage
+    key = "Usage";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _usage = input[key].get<size_t>();
+  }
+
   protected:
 
   /**
@@ -98,9 +148,29 @@ class MemorySpace
   MemorySpace(const size_t size) : _size(size){};
 
   /**
+   * Default constructor for deserialization purposes
+   */
+  MemorySpace() = default;
+
+  /**
+   * Backend-specific implemtation of the serialize function that allows adding more information than the one
+   * provided by default by HiCR
+   *
+   * @param[out] output JSON-formatted serialized compute resource information
+   */
+  virtual void serializeImpl(nlohmann::json &output) const = 0;
+
+  /**
+   * Backend-specific implementation of the deserialize function
+   *
+   * @param[in] input Serialized compute resource information corresponding to the specific backend's topology manager
+   */
+  virtual void deserializeImpl(const nlohmann::json &input) = 0;
+
+  /**
    * The memory space size, defined at construction time
    */
-  const size_t _size;
+  size_t _size;
 
   /**
    * This variable keeps track of the memory space usage (through allocation and frees)

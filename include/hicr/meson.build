@@ -6,7 +6,7 @@ if (exceptionModel == 'stdexception')
  hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_STDEXCEPTION' ]
 endif
 if (exceptionModel == 'abort')
- hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_ABORT' ]
+ hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_ABORT', '-DJSON_NOEXCEPTION' ]
 endif
 
 # Warning handling option

@@ -66,10 +66,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     for (int i = 0; i < _MPICommunicationManager->getSize(); i++)
     {
       // Creating new MPI-based HiCR instance
-      std::unique_ptr<HiCR::L0::Instance> instance = std::make_unique<HiCR::backend::mpi::L0::Instance>(i);
+      auto instance = std::make_shared<HiCR::backend::mpi::L0::Instance>(i);
 
       // If this is the current rank, set it as current instance
-      if (i == _MPICommunicationManager->getRank()) _currentInstance = instance.get();
+      if (i == _MPICommunicationManager->getRank()) _currentInstance = instance;
 
       // Adding instance to the collection
       _instances.insert(std::move(instance));
@@ -127,10 +127,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     const auto data = value->getPointer();
 
     // Sending message size
-    MPI_Send(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPICommunicationManager->getComm());
+    MPI_Rsend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPICommunicationManager->getComm());
 
     // Getting RPC execution unit index
-    MPI_Send(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPICommunicationManager->getComm());
+    MPI_Rsend(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPICommunicationManager->getComm());
   }
 
   __USED__ inline void listenImpl() override

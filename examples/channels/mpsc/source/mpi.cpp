@@ -2,7 +2,7 @@
 #include "include/producer.hpp"
 #include <backends/mpi/L1/memoryManager.hpp>
 #include <backends/mpi/L1/communicationManager.hpp>
-#include <backends/sequential/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <mpi.h>
 
 int main(int argc, char **argv)
@@ -44,8 +44,14 @@ int main(int argc, char **argv)
   HiCR::backend::mpi::L1::MemoryManager m;
   HiCR::backend::mpi::L1::CommunicationManager c(MPI_COMM_WORLD);
 
-  // Initializing Sequential backend's topology manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  // Initializing hwloc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

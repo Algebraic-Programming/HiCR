@@ -20,7 +20,7 @@
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/processingUnit.hpp>
-#include <backends/sequential/L1/computeManager.hpp>
+#include <backends/host/L1/computeManager.hpp>
 #include <frontends/taskr/dispatcher.hpp>
 #include <frontends/taskr/task.hpp>
 
@@ -70,10 +70,10 @@ class Worker
    *
    * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
    */
-  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(dynamic_cast<HiCR::backend::sequential::L1::ComputeManager *>(computeManager))
+  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
   {
     // Checking the passed compute manager is of a supported type
-    if (_computeManager == NULL) HICR_THROW_LOGIC("TaskR workers can only be instantiated with sequential or shared memory compute managers.");
+    if (_computeManager == NULL) HICR_THROW_LOGIC("TaskR workers can only be instantiated with a shared memory compute manages.");
 
     // Making sure the worker-identifying key is created (only once) with the first created task
     pthread_once(&_workerPointerKeyConfig, createWorkerPointerKey);
@@ -153,7 +153,7 @@ class Worker
     // Transitioning state
     _state = state_t::running;
 
-    // Creating new execution unit (the processing unit must support an execution unit of 'sequential' type)
+    // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
     auto executionUnit = _computeManager->createExecutionUnit([this]()
                                                               { this->mainLoop(); });
 
@@ -269,7 +269,7 @@ class Worker
   /**
    * Compute manager to use to instantiate and manage the worker's and task execution states
    */
-  HiCR::backend::sequential::L1::ComputeManager *const _computeManager;
+  HiCR::backend::host::L1::ComputeManager *const _computeManager;
 
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run

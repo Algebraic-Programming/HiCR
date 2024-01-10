@@ -1,7 +1,7 @@
-testSuite = [ 'examples', 'taskr', 'energySaver' ]
+testSuite = [ 'examples', 'taskr' ]
 
-if 'sharedMemory/hwloc' in enabledBackends and 'sharedMemory/pthreads' in enabledBackends
-	energySaver = executable('energySaver', [ 'source/main.cpp'], dependencies: [ taskrBuildDep, hicrSharedMemoryHWLocBackendDep, hicrSharedMemoryPthreadsBackendDep])
+if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
+	energySaver = executable('energySaver', [ 'source/main.cpp'], dependencies: [ taskrBuildDep, hicrHWLocBackendDep, hicrPthreadsBackendDep])
 
 	if get_option('buildTests')
 	  test('energySaver', energySaver, args : [ '10', '1', '100' ], suite: testSuite)

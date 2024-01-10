@@ -11,8 +11,8 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
-#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <backends/host/pthreads/L1/computeManager.hpp>
 #include <frontends/taskr/task.hpp>
 #include <frontends/taskr/worker.hpp>
 
@@ -20,7 +20,7 @@ TEST(Worker, Construction)
 {
   taskr::Worker *w = NULL;
   HiCR::L1::ComputeManager *m1 = NULL;
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m2;
+  HiCR::backend::host::pthreads::L1::ComputeManager m2;
 
   EXPECT_THROW(w = new taskr::Worker(m1), HiCR::LogicException);
   EXPECT_NO_THROW(w = new taskr::Worker(&m2));
@@ -30,11 +30,11 @@ TEST(Worker, Construction)
 
 TEST(Task, SetterAndGetters)
 {
-  // Instantiating default compute manager
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m;
+  // Instantiating Pthread-based host (CPU) compute manager
+  HiCR::backend::host::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
-  taskr::Worker w(&m);
+  taskr::Worker w(&c);
 
   // Getting empty lists
   EXPECT_TRUE(w.getProcessingUnits().empty());
@@ -47,10 +47,10 @@ TEST(Task, SetterAndGetters)
   // Subscribing worker to dispatcher
   w.subscribe(&dispatcher);
 
-  // Initializing HWLoc backend's topology manager
+  // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -65,7 +65,7 @@ TEST(Task, SetterAndGetters)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating processing unit from resource
-  auto processingUnit = m.createProcessingUnit(firstComputeResource);
+  auto processingUnit = c.createProcessingUnit(firstComputeResource);
 
   // Assigning processing unit to worker
   w.addProcessingUnit(std::move(processingUnit));
@@ -77,11 +77,11 @@ TEST(Task, SetterAndGetters)
 
 TEST(Worker, LifeCycle)
 {
-  // Instantiating default compute manager
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager m;
+  // Instantiating Pthread-based host (CPU) compute manager
+  HiCR::backend::host::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
-  taskr::Worker w(&m);
+  taskr::Worker w(&c);
 
   // Worker state should in an uninitialized state first
   EXPECT_EQ(w.getState(), taskr::Worker::state_t::uninitialized);
@@ -89,10 +89,10 @@ TEST(Worker, LifeCycle)
   // Attempting to run without any assigned resources
   EXPECT_THROW(w.initialize(), HiCR::LogicException);
 
-  // Initializing HWLoc backend's device manager
+  // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -107,7 +107,7 @@ TEST(Worker, LifeCycle)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating processing unit from resource
-  auto processingUnit = m.createProcessingUnit(firstComputeResource);
+  auto processingUnit = c.createProcessingUnit(firstComputeResource);
 
   // Assigning processing unit to worker
   w.addProcessingUnit(std::move(processingUnit));
@@ -150,7 +150,7 @@ TEST(Worker, LifeCycle)
   };
 
   // Creating execution unit
-  auto u = m.createExecutionUnit(f);
+  auto u = c.createExecutionUnit(f);
 
   // Creating task to run, and setting function to run
   taskr::Task t(0, u);

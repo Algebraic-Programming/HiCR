@@ -11,8 +11,8 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/sequential/L1/topologyManager.hpp>
-#include <backends/sequential/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <backends/host/pthreads/L1/computeManager.hpp>
 #include <frontends/taskr/task.hpp>
 
 TEST(Task, Construction)
@@ -41,6 +41,12 @@ TEST(Task, SetterAndGetters)
 
 TEST(Task, Run)
 {
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
   // Storage for internal checks in the task
   bool hasRunningState = false;
   bool hasCorrectTaskPointer = false;
@@ -61,23 +67,23 @@ TEST(Task, Run)
     t->suspend();
   };
 
-  // Instantiating default compute manager
-  HiCR::backend::sequential::L1::ComputeManager m;
+  // Instantiating Pthread-based host (CPU) compute manager
+  HiCR::backend::host::pthreads::L1::ComputeManager c;
 
   // Creating execution unit
-  auto u = m.createExecutionUnit(f);
+  auto u = c.createExecutionUnit(f);
 
   // Creating task
   t = new taskr::Task(0, u);
 
-  // Initializing Sequential backend's topology manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  // Initializing HWLoc-based host (CPU)  topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  tm.queryDevices();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *tm.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
@@ -86,13 +92,13 @@ TEST(Task, Run)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating processing unit from the compute resource
-  auto processingUnit = m.createProcessingUnit(firstComputeResource);
+  auto processingUnit = c.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
   processingUnit->initialize();
 
   // Creating execution state
-  auto executionState = m.createExecutionState(u);
+  auto executionState = c.createExecutionState(u);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -116,6 +122,12 @@ TEST(Task, Run)
 
 TEST(Task, Events)
 {
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
   // Test flags
   bool onExecuteHasRun = false;
   bool onExecuteUpdated = false;
@@ -151,23 +163,23 @@ TEST(Task, Events)
     t->suspend();
   };
 
-  // Instantiating default compute manager
-  HiCR::backend::sequential::L1::ComputeManager m;
+  // Instantiating Pthread-based host (CPU) compute manager
+  HiCR::backend::host::pthreads::L1::ComputeManager c;
 
   // Creating execution unit
-  auto u = m.createExecutionUnit(f);
+  auto u = c.createExecutionUnit(f);
 
   // Creating task
   t = new taskr::Task(0, u);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  // Initializing HWLoc-based host (CPU)  topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  tm.queryDevices();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *tm.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
@@ -176,10 +188,10 @@ TEST(Task, Events)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating processing unit from the compute resource
-  auto processingUnit = m.createProcessingUnit(firstComputeResource);
+  auto processingUnit = c.createProcessingUnit(firstComputeResource);
 
   // Creating execution state
-  auto executionState = m.createExecutionState(u);
+  auto executionState = c.createExecutionState(u);
 
   // Initializing processing unit
   processingUnit->initialize();
@@ -205,7 +217,7 @@ TEST(Task, Events)
   t = new taskr::Task(1, u);
 
   // Creating execution state
-  executionState = m.createExecutionState(t->getExecutionUnit());
+  executionState = c.createExecutionState(t->getExecutionUnit());
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));

@@ -1,4 +1,0 @@
-#pragma once
-
-#define TEST_RPC_PROCESSING_UNIT_ID 0
-#define TEST_RPC_EXECUTION_UNIT_ID 0

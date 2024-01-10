@@ -12,9 +12,9 @@
 
 #include <thread>
 #include "gtest/gtest.h"
-#include <backends/sequential/L1/memoryManager.hpp>
-#include <backends/sequential/L1/communicationManager.hpp>
-#include <backends/sequential/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/memoryManager.hpp>
+#include <backends/host/pthreads/L1/communicationManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <frontends/channel/spsc/consumer.hpp>
 #include <frontends/channel/spsc/producer.hpp>
 
@@ -25,14 +25,20 @@
 
 TEST(ProducerChannel, Construction)
 {
-  // Instantiating backend
-  HiCR::backend::sequential::L1::MemoryManager m;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
 
-  // Instantiating backend
-  HiCR::backend::sequential::L1::CommunicationManager c(1);
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  // Instantiating HWloc-based host (CPU) memory manager
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
+
+  // Instantiating Pthread-based host (CPU) communication manager
+  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
+
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -77,14 +83,20 @@ TEST(ProducerChannel, Construction)
 
 TEST(ProducerChannel, Push)
 {
-  // Instantiating backend
-  HiCR::backend::sequential::L1::MemoryManager m;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
 
-  // Instantiating backend
-  HiCR::backend::sequential::L1::CommunicationManager c(1);
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  // Instantiating HWloc-based host (CPU) memory manager
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
+
+  // Instantiating Pthread-based host (CPU) communication manager
+  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
+
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -153,14 +165,20 @@ TEST(ProducerChannel, Push)
 
 TEST(ProducerChannel, PushWait)
 {
-  // Instantiating backend
-  HiCR::backend::sequential::L1::MemoryManager m;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
 
-  // Instantiating backend
-  HiCR::backend::sequential::L1::CommunicationManager c(1);
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
 
-  // Initializing Sequential backend's device manager
-  HiCR::backend::sequential::L1::TopologyManager dm;
+  // Instantiating HWloc-based host (CPU) memory manager
+  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
+
+  // Instantiating Pthread-based host (CPU) communication manager
+  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
+
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();

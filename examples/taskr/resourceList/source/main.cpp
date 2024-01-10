@@ -1,6 +1,6 @@
 #include "source/workTask.hpp"
-#include <backends/sharedMemory/pthreads/L1/computeManager.hpp>
-#include <backends/sharedMemory/hwloc/L1/topologyManager.hpp>
+#include <backends/host/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <chrono>
 #include <cstdio>
 #include <frontends/taskr/runtime.hpp>
@@ -14,11 +14,11 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::pthreads::L1::ComputeManager computeManager;
+  // Initializing Pthread-base compute manager to run tasks in parallel
+  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
-  // Initializing HWLoc backend's topology manager
-  HiCR::backend::sharedMemory::hwloc::L1::TopologyManager dm(&topology);
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   dm.queryDevices();
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   for (auto computeResource : computeResources)
   {
     // Interpreting compute resource as core
-    auto core = (HiCR::backend::sharedMemory::Core *)computeResource.get();
+    auto core = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
     // If the core affinity is included in the list, create new processing unit
     if (coreSubset.contains(core->getProcessorId()))

@@ -10,10 +10,25 @@ endif
 
 mpirunExecutable = find_program('mpirun', '/usr/bin/mpirun', '/usr/local/bin/mpirun', required : true)
 
-hicrMPIBackendDeps = [ mpiDep  ]
-hicrMPIBackendDep = declare_dependency( 
-    dependencies:  hicrMPIBackendDeps
- )    
+backendIncludes = include_directories([
+])
+
+backendDependencies = [
+    mpiDep
+]
     
+backendCppArgs = [
+   '-D_HICR_USE_MPI_BACKEND_'
+ ]
 
+backendLinkArgs = [
+]
 
+backendDep = declare_dependency(
+    dependencies: backendDependencies,
+    compile_args : backendCppArgs,
+    link_args : backendLinkArgs,
+    include_directories : backendIncludes
+)    
+
+hicrMPIBackendDep = [ backendDep ]

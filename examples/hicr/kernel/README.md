@@ -1,6 +1,4 @@
-HiCR Memcpy Examples
+HiCR Kernel Examples
 =====================
 
-Simple examples for memcpy using HiCR, showing how to transfer a message from one resource to another and then printing it to screen.
-
-* Shared memory backend: it allocates memory in different NUMA domains and transfers the message from one to the other.
+These examples use HiCR to describe, instantiate, and run simple kernels in different (CPU/xPU) architectures

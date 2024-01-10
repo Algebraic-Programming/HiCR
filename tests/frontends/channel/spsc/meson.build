@@ -1,2 +1,5 @@
-test('producer', executable('producer', 'producer.cpp', dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'sequential', 'L2', 'channel', 'spsc' ] )
-test('consumer', executable('consumer', 'consumer.cpp', dependencies: [  testDeps, hicrSequentialBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'sequential', 'L2', 'channel', 'spsc' ] )
+if 'mpi' in enabledBackends and 'hwloc' in enabledBackends 
+ test('producer', executable('producer', 'producer.cpp', dependencies: [  testDeps, hicrHWLocBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'sequential', 'L2', 'channel', 'spsc' ] )
+ test('consumer', executable('consumer', 'consumer.cpp', dependencies: [  testDeps, hicrHWLocBackendDep ] ), protocol: 'gtest', suite: [ 'tests', 'sequential', 'L2', 'channel', 'spsc' ] )
+endif
+

@@ -1,15 +1,22 @@
 #include <vector>
+#include <acl/acl.h>
 #include <backends/ascend/L1/memoryManager.hpp>
 #include <backends/ascend/L1/topologyManager.hpp>
 #include <backends/ascend/L1/communicationManager.hpp>
-#include <backends/sequential/L1/memoryManager.hpp>
-#include <backends/sequential/L1/topologyManager.hpp>
+#include <backends/host/hwloc/L1/memoryManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/telephoneGame.hpp"
 
 int main(int argc, char **argv)
 {
-  // Initializing host topology manager
-  HiCR::backend::sequential::L1::TopologyManager hostDeviceManager;
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager hostDeviceManager(&topology);
   hostDeviceManager.queryDevices();
   auto hostDevice = *hostDeviceManager.getDevices().begin();
 
@@ -21,9 +28,9 @@ int main(int argc, char **argv)
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
   // Initializing ascend topology manager
-  HiCR::backend::ascend::L1::TopologyManager ascendDeviceManager;
-  ascendDeviceManager.queryDevices();
-  auto ascendDevices = ascendDeviceManager.getDevices();
+  HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
+  ascendTopologyManager.queryDevices();
+  auto ascendDevices = ascendTopologyManager.getDevices();
 
   // Getting access to all ascend devices memory spaces
   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> ascendMemorySpaces;
@@ -38,7 +45,7 @@ int main(int argc, char **argv)
   memSpaceOrder.emplace_back(hostMemorySpace);
 
   // Allocate and populate input memory slot
-  HiCR::backend::sequential::L1::MemoryManager hostMemoryManager;
+  HiCR::backend::host::hwloc::L1::MemoryManager hostMemoryManager(&topology);
   auto input = hostMemoryManager.allocateLocalMemorySlot(hostMemorySpace, BUFFER_SIZE);
   sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 

@@ -12,7 +12,7 @@ build:
   - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j24; make install; popd
   - echo "Building..."
   - mkdir build
-  - meson setup build -Db_coverage=true -Dbackends=sharedMemory/hwloc,sharedMemory/pthreads,mpi,lpf -DbuildTests=true -DbuildExamples=true  -DcompileWarningsAsErrors=true
+  - meson setup build -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,lpf -DbuildTests=true -DbuildExamples=true  -DcompileWarningsAsErrors=true
   - meson compile -C build
   - echo "Running tests..."
   - OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 meson test -C build
@@ -45,7 +45,7 @@ build-ascend:
   - echo "Building..."
   - mkdir build
   - cd build
-  - meson setup .. -Dbackends=ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+  - meson setup .. -Dbackends=hwloc,pthreads,ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
   - meson compile -C .
   - echo "Running tests..."
   - meson test

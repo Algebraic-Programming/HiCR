@@ -65,12 +65,10 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return return a unique pointer to the newly created Execution State
    */
-  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) override
+  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) const override
   {
     return std::make_unique<ascend::L0::ExecutionState>(executionUnit);
   }
-
-  private:
 
   /**
    * Create a new processing unit for the specified \p resource (device)
@@ -79,7 +77,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return a pointer to the new processing unit
    */
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnitImpl(std::shared_ptr<HiCR::L0::ComputeResource> resource) const override
+  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> resource) const override
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }
