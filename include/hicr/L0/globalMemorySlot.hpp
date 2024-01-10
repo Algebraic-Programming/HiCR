@@ -12,6 +12,7 @@
 #pragma once
 
 #include <hicr/definitions.hpp>
+#include <hicr/L0/memorySlot.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
 
 namespace HiCR
@@ -25,7 +26,7 @@ namespace L0
  *
  * - Represents a contiguous segment of memory located in a non-local memory space
  */
-class GlobalMemorySlot
+class GlobalMemorySlot : public MemorySlot
 {
   public:
 
@@ -50,7 +51,8 @@ class GlobalMemorySlot
   GlobalMemorySlot(
     const tag_t globalTag = 0,
     const globalKey_t globalKey = 0,
-    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : _globalTag(globalTag),
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : MemorySlot(),
+                                                                                  _globalTag(globalTag),
                                                                                   _globalKey(globalKey),
                                                                                   _sourceLocalMemorySlot(sourceLocalMemorySlot)
   {
@@ -72,52 +74,6 @@ class GlobalMemorySlot
    * \returns The memory slot's global key
    */
   __USED__ inline globalKey_t getGlobalKey() const noexcept { return _globalKey; }
-
-  /**
-   * Getter function for the memory slot's received message counter
-   * \returns The memory slot's received message counter
-   */
-  __USED__ inline size_t getMessagesRecv() const noexcept { return _messagesRecv; }
-
-  /**
-   * Getter function for the memory slot's sent message counter
-   * \returns The memory slot's sent message counter
-   */
-  __USED__ inline size_t getMessagesSent() const noexcept { return _messagesSent; }
-
-  /**
-   * Setter function for the memory slot's received message counter
-   * @param[in] count The memory slot's recv message counter to set
-   */
-  __USED__ inline void setMessagesRecv(const size_t count) noexcept { _messagesRecv = count; }
-
-  /**
-   * Setter function for the memory slot's sent message counter
-   * @param[in] count The memory slot's sent message counter to set
-   */
-  __USED__ inline void setMessagesSent(const size_t count) noexcept { _messagesSent = count; }
-
-  /**
-   * Increase counter function for the memory slot's received message counter
-   */
-  __USED__ inline void increaseMessagesRecv() noexcept { _messagesRecv = _messagesRecv + 1; }
-
-  /**
-   * Increase counter function for the memory slot's sent message counter
-   */
-  __USED__ inline void increaseMessagesSent() noexcept { _messagesSent = _messagesSent + 1; }
-
-  /**
-   * Gets the pointer for the received message counter
-   * \returns The pointer to the received message counter
-   */
-  __USED__ inline __volatile__ size_t *getMessagesRecvPointer() noexcept { return &_messagesRecv; }
-
-  /**
-   * Gets the pointer for the sent message counter
-   * \returns The pointer to the sent message counter
-   */
-  __USED__ inline __volatile__ size_t *getMessagesSentPointer() noexcept { return &_messagesSent; }
 
   /**
    * Function to return the source local memory slot from which this global slot was created, if one exists (if not, it's a remote memory slot)
@@ -142,16 +98,6 @@ class GlobalMemorySlot
    * Pointer to the associated local memory slot (if one exists)
    */
   std::shared_ptr<HiCR::L0::LocalMemorySlot> const _sourceLocalMemorySlot = 0;
-
-  /**
-   * Messages received into this slot
-   */
-  __volatile__ size_t _messagesRecv = 0;
-
-  /**
-   * Messages sent from this slot
-   */
-  __volatile__ size_t _messagesSent = 0;
 };
 
 } // namespace L0

@@ -13,7 +13,7 @@
 #pragma once
 
 #include <cstdlib>
-#include <stdarg.h>
+#include <cstdarg>
 #include <stdexcept>
 #include <hicr/definitions.hpp>
 
