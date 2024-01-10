@@ -1,7 +1,11 @@
 testSuite = [ 'examples', 'hicr', 'toplogyRPC' ]
 test_timeout = 60
 
-topologyDependencies = [ hicrHWLocBackendDep ] 
+topologyDependencies = [ ] 
+
+if 'hwloc' in enabledBackends 
+	topologyDependencies += hicrHWLocBackendDep
+endif
 
 if 'ascend' in enabledBackends 
 	topologyDependencies += hicrAscendBackendDep
