@@ -4,7 +4,7 @@
  */
 
 /**
- * @file MemorySlot.hpp
+ * @file memorySlot.hpp
  * @brief Provides a n abstractdefinition for all HiCR Memory Slot classes
  * @author S. M. Martin
  * @date 10/1/2024
@@ -84,9 +84,9 @@ class MemorySlot
   protected:
 
   /**
-  * Protected constructor for a MemorySlot class
-  */
-  MemorySlot() { }
+   * Protected constructor for a MemorySlot class
+   */
+  MemorySlot() {}
 
   private:
 
