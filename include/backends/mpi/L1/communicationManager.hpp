@@ -175,6 +175,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Increasing the remote sent message counter and local destination received message counter
     increaseWindowCounter(sourceRank, sourceSentMessageWindow);
+    destinationSlot->increaseMessagesRecv();
   }
 
   __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destinationSlotPtr, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceSlot, const size_t sourceOffset, const size_t size) override
@@ -215,6 +216,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (isDestinationSlotLockAcquired == false) unlockMPIWindow(destinationRank, destinationDataWindow);
 
     // Increasing the remote received message counter and local sent message counter
+    sourceSlot->increaseMessagesSent();
     increaseWindowCounter(destinationRank, destinationRecvMessageWindow);
   }
 

@@ -180,6 +180,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Check for errors
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not perform memcpy of type %d. Error %d", memcpyKind, err);
+
+    // Increasing message received/sent counters for both memory slots
+    destination->increaseMessagesRecv();
+    source->increaseMessagesSent();
   }
 
   __USED__ inline void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override

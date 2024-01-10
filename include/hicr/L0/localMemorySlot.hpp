@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <hicr/definitions.hpp>
+#include <hicr/L0/memorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 
 namespace HiCR
@@ -26,7 +27,7 @@ namespace L0
  *
  * - Represents a contiguous segment within a memory space in the local system, with a starting address and a size
  */
-class LocalMemorySlot
+class LocalMemorySlot : public MemorySlot
 {
   public:
 
@@ -40,9 +41,11 @@ class LocalMemorySlot
   LocalMemorySlot(
     void *const pointer,
     const size_t size,
-    std::shared_ptr<HiCR::L0::MemorySpace> memorySpace = NULL) : _pointer(pointer),
-                                                                 _size(size),
-                                                                 _memorySpace(memorySpace)
+    std::shared_ptr<HiCR::L0::MemorySpace> memorySpace = NULL) : 
+    MemorySlot(),
+    _pointer(pointer),
+    _size(size),
+    _memorySpace(memorySpace)
   {
   }
 
