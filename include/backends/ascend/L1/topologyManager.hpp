@@ -108,6 +108,36 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return t;
   }
 
+  /**
+   * This function deserializes a JSON-encoded topology into a topology class with its constituent devices, as recognized by the called backend, and returns it
+   *
+   * If the backend does not recognize a device in the encoded topology, it will not add it to the topology
+   *
+   * @param[in] topology The JSON-encoded topology to deserialize
+   * @return The deserialized topology containing only devices recognized by the backend
+   */
+  __USED__ static inline HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
+  {
+    // Verifying input's syntax
+    HiCR::L0::Topology::verify(topology);
+
+    // New topology to create
+    HiCR::L0::Topology t;
+
+    // Iterating over the device list entries in the serialized input
+    for (const auto &device : topology["Devices"])
+    {
+      // Getting device type
+      const auto type = device["Type"].get<std::string>();
+
+      // If the device type is recognized, add it to the new topology
+      if (type == "Ascend Device") t.addDevice(std::make_shared<ascend::L0::Device>(device));
+    }
+
+    // Returning new topology
+    return t;
+  }
+
   private:
 
   /**

@@ -38,7 +38,7 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
     #endif // _HICR_USE_HWLOC_BACKEND_
 
     #ifdef _HICR_USE_ASCEND_BACKEND_
-    topology.merge(HiCR::backend::host::hwloc::L1::Ascend::deserializeTopology(topologyJson));
+    topology.merge(HiCR::backend::ascend::L1::TopologyManager::deserializeTopology(topologyJson));
     #endif // _HICR_USE_ASCEND_BACKEND_
       
     // Now summarizing the devices seen by this topology

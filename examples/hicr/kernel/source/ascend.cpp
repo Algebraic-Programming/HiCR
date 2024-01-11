@@ -50,14 +50,14 @@ int main(int argc, char **argv)
 
   // Initializing HWLoc-based host topology manager
   HiCR::backend::host::hwloc::L1::TopologyManager hostTopologyManager(&topology);
-  hostTopologyManager.queryDevices();
-  auto hostDevice = *hostTopologyManager.getDevices().begin();
+  auto hostTopology = hostTopologyManager.queryTopology();
+  auto hostDevice = *hostTopology.getDevices().begin();
   auto hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing ascend topology manager
   HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
-  ascendTopologyManager.queryDevices();
-  auto ascendDevice = *ascendTopologyManager.getDevices().begin();
+  auto ascendTopology = ascendTopologyManager.queryTopology();
+  auto ascendDevice = *ascendTopology.getDevices().begin();
   auto deviceMemSpace = *ascendDevice->getMemorySpaceList().begin();
 
   // Instantiating Ascend memory manager
