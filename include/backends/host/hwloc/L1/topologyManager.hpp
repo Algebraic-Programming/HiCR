@@ -16,6 +16,7 @@
 #include <backends/host/hwloc/L0/device.hpp>
 #include <backends/host/hwloc/L0/computeResource.hpp>
 #include <backends/host/hwloc/L0/memorySpace.hpp>
+#include <hicr/L0/topology.hpp>
 #include <hicr/L1/topologyManager.hpp>
 
 namespace HiCR
@@ -48,45 +49,64 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   TopologyManager(hwloc_topology_t *topology) : HiCR::L1::TopologyManager(), _topology(topology) {}
 
   /**
-   * Deserializing constructor is used to build a new instance of this topology manager based on serialized information
-   *
-   * \note The instance created by this constructor should only be used to print/query the topology. It cannot be used to operate (memcpy, compute, etc).
-   *
-   * @param[in] input JSON-formatted serialized topology, as detected by a remote topology manager
-   */
-  TopologyManager(const nlohmann::json &input) : HiCR::L1::TopologyManager(), _topology(NULL) { deserialize(input); };
-
-  /**
    * The constructor is employed to free memory required for hwloc
    */
   ~TopologyManager() = default;
 
-  protected:
-
-  __USED__ inline deviceList_t queryDevicesImpl()
+  __USED__ inline HiCR::L0::Topology queryTopology() override
   {
     // Disable filters in order to detect instr. caches
     hwloc_topology_set_icache_types_filter(*_topology, HWLOC_TYPE_FILTER_KEEP_ALL);
 
-    // Loading topology
+    // Loading HWLoc topology object
     hwloc_topology_load(*_topology);
 
-    // Storage for the new device list
-    deviceList_t deviceList;
+    // Storage for the new HICR topology
+    HiCR::L0::Topology t;
 
     // Ask hwloc about number of NUMA nodes and add as many devices as NUMA domains
     auto n = hwloc_get_nbobjs_by_type(*_topology, HWLOC_OBJ_NUMANODE);
     for (int i = 0; i < n; i++)
     {
       // Creating new device for the current NUMA domain
-      auto device = std::make_shared<host::hwloc::L0::Device>(i, queryComputeResources(i), queryMemorySpaces(i));
+      auto d = std::make_shared<host::hwloc::L0::Device>(i, queryComputeResources(i), queryMemorySpaces(i));
 
       // Inserting new device into the list
-      deviceList.insert(device);
+      t.addDevice(d);
     }
 
-    // Returning device list
-    return deviceList;
+    // Returning the created topology
+    return t;
+  }
+
+  /**
+   * This function deserializes a JSON-encoded topology into a topology class with its constituent devices, as recognized by the called backend, and returns it
+   *
+   * If the backend does not recognize a device in the encoded topology, it will not add it to the topology
+   *
+   * @param[in] topology The JSON-encoded topology to deserialize
+   * @return The deserialized topology containing only devices recognized by the backend
+   */
+  __USED__ static inline HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
+  {
+    // Verifying input's syntax
+    HiCR::L0::Topology::verify(topology);
+
+    // New topology to create
+    HiCR::L0::Topology t;
+
+    // Iterating over the device list entries in the serialized input
+    for (const auto &device : topology["Devices"])
+    {
+      // Getting device type
+      const auto type = device["Type"].get<std::string>();
+
+      // If the device type is recognized, add it to the new topology
+      if (type == "NUMA Domain") t.addDevice(std::make_shared<host::hwloc::L0::Device>(device));
+    }
+
+    // Returning new topology
+    return t;
   }
 
   private:
@@ -153,25 +173,6 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
     // Returning new memory space list
     return memorySpaceList;
-  }
-
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
-  {
-    // Iterating over the device list entries in the serialized input
-    for (const auto &device : input["Devices"])
-    {
-      // Getting device type
-      const auto type = device["Type"].get<std::string>();
-
-      // Checking whether the type is correct
-      if (type != "NUMA Domain") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
-
-      // Deserializing new device
-      auto deviceObj = std::make_shared<host::hwloc::L0::Device>(device);
-
-      // Inserting device into the list
-      _deviceList.insert(deviceObj);
-    }
   }
 
   /**

@@ -46,15 +46,13 @@ class Device final : public HiCR::L0::Device
    * Constructor for an Ascend device
    *
    * \param id Internal unique identifier for the device
-   * \param context The ACL context corresponding to this device
    * \param computeResources The compute resources associated to this device (typically just one, the main Ascend processor)
    * \param memorySpaces The memory spaces associated to this device (DRAM + other use-specific or high-bandwidth memories)
    */
   Device(
     const deviceIdentifier_t id,
-    aclrtContext *context,
     const computeResourceList_t &computeResources,
-    const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(context){};
+    const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(std::make_unique<aclrtContext>()){};
 
   /**
    * Deserializing constructor
@@ -87,7 +85,7 @@ class Device final : public HiCR::L0::Device
    */
   __USED__ inline void select() const
   {
-    selectDevice(_context, _id);
+    selectDevice(_context.get(), _id);
   }
 
   /**
@@ -109,7 +107,7 @@ class Device final : public HiCR::L0::Device
    *
    * \return The ACL context
    */
-  __USED__ inline aclrtContext *getContext() const { return _context; }
+  __USED__ inline aclrtContext *getContext() const { return _context.get(); }
 
   private:
 
@@ -168,7 +166,7 @@ class Device final : public HiCR::L0::Device
   /**
    * The internal Ascend context associated to the device
    */
-  aclrtContext *_context;
+  const std::unique_ptr<aclrtContext> _context;
 };
 
 } // namespace L0

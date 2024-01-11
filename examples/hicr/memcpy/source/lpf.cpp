@@ -48,10 +48,10 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  const auto t = dm.queryTopology();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();

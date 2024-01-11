@@ -11,12 +11,12 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Instantiating HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager t(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  t.queryDevices();
+  auto t = tm.queryTopology();
 
-  // Getting first device found
+  // Getting first device found in the topology
   auto d = *t.getDevices().begin();
 
   // Initializing Pthread-based host (CPU) compute manager

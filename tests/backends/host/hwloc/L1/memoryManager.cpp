@@ -12,6 +12,8 @@
 
 #include <limits>
 #include "gtest/gtest.h"
+#include <hicr/L0/topology.hpp>
+#include <hicr/L0/device.hpp>
 #include <backends/host/hwloc/L1/memoryManager.hpp>
 #include <backends/host/pthreads/L1/communicationManager.hpp>
 #include <backends/host/hwloc/L1/topologyManager.hpp>
@@ -42,18 +44,22 @@ TEST(MemoryManager, Memory)
   HiCR::backend::host::pthreads::L1::CommunicationManager c;
 
   // Initializing hwloc-based topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking hwloc to check the available devices
-  EXPECT_NO_THROW(dm.queryDevices());
+  HiCR::L0::Topology t;
+  EXPECT_NO_THROW(t = tm.queryTopology());
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  HiCR::L0::Topology::deviceList_t dList;
+  EXPECT_NO_THROW(dList = t.getDevices());
+  ASSERT_GT(dList.size(), 0);
+  auto d = *dList.begin();
 
   // Getting memory resource list (should be size 1)
   HiCR::L0::Device::memorySpaceList_t mList;
   EXPECT_NO_THROW(mList = d->getMemorySpaceList());
-  EXPECT_GT(mList.size(), 0);
+  ASSERT_GT(mList.size(), 0);
 
   // Getting memory resource
   auto r = *mList.begin();
@@ -64,7 +70,7 @@ TEST(MemoryManager, Memory)
   EXPECT_NO_THROW(totalMem = r->getSize());
 
   // Making sure the system has enough memory for the next test
-  EXPECT_GE(totalMem, testMemAllocSize);
+  ASSERT_GE(totalMem, testMemAllocSize);
 
   // Trying to allocate more than allowed
   EXPECT_THROW(m.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::LogicException);

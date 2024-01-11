@@ -17,8 +17,8 @@ int main(int argc, char **argv)
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::host::hwloc::L1::TopologyManager hostDeviceManager(&topology);
-  hostDeviceManager.queryDevices();
-  auto hostDevice = *hostDeviceManager.getDevices().begin();
+  const auto hostTopology = hostDeviceManager.queryTopology();
+  auto hostDevice = *hostTopology.getDevices().begin();
 
   // Getting access to the host memory space
   auto hostMemorySpace = *hostDevice->getMemorySpaceList().begin();
@@ -29,8 +29,8 @@ int main(int argc, char **argv)
 
   // Initializing ascend topology manager
   HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
-  ascendTopologyManager.queryDevices();
-  auto ascendDevices = ascendTopologyManager.getDevices();
+  const auto deviceTopology = ascendTopologyManager.queryTopology();
+  auto ascendDevices = deviceTopology.getDevices();
 
   // Getting access to all ascend devices memory spaces
   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> ascendMemorySpaces;

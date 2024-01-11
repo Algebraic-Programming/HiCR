@@ -18,13 +18,13 @@ int main(int argc, char **argv)
   HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager topologyManager(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  topologyManager.queryDevices();
+  const auto t = tm.queryTopology();
 
   // Getting first device found
-  auto d = *topologyManager.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();

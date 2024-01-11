@@ -16,6 +16,7 @@
 #include <backends/ascend/L0/device.hpp>
 #include <backends/ascend/L0/computeResource.hpp>
 #include <backends/ascend/L0/memorySpace.hpp>
+#include <hicr/L0/topology.hpp>
 #include <hicr/L1/topologyManager.hpp>
 
 namespace HiCR
@@ -43,26 +44,17 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   TopologyManager() : HiCR::L1::TopologyManager() {}
 
   /**
-   * Deserializing constructor is used to build a new instance of this topology manager based on serialized information
-   *
-   * \note The instance created by this constructor should only be used to print/query the topology. It cannot be used to operate (memcpy, compute, etc).
-   *
-   * @param[in] input JSON-formatted serialized topology, as detected by a remote topology manager
-   */
-  TopologyManager(const nlohmann::json &input) : HiCR::L1::TopologyManager() { deserialize(input); };
-
-  /**
    * Default destructor
    */
   ~TopologyManager() = default;
 
-  protected:
-
-  __USED__ inline deviceList_t queryDevicesImpl()
+  __USED__ inline HiCR::L0::Topology queryTopology() override
   {
+    // Storage for the topology to return
+    HiCR::L0::Topology t;
+
     // Storage for device list
     std::unordered_set<std::shared_ptr<ascend::L0::Device>> ascendDeviceList;
-    std::unordered_set<std::shared_ptr<HiCR::L0::Device>> HiCRDeviceList;
 
     // Storage for getting the ascend device count
     uint32_t deviceCount = 0;
@@ -77,22 +69,21 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     {
       // Creating new devices
       size_t ascendFreeMemory, ascendMemorySize;
-      auto deviceContext = new aclrtContext;
 
       // set the device
       err = aclrtSetDevice(deviceId);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not select the ascend device %d. Error %d", deviceId, err);
 
+      // Creating new Ascend device
+      auto ascendDevice = std::make_shared<ascend::L0::Device>(deviceId, HiCR::L0::Device::computeResourceList_t({}), HiCR::L0::Device::memorySpaceList_t({}));
+
       // retrieve the default device context
-      err = aclrtGetCurrentContext(deviceContext);
+      err = aclrtGetCurrentContext(ascendDevice->getContext());
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
 
       // get the memory info
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
-
-      // Creating new Ascend device
-      auto ascendDevice = std::make_shared<ascend::L0::Device>(deviceId, deviceContext, HiCR::L0::Device::computeResourceList_t({}), HiCR::L0::Device::memorySpaceList_t({}));
 
       // Creating Device's memory space
       auto ascendDeviceMemorySpace = std::make_shared<ascend::L0::MemorySpace>(ascendDevice, ascendMemorySize);
@@ -106,14 +97,44 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
       // Adding new device
       ascendDeviceList.insert(ascendDevice);
-      HiCRDeviceList.insert(ascendDevice);
+      t.addDevice(ascendDevice);
     }
 
     // Setting up communication between the local ascend devices
     setupInterDeviceCommunication(ascendDeviceList);
 
-    // Returning device list
-    return HiCRDeviceList;
+    // Returning topology
+    return t;
+  }
+
+  /**
+   * This function deserializes a JSON-encoded topology into a topology class with its constituent devices, as recognized by the called backend, and returns it
+   *
+   * If the backend does not recognize a device in the encoded topology, it will not add it to the topology
+   *
+   * @param[in] topology The JSON-encoded topology to deserialize
+   * @return The deserialized topology containing only devices recognized by the backend
+   */
+  __USED__ static inline HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
+  {
+    // Verifying input's syntax
+    HiCR::L0::Topology::verify(topology);
+
+    // New topology to create
+    HiCR::L0::Topology t;
+
+    // Iterating over the device list entries in the serialized input
+    for (const auto &device : topology["Devices"])
+    {
+      // Getting device type
+      const auto type = device["Type"].get<std::string>();
+
+      // If the device type is recognized, add it to the new topology
+      if (type == "Ascend Device") t.addDevice(std::make_shared<ascend::L0::Device>(device));
+    }
+
+    // Returning new topology
+    return t;
   }
 
   private:
@@ -168,25 +189,6 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
     // Returning new memory space list
     return memorySpaceList;
-  }
-
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
-  {
-    // Iterating over the device list entries in the serialized input
-    for (const auto &device : input["Devices"])
-    {
-      // Getting device type
-      const auto type = device["Type"].get<std::string>();
-
-      // Checking whether the type is correct
-      if (type != "Ascend Device") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
-
-      // Deserializing new device
-      auto deviceObj = std::make_shared<ascend::L0::Device>(device);
-
-      // Inserting device into the list
-      _deviceList.insert(deviceObj);
-    }
   }
 };
 
