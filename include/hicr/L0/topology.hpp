@@ -28,7 +28,7 @@ namespace L0
  * - Describes the physical resources (devices) of a given system (real or constructed for requesting new instances)
  * - Information about the connectivity between the given devices
  */
-class Topology 
+class Topology
 {
   public:
 
@@ -48,24 +48,23 @@ class Topology
 
   /**
    * This function allows manually adding a new device into an existing topology
-   * 
+   *
    * @param[in] device The device to add
-  */
-  __USED__ inline void addDevice (const std::shared_ptr<HiCR::L0::Device> device) { _deviceList.insert(device); }
+   */
+  __USED__ inline void addDevice(const std::shared_ptr<HiCR::L0::Device> device) { _deviceList.insert(device); }
 
-/**
+  /**
    * This function allows manually merging one topology information into another
-   * 
+   *
    * @param[in] source The source topology to add into this instance
-  */
-  __USED__ inline void merge (const Topology& source)
-   { 
-     // Adding each device separately
-     for (const auto& d : source.getDevices()) addDevice(d);
-   }
+   */
+  __USED__ inline void merge(const Topology &source)
+  {
+    // Adding each device separately
+    for (const auto &d : source.getDevices()) addDevice(d);
+  }
 
-
- /**
+  /**
    * Serialization function to enable sharing topology information across different HiCR instances (or any other purposes)
    *
    * @return JSON-formatted serialized topology, as detected by this topology manager
@@ -84,7 +83,7 @@ class Topology
     return output;
   }
 
- /**
+  /**
    * Verifies the provided input (encoded in JSON) satisfied the standard format to describe a topology
    *
    * @param[in] input JSON-formatted serialized topology
@@ -102,14 +101,14 @@ class Topology
     }
   };
 
- protected:
+  protected:
 
   /**
-  * Map of devices queried by this topology manager
-  */
+   * Map of devices queried by this topology manager
+   */
   deviceList_t _deviceList;
 };
 
-} // namespace L0 
+} // namespace L0
 
 } // namespace HiCR
