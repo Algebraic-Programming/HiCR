@@ -69,22 +69,21 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     {
       // Creating new devices
       size_t ascendFreeMemory, ascendMemorySize;
-      auto deviceContext = new aclrtContext;
 
       // set the device
       err = aclrtSetDevice(deviceId);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not select the ascend device %d. Error %d", deviceId, err);
 
+      // Creating new Ascend device
+      auto ascendDevice = std::make_shared<ascend::L0::Device>(deviceId, HiCR::L0::Device::computeResourceList_t({}), HiCR::L0::Device::memorySpaceList_t({}));
+
       // retrieve the default device context
-      err = aclrtGetCurrentContext(deviceContext);
+      err = aclrtGetCurrentContext(ascendDevice->getContext());
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
 
       // get the memory info
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
-
-      // Creating new Ascend device
-      auto ascendDevice = std::make_shared<ascend::L0::Device>(deviceId, deviceContext, HiCR::L0::Device::computeResourceList_t({}), HiCR::L0::Device::memorySpaceList_t({}));
 
       // Creating Device's memory space
       auto ascendDeviceMemorySpace = std::make_shared<ascend::L0::MemorySpace>(ascendDevice, ascendMemorySize);
