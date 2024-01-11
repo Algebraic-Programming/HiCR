@@ -21,10 +21,10 @@ int main(int argc, char **argv)
   HiCR::backend::host::pthreads::L1::CommunicationManager c;
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  const auto t = dm.queryTopology();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();

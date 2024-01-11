@@ -1,7 +1,7 @@
-#include "include/abcTasks.hpp"
+#include <hwloc.h>
 #include <backends/host/pthreads/L1/computeManager.hpp>
 #include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <hwloc.h>
+#include "include/abcTasks.hpp"
 
 int main(int argc, char **argv)
 {
@@ -12,13 +12,13 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  const auto t = tm.queryTopology();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();

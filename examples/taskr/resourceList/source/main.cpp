@@ -1,10 +1,10 @@
-#include "source/workTask.hpp"
-#include <backends/host/pthreads/L1/computeManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <chrono>
 #include <cstdio>
-#include <frontends/taskr/runtime.hpp>
 #include <hwloc.h>
+#include <backends/host/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <frontends/taskr/runtime.hpp>
+#include "source/workTask.hpp"
 
 int main(int argc, char **argv)
 {
@@ -18,13 +18,13 @@ int main(int argc, char **argv)
   HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  const auto t = tm.queryTopology();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();

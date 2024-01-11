@@ -1,12 +1,13 @@
 #pragma once
 
 #include "common.hpp"
-#include <hicr/L1/instanceManager.hpp>
-#include <hicr/L1/memoryManager.hpp>
 #include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/memorySpace.hpp>
+#include <hicr/L0/topology.hpp>
+#include <hicr/L1/topologyManager.hpp>
+#include <hicr/L1/instanceManager.hpp>
+#include <hicr/L1/memoryManager.hpp>
 #include <backends/host/L1/computeManager.hpp>
-
 
 void workerFc(HiCR::L1::InstanceManager &instanceManager,
               HiCR::backend::host::L1::ComputeManager &computeManager,
@@ -22,8 +23,11 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager,
     // Getting current instance
     auto currentInstance = instanceManager.getCurrentInstance();
 
-    // Storage for the topology managers to use to discover the system's hardware
-    std::vector<std::pair<std::string, HiCR::L1::TopologyManager*>> topologyManagerList;
+    // Storage for the topology to send
+    HiCR::L0::Topology workerTopology;
+
+    // List of topology managers to query
+    std::vector<HiCR::L1::TopologyManager*> topologyManagerList;
 
     // Now instantiating topology managers (which ones is determined by backend availability during compilation)
     #ifdef _HICR_USE_HWLOC_BACKEND_
@@ -38,7 +42,7 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager,
     HiCR::backend::host::hwloc::L1::TopologyManager hwlocTopologyManager(&topology);
 
     // Adding topology manager to the list
-    topologyManagerList.push_back(std::make_pair("HWLoc", &hwlocTopologyManager));
+    topologyManagerList.push_back(&hwlocTopologyManager);
 
     #endif // _HICR_USE_HWLOC_BACKEND_
 
@@ -52,35 +56,22 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager,
     HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
 
     // Adding topology manager to the list
-    topologyManagerList.push_back(std::make_pair("Ascend", &ascendTopologyManager));
+    topologyManagerList.push_back(&ascendTopologyManager);
 
     #endif // _HICR_USE_ASCEND_BACKEND_
 
-    // Creating new serializable message (containing our system's topology) to transmit back to the coordinator
-    nlohmann::json topologyJson;
-
-    // Creating topology managers array
-    topologyJson["Topology Managers"] = std::vector<nlohmann::json>();
-
     // For each topology manager detected
-    for (const auto& m : topologyManagerList)
+    for (const auto& tm : topologyManagerList)
     {
-      // Query the devices it can detect
-      m.second->queryDevices();
+      // Getting the topology information from the topology manager
+      const auto t = tm->queryTopology();
 
-      // Creating new entry for the serialized message
-      nlohmann::json entry;
-      
-      // Writing type in the entry and serializing the topology manager contents
-      entry["Type"] = m.first;
-      entry["Contents"] = m.second->serialize();
-
-      // Adding the entry to the list
-      topologyJson["Topology Managers"] += entry;
+      // Merging its information to the worker topology object to send
+      workerTopology.merge(t);
     } 
 
-    // Creating the serialized (human readable for simplcity, but it can be made binarized for compactness)
-    auto message = topologyJson.dump(2);
+    // Serializing theworker topology and dumping it into a raw string message
+    auto message = workerTopology.serialize().dump();
 
     // Registering memory slot at the first available memory space as source buffer to send the return value from
     auto sendBuffer = memoryManager->registerLocalMemorySlot(bufferMemorySpace, message.data(), message.size() + 1);

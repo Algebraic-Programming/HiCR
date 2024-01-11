@@ -28,10 +28,10 @@ int main(int argc, char **argv)
   HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  tm.queryDevices();
+  const auto t = tm.queryTopology();
 
   // Getting first device (CPU) found
-  auto d = *tm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Obtaining memory spaces and compute resources
   auto memSpaces = d->getMemorySpaceList();

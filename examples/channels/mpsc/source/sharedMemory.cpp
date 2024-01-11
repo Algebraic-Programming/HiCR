@@ -48,14 +48,14 @@ int main(int argc, char **argv)
   // Instantiating Host (CPU) communication manager
   HiCR::backend::host::pthreads::L1::CommunicationManager c(producerCount + 1);
 
-  // Initializing Host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  const auto t = tm.queryTopology();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();

@@ -76,14 +76,14 @@ TEST(Task, Run)
   // Creating task
   t = new taskr::Task(0, u);
 
-  // Initializing HWLoc-based host (CPU)  topology manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  tm.queryDevices();
+  const auto tp = tm.queryTopology();
 
   // Getting first device found
-  auto d = *tm.getDevices().begin();
+  auto d = *tp.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
@@ -172,14 +172,14 @@ TEST(Task, Events)
   // Creating task
   t = new taskr::Task(0, u);
 
-  // Initializing HWLoc-based host (CPU)  topology manager
+  // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  tm.queryDevices();
+  const auto tp = tm.queryTopology();
 
   // Getting first device found
-  auto d = *tm.getDevices().begin();
+  auto d = *tp.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();

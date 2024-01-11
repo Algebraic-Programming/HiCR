@@ -50,13 +50,13 @@ TEST(Task, SetterAndGetters)
   // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  const auto t = tm.queryTopology();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
@@ -92,13 +92,13 @@ TEST(Worker, LifeCycle)
   // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  dm.queryDevices();
+  const auto t = tm.queryTopology();
 
   // Getting first device found
-  auto d = *dm.getDevices().begin();
+  auto d = *t.getDevices().begin();
 
   // Updating the compute resource list
   auto computeResources = d->getComputeResourceList();
@@ -153,11 +153,11 @@ TEST(Worker, LifeCycle)
   auto u = c.createExecutionUnit(f);
 
   // Creating task to run, and setting function to run
-  taskr::Task t(0, u);
+  taskr::Task task(0, u);
 
   // Creating task dispatcher
-  auto dispatcher = taskr::Dispatcher([&t]()
-                                      { return &t; });
+  auto dispatcher = taskr::Dispatcher([&task]()
+                                      { return &task; });
 
   // Suscribing worker to dispatcher
   EXPECT_NO_THROW(w.subscribe(&dispatcher));

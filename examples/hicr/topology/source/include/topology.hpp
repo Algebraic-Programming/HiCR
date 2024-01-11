@@ -5,10 +5,10 @@
 void topologyFc(HiCR::L1::TopologyManager &topologyManager)
 {
   // Querying the devices that this topology manager can detect
-  topologyManager.queryDevices();
+  auto topology = topologyManager.queryTopology();
 
   // Now summarizing the devices seen by this topology manager
-  for (const auto& d : topologyManager.getDevices())
+  for (const auto& d : topology.getDevices())
   {
     printf("  + '%s'\n", d->getType().c_str());
     printf("    Compute Resources: %lu %s(s)\n", d->getComputeResourceList().size(), (*d->getComputeResourceList().begin())->getType().c_str());
