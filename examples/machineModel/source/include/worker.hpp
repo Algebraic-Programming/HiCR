@@ -15,7 +15,7 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   auto currentInstance = instanceManager.getCurrentInstance();
 
   // Creating empty function in case the application needs to abort its workers
-  auto abortLambda = [](){ };
+  auto abortLambda = [](){};
 
   // Creating worker functions
   auto testLambda = [&]()

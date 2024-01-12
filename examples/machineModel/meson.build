@@ -1,4 +1,4 @@
-testSuite = [ 'examples', 'hicr', 'instances' ]
+testSuite = [ 'examples', 'machineModel' ]
 test_timeout = 60
 
 if 'mpi' in enabledBackends and 'pthreads' in enabledBackends and 'hwloc' in enabledBackends
