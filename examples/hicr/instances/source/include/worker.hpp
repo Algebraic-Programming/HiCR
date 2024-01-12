@@ -14,6 +14,9 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   // Getting current instance
   auto currentInstance = instanceManager.getCurrentInstance();
 
+  // Creating empty function in case the application needs to abort its workers
+  auto abortLambda = [](){ };
+
   // Creating worker functions
   auto testLambda = [&]()
   {
@@ -36,9 +39,6 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   // Creating test execution unit
   auto testExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit(testLambda);
 
-  // Creating empty function in case the application needs to abort its workers
-  auto abortLambda = [](){ };
-
   // Creating abort execution unit
   auto abortExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit(abortLambda);
 
@@ -53,7 +53,7 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
 
   // Assigning execution units to the instance manager
   instanceManager.addExecutionUnit(TEST_EXECUTION_UNIT_ID, testExecutionUnit);
-  instanceManager.addExecutionUnit(ABORT_EXECUTION_UNIT_ID, abortExecutionUnit);
+  // instanceManager.addExecutionUnit(ABORT_EXECUTION_UNIT_ID, abortExecutionUnit);
 
   // Listening for RPC requests
   instanceManager.listen();

@@ -3,7 +3,7 @@
 #define PROCESSING_UNIT_ID 0
 
 #define TEST_EXECUTION_UNIT_ID 0
-#define ABORT_EXECUTION_UNIT_ID 0
+#define ABORT_EXECUTION_UNIT_ID 1
 
 #include <memory>
 #include <nlohmann_json/json.hpp>
