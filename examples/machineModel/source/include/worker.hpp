@@ -9,38 +9,37 @@
 #include <backends/host/hwloc/L1/memoryManager.hpp>
 #include <backends/host/hwloc/L1/topologyManager.hpp>
 
-void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+// Worker task functions
+void taskFc(const std::string& taskName, HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace)
 {
+  // Getting memory manager
+  auto mm = instanceManager.getMemoryManager();
+
   // Getting current instance
   auto currentInstance = instanceManager.getCurrentInstance();
 
-  // Creating empty function in case the application needs to abort its workers
-  auto abortLambda = [](){};
+  // Serializing theworker topology and dumping it into a raw string message
+  auto message = std::string("Hello, I am worker ") + std::to_string(currentInstance->getId()) + std::string(" executing Task: ") + taskName; 
 
-  // Creating worker functions
-  auto testLambda = [&]()
-  {
-    // Getting memory manager
-    auto mm = instanceManager.getMemoryManager();
+  // Registering memory slot at the first available memory space as source buffer to send the return value from
+  auto sendBuffer = mm->registerLocalMemorySlot(bufferMemorySpace, message.data(), message.size() + 1);
 
-    // Serializing theworker topology and dumping it into a raw string message
-    auto message = std::string("Hello, I am worker: ") + std::to_string(currentInstance->getId()); 
+  // Registering return value
+  instanceManager.submitReturnValue(sendBuffer);
 
-    // Registering memory slot at the first available memory space as source buffer to send the return value from
-    auto sendBuffer = mm->registerLocalMemorySlot(bufferMemorySpace, message.data(), message.size() + 1);
+  // Deregistering memory slot
+  mm->deregisterLocalMemorySlot(sendBuffer);
+};
 
-    // Registering return value
-    instanceManager.submitReturnValue(sendBuffer);
+void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+{
+  // Creating task execution units
+  auto taskAExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([&](){ taskFc("A", instanceManager, bufferMemorySpace); });
+  auto taskBExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([&](){ taskFc("B", instanceManager, bufferMemorySpace); });
+  auto taskCExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([&](){ taskFc("C", instanceManager, bufferMemorySpace); });
 
-    // Deregistering memory slot
-    mm->deregisterLocalMemorySlot(sendBuffer);
-  };
-
-  // Creating test execution unit
-  auto testExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit(testLambda);
-
-  // Creating abort execution unit
-  auto abortExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit(abortLambda);
+  // Creating abort execution unit as empty function in case the application needs to abort its workers
+  auto abortExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([](){});
 
   // Creating processing unit from the compute resource
   auto processingUnit = instanceManager.getComputeManager()->createProcessingUnit(computeResource);
@@ -52,8 +51,10 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   instanceManager.addProcessingUnit(PROCESSING_UNIT_ID, std::move(processingUnit));
 
   // Assigning execution units to the instance manager
-  instanceManager.addExecutionUnit(TEST_EXECUTION_UNIT_ID, testExecutionUnit);
-  // instanceManager.addExecutionUnit(ABORT_EXECUTION_UNIT_ID, abortExecutionUnit);
+  instanceManager.addExecutionUnit(ABORT_EXECUTION_UNIT_ID, abortExecutionUnit);
+  instanceManager.addExecutionUnit(TASK_A_EXECUTION_UNIT_ID, taskAExecutionUnit);
+  instanceManager.addExecutionUnit(TASK_B_EXECUTION_UNIT_ID, taskBExecutionUnit);
+  instanceManager.addExecutionUnit(TASK_C_EXECUTION_UNIT_ID, taskCExecutionUnit);
 
   // Listening for RPC requests
   instanceManager.listen();

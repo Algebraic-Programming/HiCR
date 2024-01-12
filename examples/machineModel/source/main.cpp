@@ -5,10 +5,10 @@
 int main(int argc, char *argv[])
 {
   // Getting instance manager from the HiCR initialization
-  auto im = HiCR::initialize(&argc, &argv);
+  auto instanceManager = HiCR::initialize(&argc, &argv);
 
   // Get the locally running instance
-  auto myInstance = im->getCurrentInstance();
+  auto myInstance = instanceManager->getCurrentInstance();
 
  // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -44,25 +44,24 @@ int main(int argc, char *argv[])
   auto computeResource = *computeResources.begin();
 
   // Setting memory space for buffer allocations when receiving RPCs
-  im->setBufferMemorySpace(bufferMemSpace);
+  instanceManager->setBufferMemorySpace(bufferMemSpace);
 
   // Parsing argument list
 
   // If the number of arguments passed is incorrect, abort execution and exit
   if (argc != 2)
   {
-    if (myInstance->isRootInstance()) fprintf(stderr, "Launch error: no desired instance number provided\n");
+    if (myInstance->isRootInstance()) fprintf(stderr, "Launch error. No machine model file provided\n");
     HiCR::finalize();
     return -1;
   }
   
   // Parsing number of instances requested
-  size_t requestedInstances = 1;
-  requestedInstances = std::atoi(argv[1]);
+  auto machineModelFile = std::string(argv[1]);
 
   // Bifurcating paths based on whether the instance is root or not
-  if (myInstance->isRootInstance() == true)  coordinatorFc(*im, requestedInstances);
-  if (myInstance->isRootInstance() == false) workerFc(*im, bufferMemSpace, computeResource);
+  if (myInstance->isRootInstance() == true)  coordinatorFc(*instanceManager, machineModelFile);
+  if (myInstance->isRootInstance() == false) workerFc(*instanceManager, bufferMemSpace, computeResource);
 
   // Finalizing HiCR
   HiCR::finalize();
