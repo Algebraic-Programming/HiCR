@@ -12,8 +12,10 @@
 
 #pragma once
 
+#include <memory>
 #include <mpi.h>
 #include <hicr/definitions.hpp>
+#include <hicr/L0/topology.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/L1/instanceManager.hpp>
 #include <hicr/L1/memoryManager.hpp>
@@ -155,6 +157,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
     // Trying to run remote request
     runRequest(pIdx, eIdx);
+  }
+
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl [[noreturn]] (const HiCR::L0::Topology& requestedTopology)
+  {
+    HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
   }
 
   private:

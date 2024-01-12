@@ -21,6 +21,7 @@
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/L0/processingUnit.hpp>
+#include <hicr/L0/topology.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/communicationManager.hpp>
 #include <hicr/L1/computeManager.hpp>
@@ -77,6 +78,23 @@ class InstanceManager
    * \return A pointer to the local HiCR instance (in other words, the one running this function)
    */
   __USED__ inline std::shared_ptr<HiCR::L0::Instance> getCurrentInstance() const { return _currentInstance; }
+
+  /**
+   * Function to create a new HiCR instance
+   * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
+   * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
+   */
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology& requestedTopology)
+  {
+    // Requesting the creating of the instance to the specific backend
+    auto newInstance = createInstanceImpl(requestedTopology);
+
+    // Adding the instance to the internal list
+    _instances.insert(newInstance);
+
+    // Returning a pointer for immediate use
+    return newInstance;
+  }
 
   /**
    * Function to retrieve the internal memory manager for this instance manager
@@ -192,7 +210,14 @@ class InstanceManager
     // Running execution state
     p->start(std::move(s));
   }
-
+  
+   /**
+   * Backend-specific implementation of the createInstance function
+   * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
+   * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
+   */
+  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology& requestedTopology) = 0;
+ 
   /**
    * Backend-specific implementation of the getReturnValue function
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.

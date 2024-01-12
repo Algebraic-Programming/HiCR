@@ -75,6 +75,13 @@ class Instance final : public HiCR::L0::Instance
    */
   ~Instance() = default;
 
+
+  virtual bool isRootInstance()
+  {
+    // Criterion for root rank in MPI: Rank 0 will always be the root.
+    return _rank == 0;
+  };
+
   /**
    * Retrieves this HiCR Instance's MPI rank
    * \return The MPI rank corresponding to this instance
