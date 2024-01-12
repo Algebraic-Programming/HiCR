@@ -1,7 +1,9 @@
 #pragma once
 
-#define TEST_RPC_PROCESSING_UNIT_ID 0
-#define TEST_RPC_EXECUTION_UNIT_ID 0
+#define PROCESSING_UNIT_ID 0
+
+#define TEST_EXECUTION_UNIT_ID 0
+#define ABORT_EXECUTION_UNIT_ID 0
 
 #include <memory>
 #include <nlohmann_json/json.hpp>
@@ -20,11 +22,12 @@
 namespace HiCR // Simulating this is part of HiCR for now
 {
 
-std::unique_ptr<HiCR::L1::InstanceManager> getInstanceManager(int* argc, char** argv[]);
+std::unique_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[]);
+void finalize();
 
 #ifdef _HICR_USE_MPI_BACKEND_
 
-std::unique_ptr<HiCR::L1::InstanceManager> getInstanceManager(int* argc, char** argv[])
+std::unique_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[])
 {
   // Initializing MPI
   int requested = MPI_THREAD_SERIALIZED;
@@ -43,6 +46,11 @@ std::unique_ptr<HiCR::L1::InstanceManager> getInstanceManager(int* argc, char** 
 
   // Now instantiating the instance manager
   return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(cm, km, mm);
+}
+
+void finalize()
+{
+  MPI_Finalize();
 }
 
 #endif // _HICR_USE_MPI_BACKEND_

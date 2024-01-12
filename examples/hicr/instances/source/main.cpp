@@ -4,8 +4,8 @@
 
 int main(int argc, char *argv[])
 {
-  // Getting instance manager from HiCR
-  auto im = HiCR::getInstanceManager(&argc, &argv);
+  // Getting instance manager from the HiCR initialization
+  auto im = HiCR::initialize(&argc, &argv);
 
   // Get the locally running instance
   auto myInstance = im->getCurrentInstance();
@@ -46,12 +46,26 @@ int main(int argc, char *argv[])
   // Setting memory space for buffer allocations when receiving RPCs
   im->setBufferMemorySpace(bufferMemSpace);
 
+  // Parsing argument list
+
+  // If the number of arguments passed is incorrect, abort execution and exit
+  if (argc != 2)
+  {
+    if (myInstance->isRootInstance()) fprintf(stderr, "Launch error: no desired instance number provided\n");
+    HiCR::finalize();
+    return -1;
+  }
+  
+  // Parsing number of instances requested
+  size_t requestedInstances = 1;
+  requestedInstances = std::atoi(argv[1]);
+
   // Bifurcating paths based on whether the instance is root or not
-  if (myInstance->isRootInstance() == true)  coordinatorFc(*im);
+  if (myInstance->isRootInstance() == true)  coordinatorFc(*im, requestedInstances);
   if (myInstance->isRootInstance() == false) workerFc(*im, bufferMemSpace, computeResource);
 
-  // Finalizing MPI
-  MPI_Finalize();
+  // Finalizing HiCR
+  HiCR::finalize();
 
   return 0;
 }

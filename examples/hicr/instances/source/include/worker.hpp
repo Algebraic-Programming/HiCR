@@ -14,12 +14,12 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   // Getting current instance
   auto currentInstance = instanceManager.getCurrentInstance();
 
-  // Creating worker function
-  auto fcLambda = [&]()
+  // Creating worker functions
+  auto testLambda = [&]()
   {
     // Getting memory manager
     auto mm = instanceManager.getMemoryManager();
-    
+
     // Serializing theworker topology and dumping it into a raw string message
     auto message = std::string("Hello, I am worker: ") + std::to_string(currentInstance->getId()); 
 
@@ -33,8 +33,14 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
     mm->deregisterLocalMemorySlot(sendBuffer);
   };
 
-  // Creating execution unit
-  auto executionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit(fcLambda);
+  // Creating test execution unit
+  auto testExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit(testLambda);
+
+  // Creating empty function in case the application needs to abort its workers
+  auto abortLambda = [](){ };
+
+  // Creating abort execution unit
+  auto abortExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit(abortLambda);
 
   // Creating processing unit from the compute resource
   auto processingUnit = instanceManager.getComputeManager()->createProcessingUnit(computeResource);
@@ -43,10 +49,11 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   processingUnit->initialize();
 
   // Assigning processing unit to the instance manager
-  instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
+  instanceManager.addProcessingUnit(PROCESSING_UNIT_ID, std::move(processingUnit));
 
-  // Assigning processing unit to the instance manager
-  instanceManager.addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
+  // Assigning execution units to the instance manager
+  instanceManager.addExecutionUnit(TEST_EXECUTION_UNIT_ID, testExecutionUnit);
+  instanceManager.addExecutionUnit(ABORT_EXECUTION_UNIT_ID, abortExecutionUnit);
 
   // Listening for RPC requests
   instanceManager.listen();
