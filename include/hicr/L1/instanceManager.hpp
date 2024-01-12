@@ -100,19 +100,19 @@ class InstanceManager
    * Function to retrieve the internal memory manager for this instance manager
    * \return A pointer to the memory manager used to instantiate this instance manager
    */
-  __USED__ inline HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
+  __USED__ inline std::shared_ptr<HiCR::L1::MemoryManager> getMemoryManager() const { return _memoryManager; }
 
   /**
    * Function to retrieve the internal communication manager for this instance manager
    * \return A pointer to the communication manager used to instantiate this instance manager
    */
-  __USED__ inline HiCR::L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
+  __USED__ inline std::shared_ptr<HiCR::L1::CommunicationManager> getCommunicationManager() const { return _communicationManager; }
 
   /**
    * Function to retrieve the internal compute manager for this instance manager
    * \return A pointer to the compute manager used to instantiate this instance manager
    */
-  __USED__ inline HiCR::L1::ComputeManager *getComputeManager() const { return _computeManager; }
+  __USED__ inline std::shared_ptr<HiCR::L1::ComputeManager> getComputeManager() const { return _computeManager; }
 
   /**
    * Function to retrieve the internal memory space used for creating buffers in this instance manager
@@ -172,6 +172,13 @@ class InstanceManager
     return getReturnValueImpl(instance);
   }
 
+  /**
+   * Function to set the buffer memory space to use for allocations when receiving RPC or return values.
+   * 
+   * Must be set before starting to listen for incoming messages
+  */
+ void setBufferMemorySpace(const std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) { _bufferMemorySpace = bufferMemorySpace; }
+
   protected:
 
   /**
@@ -181,13 +188,11 @@ class InstanceManager
    * \param[in] computeManager The compute manager to use for RPC running
    * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
-  InstanceManager(HiCR::L1::CommunicationManager *communicationManager,
-                  HiCR::L1::ComputeManager *computeManager,
-                  HiCR::L1::MemoryManager *memoryManager,
-                  std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) : _communicationManager(communicationManager),
+  InstanceManager(std::shared_ptr<HiCR::L1::CommunicationManager> communicationManager,
+                  std::shared_ptr<HiCR::L1::ComputeManager> computeManager,
+                  std::shared_ptr<HiCR::L1::MemoryManager> memoryManager) : _communicationManager(communicationManager),
                                                                               _computeManager(computeManager),
-                                                                              _memoryManager(memoryManager),
-                                                                              _bufferMemorySpace(bufferMemorySpace){};
+                                                                              _memoryManager(memoryManager){};
 
   /**
    * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
@@ -239,22 +244,22 @@ class InstanceManager
   /**
    * Communication manager for exchanging information among HiCR instances
    */
-  HiCR::L1::CommunicationManager *const _communicationManager;
+  const std::shared_ptr<HiCR::L1::CommunicationManager> _communicationManager;
 
   /**
    * Compute manager for running incoming RPCs
    */
-  HiCR::L1::ComputeManager *const _computeManager;
+  const std::shared_ptr<HiCR::L1::ComputeManager> _computeManager;
 
   /**
    * Memory manager for allocating internal buffers
    */
-  HiCR::L1::MemoryManager *const _memoryManager;
+  const std::shared_ptr<HiCR::L1::MemoryManager> _memoryManager;
 
   /**
    * Memory space to store the information bufer into
    */
-  const std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
+  std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
 
   /**
    * Collection of instances
