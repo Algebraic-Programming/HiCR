@@ -53,12 +53,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    * \param[in] memoryManager The memory manager to use for buffer allocations
    * \param[in] communicationManager The communication manager to use for internal data passing
    * \param[in] computeManager The compute manager to use for RPC running
-   * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
   InstanceManager(std::shared_ptr<HiCR::backend::mpi::L1::CommunicationManager> communicationManager,
                   std::shared_ptr<HiCR::L1::ComputeManager> computeManager,
                   std::shared_ptr<HiCR::L1::MemoryManager> memoryManager) : HiCR::L1::InstanceManager(communicationManager, computeManager, memoryManager),
-                                                                              _MPICommunicationManager(communicationManager)
+                                                                            _MPICommunicationManager(communicationManager)
   {
     // Checking whether the execution unit passed is compatible with this backend
     if (_MPICommunicationManager == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");
@@ -158,7 +157,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     runRequest(pIdx, eIdx);
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl (const HiCR::L0::Topology& requestedTopology)
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology)
   {
     // The MPI backend does not currently support the launching of new instances during runtime"
     return nullptr;

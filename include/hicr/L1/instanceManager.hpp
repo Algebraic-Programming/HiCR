@@ -84,7 +84,7 @@ class InstanceManager
    * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology& requestedTopology = HiCR::L0::Topology())
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology &requestedTopology = HiCR::L0::Topology())
   {
     // Requesting the creating of the instance to the specific backend
     auto newInstance = createInstanceImpl(requestedTopology);
@@ -174,10 +174,12 @@ class InstanceManager
 
   /**
    * Function to set the buffer memory space to use for allocations when receiving RPC or return values.
-   * 
+   *
    * Must be set before starting to listen for incoming messages
-  */
- void setBufferMemorySpace(const std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) { _bufferMemorySpace = bufferMemorySpace; }
+   *
+   * @param[in] bufferMemorySpace The memory space in which to allocate the buffers
+   */
+  void setBufferMemorySpace(const std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) { _bufferMemorySpace = bufferMemorySpace; }
 
   protected:
 
@@ -186,13 +188,12 @@ class InstanceManager
    * \param[in] memoryManager The memory manager to use for buffer allocations
    * \param[in] communicationManager The communication manager to use for internal data passing
    * \param[in] computeManager The compute manager to use for RPC running
-   * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
   InstanceManager(std::shared_ptr<HiCR::L1::CommunicationManager> communicationManager,
                   std::shared_ptr<HiCR::L1::ComputeManager> computeManager,
                   std::shared_ptr<HiCR::L1::MemoryManager> memoryManager) : _communicationManager(communicationManager),
-                                                                              _computeManager(computeManager),
-                                                                              _memoryManager(memoryManager){};
+                                                                            _computeManager(computeManager),
+                                                                            _memoryManager(memoryManager){};
 
   /**
    * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
@@ -221,14 +222,14 @@ class InstanceManager
     // Waiting for processing unit to finish
     p->await();
   }
-  
-   /**
+
+  /**
    * Backend-specific implementation of the createInstance function
    * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology& requestedTopology) = 0;
- 
+  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology) = 0;
+
   /**
    * Backend-specific implementation of the getReturnValue function
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.

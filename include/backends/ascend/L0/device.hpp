@@ -57,7 +57,7 @@ class Device final : public HiCR::L0::Device
   /**
    * Default constructor for resource requesting
    */
-  Device() : HiCR::L0::Device() { }
+  Device() : HiCR::L0::Device() {}
 
   /**
    * Deserializing constructor

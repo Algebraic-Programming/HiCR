@@ -70,7 +70,7 @@ class Device : public HiCR::L0::Device
    */
   NUMADomainID_t _NUMADomainId;
 
-   __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
     // Storing numa domain identifier
     output["NUMA Domain Id"] = _NUMADomainId;
