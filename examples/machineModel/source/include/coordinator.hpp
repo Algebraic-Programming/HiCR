@@ -26,7 +26,7 @@ struct detectedInstance_t
 };
 
 // This struct hold the information of an instance to create, as described by the machine model
-struct requestedInstance_t
+struct requests_t
 {
   // Identifier of the task to execute
   int taskId;
@@ -37,8 +37,8 @@ struct requestedInstance_t
   // Requested topology for this instance, in HiCR format
   HiCR::L0::Topology topology;
 
-  // Pointer to the assigned instance
-  std::shared_ptr<HiCR::L0::Instance> instance;
+  // Pointer to the assigned instances (one per replica)
+  std::vector<std::shared_ptr<HiCR::L0::Instance>> instances;
 };
 
 void finalizeExecution(HiCR::L1::InstanceManager &instanceManager, const int returnCode = 0)
@@ -104,13 +104,74 @@ HiCR::L0::Topology parseTopology(const nlohmann::json& topologyJson)
 
 bool isTopologySubset(const HiCR::L0::Topology& a, const HiCR::L0::Topology& b)
 {
-  return false;
+  // For this example, it suffices that topology B has more or equal:
+  //  + Total Core Count (among all NUMA domains)
+  //  + Total RAM size (among all NUMA domains)
+  //  + Ascend devices
+  // than topology A.
+
+  size_t tACoreCount = 0;
+  size_t tBCoreCount = 0;
+
+  size_t tAMemSize = 0;
+  size_t tBMemSize = 0;
+
+  size_t tAAscendDeviceCount = 0;
+  size_t tBAscendDeviceCount = 0;
+
+  // Processing topology A
+  for (const auto& d: a.getDevices()) 
+  {
+    const auto deviceType = d->getType();
+
+    // If it's a NUMA Domain device, then its about host requirements
+    if (deviceType == "NUMA Domain")
+    {
+      // Casting to a host device
+      auto hostDev = std::dynamic_pointer_cast<HiCR::backend::host::L0::Device>(d);
+
+      // Adding corresponding counts
+      tACoreCount += hostDev->getComputeResourceList().size();
+      tAMemSize += (*hostDev->getMemorySpaceList().begin())->getSize();
+    }
+
+    // It it's an Ascend device, increment the ascend device counter
+    if (deviceType == "Ascend Device") tAAscendDeviceCount++;
+  } 
+
+  // Processing topology B
+  for (const auto& d: b.getDevices()) 
+  {
+    const auto deviceType = d->getType();
+
+    // If it's a NUMA Domain device, then its about host requirements
+    if (deviceType == "NUMA Domain")
+    {
+      // Casting to a host device
+      auto hostDev = std::dynamic_pointer_cast<HiCR::backend::host::L0::Device>(d);
+
+      // Adding corresponding counts
+      tBCoreCount += hostDev->getComputeResourceList().size();
+      tBMemSize += (*hostDev->getMemorySpaceList().begin())->getSize();
+    }
+
+    // It it's an Ascend device, increment the ascend device counter
+    if (deviceType == "Ascend Device") tBAscendDeviceCount++;
+  } 
+
+  // Evaluating criteria
+  if (tACoreCount > tBCoreCount) return false;
+  if (tAMemSize   > tBMemSize) return false;
+  if (tAAscendDeviceCount > tBAscendDeviceCount) return false;
+
+  // If no criteria failed, return true
+  return true;
 }
 
-std::vector<requestedInstance_t> parseMachineModel(const nlohmann::json& machineModelJson)
+std::vector<requests_t> parseMachineModel(const nlohmann::json& machineModelJson)
 {
   // Storage for the parsed instances from the machine model
-  std::vector<requestedInstance_t> requestedInstances;  
+  std::vector<requests_t> requests;  
 
   // Checking for correct format in the machine model
   if (machineModelJson.contains("Instances") == false) throw std::runtime_error("the machine model does not contain an 'Instances' entry\n");
@@ -120,7 +181,7 @@ std::vector<requestedInstance_t> parseMachineModel(const nlohmann::json& machine
   for (const auto& instance : machineModelJson["Instances"])
   {
     // Storage for the new requested instance to add
-    requestedInstance_t newRequestedInstance;
+    requests_t newRequestedInstance;
 
     // Parsing task name
     if (instance.contains("Task") == false) throw std::runtime_error("the requested instance does not contain a 'Task' entry\n"); 
@@ -145,11 +206,11 @@ std::vector<requestedInstance_t> parseMachineModel(const nlohmann::json& machine
     newRequestedInstance.topology = parseTopology(instance["Topology"]);
 
     // Adding newly requested instance to the collection
-    requestedInstances.push_back(newRequestedInstance);
+    requests.push_back(newRequestedInstance);
   }
 
   // Returning parsed requested instances
-  return requestedInstances;
+  return requests;
 }
 
 std::vector<detectedInstance_t> detectInstances(HiCR::L1::InstanceManager &instanceManager)
@@ -198,42 +259,43 @@ std::vector<detectedInstance_t> detectInstances(HiCR::L1::InstanceManager &insta
   return detectedInstances;
 }
 
-void executeRequests(HiCR::L1::InstanceManager &instanceManager, std::vector<requestedInstance_t>& requestedInstances)
+void executeRequests(HiCR::L1::InstanceManager &instanceManager, std::vector<requests_t>& requests)
 {
   // Getting information about the currently launched instances and their topology
   auto detectedInstances = detectInstances(instanceManager);
 
   // Now matching requested instances to actual instances, creating new ones if the detected ones do not satisfy their topology requirements
-  for (size_t i = 0; i < requestedInstances.size(); i++)
-  {
-    // Flag to store whether the request has been assigned an instances
-    bool requestAssigned = false;
-
-    // Try to match the requested instances against one of the detected instances
-    for (auto dItr = detectedInstances.begin(); dItr != detectedInstances.end() && requestAssigned == false; dItr++)
+  for (size_t i = 0; i < requests.size(); i++) 
+   for (size_t j = 0; j < requests[i].replicaCount; j++)
     {
-      // Check if the detected instance topology satisfied the request do the following
-      if (isTopologySubset(requestedInstances[i].topology, dItr->topology))
+      // Flag to store whether the request has been assigned an instances
+      bool requestAssigned = false;
+
+      // Try to match the requested instances against one of the detected instances
+      for (auto dItr = detectedInstances.begin(); dItr != detectedInstances.end() && requestAssigned == false; dItr++)
       {
-        // Assign the instance to the request
-        requestedInstances[i].instance = dItr->instance;
+        // Check if the detected instance topology satisfied the request do the following
+        if (isTopologySubset(requests[i].topology, dItr->topology) == true)
+        {
+          // Assign the instance to the request
+          requests[i].instances.push_back(dItr->instance);
 
-        // Mark request as assigned to continue break the loops
-        requestAssigned = true;
+          // Mark request as assigned to continue break the loops
+          requestAssigned = true;
 
-        // Remove detected instance from the list so it's not assigned to another request
-        detectedInstances.erase(dItr);
+          // Remove detected instance from the list so it's not assigned to another request
+          detectedInstances.erase(dItr);
+        }
       }
+
+      // If no remaining detected instances satisfied the request, then try to create a new instance ad hoc
+      
+      // Adding new instance to the detected instance set
+
+      // If no instances could be created, then abort
+      std::string errorMsg = std::string("Could not assign nor create an instance for request ") + std::to_string(i) + std::string(", replica ") + std::to_string(j);
+      if (requestAssigned == false) throw std::runtime_error(errorMsg.c_str()); 
     }
-
-    // If no remaining detected instances satisfied the request, then try to create a new instance ad hoc
-    
-    // Adding new instance to the detected instance set
-
-    // If no instances could be created, then abort
-    std::string errorMsg = std::string("Could not assign nor create an instance for request ") + std::to_string(i);
-    if (requestAssigned == false) throw std::runtime_error(errorMsg.c_str()); 
-  }
 }
 
 void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string& machineModelFilePath)
@@ -252,29 +314,32 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string
    catch (const std::exception& e)
     {  fprintf(stderr, "could not parse JSON from machine model file: '%s'. Reason: '%s'\n", machineModelFilePath.c_str(), e.what()); finalizeExecution(instanceManager, -1); }
 
-  // Parsing the machine model into its requested instances. Here the vector implies ordering, which allows the user specify which instances need to be allocated first
-  std::vector<requestedInstance_t> requestedInstances;
-  try { requestedInstances = parseMachineModel(machineModelJson); }
+  // Parsing the machine model into a request vector. Here the vector implies ordering, which allows the user specify which instances need to be allocated first
+  std::vector<requests_t> requests;
+  try { requests = parseMachineModel(machineModelJson); }
    catch (const std::exception& e)
     {  fprintf(stderr, "Error while parsing the machine model. Reason: '%s'\n", e.what());  finalizeExecution(instanceManager, -1); }
 
   // Execute requests by finding or creating an instance that matches their topology requirements
-  try { executeRequests(instanceManager, requestedInstances); }
+  try { executeRequests(instanceManager, requests); }
    catch (const std::exception& e)
     {  fprintf(stderr, "Error while exeucuting requests. Reason: '%s'\n", e.what());  finalizeExecution(instanceManager, -1); }
 
   // Running the assigned task id in the correspondng instance
-  for (auto &r : requestedInstances) instanceManager.execute(*r.instance, PROCESSING_UNIT_ID, r.taskId);
+  for (auto &r : requests)
+   for (auto &in : r.instances)
+    instanceManager.execute(*in, PROCESSING_UNIT_ID, r.taskId);
 
   // Now waiting for return values to arrive
-  for (auto &r : requestedInstances)
-  {
-    // Getting return value as a memory slot
-    auto returnValue = instanceManager.getReturnValue(*r.instance);
+  for (auto &r : requests)
+   for (auto &in : r.instances)
+    {
+      // Getting return value as a memory slot
+      auto returnValue = instanceManager.getReturnValue(*in);
 
-    // Printing return value
-    printf("[Coordinator] Received from instance %lu: '%s'\n", r.instance->getId(), (const char*)returnValue->getPointer());
-  }
+      // Printing return value
+      printf("[Coordinator] Received from instance %lu: '%s'\n", in->getId(), (const char*)returnValue->getPointer());
+    }
 
   // Finalizing execution for all instances
   finalizeExecution(instanceManager);
