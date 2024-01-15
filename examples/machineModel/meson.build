@@ -5,6 +5,6 @@ if 'mpi' in enabledBackends and 'pthreads' in enabledBackends and 'hwloc' in ena
 	mpi = executable('mpi', [ 'source/main.cpp'], dependencies: [ hicrBuildDep, hicrMPIBackendDep, hicrPthreadsBackendDep, hicrHWLocBackendDep ], include_directories: ['source'] )
 
 	if get_option('buildTests')
-	  test('mpi', mpirunExecutable, args : [ '-n', '4', mpi.full_path() ], timeout: test_timeout, suite: testSuite )
+	  test('mpi', mpirunExecutable, args : [ '-n', '8', mpi.full_path(), meson.current_source_dir() + '/machineModel.json'  ], timeout: test_timeout, suite: testSuite )
 	endif
 endif
