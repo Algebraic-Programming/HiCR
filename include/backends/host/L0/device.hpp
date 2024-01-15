@@ -51,10 +51,8 @@ class Device : public HiCR::L0::Device
   Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces),
                                                                                                                                     _NUMADomainId(NUMADomainId){};
 
-  protected:
-
   /**
-   * Protected empty constructor for deserialization
+   * Empty constructor for serialization / deserialization
    */
   Device() : HiCR::L0::Device(){};
 
@@ -63,12 +61,29 @@ class Device : public HiCR::L0::Device
    */
   ~Device() = default;
 
+  protected:
+
   __USED__ inline std::string getType() const override { return "NUMA Domain"; }
 
   /**
    * Identifier for the NUMA domain represented by this class
    */
   NUMADomainID_t _NUMADomainId;
+
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  {
+    // Storing numa domain identifier
+    output["NUMA Domain Id"] = _NUMADomainId;
+  }
+
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  {
+    // Getting device id
+    std::string key = "NUMA Domain Id";
+    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
+    if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    _NUMADomainId = input[key].get<NUMADomainID_t>();
+  }
 };
 
 } // namespace L0

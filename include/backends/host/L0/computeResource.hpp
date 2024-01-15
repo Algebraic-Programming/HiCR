@@ -71,6 +71,11 @@ class ComputeResource : public HiCR::L0::ComputeResource
                                                                                              _caches(caches){};
   ~ComputeResource() = default;
 
+  /**
+   * Default constructor for serialization/deserialization purposes
+   */
+  ComputeResource() = default;
+
   __USED__ inline std::string getType() const override { return "Processing Unit"; }
 
   /**
@@ -89,11 +94,6 @@ class ComputeResource : public HiCR::L0::ComputeResource
   __USED__ inline physicalProcessorId_t getPhysicalProcessorId() const { return _physicalProcessorId; }
 
   protected:
-
-  /**
-   * Protected default constructor for deserialization
-   */
-  ComputeResource() = default;
 
   __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {

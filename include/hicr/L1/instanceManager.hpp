@@ -21,6 +21,7 @@
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/L0/processingUnit.hpp>
+#include <hicr/L0/topology.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/communicationManager.hpp>
 #include <hicr/L1/computeManager.hpp>
@@ -79,22 +80,39 @@ class InstanceManager
   __USED__ inline std::shared_ptr<HiCR::L0::Instance> getCurrentInstance() const { return _currentInstance; }
 
   /**
+   * Function to create a new HiCR instance
+   * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
+   * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
+   */
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology &requestedTopology = HiCR::L0::Topology())
+  {
+    // Requesting the creating of the instance to the specific backend
+    auto newInstance = createInstanceImpl(requestedTopology);
+
+    // If successul, adding the instance to the internal list
+    if (newInstance != nullptr) _instances.insert(newInstance);
+
+    // Returning value for immediate use
+    return newInstance;
+  }
+
+  /**
    * Function to retrieve the internal memory manager for this instance manager
    * \return A pointer to the memory manager used to instantiate this instance manager
    */
-  __USED__ inline HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
+  __USED__ inline std::shared_ptr<HiCR::L1::MemoryManager> getMemoryManager() const { return _memoryManager; }
 
   /**
    * Function to retrieve the internal communication manager for this instance manager
    * \return A pointer to the communication manager used to instantiate this instance manager
    */
-  __USED__ inline HiCR::L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
+  __USED__ inline std::shared_ptr<HiCR::L1::CommunicationManager> getCommunicationManager() const { return _communicationManager; }
 
   /**
    * Function to retrieve the internal compute manager for this instance manager
    * \return A pointer to the compute manager used to instantiate this instance manager
    */
-  __USED__ inline HiCR::L1::ComputeManager *getComputeManager() const { return _computeManager; }
+  __USED__ inline std::shared_ptr<HiCR::L1::ComputeManager> getComputeManager() const { return _computeManager; }
 
   /**
    * Function to retrieve the internal memory space used for creating buffers in this instance manager
@@ -154,6 +172,15 @@ class InstanceManager
     return getReturnValueImpl(instance);
   }
 
+  /**
+   * Function to set the buffer memory space to use for allocations when receiving RPC or return values.
+   *
+   * Must be set before starting to listen for incoming messages
+   *
+   * @param[in] bufferMemorySpace The memory space in which to allocate the buffers
+   */
+  void setBufferMemorySpace(const std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) { _bufferMemorySpace = bufferMemorySpace; }
+
   protected:
 
   /**
@@ -161,15 +188,12 @@ class InstanceManager
    * \param[in] memoryManager The memory manager to use for buffer allocations
    * \param[in] communicationManager The communication manager to use for internal data passing
    * \param[in] computeManager The compute manager to use for RPC running
-   * \param[in] bufferMemorySpace The memory space from which to allocate data buffers
    */
-  InstanceManager(HiCR::L1::CommunicationManager *communicationManager,
-                  HiCR::L1::ComputeManager *computeManager,
-                  HiCR::L1::MemoryManager *memoryManager,
-                  std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) : _communicationManager(communicationManager),
-                                                                              _computeManager(computeManager),
-                                                                              _memoryManager(memoryManager),
-                                                                              _bufferMemorySpace(bufferMemorySpace){};
+  InstanceManager(std::shared_ptr<HiCR::L1::CommunicationManager> communicationManager,
+                  std::shared_ptr<HiCR::L1::ComputeManager> computeManager,
+                  std::shared_ptr<HiCR::L1::MemoryManager> memoryManager) : _communicationManager(communicationManager),
+                                                                            _computeManager(computeManager),
+                                                                            _memoryManager(memoryManager){};
 
   /**
    * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
@@ -189,9 +213,22 @@ class InstanceManager
     // Creating execution state
     auto s = _computeManager->createExecutionState(e);
 
+    // Initializing processing unit
+    p->initialize();
+
     // Running execution state
     p->start(std::move(s));
+
+    // Waiting for processing unit to finish
+    p->await();
   }
+
+  /**
+   * Backend-specific implementation of the createInstance function
+   * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
+   * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
+   */
+  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology) = 0;
 
   /**
    * Backend-specific implementation of the getReturnValue function
@@ -214,22 +251,22 @@ class InstanceManager
   /**
    * Communication manager for exchanging information among HiCR instances
    */
-  HiCR::L1::CommunicationManager *const _communicationManager;
+  const std::shared_ptr<HiCR::L1::CommunicationManager> _communicationManager;
 
   /**
    * Compute manager for running incoming RPCs
    */
-  HiCR::L1::ComputeManager *const _computeManager;
+  const std::shared_ptr<HiCR::L1::ComputeManager> _computeManager;
 
   /**
    * Memory manager for allocating internal buffers
    */
-  HiCR::L1::MemoryManager *const _memoryManager;
+  const std::shared_ptr<HiCR::L1::MemoryManager> _memoryManager;
 
   /**
    * Memory space to store the information bufer into
    */
-  const std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
+  std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
 
   /**
    * Collection of instances

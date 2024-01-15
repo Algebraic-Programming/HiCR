@@ -55,6 +55,11 @@ class Device final : public HiCR::L0::Device
     const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(std::make_unique<aclrtContext>()){};
 
   /**
+   * Default constructor for resource requesting
+   */
+  Device() : HiCR::L0::Device() {}
+
+  /**
    * Deserializing constructor
    *
    * The instance created will contain all information, if successful in deserializing it, corresponding to the passed Ascend device

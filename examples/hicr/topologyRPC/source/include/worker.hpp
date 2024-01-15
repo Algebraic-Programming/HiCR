@@ -10,7 +10,7 @@
 #include <backends/host/L1/computeManager.hpp>
 
 void workerFc(HiCR::L1::InstanceManager &instanceManager,
-              HiCR::backend::host::L1::ComputeManager &computeManager,
+              std::shared_ptr<HiCR::backend::host::L1::ComputeManager> computeManager,
               std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
               std::shared_ptr<HiCR::L0::ComputeResource> rpcExecutor)
 {
@@ -84,13 +84,10 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager,
   };
 
   // Creating execution unit
-  auto executionUnit = computeManager.createExecutionUnit(fcLambda);
+  auto executionUnit = computeManager->createExecutionUnit(fcLambda);
 
   // Creating processing unit from the compute resource
-  auto processingUnit = computeManager.createProcessingUnit(rpcExecutor);
-
-  // Initialize processing unit
-  processingUnit->initialize();
+  auto processingUnit = computeManager->createProcessingUnit(rpcExecutor);
 
   // Assigning processing unit to the instance manager
   instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));

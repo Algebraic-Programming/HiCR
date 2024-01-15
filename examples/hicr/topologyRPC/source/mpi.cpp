@@ -37,27 +37,32 @@ int main(int argc, char **argv)
   auto memSpaces = d->getMemorySpaceList();
   auto computeResources = d->getComputeResourceList();
 
-  // Creating MPI-based memory manager (necessary for passing data around between instances)
-  HiCR::backend::mpi::L1::CommunicationManager communicationManager(MPI_COMM_WORLD);
-  HiCR::backend::mpi::L1::MemoryManager memoryManager;
-
-  // Initializing host (CPU) compute manager (for running incoming RPCs)
-  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
-
   // Getting first accesible memory space for buffering
   auto firstMemorySpace = *memSpaces.begin();
 
   // Getting first compute resource for running the RPCs
   auto firstComputeResource = *computeResources.begin();
 
+  // Creating MPI-based communication manager (necessary for passing data around between instances)
+  auto cm = std::make_shared<HiCR::backend::mpi::L1::CommunicationManager>(MPI_COMM_WORLD);
+  
+  // Creating MPI-based memory manager (necessary for buffer allocation)
+  auto mm = std::make_shared<HiCR::backend::mpi::L1::MemoryManager>();
+
+  // Initializing host (CPU) compute manager (for running incoming RPCs)
+  auto km = std::make_shared<HiCR::backend::host::pthreads::L1::ComputeManager>();
+
   // Creating MPI-based instance manager
-  HiCR::backend::mpi::L1::InstanceManager instanceManager(communicationManager, computeManager, memoryManager, firstMemorySpace);
+  HiCR::backend::mpi::L1::InstanceManager instanceManager(cm, km, mm);
+
+  // Setting buffer memory space for message exchanges
+  instanceManager.setBufferMemorySpace(firstMemorySpace);
 
   // Differentiating between coordinator and worker functions using the rank number
   if (rank == 0)
     coordinatorFc(instanceManager);
   else
-    workerFc(instanceManager, computeManager, firstMemorySpace, firstComputeResource);
+    workerFc(instanceManager, km, firstMemorySpace, firstComputeResource);
 
   // Finalizing MPI
   MPI_Finalize();

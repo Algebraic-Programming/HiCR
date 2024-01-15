@@ -75,11 +75,15 @@ class Device final : public HiCR::backend::host::L0::Device
 
   __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
-    // Nothing extra to serialize here
+    // Calling base class serializer
+    HiCR::backend::host::L0::Device::serializeImpl(output);
   }
 
   __USED__ inline void deserializeImpl(const nlohmann::json &input) override
   {
+    // Calling base class deserializer
+    HiCR::backend::host::L0::Device::deserializeImpl(input);
+
     // Iterating over the compute resource list
     for (const auto &computeResource : input["Compute Resources"])
     {

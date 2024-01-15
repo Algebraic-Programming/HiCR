@@ -45,6 +45,22 @@ class Instance
    */
   __USED__ inline instanceId_t getId() const { return _id; }
 
+  /**
+   * This function reports whether the caller is the root instance
+   *
+   * The root instance represents a single instance in the entire deployment with the following characteristics:
+   *  - It is unique. Only a single instance shall be root in the entire deployment, even if new ones are created.
+   *  - It belongs among the first set of instances created during launch time
+   *  - It has no parent instance
+   *
+   * The purpose of the root instance is to provide the minimal tiebreak mechanism that helps in role/task distribution.
+   *
+   * \note Each backend decides how to designate the root instance. Hence, this is a pure virtual function.
+   *
+   * @return True, if the current instance is root; false, otherwise.
+   */
+  virtual bool isRootInstance() = 0;
+
   protected:
 
   /**
