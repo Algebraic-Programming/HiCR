@@ -84,15 +84,15 @@ class InstanceManager
    * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology& requestedTopology)
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology& requestedTopology = HiCR::L0::Topology())
   {
     // Requesting the creating of the instance to the specific backend
     auto newInstance = createInstanceImpl(requestedTopology);
 
-    // Adding the instance to the internal list
-    _instances.insert(newInstance);
+    // If successul, adding the instance to the internal list
+    if (newInstance != nullptr) _instances.insert(newInstance);
 
-    // Returning a pointer for immediate use
+    // Returning value for immediate use
     return newInstance;
   }
 

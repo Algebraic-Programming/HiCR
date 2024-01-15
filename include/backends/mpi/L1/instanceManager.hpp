@@ -158,9 +158,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     runRequest(pIdx, eIdx);
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl [[noreturn]] (const HiCR::L0::Topology& requestedTopology)
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl (const HiCR::L0::Topology& requestedTopology)
   {
-    HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
+    // The MPI backend does not currently support the launching of new instances during runtime"
+    return nullptr;
   }
 
   private:

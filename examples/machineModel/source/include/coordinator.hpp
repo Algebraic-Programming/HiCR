@@ -288,13 +288,21 @@ void executeRequests(HiCR::L1::InstanceManager &instanceManager, std::vector<req
         }
       }
 
+      // If the request replica was assigned, continue with the next one
+      if (requestAssigned == true) continue;
+    
       // If no remaining detected instances satisfied the request, then try to create a new instance ad hoc
-      
+      auto newInstance = instanceManager.createInstance(requests[i].topology);
+
       // Adding new instance to the detected instance set
+      if (newInstance != nullptr) { requests[i].instances.push_back(newInstance); requestAssigned = true; }
 
       // If no instances could be created, then abort
-      std::string errorMsg = std::string("Could not assign nor create an instance for request ") + std::to_string(i) + std::string(", replica ") + std::to_string(j);
-      if (requestAssigned == false) throw std::runtime_error(errorMsg.c_str()); 
+      if (requestAssigned == false)
+      {
+        std::string errorMsg = std::string("Could not assign nor create an instance for request ") + std::to_string(i) + std::string(", replica ") + std::to_string(j);
+        throw std::runtime_error(errorMsg.c_str()); 
+      }
     }
 }
 
@@ -323,7 +331,7 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string
   // Execute requests by finding or creating an instance that matches their topology requirements
   try { executeRequests(instanceManager, requests); }
    catch (const std::exception& e)
-    {  fprintf(stderr, "Error while exeucuting requests. Reason: '%s'\n", e.what());  finalizeExecution(instanceManager, -1); }
+    {  fprintf(stderr, "Error while executing requests. Reason: '%s'\n", e.what());  finalizeExecution(instanceManager, -1); }
 
   // Running the assigned task id in the correspondng instance
   for (auto &r : requests)
