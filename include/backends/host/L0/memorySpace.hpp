@@ -54,6 +54,18 @@ class MemorySpace : public HiCR::L0::MemorySpace
    * Default constructor for deserialization purposes
    */
   MemorySpace() = default;
+
+  private:
+
+  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  {
+    // No additional information to serialize for now
+  }
+
+  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  {
+    // No additional information to deserialize for now
+  }
 };
 
 } // namespace L0

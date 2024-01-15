@@ -212,8 +212,14 @@ class InstanceManager
     // Creating execution state
     auto s = _computeManager->createExecutionState(e);
 
+    // Initializing processing unit
+    p->initialize();
+
     // Running execution state
     p->start(std::move(s));
+
+    // Waiting for processing unit to finish
+    p->await();
   }
   
    /**

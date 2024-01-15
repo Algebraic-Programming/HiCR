@@ -89,9 +89,6 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager,
   // Creating processing unit from the compute resource
   auto processingUnit = computeManager->createProcessingUnit(rpcExecutor);
 
-  // Initialize processing unit
-  processingUnit->initialize();
-
   // Assigning processing unit to the instance manager
   instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
 
