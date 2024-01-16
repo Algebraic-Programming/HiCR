@@ -27,6 +27,11 @@
 #include <hicr/L1/communicationManager.hpp>
 #include <hicr/L1/computeManager.hpp>
 
+/**
+ * This value is assigned to the default processing unit if no id is provided
+*/
+#define _HICR_DEFAULT_PROCESSING_UNIT_ID_ 0xF0F0F0F0ul
+
 namespace HiCR
 {
 
@@ -136,21 +141,21 @@ class InstanceManager
    * \param[in] index Indicates the index to assign to the added execution unit
    * \param[in] executionUnit The execution unit to add
    */
-  __USED__ inline void addExecutionUnit(const executionUnitIndex_t index, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnitMap[index] = executionUnit; }
+  __USED__ inline void addExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, const executionUnitIndex_t index) { _executionUnitMap[index] = executionUnit; }
 
   /**
    * Function to add a new processing unit, assigned to a unique identifier
    * \param[in] index Indicates the index to assign to the added processing unit
    * \param[in] processingUnit The processing unit to add
    */
-  __USED__ inline void addProcessingUnit(const processingUnitIndex_t index, std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) { _processingUnitMap[index] = std::move(processingUnit); }
+  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit, const processingUnitIndex_t index = _HICR_DEFAULT_PROCESSING_UNIT_ID_) { _processingUnitMap[index] = std::move(processingUnit); }
 
   /**
    * Function to add a listenable unit. That is, the combination of a execution unit and the processing unit that is in charge of executing it
    * \param[in] index Indicates the index of the new execution unit
    * \param[in] processingUnit The processing unit to add
    */
-  __USED__ inline void addListenableUnit(const std::string& listenableUnitName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex)
+  __USED__ inline void addListenableUnit(const std::string& listenableUnitName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex = _HICR_DEFAULT_PROCESSING_UNIT_ID_)
    {
      // Obtaining hash from the RPC name
      const auto listenableUnitNameHash = getHashFromString(listenableUnitName);
@@ -207,11 +212,7 @@ class InstanceManager
 
   protected:
 
-  static uint64_t getHashFromString(const std::string& name)
-  {
-    // const auto hash = MurmurHash64A(name.data(), name.size(), 0);
-    return std::hash<std::string>()(name);
-  }
+  static uint64_t getHashFromString(const std::string& name) { return std::hash<std::string>()(name); }
 
   /**
    * Constructor with proper arguments

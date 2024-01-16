@@ -90,7 +90,10 @@ class MachineModel
   */
   MachineModel(HiCR::L1::InstanceManager& instanceManager) : _instanceManager(&instanceManager)
   {
-
+    // Registering Topology parsing function as callable RPC
+    auto topologyRPCExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([this](){ submitTopology(); });
+    _instanceManager->addExecutionUnit(topologyRPCExecutionUnit, _HICR_TOPOLOGY_RPC_UNIT_ID);
+    _instanceManager->addListenableUnit(_HICR_TOPOLOGY_RPC_NAME, _HICR_TOPOLOGY_RPC_UNIT_ID);
   }
 
   HiCR::L0::Topology parseTopology(const nlohmann::json& topologyJson)
@@ -334,7 +337,6 @@ class MachineModel
       }
   }
 
-  
   __USED__ inline void submitTopology()
   {
     // Fetching memory manager

@@ -1,9 +1,6 @@
 #pragma once
 
-#define PROCESSING_UNIT_ID 0
-
 #define FINALIZATION_RPC_ID 0
-#define TOPOLOGY_RPC_ID 1
 #define TASK_A_RPC_ID 2
 #define TASK_B_RPC_ID 3
 #define TASK_C_RPC_ID 4
