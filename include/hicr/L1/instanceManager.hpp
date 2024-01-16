@@ -16,6 +16,7 @@
 #include <memory>
 #include <unordered_set>
 #include <utility>
+#include <functional>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/instance.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
@@ -51,6 +52,16 @@ class InstanceManager
    * Type definition for an index to indicate the use of a specific processing unit in charge of executing a execution units
    */
   typedef uint64_t processingUnitIndex_t;
+
+  /**
+  * Type definition for a listenable unit. That is, the pair of execution unit and the processing unit in charge of executing it
+  */
+  typedef std::pair<executionUnitIndex_t, processingUnitIndex_t> listenableUnit_t;
+
+  /**
+  * Type definition for an index for a listenable unit.
+  */
+  typedef int listenableUnitIndex_t;
 
   /**
    * Type definition for an unsorted set of unique pointers to the detected instances
@@ -135,6 +146,20 @@ class InstanceManager
   __USED__ inline void addProcessingUnit(const processingUnitIndex_t index, std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) { _processingUnitMap[index] = std::move(processingUnit); }
 
   /**
+   * Function to add a listenable unit. That is, the combination of a execution unit and the processing unit that is in charge of executing it
+   * \param[in] index Indicates the index of the new execution unit
+   * \param[in] processingUnit The processing unit to add
+   */
+  __USED__ inline void addListenableUnit(const std::string& listenableUnitName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex)
+   {
+     // Obtaining hash from the RPC name
+     const auto listenableUnitNameHash = getHashFromString(listenableUnitName);
+
+     // Inserting the new entry
+     _listenableUnitMap[listenableUnitNameHash] = listenableUnit_t({ eIndex, pIndex });
+   }
+
+  /**
    * Function to put the current instance to listen for incoming requests
    */
   __USED__ inline void listen()
@@ -145,11 +170,10 @@ class InstanceManager
 
   /**
    * Function to trigger the execution of a remote function in a remote HiCR instance
-   * \param[in] pIdx Index to the processing unit to use
    * \param[in] eIdx Index to the execution unit to run
    * \param[in] instance Instance on which to run the RPC
    */
-  virtual void execute(HiCR::L0::Instance &instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const = 0;
+  virtual void execute(HiCR::L0::Instance &instance, const std::string& listenableUnitName) const = 0;
 
   /**
    * Function to submit a return value for the currently running RPC
@@ -183,6 +207,12 @@ class InstanceManager
 
   protected:
 
+  static uint64_t getHashFromString(const std::string& name)
+  {
+    // const auto hash = MurmurHash64A(name.data(), name.size(), 0);
+    return std::hash<std::string>()(name);
+  }
+
   /**
    * Constructor with proper arguments
    * \param[in] memoryManager The memory manager to use for buffer allocations
@@ -200,8 +230,16 @@ class InstanceManager
    * \param[in] pIdx Index to the processing unit to use
    * \param[in] eIdx Index to the execution unit to run
    */
-  __USED__ inline void runRequest(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx)
+  __USED__ inline void runRequest(const listenableUnitIndex_t lIdx)
   {
+    // Getting listenable unit from the index
+    if (_listenableUnitMap.contains(lIdx) == false) HICR_THROW_RUNTIME("Attempting to run an listenable unit (%lu) that was not defined in this instance (0x%lX).\n", lIdx, this);
+    auto &l = _listenableUnitMap[lIdx];
+
+    // Getting execute and processing unit indexes
+    const auto eIdx = l.first;
+    const auto pIdx = l.second;
+
     // Checks that the processing and execution units have been registered
     if (_processingUnitMap.contains(pIdx) == false) HICR_THROW_RUNTIME("Attempting to run an processing unit (%lu) that was not defined in this instance (0x%lX).\n", pIdx, this);
     if (_executionUnitMap.contains(eIdx) == false) HICR_THROW_RUNTIME("Attempting to run an execution unit (%lu) that was not defined in this instance (0x%lX).\n", eIdx, this);
@@ -289,6 +327,11 @@ class InstanceManager
    * Map of execution units, representing potential RPC requests
    */
   std::map<executionUnitIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _executionUnitMap;
+
+  /**
+  * Map of listenable units
+  */
+  std::map<listenableUnitIndex_t, listenableUnit_t> _listenableUnitMap;
 };
 
 } // namespace L1

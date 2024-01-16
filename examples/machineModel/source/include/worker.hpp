@@ -120,12 +120,19 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   instanceManager.addProcessingUnit(PROCESSING_UNIT_ID, std::move(processingUnit));
 
   // Assigning execution units to the instance manager
-  instanceManager.addExecutionUnit(FINALIZATION_EXECUTION_UNIT_ID, finalizationExecutionUnit);
-  instanceManager.addExecutionUnit(TOPOLOGY_EXECUTION_UNIT_ID, topologyExecutionUnit);
-  instanceManager.addExecutionUnit(TASK_A_EXECUTION_UNIT_ID, taskAExecutionUnit);
-  instanceManager.addExecutionUnit(TASK_B_EXECUTION_UNIT_ID, taskBExecutionUnit);
-  instanceManager.addExecutionUnit(TASK_C_EXECUTION_UNIT_ID, taskCExecutionUnit);
+  instanceManager.addExecutionUnit(FINALIZATION_RPC_ID, finalizationExecutionUnit);
+  instanceManager.addExecutionUnit(TOPOLOGY_RPC_ID, topologyExecutionUnit);
+  instanceManager.addExecutionUnit(TASK_A_RPC_ID, taskAExecutionUnit);
+  instanceManager.addExecutionUnit(TASK_B_RPC_ID, taskBExecutionUnit);
+  instanceManager.addExecutionUnit(TASK_C_RPC_ID, taskCExecutionUnit);
 
+  // Adding listenable units (combines execution units with the processing unit in charge of executing them)
+  instanceManager.addListenableUnit("Finalize", FINALIZATION_RPC_ID, PROCESSING_UNIT_ID);
+  instanceManager.addListenableUnit("Get Topology", TOPOLOGY_RPC_ID, PROCESSING_UNIT_ID);
+  instanceManager.addListenableUnit("Task A", TASK_A_RPC_ID, PROCESSING_UNIT_ID);
+  instanceManager.addListenableUnit("Task B", TASK_B_RPC_ID, PROCESSING_UNIT_ID);
+  instanceManager.addListenableUnit("Task C", TASK_C_RPC_ID, PROCESSING_UNIT_ID);
+  
   // Listening for RPC requests
   while(continueListening == true) instanceManager.listen();
 }

@@ -26,35 +26,6 @@ namespace mpi
 namespace L0
 {
 
-#ifndef _HICR_MPI_INSTANCE_BASE_TAG
-  /**
-   * Base instance tag for data passing
-   *
-   * The base tag can be changed if it collides with others
-   */
-  #define _HICR_MPI_INSTANCE_BASE_TAG 4096
-#endif
-
-/**
- * Tag to indicate an RPC's processing unit
- */
-#define _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 1)
-
-/**
- * Tag to indicate an RPC's execution unit
- */
-#define _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 2)
-
-/**
- * Tag to indicate an RPC's result size information
- */
-#define _HICR_MPI_INSTANCE_RETURN_SIZE_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 3)
-
-/**
- * Tag to indicate an RPC's result data
- */
-#define _HICR_MPI_INSTANCE_RETURN_DATA_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 4)
-
 /**
  * This class represents an abstract definition for a HICR instance as represented by the MPI backend:
  */

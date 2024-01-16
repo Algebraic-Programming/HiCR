@@ -90,10 +90,13 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager,
   auto processingUnit = computeManager->createProcessingUnit(rpcExecutor);
 
   // Assigning processing unit to the instance manager
-  instanceManager.addProcessingUnit(TEST_RPC_PROCESSING_UNIT_ID, std::move(processingUnit));
+  instanceManager.addProcessingUnit(PROCESSING_UNIT_ID, std::move(processingUnit));
 
   // Assigning processing unit to the instance manager
-  instanceManager.addExecutionUnit(TEST_RPC_EXECUTION_UNIT_ID, executionUnit);
+  instanceManager.addExecutionUnit(TOPOLOGY_RPC_ID, executionUnit);
+
+  // Adding listenable unit -- this pairs the execution unit with the processing unit in charge of executing it
+  instanceManager.addListenableUnit(TOPOLOGY_RPC_NAME, TOPOLOGY_RPC_ID, PROCESSING_UNIT_ID);
 
   // Listening for RPC requests
   instanceManager.listen();
