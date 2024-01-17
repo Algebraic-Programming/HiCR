@@ -175,8 +175,8 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     // Getting requester instance rank
     _RPCRequestRank = status.MPI_SOURCE;
 
-    // Trying to run remote request
-    runRequest(rpcIdx);
+    // Trying to execute RPC
+    executeRPC(rpcIdx);
   }
 
   __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology)

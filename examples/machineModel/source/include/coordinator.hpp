@@ -5,11 +5,6 @@
 #include "nlohmann_json/json.hpp"
 #include <hicr/L0/topology.hpp>
 #include <hicr/L1/instanceManager.hpp>
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <backends/host/L0/device.hpp>
-#include <backends/host/L0/computeResource.hpp>
-#include <backends/host/L0/memorySpace.hpp>
 #include <frontends/machineModel/machineModel.hpp>
 
 void finalizeExecution(HiCR::L1::InstanceManager &instanceManager, const int returnCode = 0)

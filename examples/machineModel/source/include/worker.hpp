@@ -1,13 +1,7 @@
 #pragma once
 
 #include "common.hpp"
-#include <hicr/L0/computeResource.hpp>
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L0/topology.hpp>
 #include <hicr/L1/instanceManager.hpp>
-#include <backends/host/pthreads/L1/computeManager.hpp>
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <frontends/machineModel/machineModel.hpp>
 
 // Worker task functions
