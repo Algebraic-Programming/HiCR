@@ -99,12 +99,12 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
   /**
    * Triggers the execution of the specified RPC (by name) in the specified instance
-   * 
+   *
    * @param[in] instance The instance in which to execute the RPC
    * @param[in] RPCTargetName The name of the target RPC to execute
-   * 
-  */
-  __USED__ inline void launchRPC(HiCR::L0::Instance &instance, const std::string& RPCTargetName) const override
+   *
+   */
+  __USED__ inline void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCTargetName) const override
   {
     // Calculating hash for the RPC target's name
     int hash = getHashFromString(RPCTargetName);

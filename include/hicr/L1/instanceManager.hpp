@@ -29,7 +29,7 @@
 
 /**
  * This value is assigned to the default processing unit if no id is provided
-*/
+ */
 #define _HICR_DEFAULT_PROCESSING_UNIT_ID_ 0xF0F0F0F0ul
 
 namespace HiCR
@@ -59,13 +59,13 @@ class InstanceManager
   typedef uint64_t processingUnitIndex_t;
 
   /**
-  * Type definition for a listenable unit. That is, the pair of execution unit and the processing unit in charge of executing it
-  */
+   * Type definition for a listenable unit. That is, the pair of execution unit and the processing unit in charge of executing it
+   */
   typedef std::pair<executionUnitIndex_t, processingUnitIndex_t> RPCTarget_t;
 
   /**
-  * Type definition for an index for a listenable unit.
-  */
+   * Type definition for an index for a listenable unit.
+   */
   typedef int RPCTargetIndex_t;
 
   /**
@@ -156,14 +156,14 @@ class InstanceManager
    * \param[in] eIndex Indicates the index of the execution unit to run when this RPC target is triggered
    * \param[in] pIndex Indicates the processing unit to use for running the specified execution unit
    */
-  __USED__ inline void addRPCTarget(const std::string& RPCName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex = _HICR_DEFAULT_PROCESSING_UNIT_ID_)
-   {
-     // Obtaining hash from the RPC name
-     const auto nameHash = getHashFromString(RPCName);
+  __USED__ inline void addRPCTarget(const std::string &RPCName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex = _HICR_DEFAULT_PROCESSING_UNIT_ID_)
+  {
+    // Obtaining hash from the RPC name
+    const auto nameHash = getHashFromString(RPCName);
 
-     // Inserting the new entry
-     _RPCTargetMap[nameHash] = RPCTarget_t({ eIndex, pIndex });
-   }
+    // Inserting the new entry
+    _RPCTargetMap[nameHash] = RPCTarget_t({eIndex, pIndex});
+  }
 
   /**
    * Function to put the current instance to listen for incoming RPCs
@@ -179,7 +179,7 @@ class InstanceManager
    * \param[in] RPCName The name of the RPC to run
    * \param[in] instance Instance on which to run the RPC
    */
-  virtual void launchRPC(HiCR::L0::Instance &instance, const std::string& RPCName) const = 0;
+  virtual void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCName) const = 0;
 
   /**
    * Function to submit a return value for the currently running RPC
@@ -215,11 +215,11 @@ class InstanceManager
 
   /**
    * Generates a 64-bit hash value from a given string. Useful for compressing the name of RPCs
-   * 
+   *
    * @param[in] name A string (e.g., the name of an RPC to compress)
    * @return The 64-bit hashed value of the name provided
-  */
-  static uint64_t getHashFromString(const std::string& name) { return std::hash<std::string>()(name); }
+   */
+  static uint64_t getHashFromString(const std::string &name) { return std::hash<std::string>()(name); }
 
   /**
    * Constructor with proper arguments
@@ -336,8 +336,8 @@ class InstanceManager
   std::map<executionUnitIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _executionUnitMap;
 
   /**
-  * Map of RPC targets units
-  */
+   * Map of RPC targets units
+   */
   std::map<RPCTargetIndex_t, RPCTarget_t> _RPCTargetMap;
 };
 
