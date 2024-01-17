@@ -22,19 +22,18 @@ void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, f
   for (int i = 0; i < BUFF_SIZE; i++) ((aclFloat16 *)memorySlot->getPointer())[i] = aclFloatToFloat16(value);
 }
 
-void doPrintMatrix(const aclFloat16 *matrix, uint32_t numRows, uint32_t numCols)
-{
-  uint32_t rows = numRows;
+ascend::ComputationKernel createComputeKernelFromFile(std::string path,
+                                                      std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
+                                                      std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+                                                      aclopAttr *kernelAttributes);
 
-  for (uint32_t i = 0; i < rows; ++i)
-  {
-    for (uint32_t j = 0; j < numCols; ++j)
-    {
-      std::cout << std::setw(10) << aclFloat16ToFloat(matrix[i * numCols + j]);
-    }
-    std::cout << "\n";
-  }
-}
+ascend::ComputationKernel createComputeKernelFromDirectory(std::string path,
+                                                           std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
+                                                           std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+                                                           aclopAttr *kernelAttributes);
+
+void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice,
+                   std::vector<ascend::Kernel *> operations);
 
 int main(int argc, char **argv)
 {
@@ -85,30 +84,125 @@ int main(int argc, char **argv)
   ascend::MemoryKernel copyInput1MemoryKernel(&ascendCommunicationManager, input1Device, 0, input1Host, 0, size);
   ascend::MemoryKernel copyInput2MemoryKernel(&ascendCommunicationManager, input2Device, 0, input2Host, 0, size);
 
-  // Create tensor descriptor (what's inside the tensor)
-  const int64_t dims[] = {192, 1};
-  auto tensorDesc = aclCreateTensorDesc(ACL_FLOAT16, 2, dims, ACL_FORMAT_ND);
-
-  if (tensorDesc == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
-
-  // Prepare kernel input tensor data
-  std::vector<ascend::ComputationKernel::tensorData_t> inputs({ascend::ComputationKernel::createTensorData(input1Device, tensorDesc),
-                                                               ascend::ComputationKernel::createTensorData(input2Device, tensorDesc)});
-
-  // Prepare kernel output tensor data
-  std::vector<ascend::ComputationKernel::tensorData_t> outputs({ascend::ComputationKernel::createTensorData(outputDevice, tensorDesc)});
-
-  // Create the vector addition ComputeKernel
-  auto currentPath = std::filesystem::current_path().string();
-  auto kernelPath = currentPath + std::string("/../examples/hicr/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om");
-  ascend::ComputationKernel kernel = ascend::ComputationKernel(kernelPath.c_str(), "Add", std::move(inputs), std::move(outputs), aclopCreateAttr());
-
-  // copy the result back on the host
+  // Copy the result back on the host using a MemoryKernel abstraction
   ascend::MemoryKernel copyOutputMemoryKernel(&ascendCommunicationManager, outputHost, 0, outputDevice, 0, size);
 
-  // create the stream of Kernel operations to be executed on the device
-  std::vector<ascend::Kernel *> operations({&copyInput1MemoryKernel, &copyInput2MemoryKernel, &kernel, &copyOutputMemoryKernel});
+  // Create tensor descriptor (what's inside the tensor). In this example it is the same for all tensors
+  const int64_t dims[] = {192, 1};
+  auto tensorDescriptor = aclCreateTensorDesc(ACL_FLOAT16, 2, dims, ACL_FORMAT_ND);
+  if (tensorDescriptor == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
 
+  // Create kernel attributes
+  auto kernelAttributes = aclopCreateAttr();
+  if (kernelAttributes == NULL) HICR_THROW_RUNTIME("Can not create kernel attributes");
+
+  // Prepare kernel input tensor data
+  std::vector<ascend::ComputationKernel::tensorData_t> inputs({ascend::ComputationKernel::createTensorData(input1Device, tensorDescriptor),
+                                                               ascend::ComputationKernel::createTensorData(input2Device, tensorDescriptor)});
+
+  // Prepare kernel output tensor data
+  std::vector<ascend::ComputationKernel::tensorData_t> outputs({ascend::ComputationKernel::createTensorData(outputDevice, tensorDescriptor)});
+
+  // Create the ComputationKernel by reading it from file
+  auto fileComputationKernel = createComputeKernelFromFile("/../examples/hicr/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om",
+                                                           inputs,
+                                                           outputs,
+                                                           kernelAttributes);
+
+  // Create the stream of Kernel operations to be executed on the device
+  auto operations = std::vector<ascend::Kernel *>{&copyInput1MemoryKernel,
+                                                  &copyInput2MemoryKernel,
+                                                  &fileComputationKernel,
+                                                  &copyOutputMemoryKernel};
+
+  // Execute the stream of Kernels
+  executeKernel(ascendDevice, operations);
+
+  // Print the result
+  printf("First vector contains: %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input1Host->getPointer())[0]));
+  printf("Second vector contains : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input2Host->getPointer())[0]));
+  printf("Vector sum is : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)outputHost->getPointer())[0]));
+
+  // Reset tensors
+  populateMemorySlot(input1Host, 0.0);
+  populateMemorySlot(input2Host, 0.0);
+  populateMemorySlot(outputHost, 0.0);
+
+  // Create the ComputationKernel by looking up in a directory
+  auto directoryComputationKernel = createComputeKernelFromDirectory("/../examples/hicr/kernel/op_models",
+                                                                     inputs,
+                                                                     outputs,
+                                                                     kernelAttributes);
+
+  // Create the stream of Kernel operations to be executed on the device
+  operations = std::vector<ascend::Kernel *>{&copyInput1MemoryKernel,
+                                             &copyInput2MemoryKernel,
+                                             &directoryComputationKernel,
+                                             &copyOutputMemoryKernel};
+
+  // Execute the stream of Kernels
+  executeKernel(ascendDevice, operations);
+
+  // Print the result
+  printf("First vector contains: %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input1Host->getPointer())[0]));
+  printf("Second vector contains : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input2Host->getPointer())[0]));
+  printf("Vector sum is : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)outputHost->getPointer())[0]));
+
+  // Free memory slots
+  ascendMemoryManager.freeLocalMemorySlot(input1Host);
+  ascendMemoryManager.freeLocalMemorySlot(input1Device);
+  ascendMemoryManager.freeLocalMemorySlot(input2Host);
+  ascendMemoryManager.freeLocalMemorySlot(input2Device);
+  ascendMemoryManager.freeLocalMemorySlot(outputHost);
+  ascendMemoryManager.freeLocalMemorySlot(outputDevice);
+
+  // Destroy tensor descriptors and kernel attributes
+  aclDestroyTensorDesc(tensorDescriptor);
+  aclopDestroyAttr(kernelAttributes);
+
+  err = aclFinalize();
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize Ascend Computing Language. Error %d", err);
+
+  return 0;
+}
+
+ascend::ComputationKernel createComputeKernelFromFile(
+  std::string path,
+  std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
+  std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+  aclopAttr *kernelAttributes)
+{
+  auto currentPath = std::filesystem::current_path().string();
+  auto kernelPath = currentPath + std::string(path);
+
+  // Instantiate a ComputationKernel abstraction by providing a path to an .om file. The kernel is loaded internally
+  auto kernel = ascend::ComputationKernel(kernelPath.c_str(), "Add", std::move(inputs), std::move(outputs), kernelAttributes);
+  return kernel;
+}
+
+ascend::ComputationKernel createComputeKernelFromDirectory(std::string path,
+                                                           std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
+                                                           std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+                                                           aclopAttr *kernelAttributes)
+{
+  aclError err;
+
+  auto currentPath = std::filesystem::current_path().string();
+  auto kernelPath = currentPath + std::string(path);
+
+  // Set the directory in which ACL will performs the lookup for kernels
+  err = aclopSetModelDir(kernelPath.c_str());
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not set the model directory %s in ACL runtime. Error: %d", kernelPath.c_str(), err);
+
+  // Instantiate a ComputationKernel abstraction by providing only its features. The kernel has been already loaded in aclopSetModelDir()
+  auto kernel = ascend::ComputationKernel("Add", std::move(inputs), std::move(outputs), kernelAttributes);
+  return kernel;
+}
+
+void executeKernel(
+  std::shared_ptr<HiCR::L0::Device> ascendDevice,
+  std::vector<ascend::Kernel *> operations)
+{
   // Instantiating Ascend computation manager
   HiCR::backend::ascend::L1::ComputeManager ascendComputeManager;
 
@@ -126,30 +220,9 @@ int main(int argc, char **argv)
   // Execute the kernel stream
   processingUnit->start(std::move(executionState));
 
-  // in the meantime we can check for completion
-  // printf("Currently the kernel execution completion is %s\n", executionState.get()->checkFinalization() ? "true" : "false");
-
   // start teminating the processing unit
   processingUnit->terminate();
 
   // wait for termination
   processingUnit->await();
-
-  // print the result
-  printf("First vector contains: %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input1Host->getPointer())[0]));
-  printf("Second vector contains : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input2Host->getPointer())[0]));
-  printf("Vector sum is : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)outputHost->getPointer())[0]));
-
-  // free memory slots
-  ascendMemoryManager.freeLocalMemorySlot(input1Host);
-  ascendMemoryManager.freeLocalMemorySlot(input1Device);
-  ascendMemoryManager.freeLocalMemorySlot(input2Host);
-  ascendMemoryManager.freeLocalMemorySlot(input2Device);
-  ascendMemoryManager.freeLocalMemorySlot(outputHost);
-  ascendMemoryManager.freeLocalMemorySlot(outputDevice);
-
-  err = aclFinalize();
-  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize Ascend Computing Language. Error %d", err);
-
-  return 0;
 }
