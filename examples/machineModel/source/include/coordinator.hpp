@@ -7,18 +7,18 @@
 #include <hicr/L1/instanceManager.hpp>
 #include <frontends/machineModel/machineModel.hpp>
 
-void finalizeExecution(HiCR::L1::InstanceManager &instanceManager, const int returnCode = 0)
+void finalizeExecution(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager, const int returnCode = 0)
 {
   // Querying instance list
-  auto &instances = instanceManager.getInstances();
+  auto &instances = instanceManager->getInstances();
 
   // Getting the pointer to our own (coordinator) instance
-  auto coordinator = instanceManager.getCurrentInstance();
+  auto coordinator = instanceManager->getCurrentInstance();
 
   // Requesting workers to abort and printing error message 
   for (const auto &instance : instances)
     if (instance->getId() != coordinator->getId())
-      instanceManager.launchRPC(*instance, "Finalize");
+      instanceManager->launchRPC(*instance, "Finalize");
 
   HiCR::finalize();
   exit(returnCode);
@@ -94,10 +94,10 @@ bool isTopologyAcceptable(const HiCR::L0::Topology& a, const HiCR::L0::Topology&
   }
 
 
-void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string& machineModelFilePath)
+void coordinatorFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager, const std::string& machineModelFilePath)
 {
   // Getting the pointer to our own (coordinator) instance
-  auto coordinator = instanceManager.getCurrentInstance();
+  auto coordinator = instanceManager->getCurrentInstance();
 
   // Reading from machine model file
   std::string machineModelRaw;
@@ -127,14 +127,14 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string
   // Running the assigned task id in the correspondng instance
   for (auto &r : requests)
    for (auto &in : r.instances)
-    instanceManager.launchRPC(*in, r.taskName);
+    instanceManager->launchRPC(*in, r.taskName);
 
   // Now waiting for return values to arrive
   for (auto &r : requests)
    for (auto &in : r.instances)
     {
       // Getting return value as a memory slot
-      auto returnValue = instanceManager.getReturnValue(*in);
+      auto returnValue = instanceManager->getReturnValue(*in);
 
       // Printing return value
       printf("[Coordinator] Received from instance %lu: '%s'\n", in->getId(), (const char*)returnValue->getPointer());

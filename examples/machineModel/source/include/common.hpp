@@ -24,12 +24,12 @@
 namespace HiCR // Simulating this is part of HiCR for now
 {
 
-std::unique_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[]);
+std::shared_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[]);
 void finalize();
 
 #ifdef _HICR_USE_MPI_BACKEND_
 
-std::unique_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[])
+std::shared_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[])
 {
   // Initializing MPI
   int requested = MPI_THREAD_SERIALIZED;
@@ -47,7 +47,7 @@ std::unique_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[])
   auto km = std::make_shared<HiCR::backend::host::pthreads::L1::ComputeManager>();
 
   // Now instantiating the instance manager
-  return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(cm, km, mm);
+  return std::make_shared<HiCR::backend::mpi::L1::InstanceManager>(cm, km, mm);
 }
 
 void finalize()

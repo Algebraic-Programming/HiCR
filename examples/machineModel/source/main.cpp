@@ -46,7 +46,11 @@ int main(int argc, char *argv[])
   // Setting memory space for buffer allocations when receiving RPCs
   instanceManager->setBufferMemorySpace(bufferMemSpace);
 
-  // Parsing argument list
+  // Creating processing unit from the compute resource
+  auto processingUnit = km.createProcessingUnit(computeResource);
+
+  // Assigning processing unit to the instance manager
+  instanceManager->addProcessingUnit(std::move(processingUnit));
 
   // If the number of arguments passed is incorrect, abort execution and exit
   if (argc != 2)
@@ -60,8 +64,8 @@ int main(int argc, char *argv[])
   auto machineModelFile = std::string(argv[1]);
 
   // Bifurcating paths based on whether the instance is root or not
-  if (myInstance->isRootInstance() == true)  coordinatorFc(*instanceManager, machineModelFile);
-  if (myInstance->isRootInstance() == false) workerFc(*instanceManager, bufferMemSpace, computeResource);
+  if (myInstance->isRootInstance() == true)  coordinatorFc(instanceManager, machineModelFile);
+  if (myInstance->isRootInstance() == false) workerFc(instanceManager);
 
   // Finalizing HiCR
   HiCR::finalize();

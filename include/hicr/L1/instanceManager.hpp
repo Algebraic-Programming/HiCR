@@ -73,6 +73,8 @@ class InstanceManager
    */
   typedef std::unordered_set<std::shared_ptr<HiCR::L0::Instance>> instanceList_t;
 
+  void finalize() { _processingUnitMap.clear(); }
+
   /**
    * Default constructor is deleted, this class requires the passing of a memory manager
    */
@@ -252,20 +254,20 @@ class InstanceManager
     if (_executionUnitMap.contains(eIdx) == false) HICR_THROW_RUNTIME("Attempting to run an execution unit (%lu) that was not defined in this instance (0x%lX).\n", eIdx, this);
 
     // Getting units
-    auto &p = _processingUnitMap[pIdx];
+    auto &p = *_processingUnitMap[pIdx];
     auto &e = _executionUnitMap[eIdx];
 
     // Creating execution state
     auto s = _computeManager->createExecutionState(e);
 
     // Initializing processing unit
-    p->initialize();
+    p.initialize();
 
     // Running execution state
-    p->start(std::move(s));
+    p.start(std::move(s));
 
     // Waiting for processing unit to finish
-    p->await();
+    p.await();
   }
 
   /**

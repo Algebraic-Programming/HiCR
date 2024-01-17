@@ -64,8 +64,6 @@ class ComputeManager : public HiCR::L1::ComputeManager
     // Creating and returning new execution state
     return std::make_unique<host::L0::ExecutionState>(executionUnit);
   }
-
-  virtual std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const = 0;
 };
 
 } // namespace L1

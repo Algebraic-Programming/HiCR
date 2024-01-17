@@ -100,7 +100,7 @@ class MachineModel
    *
    * @param[in] instanceManager Specifies the instance manager to detect and create instances and send RPC requests
    */
-  MachineModel(HiCR::L1::InstanceManager &instanceManager) : _instanceManager(&instanceManager)
+  MachineModel(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager) : _instanceManager(instanceManager)
   {
     // Registering Topology parsing function as callable RPC
     auto topologyRPCExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([this]()
@@ -375,7 +375,7 @@ class MachineModel
     memoryManager->deregisterLocalMemorySlot(sendBuffer);
   };
 
-  HiCR::L1::InstanceManager *const _instanceManager;
+  const std::shared_ptr<HiCR::L1::InstanceManager> _instanceManager;
 };
 
 } // namespace HiCR
