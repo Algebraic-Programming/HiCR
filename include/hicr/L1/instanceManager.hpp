@@ -16,6 +16,7 @@
 #include <memory>
 #include <unordered_set>
 #include <utility>
+#include <functional>
 #include <hicr/L0/executionUnit.hpp>
 #include <hicr/L0/instance.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
@@ -25,6 +26,11 @@
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/communicationManager.hpp>
 #include <hicr/L1/computeManager.hpp>
+
+/**
+ * This value is assigned to the default processing unit if no id is provided
+ */
+#define _HICR_DEFAULT_PROCESSING_UNIT_ID_ 0xF0F0F0F0ul
 
 namespace HiCR
 {
@@ -51,6 +57,16 @@ class InstanceManager
    * Type definition for an index to indicate the use of a specific processing unit in charge of executing a execution units
    */
   typedef uint64_t processingUnitIndex_t;
+
+  /**
+   * Type definition for a listenable unit. That is, the pair of execution unit and the processing unit in charge of executing it
+   */
+  typedef std::pair<executionUnitIndex_t, processingUnitIndex_t> RPCTarget_t;
+
+  /**
+   * Type definition for an index for a listenable unit.
+   */
+  typedef int RPCTargetIndex_t;
 
   /**
    * Type definition for an unsorted set of unique pointers to the detected instances
@@ -125,17 +141,32 @@ class InstanceManager
    * \param[in] index Indicates the index to assign to the added execution unit
    * \param[in] executionUnit The execution unit to add
    */
-  __USED__ inline void addExecutionUnit(const executionUnitIndex_t index, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnitMap[index] = executionUnit; }
+  __USED__ inline void addExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, const executionUnitIndex_t index) { _executionUnitMap[index] = executionUnit; }
 
   /**
    * Function to add a new processing unit, assigned to a unique identifier
    * \param[in] index Indicates the index to assign to the added processing unit
    * \param[in] processingUnit The processing unit to add
    */
-  __USED__ inline void addProcessingUnit(const processingUnitIndex_t index, std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) { _processingUnitMap[index] = std::move(processingUnit); }
+  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit, const processingUnitIndex_t index = _HICR_DEFAULT_PROCESSING_UNIT_ID_) { _processingUnitMap[index] = std::move(processingUnit); }
 
   /**
-   * Function to put the current instance to listen for incoming requests
+   * Function to add an RPC target with a name, and the combination of a execution unit and the processing unit that is in charge of executing it
+   * \param[in] RPCName Name of the RPC to add
+   * \param[in] eIndex Indicates the index of the execution unit to run when this RPC target is triggered
+   * \param[in] pIndex Indicates the processing unit to use for running the specified execution unit
+   */
+  __USED__ inline void addRPCTarget(const std::string &RPCName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex = _HICR_DEFAULT_PROCESSING_UNIT_ID_)
+  {
+    // Obtaining hash from the RPC name
+    const auto nameHash = getHashFromString(RPCName);
+
+    // Inserting the new entry
+    _RPCTargetMap[nameHash] = RPCTarget_t({eIndex, pIndex});
+  }
+
+  /**
+   * Function to put the current instance to listen for incoming RPCs
    */
   __USED__ inline void listen()
   {
@@ -145,11 +176,10 @@ class InstanceManager
 
   /**
    * Function to trigger the execution of a remote function in a remote HiCR instance
-   * \param[in] pIdx Index to the processing unit to use
-   * \param[in] eIdx Index to the execution unit to run
+   * \param[in] RPCName The name of the RPC to run
    * \param[in] instance Instance on which to run the RPC
    */
-  virtual void execute(HiCR::L0::Instance &instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const = 0;
+  virtual void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCName) const = 0;
 
   /**
    * Function to submit a return value for the currently running RPC
@@ -184,6 +214,14 @@ class InstanceManager
   protected:
 
   /**
+   * Generates a 64-bit hash value from a given string. Useful for compressing the name of RPCs
+   *
+   * @param[in] name A string (e.g., the name of an RPC to compress)
+   * @return The 64-bit hashed value of the name provided
+   */
+  static uint64_t getHashFromString(const std::string &name) { return std::hash<std::string>()(name); }
+
+  /**
    * Constructor with proper arguments
    * \param[in] memoryManager The memory manager to use for buffer allocations
    * \param[in] communicationManager The communication manager to use for internal data passing
@@ -196,31 +234,38 @@ class InstanceManager
                                                                             _memoryManager(memoryManager){};
 
   /**
-   * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
-   * \param[in] pIdx Index to the processing unit to use
-   * \param[in] eIdx Index to the execution unit to run
+   * Internal function used to initiate the execution of the requested RPC
+   * \param[in] rpcIdx Index to the RPC to run (hash to save overhead, the name is no longer recoverable)
    */
-  __USED__ inline void runRequest(const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx)
+  __USED__ inline void executeRPC(const RPCTargetIndex_t rpcIdx)
   {
+    // Getting RPC target from the index
+    if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
+    auto &l = _RPCTargetMap[rpcIdx];
+
+    // Getting execute and processing unit indexes
+    const auto eIdx = l.first;
+    const auto pIdx = l.second;
+
     // Checks that the processing and execution units have been registered
     if (_processingUnitMap.contains(pIdx) == false) HICR_THROW_RUNTIME("Attempting to run an processing unit (%lu) that was not defined in this instance (0x%lX).\n", pIdx, this);
     if (_executionUnitMap.contains(eIdx) == false) HICR_THROW_RUNTIME("Attempting to run an execution unit (%lu) that was not defined in this instance (0x%lX).\n", eIdx, this);
 
     // Getting units
-    auto &p = _processingUnitMap[pIdx];
+    auto &p = *_processingUnitMap[pIdx];
     auto &e = _executionUnitMap[eIdx];
 
     // Creating execution state
     auto s = _computeManager->createExecutionState(e);
 
     // Initializing processing unit
-    p->initialize();
+    p.initialize();
 
     // Running execution state
-    p->start(std::move(s));
+    p.start(std::move(s));
 
     // Waiting for processing unit to finish
-    p->await();
+    p.await();
   }
 
   /**
@@ -289,6 +334,11 @@ class InstanceManager
    * Map of execution units, representing potential RPC requests
    */
   std::map<executionUnitIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _executionUnitMap;
+
+  /**
+   * Map of RPC targets units
+   */
+  std::map<RPCTargetIndex_t, RPCTarget_t> _RPCTargetMap;
 };
 
 } // namespace L1

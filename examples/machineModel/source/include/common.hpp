@@ -1,12 +1,9 @@
 #pragma once
 
-#define PROCESSING_UNIT_ID 0
-
-#define FINALIZATION_EXECUTION_UNIT_ID 0
-#define TOPOLOGY_EXECUTION_UNIT_ID 1
-#define TASK_A_EXECUTION_UNIT_ID 2
-#define TASK_B_EXECUTION_UNIT_ID 3
-#define TASK_C_EXECUTION_UNIT_ID 4
+#define FINALIZATION_RPC_ID 0
+#define TASK_A_RPC_ID 2
+#define TASK_B_RPC_ID 3
+#define TASK_C_RPC_ID 4
 
 
 #include <memory>
@@ -27,12 +24,12 @@
 namespace HiCR // Simulating this is part of HiCR for now
 {
 
-std::unique_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[]);
+std::shared_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[]);
 void finalize();
 
 #ifdef _HICR_USE_MPI_BACKEND_
 
-std::unique_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[])
+std::shared_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[])
 {
   // Initializing MPI
   int requested = MPI_THREAD_SERIALIZED;
@@ -50,7 +47,7 @@ std::unique_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[])
   auto km = std::make_shared<HiCR::backend::host::pthreads::L1::ComputeManager>();
 
   // Now instantiating the instance manager
-  return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(cm, km, mm);
+  return std::make_shared<HiCR::backend::mpi::L1::InstanceManager>(cm, km, mm);
 }
 
 void finalize()

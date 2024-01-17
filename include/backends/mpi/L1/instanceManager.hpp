@@ -35,10 +35,29 @@ namespace mpi
 namespace L1
 {
 
+#ifndef _HICR_MPI_INSTANCE_BASE_TAG
+  /**
+   * Base instance tag for data passing
+   *
+   * The base tag can be changed if it collides with others
+   */
+  #define _HICR_MPI_INSTANCE_BASE_TAG 4096
+#endif
+
 /**
- * Instance manager tag for exchanging memory slots
+ * Tag to communicate an RPC's target
  */
-#define _HICR_MPI_INSTANCE_MANAGER_TAG 4096
+#define _HICR_MPI_RPC_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 1)
+
+/**
+ * Tag to communicate an RPC's result size information
+ */
+#define _HICR_MPI_INSTANCE_RETURN_SIZE_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 2)
+
+/**
+ * Tag to communicate an RPC's result data
+ */
+#define _HICR_MPI_INSTANCE_RETURN_DATA_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 3)
 
 /**
  * Implementation of the HiCR MPI Instance Manager
@@ -78,8 +97,18 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
   ~InstanceManager() = default;
 
-  __USED__ inline void execute(HiCR::L0::Instance &instance, const processingUnitIndex_t pIdx, const executionUnitIndex_t eIdx) const override
+  /**
+   * Triggers the execution of the specified RPC (by name) in the specified instance
+   *
+   * @param[in] instance The instance in which to execute the RPC
+   * @param[in] RPCTargetName The name of the target RPC to execute
+   *
+   */
+  __USED__ inline void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCTargetName) const override
   {
+    // Calculating hash for the RPC target's name
+    int hash = getHashFromString(RPCTargetName);
+
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *>(&instance);
 
@@ -90,8 +119,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     const auto dest = MPIInstance->getRank();
 
     // Sending request
-    MPI_Send(&eIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _MPICommunicationManager->getComm());
-    MPI_Send(&pIdx, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _MPICommunicationManager->getComm());
+    MPI_Send(&hash, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_RPC_TAG, _MPICommunicationManager->getComm());
   }
 
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance &instance) const override
@@ -139,22 +167,16 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Status status;
 
     // Storage for incoming execution unit index
-    executionUnitIndex_t eIdx = 0;
+    RPCTargetIndex_t rpcIdx = 0;
 
     // Getting RPC execution unit index
-    MPI_Recv(&eIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_INSTANCE_EXECUTION_UNIT_TAG, _MPICommunicationManager->getComm(), &status);
+    MPI_Recv(&rpcIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_RPC_TAG, _MPICommunicationManager->getComm(), &status);
 
     // Getting requester instance rank
     _RPCRequestRank = status.MPI_SOURCE;
 
-    // Storage for the index of the processing unit to use
-    processingUnitIndex_t pIdx = 0;
-
-    // Getting RPC execution unit index
-    MPI_Recv(&pIdx, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_PROCESSING_UNIT_TAG, _MPICommunicationManager->getComm(), MPI_STATUS_IGNORE);
-
-    // Trying to run remote request
-    runRequest(pIdx, eIdx);
+    // Trying to execute RPC
+    executeRPC(rpcIdx);
   }
 
   __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology)

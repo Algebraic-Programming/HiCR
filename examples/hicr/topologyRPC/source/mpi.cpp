@@ -25,10 +25,10 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::L1::TopologyManager topologyManager(&topology);
 
   // Asking backend to check the available devices
-  const auto t = tm.queryTopology();
+  const auto t = topologyManager.queryTopology();
 
   // Getting first device (CPU) found
   auto d = *t.getDevices().begin();
@@ -44,25 +44,31 @@ int main(int argc, char **argv)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating MPI-based communication manager (necessary for passing data around between instances)
-  auto cm = std::make_shared<HiCR::backend::mpi::L1::CommunicationManager>(MPI_COMM_WORLD);
+  auto communicationManager = std::make_shared<HiCR::backend::mpi::L1::CommunicationManager>(MPI_COMM_WORLD);
   
   // Creating MPI-based memory manager (necessary for buffer allocation)
-  auto mm = std::make_shared<HiCR::backend::mpi::L1::MemoryManager>();
+  auto memoryManager = std::make_shared<HiCR::backend::mpi::L1::MemoryManager>();
 
   // Initializing host (CPU) compute manager (for running incoming RPCs)
-  auto km = std::make_shared<HiCR::backend::host::pthreads::L1::ComputeManager>();
+  auto computeManager = std::make_shared<HiCR::backend::host::pthreads::L1::ComputeManager>();
 
   // Creating MPI-based instance manager
-  HiCR::backend::mpi::L1::InstanceManager instanceManager(cm, km, mm);
+  auto instanceManager = std::make_shared<HiCR::backend::mpi::L1::InstanceManager>(communicationManager, computeManager, memoryManager);
 
   // Setting buffer memory space for message exchanges
-  instanceManager.setBufferMemorySpace(firstMemorySpace);
+  instanceManager->setBufferMemorySpace(firstMemorySpace);
+
+  // Creating processing unit from the compute resource
+  auto processingUnit = computeManager->createProcessingUnit(firstComputeResource);
+
+  // Assigning processing unit to the instance manager
+  instanceManager->addProcessingUnit(std::move(processingUnit));
 
   // Differentiating between coordinator and worker functions using the rank number
   if (rank == 0)
     coordinatorFc(instanceManager);
   else
-    workerFc(instanceManager, km, firstMemorySpace, firstComputeResource);
+    workerFc(instanceManager, computeManager);
 
   // Finalizing MPI
   MPI_Finalize();
