@@ -57,7 +57,31 @@ class ComputationKernel final : public Kernel
   };
 
   /**
-   * Constructor for the Computation Kernel unit class of the ascend backend
+   * Constructor for the Computation Kernel unit class of the ascend backend.
+   * This will not perform any model loading so this aspect should be handled manually (e.g., with aclopSetModelDir())
+   *
+   * \param kernelName name of the kernel
+   * \param inputs kernel input tensor data descriptors
+   * \param outputs kernel output tensor data descriptors
+   * \param kernelAttrs kernel attributes
+   */
+  ComputationKernel(
+    const char *kernelName,
+    const std::vector<tensorData_t> &inputs,
+    const std::vector<tensorData_t> &outputs,
+    const aclopAttr *kernelAttrs)
+    : Kernel(),
+      _kernelName(kernelName),
+      _kernelAttrs(kernelAttrs)
+  {
+    // populate internal data structure with input and output tensor data
+    initializeDataBuffersAndDescriptors(inputs, _inputTensorDescriptors, _inputDataBuffers);
+    initializeDataBuffersAndDescriptors(outputs, _outputTensorDescriptors, _outputDataBuffers);
+  };
+
+  /**
+   * Constructor for the Computation Kernel unit class of the ascend backend.
+   * This will load an operator binary file located at the provided path with aclopLoad()
    *
    * \param kernelPath path the the kernel .om file
    * \param kernelName name of the kernel
@@ -71,16 +95,12 @@ class ComputationKernel final : public Kernel
     const std::vector<tensorData_t> &inputs,
     const std::vector<tensorData_t> &outputs,
     const aclopAttr *kernelAttrs)
-    : Kernel(),
-      _kernelName(kernelName),
-      _kernelAttrs(kernelAttrs)
+    : ComputationKernel(kernelName, inputs, outputs, kernelAttrs)
   {
-    // populate internal data structure with input and output tensor data
-    initializeDataBuffersAndDescriptors(inputs, _inputTensorDescriptors, _inputDataBuffers);
-    initializeDataBuffersAndDescriptors(outputs, _outputTensorDescriptors, _outputDataBuffers);
     // load kernel in memory
     loadKernel(std::string(kernelPath));
   };
+
   ComputationKernel() = delete;
   ~ComputationKernel() = default;
 
@@ -110,21 +130,16 @@ class ComputationKernel final : public Kernel
    */
   __USED__ inline void start(const aclrtStream stream) override
   {
-    // register the operator in the ACL runtime
-    aclError err = aclopLoad(_kernelPtr.data(), _kernelSize);
-
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to load kernel into memory. Error %d", err);
-
     // start the kernel
-    err = aclopExecuteV2(_kernelName.c_str(),
-                         (int)_inputTensorDescriptors.size(),
-                         (aclTensorDesc **)_inputTensorDescriptors.data(),
-                         (aclDataBuffer **)_inputDataBuffers.data(),
-                         (int)_outputTensorDescriptors.size(),
-                         (aclTensorDesc **)_outputTensorDescriptors.data(),
-                         (aclDataBuffer **)_outputDataBuffers.data(),
-                         (aclopAttr *)_kernelAttrs,
-                         stream);
+    aclError err = aclopExecuteV2(_kernelName.c_str(),
+                                  (int)_inputTensorDescriptors.size(),
+                                  (aclTensorDesc **)_inputTensorDescriptors.data(),
+                                  (aclDataBuffer **)_inputDataBuffers.data(),
+                                  (int)_outputTensorDescriptors.size(),
+                                  (aclTensorDesc **)_outputTensorDescriptors.data(),
+                                  (aclDataBuffer **)_outputDataBuffers.data(),
+                                  (aclopAttr *)_kernelAttrs,
+                                  stream);
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to run the kernel. Error %d", err);
   }
@@ -203,6 +218,12 @@ class ComputationKernel final : public Kernel
     if (!fin) HICR_THROW_RUNTIME("Error reading file could only read %d bytes", fin.gcount());
 
     fin.close();
+
+    // register the operator in the ACL runtime
+    aclError err = aclopLoad(_kernelPtr.data(), _kernelSize);
+
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to load kernel into memory. Error %d", err);
+    printf("Kernel loaded\n");
   }
 };
 
