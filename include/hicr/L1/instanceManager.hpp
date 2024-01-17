@@ -73,8 +73,6 @@ class InstanceManager
    */
   typedef std::unordered_set<std::shared_ptr<HiCR::L0::Instance>> instanceList_t;
 
-  void finalize() { _processingUnitMap.clear(); }
-
   /**
    * Default constructor is deleted, this class requires the passing of a memory manager
    */

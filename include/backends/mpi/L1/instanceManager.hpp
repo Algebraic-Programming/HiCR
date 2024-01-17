@@ -174,7 +174,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
     // Getting requester instance rank
     _RPCRequestRank = status.MPI_SOURCE;
-    
+
     // Trying to execute RPC
     executeRPC(rpcIdx);
   }
