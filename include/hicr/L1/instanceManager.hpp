@@ -61,12 +61,12 @@ class InstanceManager
   /**
   * Type definition for a listenable unit. That is, the pair of execution unit and the processing unit in charge of executing it
   */
-  typedef std::pair<executionUnitIndex_t, processingUnitIndex_t> listenableUnit_t;
+  typedef std::pair<executionUnitIndex_t, processingUnitIndex_t> RPCTarget_t;
 
   /**
   * Type definition for an index for a listenable unit.
   */
-  typedef int listenableUnitIndex_t;
+  typedef int RPCTargetIndex_t;
 
   /**
    * Type definition for an unsorted set of unique pointers to the detected instances
@@ -151,21 +151,22 @@ class InstanceManager
   __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit, const processingUnitIndex_t index = _HICR_DEFAULT_PROCESSING_UNIT_ID_) { _processingUnitMap[index] = std::move(processingUnit); }
 
   /**
-   * Function to add a listenable unit. That is, the combination of a execution unit and the processing unit that is in charge of executing it
+   * Function to add an RPC target with a name, and the combination of a execution unit and the processing unit that is in charge of executing it
+   * \param[in] RPCName Name of the RPC to add
    * \param[in] index Indicates the index of the new execution unit
    * \param[in] processingUnit The processing unit to add
    */
-  __USED__ inline void addListenableUnit(const std::string& listenableUnitName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex = _HICR_DEFAULT_PROCESSING_UNIT_ID_)
+  __USED__ inline void addRPCTarget(const std::string& RPCName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex = _HICR_DEFAULT_PROCESSING_UNIT_ID_)
    {
      // Obtaining hash from the RPC name
-     const auto listenableUnitNameHash = getHashFromString(listenableUnitName);
+     const auto nameHash = getHashFromString(RPCName);
 
      // Inserting the new entry
-     _listenableUnitMap[listenableUnitNameHash] = listenableUnit_t({ eIndex, pIndex });
+     _RPCTargetMap[nameHash] = RPCTarget_t({ eIndex, pIndex });
    }
 
   /**
-   * Function to put the current instance to listen for incoming requests
+   * Function to put the current instance to listen for incoming RPCs
    */
   __USED__ inline void listen()
   {
@@ -178,7 +179,7 @@ class InstanceManager
    * \param[in] eIdx Index to the execution unit to run
    * \param[in] instance Instance on which to run the RPC
    */
-  virtual void execute(HiCR::L0::Instance &instance, const std::string& listenableUnitName) const = 0;
+  virtual void executeRPC(HiCR::L0::Instance &instance, const std::string& RPCName) const = 0;
 
   /**
    * Function to submit a return value for the currently running RPC
@@ -231,11 +232,11 @@ class InstanceManager
    * \param[in] pIdx Index to the processing unit to use
    * \param[in] eIdx Index to the execution unit to run
    */
-  __USED__ inline void runRequest(const listenableUnitIndex_t lIdx)
+  __USED__ inline void runRequest(const RPCTargetIndex_t rpcIdx)
   {
-    // Getting listenable unit from the index
-    if (_listenableUnitMap.contains(lIdx) == false) HICR_THROW_RUNTIME("Attempting to run an listenable unit (%lu) that was not defined in this instance (0x%lX).\n", lIdx, this);
-    auto &l = _listenableUnitMap[lIdx];
+    // Getting RPC target from the index
+    if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
+    auto &l = _RPCTargetMap[rpcIdx];
 
     // Getting execute and processing unit indexes
     const auto eIdx = l.first;
@@ -330,9 +331,9 @@ class InstanceManager
   std::map<executionUnitIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _executionUnitMap;
 
   /**
-  * Map of listenable units
+  * Map of RPC targets units
   */
-  std::map<listenableUnitIndex_t, listenableUnit_t> _listenableUnitMap;
+  std::map<RPCTargetIndex_t, RPCTarget_t> _RPCTargetMap;
 };
 
 } // namespace L1

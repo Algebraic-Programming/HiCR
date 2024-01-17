@@ -93,9 +93,96 @@ class MachineModel
     // Registering Topology parsing function as callable RPC
     auto topologyRPCExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([this](){ submitTopology(); });
     _instanceManager->addExecutionUnit(topologyRPCExecutionUnit, _HICR_TOPOLOGY_RPC_UNIT_ID);
-    _instanceManager->addListenableUnit(_HICR_TOPOLOGY_RPC_NAME, _HICR_TOPOLOGY_RPC_UNIT_ID);
+    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, _HICR_TOPOLOGY_RPC_UNIT_ID);
   }
 
+  std::vector<request_t> parseMachineModel(const nlohmann::json& machineModelJson)
+  {
+    // Storage for the parsed instances from the machine model
+    std::vector<request_t> requests;  
+
+    // Checking for correct format in the machine model
+    if (machineModelJson.contains("Instances") == false) throw std::runtime_error("the machine model does not contain an 'Instances' entry\n");
+    if (machineModelJson["Instances"].is_array() == false) throw std::runtime_error("The 'Instances' entry in the machine model is not an array\n");
+
+    // Now iterating over all requested instances
+    for (const auto& instance : machineModelJson["Instances"])
+    {
+      // Storage for the new requested instance to add
+      request_t newRequestedInstance;
+
+      // Parsing task name
+      if (instance.contains("Task") == false) throw std::runtime_error("the requested instance does not contain a 'Task' entry\n"); 
+      if (instance["Task"].is_string() == false) throw std::runtime_error("The instance 'Task' entry is not a string\n");
+      newRequestedInstance.taskName = instance["Task"].get<std::string>();
+
+      // Parsing replica count
+      if (instance.contains("Replicas") == false) throw std::runtime_error("the requested instance does not contain a 'Replicas' entry\n");
+      if (instance["Replicas"].is_number_unsigned() == false) throw std::runtime_error("The instance 'Replicas' entry is not an unsigned number\n");
+      newRequestedInstance.replicaCount = instance["Replicas"].get<size_t>();
+
+      // Parsing requested topology
+      if (instance.contains("Topology") == false) throw std::runtime_error("the requested instance does not contain a 'Topology' entry\n");
+      if (instance["Topology"].is_object() == false) throw std::runtime_error("The instance 'Topology' entry is not an object\n");
+      newRequestedInstance.topology = parseTopology(instance["Topology"]);
+
+      // Adding newly requested instance to the collection
+      requests.push_back(newRequestedInstance);
+    }
+
+    // Returning parsed requested instances
+    return requests;
+  }
+  void executeRequests(std::vector<request_t>& requests)
+  {
+    // Getting information about the currently launched instances and their topology
+    auto detectedInstances = detectInstances(*_instanceManager);
+
+    // Now matching requested instances to actual instances, creating new ones if the detected ones do not satisfy their topology requirements
+    for (size_t i = 0; i < requests.size(); i++) 
+     for (size_t j = 0; j < requests[i].replicaCount; j++)
+      {
+        // Flag to store whether the request has been assigned an instances
+        bool requestAssigned = false;
+
+        // Try to match the requested instances against one of the detected instances
+        for (auto dItr = detectedInstances.begin(); dItr != detectedInstances.end() && requestAssigned == false; dItr++)
+        {
+          // Check if the detected instance topology satisfied the request do the following
+          if (isTopologySubset(requests[i].topology, dItr->topology) == true)
+          {
+            // Assign the instance to the request
+            requests[i].instances.push_back(dItr->instance);
+
+            // Mark request as assigned to continue break the loops
+            requestAssigned = true;
+
+            // Remove detected instance from the list so it's not assigned to another request
+            detectedInstances.erase(dItr);
+          }
+        }
+
+        // If the request replica was assigned, continue with the next one
+        if (requestAssigned == true) continue;
+      
+        // If no remaining detected instances satisfied the request, then try to create a new instance ad hoc
+        auto newInstance = _instanceManager->createInstance(requests[i].topology);
+
+        // Adding new instance to the detected instance set
+        if (newInstance != nullptr) { requests[i].instances.push_back(newInstance); requestAssigned = true; }
+
+        // If no instances could be created, then abort
+        if (requestAssigned == false)
+        {
+          std::string errorMsg = std::string("Could not assign nor create an instance for request ") + std::to_string(i) + std::string(", replica ") + std::to_string(j);
+          throw std::runtime_error(errorMsg.c_str()); 
+        }
+      }
+  }
+
+  private:
+
+  
   HiCR::L0::Topology parseTopology(const nlohmann::json& topologyJson)
   {
     // Storage for the HiCR-formatted topology to create
@@ -206,44 +293,6 @@ class MachineModel
     return true;
   }
 
-  std::vector<request_t> parseMachineModel(const nlohmann::json& machineModelJson)
-  {
-    // Storage for the parsed instances from the machine model
-    std::vector<request_t> requests;  
-
-    // Checking for correct format in the machine model
-    if (machineModelJson.contains("Instances") == false) throw std::runtime_error("the machine model does not contain an 'Instances' entry\n");
-    if (machineModelJson["Instances"].is_array() == false) throw std::runtime_error("The 'Instances' entry in the machine model is not an array\n");
-
-    // Now iterating over all requested instances
-    for (const auto& instance : machineModelJson["Instances"])
-    {
-      // Storage for the new requested instance to add
-      request_t newRequestedInstance;
-
-      // Parsing task name
-      if (instance.contains("Task") == false) throw std::runtime_error("the requested instance does not contain a 'Task' entry\n"); 
-      if (instance["Task"].is_string() == false) throw std::runtime_error("The instance 'Task' entry is not a string\n");
-      newRequestedInstance.taskName = instance["Task"].get<std::string>();
-
-      // Parsing replica count
-      if (instance.contains("Replicas") == false) throw std::runtime_error("the requested instance does not contain a 'Replicas' entry\n");
-      if (instance["Replicas"].is_number_unsigned() == false) throw std::runtime_error("The instance 'Replicas' entry is not an unsigned number\n");
-      newRequestedInstance.replicaCount = instance["Replicas"].get<size_t>();
-
-      // Parsing requested topology
-      if (instance.contains("Topology") == false) throw std::runtime_error("the requested instance does not contain a 'Topology' entry\n");
-      if (instance["Topology"].is_object() == false) throw std::runtime_error("The instance 'Topology' entry is not an object\n");
-      newRequestedInstance.topology = parseTopology(instance["Topology"]);
-
-      // Adding newly requested instance to the collection
-      requests.push_back(newRequestedInstance);
-    }
-
-    // Returning parsed requested instances
-    return requests;
-  }
-
   std::vector<detectedInstance_t> detectInstances(HiCR::L1::InstanceManager &instanceManager)
   {
     // Storage for the detected instances
@@ -263,7 +312,7 @@ class MachineModel
       detectedInstance.instance = instance;
 
       // Running the RPC that obtains the instance's serialized topology
-      instanceManager.execute(*instance, _HICR_TOPOLOGY_RPC_NAME);
+      instanceManager.executeRPC(*instance, _HICR_TOPOLOGY_RPC_NAME);
 
       // Gathering the return value
       auto returnValue = instanceManager.getReturnValue(*instance);
@@ -288,53 +337,6 @@ class MachineModel
 
     // Returning detected instances
     return detectedInstances;
-  }
-
-  void executeRequests(std::vector<request_t>& requests)
-  {
-    // Getting information about the currently launched instances and their topology
-    auto detectedInstances = detectInstances(*_instanceManager);
-
-    // Now matching requested instances to actual instances, creating new ones if the detected ones do not satisfy their topology requirements
-    for (size_t i = 0; i < requests.size(); i++) 
-     for (size_t j = 0; j < requests[i].replicaCount; j++)
-      {
-        // Flag to store whether the request has been assigned an instances
-        bool requestAssigned = false;
-
-        // Try to match the requested instances against one of the detected instances
-        for (auto dItr = detectedInstances.begin(); dItr != detectedInstances.end() && requestAssigned == false; dItr++)
-        {
-          // Check if the detected instance topology satisfied the request do the following
-          if (isTopologySubset(requests[i].topology, dItr->topology) == true)
-          {
-            // Assign the instance to the request
-            requests[i].instances.push_back(dItr->instance);
-
-            // Mark request as assigned to continue break the loops
-            requestAssigned = true;
-
-            // Remove detected instance from the list so it's not assigned to another request
-            detectedInstances.erase(dItr);
-          }
-        }
-
-        // If the request replica was assigned, continue with the next one
-        if (requestAssigned == true) continue;
-      
-        // If no remaining detected instances satisfied the request, then try to create a new instance ad hoc
-        auto newInstance = _instanceManager->createInstance(requests[i].topology);
-
-        // Adding new instance to the detected instance set
-        if (newInstance != nullptr) { requests[i].instances.push_back(newInstance); requestAssigned = true; }
-
-        // If no instances could be created, then abort
-        if (requestAssigned == false)
-        {
-          std::string errorMsg = std::string("Could not assign nor create an instance for request ") + std::to_string(i) + std::string(", replica ") + std::to_string(j);
-          throw std::runtime_error(errorMsg.c_str()); 
-        }
-      }
   }
 
   __USED__ inline void submitTopology()
@@ -404,9 +406,6 @@ class MachineModel
     // Deregistering memory slot
     memoryManager->deregisterLocalMemorySlot(sendBuffer);
   };
-
-
-  private:
 
   HiCR::L1::InstanceManager* const _instanceManager;
 };

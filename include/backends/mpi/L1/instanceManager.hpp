@@ -45,9 +45,9 @@ namespace L1
 #endif
 
 /**
- * Tag to communicate an RPC's listenable unit
+ * Tag to communicate an RPC's target
  */
-#define _HICR_MPI_LISTENABLE_UNIT_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 1)
+#define _HICR_MPI_RPC_TAG (_HICR_MPI_INSTANCE_BASE_TAG + 1)
 
 /**
  * Tag to communicate an RPC's result size information
@@ -97,10 +97,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
   ~InstanceManager() = default;
 
-  __USED__ inline void execute(HiCR::L0::Instance &instance, const std::string& listenableUnitName) const override
+  __USED__ inline void executeRPC(HiCR::L0::Instance &instance, const std::string& RPCTargetName) const override
   {
-    // Calculating hash for the listenable unit
-    int hash = getHashFromString(listenableUnitName);
+    // Calculating hash for the RPC target's name
+    int hash = getHashFromString(RPCTargetName);
 
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *>(&instance);
@@ -112,7 +112,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     const auto dest = MPIInstance->getRank();
 
     // Sending request
-    MPI_Send(&hash, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_LISTENABLE_UNIT_TAG, _MPICommunicationManager->getComm());
+    MPI_Send(&hash, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_RPC_TAG, _MPICommunicationManager->getComm());
   }
 
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance &instance) const override
@@ -160,16 +160,16 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Status status;
 
     // Storage for incoming execution unit index
-    listenableUnitIndex_t lIdx = 0;
+    RPCTargetIndex_t rpcIdx = 0;
 
     // Getting RPC execution unit index
-    MPI_Recv(&lIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_LISTENABLE_UNIT_TAG, _MPICommunicationManager->getComm(), &status);
+    MPI_Recv(&rpcIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_RPC_TAG, _MPICommunicationManager->getComm(), &status);
 
     // Getting requester instance rank
     _RPCRequestRank = status.MPI_SOURCE;
 
     // Trying to run remote request
-    runRequest(lIdx);
+    runRequest(rpcIdx);
   }
 
   __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology)

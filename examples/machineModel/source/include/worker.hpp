@@ -8,6 +8,7 @@
 #include <backends/host/pthreads/L1/computeManager.hpp>
 #include <backends/host/hwloc/L1/memoryManager.hpp>
 #include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <frontends/machineModel/machineModel.hpp>
 
 // Worker task functions
 void taskFc(const std::string& taskName, HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace)
@@ -59,11 +60,11 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   instanceManager.addExecutionUnit(taskBExecutionUnit, TASK_B_RPC_ID);
   instanceManager.addExecutionUnit(taskCExecutionUnit, TASK_C_RPC_ID);
 
-  // Adding listenable units (combines execution units with the processing unit in charge of executing them)
-  instanceManager.addListenableUnit("Finalize", FINALIZATION_RPC_ID);
-  instanceManager.addListenableUnit("Task A", TASK_A_RPC_ID);
-  instanceManager.addListenableUnit("Task B", TASK_B_RPC_ID);
-  instanceManager.addListenableUnit("Task C", TASK_C_RPC_ID);
+  // Adding RPC targets, specifying a name and the execution unit to execute
+  instanceManager.addRPCTarget("Finalize", FINALIZATION_RPC_ID);
+  instanceManager.addRPCTarget("Task A", TASK_A_RPC_ID);
+  instanceManager.addRPCTarget("Task B", TASK_B_RPC_ID);
+  instanceManager.addRPCTarget("Task C", TASK_C_RPC_ID);
   
   // Listening for RPC requests
   while(continueListening == true) instanceManager.listen();

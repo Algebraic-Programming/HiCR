@@ -95,8 +95,8 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager,
   // Assigning processing unit to the instance manager
   instanceManager.addExecutionUnit(executionUnit, TOPOLOGY_RPC_ID);
 
-  // Adding listenable unit -- this pairs the execution unit with the processing unit in charge of executing it
-  instanceManager.addListenableUnit(TOPOLOGY_RPC_NAME, TOPOLOGY_RPC_ID);
+  // Adding RPC target by name and the execution unit id to run
+  instanceManager.addRPCTarget(TOPOLOGY_RPC_NAME, TOPOLOGY_RPC_ID);
 
   // Listening for RPC requests
   instanceManager.listen();

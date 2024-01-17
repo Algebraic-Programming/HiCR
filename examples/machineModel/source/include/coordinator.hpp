@@ -23,7 +23,7 @@ void finalizeExecution(HiCR::L1::InstanceManager &instanceManager, const int ret
   // Requesting workers to abort and printing error message 
   for (const auto &instance : instances)
     if (instance->getId() != coordinator->getId())
-      instanceManager.execute(*instance, "Finalize");
+      instanceManager.executeRPC(*instance, "Finalize");
 
   HiCR::finalize();
   exit(returnCode);
@@ -62,7 +62,7 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string
   // Running the assigned task id in the correspondng instance
   for (auto &r : requests)
    for (auto &in : r.instances)
-    instanceManager.execute(*in, r.taskName);
+    instanceManager.executeRPC(*in, r.taskName);
 
   // Now waiting for return values to arrive
   for (auto &r : requests)
