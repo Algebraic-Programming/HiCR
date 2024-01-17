@@ -15,7 +15,7 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
   // Printing instance information and invoking a simple RPC if its not ourselves
   for (const auto &instance : instances)
     if (instance->getId() != coordinator->getId())
-      instanceManager.executeRPC(*instance, TOPOLOGY_RPC_NAME);
+      instanceManager.launchRPC(*instance, TOPOLOGY_RPC_NAME);
 
   // Getting return values from the RPCs containing each of the worker's topology
   for (const auto &instance : instances) if (instance != coordinator)

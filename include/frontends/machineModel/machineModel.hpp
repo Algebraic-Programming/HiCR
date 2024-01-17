@@ -14,6 +14,7 @@
 #pragma once
 
 #include <unordered_set>
+#include <functional>
 #include "nlohmann_json/json.hpp"
 #include <hicr/L0/topology.hpp>
 #include <hicr/L1/instanceManager.hpp>
@@ -27,7 +28,14 @@
 #include <backends/ascend/L0/device.hpp>
 #endif
 
-#define _HICR_TOPOLOGY_RPC_UNIT_ID 0xF0F0F0F0
+/**
+ * Execution unit id for the predetermined topology-exchange RPC
+*/
+#define _HICR_TOPOLOGY_RPC_EXECUTION_UNIT_ID 0xF0F0F0F0
+
+/**
+ * Internal name of the predetermined topology-exchange RPC
+*/
 #define _HICR_TOPOLOGY_RPC_NAME "HICR_TOPOLOGY_RPC_"
 
 namespace HiCR
@@ -40,6 +48,11 @@ class MachineModel
 {
   public:
  
+  /**
+   * Function type for the evaluation topology acceptance criteria (whether an instance topology satisfies a given request)
+  */
+ typedef std::function<bool(const HiCR::L0::Topology&, const HiCR::L0::Topology&)> topologyAcceptanceCriteriaFc_t;
+
   /**
    *  This struct hold the information of a detected instance including its topology
    */
@@ -92,11 +105,18 @@ class MachineModel
   {
     // Registering Topology parsing function as callable RPC
     auto topologyRPCExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([this](){ submitTopology(); });
-    _instanceManager->addExecutionUnit(topologyRPCExecutionUnit, _HICR_TOPOLOGY_RPC_UNIT_ID);
-    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, _HICR_TOPOLOGY_RPC_UNIT_ID);
+    _instanceManager->addExecutionUnit(topologyRPCExecutionUnit, _HICR_TOPOLOGY_RPC_EXECUTION_UNIT_ID);
+    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, _HICR_TOPOLOGY_RPC_EXECUTION_UNIT_ID);
   }
 
-  std::vector<request_t> parseMachineModel(const nlohmann::json& machineModelJson)
+  /**
+   * This function takes a valid JSON-based description of a machine model and parses it into HiCR request objects that can be
+   * satisfied later by creating a new instance using the instance manager 
+   * 
+   * @param[in] machineModelJson The machine model to parse, in JSON format
+   * @return A vector of requests, in the same order as provided in the JSON file
+  */
+  std::vector<request_t> parse(const nlohmann::json& machineModelJson)
   {
     // Storage for the parsed instances from the machine model
     std::vector<request_t> requests;  
@@ -133,9 +153,20 @@ class MachineModel
     // Returning parsed requested instances
     return requests;
   }
-  void executeRequests(std::vector<request_t>& requests)
+
+  /**
+   * This function deploys the requested machine model into the available system resources.
+   * It receives a set of machine requests and uses the instance manager to resolve whether:
+   * - A yet-unasigned instance exists that can satisfy the given request or, otherwise
+   * - A new instance can be created with the minimal set of hardware resources to satisfy that request
+   * This function will fail (exception) if neither of the two conditions above can be met
+   * 
+   * @param[in] requests A vector of machine requests. The requests will be resolved in the order provided.
+   * @param[in] acceptanceCriteriaFc A function that determines, given the detect topology and the requested topology, if the former satisfies the latter
+  */
+  void deploy(std::vector<request_t>& requests, topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
   {
-    // Getting information about the currently launched instances and their topology
+    // Getting information about the currently deployed instances and their topology
     auto detectedInstances = detectInstances(*_instanceManager);
 
     // Now matching requested instances to actual instances, creating new ones if the detected ones do not satisfy their topology requirements
@@ -149,7 +180,7 @@ class MachineModel
         for (auto dItr = detectedInstances.begin(); dItr != detectedInstances.end() && requestAssigned == false; dItr++)
         {
           // Check if the detected instance topology satisfied the request do the following
-          if (isTopologySubset(requests[i].topology, dItr->topology) == true)
+          if (acceptanceCriteriaFc(requests[i].topology, dItr->topology) == true)
           {
             // Assign the instance to the request
             requests[i].instances.push_back(dItr->instance);
@@ -227,72 +258,6 @@ class MachineModel
     return topology;
   }
 
-  bool isTopologySubset(const HiCR::L0::Topology& a, const HiCR::L0::Topology& b)
-  {
-    // For this example, it suffices that topology B has more or equal:
-    //  + Total Core Count (among all NUMA domains)
-    //  + Total RAM size (among all NUMA domains)
-    //  + Ascend devices
-    // than topology A.
-
-    size_t tACoreCount = 0;
-    size_t tBCoreCount = 0;
-
-    size_t tAMemSize = 0;
-    size_t tBMemSize = 0;
-
-    size_t tAAscendDeviceCount = 0;
-    size_t tBAscendDeviceCount = 0;
-
-    // Processing topology A
-    for (const auto& d: a.getDevices()) 
-    {
-      const auto deviceType = d->getType();
-
-      // If it's a NUMA Domain device, then its about host requirements
-      if (deviceType == "NUMA Domain")
-      {
-        // Casting to a host device
-        auto hostDev = std::dynamic_pointer_cast<HiCR::backend::host::L0::Device>(d);
-
-        // Adding corresponding counts
-        tACoreCount += hostDev->getComputeResourceList().size();
-        tAMemSize += (*hostDev->getMemorySpaceList().begin())->getSize();
-      }
-
-      // It it's an Ascend device, increment the ascend device counter
-      if (deviceType == "Ascend Device") tAAscendDeviceCount++;
-    } 
-
-    // Processing topology B
-    for (const auto& d: b.getDevices()) 
-    {
-      const auto deviceType = d->getType();
-
-      // If it's a NUMA Domain device, then its about host requirements
-      if (deviceType == "NUMA Domain")
-      {
-        // Casting to a host device
-        auto hostDev = std::dynamic_pointer_cast<HiCR::backend::host::L0::Device>(d);
-
-        // Adding corresponding counts
-        tBCoreCount += hostDev->getComputeResourceList().size();
-        tBMemSize += (*hostDev->getMemorySpaceList().begin())->getSize();
-      }
-
-      // It it's an Ascend device, increment the ascend device counter
-      if (deviceType == "Ascend Device") tBAscendDeviceCount++;
-    } 
-
-    // Evaluating criteria
-    if (tACoreCount > tBCoreCount) return false;
-    if (tAMemSize   > tBMemSize) return false;
-    if (tAAscendDeviceCount > tBAscendDeviceCount) return false;
-
-    // If no criteria failed, return true
-    return true;
-  }
-
   std::vector<detectedInstance_t> detectInstances(HiCR::L1::InstanceManager &instanceManager)
   {
     // Storage for the detected instances
@@ -312,7 +277,7 @@ class MachineModel
       detectedInstance.instance = instance;
 
       // Running the RPC that obtains the instance's serialized topology
-      instanceManager.executeRPC(*instance, _HICR_TOPOLOGY_RPC_NAME);
+      instanceManager.launchRPC(*instance, _HICR_TOPOLOGY_RPC_NAME);
 
       // Gathering the return value
       auto returnValue = instanceManager.getReturnValue(*instance);

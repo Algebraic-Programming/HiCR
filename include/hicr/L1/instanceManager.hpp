@@ -153,8 +153,8 @@ class InstanceManager
   /**
    * Function to add an RPC target with a name, and the combination of a execution unit and the processing unit that is in charge of executing it
    * \param[in] RPCName Name of the RPC to add
-   * \param[in] index Indicates the index of the new execution unit
-   * \param[in] processingUnit The processing unit to add
+   * \param[in] eIndex Indicates the index of the execution unit to run when this RPC target is triggered
+   * \param[in] pIndex Indicates the processing unit to use for running the specified execution unit
    */
   __USED__ inline void addRPCTarget(const std::string& RPCName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex = _HICR_DEFAULT_PROCESSING_UNIT_ID_)
    {
@@ -176,10 +176,10 @@ class InstanceManager
 
   /**
    * Function to trigger the execution of a remote function in a remote HiCR instance
-   * \param[in] eIdx Index to the execution unit to run
+   * \param[in] RPCName The name of the RPC to run
    * \param[in] instance Instance on which to run the RPC
    */
-  virtual void executeRPC(HiCR::L0::Instance &instance, const std::string& RPCName) const = 0;
+  virtual void launchRPC(HiCR::L0::Instance &instance, const std::string& RPCName) const = 0;
 
   /**
    * Function to submit a return value for the currently running RPC
@@ -213,6 +213,12 @@ class InstanceManager
 
   protected:
 
+  /**
+   * Generates a 64-bit hash value from a given string. Useful for compressing the name of RPCs
+   * 
+   * @param[in] name A string (e.g., the name of an RPC to compress)
+   * @return The 64-bit hashed value of the name provided
+  */
   static uint64_t getHashFromString(const std::string& name) { return std::hash<std::string>()(name); }
 
   /**
@@ -228,11 +234,10 @@ class InstanceManager
                                                                             _memoryManager(memoryManager){};
 
   /**
-   * Internal function used to initiate the execution of the requested RPC  bt running executionUnit using the indicated procesing unit
-   * \param[in] pIdx Index to the processing unit to use
-   * \param[in] eIdx Index to the execution unit to run
+   * Internal function used to initiate the execution of the requested RPC
+   * \param[in] rpcIdx Index to the RPC to run (hash to save overhead, the name is no longer recoverable)
    */
-  __USED__ inline void runRequest(const RPCTargetIndex_t rpcIdx)
+  __USED__ inline void executeRPC(const RPCTargetIndex_t rpcIdx)
   {
     // Getting RPC target from the index
     if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
