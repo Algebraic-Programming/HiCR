@@ -5,18 +5,17 @@
 #define TASK_B_RPC_ID 3
 #define TASK_C_RPC_ID 4
 
-
 #include <memory>
 #include <fstream>
 #include <nlohmann_json/json.hpp>
 #include <hicr/L1/instanceManager.hpp>
 
 #ifdef _HICR_USE_MPI_BACKEND_
-#include <mpi.h>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <backends/host/pthreads/L1/computeManager.hpp>
-#include <backends/mpi/L1/memoryManager.hpp>
-#include <backends/mpi/L1/instanceManager.hpp>
+  #include <mpi.h>
+  #include <backends/host/hwloc/L1/topologyManager.hpp>
+  #include <backends/host/pthreads/L1/computeManager.hpp>
+  #include <backends/mpi/L1/memoryManager.hpp>
+  #include <backends/mpi/L1/instanceManager.hpp>
 #endif // _HICR_USE_MPI_BACKEND_
 
 // Selecting the appropriate instance manager based on the selected backends during compilation
@@ -24,12 +23,12 @@
 namespace HiCR // Simulating this is part of HiCR for now
 {
 
-std::shared_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[]);
+std::shared_ptr<HiCR::L1::InstanceManager> initialize(int *argc, char **argv[]);
 void finalize();
 
 #ifdef _HICR_USE_MPI_BACKEND_
 
-std::shared_ptr<HiCR::L1::InstanceManager> initialize(int* argc, char** argv[])
+std::shared_ptr<HiCR::L1::InstanceManager> initialize(int *argc, char **argv[])
 {
   // Initializing MPI
   int requested = MPI_THREAD_SERIALIZED;
@@ -58,7 +57,6 @@ void finalize()
 #endif // _HICR_USE_MPI_BACKEND_
 
 } // namespace HiCR
-
 
 // Taken from https://stackoverflow.com/questions/116038/how-do-i-read-an-entire-file-into-a-stdstring-in-c/116220#116220
 inline std::string slurp(std::ifstream &in)

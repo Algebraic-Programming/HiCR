@@ -7,9 +7,7 @@
 
 // Enabling topology managers (to discover the system's hardware) based on the selected backends during compilation
 
-
-
 #ifdef _HICR_USE_HWLOC_BACKEND_
-#include <hwloc.h>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+  #include <hwloc.h>
+  #include <backends/host/hwloc/L1/topologyManager.hpp>
 #endif // _HICR_USE_HWLOC_BACKEND_

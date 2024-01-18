@@ -5,8 +5,8 @@
  */
 
 /**
- * @file base.hpp
- * @brief Provides base functionality for a Multiple-Producer Single-Consumer Channel (MPSC) over HiCR
+ * @file fixedSize/base.hpp
+ * @brief Provides base functionality for a fixed-size MPSC channel over HiCR
  * @author S. M Martin
  * @date 14/11/2023
  */

@@ -71,7 +71,40 @@ class LocalMemorySlot : public MemorySlot
    */
   __USED__ inline std::shared_ptr<HiCR::L0::MemorySpace> getMemorySpace() const noexcept { return _memorySpace; }
 
+  /**
+   * Setter function for the memory slot's sent message counter
+   * @param[in] count The memory slot's sent message counter to set
+   */
+  __USED__ inline void setMessagesSent(const size_t count) noexcept { _messagesSent = count; }
+  /**
+   * Setter function for the memory slot's received message counter
+   * @param[in] count The memory slot's recv message counter to set
+   */
+  __USED__ inline void setMessagesRecv(const size_t count) noexcept { _messagesRecv = count; }
+
+  /**
+   * Getter function for the memory slot's sent message counter
+   * \returns The memory slot's sent message counter
+   */
+  __USED__ inline size_t getMessagesSent() const noexcept { return _messagesSent; }
+
+  /**
+   * Getter function for the memory slot's received message counter
+   * \returns The memory slot's received message counter
+   */
+  __USED__ inline size_t getMessagesRecv() const noexcept { return _messagesRecv; }
+
   private:
+
+  /**
+   * Messages received into this slot
+   */
+  __volatile__ size_t _messagesRecv = 0;
+
+  /**
+   * Messages sent from this slot
+   */
+  __volatile__ size_t _messagesSent = 0;
 
   /**
    * Pointer to the local memory address containing this slot

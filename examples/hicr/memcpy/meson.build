@@ -12,6 +12,7 @@ endif
 
 if 'lpf' in enabledBackends and 'hwloc' in enabledBackends 
 	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep, hicrHWLocBackendDep])
+	lpf2 = executable('lpfMemcpyAndCountingFence', [ 'source/lpfMemcpyAndCountingFence.cpp'], dependencies: [ hicrBuildDep, hicrLPFBackendDep, hicrHWLocBackendDep])
 
 	if get_option('buildTests')
 	  test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'ibverbs', lpf.full_path() ], timeout: test_timeout, suite: testSuite ) 

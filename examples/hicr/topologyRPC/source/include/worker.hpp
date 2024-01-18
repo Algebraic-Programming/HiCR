@@ -13,7 +13,7 @@ void sendTopology(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
 {
   // Fetching memory manager
   auto memoryManager = instanceManager->getMemoryManager();
-  
+
   // Getting current instance
   auto currentInstance = instanceManager->getCurrentInstance();
 
@@ -23,8 +23,8 @@ void sendTopology(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
   // List of topology managers to query
   std::vector<std::shared_ptr<HiCR::L1::TopologyManager>> topologyManagerList;
 
-  // Now instantiating topology managers (which ones is determined by backend availability during compilation)
-  #ifdef _HICR_USE_HWLOC_BACKEND_
+// Now instantiating topology managers (which ones is determined by backend availability during compilation)
+#ifdef _HICR_USE_HWLOC_BACKEND_
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -38,9 +38,9 @@ void sendTopology(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
   // Adding topology manager to the list
   topologyManagerList.push_back(hwlocTopologyManager);
 
-  #endif // _HICR_USE_HWLOC_BACKEND_
+#endif // _HICR_USE_HWLOC_BACKEND_
 
-  #ifdef _HICR_USE_ASCEND_BACKEND_
+#ifdef _HICR_USE_ASCEND_BACKEND_
 
   // Initialize (Ascend's) ACL runtime
   aclError err = aclInit(NULL);
@@ -52,17 +52,17 @@ void sendTopology(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
   // Adding topology manager to the list
   topologyManagerList.push_back(ascendTopologyManager);
 
-  #endif // _HICR_USE_ASCEND_BACKEND_
+#endif // _HICR_USE_ASCEND_BACKEND_
 
   // For each topology manager detected
-  for (const auto& tm : topologyManagerList)
+  for (const auto &tm : topologyManagerList)
   {
     // Getting the topology information from the topology manager
     const auto t = tm->queryTopology();
 
     // Merging its information to the worker topology object to send
     workerTopology.merge(t);
-  } 
+  }
 
   // Serializing theworker topology and dumping it into a raw string message
   auto message = workerTopology.serialize().dump();
@@ -85,7 +85,8 @@ __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(s
 void workerFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager, std::shared_ptr<HiCR::backend::host::L1::ComputeManager> computeManager)
 {
   // Creating lambda function to run
-  auto topologyFc = [&](){sendTopology(instanceManager);};
+  auto topologyFc = [&]()
+  { sendTopology(instanceManager); };
 
   // Creating execution unit
   auto executionUnit = computeManager->createExecutionUnit(topologyFc);

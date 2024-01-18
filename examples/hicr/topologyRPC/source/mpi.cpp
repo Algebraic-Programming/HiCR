@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
   // Creating MPI-based communication manager (necessary for passing data around between instances)
   auto communicationManager = std::make_shared<HiCR::backend::mpi::L1::CommunicationManager>(MPI_COMM_WORLD);
-  
+
   // Creating MPI-based memory manager (necessary for buffer allocation)
   auto memoryManager = std::make_shared<HiCR::backend::mpi::L1::MemoryManager>();
 

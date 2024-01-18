@@ -247,8 +247,14 @@ class CircularBuffer
    */
   __volatile__ size_t *const _tailAdvanceCounter;
 
-  private:
+  protected:
 
+  /**
+   * Calculate depth of circular buffer
+   * @param[in] headAdvanceCounter head index
+   * @param[in] tailAdvanceCounter tail index
+   * @return depth of buffer (in elements)
+   */
   __USED__ static inline size_t calculateDepth(const size_t headAdvanceCounter, const size_t tailAdvanceCounter)
   {
     return headAdvanceCounter - tailAdvanceCounter;
