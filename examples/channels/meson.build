@@ -1,3 +1,3 @@
-subdir('spsc')
-subdir('mpsc')
+subdir('fixedSize')
+subdir('variableSize')
 

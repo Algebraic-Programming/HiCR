@@ -274,9 +274,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   }
 
   /**
-   * Fence on a specific global memory slot. The semantic
-   * of the fence operation for the LPF backend is to complete
-   * via polling all started put and get operations on that slot
+   * Implementaion of fence on a specific global memory slot for the LPF backend
    * \param[in] hicrSlot global memory slot to fence on
    */
   __USED__ inline void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> hicrSlot)
@@ -286,6 +284,38 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     CHECK(lpf_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, slot));
     updateMessagesRecv(memorySlot);
     updateMessagesSent(memorySlot);
+  }
+
+  /**
+   * Implementaion of fence on a specific global memory slot for the LPF backend
+   * \param[in] slot global memory slot to fence on
+   * \param[in] expectedSent message count to be blockingly sent out on this slot
+   * \param[in] expectedRcvd message count to be blockingly received on this slot
+   */
+  __USED__ inline void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd)
+  {
+    auto memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(slot);
+    lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
+    if (lpfSlot == LPF_INVALID_MEMSLOT) { HICR_THROW_LOGIC("This slot is not registered with LPF!"); }
+    CHECK(lpf_counting_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, lpfSlot, expectedSent, expectedRcvd));
+    memSlot->setMessagesRecv(memSlot->getMessagesRecv() + expectedRcvd);
+    memSlot->setMessagesSent(memSlot->getMessagesSent() + expectedSent);
+  }
+
+  /**
+   * Implementaion of fence on a specific local memory slot for the LPF backend
+   * \param[in] slot local memory slot to fence on
+   * \param[in] expectedSent message count to be blockingly sent out on this slot
+   * \param[in] expectedRcvd message count to be blockingly received on this slot
+   */
+  __USED__ inline void fenceImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd)
+  {
+    auto memSlot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(slot);
+    lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
+    if (lpfSlot == LPF_INVALID_MEMSLOT) { HICR_THROW_LOGIC("This slot is not registered with LPF!"); }
+    CHECK(lpf_counting_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, lpfSlot, expectedSent, expectedRcvd));
+    memSlot->setMessagesRecv(memSlot->getMessagesRecv() + expectedRcvd);
+    memSlot->setMessagesSent(memSlot->getMessagesSent() + expectedSent);
   }
 
   __USED__ inline void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
@@ -332,7 +362,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
   __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
-    fenceImpl(memorySlot->getGlobalTag());
+    fenceImpl(memorySlot);
   }
 
   __USED__ inline void flush() override

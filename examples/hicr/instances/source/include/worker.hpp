@@ -15,8 +15,8 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   auto currentInstance = instanceManager.getCurrentInstance();
 
   // Creating empty function in case the application needs to abort its workers
-  auto abortLambda = [](){ };
-  
+  auto abortLambda = []() {};
+
   // Creating worker functions
   auto testLambda = [&]()
   {
@@ -24,7 +24,7 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
     auto mm = instanceManager.getMemoryManager();
 
     // Serializing theworker topology and dumping it into a raw string message
-    auto message = std::string("Hello, I am worker: ") + std::to_string(currentInstance->getId()); 
+    auto message = std::string("Hello, I am worker: ") + std::to_string(currentInstance->getId());
 
     // Registering memory slot at the first available memory space as source buffer to send the return value from
     auto sendBuffer = mm->registerLocalMemorySlot(bufferMemorySpace, message.data(), message.size() + 1);

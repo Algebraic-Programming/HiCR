@@ -277,6 +277,48 @@ class CommunicationManager
   }
 
   /**
+   * Fences locally on a local memory slot until a number of messages are sent/received
+   *
+   * This is a non-collective and blocking call; returning from this function
+   * indicates that specific to this memory slot, incoming memory movement has completed \em and that
+   * outgoing memory movement has left the local interface.
+   *
+   * \param[in] slot A local memory slot
+   * \param[in] expectedSent number of messages to finish sending on slot before returning
+   * \param[in] expectedRecvd number of messages to finish receiving on slot before returning
+   */
+  __USED__ inline void fence(std::shared_ptr<L0::LocalMemorySlot> slot, size_t expectedSent, size_t expectedRecvd)
+  {
+    // To enable concurrent fence operations, the implementation is executed outside the mutex zone
+    // This means that the developer needs to make sure that the implementation is concurrency-safe,
+    // and try not to access any of the internal Backend class fields without proper mutex locking
+
+    // Now call the proper fence, as implemented by the backend
+    fenceImpl(slot, expectedSent, expectedRecvd);
+  }
+
+  /**
+   * Fences locally on a global, but locally allocated memory slot, until a number of messages are sent/received
+   *
+   * This is a non-collective and blocking call; returning from this function
+   * indicates that specific to this locally allocated memory slot, incoming memory movement has completed \em and that
+   * outgoing memory movement has left the local interface.
+   *
+   * \param[in] slot A global memory slot which is locally allocated
+   * \param[in] expectedSent number of messages to finish sending on slot before returning
+   * \param[in] expectedRecvd number of messages to finish receiving on slot before returning
+   */
+  __USED__ inline void fence(std::shared_ptr<L0::GlobalMemorySlot> slot, size_t expectedSent, size_t expectedRecvd)
+  {
+    // To enable concurrent fence operations, the implementation is executed outside the mutex zone
+    // This means that the developer needs to make sure that the implementation is concurrency-safe,
+    // and try not to access any of the internal Backend class fields without proper mutex locking
+
+    // Now call the proper fence, as implemented by the backend
+    fenceImpl(slot, expectedSent, expectedRecvd);
+  }
+
+  /**
    * This function ensures that the global memory slot is reserved exclusively for access by the caller.
    *
    * This function might (or might not) block the caller to satisfy the exclusion, if the lock is already held by another caller.
@@ -437,6 +479,22 @@ class CommunicationManager
    */
   virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::GlobalMemorySlot> source, const size_t src_offset, const size_t size) { HICR_THROW_LOGIC("Global->Local memcpy operations are unsupported by the given backend"); };
 
+  /**
+   * Backend-internal implementation of the fence on a local memory slot
+   *
+   * \param[in] slot A local memory slot
+   * \param[in] expectedSent number of messages to finish sending on slot before returning
+   * \param[in] expectedRcvd number of messages to finish receiving on slot before returning
+   */
+  virtual void fenceImpl(std::shared_ptr<L0::LocalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd) {}
+  /**
+   * Backend-internal implementation of the fence on a global memory slot
+   *
+   * \param[in] slot A global (but locally allocated) memory slot
+   * \param[in] expectedSent number of messages to finish sending on slot before returning
+   * \param[in] expectedRcvd number of messages to finish receiving on slot before returning
+   */
+  virtual void fenceImpl(std::shared_ptr<L0::GlobalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd) {}
   /**
    * Backend-internal implementation of the fence function
    *
