@@ -140,10 +140,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   __USED__ inline void submitReturnValueImpl(const void *pointer, const size_t size) const override
   {
     // Sending message size
-    MPI_Rsend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);
+    MPI_Ssend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);
 
     // Getting RPC execution unit index
-    MPI_Rsend(pointer, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm);
+    MPI_Ssend(pointer, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm);
   }
 
   __USED__ inline void listenImpl() override
