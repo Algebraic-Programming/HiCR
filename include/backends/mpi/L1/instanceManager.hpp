@@ -98,7 +98,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   __USED__ inline void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCTargetName) const override
   {
     // Calculating hash for the RPC target's name
-    int hash = getHashFromString(RPCTargetName);
+    auto hash = getHashFromString(RPCTargetName);
 
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *>(&instance);
@@ -164,7 +164,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     executeRPC(rpcIdx);
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology)
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(int argc, char **argv, const HiCR::L0::Topology &requestedTopology) override
   {
     // The MPI backend does not currently support the launching of new instances during runtime"
     return nullptr;

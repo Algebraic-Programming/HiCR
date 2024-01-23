@@ -46,7 +46,7 @@ class Instance final : public HiCR::L0::Instance
    */
   ~Instance() = default;
 
-  virtual bool isRootInstance()
+  virtual bool isRootInstance() const
   {
     // Criterion for root rank in MPI: Rank 0 will always be the root.
     return _rank == 0;
