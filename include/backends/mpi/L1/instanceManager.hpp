@@ -15,13 +15,8 @@
 #include <memory>
 #include <mpi.h>
 #include <hicr/definitions.hpp>
-#include <hicr/L0/topology.hpp>
-#include <hicr/L0/memorySpace.hpp>
 #include <hicr/L1/instanceManager.hpp>
-#include <hicr/L1/memoryManager.hpp>
-#include <hicr/L1/computeManager.hpp>
 #include <backends/mpi/L0/instance.hpp>
-#include <backends/mpi/L1/communicationManager.hpp>
 
 namespace HiCR
 {
@@ -69,26 +64,22 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   /**
    * Constructor for the MPI instance manager
    *
-   * \param[in] memoryManager The memory manager to use for buffer allocations
-   * \param[in] communicationManager The communication manager to use for internal data passing
-   * \param[in] computeManager The compute manager to use for RPC running
+   * \param[in] comm The MPI subcommunicator to use in instance detection and communication
    */
-  InstanceManager(std::shared_ptr<HiCR::backend::mpi::L1::CommunicationManager> communicationManager,
-                  std::shared_ptr<HiCR::L1::ComputeManager> computeManager,
-                  std::shared_ptr<HiCR::L1::MemoryManager> memoryManager) : HiCR::L1::InstanceManager(communicationManager, computeManager, memoryManager),
-                                                                            _MPICommunicationManager(communicationManager)
+  InstanceManager(MPI_Comm comm) : HiCR::L1::InstanceManager(), _comm(comm)
   {
-    // Checking whether the execution unit passed is compatible with this backend
-    if (_MPICommunicationManager == NULL) HICR_THROW_LOGIC("The passed memory manager is not supported by this instance manager\n");
+    // Getting current rank within and size of communicator
+    MPI_Comm_size(_comm, &_size);
+    MPI_Comm_rank(_comm, &_rank);
 
     // In MPI, the initial set of processes represents all the currently available instances of HiCR
-    for (int i = 0; i < _MPICommunicationManager->getSize(); i++)
+    for (int i = 0; i < _size; i++)
     {
       // Creating new MPI-based HiCR instance
       auto instance = std::make_shared<HiCR::backend::mpi::L0::Instance>(i);
 
       // If this is the current rank, set it as current instance
-      if (i == _MPICommunicationManager->getRank()) _currentInstance = instance;
+      if (i == _rank) _currentInstance = instance;
 
       // Adding instance to the collection
       _instances.insert(std::move(instance));
@@ -107,7 +98,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   __USED__ inline void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCTargetName) const override
   {
     // Calculating hash for the RPC target's name
-    int hash = getHashFromString(RPCTargetName);
+    auto hash = getHashFromString(RPCTargetName);
 
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *>(&instance);
@@ -119,10 +110,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     const auto dest = MPIInstance->getRank();
 
     // Sending request
-    MPI_Send(&hash, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_RPC_TAG, _MPICommunicationManager->getComm());
+    MPI_Send(&hash, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_RPC_TAG, _comm);
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance &instance) const override
+  __USED__ inline void *getReturnValueImpl(HiCR::L0::Instance &instance) const override
   {
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *const>(&instance);
@@ -134,31 +125,25 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     size_t size = 0;
 
     // Getting return value size
-    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPICommunicationManager->getComm(), MPI_STATUS_IGNORE);
+    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm, MPI_STATUS_IGNORE);
 
     // Allocating memory slot to store the return value
-    auto memorySlot = _memoryManager->allocateLocalMemorySlot(_bufferMemorySpace, size);
+    auto buffer = malloc(size);
 
     // Getting data directly
-    MPI_Recv(memorySlot->getPointer(), size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPICommunicationManager->getComm(), MPI_STATUS_IGNORE);
+    MPI_Recv(buffer, size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm, MPI_STATUS_IGNORE);
 
     // Returning memory slot containing the return value
-    return memorySlot;
+    return buffer;
   }
 
-  __USED__ inline void submitReturnValueImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> value) const override
+  __USED__ inline void submitReturnValueImpl(const void *pointer, const size_t size) const override
   {
-    // Getting return value size
-    const auto size = value->getSize();
-
-    // Getting return value data pointer
-    const auto data = value->getPointer();
-
     // Sending message size
-    MPI_Rsend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _MPICommunicationManager->getComm());
+    MPI_Ssend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);
 
     // Getting RPC execution unit index
-    MPI_Rsend(data, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _MPICommunicationManager->getComm());
+    MPI_Ssend(pointer, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm);
   }
 
   __USED__ inline void listenImpl() override
@@ -170,7 +155,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     RPCTargetIndex_t rpcIdx = 0;
 
     // Getting RPC execution unit index
-    MPI_Recv(&rpcIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_RPC_TAG, _MPICommunicationManager->getComm(), &status);
+    MPI_Recv(&rpcIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_RPC_TAG, _comm, &status);
 
     // Getting requester instance rank
     _RPCRequestRank = status.MPI_SOURCE;
@@ -179,10 +164,14 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     executeRPC(rpcIdx);
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology)
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl [[noreturn]] (const HiCR::L0::Topology &requestedTopology, int argc, char *argv[])
   {
-    // The MPI backend does not currently support the launching of new instances during runtime"
-    return nullptr;
+    HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
+  }
+
+  __USED__ inline virtual void finalize() override
+  {
+    MPI_Finalize();
   }
 
   private:
@@ -193,9 +182,19 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   int _RPCRequestRank = 0;
 
   /**
-   * Internal communication manager for MPI
+   * Default MPI communicator to use for this backend
    */
-  const std::shared_ptr<mpi::L1::CommunicationManager> _MPICommunicationManager;
+  const MPI_Comm _comm;
+
+  /**
+   * Number of MPI processes in the communicator
+   */
+  int _size;
+
+  /**
+   * MPI rank corresponding to this process
+   */
+  int _rank;
 };
 
 } // namespace L1

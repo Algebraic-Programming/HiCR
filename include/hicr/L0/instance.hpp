@@ -59,7 +59,7 @@ class Instance
    *
    * @return True, if the current instance is root; false, otherwise.
    */
-  virtual bool isRootInstance() = 0;
+  virtual bool isRootInstance() const = 0;
 
   protected:
 

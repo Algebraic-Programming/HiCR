@@ -1,62 +1,29 @@
+ #include <mpi.h>
 #include "include/common.hpp"
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
+#include <backends/mpi/L1/memoryManager.hpp>
+#include <backends/mpi/L1/instanceManager.hpp>
 
 int main(int argc, char *argv[])
 {
-  // Getting instance manager from the HiCR initialization
-  auto instanceManager = HiCR::initialize(&argc, &argv);
+  // Initializing MPI
+  int requested = MPI_THREAD_SERIALIZED;
+  int provided;
+  MPI_Init_thread(&argc, &argv, requested, &provided);
+  if (provided < requested) fprintf(stderr, "Warning, this example may not work properly if MPI does not support (serialized) threaded access\n");
+
+  // Creating MPI-based instance manager
+  HiCR::backend::mpi::L1::InstanceManager instanceManager(MPI_COMM_WORLD);
 
   // Get the locally running instance
-  auto myInstance = instanceManager->getCurrentInstance();
-
-  // Creating HWloc topology object
-  hwloc_topology_t topology;
-
-  // Reserving memory for hwloc
-  hwloc_topology_init(&topology);
-
-  // Initializing host (CPU) topology manager
-  auto tm = HiCR::backend::host::hwloc::L1::TopologyManager(&topology);
-
-  // Instantiating host (CPU) memory manager
-  auto mm = HiCR::backend::host::hwloc::L1::MemoryManager(&topology);
-
-  // Initializing host (CPU) compute manager manager
-  auto km = HiCR::backend::host::pthreads::L1::ComputeManager();
-
-  // Asking backend to check the available devices
-  const auto t = tm.queryTopology();
-
-  // Getting first device found
-  auto d = *t.getDevices().begin();
-
-  // Obtaining memory spaces
-  auto memSpaces = d->getMemorySpaceList();
-
-  // Selecting a memory space to allocate the required buffers into
-  auto bufferMemSpace = *memSpaces.begin();
-
-  // Obtaining compute resources
-  auto computeResources = d->getComputeResourceList();
-
-  // Selecting a memory space to allocate the required buffers into
-  auto computeResource = *computeResources.begin();
-
-  // Setting memory space for buffer allocations when receiving RPCs
-  instanceManager->setBufferMemorySpace(bufferMemSpace);
-
-  // Creating processing unit from the compute resource
-  auto processingUnit = km.createProcessingUnit(computeResource);
-
-  // Assigning processing unit to the instance manager
-  instanceManager->addProcessingUnit(std::move(processingUnit));
+  auto myInstance = instanceManager.getCurrentInstance();
 
   // If the number of arguments passed is incorrect, abort execution and exit
   if (argc != 2)
   {
     if (myInstance->isRootInstance()) fprintf(stderr, "Launch error. No machine model file provided\n");
-    HiCR::finalize();
+    instanceManager.finalize();
     return -1;
   }
 
@@ -68,7 +35,7 @@ int main(int argc, char *argv[])
   if (myInstance->isRootInstance() == false) workerFc(instanceManager);
 
   // Finalizing HiCR
-  HiCR::finalize();
+  instanceManager.finalize();
 
   return 0;
 }

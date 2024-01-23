@@ -49,24 +49,14 @@ class InstanceManager
   public:
 
   /**
-   * Type definition for an index to indicate the execution of a specific execution unit
-   */
-  typedef uint64_t executionUnitIndex_t;
-
-  /**
-   * Type definition for an index to indicate the use of a specific processing unit in charge of executing a execution units
-   */
-  typedef uint64_t processingUnitIndex_t;
-
-  /**
-   * Type definition for a listenable unit. That is, the pair of execution unit and the processing unit in charge of executing it
-   */
-  typedef std::pair<executionUnitIndex_t, processingUnitIndex_t> RPCTarget_t;
-
-  /**
    * Type definition for an index for a listenable unit.
    */
-  typedef int RPCTargetIndex_t;
+  typedef uint64_t RPCTargetIndex_t;
+
+  /**
+   * Type definition for a function that can be executed as RPC
+   */
+  typedef std::function<void()> RPCFunction_t;
 
   /**
    * Type definition for an unsorted set of unique pointers to the detected instances
@@ -76,7 +66,7 @@ class InstanceManager
   /**
    * Default constructor is deleted, this class requires the passing of a memory manager
    */
-  InstanceManager() = delete;
+  InstanceManager() = default;
 
   /**
    * Default destructor
@@ -97,72 +87,35 @@ class InstanceManager
 
   /**
    * Function to create a new HiCR instance
+   * \param[in] argc Argc to pass to the newly created instance
+   * \param[in] argv Argv to pass to the newly created instance
    * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology &requestedTopology = HiCR::L0::Topology())
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology &requestedTopology = HiCR::L0::Topology(), int argc = 0, char *argv[] = nullptr)
   {
     // Requesting the creating of the instance to the specific backend
-    auto newInstance = createInstanceImpl(requestedTopology);
+    auto newInstance = createInstanceImpl(requestedTopology, argc, argv);
 
     // If successul, adding the instance to the internal list
-    if (newInstance != nullptr) _instances.insert(newInstance);
+    _instances.insert(newInstance);
 
     // Returning value for immediate use
     return newInstance;
   }
 
   /**
-   * Function to retrieve the internal memory manager for this instance manager
-   * \return A pointer to the memory manager used to instantiate this instance manager
-   */
-  __USED__ inline std::shared_ptr<HiCR::L1::MemoryManager> getMemoryManager() const { return _memoryManager; }
-
-  /**
-   * Function to retrieve the internal communication manager for this instance manager
-   * \return A pointer to the communication manager used to instantiate this instance manager
-   */
-  __USED__ inline std::shared_ptr<HiCR::L1::CommunicationManager> getCommunicationManager() const { return _communicationManager; }
-
-  /**
-   * Function to retrieve the internal compute manager for this instance manager
-   * \return A pointer to the compute manager used to instantiate this instance manager
-   */
-  __USED__ inline std::shared_ptr<HiCR::L1::ComputeManager> getComputeManager() const { return _computeManager; }
-
-  /**
-   * Function to retrieve the internal memory space used for creating buffers in this instance manager
-   * \return The internal memory space
-   */
-  __USED__ inline std::shared_ptr<HiCR::L0::MemorySpace> getBufferMemorySpace() const { return _bufferMemorySpace; }
-
-  /**
-   * Function to add a new execution unit, assigned to a unique identifier
-   * \param[in] index Indicates the index to assign to the added execution unit
-   * \param[in] executionUnit The execution unit to add
-   */
-  __USED__ inline void addExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, const executionUnitIndex_t index) { _executionUnitMap[index] = executionUnit; }
-
-  /**
-   * Function to add a new processing unit, assigned to a unique identifier
-   * \param[in] index Indicates the index to assign to the added processing unit
-   * \param[in] processingUnit The processing unit to add
-   */
-  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit, const processingUnitIndex_t index = _HICR_DEFAULT_PROCESSING_UNIT_ID_) { _processingUnitMap[index] = std::move(processingUnit); }
-
-  /**
    * Function to add an RPC target with a name, and the combination of a execution unit and the processing unit that is in charge of executing it
    * \param[in] RPCName Name of the RPC to add
-   * \param[in] eIndex Indicates the index of the execution unit to run when this RPC target is triggered
-   * \param[in] pIndex Indicates the processing unit to use for running the specified execution unit
+   * \param[in] fc Indicates function to run when this RPC is triggered
    */
-  __USED__ inline void addRPCTarget(const std::string &RPCName, const executionUnitIndex_t eIndex, const processingUnitIndex_t pIndex = _HICR_DEFAULT_PROCESSING_UNIT_ID_)
+  __USED__ inline void addRPCTarget(const std::string &RPCName, const RPCFunction_t fc)
   {
     // Obtaining hash from the RPC name
     const auto nameHash = getHashFromString(RPCName);
 
     // Inserting the new entry
-    _RPCTargetMap[nameHash] = RPCTarget_t({eIndex, pIndex});
+    _RPCTargetMap[nameHash] = fc;
   }
 
   /**
@@ -183,12 +136,13 @@ class InstanceManager
 
   /**
    * Function to submit a return value for the currently running RPC
-   * \param[in] value The memory slot containing the RPC's return value
+   * \param[in] pointer Pointer to the start of the data buffer to send
+   * \param[in] size Size of the data buffer to send
    */
-  __USED__ inline void submitReturnValue(std::shared_ptr<HiCR::L0::LocalMemorySlot> value) const
+  __USED__ inline void submitReturnValue(void *pointer, const size_t size) const
   {
     // Calling backend-specific implementation of this function
-    submitReturnValueImpl(value);
+    submitReturnValueImpl(pointer, size);
   }
 
   /**
@@ -196,20 +150,16 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValue(HiCR::L0::Instance &instance) const
+  __USED__ inline void *getReturnValue(HiCR::L0::Instance &instance) const
   {
     // Calling backend-specific implementation of this function
     return getReturnValueImpl(instance);
   }
 
   /**
-   * Function to set the buffer memory space to use for allocations when receiving RPC or return values.
-   *
-   * Must be set before starting to listen for incoming messages
-   *
-   * @param[in] bufferMemorySpace The memory space in which to allocate the buffers
+   * This function calls the internal implementation of the finalization procedure for the given instance manager
    */
-  void setBufferMemorySpace(const std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace) { _bufferMemorySpace = bufferMemorySpace; }
+  virtual void finalize() = 0;
 
   protected:
 
@@ -222,18 +172,6 @@ class InstanceManager
   static uint64_t getHashFromString(const std::string &name) { return std::hash<std::string>()(name); }
 
   /**
-   * Constructor with proper arguments
-   * \param[in] memoryManager The memory manager to use for buffer allocations
-   * \param[in] communicationManager The communication manager to use for internal data passing
-   * \param[in] computeManager The compute manager to use for RPC running
-   */
-  InstanceManager(std::shared_ptr<HiCR::L1::CommunicationManager> communicationManager,
-                  std::shared_ptr<HiCR::L1::ComputeManager> computeManager,
-                  std::shared_ptr<HiCR::L1::MemoryManager> memoryManager) : _communicationManager(communicationManager),
-                                                                            _computeManager(computeManager),
-                                                                            _memoryManager(memoryManager){};
-
-  /**
    * Internal function used to initiate the execution of the requested RPC
    * \param[in] rpcIdx Index to the RPC to run (hash to save overhead, the name is no longer recoverable)
    */
@@ -241,77 +179,39 @@ class InstanceManager
   {
     // Getting RPC target from the index
     if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
-    auto &l = _RPCTargetMap[rpcIdx];
+    auto &fc = _RPCTargetMap[rpcIdx];
 
-    // Getting execute and processing unit indexes
-    const auto eIdx = l.first;
-    const auto pIdx = l.second;
-
-    // Checks that the processing and execution units have been registered
-    if (_processingUnitMap.contains(pIdx) == false) HICR_THROW_RUNTIME("Attempting to run an processing unit (%lu) that was not defined in this instance (0x%lX).\n", pIdx, this);
-    if (_executionUnitMap.contains(eIdx) == false) HICR_THROW_RUNTIME("Attempting to run an execution unit (%lu) that was not defined in this instance (0x%lX).\n", eIdx, this);
-
-    // Getting units
-    auto &p = *_processingUnitMap[pIdx];
-    auto &e = _executionUnitMap[eIdx];
-
-    // Creating execution state
-    auto s = _computeManager->createExecutionState(e);
-
-    // Initializing processing unit
-    p.initialize();
-
-    // Running execution state
-    p.start(std::move(s));
-
-    // Waiting for processing unit to finish
-    p.await();
+    // Running RPC function
+    fc();
   }
 
   /**
    * Backend-specific implementation of the createInstance function
+   * \param[in] argc Argc to pass to the newly created instance
+   * \param[in] argv Argv to pass to the newly created instance
    * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology) = 0;
+  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology, int argc, char *argv[]) = 0;
 
   /**
    * Backend-specific implementation of the getReturnValue function
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  virtual std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValueImpl(HiCR::L0::Instance &instance) const = 0;
+  virtual void *getReturnValueImpl(HiCR::L0::Instance &instance) const = 0;
 
   /**
    * Backend-specific implementation of the submitReturnValue
-   * \param[in] value The memory slot containing the RPC's return value
+   * \param[in] pointer Pointer to the start of the data buffer to send
+   * \param[in] size Size of the data buffer to send
    */
-  virtual void submitReturnValueImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> value) const = 0;
+  virtual void submitReturnValueImpl(const void *pointer, const size_t size) const = 0;
 
   /**
    * Backend-specific implementation of the listen function
    */
   virtual void listenImpl() = 0;
-
-  /**
-   * Communication manager for exchanging information among HiCR instances
-   */
-  const std::shared_ptr<HiCR::L1::CommunicationManager> _communicationManager;
-
-  /**
-   * Compute manager for running incoming RPCs
-   */
-  const std::shared_ptr<HiCR::L1::ComputeManager> _computeManager;
-
-  /**
-   * Memory manager for allocating internal buffers
-   */
-  const std::shared_ptr<HiCR::L1::MemoryManager> _memoryManager;
-
-  /**
-   * Memory space to store the information bufer into
-   */
-  std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
 
   /**
    * Collection of instances
@@ -326,19 +226,9 @@ class InstanceManager
   private:
 
   /**
-   * Map of assigned processing units in charge of executing a execution units
+   * Map of executable functions, representing potential RPC requests
    */
-  std::map<processingUnitIndex_t, std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnitMap;
-
-  /**
-   * Map of execution units, representing potential RPC requests
-   */
-  std::map<executionUnitIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _executionUnitMap;
-
-  /**
-   * Map of RPC targets units
-   */
-  std::map<RPCTargetIndex_t, RPCTarget_t> _RPCTargetMap;
+  std::map<RPCTargetIndex_t, RPCFunction_t> _RPCTargetMap;
 };
 
 } // namespace L1

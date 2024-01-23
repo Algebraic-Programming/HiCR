@@ -1,22 +1,13 @@
 #pragma once
 
 #include "common.hpp"
-#include <hicr/L0/computeResource.hpp>
 #include <hicr/L0/memorySpace.hpp>
 #include <hicr/L0/topology.hpp>
 #include <hicr/L1/topologyManager.hpp>
 #include <hicr/L1/instanceManager.hpp>
-#include <hicr/L1/memoryManager.hpp>
-#include <backends/host/L1/computeManager.hpp>
 
-void sendTopology(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
+void sendTopology(HiCR::L1::InstanceManager& instanceManager)
 {
-  // Fetching memory manager
-  auto memoryManager = instanceManager->getMemoryManager();
-
-  // Getting current instance
-  auto currentInstance = instanceManager->getCurrentInstance();
-
   // Storage for the topology to send
   HiCR::L0::Topology workerTopology;
 
@@ -67,36 +58,15 @@ void sendTopology(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
   // Serializing theworker topology and dumping it into a raw string message
   auto message = workerTopology.serialize().dump();
 
-  // Registering memory slot at the first available memory space as source buffer to send the return value from
-  auto sendBuffer = memoryManager->registerLocalMemorySlot(instanceManager->getBufferMemorySpace(), message.data(), message.size() + 1);
-
   // Registering return value
-  instanceManager->submitReturnValue(sendBuffer);
-
-  // Deregistering memory slot
-  memoryManager->deregisterLocalMemorySlot(sendBuffer);
+  instanceManager.submitReturnValue(message.data(), message.size() + 1);
 }
 
-__USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+void workerFc(HiCR::L1::InstanceManager& instanceManager)
 {
-  return std::make_unique<HiCR::backend::host::pthreads::L0::ProcessingUnit>(computeResource);
-}
-
-void workerFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager, std::shared_ptr<HiCR::backend::host::L1::ComputeManager> computeManager)
-{
-  // Creating lambda function to run
-  auto topologyFc = [&]()
-  { sendTopology(instanceManager); };
-
-  // Creating execution unit
-  auto executionUnit = computeManager->createExecutionUnit(topologyFc);
-
-  // Assigning processing unit to the instance manager
-  instanceManager->addExecutionUnit(executionUnit, TOPOLOGY_RPC_ID);
-
   // Adding RPC target by name and the execution unit id to run
-  instanceManager->addRPCTarget(TOPOLOGY_RPC_NAME, TOPOLOGY_RPC_ID);
+  instanceManager.addRPCTarget(TOPOLOGY_RPC_NAME, [&]() { sendTopology(instanceManager); });
 
   // Listening for RPC requests
-  instanceManager->listen();
+  instanceManager.listen();
 }
