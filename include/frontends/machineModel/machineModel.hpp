@@ -100,10 +100,11 @@ class MachineModel
    *
    * @param[in] instanceManager Specifies the instance manager to detect and create instances and send RPC requests
    */
-  MachineModel(HiCR::L1::InstanceManager& instanceManager) : _instanceManager(&instanceManager)
+  MachineModel(HiCR::L1::InstanceManager &instanceManager) : _instanceManager(&instanceManager)
   {
     // Registering Topology parsing function as callable RPC
-    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [&]() { submitTopology(&instanceManager); });
+    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [&]()
+                                   { submitTopology(&instanceManager); });
   }
 
   /**
@@ -294,7 +295,7 @@ class MachineModel
     return detectedInstances;
   }
 
-  __USED__ static inline void submitTopology(HiCR::L1::InstanceManager* instanceManager)
+  __USED__ static inline void submitTopology(HiCR::L1::InstanceManager *instanceManager)
   {
     // Storage for the topology to send
     HiCR::L0::Topology workerTopology;
@@ -350,7 +351,7 @@ class MachineModel
     instanceManager->submitReturnValue(message.data(), message.size() + 1);
   };
 
-  HiCR::L1::InstanceManager* _instanceManager;
+  HiCR::L1::InstanceManager *_instanceManager;
 };
 
 } // namespace HiCR

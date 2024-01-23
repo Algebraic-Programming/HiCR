@@ -157,8 +157,8 @@ class InstanceManager
   }
 
   /**
-   * This function calls the internal implementation of the finalization procedure for the given instance manager 
-  */
+   * This function calls the internal implementation of the finalization procedure for the given instance manager
+   */
   virtual void finalize() = 0;
 
   protected:
