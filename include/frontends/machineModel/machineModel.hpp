@@ -15,6 +15,7 @@
 
 #include <unordered_set>
 #include <functional>
+#include <vector>
 #include "nlohmann_json/json.hpp"
 #include <hicr/L0/topology.hpp>
 #include <hicr/L1/instanceManager.hpp>
@@ -99,11 +100,10 @@ class MachineModel
    *
    * @param[in] instanceManager Specifies the instance manager to detect and create instances and send RPC requests
    */
-  MachineModel(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager) : _instanceManager(instanceManager)
+  MachineModel(HiCR::L1::InstanceManager& instanceManager) : _instanceManager(&instanceManager)
   {
     // Registering Topology parsing function as callable RPC
-    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [this]()
-                                   { submitTopology(); });
+    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [&]() { submitTopology(&instanceManager); });
   }
 
   /**
@@ -197,18 +197,8 @@ class MachineModel
         auto newInstance = _instanceManager->createInstance(requests[i].topology);
 
         // Adding new instance to the detected instance set
-        if (newInstance != nullptr)
-        {
-          requests[i].instances.push_back(newInstance);
-          requestAssigned = true;
-        }
-
-        // If no instances could be created, then abort
-        if (requestAssigned == false)
-        {
-          std::string errorMsg = std::string("Could not assign nor create an instance for request ") + std::to_string(i) + std::string(", replica ") + std::to_string(j);
-          throw std::runtime_error(errorMsg.c_str());
-        }
+        requests[i].instances.push_back(newInstance);
+        requestAssigned = true;
       }
   }
 
@@ -304,11 +294,8 @@ class MachineModel
     return detectedInstances;
   }
 
-  __USED__ inline void submitTopology()
+  __USED__ static inline void submitTopology(HiCR::L1::InstanceManager* instanceManager)
   {
-    // Getting current instance
-    auto currentInstance = _instanceManager->getCurrentInstance();
-
     // Storage for the topology to send
     HiCR::L0::Topology workerTopology;
 
@@ -360,10 +347,10 @@ class MachineModel
     auto message = workerTopology.serialize().dump();
 
     // Registering return value
-    _instanceManager->submitReturnValue(message.data(), message.size() + 1);
+    instanceManager->submitReturnValue(message.data(), message.size() + 1);
   };
 
-  const std::shared_ptr<HiCR::L1::InstanceManager> _instanceManager;
+  HiCR::L1::InstanceManager* _instanceManager;
 };
 
 } // namespace HiCR

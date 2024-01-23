@@ -96,7 +96,7 @@ class InstanceManager
     auto newInstance = createInstanceImpl(requestedTopology);
 
     // If successul, adding the instance to the internal list
-    if (newInstance != nullptr) _instances.insert(newInstance);
+    _instances.insert(newInstance);
 
     // Returning value for immediate use
     return newInstance;
@@ -153,6 +153,11 @@ class InstanceManager
     // Calling backend-specific implementation of this function
     return getReturnValueImpl(instance);
   }
+
+  /**
+   * This function calls the internal implementation of the finalization procedure for the given instance manager 
+  */
+  virtual void finalize() = 0;
 
   protected:
 

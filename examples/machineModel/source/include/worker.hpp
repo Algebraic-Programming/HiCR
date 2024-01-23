@@ -5,19 +5,19 @@
 #include <frontends/machineModel/machineModel.hpp>
 
 // Worker task functions
-void taskFc(const std::string &taskName, std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
+void taskFc(const std::string &taskName, HiCR::L1::InstanceManager& instanceManager)
 {
   // Getting current instance
-  auto currentInstance = instanceManager->getCurrentInstance();
+  auto currentInstance = instanceManager.getCurrentInstance();
 
   // Serializing theworker topology and dumping it into a raw string message
   auto message = std::string("Hello, I am worker ") + std::to_string(currentInstance->getId()) + std::string(" executing Task: ") + taskName;
 
   // Registering return value
-  instanceManager->submitReturnValue(message.data(), message.size() + 1);
+  instanceManager.submitReturnValue(message.data(), message.size() + 1);
 };
 
-void workerFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
+void workerFc(HiCR::L1::InstanceManager& instanceManager)
 {
   // Flag to indicate whether the worker should continue listening
   bool continueListening = true;
@@ -26,11 +26,11 @@ void workerFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
   HiCR::MachineModel machineModel(instanceManager);
 
   // Adding RPC targets, specifying a name and the execution unit to execute
-  instanceManager->addRPCTarget("Finalize", [&]() { continueListening = false; });
-  instanceManager->addRPCTarget("Task A",   [&]() { taskFc("A", instanceManager); });
-  instanceManager->addRPCTarget("Task B",   [&]() { taskFc("B", instanceManager); });
-  instanceManager->addRPCTarget("Task C",   [&]() { taskFc("C", instanceManager); });
+  instanceManager.addRPCTarget("Finalize", [&]() { continueListening = false; });
+  instanceManager.addRPCTarget("Task A",   [&]() { taskFc("A", instanceManager); });
+  instanceManager.addRPCTarget("Task B",   [&]() { taskFc("B", instanceManager); });
+  instanceManager.addRPCTarget("Task C",   [&]() { taskFc("C", instanceManager); });
 
   // Listening for RPC requests
-  while (continueListening == true) instanceManager->listen();
+  while (continueListening == true) instanceManager.listen();
 }

@@ -12,10 +12,10 @@ int main(int argc, char **argv)
   if (provided < requested) fprintf(stderr, "Warning, this example may not work properly if MPI does not support (serialized) threaded access\n");
 
   // Creating MPI-based instance manager
-  auto instanceManager = std::make_shared<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
+  HiCR::backend::mpi::L1::InstanceManager instanceManager(MPI_COMM_WORLD);
 
   // Get the locally running instance
-  auto myInstance = instanceManager->getCurrentInstance();
+  auto myInstance = instanceManager.getCurrentInstance();
 
   // Bifurcating paths based on whether the instance is root or not
   if (myInstance->isRootInstance() == true) coordinatorFc(instanceManager);

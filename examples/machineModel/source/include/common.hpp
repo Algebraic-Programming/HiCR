@@ -2,45 +2,7 @@
 
 #include <memory>
 #include <fstream>
-#include <nlohmann_json/json.hpp>
-#include <hicr/L1/instanceManager.hpp>
-
-#ifdef _HICR_USE_MPI_BACKEND_
-  #include <mpi.h>
-  #include <backends/mpi/L1/memoryManager.hpp>
-  #include <backends/mpi/L1/instanceManager.hpp>
-#endif // _HICR_USE_MPI_BACKEND_
-
-// Selecting the appropriate instance manager based on the selected backends during compilation
-
-namespace HiCR // Simulating this is part of HiCR for now
-{
-
-std::shared_ptr<HiCR::L1::InstanceManager> initialize(int *argc, char **argv[]);
-void finalize();
-
-#ifdef _HICR_USE_MPI_BACKEND_
-
-std::shared_ptr<HiCR::L1::InstanceManager> initialize(int *argc, char **argv[])
-{
-  // Initializing MPI
-  int requested = MPI_THREAD_SERIALIZED;
-  int provided;
-  MPI_Init_thread(argc, argv, requested, &provided);
-  if (provided < requested) fprintf(stderr, "Warning, this example may not work properly if MPI does not support (serialized) threaded access\n");
-
-  // Now instantiating the instance manager
-  return std::make_shared<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
-}
-
-void finalize()
-{
-  MPI_Finalize();
-}
-
-#endif // _HICR_USE_MPI_BACKEND_
-
-} // namespace HiCR
+#include <sstream>
 
 // Taken from https://stackoverflow.com/questions/116038/how-do-i-read-an-entire-file-into-a-stdstring-in-c/116220#116220
 inline std::string slurp(std::ifstream &in)

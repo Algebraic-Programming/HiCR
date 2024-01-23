@@ -4,25 +4,25 @@
 #include <hicr/L0/topology.hpp>
 #include <hicr/L1/instanceManager.hpp>
 
-void coordinatorFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
+void coordinatorFc(HiCR::L1::InstanceManager& instanceManager)
 {
   // Querying instance list
-  auto &instances = instanceManager->getInstances();
+  auto &instances = instanceManager.getInstances();
 
   // Getting the pointer to our own (coordinator) instance
-  auto coordinator = instanceManager->getCurrentInstance();
+  auto coordinator = instanceManager.getCurrentInstance();
 
   // Printing instance information and invoking a simple RPC if its not ourselves
   for (const auto &instance : instances)
     if (instance->getId() != coordinator->getId())
-      instanceManager->launchRPC(*instance, TOPOLOGY_RPC_NAME);
+      instanceManager.launchRPC(*instance, TOPOLOGY_RPC_NAME);
 
   // Getting return values from the RPCs containing each of the worker's topology
   for (const auto &instance : instances)
     if (instance != coordinator)
     {
       // Getting return value as a memory slot
-      auto returnValue = instanceManager->getReturnValue(*instance);
+      auto returnValue = instanceManager.getReturnValue(*instance);
 
       // Receiving raw serialized topology information from the worker
       std::string serializedTopology = (char *)returnValue;
@@ -32,7 +32,7 @@ void coordinatorFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
 
       // Freeing return value
       free (returnValue);
-      
+
       // HiCR topology object to obtain
       HiCR::L0::Topology topology;
 
