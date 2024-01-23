@@ -25,11 +25,14 @@ void coordinatorFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager)
       auto returnValue = instanceManager->getReturnValue(*instance);
 
       // Receiving raw serialized topology information from the worker
-      std::string serializedTopology = (char *)returnValue->getPointer();
+      std::string serializedTopology = (char *)returnValue;
 
       // Parsing serialized raw topology into a json object
       auto topologyJson = nlohmann::json::parse(serializedTopology);
 
+      // Freeing return value
+      free (returnValue);
+      
       // HiCR topology object to obtain
       HiCR::L0::Topology topology;
 

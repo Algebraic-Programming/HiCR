@@ -158,7 +158,10 @@ void coordinatorFc(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager, c
       auto returnValue = instanceManager->getReturnValue(*in);
 
       // Printing return value
-      printf("[Coordinator] Received from instance %lu: '%s'\n", in->getId(), (const char *)returnValue->getPointer());
+      printf("[Coordinator] Received from instance %lu: '%s'\n", in->getId(), (const char *)returnValue);
+
+      // Freeing return value
+      free (returnValue);
     }
 
   // Finalizing execution for all instances

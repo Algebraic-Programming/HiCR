@@ -1,7 +1,5 @@
 #pragma once
 
-#define PROCESSING_UNIT_ID 0
-#define TOPOLOGY_RPC_ID 0
 #define TOPOLOGY_RPC_NAME "Get Topology"
 
 #include <nlohmann_json/json.hpp>

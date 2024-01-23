@@ -10,48 +10,6 @@ int main(int argc, char *argv[])
   // Get the locally running instance
   auto myInstance = instanceManager->getCurrentInstance();
 
-  // Creating HWloc topology object
-  hwloc_topology_t topology;
-
-  // Reserving memory for hwloc
-  hwloc_topology_init(&topology);
-
-  // Initializing host (CPU) topology manager
-  auto tm = HiCR::backend::host::hwloc::L1::TopologyManager(&topology);
-
-  // Instantiating host (CPU) memory manager
-  auto mm = HiCR::backend::host::hwloc::L1::MemoryManager(&topology);
-
-  // Initializing host (CPU) compute manager manager
-  auto km = HiCR::backend::host::pthreads::L1::ComputeManager();
-
-  // Asking backend to check the available devices
-  const auto t = tm.queryTopology();
-
-  // Getting first device found
-  auto d = *t.getDevices().begin();
-
-  // Obtaining memory spaces
-  auto memSpaces = d->getMemorySpaceList();
-
-  // Selecting a memory space to allocate the required buffers into
-  auto bufferMemSpace = *memSpaces.begin();
-
-  // Obtaining compute resources
-  auto computeResources = d->getComputeResourceList();
-
-  // Selecting a memory space to allocate the required buffers into
-  auto computeResource = *computeResources.begin();
-
-  // Setting memory space for buffer allocations when receiving RPCs
-  instanceManager->setBufferMemorySpace(bufferMemSpace);
-
-  // Creating processing unit from the compute resource
-  auto processingUnit = km.createProcessingUnit(computeResource);
-
-  // Assigning processing unit to the instance manager
-  instanceManager->addProcessingUnit(std::move(processingUnit));
-
   // If the number of arguments passed is incorrect, abort execution and exit
   if (argc != 2)
   {

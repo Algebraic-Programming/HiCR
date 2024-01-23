@@ -18,7 +18,6 @@
 #include "nlohmann_json/json.hpp"
 #include <hicr/L0/topology.hpp>
 #include <hicr/L1/instanceManager.hpp>
-#include <backends/host/hwloc/L1/memoryManager.hpp>
 #include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <backends/host/L0/device.hpp>
 #include <backends/host/L0/computeResource.hpp>
@@ -103,10 +102,7 @@ class MachineModel
   MachineModel(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager) : _instanceManager(instanceManager)
   {
     // Registering Topology parsing function as callable RPC
-    auto topologyRPCExecutionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([this]()
-                                                                                                 { submitTopology(); });
-    _instanceManager->addExecutionUnit(topologyRPCExecutionUnit, _HICR_TOPOLOGY_RPC_EXECUTION_UNIT_ID);
-    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, _HICR_TOPOLOGY_RPC_EXECUTION_UNIT_ID);
+    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [this]() { submitTopology(); });
   }
 
   /**
@@ -286,7 +282,7 @@ class MachineModel
         auto returnValue = instanceManager.getReturnValue(*instance);
 
         // Receiving raw serialized topology information from the worker
-        std::string serializedTopology = (char *)returnValue->getPointer();
+        std::string serializedTopology = (char *)returnValue;
 
         // Parsing serialized raw topology into a json object
         auto topologyJson = nlohmann::json::parse(serializedTopology);
@@ -309,9 +305,6 @@ class MachineModel
 
   __USED__ inline void submitTopology()
   {
-    // Fetching memory manager
-    auto memoryManager = _instanceManager->getMemoryManager();
-
     // Getting current instance
     auto currentInstance = _instanceManager->getCurrentInstance();
 
@@ -365,14 +358,8 @@ class MachineModel
     // Serializing theworker topology and dumping it into a raw string message
     auto message = workerTopology.serialize().dump();
 
-    // Registering memory slot at the first available memory space as source buffer to send the return value from
-    auto sendBuffer = memoryManager->registerLocalMemorySlot(_instanceManager->getBufferMemorySpace(), message.data(), message.size() + 1);
-
     // Registering return value
-    _instanceManager->submitReturnValue(sendBuffer);
-
-    // Deregistering memory slot
-    memoryManager->deregisterLocalMemorySlot(sendBuffer);
+    _instanceManager->submitReturnValue(message.data(), message.size() + 1);
   };
 
   const std::shared_ptr<HiCR::L1::InstanceManager> _instanceManager;
