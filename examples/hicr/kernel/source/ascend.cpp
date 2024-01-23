@@ -123,9 +123,7 @@ int main(int argc, char **argv)
   printf("Second vector contains : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input2Host->getPointer())[0]));
   printf("Vector sum is : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)outputHost->getPointer())[0]));
 
-  // Reset tensors
-  populateMemorySlot(input1Host, 0.0);
-  populateMemorySlot(input2Host, 0.0);
+  // Reset output tensor
   populateMemorySlot(outputHost, 0.0);
 
   // Create the ComputationKernel by looking up in a directory

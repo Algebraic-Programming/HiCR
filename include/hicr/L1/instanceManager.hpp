@@ -51,7 +51,7 @@ class InstanceManager
   /**
    * Type definition for an index for a listenable unit.
    */
-  typedef int RPCTargetIndex_t;
+  typedef uint64_t RPCTargetIndex_t;
 
   /**
    * Type definition for a function that can be executed as RPC
@@ -87,13 +87,15 @@ class InstanceManager
 
   /**
    * Function to create a new HiCR instance
+   * \param[in] argc Argc to pass to the newly created instance
+   * \param[in] argv Argv to pass to the newly created instance
    * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology &requestedTopology = HiCR::L0::Topology())
+  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology &requestedTopology = HiCR::L0::Topology(), int argc = 0, char *argv[] = nullptr)
   {
     // Requesting the creating of the instance to the specific backend
-    auto newInstance = createInstanceImpl(requestedTopology);
+    auto newInstance = createInstanceImpl(requestedTopology, argc, argv);
 
     // If successul, adding the instance to the internal list
     _instances.insert(newInstance);
@@ -185,10 +187,12 @@ class InstanceManager
 
   /**
    * Backend-specific implementation of the createInstance function
+   * \param[in] argc Argc to pass to the newly created instance
+   * \param[in] argv Argv to pass to the newly created instance
    * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology) = 0;
+  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology, int argc, char *argv[]) = 0;
 
   /**
    * Backend-specific implementation of the getReturnValue function
