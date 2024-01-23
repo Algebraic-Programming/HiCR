@@ -64,16 +64,14 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   /**
    * Constructor for the MPI instance manager
    *
-   * \param[in] memoryManager The memory manager to use for buffer allocations
-   * \param[in] communicationManager The communication manager to use for internal data passing
-   * \param[in] computeManager The compute manager to use for RPC running
+   * \param[in] comm The MPI subcommunicator to use in instance detection and communication
    */
   InstanceManager(MPI_Comm comm) : HiCR::L1::InstanceManager(), _comm(comm)
   {
     // Getting current rank within and size of communicator
     MPI_Comm_size(_comm, &_size);
     MPI_Comm_rank(_comm, &_rank);
-    
+
     // In MPI, the initial set of processes represents all the currently available instances of HiCR
     for (int i = 0; i < _size; i++)
     {
@@ -115,7 +113,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Send(&hash, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_RPC_TAG, _comm);
   }
 
-  __USED__ inline void* getReturnValueImpl(HiCR::L0::Instance &instance) const override
+  __USED__ inline void *getReturnValueImpl(HiCR::L0::Instance &instance) const override
   {
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *const>(&instance);
@@ -130,7 +128,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm, MPI_STATUS_IGNORE);
 
     // Allocating memory slot to store the return value
-    auto buffer = malloc (size);
+    auto buffer = malloc(size);
 
     // Getting data directly
     MPI_Recv(buffer, size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm, MPI_STATUS_IGNORE);
@@ -139,7 +137,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return buffer;
   }
 
-  __USED__ inline void submitReturnValueImpl(const void* pointer, const size_t size) const override
+  __USED__ inline void submitReturnValueImpl(const void *pointer, const size_t size) const override
   {
     // Sending message size
     MPI_Rsend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);

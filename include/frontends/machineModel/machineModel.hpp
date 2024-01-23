@@ -102,7 +102,8 @@ class MachineModel
   MachineModel(std::shared_ptr<HiCR::L1::InstanceManager> instanceManager) : _instanceManager(instanceManager)
   {
     // Registering Topology parsing function as callable RPC
-    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [this]() { submitTopology(); });
+    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [this]()
+                                   { submitTopology(); });
   }
 
   /**

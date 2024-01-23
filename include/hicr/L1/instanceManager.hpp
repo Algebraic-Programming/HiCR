@@ -55,7 +55,7 @@ class InstanceManager
 
   /**
    * Type definition for a function that can be executed as RPC
-  */
+   */
   typedef std::function<void()> RPCFunction_t;
 
   /**
@@ -105,8 +105,7 @@ class InstanceManager
   /**
    * Function to add an RPC target with a name, and the combination of a execution unit and the processing unit that is in charge of executing it
    * \param[in] RPCName Name of the RPC to add
-   * \param[in] eIndex Indicates the index of the execution unit to run when this RPC target is triggered
-   * \param[in] pIndex Indicates the processing unit to use for running the specified execution unit
+   * \param[in] fc Indicates function to run when this RPC is triggered
    */
   __USED__ inline void addRPCTarget(const std::string &RPCName, const RPCFunction_t fc)
   {
@@ -135,9 +134,10 @@ class InstanceManager
 
   /**
    * Function to submit a return value for the currently running RPC
-   * \param[in] value The memory slot containing the RPC's return value
+   * \param[in] pointer Pointer to the start of the data buffer to send
+   * \param[in] size Size of the data buffer to send
    */
-  __USED__ inline void submitReturnValue(void* pointer, const size_t size) const
+  __USED__ inline void submitReturnValue(void *pointer, const size_t size) const
   {
     // Calling backend-specific implementation of this function
     submitReturnValueImpl(pointer, size);
@@ -148,7 +148,7 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  __USED__ inline void* getReturnValue(HiCR::L0::Instance &instance) const
+  __USED__ inline void *getReturnValue(HiCR::L0::Instance &instance) const
   {
     // Calling backend-specific implementation of this function
     return getReturnValueImpl(instance);
@@ -190,13 +190,14 @@ class InstanceManager
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  virtual void* getReturnValueImpl(HiCR::L0::Instance &instance) const = 0;
+  virtual void *getReturnValueImpl(HiCR::L0::Instance &instance) const = 0;
 
   /**
    * Backend-specific implementation of the submitReturnValue
-   * \param[in] value The memory slot containing the RPC's return value
+   * \param[in] pointer Pointer to the start of the data buffer to send
+   * \param[in] size Size of the data buffer to send
    */
-  virtual void submitReturnValueImpl(const void* pointer, const size_t size) const = 0;
+  virtual void submitReturnValueImpl(const void *pointer, const size_t size) const = 0;
 
   /**
    * Backend-specific implementation of the listen function
