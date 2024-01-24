@@ -6,8 +6,7 @@ exampleBuildIncludes = include_directories([
   ])
   
 if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
-    sharedMemoryDependencies = [ hicrBuildDep, hicrHWLocBackendDep, hicrPthreadsBackendDep] 
-	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp' ], dependencies: sharedMemoryDependencies, include_directories: [exampleBuildIncludes])
+	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp' ], dependencies: hicrBuildDep, include_directories: [exampleBuildIncludes])
 
 	if get_option('buildTests')
 	  test('sharedMemory', sharedMemory, args : [ '3', '15' ], timeout: test_timeout, suite: testSuite )
@@ -15,7 +14,7 @@ if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
 endif
 
 if 'mpi' in enabledBackends and 'hwloc' in enabledBackends 
-	mpi = executable('mpi', [ 'source/mpi.cpp' ], dependencies: [ hicrBuildDep, hicrMPIBackendDep, hicrHWLocBackendDep], include_directories: [exampleBuildIncludes] )
+	mpi = executable('mpi', [ 'source/mpi.cpp' ], dependencies: hicrBuildDep, include_directories: [exampleBuildIncludes] )
 
 	if get_option('buildTests')
 	test('mpi', mpirunExecutable, args : [ '-n', '16', mpi.full_path(), '3' ], timeout: test_timeout, suite: testSuite )

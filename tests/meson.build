@@ -1,5 +1,5 @@
 # Base configuration for all tests
-testDeps = [ hicrBuildDep, hicrTestDep ]
+HiCRTestBuildDependencies = [ hicrBuildDep, hicrTestDep ]
 
 subdir('frontends')
 subdir('backends')
