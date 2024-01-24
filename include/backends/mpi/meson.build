@@ -24,11 +24,9 @@ backendCppArgs = [
 backendLinkArgs = [
 ]
 
-backendDep = declare_dependency(
+HiCRBackendDependencies += declare_dependency(
     dependencies: backendDependencies,
     compile_args : backendCppArgs,
     link_args : backendLinkArgs,
     include_directories : backendIncludes
 )    
-
-hicrMPIBackendDep = [ backendDep ]

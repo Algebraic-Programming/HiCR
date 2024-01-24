@@ -16,6 +16,7 @@ if get_option('compileWarningsAsErrors') == true
 endif
 
 hicrBuildDeps = [
+    HiCRBackendDependencies
    ]
 
 hicrBuildCppArgs = [
