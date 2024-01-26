@@ -223,7 +223,6 @@ class ComputationKernel final : public Kernel
     aclError err = aclopLoad(_kernelPtr.data(), _kernelSize);
 
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to load kernel into memory. Error %d", err);
-    printf("Kernel loaded\n");
   }
 };
 
