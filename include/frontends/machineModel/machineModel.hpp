@@ -119,7 +119,7 @@ class MachineModel
    * @param[in] argc argc to pass to the newly created instance
    * @param[in] argv argv to pass to the newly created instance
    */
-  void deploy(std::vector<request_t> &requests, topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc = 0, char **argv = nullptr)
+  void deploy(std::vector<request_t> &requests, topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc = 0, char *argv[] = nullptr)
   {
     // Getting information about the currently deployed instances and their topology
     auto detectedInstances = detectInstances(*_instanceManager);
