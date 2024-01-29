@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <frontends/channel/variableSize/spsc/producer.hpp>
+#include <frontends/channel/variableSize/base.hpp>
 
 namespace HiCR
 {
