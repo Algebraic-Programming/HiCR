@@ -52,7 +52,12 @@ class Device final : public HiCR::L0::Device
   Device(
     const deviceIdentifier_t id,
     const computeResourceList_t &computeResources,
-    const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(std::make_unique<aclrtContext>()){};
+    const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(std::make_unique<aclrtContext>())
+  {
+    // create ACL context for executing operations on the given device
+    aclError err = aclrtCreateContext(_context.get(), id);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create context for device %ld. Error %d", _id, err);
+  };
 
   /**
    * Default constructor for resource requesting
@@ -94,9 +99,14 @@ class Device final : public HiCR::L0::Device
   }
 
   /**
-   * Default destructor
+   * Device destructor
    */
-  ~Device() = default;
+  ~Device()
+  {
+    // destroy the ACL context
+    aclError err = aclrtDestroyContext(*_context.get());
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy context for device %ld. Error %d", _id, err);
+  };
 
   __USED__ inline std::string getType() const override { return "Ascend Device"; }
 

@@ -50,6 +50,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+
+    _context = c->getDevice().lock()->getContext();
   };
 
   protected:
@@ -120,9 +122,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __USED__ inline void awaitImpl() override
   {
-    // Getting device id associated to the underlying compute resource (ascend)
-    auto deviceId = ((ascend::L0::ComputeResource *)getComputeResource().get())->getDevice().lock()->getId();
-
     // Getting up-casted pointer for the instance
     auto c = static_cast<ascend::L0::ComputeResource *>(getComputeResource().get());
 
@@ -131,10 +130,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
     // force the execution state to finalize
     _executionState.get()->finalizeStream();
-
-    // destroy the ACL context
-    aclError err = aclrtDestroyContext(_context);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy ACL context on device %d. Error %d", deviceId, err);
   }
 
   private:
