@@ -14,7 +14,6 @@
 #pragma once
 
 #include <frontends/channel/variableSize/base.hpp>
-#include <frontends/channel/variableSize/spsc/consumer.hpp>
 #include <array>
 #include <numeric>
 #include <cassert>
