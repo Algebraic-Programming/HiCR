@@ -43,7 +43,7 @@ void consumerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationM
   auto payloadBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
 
   // Creating producer and consumer channels
-  auto consumer = HiCR::channel::SPSC::Consumer(communicationManager, payloadBuffer /*payload buffer */, globalSizesBufferSlot, coordinationBufferForCounts, coordinationBufferForPayloads, producerCoordinationBufferForCounts, producerCoordinationBufferForPayloads, PAYLOAD_CAPACITY, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto consumer = HiCR::channel::variableSize::SPSC::Consumer(communicationManager, payloadBuffer /*payload buffer */, globalSizesBufferSlot, coordinationBufferForCounts, coordinationBufferForPayloads, producerCoordinationBufferForCounts, producerCoordinationBufferForPayloads, PAYLOAD_CAPACITY, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Getting a single value from the channel
   while (consumer.getDepth() != 1) consumer.updateDepth();
