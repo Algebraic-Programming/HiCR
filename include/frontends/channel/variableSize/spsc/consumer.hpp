@@ -20,8 +20,13 @@
 
 namespace HiCR
 {
+
 namespace channel
 {
+
+namespace variableSize
+{
+
 namespace SPSC
 {
 
@@ -348,6 +353,11 @@ class Consumer final : public variableSize::Base
     return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0);
   }
 };
+
 } // namespace SPSC
+
+} // namespace variableSize
+
 } // namespace channel
+
 } // namespace HiCR

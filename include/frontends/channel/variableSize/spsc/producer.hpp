@@ -264,6 +264,7 @@ class Producer final : public variableSize::Base
    */
   const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForPayloads;
 };
+
 } // namespace SPSC
 
 } // namespace variableSize
