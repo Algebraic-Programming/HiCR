@@ -1,5 +1,4 @@
-# Registering HiCR examples
 subdir('hicr')
-
-# Registering TaskR examples
+subdir('machineModel')
 subdir('taskr')
+subdir('channels')

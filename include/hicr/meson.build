@@ -1,12 +1,28 @@
 # Define HiCR dependencies
 
+# Parsing exception model
+exceptionModel = get_option('exceptionModel')
+if (exceptionModel == 'stdexception')
+ hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_STDEXCEPTION' ]
+endif
+if (exceptionModel == 'abort')
+ hicrExceptionCppArgs = [ '-DHICR_EXCEPTION_USE_ABORT', '-DJSON_NOEXCEPTION' ]
+endif
+
+# Warning handling option
+warningAsErrorFlags=[]
+if get_option('compileWarningsAsErrors') == true
+  warningAsErrorFlags=[ '-Werror' ]
+endif
+
 hicrBuildDeps = [
-    dependency('boost',  modules : ['context'],  required : true)
+    HiCRBackendDependencies
    ]
 
 hicrBuildCppArgs = [
  '-Wfatal-errors',
- '-Werror',
+  hicrExceptionCppArgs,
+  warningAsErrorFlags
  ]
 
 hicrBuildIncludes = include_directories([

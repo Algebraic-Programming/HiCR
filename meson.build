@@ -5,39 +5,46 @@ project('HiCR', [ 'cpp', 'c'],
   ]
 )
 
-# Including dependencies
-subdir('include/hicr')
-subdir('include/taskr')
-
-# Getting selected backends
+# Getting selected built-in backends
 enabledBackends = get_option('backends')
 
-# The sequential backend is the default for HiCR
-subdir('include/hicr/backends/sequential')
+# Including selected built-in backends
+HiCRBackendDependencies = [ ]
 
-# Including selected optional backends
-if 'sharedMemory' in enabledBackends
-  subdir('include/hicr/backends/sharedMemory')
+if 'hwloc' in enabledBackends
+  subdir('include/backends/host/hwloc')
+endif
+
+if 'pthreads' in enabledBackends
+  subdir('include/backends/host/pthreads')
 endif
 
 if 'mpi' in enabledBackends
-  subdir('include/hicr/backends/mpi')
+  subdir('include/backends/mpi')
 endif
 
 if 'lpf' in enabledBackends
-  subdir('include/hicr/backends/lpf')
+  subdir('include/backends/lpf')
 endif
 
 if 'ascend' in enabledBackends    
-  subdir('include/hicr/backends/ascend')
+  subdir('include/backends/ascend')
 endif    
-    
-# Build example targets
-if get_option('buildExamples')
- subdir('examples')
-endif
 
-# Build test targets
-if get_option('buildTests')
- subdir('tests')
+# Creating HiCR Configuration and Dependency
+subdir('include/hicr')
+
+# Build targets are only relevant if HiCR is being loaded as a subproject
+if meson.is_subproject() == false
+
+  # Build example targets
+  if get_option('buildExamples')
+  subdir('examples')
+  endif
+
+  # Build test targets
+  if get_option('buildTests')
+  subdir('tests')
+  endif
+
 endif

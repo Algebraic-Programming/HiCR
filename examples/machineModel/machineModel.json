@@ -1,0 +1,37 @@
+{
+  "Instances":
+  [
+    {
+      "Task": "Task A",
+      "Replicas": 1,
+      "Topology": 
+      {
+	      "CPU Cores": 24,
+        "Host RAM Size (Gb)": 32,
+	      "Ascend Devices": 0
+      }
+    },
+
+    {
+      "Task": "Task B",
+      "Replicas": 2,
+      "Topology": 
+      {
+	      "CPU Cores": 24,
+        "Host RAM Size (Gb)": 32,
+	      "Ascend Devices": 0
+      }
+    },
+
+    {
+      "Task": "Task C",
+      "Replicas": 3,
+      "Topology": 
+      {
+	      "CPU Cores": 24,
+        "Host RAM Size (Gb)": 32,
+	      "Ascend Devices": 0
+      }
+    }
+  ]
+}

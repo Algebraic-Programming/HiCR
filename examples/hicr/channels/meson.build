@@ -1,3 +1,0 @@
-subdir('spsc')
-subdir('mpsc')
-

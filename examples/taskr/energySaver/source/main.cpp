@@ -1,8 +1,9 @@
 #include <cstdio>
+#include <backends/host/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <frontends/taskr/runtime.hpp>
+#include <frontends/taskr/task.hpp>
 #include <hwloc.h>
-#include <hicr/backends/sharedMemory/computeManager.hpp>
-#include <taskr/runtime.hpp>
-#include <taskr/task.hpp>
 
 void workFc(const size_t iterations)
 {
@@ -22,7 +23,9 @@ void waitFc(taskr::Runtime *taskr, size_t secondsDelay)
 
   printf("Starting long task...\n");
   fflush(stdout);
+
   sleep(secondsDelay);
+
   printf("Finished long task...\n");
   fflush(stdout);
 
@@ -46,14 +49,20 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::ComputeManager computeManager(&topology);
+  // Initializing Pthreads-based compute manager to run tasks in parallel
+  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
-  // Querying computational resources
-  computeManager.queryComputeResources();
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+
+  // Asking backend to check the available devices
+  const auto t = tm.queryTopology();
+
+  // Getting first device found
+  auto d = *t.getDevices().begin();
 
   // Updating the compute resource list
-  auto computeResources = computeManager.getComputeResourceList();
+  auto computeResources = d->getComputeResourceList();
 
   // Initializing taskr
   taskr::Runtime taskr;

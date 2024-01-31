@@ -1,9 +1,10 @@
 #include <chrono>
 #include <cstdio>
 #include <hwloc.h>
-#include <hicr/backends/sharedMemory/computeManager.hpp>
-#include <source/workTask.hpp>
-#include <taskr/runtime.hpp>
+#include <backends/host/pthreads/L1/computeManager.hpp>
+#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <frontends/taskr/runtime.hpp>
+#include "source/workTask.hpp"
 
 int main(int argc, char **argv)
 {
@@ -13,11 +14,20 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing Pthreads backend to run in parallel
-  HiCR::backend::sharedMemory::ComputeManager computeManager(&topology);
+  // Initializing Pthread-base compute manager to run tasks in parallel
+  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
-  // Querying computational resources
-  computeManager.queryComputeResources();
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+
+  // Asking backend to check the available devices
+  const auto t = tm.queryTopology();
+
+  // Getting first device found
+  auto d = *t.getDevices().begin();
+
+  // Updating the compute resource list
+  auto computeResources = d->getComputeResourceList();
 
   // Initializing taskr
   taskr::Runtime taskr;
@@ -40,13 +50,20 @@ int main(int argc, char **argv)
   }
 
   // Create processing units from the detected compute resource list and giving them to taskr
-  for (auto &coreId : coreSubset)
+  for (auto computeResource : computeResources)
   {
-    // Creating a processing unit out of the computational resource
-    auto processingUnit = computeManager.createProcessingUnit(coreId);
+    // Interpreting compute resource as core
+    auto core = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
-    // Assigning resource to the taskr
-    taskr.addProcessingUnit(std::move(processingUnit));
+    // If the core affinity is included in the list, create new processing unit
+    if (coreSubset.contains(core->getProcessorId()))
+    {
+      // Creating a processing unit out of the computational resource
+      auto processingUnit = computeManager.createProcessingUnit(computeResource);
+
+      // Assigning resource to the taskr
+      taskr.addProcessingUnit(std::move(processingUnit));
+    }
   }
 
   // Creating task  execution unit
@@ -66,7 +83,6 @@ int main(int argc, char **argv)
   printf("Finished in %.3f seconds.\n", (double)dt * 1.0e-9);
 
   // Freeing up memory
-  delete taskExecutionUnit;
   hwloc_topology_destroy(topology);
 
   return 0;

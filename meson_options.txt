@@ -1,5 +1,6 @@
-option('backends', type : 'array', choices : ['sharedMemory', 'mpi', 'lpf',  'ascend'], value : [ ],
-       description : 'Specifies which backends to enable for compilation with HiCR'
+option('backends', type : 'array', choices : ['hwloc', 'pthreads', 'mpi', 'lpf',  'ascend'], 
+       description : 'Specifies which backends to enable for compilation with HiCR',
+       value: [ 'hwloc', 'pthreads' ]
        )
       
 option('buildTests', type : 'boolean', value : false,
@@ -9,3 +10,11 @@ option('buildTests', type : 'boolean', value : false,
 option('buildExamples', type : 'boolean', value : false,
        description: 'Indicates whether to build example apps'
 )
+
+option('exceptionModel', type : 'combo', choices : [ 'stdexception', 'abort' ], value : 'stdexception',
+       description : 'Specifies how exceptions are implemented in HiCR'
+       )
+      
+option('compileWarningsAsErrors', type : 'boolean', value : false,
+       description: 'Indicates whether a compilation warning should result in a fatal error. This is useful for CI testing but may result in inconveniences for normal users, hence it should be false by default'
+) 
