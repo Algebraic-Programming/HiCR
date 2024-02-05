@@ -161,6 +161,11 @@ class InstanceManager
    */
   virtual void finalize() = 0;
 
+  /**
+   * This function calls the internal implementation of the abort procedure for the given instance manager
+   */
+  virtual void abort(int errorCode) = 0;
+
   protected:
 
   /**
