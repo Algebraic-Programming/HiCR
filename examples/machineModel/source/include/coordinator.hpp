@@ -7,6 +7,17 @@
 #include <hicr/L1/instanceManager.hpp>
 #include <frontends/machineModel/machineModel.hpp>
 
+#ifdef _HICR_USE_ASCEND_BACKEND_
+#include <backends/ascend/L0/computeResource.hpp>
+#include <backends/ascend/L0/device.hpp>
+#endif
+
+#ifdef _HICR_USE_HWLOC_BACKEND_
+#include <backends/host/L0/computeResource.hpp>
+#include <backends/host/L0/memorySpace.hpp>
+#include <backends/host/L0/device.hpp>
+#endif
+
 void finalizeExecution(HiCR::L1::InstanceManager& instanceManager, const int returnCode = 0)
 {
   // Querying instance list
@@ -43,6 +54,8 @@ HiCR::L0::Topology parseTopology(const nlohmann::json &topologyJson)
   if (topologyJson["Host RAM Size (Gb)"].is_number() == false) throw std::runtime_error("The instance topology 'Host RAM Size (Gb)' entry is not a number\n");
   auto hostRamSize = (size_t)std::ceil(topologyJson["Host RAM Size (Gb)"].get<double>() * 1024.0 * 1024.0 * 1024.0);
 
+#ifdef _HICR_USE_HWLOC_BACKEND_
+
   // Creating list of memory spaces (only one, with the total host memory)
   HiCR::L0::Device::memorySpaceList_t memorySpaces({std::make_shared<HiCR::backend::host::L0::MemorySpace>(hostRamSize)});
 
@@ -51,6 +64,8 @@ HiCR::L0::Topology parseTopology(const nlohmann::json &topologyJson)
 
   // Adding host device to the topology
   topology.addDevice(hostDevice);
+
+#endif
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
 
@@ -182,7 +197,7 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
   return true;
 }
 
-void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string &machineModelFilePath)
+void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string &machineModelFilePath, std::vector<HiCR::L1::TopologyManager*>& topologyManagers)
 {
   // Reading from machine model file
   std::string machineModelRaw;
@@ -206,7 +221,7 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
   }
 
   // Creating machine model to handle the instance creation and task execution
-  HiCR::MachineModel machineModel(instanceManager);
+  HiCR::MachineModel machineModel(instanceManager, topologyManagers);
 
   // Parsing the machine model into a request vector. Here the vector implies ordering, which allows the user specify which instances need to be allocated first
   std::vector<HiCR::MachineModel::request_t> requests;
