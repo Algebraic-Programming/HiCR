@@ -139,6 +139,16 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return deserializeTopology(topology);
   }
 
+  __USED__ static inline std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
+  {
+    // Initialize (Ascend's) ACL runtime
+    aclError err = aclInit(NULL);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
+
+    // Initializing ascend topology manager
+    return std::make_unique<HiCR::backend::ascend::L1::TopologyManager>();
+  }
+
   private:
 
   /**

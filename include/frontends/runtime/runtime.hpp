@@ -24,6 +24,11 @@
 #include <backends/mpi/L1/instanceManager.hpp>
 #endif
 
+#ifdef _HICR_USE_YUANRONG_BACKEND_
+#include <backends/yuanrong/L1/instanceManager.hpp>
+#endif
+
+
 #ifdef _HICR_USE_HWLOC_BACKEND_
 #include <backends/host/hwloc/L1/topologyManager.hpp>
 #endif
@@ -43,35 +48,28 @@ class Runtime final
 {
   public:
 
-  Runtime()
+  Runtime(int* argc, char*** argv) : _argc(argc), _argv(argv)
   {
     /////////////////////////// Detecting instance manager
-    bool instanceManagerDetected = false;
 
     // Detecting MPI
     #ifdef _HICR_USE_MPI_BACKEND_
-    { 
-      // Checking the instance manager has not yet been defined
-      if (instanceManagerDetected == true) HICR_THROW_LOGIC("Trying to initialize instance manager backend when another has already been defined.\n");
 
-      // Initializing MPI
-      int requested = MPI_THREAD_SERIALIZED;
-      int provided;
-      int argc = 0;
-      char** argv = nullptr;
-      MPI_Init_thread(&argc, &argv, requested, &provided);
-      if (provided < requested) fprintf(stderr, "Warning, this example may not work properly if MPI does not support (serialized) threaded access\n");
+    // Creating instance manager
+    _instanceManager = HiCR::backend::mpi::L1::InstanceManager::createDefault(_argc, _argv);
 
-      // Creating instance manager
-      _instanceManager = std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
+    #endif
 
-      // Setting detected flag
-      instanceManagerDetected = true;
-    }
+    // Detecting YuanRong
+    #ifdef _HICR_USE_YUANRONG_BACKEND_
+
+    // Instantiating YuanRong instance manager
+    _instanceManager = HiCR::backend::yuanrong::L1::InstanceManager::createDefault(_argc, _argv);
+
     #endif
 
     // Checking an instance manager has been found
-    if (instanceManagerDetected == false) HICR_THROW_LOGIC("No suitable backend for the instance manager was found.\n");
+    if (_instanceManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the instance manager was found.\n");
 
     /////////////////////////// Detecting topology managers
 
@@ -80,35 +78,17 @@ class Runtime final
 
     // Detecting Hwloc
     #ifdef _HICR_USE_HWLOC_BACKEND_
-    {
-      // Creating HWloc topology object
-      auto topology = new hwloc_topology_t;
 
-      // Reserving memory for hwloc
-      hwloc_topology_init(topology);
+    // Adding topology manager to the list
+    _topologyManagers.push_back(std::move(HiCR::backend::host::hwloc::L1::TopologyManager::createDefault()));
 
-      // Initializing HWLoc-based host (CPU) topology manager
-      auto tm = std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(topology);
-
-      // Adding topology manager to the list
-      _topologyManagers.push_back(std::move(tm));
-    }
     #endif
 
     // Detecting Ascend
     #ifdef _HICR_USE_ASCEND_BACKEND_
 
-    {
-      // Initialize (Ascend's) ACL runtime
-      aclError err = aclInit(NULL);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
-
-      // Initializing ascend topology manager
-      auto tm = std::make_unique<HiCR::backend::ascend::L1::TopologyManager>();
-
-       // Adding topology manager to the list
-      _topologyManagers.push_back(std::move(tm));
-    }
+     // Adding topology manager to the list
+    _topologyManagers.push_back(std::move(HiCR::backend::ascend::L1::TopologyManager::createDefault()));
 
     #endif
 
@@ -124,11 +104,20 @@ class Runtime final
 
   ~Runtime() = default;
 
-  static void initialize() { _runtime = new Runtime(); }
+  static void initialize(int* argc, char*** argv) { _runtime = new Runtime(argc, argv); }
+  static void abort(const int errorCode) { _runtime->_abort(errorCode); }
+  static void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc) { _runtime->_deploy(requests, acceptanceCriteriaFc, *_runtime->_argc, *_runtime->_argv); }
+  static void addTask(const std::string &RPCName, const HiCR::L1::InstanceManager::RPCFunction_t fc) { return _runtime->_instanceManager->addRPCTarget(RPCName, fc); }
+  static bool isCoordinator() { return _runtime->_instanceManager->getCurrentInstance()->isRootInstance(); }
+  static bool isWorker() { return _runtime->_instanceManager->getCurrentInstance()->isRootInstance() == false; }
+  static void listen() { _runtime->_listen(); }
+
+  static HiCR::L0::Instance::instanceId_t getInstanceId() { return _runtime->_instanceManager->getCurrentInstance()->getId(); }
+
   static void finalize()
   {
     // Finalizing instance manager
-   _runtime->_instanceManager->finalize();
+   _runtime->_finalize();
 
    // Freeing up memory
    delete _runtime;
@@ -136,10 +125,77 @@ class Runtime final
 
   private:
 
+  void _finalize()
+  {
+    // Finalizing instance manager
+   _instanceManager->finalize();
+  }
+
+  void _abort(const int errorCode = 0)
+  {
+    _instanceManager->abort(errorCode);
+  }
+
+  void _listen()
+  {
+    // Flag to indicate whether the worker should continue listening
+    bool continueListening = true;
+
+    // Adding RPC targets, specifying a name and the execution unit to execute
+    _instanceManager->addRPCTarget("Finalize", [&]() { continueListening = false; });
+
+    // Listening for RPC requests
+    while (continueListening == true)  _instanceManager->listen();
+
+     // Registering an empty return value to sync on finalization
+     _instanceManager->submitReturnValue(nullptr, 0);
+
+    // Finalizing
+    _instanceManager->finalize();
+
+    // Exiting
+    exit(0);
+  }
+
+  void _deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc, char *argv[])
+  {
+    // Execute requests by finding or creating an instance that matches their topology requirements
+    try
+    {
+      _machineModel->deploy(requests, acceptanceCriteriaFc);
+    }
+    catch (const std::exception &e)
+    {
+      fprintf(stderr, "Error while executing requests. Reason: '%s'\n", e.what());
+      _abort(-1);
+    }
+
+    // Running the assigned task id in the correspondng instance
+    for (auto &r : requests) for (auto &in : r.instances)  _instanceManager->launchRPC(*in, r.taskName);
+
+    // Now waiting for return values to arrive
+    for (const auto &instance : _instanceManager->getInstances()) 
+      if (instance->getId() != _instanceManager->getCurrentInstance()->getId())
+       _instanceManager->launchRPC(*instance, "Finalize");
+
+    // Now waiting for return values to arrive
+    for (auto &r : requests) for (auto &in : r.instances)  _instanceManager->getReturnValue(*in);
+  }
+
+  /**
+   * Storage pointer for argc
+  */
+  int* const _argc;
+
+  /**
+   * Storage pointer for argv
+  */
+  char*** const _argv;
+
   /**
    * Detected instance manager to use for detecting and creating HiCR instances (only one allowed)
   */ 
-  std::unique_ptr<HiCR::L1::InstanceManager> _instanceManager; 
+  std::unique_ptr<HiCR::L1::InstanceManager> _instanceManager = nullptr; 
 
   /**
    * Detected topology managers to use for resource discovery

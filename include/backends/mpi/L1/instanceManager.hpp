@@ -169,11 +169,29 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
   }
 
-  __USED__ inline virtual void finalize() override
+  __USED__ inline void finalize() override
   {
     MPI_Finalize();
   }
 
+  __USED__ inline void abort(int errorCode) override
+  {
+    MPI_Abort(MPI_COMM_WORLD, errorCode);
+  }
+
+  __USED__ static inline std::unique_ptr<HiCR::L1::InstanceManager> createDefault(int* argc, char*** argv)
+  {
+    // Initializing MPI
+    int requested = MPI_THREAD_SERIALIZED;
+    int provided;
+    MPI_Init_thread(argc, argv, requested, &provided);
+    if (provided < requested) fprintf(stderr, "Warning, this example may not work properly if MPI does not support (serialized) threaded access\n");
+    
+    // Creating instance manager
+    return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
+  }
+
+  
   private:
 
   /**

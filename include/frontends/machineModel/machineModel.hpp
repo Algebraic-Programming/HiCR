@@ -153,6 +153,9 @@ class MachineModel
         requests[i].instances.push_back(newInstance);
         requestAssigned = true;
       }
+    
+    // Checking no excess of instances were created/detected
+    if (detectedInstances.empty() == false) HICR_THROW_LOGIC("An excess number of instances were detected after deploying the machine model.");
   }
 
   private:

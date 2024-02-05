@@ -111,6 +111,18 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return deserializeTopology(topology);
   }
 
+  __USED__ static inline std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
+  {
+    // Creating HWloc topology object
+    auto topology = new hwloc_topology_t;
+
+    // Reserving memory for hwloc
+    hwloc_topology_init(topology);
+
+    // Initializing HWLoc-based host (CPU) topology manager
+    return std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(topology);
+  }
+
   private:
 
   /**
