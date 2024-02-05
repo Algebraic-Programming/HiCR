@@ -17,6 +17,8 @@
 #include <hicr/L1/instanceManager.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/topologyManager.hpp>
+#include <frontends/machineModel/machineModel.hpp>
+#include "instance.hpp"
 
 #ifdef _HICR_USE_MPI_BACKEND_
 #include <backends/mpi/L1/instanceManager.hpp>
@@ -112,6 +114,12 @@ class Runtime final
 
     // Checking at least one topology manager was defined
     if (_topologyManagers.empty() == true) HICR_THROW_LOGIC("No suitable backends for topology managers were found.\n");
+
+    /////////////////////////// Creating machine model object
+
+    std::vector<HiCR::L1::TopologyManager*> topologyManagers;
+    for (const auto& tm : _topologyManagers) topologyManagers.push_back(tm.get());
+    _machineModel = std::make_unique<HiCR::MachineModel>(*_instanceManager, topologyManagers);
   }
 
   ~Runtime() = default;
@@ -128,8 +136,26 @@ class Runtime final
 
   private:
 
+  /**
+   * Detected instance manager to use for detecting and creating HiCR instances (only one allowed)
+  */ 
   std::unique_ptr<HiCR::L1::InstanceManager> _instanceManager; 
+
+  /**
+   * Detected topology managers to use for resource discovery
+  */
   std::vector<std::unique_ptr<HiCR::L1::TopologyManager>> _topologyManagers;
+
+  /**
+   * Storage for the detected instances
+  */
+  std::vector<std::unique_ptr<HiCR::runtime::Instance>> _instances;
+
+  /**
+   * Storage for the machine model instance
+  */
+  std::unique_ptr<HiCR::MachineModel> _machineModel;
+
 };
 
 

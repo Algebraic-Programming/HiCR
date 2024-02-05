@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include <hicr/L1/instanceManager.hpp>
+#include <hicr/L1/topologyManager.hpp>
 #include <frontends/machineModel/machineModel.hpp>
 
 // Worker task functions
@@ -17,13 +18,13 @@ void taskFc(const std::string &taskName, HiCR::L1::InstanceManager& instanceMana
   instanceManager.submitReturnValue(message.data(), message.size() + 1);
 };
 
-void workerFc(HiCR::L1::InstanceManager& instanceManager)
+void workerFc(HiCR::L1::InstanceManager& instanceManager, std::vector<HiCR::L1::TopologyManager*>& topologyManagers)
 {
   // Flag to indicate whether the worker should continue listening
   bool continueListening = true;
 
   // Creating machine model to handle the instance creation and task execution
-  HiCR::MachineModel machineModel(instanceManager);
+  HiCR::MachineModel machineModel(instanceManager, topologyManagers);
 
   // Adding RPC targets, specifying a name and the execution unit to execute
   instanceManager.addRPCTarget("Finalize", [&]() { continueListening = false; });

@@ -19,14 +19,7 @@
 #include "nlohmann_json/json.hpp"
 #include <hicr/L0/topology.hpp>
 #include <hicr/L1/instanceManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <backends/host/L0/device.hpp>
-#include <backends/host/L0/computeResource.hpp>
-#include <backends/host/L0/memorySpace.hpp>
-
-#ifdef _HICR_USE_ASCEND_BACKEND_
-  #include <backends/ascend/L0/device.hpp>
-#endif
+#include <hicr/L1/topologyManager.hpp>
 
 /**
  * Execution unit id for the predetermined topology-exchange RPC
@@ -100,11 +93,13 @@ class MachineModel
    *
    * @param[in] instanceManager Specifies the instance manager to detect and create instances and send RPC requests
    */
-  MachineModel(HiCR::L1::InstanceManager &instanceManager) : _instanceManager(&instanceManager)
+  MachineModel(HiCR::L1::InstanceManager &instanceManager, std::vector<HiCR::L1::TopologyManager*>& topologyManagers):
+   _instanceManager(&instanceManager),
+   _topologyManagers(topologyManagers)
   {
     // Registering Topology parsing function as callable RPC
     _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [&]()
-                                   { submitTopology(&instanceManager); });
+                                   { submitTopology(&instanceManager, _topologyManagers); });
   }
 
   /**
@@ -192,13 +187,8 @@ class MachineModel
         // Parsing serialized raw topology into a json object
         auto topologyJson = nlohmann::json::parse(serializedTopology);
 
-        // Obtaining the host topology from the serialized object
-        detectedInstance.topology.merge(HiCR::backend::host::hwloc::L1::TopologyManager::deserializeTopology(topologyJson));
-
-// Obtaining the ascend topology (if enabled at compilation time)
-#ifdef _HICR_USE_ASCEND_BACKEND_
-        detectedInstance.topology.merge(HiCR::backend::ascend::L1::TopologyManager::deserializeTopology(topologyJson));
-#endif // _HICR_USE_ASCEND_BACKEND_
+        // Obtaining topology from the registered topology managers
+        for (const auto tm : _topologyManagers) detectedInstance.topology.merge(tm->_deserializeTopology(topologyJson));
 
         // Adding detected instance to the storage
         detectedInstances.push_back(detectedInstance);
@@ -208,47 +198,13 @@ class MachineModel
     return detectedInstances;
   }
 
-  __USED__ static inline void submitTopology(HiCR::L1::InstanceManager *instanceManager)
+  __USED__ static inline void submitTopology(HiCR::L1::InstanceManager *instanceManager, std::vector<HiCR::L1::TopologyManager*>& topologyManagers)
   {
     // Storage for the topology to send
     HiCR::L0::Topology workerTopology;
 
-    // List of topology managers to query
-    std::vector<HiCR::L1::TopologyManager *> topologyManagerList;
-
-// Now instantiating topology managers (which ones is determined by backend availability during compilation)
-#ifdef _HICR_USE_HWLOC_BACKEND_
-
-    // Creating HWloc topology object
-    hwloc_topology_t topology;
-
-    // Reserving memory for hwloc
-    hwloc_topology_init(&topology);
-
-    // Initializing HWLoc-based host (CPU) topology manager
-    HiCR::backend::host::hwloc::L1::TopologyManager hwlocTopologyManager(&topology);
-
-    // Adding topology manager to the list
-    topologyManagerList.push_back(&hwlocTopologyManager);
-
-#endif // _HICR_USE_HWLOC_BACKEND_
-
-#ifdef _HICR_USE_ASCEND_BACKEND_
-
-    // Initialize (Ascend's) ACL runtime
-    aclError err = aclInit(NULL);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
-
-    // Initializing ascend topology manager
-    HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
-
-    // Adding topology manager to the list
-    topologyManagerList.push_back(&ascendTopologyManager);
-
-#endif // _HICR_USE_ASCEND_BACKEND_
-
     // For each topology manager detected
-    for (const auto &tm : topologyManagerList)
+    for (const auto tm : topologyManagers)
     {
       // Getting the topology information from the topology manager
       const auto t = tm->queryTopology();
@@ -264,7 +220,15 @@ class MachineModel
     instanceManager->submitReturnValue(message.data(), message.size() + 1);
   };
 
+  /**
+   * Instance manager to use for instance detection
+  */
   HiCR::L1::InstanceManager *_instanceManager;
+
+  /**
+   * Topology managers to use for resource detection
+  */
+  std::vector<HiCR::L1::TopologyManager*> _topologyManagers;
 };
 
 } // namespace HiCR

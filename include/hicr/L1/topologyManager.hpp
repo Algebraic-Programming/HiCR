@@ -51,6 +51,16 @@ class TopologyManager
    */
   virtual HiCR::L0::Topology queryTopology() = 0;
 
+  /**
+   * This function deserializes a JSON-encoded topology into a topology class with its constituent devices, as recognized by the called backend, and returns it
+   *
+   * If the backend does not recognize a device in the encoded topology, it will not add it to the topology
+   *
+   * @param[in] topology The JSON-encoded topology to deserialize
+   * @return The deserialized topology containing only devices recognized by the backend
+   */
+  virtual HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const = 0;
+
   protected:
 
   /**
