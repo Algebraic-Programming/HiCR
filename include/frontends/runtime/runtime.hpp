@@ -108,10 +108,10 @@ class Runtime final
   /**
    * This function initializes the HiCR runtime singleton and runs the backen detect and initialization routines
    *
-   * @param[in] argc A pointer to the argc value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
-   * @param[in] argv A pointer to the argv value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
+   * @param[in] pargc A pointer to the argc value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
+   * @param[in] pargv A pointer to the argv value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
    */
-  static void initialize(int *argc, char ***argv) { _runtime = new Runtime(argc, argv); }
+  static void initialize(int *pargc, char ***pargv) { _runtime = new Runtime(pargc, pargv); }
 
   /**
    * This function aborts execution, while trying to bring down all other instances (prevents hang ups). It may be only be called by the coordinator.
@@ -127,7 +127,7 @@ class Runtime final
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
    */
-  static void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc) { _runtime->_deploy(requests, acceptanceCriteriaFc, *_runtime->_argc, *_runtime->_argv); }
+  static void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc) { _runtime->_deploy(requests, acceptanceCriteriaFc, *_runtime->_pargc, *_runtime->_pargv); }
 
   /**
    * Adds a task that will be a possible target as initial function for a deployed HiCR instance.
