@@ -163,7 +163,7 @@ class InstanceManager
 
   /**
    * This function calls the internal implementation of the abort procedure for the given instance manager
-   * 
+   *
    * @param[in] errorCode The error code to publish upon aborting execution
    */
   virtual void abort(int errorCode) = 0;
