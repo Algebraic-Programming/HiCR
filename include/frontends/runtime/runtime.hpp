@@ -18,7 +18,7 @@
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/topologyManager.hpp>
 #include <frontends/machineModel/machineModel.hpp>
-#include "instance.hpp"
+#include "worker.hpp"
 
 #ifdef _HICR_USE_MPI_BACKEND_
   #include <backends/mpi/L1/instanceManager.hpp>
@@ -172,7 +172,7 @@ class Runtime final
     _runtime->_finalize();
 
     // Freeing up memory
-    delete _runtime;
+    // delete _runtime;
   }
 
   private:
@@ -182,6 +182,20 @@ class Runtime final
    */
   void _finalize()
   {
+    // If this is the coordinator function, wait for the workers to finalize
+    // For this, we wait for them to produce the last return values
+    if (isCoordinator() == true)
+    {
+     // Launching finalization RPC
+     for (auto &w : _workers) _instanceManager->launchRPC(*w->getInstance(), "Finalize");
+
+     // Waiting for return ack
+     for (auto &w : _workers) _instanceManager->getReturnValue(*w->getInstance());
+    }
+
+    // Registering an empty return value to ack on finalization
+    if (isWorker() == true) _instanceManager->submitReturnValue(nullptr, 0);
+
     // Finalizing instance manager
     _instanceManager->finalize();
   }
@@ -208,15 +222,6 @@ class Runtime final
 
     // Listening for RPC requests
     while (continueListening == true) _instanceManager->listen();
-
-    // Registering an empty return value to sync on finalization
-    _instanceManager->submitReturnValue(nullptr, 0);
-
-    // Finalizing
-    _instanceManager->finalize();
-
-    // Exiting
-    exit(0);
   }
 
   /**
@@ -235,18 +240,23 @@ class Runtime final
       _abort(-1);
     }
 
-    // Running the assigned task id in the correspondng instance
+    // Running the assigned task id in the corresponding instance and registering it as worker
+    runtime::Worker::workerId_t currentId = 0;
     for (auto &r : requests)
-      for (auto &in : r.instances) _instanceManager->launchRPC(*in, r.taskName);
+      for (auto &in : r.instances)
+      {
+         // Launching initial task
+         _instanceManager->launchRPC(*in, r.taskName);
 
-    // Now waiting for return values to arrive
-    for (const auto &instance : _instanceManager->getInstances())
-      if (instance->getId() != _instanceManager->getCurrentInstance()->getId())
-        _instanceManager->launchRPC(*instance, "Finalize");
+         // Creating worker instance
+         auto worker = std::make_unique<runtime::Worker>(currentId, r.taskName, in);
 
-    // Now waiting for return values to arrive
-    for (auto &r : requests)
-      for (auto &in : r.instances) _instanceManager->getReturnValue(*in);
+         // Adding worker to the set
+         _workers.push_back(std::move(worker));
+
+         // Increasing current worker id
+         currentId++;
+      } 
   }
 
   /**
@@ -270,9 +280,9 @@ class Runtime final
   std::vector<std::unique_ptr<HiCR::L1::TopologyManager>> _topologyManagers;
 
   /**
-   * Storage for the detected instances
+   * Storage for the deployed workers
    */
-  std::vector<std::unique_ptr<HiCR::runtime::Instance>> _instances;
+  std::vector<std::unique_ptr<HiCR::runtime::Worker>> _workers;
 
   /**
    * Storage for the machine model instance
