@@ -139,6 +139,11 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return deserializeTopology(topology);
   }
 
+  /**
+   * This function represents the default intializer for this backend
+   * 
+   * @return A unique pointer to the newly instantiated backend class
+  */
   __USED__ static inline std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
   {
     // Initialize (Ascend's) ACL runtime

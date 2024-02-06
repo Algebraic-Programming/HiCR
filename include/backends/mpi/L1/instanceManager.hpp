@@ -179,6 +179,13 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Abort(MPI_COMM_WORLD, errorCode);
   }
 
+  /**
+   * This function represents the default intializer for this backend
+   * 
+   * @param[in] argc A pointer to the argc value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
+   * @param[in] argv A pointer to the argv value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
+   * @return A unique pointer to the newly instantiated backend class
+  */
   __USED__ static inline std::unique_ptr<HiCR::L1::InstanceManager> createDefault(int* argc, char*** argv)
   {
     // Initializing MPI
