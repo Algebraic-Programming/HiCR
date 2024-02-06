@@ -38,7 +38,6 @@ class Instance final
 
   // Internal HiCR instance class
   std::unique_ptr<HiCR::L0::Instance> _hicrInstance;
-   
 };
 
 } // namespace runtime

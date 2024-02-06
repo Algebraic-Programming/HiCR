@@ -94,9 +94,8 @@ class MachineModel
    * @param[in] instanceManager Specifies the instance manager to detect and create instances and send RPC requests
    * @param[in] topologyManagers Specifies the topology managers to employ for topology detection and serialization
    */
-  MachineModel(HiCR::L1::InstanceManager &instanceManager, std::vector<HiCR::L1::TopologyManager*>& topologyManagers):
-   _instanceManager(&instanceManager),
-   _topologyManagers(topologyManagers)
+  MachineModel(HiCR::L1::InstanceManager &instanceManager, std::vector<HiCR::L1::TopologyManager *> &topologyManagers) : _instanceManager(&instanceManager),
+                                                                                                                         _topologyManagers(topologyManagers)
   {
     // Registering Topology parsing function as callable RPC
     _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [&]()
@@ -154,7 +153,7 @@ class MachineModel
         requests[i].instances.push_back(newInstance);
         requestAssigned = true;
       }
-    
+
     // Checking no excess of instances were created/detected
     if (detectedInstances.empty() == false) HICR_THROW_LOGIC("An excess number of instances were detected after deploying the machine model.");
   }
@@ -202,7 +201,7 @@ class MachineModel
     return detectedInstances;
   }
 
-  __USED__ static inline void submitTopology(HiCR::L1::InstanceManager *instanceManager, std::vector<HiCR::L1::TopologyManager*>& topologyManagers)
+  __USED__ static inline void submitTopology(HiCR::L1::InstanceManager *instanceManager, std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
   {
     // Storage for the topology to send
     HiCR::L0::Topology workerTopology;
@@ -226,13 +225,13 @@ class MachineModel
 
   /**
    * Instance manager to use for instance detection
-  */
+   */
   HiCR::L1::InstanceManager *_instanceManager;
 
   /**
    * Topology managers to use for resource detection
-  */
-  std::vector<HiCR::L1::TopologyManager*> _topologyManagers;
+   */
+  std::vector<HiCR::L1::TopologyManager *> _topologyManagers;
 };
 
 } // namespace HiCR

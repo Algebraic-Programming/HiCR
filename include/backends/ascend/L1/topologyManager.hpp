@@ -111,7 +111,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    * Static implementation of the _deserializeTopology Function
    * @param[in] topology see: _deserializeTopology
    * @return see: _deserializeTopology
-  */
+   */
   __USED__ static inline HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
   {
     // Verifying input's syntax
@@ -141,9 +141,9 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
   /**
    * This function represents the default intializer for this backend
-   * 
+   *
    * @return A unique pointer to the newly instantiated backend class
-  */
+   */
   __USED__ static inline std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
   {
     // Initialize (Ascend's) ACL runtime
