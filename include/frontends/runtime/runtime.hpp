@@ -172,7 +172,7 @@ class Runtime final
     _runtime->_finalize();
 
     // Freeing up memory
-    // delete _runtime;
+    delete _runtime;
   }
 
   private:
@@ -193,8 +193,9 @@ class Runtime final
      for (auto &w : _workers) _instanceManager->getReturnValue(*w->getInstance());
     }
 
+    uint8_t ack = 0;
     // Registering an empty return value to ack on finalization
-    if (isWorker() == true) _instanceManager->submitReturnValue(nullptr, 0);
+    if (isWorker() == true) _instanceManager->submitReturnValue(&ack, sizeof(ack));
 
     // Finalizing instance manager
     _instanceManager->finalize();
@@ -232,7 +233,7 @@ class Runtime final
     // Execute requests by finding or creating an instance that matches their topology requirements
     try
     {
-      _machineModel->deploy(requests, acceptanceCriteriaFc);
+      _machineModel->deploy(requests, acceptanceCriteriaFc, argc, argv);
     }
     catch (const std::exception &e)
     {
