@@ -15,6 +15,7 @@
 #include <memory>
 #include <hicr/definitions.hpp>
 #include <hicr/L0/instance.hpp>
+#include "channel.hpp"
 
 namespace HiCR
 {
@@ -31,30 +32,34 @@ class Worker final
 {
   public:
 
-  /**
-   * Type definition for a worker id
-  */
-  typedef uint64_t workerId_t; 
 
   Worker() = delete;
-  Worker(const workerId_t id, const std::string& task, std::shared_ptr<HiCR::L0::Instance> hicrInstance) :
-   _id(id),
-   _task(task),
+  Worker(const std::string& entryPoint,
+         std::shared_ptr<HiCR::L0::Instance> hicrInstance
+        ) :
+   _entryPoint(entryPoint),
    _hicrInstance(hicrInstance) {}
   ~Worker() = default;
 
   inline std::shared_ptr<HiCR::L0::Instance> getInstance() const { return _hicrInstance; }
+  inline std::string getEntryPoint() const { return _entryPoint; }
 
   private:
 
-  // Unique identifier for the worker given the current deployment
-  const workerId_t _id;
+  /**
+   * Initial entry point function name being executed by the worker
+   */ 
+  const std::string _entryPoint;
 
-  // Initial task being executed by the worker
-  const std::string _task;
-
-  // Internal HiCR instance class
+  /**
+   * Internal HiCR instance class
+   */ 
   const std::shared_ptr<HiCR::L0::Instance> _hicrInstance;
+
+  /**
+   * Consumer channel to receive RPCs from the coordinator instance
+   */ 
+  const std::unique_ptr<runtime::Channel> _rpcInputChannel;
 };
 
 } // namespace runtime

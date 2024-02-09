@@ -1,12 +1,8 @@
 #include <frontends/runtime/runtime.hpp>
 #include "include/machineModel.hpp"
 
-// Worker task functions
-void taskFc(const std::string &taskName)
-{
-  // Serializing theworker topology and dumping it into a raw string message
-  printf("Hello, I am worker %lu, executing task '%s'\n", HiCR::Runtime::getInstanceId(), taskName.c_str());
-};
+// Worker task function
+void taskFc(const std::string &taskName) { printf("Hello, I am worker %lu, executing task '%s'\n", HiCR::Runtime::getInstanceId(), taskName.c_str()); };
 
 int main(int argc, char *argv[])
 {
