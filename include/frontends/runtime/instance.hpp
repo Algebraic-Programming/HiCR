@@ -34,8 +34,17 @@ class Instance
 {
   public:
 
-
   Instance() = delete;
+  
+  /**
+   * Constructor for the coordinator class
+   * 
+   * @param[in] instanceManager The instance manager backend to use
+   * @param[in] communicationManager The communication manager backend to use
+   * @param[in] memoryManager The memory manager backend to use
+   * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
+   * @param[in] machineModel The machine model to use to deploy the workers
+  */
   Instance(
     HiCR::L1::InstanceManager& instanceManager,
     HiCR::L1::CommunicationManager& communicationManager,
@@ -53,6 +62,9 @@ class Instance
    }
   virtual ~Instance() = default;
 
+  /**
+   * Initializer function for the instance 
+  */
   virtual void initialize() = 0;
 
   /**
@@ -60,12 +72,19 @@ class Instance
   */
   virtual void finalize() = 0;
   
+  /**
+   * Returns the internal HiCR instance object for the caller instance
+   * 
+   * @return The pointer to the internal HiCR instance
+  */
   HiCR::L0::Instance* getHiCRInstance() const { return _HiCRInstance.get(); }
 
   protected:
 
   /**
    * Internal implementation of the abort function
+   * 
+   * @param[in] errorCode The error code to produce upon abort
    */
   void _abort(const int errorCode = 0)
   {
@@ -77,7 +96,7 @@ class Instance
   */
   const std::shared_ptr<HiCR::L0::Instance> _HiCRInstance;
 
-  /*
+  /**
    * Detected instance manager to use for detecting and creating HiCR instances (only one allowed)
    */
   HiCR::L1::InstanceManager* const _instanceManager = nullptr;
