@@ -2,7 +2,7 @@
   "Instances":
   [
     {
-      "Task": "Task A",
+      "Entry Point": "Task A",
       "Replicas": 1,
       "Topology": 
       {
@@ -13,7 +13,7 @@
     },
 
     {
-      "Task": "Task B",
+      "Entry Point": "Task B",
       "Replicas": 2,
       "Topology": 
       {
@@ -24,7 +24,7 @@
     },
 
     {
-      "Task": "Task C",
+      "Entry Point": "Task C",
       "Replicas": 3,
       "Topology": 
       {
