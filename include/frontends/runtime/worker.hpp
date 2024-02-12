@@ -93,7 +93,7 @@ class Worker final : public runtime::Instance
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include "channel/yuanrong/consumerChannelImpl.hpp"
+  #include <channel/yuanrong/consumerChannelImpl.hpp>
 #else
   #include "channel/hicr/consumerChannelImpl.hpp"
 #endif

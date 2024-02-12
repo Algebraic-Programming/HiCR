@@ -96,7 +96,7 @@ class Coordinator final : public runtime::Instance
       for (auto &in : r.instances)
       {
         // Creating worker instance
-        auto worker = worker_t { .entryPoint = r.taskName, .hicrInstance = in };
+        auto worker = worker_t { .entryPoint = r.entryPointName, .hicrInstance = in };
 
         // Adding worker to the set
         _workers.push_back(worker);
@@ -125,7 +125,7 @@ class Coordinator final : public runtime::Instance
 
   __USED__ inline void sendMessage(worker_t& worker, void* messagePtr, size_t messageSize);
   __USED__ inline std::vector<worker_t>& getWorkers() { return _workers; }
-  
+
   private:
 
   // For interoperability with YuanRong, this function is implemented differently depended on the backend used

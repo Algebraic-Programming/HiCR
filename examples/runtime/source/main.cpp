@@ -19,9 +19,9 @@ void entryPointFc(const std::string &entryPointName)
 int main(int argc, char *argv[])
 {
   // Registering tasks for the workers
-  HiCR::Runtime::registerEntryPoint("Task A",   [&]() { entryPointFc("A"); });
-  HiCR::Runtime::registerEntryPoint("Task B",   [&]() { entryPointFc("B"); });
-  HiCR::Runtime::registerEntryPoint("Task C",   [&]() { entryPointFc("C"); });
+  HiCR::Runtime::registerEntryPoint("A", [&]() { entryPointFc("A"); });
+  HiCR::Runtime::registerEntryPoint("B", [&]() { entryPointFc("B"); });
+  HiCR::Runtime::registerEntryPoint("C", [&]() { entryPointFc("C"); });
 
   // Initializing the HiCR singleton
   HiCR::Runtime::initialize(&argc, &argv);

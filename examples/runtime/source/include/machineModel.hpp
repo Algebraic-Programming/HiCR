@@ -93,9 +93,9 @@ std::vector<HiCR::MachineModel::request_t> parseMachineModel(const nlohmann::jso
     HiCR::MachineModel::request_t newRequestedInstance;
 
     // Parsing task name
-    if (instance.contains("Task") == false) throw std::runtime_error("the requested instance does not contain a 'Task' entry\n");
-    if (instance["Task"].is_string() == false) throw std::runtime_error("The instance 'Task' entry is not a string\n");
-    newRequestedInstance.taskName = instance["Task"].get<std::string>();
+    if (instance.contains("Entry Point") == false) throw std::runtime_error("the requested instance does not contain a 'Entry Point' entry\n");
+    if (instance["Entry Point"].is_string() == false) throw std::runtime_error("The instance 'Entry Point' entry is not a string\n");
+    newRequestedInstance.entryPointName = instance["Entry Point"].get<std::string>();
 
     // Parsing replica count
     if (instance.contains("Replicas") == false) throw std::runtime_error("the requested instance does not contain a 'Replicas' entry\n");

@@ -68,9 +68,9 @@ class MachineModel
   struct request_t
   {
     /**
-     * Identifier of the task to execute
+     * Identifier of the entry point to execute
      */
-    std::string taskName;
+    std::string entryPointName;
 
     /**
      * Number of replicas of this instance to create
