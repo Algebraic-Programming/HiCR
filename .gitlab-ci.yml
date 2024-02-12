@@ -41,7 +41,7 @@ build-ascend:
   - docker
   - ascend
   script:
-  - source /home/hicr/.bashrc
+  - . /home/hicr/.bashrc
   - cat /home/hicr/.bashrc
   - echo "$(ls -al /home/hicr/.local/bin)"
   - echo "$PATH"
