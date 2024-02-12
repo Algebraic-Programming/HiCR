@@ -353,6 +353,11 @@ class Consumer final : public variableSize::Base
     return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0);
   }
 
+  /**
+   * Retrieves the pointer to the channel's payload buffer
+   * 
+   * @return The pointer to the payload buffer
+  */
   std::shared_ptr<L0::GlobalMemorySlot> getPayloadBufferMemorySlot() const { return _payloadBuffer; }
 };
 

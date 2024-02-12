@@ -50,8 +50,14 @@ class Runtime;
  */
 static Runtime *_runtime;
 
+/**
+ * The entry point type is the combination of its name (a string) and the associated function to execute
+*/
 typedef std::pair<const std::string, const HiCR::L1::InstanceManager::RPCFunction_t> entryPoint_t;
 
+/**
+ * A temporary storage place for entry points so that workers can register them before initializing (and therefore losing control over their execution)
+*/
 static std::vector<entryPoint_t> _runtimeEntryPointVector;
 
 /**
@@ -159,6 +165,11 @@ class Runtime final
    */
   static void initialize(int *pargc, char ***pargv) { _runtime = new Runtime(pargc, pargv); }
 
+  /**
+   * Retrieves the worker pointer corresponding to the caller instance. Only a worker can call this function, otherwise it will fail
+   * 
+   * @return A pointer to the current Worker instance
+  */
   static inline HiCR::runtime::Worker* getWorkerInstance() 
   {
      // Sanity check
@@ -174,6 +185,11 @@ class Runtime final
      return workerPtr;
   }
 
+  /**
+   * Retrieves the coordinator pointer corresponding to the caller instance. Only a coordinator can call this function, otherwise it will fail
+   * 
+   * @return A pointer to the current Coordinator instance
+  */
   static inline HiCR::runtime::Coordinator* getCoordinatorInstance() 
   {
      // Sanity check

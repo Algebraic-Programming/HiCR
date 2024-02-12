@@ -60,23 +60,34 @@ class Coordinator final : public runtime::Instance
     std::shared_ptr<runtime::ProducerChannel> channel;
   };
 
-  Coordinator() = delete;
+  /**
+   * Constructor for the coordinator class
+   * 
+   * @param[in] instanceManager The instance manager backend to use
+   * @param[in] communicationManager The communication manager backend to use
+   * @param[in] memoryManager The memory manager backend to use
+   * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
+   * @param[in] machineModel The machine model to use to deploy the workers
+  */
   Coordinator(HiCR::L1::InstanceManager& instanceManager,
           HiCR::L1::CommunicationManager& communicationManager,
           HiCR::L1::MemoryManager& memoryManager,
           std::vector<HiCR::L1::TopologyManager*>& topologyManagers,
           HiCR::MachineModel& machineModel
         ) : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel) {}
+  
+  Coordinator() = delete;
   ~Coordinator() = default;
 
-  __USED__ inline void initialize()
-  { }
+  __USED__ inline void initialize() override { }
 
   /**
    * Deploys the requested machine model and uses the a user-provided acceptance criteria function to evaluate whether the allotted resources satisfy the request
    *
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
+   * @param[in] argc The number of command line arguments
+   * @param[in] argv Poiners to the character string for the command line arguments
    */
   __USED__ inline void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc, char *argv[])
   {
@@ -123,7 +134,20 @@ class Coordinator final : public runtime::Instance
     _instanceManager->finalize();
   }
 
+  /**
+   * Asynchronously sends a binary message (buffer + size) to a given worker
+   * 
+   * @param[in] worker The recepient worker of the message
+   * @param[in] messagePtr The pointer to the message buffer
+   * @param[in] messageSize The message size in bytes
+  */
   __USED__ inline void sendMessage(worker_t& worker, void* messagePtr, size_t messageSize);
+
+  /**
+   * Gets the worker vector, as deployed by the coordinator
+   * 
+   * @return A reference to the worker vector
+  */
   __USED__ inline std::vector<worker_t>& getWorkers() { return _workers; }
 
   private:
