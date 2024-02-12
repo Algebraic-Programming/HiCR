@@ -36,12 +36,12 @@ RUN useradd -d $HOME -m $USER -G root \
   && echo 'umask 0027' >> $HOME/.bashrc \
   && adduser $USER sudo
 
+USER $USER
+
 RUN touch $HOME/.hicr-env.sh
-RUN chmod +x $HOME/.hicr-env.sh
+RUN chmod +rwx $HOME/.hicr-env.sh
 RUN echo "export PATH=$HOME/.local/bin:$PATH" >> $HOME/.hicr-env.sh
 RUN echo "source .hicr-env.sh" >> $HOME/.bashrc
-
-USER $USER
 
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install 'cmake>=3.27'
