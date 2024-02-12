@@ -1,6 +1,6 @@
 #pragma once
 
-__USED__ inline void Coordinator::initializeRPCChannels()
+__USED__ inline void Coordinator::initializeChannels()
 {
 ////////// Creating producer channels to send variable sized RPCs fto the workers
 
@@ -83,7 +83,7 @@ for (size_t i = 0; i < _workers.size(); i++)
     auto coordinatorPayloadCoordinatorBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_COORDINATOR_COORDINATION_BUFFER_PAYLOADS_TAG, workerInstanceId);
 
     // Creating channel
-    worker.rpcChannel = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(
+    worker.channel = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(
     *_communicationManager,
     sizeInfoBufferMemorySlotVector[i],
     workerMessagePayloadBuffer,
@@ -97,4 +97,26 @@ for (size_t i = 0; i < _workers.size(); i++)
     _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY
     );
  }
+}
+
+__USED__ inline void Coordinator::sendMessage(worker_t& worker, void* messagePtr, size_t messageSize)
+{
+    // Accessing first topology manager detected
+    auto& tm = *_topologyManagers[0];
+
+    // Gathering topology from the topology manager
+    const auto t = tm.queryTopology();
+
+    // Selecting first device
+    auto d = *t.getDevices().begin();
+
+    // Getting memory space list from device
+    auto memSpaces = d->getMemorySpaceList();
+
+    // Grabbing first memory space for buffering
+    auto bufferMemorySpace = *memSpaces.begin();
+
+    // Sending initial message to all workers
+    auto messageSendSlot = _memoryManager->registerLocalMemorySlot(bufferMemorySpace, messagePtr, messageSize);
+    worker.channel->push(messageSendSlot);
 }

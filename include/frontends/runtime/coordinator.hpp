@@ -55,9 +55,9 @@ class Coordinator final : public runtime::Instance
     const std::shared_ptr<HiCR::L0::Instance> hicrInstance;
 
     /**
-     * Producer channels to send RPCs to the worker instances
+     * Producer channels to send messages to the worker instances
      */ 
-    std::shared_ptr<runtime::ProducerChannel> rpcChannel;
+    std::shared_ptr<runtime::ProducerChannel> channel;
   };
 
   Coordinator() = delete;
@@ -69,7 +69,7 @@ class Coordinator final : public runtime::Instance
         ) : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel) {}
   ~Coordinator() = default;
 
-  void initialize()
+  __USED__ inline void initialize()
   { }
 
   /**
@@ -78,7 +78,7 @@ class Coordinator final : public runtime::Instance
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
    */
-  void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc, char *argv[])
+  __USED__ inline void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc, char *argv[])
   {
     // Execute requests by finding or creating an instance that matches their topology requirements
     try
@@ -103,39 +103,16 @@ class Coordinator final : public runtime::Instance
       } 
 
     // Launching channel creation routine for every worker
-    for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, "__initializeRPCChannels");
+    for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, "__initializeChannels");
 
     // Initializing RPC channels
-    initializeRPCChannels();
+    initializeChannels();
     
-    // Accessing first topology manager detected
-    auto& tm = *_topologyManagers[0];
-
-    // Gathering topology from the topology manager
-    const auto t = tm.queryTopology();
-
-    // Selecting first device
-    auto d = *t.getDevices().begin();
-
-    // Getting memory space list from device
-    auto memSpaces = d->getMemorySpaceList();
-
-    // Grabbing first memory space for buffering
-    auto bufferMemorySpace = *memSpaces.begin();
-
-    // Sending initial message to all workers
-    for (auto& worker : _workers)
-    {
-      std::string message = "Hello from the coordinator";
-      auto messageSendSlot = _memoryManager->registerLocalMemorySlot(bufferMemorySpace, message.data(), message.size());
-      worker.rpcChannel->push(messageSendSlot);
-    }
-
     // Launching worker's entry point function     
     for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, w.entryPoint); 
   }
 
-  void finalize()
+  __USED__ inline void finalize()
   {
     // Launching finalization RPC
     for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, "__finalize");
@@ -146,10 +123,13 @@ class Coordinator final : public runtime::Instance
     _instanceManager->finalize();
   }
 
+  __USED__ inline void sendMessage(worker_t& worker, void* messagePtr, size_t messageSize);
+  __USED__ inline std::vector<worker_t>& getWorkers() { return _workers; }
+  
   private:
 
   // For interoperability with YuanRong, this function is implemented differently depended on the backend used
-  __USED__ inline void initializeRPCChannels();
+  __USED__ inline void initializeChannels();
 
  /**
   * Storage for the deployed workers. This object is only mantained and usable by the coordinator

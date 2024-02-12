@@ -159,6 +159,36 @@ class Runtime final
    */
   static void initialize(int *pargc, char ***pargv) { _runtime = new Runtime(pargc, pargv); }
 
+  static inline HiCR::runtime::Worker* getWorkerInstance() 
+  {
+     // Sanity check
+     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getWorkerInstance before HiCR has been initialized.\n");
+
+     // Casting current instance to worker type
+     const auto workerPtr = dynamic_cast<HiCR::runtime::Worker*>(_currentInstance);
+
+     // Sanity check
+     if (workerPtr == nullptr) HICR_THROW_LOGIC("Calling getWorkerInstance but current instance is not a worker.\n");
+
+     // Returning worker pointer
+     return workerPtr;
+  }
+
+  static inline HiCR::runtime::Coordinator* getCoordinatorInstance() 
+  {
+     // Sanity check
+     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance before HiCR has been initialized.\n");
+
+     // Casting current instance to worker type
+     const auto coordinatorPtr = dynamic_cast<HiCR::runtime::Coordinator*>(_currentInstance);
+
+     // Sanity check
+     if (coordinatorPtr == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance but current instance is not a worker.\n");
+
+     // Returning worker pointer
+     return coordinatorPtr;
+  }
+
   /**
    * This function aborts execution, while trying to bring down all other instances (prevents hang ups). It may be only be called by the coordinator.
    * Calling this function from a worker may result in a hangup.

@@ -56,22 +56,7 @@ class Worker final : public runtime::Instance
 
     // Adding RPC targets, specifying a name and the execution unit to execute
     _instanceManager->addRPCTarget("__finalize", [&]() { continueListening = false; });
-    _instanceManager->addRPCTarget("__initializeRPCChannels", [this]()
-     {
-        initializeRPCChannels();
-
-        // Waiting for initial message from coordinator
-        while (rpcChannel->getDepth() == 0) rpcChannel->updateDepth();
-
-        // Get internal pointer of the token buffer slot and the offset
-        auto payloadBufferMemorySlot = rpcChannel->getPayloadBufferMemorySlot();
-        auto payloadBufferPtr = (const char*) payloadBufferMemorySlot->getSourceLocalMemorySlot()->getPointer();
-        auto offset = rpcChannel->peek()[0];
-        rpcChannel->pop();
-
-        // Printing message
-        printf("[Worker] Message from the coordinator: '%s'\n", &payloadBufferPtr[offset]);
-     });
+    _instanceManager->addRPCTarget("__initializeChannels", [this]() { initializeChannels(); });
 
     // Listening for RPC requests
     while (continueListening == true) _instanceManager->listen();
@@ -94,14 +79,16 @@ class Worker final : public runtime::Instance
     exit(0);
   }
 
+  __USED__ inline std::pair<const void*, size_t> recvMessage();
+
   private:
 
-  __USED__ inline void initializeRPCChannels();
+  __USED__ inline void initializeChannels();
 
   /**
-   * Consumer channel to receive RPCs from the coordinator instance
+   * Consumer channel to receive messages from the coordinator instance
    */ 
-  std::shared_ptr<runtime::ConsumerChannel> rpcChannel;
+  std::shared_ptr<runtime::ConsumerChannel> channel;
 };
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
