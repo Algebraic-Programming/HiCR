@@ -39,47 +39,46 @@ class Coordinator final : public runtime::Instance
 {
   public:
 
-  /** 
-  * Storage for worker data as required by the coordinator for issuing RPCs and sending messages
-  */
+  /**
+   * Storage for worker data as required by the coordinator for issuing RPCs and sending messages
+   */
   struct worker_t
   {
     /**
      * Initial entry point function name being executed by the worker
-     */ 
+     */
     const std::string entryPoint;
 
     /**
      * Internal HiCR instance class
-     */ 
+     */
     const std::shared_ptr<HiCR::L0::Instance> hicrInstance;
 
     /**
      * Producer channels to send messages to the worker instances
-     */ 
+     */
     std::shared_ptr<runtime::ProducerChannel> channel;
   };
 
   /**
    * Constructor for the coordinator class
-   * 
+   *
    * @param[in] instanceManager The instance manager backend to use
    * @param[in] communicationManager The communication manager backend to use
    * @param[in] memoryManager The memory manager backend to use
    * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
    * @param[in] machineModel The machine model to use to deploy the workers
-  */
-  Coordinator(HiCR::L1::InstanceManager& instanceManager,
-          HiCR::L1::CommunicationManager& communicationManager,
-          HiCR::L1::MemoryManager& memoryManager,
-          std::vector<HiCR::L1::TopologyManager*>& topologyManagers,
-          HiCR::MachineModel& machineModel
-        ) : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel) {}
-  
+   */
+  Coordinator(HiCR::L1::InstanceManager &instanceManager,
+              HiCR::L1::CommunicationManager &communicationManager,
+              HiCR::L1::MemoryManager &memoryManager,
+              std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
+              HiCR::MachineModel &machineModel) : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel) {}
+
   Coordinator() = delete;
   ~Coordinator() = default;
 
-  __USED__ inline void initialize() override { }
+  __USED__ inline void initialize() override {}
 
   /**
    * Deploys the requested machine model and uses the a user-provided acceptance criteria function to evaluate whether the allotted resources satisfy the request
@@ -107,20 +106,20 @@ class Coordinator final : public runtime::Instance
       for (auto &in : r.instances)
       {
         // Creating worker instance
-        auto worker = worker_t { .entryPoint = r.entryPointName, .hicrInstance = in };
+        auto worker = worker_t{.entryPoint = r.entryPointName, .hicrInstance = in};
 
         // Adding worker to the set
         _workers.push_back(worker);
-      } 
+      }
 
     // Launching channel creation routine for every worker
     for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, "__initializeChannels");
 
     // Initializing RPC channels
     initializeChannels();
-    
-    // Launching worker's entry point function     
-    for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, w.entryPoint); 
+
+    // Launching worker's entry point function
+    for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, w.entryPoint);
   }
 
   __USED__ inline void finalize()
@@ -136,28 +135,28 @@ class Coordinator final : public runtime::Instance
 
   /**
    * Asynchronously sends a binary message (buffer + size) to a given worker
-   * 
+   *
    * @param[in] worker The recepient worker of the message
    * @param[in] messagePtr The pointer to the message buffer
    * @param[in] messageSize The message size in bytes
-  */
-  __USED__ inline void sendMessage(worker_t& worker, void* messagePtr, size_t messageSize);
+   */
+  __USED__ inline void sendMessage(worker_t &worker, void *messagePtr, size_t messageSize);
 
   /**
    * Gets the worker vector, as deployed by the coordinator
-   * 
+   *
    * @return A reference to the worker vector
-  */
-  __USED__ inline std::vector<worker_t>& getWorkers() { return _workers; }
+   */
+  __USED__ inline std::vector<worker_t> &getWorkers() { return _workers; }
 
   private:
 
   // For interoperability with YuanRong, this function is implemented differently depended on the backend used
   __USED__ inline void initializeChannels();
 
- /**
-  * Storage for the deployed workers. This object is only mantained and usable by the coordinator
-  */
+  /**
+   * Storage for the deployed workers. This object is only mantained and usable by the coordinator
+   */
   std::vector<worker_t> _workers;
 };
 
