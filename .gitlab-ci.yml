@@ -41,7 +41,8 @@ build-ascend:
   - docker
   - ascend
   script:
-  - source /home/hicr/.bashrc || true
+  - source /home/hicr/.bashrc
+  - cat /home/hicr/.bashrc
   - echo '------------------------------------------------'
   - echo "$PATH"
   - echo "Building..."
