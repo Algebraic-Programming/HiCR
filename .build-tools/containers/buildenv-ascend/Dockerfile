@@ -1,5 +1,5 @@
 ARG ARCH=
-FROM registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-${ARCH}-try:latest
+FROM registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-${ARCH}:latest
 
 ENV USER hicr
 ENV HOME /home/$USER
