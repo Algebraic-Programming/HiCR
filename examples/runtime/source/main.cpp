@@ -2,7 +2,19 @@
 #include "include/machineModel.hpp"
 
 // Worker entry point functions
-void entryPointFc(const std::string &entryPointName) { printf("Hello, I am worker %lu, executing entry point '%s'\n", HiCR::Runtime::getInstanceId(), entryPointName.c_str());  };
+void entryPointFc(const std::string &entryPointName)
+ {
+   printf("Hello, I am worker %lu, executing entry point '%s'\n", HiCR::Runtime::getInstanceId(), entryPointName.c_str());
+
+   // Getting my current worker instance
+   auto currentWorker = HiCR::Runtime::getWorkerInstance();
+
+   // Getting message from coordinator
+   auto message = currentWorker->recvMessage();  
+
+   // Printinf message
+   printf("[Worker %lu] Received message from coordinator: '%s'\n", HiCR::Runtime::getInstanceId(), (const char*) message.first);
+ };
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +42,15 @@ int main(int argc, char *argv[])
   // Finally, deploying machine model
   HiCR::Runtime::deploy(machineModel, &isTopologyAcceptable);
   
+  // Getting coordinator instance
+  auto coordinator = HiCR::Runtime::getCoordinatorInstance();
+
+  // Creating a welcome message
+  std::string welcomeMsg = "Hello from the coordinator";
+  
+  // Sending message to all the workers
+  for (auto& worker : coordinator->getWorkers()) coordinator->sendMessage(worker, welcomeMsg.data(), welcomeMsg.size());
+
   // Finalizing runtime
   HiCR::Runtime::finalize();
 

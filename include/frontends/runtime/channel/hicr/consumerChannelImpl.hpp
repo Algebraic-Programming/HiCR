@@ -1,4 +1,4 @@
-__USED__ inline void Worker::initializeRPCChannels()
+__USED__ inline void Worker::initializeChannels()
 {
     printf("[Worker] Initializing Worker Instance...\n"); fflush(stdout);
 
@@ -68,7 +68,7 @@ __USED__ inline void Worker::initializeRPCChannels()
     auto coordinatorPayloadCoordinatorBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_COORDINATOR_COORDINATION_BUFFER_PAYLOADS_TAG, instanceId);
 
     // Creating channel
-    rpcChannel = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(
+    channel = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(
         *_communicationManager,
         workerMessagePayloadBuffer,
         workerMessageSizesBuffer,
@@ -80,5 +80,27 @@ __USED__ inline void Worker::initializeRPCChannels()
         sizeof(uint8_t),
         _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY
     );
+}
 
+__USED__ inline std::pair<const void*, size_t> Worker::recvMessage()
+{
+    // Waiting for initial message from coordinator
+    while (channel->getDepth() == 0) channel->updateDepth();
+
+    // Get internal pointer of the token buffer slot and the offset
+    auto payloadBufferMemorySlot = channel->getPayloadBufferMemorySlot();
+    auto payloadBufferPtr = (const char*) payloadBufferMemorySlot->getSourceLocalMemorySlot()->getPointer();
+    
+    // Obtaining pointer from the offset + base pointer
+    auto offset = channel->peek()[0];
+    const void* ptr = &payloadBufferPtr[offset]; 
+
+    // Obtaining size
+    const size_t size = channel->peek()[1];
+
+    // Popping message from the channel
+    channel->pop();
+
+    // Returning ptr + size pair
+    return std::make_pair(ptr, size);
 }
