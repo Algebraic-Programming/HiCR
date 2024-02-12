@@ -352,6 +352,8 @@ class Consumer final : public variableSize::Base
   {
     return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0);
   }
+
+  std::shared_ptr<L0::GlobalMemorySlot> getPayloadBufferMemorySlot() const { return _payloadBuffer; }
 };
 
 } // namespace SPSC
