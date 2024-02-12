@@ -42,11 +42,17 @@ RUN touch $HOME/.hicr-env.sh
 RUN chmod +rwx $HOME/.hicr-env.sh
 RUN echo "export PATH=$HOME/.local/bin:$PATH" >> $HOME/.hicr-env.sh
 RUN echo "source .hicr-env.sh" >> $HOME/.bashrc
+RUN chown -R $USER $HOME
+RUN chgrp -R $USER $HOME
 
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install 'cmake>=3.27'
 RUN python3 -m pip install 'meson>=1.2'
 RUN python3 -m pip install 'ninja>=1.10'
 RUN python3 -m pip install 'gcovr>=6.0'
+RUN sudo python3 -m pip install 'cmake>=3.27'
+RUN sudo python3 -m pip install 'meson>=1.2'
+RUN sudo python3 -m pip install 'ninja>=1.10'
+RUN sudo python3 -m pip install 'gcovr>=6.0'
 
 WORKDIR $HOME
