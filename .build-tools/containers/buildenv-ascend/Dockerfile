@@ -22,5 +22,5 @@ RUN /bin/bash -c "cd $HOME/cann-toolkit \
 USER $USER
 
 ENV ESCAPED_LD_LIBRARY_PATH='$LD_LIBRARY_PATH'
-RUN echo "export LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:$ESCAPED_LD_LIBRARY_PATH" >> $HOME/.bashrc
-RUN echo "source /usr/local/Ascend/ascend-toolkit/set_env.sh" >> $HOME/.bashrc
+RUN echo "LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:$ESCAPED_LD_LIBRARY_PATH" >> $HOME/.hicr.env
+RUN echo "source /usr/local/Ascend/ascend-toolkit/set_env.sh" >> $HOME/.hicr.env

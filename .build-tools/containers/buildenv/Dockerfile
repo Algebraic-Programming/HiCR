@@ -36,7 +36,7 @@ RUN useradd -d $HOME -m $USER -G root \
   && echo 'umask 0027' >> $HOME/.bashrc \
   && adduser $USER sudo
 
-RUN echo 'export PATH=$HOME/.local/bin:$PATH' >> $HOME/.bashrc
+RUN echo "export PATH=$HOME/.local/bin:$PATH" >> $HOME/.bashrc
 
 USER $USER
 
