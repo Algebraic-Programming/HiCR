@@ -8,8 +8,8 @@ namespace HiCR
 namespace runtime
 {
 
- typedef HiCR::channel::variableSize::SPSC::Producer ProducerChannel;
+typedef HiCR::channel::variableSize::SPSC::Producer ProducerChannel;
 
-} // namespace HiCR
+} // namespace runtime
 
 } // namespace HiCR

@@ -8,8 +8,8 @@ namespace HiCR
 namespace runtime
 {
 
- typedef HiCR::channel::variableSize::SPSC::Consumer ConsumerChannel;
+typedef HiCR::channel::variableSize::SPSC::Consumer ConsumerChannel;
 
-} // namespace HiCR
+} // namespace runtime
 
 } // namespace HiCR

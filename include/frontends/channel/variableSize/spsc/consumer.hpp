@@ -355,9 +355,9 @@ class Consumer final : public variableSize::Base
 
   /**
    * Retrieves the pointer to the channel's payload buffer
-   * 
+   *
    * @return The pointer to the payload buffer
-  */
+   */
   std::shared_ptr<L0::GlobalMemorySlot> getPayloadBufferMemorySlot() const { return _payloadBuffer; }
 };
 
