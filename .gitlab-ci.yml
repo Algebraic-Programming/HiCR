@@ -44,10 +44,9 @@ build-ascend:
   - source /home/hicr/.bashrc
   - cat /home/hicr/.bashrc
   - echo "$(ls -al /home/hicr/.local/bin)"
-  - echo "$HOME"
+  - echo "$PATH"
   - echo "Building..."
   - mkdir build
-  - sleep 200
   - meson setup build -Dbackends=hwloc,pthreads,ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
   - meson compile -C build
   - echo "Running tests..."
