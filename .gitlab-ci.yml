@@ -41,7 +41,7 @@ build-ascend:
   - docker
   - ascend
   script:
-  - source /home/HwHiAiUser/.bashrc
+  - source /home/hicr/.bashrc
   - echo "Building..."
   - mkdir build
   - meson setup build -Dbackends=hwloc,pthreads,ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
