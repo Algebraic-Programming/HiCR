@@ -8,6 +8,7 @@ build:
   - x86
   - infiniband
   script:
+  - source /home/hicr/.hicr-env.sh
   - echo "Compiling LPF..."
   - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j24; sudo make install; popd
   - echo "Building..."
