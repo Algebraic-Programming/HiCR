@@ -197,7 +197,7 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
   return true;
 }
 
-void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string &machineModelFilePath, std::vector<HiCR::L1::TopologyManager*>& topologyManagers)
+void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string &machineModelFilePath, std::vector<HiCR::L1::TopologyManager*>& topologyManagers, int argc, char **argv)
 {
   // Reading from machine model file
   std::string machineModelRaw;
@@ -238,7 +238,7 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
   // Execute requests by finding or creating an instance that matches their topology requirements
   try
   {
-    machineModel.deploy(requests, &isTopologyAcceptable);
+    machineModel.deploy(requests, &isTopologyAcceptable, argc, argv);
   }
   catch (const std::exception &e)
   {

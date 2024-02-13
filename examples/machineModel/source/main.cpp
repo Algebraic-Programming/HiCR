@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
   for (const auto& tm : topologyManagers) topologyManagerPointers.push_back(tm.get());
 
   // Bifurcating paths based on whether the instance is root or not
-  if (myInstance->isRootInstance() == true) coordinatorFc(instanceManager, machineModelFile, topologyManagerPointers);
+  if (myInstance->isRootInstance() == true) coordinatorFc(instanceManager, machineModelFile, topologyManagerPointers, argc, argv);
   if (myInstance->isRootInstance() == false) workerFc(instanceManager, topologyManagerPointers);
 
   // Finalizing HiCR
