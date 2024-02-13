@@ -98,21 +98,21 @@ class Worker final : public runtime::Instance
 
   /**
    * Allows a worker to obtain a data object by id from the coordinator instance
-   * 
+   *
    * This is a blocking function.
    * The data object must be published (either before or after this call) by the coordinator for this function to succeed.
-   * 
+   *
    * @param[in] dataObjectId The id of the data object to get from the coordinator instance
    * @return A shared pointer to the obtained data object
-  */
+   */
   __USED__ inline std::shared_ptr<DataObject> getDataObject(const DataObject::dataObjectId_t dataObjectId)
-   {
-     // Getting instance id of coordinator instance
-     const auto coordinatorId = _instanceManager->getRootInstanceId();
- 
-     // Creating data object from id and remote instance id
-     return DataObject::getDataObject(dataObjectId, coordinatorId);
-   }
+  {
+    // Getting instance id of coordinator instance
+    const auto coordinatorId = _instanceManager->getRootInstanceId();
+
+    // Creating data object from id and remote instance id
+    return DataObject::getDataObject(dataObjectId, coordinatorId);
+  }
 
   private:
 

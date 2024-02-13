@@ -151,14 +151,14 @@ class Coordinator final : public runtime::Instance
 
   /**
    * Requests the creation of a new data object.
-   * 
+   *
    * This adds the internal counter for the assignment of unique identifiers to new data objects
-   * 
+   *
    * @param[in] buffer A pointer to the internal buffer to assign to the data object
    * @param[in] size The size of the internal buffer to use
    * @return A shared pointer to the newly created data object
-  */
-  __USED__ inline std::shared_ptr<DataObject> createDataObject(void* buffer, const size_t size) { return std::make_shared<DataObject>(buffer, size, _currentDataObjectId++); }
+   */
+  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size) { return std::make_shared<DataObject>(buffer, size, _currentDataObjectId++); }
 
   private:
 

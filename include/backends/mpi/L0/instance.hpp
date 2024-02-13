@@ -16,8 +16,8 @@
 
 /**
  * Definition for the root rank for an MPI deployment (zero because rank zero is always present)
-*/
-#define _HICR_MPI_INSTANCE_ROOT_ID 0 
+ */
+#define _HICR_MPI_INSTANCE_ROOT_ID 0
 
 namespace HiCR
 {

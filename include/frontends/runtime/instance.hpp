@@ -83,7 +83,6 @@ class Instance
    */
   HiCR::L0::Instance *getHiCRInstance() const { return _HiCRInstance.get(); }
 
-
   protected:
 
   /**
@@ -128,9 +127,8 @@ class Instance
 
   /**
    * Global counter for the current data object pertaining to this instance
-  */
+   */
   DataObject::dataObjectId_t _currentDataObjectId = 0;
-
 };
 
 } // namespace runtime

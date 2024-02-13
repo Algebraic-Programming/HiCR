@@ -171,9 +171,8 @@ class InstanceManager
   /**
    * Returns the id of the backend's root instance id
    * @return The id of the root instance id
-  */
+   */
   virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
-
 
   protected:
 
