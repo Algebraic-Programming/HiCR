@@ -149,6 +149,8 @@ class Coordinator final : public runtime::Instance
    */
   __USED__ inline std::vector<worker_t> &getWorkers() { return _workers; }
 
+  __USED__ inline std::shared_ptr<DataObject> createDataObject(void* buffer, const size_t size) { return std::make_shared<DataObject>(buffer, size, _currentDataObjectId++); }
+
   private:
 
   // For interoperability with YuanRong, this function is implemented differently depended on the backend used

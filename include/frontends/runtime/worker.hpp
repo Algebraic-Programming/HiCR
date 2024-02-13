@@ -96,6 +96,16 @@ class Worker final : public runtime::Instance
    */
   __USED__ inline std::pair<const void *, size_t> recvMessage();
 
+  __USED__ inline std::shared_ptr<DataObject> getDataObject(const DataObject::dataObjectId_t dataObjectId)
+   {
+     // Getting instance id of coordinator instance
+     const auto coordinatorId = _instanceManager->getRootInstanceId();
+ 
+     // Creating data object from id and remote instance id
+     return DataObject::getDataObject(dataObjectId, coordinatorId);
+   }
+
+
   private:
 
   /**
