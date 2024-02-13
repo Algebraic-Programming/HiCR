@@ -1,5 +1,5 @@
 build:
-  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv:latest
+  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-x86_64:latest
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   tags:
@@ -8,6 +8,7 @@ build:
   - x86
   - infiniband
   script:
+  - source /home/hicr/.hicr-env.sh
   - echo "Compiling LPF..."
   - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j24; make install; popd
   - echo "Building..."
@@ -41,14 +42,14 @@ build-ascend:
   - docker
   - ascend
   script:
-  - source /home/HwHiAiUser/.bashrc
+  - source /home/hicr/.hicr-env.sh
+  - echo "$PATH"
   - echo "Building..."
   - mkdir build
-  - cd build
-  - meson setup .. -Dbackends=hwloc,pthreads,ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
-  - meson compile -C .
+  - meson setup build -Dbackends=hwloc,pthreads,ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+  - meson compile -C build
   - echo "Running tests..."
-  - meson test
+  - meson test -C build
   artifacts:
     name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     expire_in: 2 days
