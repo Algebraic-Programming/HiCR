@@ -19,6 +19,12 @@
 #include <hicr/L1/topologyManager.hpp>
 #include <frontends/machineModel/machineModel.hpp>
 
+#ifdef _HICR_USE_YUANRONG_BACKEND_
+  #include <dataObject/yuanrong/dataObject.hpp>
+#else
+  #include "dataObject/mpi/dataObject.hpp"
+#endif
+
 namespace HiCR
 {
 
@@ -77,6 +83,8 @@ class Instance
    */
   HiCR::L0::Instance *getHiCRInstance() const { return _HiCRInstance.get(); }
 
+  __USED__ inline std::shared_ptr<DataObject> createDataObject(const void* buffer, const size_t size) { return std::make_shared<DataObject>(buffer, size, _currentDataObjectId++); }
+
   protected:
 
   /**
@@ -118,6 +126,12 @@ class Instance
    * Machine model object for deployment
    */
   HiCR::MachineModel *const _machineModel;
+
+  /**
+   * Global counter for the current data object pertaining to this instance
+  */
+  DataObject::dataObjectId_t _currentDataObjectId = 0;
+
 };
 
 } // namespace runtime

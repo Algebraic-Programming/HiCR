@@ -13,7 +13,7 @@ void entryPointFc(const std::string &entryPointName)
    auto message = currentWorker->recvMessage();  
 
    // Printinf message
-   printf("[Worker %lu] Received message from coordinator: '%s'\n", HiCR::Runtime::getInstanceId(), (const char*) message.first);
+   printf("[Worker %lu] Received message from coordinator: '%u'\n", HiCR::Runtime::getInstanceId(), *((HiCR::runtime::DataObject::dataObjectId_t*) message.first));
  };
 
 int main(int argc, char *argv[])
@@ -47,9 +47,22 @@ int main(int argc, char *argv[])
 
   // Creating a welcome message
   std::string welcomeMsg = "Hello from the coordinator";
-  
+
   // Sending message to all the workers
-  for (auto& worker : coordinator->getWorkers()) coordinator->sendMessage(worker, welcomeMsg.data(), welcomeMsg.size());
+  for (auto& worker : coordinator->getWorkers()) 
+  {
+    // Creating data object with welcome message
+    auto dataObject = coordinator->createDataObject(welcomeMsg.data(), welcomeMsg.size());
+
+    // Getting data object identifier
+    auto dataObjectId = dataObject->getId();
+
+    // Publishing data object
+    dataObject->publish();
+
+    // Sending message with only the data object identifier
+    coordinator->sendMessage(worker, &dataObjectId, sizeof(HiCR::runtime::DataObject::dataObjectId_t));
+  }
 
   // Finalizing runtime
   HiCR::Runtime::finalize();
