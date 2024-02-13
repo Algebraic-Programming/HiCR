@@ -3,30 +3,30 @@
 
 // Worker entry point functions
 void entryPointFc(const std::string &entryPointName)
- {
-   printf("Hello, I am worker %lu, executing entry point '%s'\n", HiCR::Runtime::getInstanceId(), entryPointName.c_str());
+{
+  printf("Hello, I am worker %lu, executing entry point '%s'\n", HiCR::Runtime::getInstanceId(), entryPointName.c_str());
 
-   // Getting my current worker instance
-   auto currentWorker = HiCR::Runtime::getWorkerInstance();
+  // Getting my current worker instance
+  auto currentWorker = HiCR::Runtime::getWorkerInstance();
 
-   // Getting message from coordinator
-   auto message = currentWorker->recvMessage();  
+  // Getting message from coordinator
+  auto message = currentWorker->recvMessage();  
 
-   // Getting data object id from message
-   const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t*) message.first);
+  // Getting data object id from message
+  const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t*) message.first);
 
-   // Printing data object id
-   printf("[Worker %lu] Requesting data object id %u from coordinator.\n", HiCR::Runtime::getInstanceId(), dataObjectId);
+  // Printing data object id
+  printf("[Worker %lu] Requesting data object id %u from coordinator.\n", HiCR::Runtime::getInstanceId(), dataObjectId);
 
-   // Getting data object from coordinator
-   auto dataObject = currentWorker->getDataObject(dataObjectId);
+  // Getting data object from coordinator
+  auto dataObject = currentWorker->getDataObject(dataObjectId);
 
-   // Printing data object contents
-   printf("[Worker %lu] Received message from coordinator: '%s'\n", HiCR::Runtime::getInstanceId(), (const char*) dataObject->getData());
+  // Printing data object contents
+  printf("[Worker %lu] Received message from coordinator: '%s'\n", HiCR::Runtime::getInstanceId(), (const char*) dataObject->getData());
 
-   // Freeing up internal buffer
-   dataObject->destroyBuffer();
- };
+  // Freeing up internal buffer
+  dataObject->destroyBuffer();
+};
 
 int main(int argc, char *argv[])
 {
@@ -82,12 +82,13 @@ int main(int argc, char *argv[])
     coordinator->sendMessage(worker, &dataObjectId, sizeof(HiCR::runtime::DataObject::dataObjectId_t));
   }
 
-  // Testing completion for all data objects
-  bool hasFinishedTransferring = false;
-  while (hasFinishedTransferring == false)
+  // Testing release completion for all data objects
+  bool allDataObjectsReleased = false;
+  while (allDataObjectsReleased == false)
   {
-    hasFinishedTransferring = true;
-    for (auto& dataObject : dataObjects) hasFinishedTransferring &= dataObject->test();
+    allDataObjectsReleased = true;
+    for (auto& dataObject : dataObjects)
+     allDataObjectsReleased &= dataObject->release();
   }
 
   // Finalizing runtime
