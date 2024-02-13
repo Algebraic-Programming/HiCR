@@ -80,12 +80,9 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   }
 
   /**
-   * This function deserializes a JSON-encoded topology into a topology class with its constituent devices, as recognized by the called backend, and returns it
-   *
-   * If the backend does not recognize a device in the encoded topology, it will not add it to the topology
-   *
-   * @param[in] topology The JSON-encoded topology to deserialize
-   * @return The deserialized topology containing only devices recognized by the backend
+   * Static implementation of the _deserializeTopology Function
+   * @param[in] topology see: _deserializeTopology
+   * @return see: _deserializeTopology
    */
   __USED__ static inline HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
   {
@@ -107,6 +104,28 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
     // Returning new topology
     return t;
+  }
+
+  __USED__ inline HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override
+  {
+    return deserializeTopology(topology);
+  }
+
+  /**
+   * This function represents the default intializer for this backend
+   *
+   * @return A unique pointer to the newly instantiated backend class
+   */
+  __USED__ static inline std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
+  {
+    // Creating HWloc topology object
+    auto topology = new hwloc_topology_t;
+
+    // Reserving memory for hwloc
+    hwloc_topology_init(topology);
+
+    // Initializing HWLoc-based host (CPU) topology manager
+    return std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(topology);
   }
 
   private:

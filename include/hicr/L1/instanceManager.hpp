@@ -161,6 +161,19 @@ class InstanceManager
    */
   virtual void finalize() = 0;
 
+  /**
+   * This function calls the internal implementation of the abort procedure for the given instance manager
+   *
+   * @param[in] errorCode The error code to publish upon aborting execution
+   */
+  virtual void abort(int errorCode) = 0;
+
+  /**
+   * Returns the id of the backend's root instance id
+   * @return The id of the root instance id
+   */
+  virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
+
   protected:
 
   /**

@@ -14,6 +14,11 @@
 #include <hicr/L0/instance.hpp>
 #include <mpi.h>
 
+/**
+ * Definition for the root rank for an MPI deployment (zero because rank zero is always present)
+ */
+#define _HICR_MPI_INSTANCE_ROOT_ID 0
+
 namespace HiCR
 {
 
@@ -49,7 +54,7 @@ class Instance final : public HiCR::L0::Instance
   virtual bool isRootInstance() const
   {
     // Criterion for root rank in MPI: Rank 0 will always be the root.
-    return _rank == 0;
+    return _rank == _HICR_MPI_INSTANCE_ROOT_ID;
   };
 
   /**

@@ -1,38 +1,37 @@
 #pragma once
 
-#include <unordered_set>
-#include "common.hpp"
-#include "nlohmann_json/json.hpp"
 #include <hicr/L0/topology.hpp>
-#include <hicr/L1/instanceManager.hpp>
 #include <frontends/machineModel/machineModel.hpp>
-
-#ifdef _HICR_USE_ASCEND_BACKEND_
-#include <backends/ascend/L0/computeResource.hpp>
-#include <backends/ascend/L0/device.hpp>
-#endif
-
-#ifdef _HICR_USE_HWLOC_BACKEND_
-#include <backends/host/L0/computeResource.hpp>
-#include <backends/host/L0/memorySpace.hpp>
 #include <backends/host/L0/device.hpp>
-#endif
+#include <backends/host/L0/memorySpace.hpp>
+#include <backends/host/L0/computeResource.hpp>
+#include <memory>
+#include <fstream>
+#include <sstream>
 
-void finalizeExecution(HiCR::L1::InstanceManager& instanceManager, const int returnCode = 0)
+// Taken from https://stackoverflow.com/questions/116038/how-do-i-read-an-entire-file-into-a-stdstring-in-c/116220#116220
+inline std::string slurp(std::ifstream &in)
 {
-  // Querying instance list
-  auto &instances = instanceManager.getInstances();
+  std::ostringstream sstr;
+  sstr << in.rdbuf();
+  return sstr.str();
+}
 
-  // Getting the pointer to our own (coordinator) instance
-  auto coordinator = instanceManager.getCurrentInstance();
+// Loads a string from a given file
+inline bool loadStringFromFile(std::string &dst, const std::string fileName)
+{
+  std::ifstream fi(fileName);
 
-  // Requesting workers to abort and printing error message
-  for (const auto &instance : instances)
-    if (instance->getId() != coordinator->getId())
-      instanceManager.launchRPC(*instance, "Finalize");
+  // If file not found or open, return false
+  if (fi.good() == false) return false;
 
-  instanceManager.finalize();
-  exit(returnCode);
+  // Reading entire file
+  dst = slurp(fi);
+
+  // Closing file
+  fi.close();
+
+  return true;
 }
 
 HiCR::L0::Topology parseTopology(const nlohmann::json &topologyJson)
@@ -64,18 +63,6 @@ HiCR::L0::Topology parseTopology(const nlohmann::json &topologyJson)
 
   // Adding host device to the topology
   topology.addDevice(hostDevice);
-
-#endif
-
-#ifdef _HICR_USE_ASCEND_BACKEND_
-
-  // Parsing ascend device list
-  if (topologyJson.contains("Ascend Devices") == false) throw std::runtime_error("the requested instance topoogy does not contain a 'Ascend Devices' entry\n");
-  if (topologyJson["Ascend Devices"].is_number_unsigned() == false) throw std::runtime_error("The instance topology 'Ascend Devices' entry is not a positive number\n");
-  size_t ascendDeviceCount = topologyJson["Ascend Devices"].get<size_t>();
-
-  // Adding requested ascend devices, if any
-  for (size_t i = 0; i < ascendDeviceCount; i++) topology.addDevice(std::make_shared<HiCR::backend::ascend::L0::Device>());
 
 #endif
 
@@ -136,7 +123,6 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
   // For this example, it suffices that topology B has more or equal:
   //  + Total Core Count (among all NUMA domains)
   //  + Total RAM size (among all NUMA domains)
-  //  + Ascend devices
   // than topology A.
 
   size_t tACoreCount = 0;
@@ -144,9 +130,6 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
 
   size_t tAMemSize = 0;
   size_t tBMemSize = 0;
-
-  size_t tAAscendDeviceCount = 0;
-  size_t tBAscendDeviceCount = 0;
 
   // Processing topology A
   for (const auto &d : a.getDevices())
@@ -163,9 +146,6 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
       tACoreCount += hostDev->getComputeResourceList().size();
       tAMemSize += (*hostDev->getMemorySpaceList().begin())->getSize();
     }
-
-    // It it's an Ascend device, increment the ascend device counter
-    if (deviceType == "Ascend Device") tAAscendDeviceCount++;
   }
 
   // Processing topology B
@@ -183,29 +163,25 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
       tBCoreCount += hostDev->getComputeResourceList().size();
       tBMemSize += (*hostDev->getMemorySpaceList().begin())->getSize();
     }
-
-    // It it's an Ascend device, increment the ascend device counter
-    if (deviceType == "Ascend Device") tBAscendDeviceCount++;
   }
 
   // Evaluating criteria
   if (tACoreCount > tBCoreCount) return false;
   if (tAMemSize > tBMemSize) return false;
-  if (tAAscendDeviceCount > tBAscendDeviceCount) return false;
 
   // If no criteria failed, return true
   return true;
 }
 
-void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string &machineModelFilePath, std::vector<HiCR::L1::TopologyManager*>& topologyManagers)
+std::vector<HiCR::MachineModel::request_t> loadMachineModelFromFile(const std::string& machineModelFile)
 {
   // Reading from machine model file
   std::string machineModelRaw;
-  auto status = loadStringFromFile(machineModelRaw, machineModelFilePath);
+  auto status = loadStringFromFile(machineModelRaw, machineModelFile);
   if (status == false)
   {
-    fprintf(stderr, "could not read from machine model file: '%s'\n", machineModelFilePath.c_str());
-    finalizeExecution(instanceManager, -1);
+    fprintf(stderr, "could not read from machine model file: '%s'\n", machineModelFile.c_str());
+    HiCR::Runtime::abort(-1);
   }
 
   // Parsing received machine model file
@@ -216,12 +192,9 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
   }
   catch (const std::exception &e)
   {
-    fprintf(stderr, "could not parse JSON from machine model file: '%s'. Reason: '%s'\n", machineModelFilePath.c_str(), e.what());
-    finalizeExecution(instanceManager, -1);
+    fprintf(stderr, "could not parse JSON from machine model file: '%s'. Reason: '%s'\n", machineModelFile.c_str(), e.what());
+    HiCR::Runtime::abort(-1);
   }
-
-  // Creating machine model to handle the instance creation and task execution
-  HiCR::MachineModel machineModel(instanceManager, topologyManagers);
 
   // Parsing the machine model into a request vector. Here the vector implies ordering, which allows the user specify which instances need to be allocated first
   std::vector<HiCR::MachineModel::request_t> requests;
@@ -232,39 +205,8 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
   catch (const std::exception &e)
   {
     fprintf(stderr, "Error while parsing the machine model. Reason: '%s'\n", e.what());
-    finalizeExecution(instanceManager, -1);
+    HiCR::Runtime::abort(-1);
   }
 
-  // Execute requests by finding or creating an instance that matches their topology requirements
-  try
-  {
-    machineModel.deploy(requests, &isTopologyAcceptable);
-  }
-  catch (const std::exception &e)
-  {
-    fprintf(stderr, "Error while executing requests. Reason: '%s'\n", e.what());
-    finalizeExecution(instanceManager, -1);
-  }
-
-  // Running the assigned task id in the correspondng instance
-  for (auto &r : requests)
-    for (auto &in : r.instances)
-      instanceManager.launchRPC(*in, r.entryPointName);
-
-  // Now waiting for return values to arrive
-  for (auto &r : requests)
-    for (auto &in : r.instances)
-    {
-      // Getting return value as a memory slot
-      auto returnValue = instanceManager.getReturnValue(*in);
-
-      // Printing return value
-      printf("[Coordinator] Received from instance %lu: '%s'\n", in->getId(), (const char *)returnValue);
-
-      // Freeing return value
-      free (returnValue);
-    }
-
-  // Finalizing execution for all instances
-  finalizeExecution(instanceManager);
+  return requests;
 }
