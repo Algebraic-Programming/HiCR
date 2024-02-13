@@ -168,6 +168,10 @@ class InstanceManager
    */
   virtual void abort(int errorCode) = 0;
 
+  /**
+   * Returns the id of the backend's root instance id
+   * @return The id of the root instance id
+  */
   virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
 
 
