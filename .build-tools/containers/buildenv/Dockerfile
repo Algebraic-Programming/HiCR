@@ -1,6 +1,7 @@
 FROM ubuntu:20.04
 
 ENV USER hicr
+ENV ROOT_USER root
 ENV HOME /home/$USER
 
 RUN apt update
@@ -29,6 +30,11 @@ RUN apt install -y gcc-10
 RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 20
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 20
 
+RUN sudo python3 -m pip install 'cmake>=3.27'
+RUN sudo python3 -m pip install 'meson>=1.2'
+RUN sudo python3 -m pip install 'ninja>=1.10'
+RUN sudo python3 -m pip install 'gcovr>=6.0'
+
 RUN useradd -d $HOME -m $USER -G root \
   && chown -R $USER /home/$USER  \
   && echo 'hicr ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers \
@@ -50,9 +56,6 @@ RUN python3 -m pip install 'cmake>=3.27'
 RUN python3 -m pip install 'meson>=1.2'
 RUN python3 -m pip install 'ninja>=1.10'
 RUN python3 -m pip install 'gcovr>=6.0'
-RUN sudo python3 -m pip install 'cmake>=3.27'
-RUN sudo python3 -m pip install 'meson>=1.2'
-RUN sudo python3 -m pip install 'ninja>=1.10'
-RUN sudo python3 -m pip install 'gcovr>=6.0'
 
-WORKDIR $HOME
+USER $ROOT_USER
+WORKDIR /

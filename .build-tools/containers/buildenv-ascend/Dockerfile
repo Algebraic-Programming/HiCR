@@ -6,6 +6,8 @@ ENV HOME /home/$USER
 ENV CANN_VERSION 7.0.RC1.alpha003
 ENV TOOLKIT Ascend-cann-toolkit_${CANN_VERSION}_linux-aarch64.run
 
+USER $USER 
+
 #TODO: missing gpg verification
 RUN /bin/bash -c "mkdir $HOME/cann-toolkit \
   && cd $HOME/cann-toolkit \
@@ -22,3 +24,5 @@ RUN /bin/bash -c "cd $HOME/cann-toolkit \
 ENV ESCAPED_LD_LIBRARY_PATH='$LD_LIBRARY_PATH'
 RUN echo "LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/common:/usr/local/Ascend/driver/lib64/driver:$ESCAPED_LD_LIBRARY_PATH" >> $HOME/.hicr-env.sh
 RUN echo "source /usr/local/Ascend/ascend-toolkit/set_env.sh" >> $HOME/.hicr-env.sh
+
+WORKDIR $HOME
