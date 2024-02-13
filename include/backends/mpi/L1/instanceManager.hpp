@@ -198,6 +198,12 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
   }
 
+   __USED__ inline HiCR::L0::Instance::instanceId_t getRootInstanceId() const
+  {
+    return _HICR_MPI_INSTANCE_ROOT_ID;
+  }
+
+
   private:
 
   /**

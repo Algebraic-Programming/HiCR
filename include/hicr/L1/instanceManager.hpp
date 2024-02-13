@@ -168,6 +168,9 @@ class InstanceManager
    */
   virtual void abort(int errorCode) = 0;
 
+  virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
+
+
   protected:
 
   /**

@@ -83,7 +83,6 @@ class Instance
    */
   HiCR::L0::Instance *getHiCRInstance() const { return _HiCRInstance.get(); }
 
-  __USED__ inline std::shared_ptr<DataObject> createDataObject(const void* buffer, const size_t size) { return std::make_shared<DataObject>(buffer, size, _currentDataObjectId++); }
 
   protected:
 
