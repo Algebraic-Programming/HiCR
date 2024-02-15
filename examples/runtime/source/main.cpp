@@ -2,12 +2,12 @@
 #include "include/machineModel.hpp"
 
 // Worker entry point functions
-void entryPointFc(const std::string &entryPointName)
+void entryPointFc(HiCR::Runtime& runtime, const std::string &entryPointName)
 {
-  printf("Hello, I am worker %lu, executing entry point '%s'\n", HiCR::Runtime::getInstanceId(), entryPointName.c_str());
+  printf("Hello, I am worker %lu, executing entry point '%s'\n", runtime.getInstanceId(), entryPointName.c_str());
 
   // Getting my current worker instance
-  auto currentWorker = HiCR::Runtime::getWorkerInstance();
+  auto currentWorker = runtime.getWorkerInstance();
 
   // Getting message from coordinator
   auto message = currentWorker->recvMessage();  
@@ -16,13 +16,13 @@ void entryPointFc(const std::string &entryPointName)
   const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t*) message.first);
 
   // Printing data object id
-  printf("[Worker %lu] Requesting data object id %u from coordinator.\n", HiCR::Runtime::getInstanceId(), dataObjectId);
+  printf("[Worker %lu] Requesting data object id %u from coordinator.\n", runtime.getInstanceId(), dataObjectId);
 
   // Getting data object from coordinator
   auto dataObject = currentWorker->getDataObject(dataObjectId);
 
   // Printing data object contents
-  printf("[Worker %lu] Received message from coordinator: '%s'\n", HiCR::Runtime::getInstanceId(), (const char*) dataObject->getData());
+  printf("[Worker %lu] Received message from coordinator: '%s'\n", runtime.getInstanceId(), (const char*) dataObject->getData());
 
   // Freeing up internal buffer
   dataObject->destroyBuffer();
@@ -30,19 +30,22 @@ void entryPointFc(const std::string &entryPointName)
 
 int main(int argc, char *argv[])
 {
-  // Registering tasks for the workers
-  HiCR::Runtime::registerEntryPoint("A", [&]() { entryPointFc("A"); });
-  HiCR::Runtime::registerEntryPoint("B", [&]() { entryPointFc("B"); });
-  HiCR::Runtime::registerEntryPoint("C", [&]() { entryPointFc("C"); });
+  // Creating HiCR Runtime
+  HiCR::Runtime runtime(&argc, &argv);
 
-  // Initializing the HiCR singleton
-  HiCR::Runtime::initialize(&argc, &argv);
+  // Registering tasks for the workers
+  runtime.registerEntryPoint("A", [&]() { entryPointFc(runtime, "A"); });
+  runtime.registerEntryPoint("B", [&]() { entryPointFc(runtime, "B"); });
+  runtime.registerEntryPoint("C", [&]() { entryPointFc(runtime, "C"); });
+
+  // Initializing the HiCR runtime
+  runtime.initialize();
   
   // If the number of arguments passed is incorrect, abort execution and exit
   if (argc != 2)
   {
     fprintf(stderr, "Launch error. No machine model file provided\n");
-    HiCR::Runtime::abort(-1);
+    runtime.abort(-1);
   }
 
   // Parsing number of instances requested
@@ -51,11 +54,18 @@ int main(int argc, char *argv[])
   // Loading machine model
   auto machineModel = loadMachineModelFromFile(machineModelFile);
 
+  // If the machine model is empty, it's either erroneous or empty
+  if (machineModel.empty())
+  {
+    fprintf(stderr, "Launch error. Machine model is erroneous or empty\n");
+    runtime.abort(-1);
+  }
+
   // Finally, deploying machine model
-  HiCR::Runtime::deploy(machineModel, &isTopologyAcceptable);
+  runtime.deploy(machineModel, &isTopologyAcceptable);
   
   // Getting coordinator instance
-  auto coordinator = HiCR::Runtime::getCoordinatorInstance();
+  auto coordinator = runtime.getCoordinatorInstance();
 
   // Creating a welcome message
   std::string welcomeMsg = "Hello from the coordinator";
@@ -92,7 +102,7 @@ int main(int argc, char *argv[])
   }
 
   // Finalizing runtime
-  HiCR::Runtime::finalize();
+  runtime.finalize();
 
   return 0;
 }
