@@ -58,10 +58,15 @@ class Runtime final
    * @param[in] pargc Pointer to the argc argument count
    * @param[in] pargv Pointer to the argc argument char arrays
    */
-  Runtime(int *pargc, char ***pargv) : _pargc(pargc), _pargv(pargv) { }
+  Runtime(int *pargc, char ***pargv) : _pargc(pargc), _pargv(pargv) {}
   ~Runtime() = default;
 
-  void initialize()
+  /**
+   * This function detects the backends that HiCR has been compiled against and creates the relevant L1 classes based on that.
+   *
+   * It also creates the machine model object for future deployment and decides whether this instance is coordinator or worker.
+   */
+  __USED__ inline void initialize()
   {
     /////////////////////////// Detecting instance manager
 
@@ -141,7 +146,7 @@ class Runtime final
    *
    * @return A pointer to the current Worker instance
    */
-  inline HiCR::runtime::Worker *getWorkerInstance()
+  __USED__ inline HiCR::runtime::Worker *getWorkerInstance()
   {
     // Sanity check
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getWorkerInstance before HiCR has been initialized.\n");
@@ -161,7 +166,7 @@ class Runtime final
    *
    * @return A pointer to the current Coordinator instance
    */
-  inline HiCR::runtime::Coordinator *getCoordinatorInstance()
+  __USED__ inline HiCR::runtime::Coordinator *getCoordinatorInstance()
   {
     // Sanity check
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance before HiCR has been initialized.\n");
@@ -182,7 +187,7 @@ class Runtime final
    *
    * @param[in] errorCode The error code to produce upon abortin execution
    */
-  void abort(const int errorCode)
+  __USED__ inline void abort(const int errorCode)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling abort before HiCR has been initialized.\n");
 
@@ -195,7 +200,7 @@ class Runtime final
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
    */
-  void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
+  __USED__ inline void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling deploy before HiCR has been initialized.\n");
 
@@ -209,14 +214,14 @@ class Runtime final
    * @param[in] entryPointName A human-readable string that defines the name of the task. To be executed, this should coincide with the name of a task specified in the machine model requests.
    * @param[in] fc Actual function to be executed upon instantiation
    */
-  void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc) { _runtimeEntryPointVector.push_back(entryPoint_t(entryPointName, fc)); }
+  __USED__ inline void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc) { _runtimeEntryPointVector.push_back(entryPoint_t(entryPointName, fc)); }
 
   /**
    * This function returns the unique numerical identifier for the caler instance
    *
    * @return An integer number containing the HiCR instance identifier
    */
-  HiCR::L0::Instance::instanceId_t getInstanceId()
+  __USED__ inline HiCR::L0::Instance::instanceId_t getInstanceId()
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getInstanceId before HiCR has been initialized.\n");
 
@@ -226,7 +231,7 @@ class Runtime final
   /**
    * This function should be used at the end of execution by all HiCR instances, to correctly finalize the execution environment
    */
-  void finalize()
+  __USED__ inline void finalize()
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling finalize before HiCR has been initialized.\n");
 
