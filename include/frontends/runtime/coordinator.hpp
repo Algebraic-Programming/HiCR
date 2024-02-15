@@ -107,7 +107,7 @@ class Coordinator final : public runtime::Instance
       for (auto &in : r.instances)
       {
         // Creating worker instance
-        auto worker = worker_t{.request = r, .hicrInstance = in}; 
+        auto worker = worker_t{.request = r, .hicrInstance = in};
 
         // Adding worker to the set
         _workers.push_back(worker);
