@@ -181,7 +181,7 @@ std::vector<HiCR::MachineModel::request_t> loadMachineModelFromFile(const std::s
   if (status == false)
   {
     fprintf(stderr, "could not read from machine model file: '%s'\n", machineModelFile.c_str());
-    HiCR::Runtime::abort(-1);
+    return {};
   }
 
   // Parsing received machine model file
@@ -193,7 +193,7 @@ std::vector<HiCR::MachineModel::request_t> loadMachineModelFromFile(const std::s
   catch (const std::exception &e)
   {
     fprintf(stderr, "could not parse JSON from machine model file: '%s'. Reason: '%s'\n", machineModelFile.c_str(), e.what());
-    HiCR::Runtime::abort(-1);
+    return {};
   }
 
   // Parsing the machine model into a request vector. Here the vector implies ordering, which allows the user specify which instances need to be allocated first
@@ -205,7 +205,7 @@ std::vector<HiCR::MachineModel::request_t> loadMachineModelFromFile(const std::s
   catch (const std::exception &e)
   {
     fprintf(stderr, "Error while parsing the machine model. Reason: '%s'\n", e.what());
-    HiCR::Runtime::abort(-1);
+    return {};
   }
 
   return requests;

@@ -1,4 +1,3 @@
-
 /*
  * Copyright Huawei Technologies Switzerland AG
  * All rights reserved.
@@ -26,6 +25,7 @@
   #include <backends/mpi/L1/instanceManager.hpp>
   #include <backends/mpi/L1/communicationManager.hpp>
   #include <backends/mpi/L1/memoryManager.hpp>
+  #include "dataObject/mpi/dataObject.hpp"
 #endif
 
 #ifdef _HICR_USE_YUANRONG_BACKEND_
@@ -43,28 +43,6 @@
 namespace HiCR
 {
 
-class Runtime;
-
-/**
- * Static singleton of the HiCR runtime class
- */
-static Runtime *_runtime;
-
-/**
- * The entry point type is the combination of its name (a string) and the associated function to execute
- */
-typedef std::pair<const std::string, const HiCR::L1::InstanceManager::RPCFunction_t> entryPoint_t;
-
-/**
- * A temporary storage place for entry points so that workers can register them before initializing (and therefore losing control over their execution)
- */
-static std::vector<entryPoint_t> _runtimeEntryPointVector;
-
-/**
- * The currently running instance
- */
-static HiCR::runtime::Instance *_currentInstance = nullptr;
-
 /**
  * The runtime class represents a singleton that exposes many HiCR's (and its frontends') functionalities with a simplified API
  * and performs backend detect and initialization of a selected set of backends. This class goal is to be FF3 RTS's backend library
@@ -80,9 +58,17 @@ class Runtime final
    * @param[in] pargc Pointer to the argc argument count
    * @param[in] pargv Pointer to the argc argument char arrays
    */
-  Runtime(int *pargc, char ***pargv) : _pargc(pargc), _pargv(pargv)
+  Runtime(int *pargc, char ***pargv) : _pargc(pargc), _pargv(pargv) {}
+  ~Runtime() = default;
+
+  /**
+   * This function detects the backends that HiCR has been compiled against and creates the relevant L1 classes based on that.
+   *
+   * It also creates the machine model object for future deployment and decides whether this instance is coordinator or worker.
+   */
+  __USED__ inline void initialize()
   {
-/////////////////////////// Detecting instance manager
+    /////////////////////////// Detecting instance manager
 
 // Detecting MPI
 #ifdef _HICR_USE_MPI_BACKEND_
@@ -155,22 +141,12 @@ class Runtime final
     _currentInstance->initialize();
   }
 
-  ~Runtime() = default;
-
-  /**
-   * This function initializes the HiCR runtime singleton and runs the backen detect and initialization routines
-   *
-   * @param[in] pargc A pointer to the argc value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
-   * @param[in] pargv A pointer to the argv value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
-   */
-  static void initialize(int *pargc, char ***pargv) { _runtime = new Runtime(pargc, pargv); }
-
   /**
    * Retrieves the worker pointer corresponding to the caller instance. Only a worker can call this function, otherwise it will fail
    *
    * @return A pointer to the current Worker instance
    */
-  static inline HiCR::runtime::Worker *getWorkerInstance()
+  __USED__ inline HiCR::runtime::Worker *getWorkerInstance()
   {
     // Sanity check
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getWorkerInstance before HiCR has been initialized.\n");
@@ -190,7 +166,7 @@ class Runtime final
    *
    * @return A pointer to the current Coordinator instance
    */
-  static inline HiCR::runtime::Coordinator *getCoordinatorInstance()
+  __USED__ inline HiCR::runtime::Coordinator *getCoordinatorInstance()
   {
     // Sanity check
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance before HiCR has been initialized.\n");
@@ -211,11 +187,11 @@ class Runtime final
    *
    * @param[in] errorCode The error code to produce upon abortin execution
    */
-  static void abort(const int errorCode)
+  __USED__ inline void abort(const int errorCode)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling abort before HiCR has been initialized.\n");
 
-    _runtime->_instanceManager->abort(errorCode);
+    _instanceManager->abort(errorCode);
   }
 
   /**
@@ -224,12 +200,12 @@ class Runtime final
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
    */
-  static void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
+  __USED__ inline void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling deploy before HiCR has been initialized.\n");
 
     // Calling coordinator's deploy function
-    dynamic_cast<HiCR::runtime::Coordinator *>(_currentInstance)->deploy(requests, acceptanceCriteriaFc, *_runtime->_pargc, *_runtime->_pargv);
+    dynamic_cast<HiCR::runtime::Coordinator *>(_currentInstance)->deploy(requests, acceptanceCriteriaFc, *_pargc, *_pargv);
   }
 
   /**
@@ -238,14 +214,14 @@ class Runtime final
    * @param[in] entryPointName A human-readable string that defines the name of the task. To be executed, this should coincide with the name of a task specified in the machine model requests.
    * @param[in] fc Actual function to be executed upon instantiation
    */
-  static void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc) { _registerEntryPoint(entryPointName, fc); }
+  __USED__ inline void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc) { _runtimeEntryPointVector.push_back(entryPoint_t(entryPointName, fc)); }
 
   /**
    * This function returns the unique numerical identifier for the caler instance
    *
    * @return An integer number containing the HiCR instance identifier
    */
-  static HiCR::L0::Instance::instanceId_t getInstanceId()
+  __USED__ inline HiCR::L0::Instance::instanceId_t getInstanceId()
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getInstanceId before HiCR has been initialized.\n");
 
@@ -255,7 +231,7 @@ class Runtime final
   /**
    * This function should be used at the end of execution by all HiCR instances, to correctly finalize the execution environment
    */
-  static void finalize()
+  __USED__ inline void finalize()
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling finalize before HiCR has been initialized.\n");
 
@@ -264,14 +240,9 @@ class Runtime final
 
     // Freeing up instance memory
     delete _currentInstance;
-
-    // Freeing up runtime memory
-    delete _runtime;
   }
 
   private:
-
-  static inline void _registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc) { _runtimeEntryPointVector.push_back(entryPoint_t(entryPointName, fc)); }
 
   /**
    * Storage pointer for argc
@@ -282,6 +253,21 @@ class Runtime final
    * Storage pointer for argv
    */
   char ***const _pargv;
+
+  /**
+   * The entry point type is the combination of its name (a string) and the associated function to execute
+   */
+  typedef std::pair<const std::string, const HiCR::L1::InstanceManager::RPCFunction_t> entryPoint_t;
+
+  /**
+   * A temporary storage place for entry points so that workers can register them before initializing (and therefore losing control over their execution)
+   */
+  std::vector<entryPoint_t> _runtimeEntryPointVector;
+
+  /**
+   * The currently running instance
+   */
+  HiCR::runtime::Instance *_currentInstance = nullptr;
 
   /**
    * Detected instance manager to use for detecting and creating HiCR instances (only one allowed)
