@@ -47,7 +47,7 @@ class Coordinator final : public runtime::Instance
   {
     /**
      * The original request by which the worker was created
-    */
+     */
     const HiCR::MachineModel::request_t request;
 
     /**
