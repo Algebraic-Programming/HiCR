@@ -13,13 +13,16 @@
 #pragma once
 
 #include <memory>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
+#include <hicr/L0/topology.hpp>
 #include "instance.hpp"
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <channel/yuanrong/producerChannel.hpp>
+  #include <frontends/runtime/channel/yuanrong/producerChannel.hpp>
 #else
   #include "channel/hicr/producerChannel.hpp"
 #endif
@@ -45,9 +48,9 @@ class Coordinator final : public runtime::Instance
   struct worker_t
   {
     /**
-     * Initial entry point function name being executed by the worker
+     * The original request by which the worker was created
      */
-    const std::string entryPoint;
+    const HiCR::MachineModel::request_t request;
 
     /**
      * Internal HiCR instance class
@@ -106,7 +109,7 @@ class Coordinator final : public runtime::Instance
       for (auto &in : r.instances)
       {
         // Creating worker instance
-        auto worker = worker_t{.entryPoint = r.entryPointName, .hicrInstance = in};
+        auto worker = worker_t{.request = r, .hicrInstance = in};
 
         // Adding worker to the set
         _workers.push_back(worker);
@@ -119,7 +122,7 @@ class Coordinator final : public runtime::Instance
     initializeChannels();
 
     // Launching worker's entry point function
-    for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, w.entryPoint);
+    for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, w.request.entryPointName);
   }
 
   __USED__ inline void finalize()
@@ -158,7 +161,15 @@ class Coordinator final : public runtime::Instance
    * @param[in] size The size of the internal buffer to use
    * @return A shared pointer to the newly created data object
    */
-  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size) { return std::make_shared<DataObject>(buffer, size, _currentDataObjectId++); }
+  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
+  {
+    DataObject::dataObjectId_t dataObjectId;
+
+    auto uuid = boost::uuids::random_generator()();
+    std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
+
+    return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());
+  }
 
   private:
 

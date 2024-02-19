@@ -20,7 +20,7 @@
 #include <frontends/machineModel/machineModel.hpp>
 
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <dataObject/yuanrong/dataObject.hpp>
+  #include <frontends/runtime/dataObject/yuanrong/dataObject.hpp>
 #else
   #include "dataObject/mpi/dataObject.hpp"
 #endif
@@ -82,6 +82,41 @@ class Instance
    * @return The pointer to the internal HiCR instance
    */
   HiCR::L0::Instance *getHiCRInstance() const { return _HiCRInstance.get(); }
+
+  /**
+   * Function to obtain the instance manager from the instance
+   *
+   * @return The HiCR runtime's instance manager
+   */
+  HiCR::L1::InstanceManager *getInstanceManager() const { return _instanceManager; }
+
+  /**
+   * Function to obtain the communication manager from the instance
+   *
+   * @return The HiCR runtime's communication manager
+   */
+  HiCR::L1::InstanceManager *getCommunicationManager() const { return _instanceManager; }
+
+  /**
+   * Function to obtain the memory manager from the instance
+   *
+   * @return The HiCR runtime's memory manager
+   */
+  HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
+
+  /**
+   * Function to obtain the topology managers from the instance
+   *
+   * @return The HiCR runtime's topology managers
+   */
+  std::vector<HiCR::L1::TopologyManager *> getTopologyManagers() const { return _topologyManagers; }
+
+  /**
+   * Function to get machine model object from the instance
+   *
+   * @return The HiCR machine model
+   */
+  HiCR::MachineModel *getMachineModel() const { return _machineModel; }
 
   protected:
 
