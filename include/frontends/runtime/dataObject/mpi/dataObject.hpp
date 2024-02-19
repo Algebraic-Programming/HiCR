@@ -109,7 +109,7 @@ class DataObject final
     const int dataObjectIdTag = dataObjectId & tagMask;
 
     // Sending request
-    MPI_Send(nullptr, 0, MPI_BYTE, instanceId, dataObjectId, MPI_COMM_WORLD);
+    MPI_Send(nullptr, 0, MPI_BYTE, instanceId, dataObjectIdTag, MPI_COMM_WORLD);
 
     // Buffer to store the size
     size_t size = 0;
