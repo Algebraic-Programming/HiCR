@@ -42,8 +42,11 @@ class DataObject final
    */
   __USED__ inline void publish()
   {
+    constexpr dataObjectId_t tagMask = 32767;
+    const int dataObjectIdTag = _id & tagMask;
+
     // Publishing an asynchronous recieve for whoever needs this data
-    MPI_Irecv(nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, _HICR_RUNTIME_DATA_OBJECT_BASE_TAG, MPI_COMM_WORLD, &publishRequest);
+    MPI_Irecv(nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, dataObjectIdTag, MPI_COMM_WORLD, &publishRequest);
   }
 
   /**
@@ -100,10 +103,13 @@ class DataObject final
    * @param[in] instanceId Id of the remote instance to take the published data object from
    * @return A shared pointer to the data object obtained from the remote instance
    */
-  __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t dataObjectId, HiCR::L0::Instance::instanceId_t instanceId)
+  __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t dataObjectId, HiCR::L0::Instance::instanceId_t instanceId, HiCR::L0::Instance::instanceId_t currentInstanceId)
   {
+    constexpr dataObjectId_t tagMask = 32767;
+    const int dataObjectIdTag = dataObjectId & tagMask;
+
     // Sending request
-    MPI_Send(nullptr, 0, MPI_BYTE, instanceId, _HICR_RUNTIME_DATA_OBJECT_BASE_TAG, MPI_COMM_WORLD);
+    MPI_Send(nullptr, 0, MPI_BYTE, instanceId, dataObjectId, MPI_COMM_WORLD);
 
     // Buffer to store the size
     size_t size = 0;

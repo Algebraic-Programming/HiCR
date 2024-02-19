@@ -13,6 +13,8 @@
 #pragma once
 
 #include <memory>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/topology.hpp>
@@ -20,7 +22,7 @@
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <channel/yuanrong/producerChannel.hpp>
+  #include <frontends/runtime/channel/yuanrong/producerChannel.hpp>
 #else
   #include "channel/hicr/producerChannel.hpp"
 #endif
@@ -159,7 +161,15 @@ class Coordinator final : public runtime::Instance
    * @param[in] size The size of the internal buffer to use
    * @return A shared pointer to the newly created data object
    */
-  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size) { return std::make_shared<DataObject>(buffer, size, _currentDataObjectId++); }
+  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
+  {
+    DataObject::dataObjectId_t dataObjectId;
+
+    auto uuid = boost::uuids::random_generator()();
+    std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
+
+    return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());
+  }
 
   private:
 
