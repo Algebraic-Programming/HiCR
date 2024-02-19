@@ -27,6 +27,15 @@ class DataObject final
   typedef uint32_t dataObjectId_t;
 
   /**
+   * Mask used to convert the data object ID to the precision required by the MPI tags (15 bits guaranteed by the specification).
+   * 
+   * Notes: using only 15 bits of the data object id increases the risk of collisions
+   * 
+   * See: https://www.intel.com/content/www/us/en/developer/articles/technical/large-mpi-tags-with-the-intel-mpi.html#:~:text=For%20the%20InfiniBand*%20support%20via,be%20queried%20in%20the%20application
+  */
+  static const dataObjectId_t mpiTagMask = 32767;
+  
+  /**
    * Standard data object constructor
    *
    * @param[in] buffer The internal buffer to use for the data object
@@ -43,8 +52,8 @@ class DataObject final
    */
   __USED__ inline void publish()
   {
-    constexpr dataObjectId_t tagMask = 32767;
-    const int dataObjectIdTag = _id & tagMask;
+    // Pick the first 15 bits of the id and use it as MPI Tag
+    const int dataObjectIdTag = _id & mpiTagMask;
 
     // Publishing an asynchronous recieve for whoever needs this data
     MPI_Irecv(nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, dataObjectIdTag, MPI_COMM_WORLD, &publishRequest);
@@ -106,8 +115,8 @@ class DataObject final
    */
   __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t dataObjectId, HiCR::L0::Instance::instanceId_t remoteInstanceId, HiCR::L0::Instance::instanceId_t currentInstanceId)
   {
-    constexpr dataObjectId_t tagMask = 32767;
-    const int dataObjectIdTag = dataObjectId & tagMask;
+    // Pick the first 15 bits of the id and use it as MPI Tag
+    const int dataObjectIdTag = dataObjectId & mpiTagMask;
 
     // Sending request
     MPI_Send(nullptr, 0, MPI_BYTE, remoteInstanceId, dataObjectIdTag, MPI_COMM_WORLD);
