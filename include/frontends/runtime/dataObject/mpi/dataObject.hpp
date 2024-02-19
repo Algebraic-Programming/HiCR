@@ -28,13 +28,13 @@ class DataObject final
 
   /**
    * Mask used to convert the data object ID to the precision required by the MPI tags (15 bits guaranteed by the specification).
-   * 
+   *
    * Notes: using only 15 bits of the data object id increases the risk of collisions
-   * 
+   *
    * See: https://www.intel.com/content/www/us/en/developer/articles/technical/large-mpi-tags-with-the-intel-mpi.html#:~:text=For%20the%20InfiniBand*%20support%20via,be%20queried%20in%20the%20application
-  */
+   */
   static const dataObjectId_t mpiTagMask = 32767;
-  
+
   /**
    * Standard data object constructor
    *
