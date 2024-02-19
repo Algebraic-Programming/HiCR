@@ -47,11 +47,6 @@ namespace L0
 class ProcessingUnit;
 
 /**
- * Thread local pointer to remember who is the current thread
- */
-thread_local ProcessingUnit *_currentThread;
-
-/**
  * Implementation of a kernel-level thread as processing unit for the pthread-based host (CPU) backend.
  *
  * This implementation uses PThreads as backend for the creation and management of OS threads.
@@ -132,9 +127,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
     // Getting associated compute unit reference
     auto computeResource = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(thread->getComputeResource());
-
-    // Storing current thread pointer
-    _currentThread = thread;
 
     // Setting signal to hear for suspend/resume
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
