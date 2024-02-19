@@ -41,6 +41,7 @@ class DataObject final
    * @param[in] buffer The internal buffer to use for the data object
    * @param[in] size The size of the internal buffer
    * @param[in] id Identifier for the new data object
+   * @param[in] instanceId Identifier of the instance owning the data object
    */
   DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId) : _buffer(buffer),
                                                                                                                             _size(size),
@@ -110,7 +111,8 @@ class DataObject final
    * This function will stall until and unless the specified remote instance published the given data object
    *
    * @param[in] dataObjectId The data object id to take from a remote instance
-   * @param[in] instanceId Id of the remote instance to take the published data object from
+   * @param[in] remoteInstanceId Id of the remote instance to take the published data object from
+   * @param[in] currentInstanceId Id of the instance that will own the data object
    * @return A shared pointer to the data object obtained from the remote instance
    */
   __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t dataObjectId, HiCR::L0::Instance::instanceId_t remoteInstanceId, HiCR::L0::Instance::instanceId_t currentInstanceId)
