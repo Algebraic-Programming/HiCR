@@ -18,7 +18,7 @@
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <channel/yuanrong/consumerChannel.hpp>
+  #include <frontends/runtime/channel/yuanrong/consumerChannel.hpp>
 #else
   #include "channel/hicr/consumerChannel.hpp"
 #endif
@@ -109,9 +109,9 @@ class Worker final : public runtime::Instance
   {
     // Getting instance id of coordinator instance
     const auto coordinatorId = _instanceManager->getRootInstanceId();
-
+    const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
     // Creating data object from id and remote instance id
-    return DataObject::getDataObject(dataObjectId, coordinatorId);
+    return DataObject::getDataObject(dataObjectId, coordinatorId, currentInstanceId);
   }
 
   private:
@@ -129,7 +129,7 @@ class Worker final : public runtime::Instance
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <channel/yuanrong/consumerChannelImpl.hpp>
+  #include <frontends/runtime/channel/yuanrong/consumerChannelImpl.hpp>
 #else
   #include "channel/hicr/consumerChannelImpl.hpp"
 #endif

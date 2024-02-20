@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <hicr/L0/instance.hpp>
 #include <mpi.h>
 
 #define _HICR_RUNTIME_DATA_OBJECT_BASE_TAG 0x00010000
@@ -26,15 +27,25 @@ class DataObject final
   typedef uint32_t dataObjectId_t;
 
   /**
+   * Mask used to convert the data object ID to the precision required by the MPI tags (15 bits guaranteed by the specification).
+   *
+   * Notes: using only 15 bits of the data object id increases the risk of collisions
+   *
+   * See: https://www.intel.com/content/www/us/en/developer/articles/technical/large-mpi-tags-with-the-intel-mpi.html#:~:text=For%20the%20InfiniBand*%20support%20via,be%20queried%20in%20the%20application
+   */
+  static const dataObjectId_t mpiTagMask = 32767;
+
+  /**
    * Standard data object constructor
    *
    * @param[in] buffer The internal buffer to use for the data object
    * @param[in] size The size of the internal buffer
    * @param[in] id Identifier for the new data object
+   * @param[in] instanceId Identifier of the instance owning the data object
    */
-  DataObject(void *buffer, const size_t size, const dataObjectId_t id) : _buffer(buffer),
-                                                                         _size(size),
-                                                                         _id(id){};
+  DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId) : _buffer(buffer),
+                                                                                                                            _size(size),
+                                                                                                                            _id(id){};
   ~DataObject() = default;
 
   /**
@@ -42,8 +53,11 @@ class DataObject final
    */
   __USED__ inline void publish()
   {
+    // Pick the first 15 bits of the id and use it as MPI Tag
+    const int dataObjectIdTag = _id & mpiTagMask;
+
     // Publishing an asynchronous recieve for whoever needs this data
-    MPI_Irecv(nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, _HICR_RUNTIME_DATA_OBJECT_BASE_TAG, MPI_COMM_WORLD, &publishRequest);
+    MPI_Irecv(nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, dataObjectIdTag, MPI_COMM_WORLD, &publishRequest);
   }
 
   /**
@@ -97,28 +111,32 @@ class DataObject final
    * This function will stall until and unless the specified remote instance published the given data object
    *
    * @param[in] dataObjectId The data object id to take from a remote instance
-   * @param[in] instanceId Id of the remote instance to take the published data object from
+   * @param[in] remoteInstanceId Id of the remote instance to take the published data object from
+   * @param[in] currentInstanceId Id of the instance that will own the data object
    * @return A shared pointer to the data object obtained from the remote instance
    */
-  __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t dataObjectId, HiCR::L0::Instance::instanceId_t instanceId)
+  __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t dataObjectId, HiCR::L0::Instance::instanceId_t remoteInstanceId, HiCR::L0::Instance::instanceId_t currentInstanceId)
   {
+    // Pick the first 15 bits of the id and use it as MPI Tag
+    const int dataObjectIdTag = dataObjectId & mpiTagMask;
+
     // Sending request
-    MPI_Send(nullptr, 0, MPI_BYTE, instanceId, _HICR_RUNTIME_DATA_OBJECT_BASE_TAG, MPI_COMM_WORLD);
+    MPI_Send(nullptr, 0, MPI_BYTE, remoteInstanceId, dataObjectIdTag, MPI_COMM_WORLD);
 
     // Buffer to store the size
     size_t size = 0;
 
     // Getting return value size
-    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, instanceId, _HICR_RUNTIME_DATA_OBJECT_RETURN_SIZE_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, remoteInstanceId, _HICR_RUNTIME_DATA_OBJECT_RETURN_SIZE_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     // Allocating memory slot to store the return value
     auto buffer = malloc(size);
 
     // Getting data directly
-    MPI_Recv(buffer, size, MPI_BYTE, instanceId, _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(buffer, size, MPI_BYTE, remoteInstanceId, _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     // Creating data object
-    return std::make_shared<DataObject>(buffer, size, dataObjectId);
+    return std::make_shared<DataObject>(buffer, size, dataObjectId, currentInstanceId);
   }
 
   /**

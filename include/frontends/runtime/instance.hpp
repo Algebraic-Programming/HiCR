@@ -20,7 +20,7 @@
 #include <frontends/machineModel/machineModel.hpp>
 
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <dataObject/yuanrong/dataObject.hpp>
+  #include <frontends/runtime/dataObject/yuanrong/dataObject.hpp>
 #else
   #include "dataObject/mpi/dataObject.hpp"
 #endif
