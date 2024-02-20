@@ -6,8 +6,8 @@
       "Replicas": 1,
       "Topology": 
       {
-	      "CPU Cores": 24,
-        "Host RAM Size (Gb)": 32,
+	      "CPU Cores": 1,
+        "Host RAM Size (Gb)": 1,
 	      "Ascend Devices": 0
       }
     },
@@ -17,8 +17,8 @@
       "Replicas": 2,
       "Topology": 
       {
-	      "CPU Cores": 24,
-        "Host RAM Size (Gb)": 32,
+	      "CPU Cores": 1,
+        "Host RAM Size (Gb)": 1,
 	      "Ascend Devices": 0
       }
     },
@@ -28,8 +28,8 @@
       "Replicas": 3,
       "Topology": 
       {
-	      "CPU Cores": 24,
-        "Host RAM Size (Gb)": 32,
+	      "CPU Cores": 1,
+        "Host RAM Size (Gb)": 1,
 	      "Ascend Devices": 0
       }
     }
