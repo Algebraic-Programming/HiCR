@@ -148,6 +148,13 @@ class Task
   }
 
   /**
+   * Sets the execution unit assigned to this task
+   *
+   * \param[in] The execution unit to assign to this task
+   */
+  __USED__ inline void getExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnit = executionUnit; }
+
+  /**
    * Returns the execution unit assigned to this task
    *
    * \return The execution unit assigned to this task
@@ -297,7 +304,7 @@ class Task
   /**
    * Execution unit that will be instantiated and executed by this task
    */
-  const std::shared_ptr<HiCR::L0::ExecutionUnit> _executionUnit;
+  std::shared_ptr<HiCR::L0::ExecutionUnit> _executionUnit;
 
   /**
    *  Map of events to trigger
