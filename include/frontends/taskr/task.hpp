@@ -150,7 +150,7 @@ class Task
   /**
    * Sets the execution unit assigned to this task
    *
-   * \param[in] The execution unit to assign to this task
+   * \param[in] executionUnit The execution unit to assign to this task
    */
   __USED__ inline void getExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnit = executionUnit; }
 
