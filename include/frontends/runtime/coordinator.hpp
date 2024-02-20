@@ -165,7 +165,10 @@ class Coordinator final : public runtime::Instance
   {
     DataObject::dataObjectId_t dataObjectId;
 
+    // Generate a new UUID
     auto uuid = boost::uuids::random_generator()();
+
+    // Truncate it to fit into the data object id
     std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
 
     return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());
@@ -184,7 +187,7 @@ class Coordinator final : public runtime::Instance
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <channel/yuanrong/producerChannelImpl.hpp>
+  #include <frontends/runtime/channel/yuanrong/producerChannelImpl.hpp>
 #else
   #include "channel/hicr/producerChannelImpl.hpp"
 #endif

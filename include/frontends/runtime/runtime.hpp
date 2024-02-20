@@ -33,7 +33,9 @@
 #endif
 
 #ifdef _HICR_USE_HWLOC_BACKEND_
+  #include <hwloc.h>
   #include <backends/host/hwloc/L1/topologyManager.hpp>
+  #include <backends/host/hwloc/L1/memoryManager.hpp>
 #endif
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
@@ -90,10 +92,18 @@ class Runtime final
     _communicationManager = std::make_unique<HiCR::backend::mpi::L1::CommunicationManager>();
 #endif
 
-    // Checking an instance manager has been found
+// Check if a communication manager is found if YuanRong is not used
+#ifndef _HICR_USE_YUANRONG_BACKEND_
     if (_communicationManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the communication manager was found.\n");
-
+#endif
 /////////////////////////// Detecting memory manager
+
+// Detecting HWLOC
+#ifdef _HICR_USE_HWLOC_BACKEND_
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    _memoryManager = std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(&topology);
+#endif
 
 // Detecting MPI
 #ifdef _HICR_USE_MPI_BACKEND_
