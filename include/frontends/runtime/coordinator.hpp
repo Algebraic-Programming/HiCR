@@ -162,13 +162,13 @@ class Coordinator final : public runtime::Instance
    * @return A shared pointer to the newly created data object
    */
   __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
-  { 
+  {
     DataObject::dataObjectId_t dataObjectId;
-	
-	// Generate a new UUID
+
+    // Generate a new UUID
     auto uuid = boost::uuids::random_generator()();
-	
-	// Truncate it to fit into the data object id 
+
+    // Truncate it to fit into the data object id
     std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
 
     return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());

@@ -100,8 +100,8 @@ class Runtime final
 
 // Detecting HWLOC
 #ifdef _HICR_USE_HWLOC_BACKEND_
-	hwloc_topology_t topology;
-	hwloc_topology_init(&topology);
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
     _memoryManager = std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(&topology);
 #endif
 
