@@ -16,13 +16,6 @@
 #include <hicr/definitions.hpp>
 #include "instance.hpp"
 
-// For interoperability with YuanRong, we bifurcate implementations using different includes
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/consumerChannel.hpp>
-#else
-  #include "channel/hicr/consumerChannel.hpp"
-#endif
-
 namespace HiCR
 {
 
@@ -94,7 +87,7 @@ class Worker final : public runtime::Instance
    *
    * @return A pair containing a pointer to the start of the message binary data and the message's size
    */
-  __USED__ inline std::pair<const void *, size_t> recvMessage();
+  __USED__ inline std::pair<const void *, size_t> recvMessage() { return {0, 0}; };
 
   /**
    * Allows a worker to obtain a data object by id from the coordinator instance
@@ -117,22 +110,10 @@ class Worker final : public runtime::Instance
   private:
 
   /**
-   * Initializes the consumer channel for the worker to receive messages from the coordinator
-   */
-  __USED__ inline void initializeChannels();
-
-  /**
    * Consumer channel to receive messages from the coordinator instance
    */
   std::shared_ptr<runtime::ConsumerChannel> channel;
 };
-
-// For interoperability with YuanRong, we bifurcate implementations using different includes
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/consumerChannelImpl.hpp>
-#else
-  #include "channel/hicr/consumerChannelImpl.hpp"
-#endif
 
 } // namespace runtime
 

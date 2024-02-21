@@ -14,7 +14,7 @@
 
     {
       "Entry Point": "B",
-      "Replicas": 2,
+      "Replicas": 0,
       "Topology": 
       {
 	      "CPU Cores": 1,
@@ -25,7 +25,7 @@
 
     {
       "Entry Point": "C",
-      "Replicas": 3,
+      "Replicas": 0,
       "Topology": 
       {
 	      "CPU Cores": 1,

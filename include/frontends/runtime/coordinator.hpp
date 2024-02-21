@@ -18,13 +18,6 @@
 #include <hicr/L0/topology.hpp>
 #include "instance.hpp"
 
-// For interoperability with YuanRong, we bifurcate implementations using different includes
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/producerChannel.hpp>
-#else
-  #include "channel/hicr/producerChannel.hpp"
-#endif
-
 namespace HiCR
 {
 
@@ -141,7 +134,7 @@ class Coordinator final : public runtime::Instance
    * @param[in] messagePtr The pointer to the message buffer
    * @param[in] messageSize The message size in bytes
    */
-  __USED__ inline void sendMessage(worker_t &worker, void *messagePtr, size_t messageSize);
+  __USED__ inline void sendMessage(worker_t &worker, void *messagePtr, size_t messageSize) {};
 
   /**
    * Gets the worker vector, as deployed by the coordinator
@@ -152,21 +145,12 @@ class Coordinator final : public runtime::Instance
 
   private:
 
-  // For interoperability with YuanRong, this function is implemented differently depending on the backend used
-  __USED__ inline void initializeChannels();
-
   /**
    * Storage for the deployed workers. This object is only mantained and usable by the coordinator
    */
   std::vector<worker_t> _workers;
 };
 
-// For interoperability with YuanRong, we bifurcate implementations using different includes
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/producerChannelImpl.hpp>
-#else
-  #include "channel/hicr/producerChannelImpl.hpp"
-#endif
 
 } // namespace runtime
 

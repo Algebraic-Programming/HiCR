@@ -1,8 +1,5 @@
 __USED__ inline void Worker::initializeChannels()
 {
-  printf("[Worker] Initializing Worker Instance...\n");
-  fflush(stdout);
-
   ////////// Creating consumer channel to receive variable sized RPCs from the coordinator
 
   // Accessing first topology manager detected

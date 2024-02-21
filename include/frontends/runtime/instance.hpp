@@ -13,6 +13,7 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <hicr/L1/instanceManager.hpp>
@@ -21,10 +22,15 @@
 #include <hicr/L1/topologyManager.hpp>
 #include <frontends/machineModel/machineModel.hpp>
 
+// For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
   #include <frontends/runtime/dataObject/yuanrong/dataObject.hpp>
+  #include <frontends/runtime/channel/yuanrong/producerChannel.hpp>
+  #include <frontends/runtime/channel/yuanrong/consumerChannel.hpp>
 #else
   #include "dataObject/mpi/dataObject.hpp"
+  #include "channel/hicr/producerChannel.hpp"
+  #include "channel/hicr/consumerChannel.hpp"
 #endif
 
 namespace HiCR
@@ -65,7 +71,11 @@ class Instance
                                         _topologyManagers(topologyManagers),
                                         _machineModel(&machineModel)
   {
+    // Getting instance ids into a sorted vector
+    for (const auto& instance : _instanceManager->getInstances()) _instanceIds.push_back(instance->getId());
+    std::sort(_instanceIds.begin(), _instanceIds.end());
   }
+  
   virtual ~Instance() = default;
 
   /**
@@ -155,6 +165,11 @@ class Instance
   }
 
   /**
+   *  The ids of other instances, sorted by Id
+  */
+  std::vector<HiCR::L0::Instance::instanceId_t> _instanceIds;
+
+  /**
    * Internal HiCR instance represented by this runtime instance
    */
   const std::shared_ptr<HiCR::L0::Instance> _HiCRInstance;
@@ -188,7 +203,26 @@ class Instance
    * Global counter for the current data object pertaining to this instance
    */
   DataObject::dataObjectId_t _currentDataObjectId = 0;
+
+  inline void initializeChannels();
+
+  /**
+   * Producer channels for sending messages to all other instances
+  */
+  std::vector<std::shared_ptr<runtime::ProducerChannel>> _producerChannels;
+
+  /**
+   * Consumer channels for sending messages to all other instances
+  */
+  std::vector<std::shared_ptr<runtime::ConsumerChannel>> _consumerChannels;
 };
+
+// For interoperability with YuanRong, we bifurcate implementations using different includes
+#ifdef _HICR_USE_YUANRONG_BACKEND_
+  #include <frontends/runtime/channel/yuanrong/initializeChannelsImpl.hpp>
+#else
+  #include "channel/hicr/initializeChannelsImpl.hpp"
+#endif
 
 } // namespace runtime
 
