@@ -9,7 +9,7 @@
 #define _HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG _HICR_RUNTIME_CHANNEL_BASE_TAG + 6
 
 __USED__ inline void Instance::initializeChannels()
-{ 
+{
   // Getting my current instance
   const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
 
@@ -48,25 +48,26 @@ __USED__ inline void Instance::initializeChannels()
       std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> sizeInfoBufferMemorySlotVector;
 
       // Create producer buffers for each of the channels (one per consumer)
-      for (size_t i = 0; i < totalInstances; i++) if (i != producerIdx)
-      {
-        // Allocating coordination buffers
-        auto coordinationBufferMessageSizes = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
-        auto coordinationBufferMessagePayloads = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
-        auto sizeInfoBufferMemorySlot = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, sizeof(size_t));
+      for (size_t i = 0; i < totalInstances; i++)
+        if (i != producerIdx)
+        {
+          // Allocating coordination buffers
+          auto coordinationBufferMessageSizes = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+          auto coordinationBufferMessagePayloads = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+          auto sizeInfoBufferMemorySlot = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, sizeof(size_t));
 
-        // Initializing coordination buffers
-        HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferMessageSizes);
-        HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferMessagePayloads);
+          // Initializing coordination buffers
+          HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferMessageSizes);
+          HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferMessagePayloads);
 
-        // Getting consumer instance id
-        const auto consumerInstanceId = _instanceIds[i];
+          // Getting consumer instance id
+          const auto consumerInstanceId = _instanceIds[i];
 
-        // Adding buffers to their respective vectors
-        coordinationBufferMessageSizesVector.push_back({consumerInstanceId, coordinationBufferMessageSizes});
-        coordinationBufferMessagePayloadsVector.push_back({consumerInstanceId, coordinationBufferMessagePayloads});
-        sizeInfoBufferMemorySlotVector.push_back(sizeInfoBufferMemorySlot);
-      }
+          // Adding buffers to their respective vectors
+          coordinationBufferMessageSizesVector.push_back({consumerInstanceId, coordinationBufferMessageSizes});
+          coordinationBufferMessagePayloadsVector.push_back({consumerInstanceId, coordinationBufferMessagePayloads});
+          sizeInfoBufferMemorySlotVector.push_back(sizeInfoBufferMemorySlot);
+        }
 
       // Exchanging local memory slots to become global for them to be used by the remote end
       _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, {});
@@ -89,34 +90,35 @@ __USED__ inline void Instance::initializeChannels()
 
       // Creating producer channels
       size_t slotVectorIdx = 0;
-      for (size_t i = 0; i < totalInstances; i++) if (i != producerIdx)
-      {
-        // Getting consumer instance id
-        const auto consumerInstanceId = _instanceIds[i];
+      for (size_t i = 0; i < totalInstances; i++)
+        if (i != producerIdx)
+        {
+          // Getting consumer instance id
+          const auto consumerInstanceId = _instanceIds[i];
 
-        // Obtaining the globally exchanged memory slots
-        auto consumerMessageSizesBuffer    = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, consumerInstanceId);
-        auto consumerMessagePayloadBuffer  = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, consumerInstanceId);
-        auto producerSizesProducerBuffer   = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, consumerInstanceId);
-        auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, consumerInstanceId);
+          // Obtaining the globally exchanged memory slots
+          auto consumerMessageSizesBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, consumerInstanceId);
+          auto consumerMessagePayloadBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, consumerInstanceId);
+          auto producerSizesProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, consumerInstanceId);
+          auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, consumerInstanceId);
 
-        // Creating channel
-        _producerChannels[consumerInstanceId] = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(
-          *_communicationManager,
-          sizeInfoBufferMemorySlotVector[slotVectorIdx],
-          consumerMessagePayloadBuffer,
-          consumerMessageSizesBuffer,
-          coordinationBufferMessageSizesVector[slotVectorIdx].second,
-          coordinationBufferMessagePayloadsVector[slotVectorIdx].second,
-          producerSizesProducerBuffer,
-          producerPayloadProducerBuffer,
-          _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
-          sizeof(uint8_t),
-          _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
+          // Creating channel
+          _producerChannels[consumerInstanceId] = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(
+            *_communicationManager,
+            sizeInfoBufferMemorySlotVector[slotVectorIdx],
+            consumerMessagePayloadBuffer,
+            consumerMessageSizesBuffer,
+            coordinationBufferMessageSizesVector[slotVectorIdx].second,
+            coordinationBufferMessagePayloadsVector[slotVectorIdx].second,
+            producerSizesProducerBuffer,
+            producerPayloadProducerBuffer,
+            _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
+            sizeof(uint8_t),
+            _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
 
-          // Increasing slot vector 
+          // Increasing slot vector
           slotVectorIdx++;
-      }
+        }
     }
 
     // If the produer Id is not this instance, then create a consumer channel for the current producer
@@ -197,7 +199,7 @@ __USED__ inline void Instance::initializeChannels()
         _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
         sizeof(uint8_t),
         _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
-    } 
+    }
   }
 }
 
@@ -207,7 +209,7 @@ __USED__ inline void Instance::sendMessage(const HiCR::L0::Instance::instanceId_
   if (_producerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the producer channel map");
 
   // Getting reference to the appropriate producer channel
-  const auto& channel = _producerChannels[instanceId];
+  const auto &channel = _producerChannels[instanceId];
 
   // Accessing first topology manager detected
   auto &tm = *_topologyManagers[0];
@@ -234,7 +236,7 @@ __USED__ inline std::pair<const void *, size_t> Instance::recvMessage(const HiCR
   if (_consumerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the consumer channel map");
 
   // Getting reference to the appropriate consumer channel
-  const auto& channel = _consumerChannels[instanceId];
+  const auto &channel = _consumerChannels[instanceId];
 
   // Waiting for initial message from coordinator
   while (channel->getDepth() == 0) channel->updateDepth();

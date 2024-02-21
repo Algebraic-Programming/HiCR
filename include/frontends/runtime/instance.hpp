@@ -72,7 +72,7 @@ class Instance
                                         _machineModel(&machineModel)
   {
     // Getting instance ids into a sorted vector
-    for (const auto& instance : _instanceManager->getInstances()) _instanceIds.push_back(instance->getId());
+    for (const auto &instance : _instanceManager->getInstances()) _instanceIds.push_back(instance->getId());
     std::sort(_instanceIds.begin(), _instanceIds.end());
   }
 
@@ -152,7 +152,7 @@ class Instance
     return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());
   }
 
-   /**
+  /**
    * Allows a worker to obtain a data object by id from the coordinator instance
    *
    * This is a blocking function.
@@ -171,17 +171,18 @@ class Instance
   }
 
   /**
-   * Asynchronously sends a binary message (buffer + size) to a given worker
+   * Asynchronously sends a binary message (buffer + size) to another instance
    *
-   * @param[in] worker The recepient worker of the message
+   * @param[in] instanceId The id of the instance to which to send the message
    * @param[in] messagePtr The pointer to the message buffer
    * @param[in] messageSize The message size in bytes
    */
   __USED__ inline void sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize);
 
   /**
-   * Synchronous function to receive a message from the coordinator instance
+   * Synchronous function to receive a message from another instance
    *
+   * @param[in] instanceId The id of the instance for which channel we check for incoming messages
    * @return A pair containing a pointer to the start of the message binary data and the message's size
    */
   __USED__ inline std::pair<const void *, size_t> recvMessage(const HiCR::L0::Instance::instanceId_t instanceId);
@@ -200,7 +201,7 @@ class Instance
 
   /**
    *  The ids of other instances, sorted by Id
-  */
+   */
   std::vector<HiCR::L0::Instance::instanceId_t> _instanceIds;
 
   /**
@@ -238,16 +239,19 @@ class Instance
    */
   DataObject::dataObjectId_t _currentDataObjectId = 0;
 
+  /**
+   * Function to initialize producer and consumer channels with all the rest of the instances
+   */
   inline void initializeChannels();
 
   /**
    * Producer channels for sending messages to all other instances
-  */
+   */
   std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<runtime::ProducerChannel>> _producerChannels;
 
   /**
    * Consumer channels for sending messages to all other instances
-  */
+   */
   std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<runtime::ConsumerChannel>> _consumerChannels;
 };
 

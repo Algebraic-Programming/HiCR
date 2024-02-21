@@ -137,7 +137,6 @@ class Coordinator final : public runtime::Instance
   std::vector<worker_t> _workers;
 };
 
-
 } // namespace runtime
 
 } // namespace HiCR
