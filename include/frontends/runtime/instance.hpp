@@ -13,6 +13,8 @@
 #pragma once
 
 #include <vector>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 #include <hicr/L1/instanceManager.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <hicr/L1/communicationManager.hpp>
@@ -117,6 +119,28 @@ class Instance
    * @return The HiCR machine model
    */
   HiCR::MachineModel *getMachineModel() const { return _machineModel; }
+
+  /**
+   * Requests the creation of a new data object.
+   *
+   * This adds the internal counter for the assignment of unique identifiers to new data objects
+   *
+   * @param[in] buffer A pointer to the internal buffer to assign to the data object
+   * @param[in] size The size of the internal buffer to use
+   * @return A shared pointer to the newly created data object
+   */
+  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
+  {
+    DataObject::dataObjectId_t dataObjectId;
+
+    // Generate a new UUID
+    auto uuid = boost::uuids::random_generator()();
+
+    // Truncate it to fit into the data object id
+    std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
+
+    return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());
+  }
 
   protected:
 

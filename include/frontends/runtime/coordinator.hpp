@@ -13,8 +13,6 @@
 #pragma once
 
 #include <memory>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/topology.hpp>
@@ -152,31 +150,9 @@ class Coordinator final : public runtime::Instance
    */
   __USED__ inline std::vector<worker_t> &getWorkers() { return _workers; }
 
-  /**
-   * Requests the creation of a new data object.
-   *
-   * This adds the internal counter for the assignment of unique identifiers to new data objects
-   *
-   * @param[in] buffer A pointer to the internal buffer to assign to the data object
-   * @param[in] size The size of the internal buffer to use
-   * @return A shared pointer to the newly created data object
-   */
-  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
-  {
-    DataObject::dataObjectId_t dataObjectId;
-
-    // Generate a new UUID
-    auto uuid = boost::uuids::random_generator()();
-
-    // Truncate it to fit into the data object id
-    std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
-
-    return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());
-  }
-
   private:
 
-  // For interoperability with YuanRong, this function is implemented differently depended on the backend used
+  // For interoperability with YuanRong, this function is implemented differently depending on the backend used
   __USED__ inline void initializeChannels();
 
   /**
