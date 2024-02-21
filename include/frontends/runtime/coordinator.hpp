@@ -47,11 +47,6 @@ class Coordinator final : public runtime::Instance
      * Internal HiCR instance class
      */
     const std::shared_ptr<HiCR::L0::Instance> hicrInstance;
-
-    /**
-     * Producer channels to send messages to the worker instances
-     */
-    std::shared_ptr<runtime::ProducerChannel> channel;
   };
 
   /**
@@ -126,15 +121,6 @@ class Coordinator final : public runtime::Instance
 
     _instanceManager->finalize();
   }
-
-  /**
-   * Asynchronously sends a binary message (buffer + size) to a given worker
-   *
-   * @param[in] worker The recepient worker of the message
-   * @param[in] messagePtr The pointer to the message buffer
-   * @param[in] messageSize The message size in bytes
-   */
-  __USED__ inline void sendMessage(worker_t &worker, void *messagePtr, size_t messageSize) {};
 
   /**
    * Gets the worker vector, as deployed by the coordinator

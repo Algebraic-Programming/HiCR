@@ -13,16 +13,10 @@ __USED__ inline void Instance::initializeChannels()
   // Getting my current instance
   const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
 
-  printf("[Instance %lu] Initializing Channels...\n", currentInstanceId);
-  fflush(stdout);
-
   // Getting total amount of instances
   const auto totalInstances = _instanceIds.size();
 
   // Create N-1 producer-consumer pairs for each instance
-  _producerChannels.resize(totalInstances);
-  _consumerChannels.resize(totalInstances);
-
   for (size_t producerIdx = 0; producerIdx < totalInstances; producerIdx++)
   {
     // If the producer Id is this instance, then create all producer channels for the other instances
@@ -107,7 +101,7 @@ __USED__ inline void Instance::initializeChannels()
         auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, consumerInstanceId);
 
         // Creating channel
-        _producerChannels[i] = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(
+        _producerChannels[consumerInstanceId] = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(
           *_communicationManager,
           sizeInfoBufferMemorySlotVector[slotVectorIdx],
           consumerMessagePayloadBuffer,
@@ -165,20 +159,17 @@ __USED__ inline void Instance::initializeChannels()
       HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferMessageSizes);
       HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferMessagePayloads);
 
-      // Getting instance id for memory slot exchange
-      const auto instanceId = _instanceManager->getCurrentInstance()->getId();
-
       // Exchanging local memory slots to become global for them to be used by the remote end
-      _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, {{instanceId, tokenSizeBufferSlot}});
+      _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, {{currentInstanceId, tokenSizeBufferSlot}});
       _communicationManager->fence(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG);
 
-      _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, {{instanceId, payloadBufferSlot}});
+      _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, {{currentInstanceId, payloadBufferSlot}});
       _communicationManager->fence(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG);
 
-      _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_COORDINATION_BUFFER_SIZES_TAG, {{instanceId, coordinationBufferMessageSizes}});
+      _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_COORDINATION_BUFFER_SIZES_TAG, {{currentInstanceId, coordinationBufferMessageSizes}});
       _communicationManager->fence(_HICR_RUNTIME_CHANNEL_CONSUMER_COORDINATION_BUFFER_SIZES_TAG);
 
-      _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_COORDINATION_BUFFER_PAYLOADS_TAG, {{instanceId, coordinationBufferMessagePayloads}});
+      _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_CONSUMER_COORDINATION_BUFFER_PAYLOADS_TAG, {{currentInstanceId, coordinationBufferMessagePayloads}});
       _communicationManager->fence(_HICR_RUNTIME_CHANNEL_CONSUMER_COORDINATION_BUFFER_PAYLOADS_TAG);
 
       _communicationManager->exchangeGlobalMemorySlots(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, {});
@@ -188,13 +179,14 @@ __USED__ inline void Instance::initializeChannels()
       _communicationManager->fence(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG);
 
       // Obtaining the globally exchanged memory slots
-      auto consumerMessageSizesBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, instanceId);
-      auto consumerMessagePayloadBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, instanceId);
-      auto producerSizesProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, instanceId);
-      auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, instanceId);
+      auto consumerMessageSizesBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, currentInstanceId);
+      auto consumerMessagePayloadBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, currentInstanceId);
+      auto producerSizesProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, currentInstanceId);
+      auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, currentInstanceId);
 
       // Creating channel
-      _consumerChannels[producerIdx] = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(
+      printf("[Instance %lu] Adding consumer channel for instance %lu\n", currentInstanceId, _instanceIds[producerIdx]);
+      _consumerChannels[_instanceIds[producerIdx]] = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(
         *_communicationManager,
         consumerMessagePayloadBuffer,
         consumerMessageSizesBuffer,
@@ -207,11 +199,60 @@ __USED__ inline void Instance::initializeChannels()
         _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
     } 
   }
-
-
-  printf("[Instance %lu] Arrived at the end.\n", currentInstanceId);
-  fflush(stdout);
-  
-  while(1);
 }
 
+__USED__ inline void Instance::sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize)
+{
+  // Sanity check
+  if (_producerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the producer channel map");
+
+  // Getting reference to the appropriate producer channel
+  const auto& channel = _producerChannels[instanceId];
+
+  // Accessing first topology manager detected
+  auto &tm = *_topologyManagers[0];
+
+  // Gathering topology from the topology manager
+  const auto t = tm.queryTopology();
+
+  // Selecting first device
+  auto d = *t.getDevices().begin();
+
+  // Getting memory space list from device
+  auto memSpaces = d->getMemorySpaceList();
+
+  // Grabbing first memory space for buffering
+  auto bufferMemorySpace = *memSpaces.begin();
+
+  // Sending initial message to all workers
+  auto messageSendSlot = _memoryManager->registerLocalMemorySlot(bufferMemorySpace, messagePtr, messageSize);
+  channel->push(messageSendSlot);
+}
+
+__USED__ inline std::pair<const void *, size_t> Instance::recvMessage(const HiCR::L0::Instance::instanceId_t instanceId)
+{
+  if (_consumerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the consumer channel map");
+
+  // Getting reference to the appropriate consumer channel
+  const auto& channel = _consumerChannels[instanceId];
+
+  // Waiting for initial message from coordinator
+  while (channel->getDepth() == 0) channel->updateDepth();
+
+  // Get internal pointer of the token buffer slot and the offset
+  auto payloadBufferMemorySlot = channel->getPayloadBufferMemorySlot();
+  auto payloadBufferPtr = (const char *)payloadBufferMemorySlot->getSourceLocalMemorySlot()->getPointer();
+
+  // Obtaining pointer from the offset + base pointer
+  auto offset = channel->peek()[0];
+  const void *ptr = &payloadBufferPtr[offset];
+
+  // Obtaining size
+  const size_t size = channel->peek()[1];
+
+  // Popping message from the channel
+  channel->pop();
+
+  // Returning ptr + size pair
+  return std::make_pair(ptr, size);
+}

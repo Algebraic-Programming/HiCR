@@ -191,6 +191,11 @@ class Runtime final
     return coordinatorPtr;
   }
 
+  HiCR::L0::Instance::instanceId_t getCoordinatorInstanceId() const
+  {
+    return _instanceManager->getRootInstanceId();
+  }
+ 
   /**
    * This function aborts execution, while trying to bring down all other instances (prevents hang ups). It may be only be called by the coordinator.
    * Calling this function from a worker may result in a hangup.

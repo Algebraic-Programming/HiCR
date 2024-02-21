@@ -400,13 +400,6 @@ class CommunicationManager
     // Locking access to prevent concurrency issues
     this->lock();
 
-    // Sanity check: tag/globalkey collision
-    if (_globalMemorySlotTagKeyMap.contains(tag) && _globalMemorySlotTagKeyMap.at(tag).contains(globalKey))
-    {
-      this->unlock();
-      HICR_THROW_RUNTIME("Detected collision on global slots tag/globalKey (%lu/%lu). Another global slot was registered with that pair before.", tag, globalKey);
-    }
-
     // Adding memory slot to the global map (based on tag and key)
     _globalMemorySlotTagKeyMap[tag][globalKey] = memorySlot;
 
