@@ -202,6 +202,16 @@ class Runtime final
   }
 
   /**
+   * Returns a list of all the created instances
+   *
+   * @return The list of all created instances
+   */
+  HiCR::L1::InstanceManager::instanceList_t getInstances() const
+  {
+    return _instanceManager->getInstances();
+  }
+
+  /**
    * This function aborts execution, while trying to bring down all other instances (prevents hang ups). It may be only be called by the coordinator.
    * Calling this function from a worker may result in a hangup.
    *
