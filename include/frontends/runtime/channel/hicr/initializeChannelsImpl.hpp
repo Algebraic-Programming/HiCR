@@ -231,12 +231,15 @@ __USED__ inline void Instance::sendMessage(const HiCR::L0::Instance::instanceId_
   channel->push(messageSendSlot);
 }
 
-__USED__ inline std::pair<const void *, size_t> Instance::recvMessage(const HiCR::L0::Instance::instanceId_t instanceId)
+__USED__ inline std::pair<const void *, size_t> Instance::recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync)
 {
   if (_consumerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the consumer channel map");
 
   // Getting reference to the appropriate consumer channel
   const auto &channel = _consumerChannels[instanceId];
+
+  // If asynchronous and channel is empty, return immediately
+  if (isAsync == true && channel->getDepth() == 0) return {NULL, 0};
 
   // Waiting for initial message from coordinator
   while (channel->getDepth() == 0) channel->updateDepth();

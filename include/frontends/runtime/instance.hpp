@@ -183,9 +183,20 @@ class Instance
    * Synchronous function to receive a message from another instance
    *
    * @param[in] instanceId The id of the instance for which channel we check for incoming messages
+   * @param[in] isAsync Whether the function must return immediately if no message was found
    * @return A pair containing a pointer to the start of the message binary data and the message's size
    */
-  __USED__ inline std::pair<const void *, size_t> recvMessage(const HiCR::L0::Instance::instanceId_t instanceId);
+  __USED__ inline std::pair<const void *, size_t> recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync = false);
+
+  /**
+   * Asynchronous function to receive a message from another instance
+   *
+   * This function returns immediately.
+   *
+   * @param[in] instanceId The id of the instance for which channel we check for incoming messages
+   * @return A pair containing a pointer to the start of the message binary data and the message's size. The pointer will be NULL if no messages were there when called.
+   */
+  __USED__ inline std::pair<const void *, size_t> recvMessageAsync(const HiCR::L0::Instance::instanceId_t instanceId) { return recvMessage(instanceId, true); }
 
   protected:
 
