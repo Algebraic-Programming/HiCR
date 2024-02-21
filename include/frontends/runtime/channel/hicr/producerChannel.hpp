@@ -1,7 +1,6 @@
 #pragma once
 
 #include <frontends/channel/variableSize/spsc/producer.hpp>
-#include "common.hpp"
 
 namespace HiCR
 {

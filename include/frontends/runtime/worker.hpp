@@ -16,13 +16,6 @@
 #include <hicr/definitions.hpp>
 #include "instance.hpp"
 
-// For interoperability with YuanRong, we bifurcate implementations using different includes
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/consumerChannel.hpp>
-#else
-  #include "channel/hicr/consumerChannel.hpp"
-#endif
-
 namespace HiCR
 {
 
@@ -89,50 +82,8 @@ class Worker final : public runtime::Instance
     exit(0);
   }
 
-  /**
-   * Synchronous function to receive a message from the coordinator instance
-   *
-   * @return A pair containing a pointer to the start of the message binary data and the message's size
-   */
-  __USED__ inline std::pair<const void *, size_t> recvMessage();
-
-  /**
-   * Allows a worker to obtain a data object by id from the coordinator instance
-   *
-   * This is a blocking function.
-   * The data object must be published (either before or after this call) by the coordinator for this function to succeed.
-   *
-   * @param[in] dataObjectId The id of the data object to get from the coordinator instance
-   * @return A shared pointer to the obtained data object
-   */
-  __USED__ inline std::shared_ptr<DataObject> getDataObject(const DataObject::dataObjectId_t dataObjectId)
-  {
-    // Getting instance id of coordinator instance
-    const auto coordinatorId = _instanceManager->getRootInstanceId();
-    const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
-    // Creating data object from id and remote instance id
-    return DataObject::getDataObject(dataObjectId, coordinatorId, currentInstanceId);
-  }
-
   private:
-
-  /**
-   * Initializes the consumer channel for the worker to receive messages from the coordinator
-   */
-  __USED__ inline void initializeChannels();
-
-  /**
-   * Consumer channel to receive messages from the coordinator instance
-   */
-  std::shared_ptr<runtime::ConsumerChannel> channel;
 };
-
-// For interoperability with YuanRong, we bifurcate implementations using different includes
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/consumerChannelImpl.hpp>
-#else
-  #include "channel/hicr/consumerChannelImpl.hpp"
-#endif
 
 } // namespace runtime
 

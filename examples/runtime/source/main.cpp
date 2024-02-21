@@ -10,7 +10,8 @@ void entryPointFc(HiCR::Runtime& runtime, const std::string &entryPointName)
   auto currentWorker = runtime.getWorkerInstance();
 
   // Getting message from coordinator
-  auto message = currentWorker->recvMessage();  
+  const auto coordinatorInstanceId = runtime.getCoordinatorInstanceId();
+  auto message = currentWorker->recvMessage(coordinatorInstanceId);  
 
   // Getting data object id from message
   const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t*) message.first);
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
     dataObjects.push_back(dataObject);
 
     // Sending message with only the data object identifier
-    coordinator->sendMessage(worker, &dataObjectId, sizeof(HiCR::runtime::DataObject::dataObjectId_t));
+    coordinator->sendMessage(worker.hicrInstance->getId(), &dataObjectId, sizeof(HiCR::runtime::DataObject::dataObjectId_t));
   }
 
   // Testing release completion for all data objects

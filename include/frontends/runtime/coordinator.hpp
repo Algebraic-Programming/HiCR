@@ -13,19 +13,10 @@
 #pragma once
 
 #include <memory>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/topology.hpp>
 #include "instance.hpp"
-
-// For interoperability with YuanRong, we bifurcate implementations using different includes
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/producerChannel.hpp>
-#else
-  #include "channel/hicr/producerChannel.hpp"
-#endif
 
 namespace HiCR
 {
@@ -56,11 +47,6 @@ class Coordinator final : public runtime::Instance
      * Internal HiCR instance class
      */
     const std::shared_ptr<HiCR::L0::Instance> hicrInstance;
-
-    /**
-     * Producer channels to send messages to the worker instances
-     */
-    std::shared_ptr<runtime::ProducerChannel> channel;
   };
 
   /**
@@ -137,60 +123,19 @@ class Coordinator final : public runtime::Instance
   }
 
   /**
-   * Asynchronously sends a binary message (buffer + size) to a given worker
-   *
-   * @param[in] worker The recepient worker of the message
-   * @param[in] messagePtr The pointer to the message buffer
-   * @param[in] messageSize The message size in bytes
-   */
-  __USED__ inline void sendMessage(worker_t &worker, void *messagePtr, size_t messageSize);
-
-  /**
    * Gets the worker vector, as deployed by the coordinator
    *
    * @return A reference to the worker vector
    */
   __USED__ inline std::vector<worker_t> &getWorkers() { return _workers; }
 
-  /**
-   * Requests the creation of a new data object.
-   *
-   * This adds the internal counter for the assignment of unique identifiers to new data objects
-   *
-   * @param[in] buffer A pointer to the internal buffer to assign to the data object
-   * @param[in] size The size of the internal buffer to use
-   * @return A shared pointer to the newly created data object
-   */
-  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
-  {
-    DataObject::dataObjectId_t dataObjectId;
-
-    // Generate a new UUID
-    auto uuid = boost::uuids::random_generator()();
-
-    // Truncate it to fit into the data object id
-    std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
-
-    return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());
-  }
-
   private:
-
-  // For interoperability with YuanRong, this function is implemented differently depended on the backend used
-  __USED__ inline void initializeChannels();
 
   /**
    * Storage for the deployed workers. This object is only mantained and usable by the coordinator
    */
   std::vector<worker_t> _workers;
 };
-
-// For interoperability with YuanRong, we bifurcate implementations using different includes
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/producerChannelImpl.hpp>
-#else
-  #include "channel/hicr/producerChannelImpl.hpp"
-#endif
 
 } // namespace runtime
 
