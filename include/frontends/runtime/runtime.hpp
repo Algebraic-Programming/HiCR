@@ -176,7 +176,7 @@ class Runtime final
    *
    * @return A pointer to the current instance
    */
-  HiCR::runtime::Instance* getCurrentInstance() const
+  HiCR::runtime::Instance *getCurrentInstance() const
   {
     // Sanity check
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance before HiCR has been initialized.\n");
