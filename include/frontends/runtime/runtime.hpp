@@ -152,46 +152,6 @@ class Runtime final
   }
 
   /**
-   * Retrieves the worker pointer corresponding to the caller instance. Only a worker can call this function, otherwise it will fail
-   *
-   * @return A pointer to the current Worker instance
-   */
-  __USED__ inline HiCR::runtime::Worker *getWorkerInstance()
-  {
-    // Sanity check
-    if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getWorkerInstance before HiCR has been initialized.\n");
-
-    // Casting current instance to worker type
-    const auto workerPtr = dynamic_cast<HiCR::runtime::Worker *>(_currentInstance);
-
-    // Sanity check
-    if (workerPtr == nullptr) HICR_THROW_LOGIC("Calling getWorkerInstance but current instance is not a worker.\n");
-
-    // Returning worker pointer
-    return workerPtr;
-  }
-
-  /**
-   * Retrieves the coordinator pointer corresponding to the caller instance. Only a coordinator can call this function, otherwise it will fail
-   *
-   * @return A pointer to the current Coordinator instance
-   */
-  __USED__ inline HiCR::runtime::Coordinator *getCoordinatorInstance()
-  {
-    // Sanity check
-    if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance before HiCR has been initialized.\n");
-
-    // Casting current instance to worker type
-    const auto coordinatorPtr = dynamic_cast<HiCR::runtime::Coordinator *>(_currentInstance);
-
-    // Sanity check
-    if (coordinatorPtr == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance but current instance is not a worker.\n");
-
-    // Returning worker pointer
-    return coordinatorPtr;
-  }
-
-  /**
    * Returns the id of the coordinator instance
    *
    * @return The id of the coordinator instance
@@ -209,6 +169,19 @@ class Runtime final
   HiCR::L1::InstanceManager::instanceList_t getInstances() const
   {
     return _instanceManager->getInstances();
+  }
+
+  /**
+   * Gets a pointer to the currently running runtime instance
+   *
+   * @return A pointer to the current instance
+   */
+  HiCR::runtime::Instance* getCurrentInstance() const
+  {
+    // Sanity check
+    if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance before HiCR has been initialized.\n");
+
+    return _currentInstance;
   }
 
   /**

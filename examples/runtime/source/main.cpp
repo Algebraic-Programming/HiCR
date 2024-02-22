@@ -7,11 +7,11 @@ void entryPointFc(HiCR::Runtime& runtime, const std::string &entryPointName)
   printf("Hello, I am worker %lu, executing entry point '%s'\n", runtime.getInstanceId(), entryPointName.c_str());
 
   // Getting my current worker instance
-  auto currentWorker = runtime.getWorkerInstance();
+  auto currentInstance = runtime.getCurrentInstance();
 
   // Getting message from coordinator
   const auto coordinatorInstanceId = runtime.getCoordinatorInstanceId();
-  auto message = currentWorker->recvMessage(coordinatorInstanceId);  
+  auto message = currentInstance->recvMessage(coordinatorInstanceId);  
 
   // Getting data object id from message
   const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t*) message.first);
@@ -20,7 +20,7 @@ void entryPointFc(HiCR::Runtime& runtime, const std::string &entryPointName)
   printf("[Worker %lu] Requesting data object id %u from coordinator.\n", runtime.getInstanceId(), dataObjectId);
 
   // Getting data object from coordinator
-  auto dataObject = currentWorker->getDataObject(dataObjectId);
+  auto dataObject = currentInstance->getDataObject(dataObjectId);
 
   // Printing data object contents
   printf("[Worker %lu] Received message from coordinator: '%s'\n", runtime.getInstanceId(), (const char*) dataObject->getData());
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   runtime.deploy(machineModel, &isTopologyAcceptable);
   
   // Getting coordinator instance
-  auto coordinator = runtime.getCoordinatorInstance();
+  auto coordinator = dynamic_cast<HiCR::runtime::Coordinator*>(runtime.getCurrentInstance());
 
   // Creating a welcome message
   std::string welcomeMsg = "Hello from the coordinator";
