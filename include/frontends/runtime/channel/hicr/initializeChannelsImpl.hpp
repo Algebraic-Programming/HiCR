@@ -15,7 +15,7 @@ __USED__ inline void Instance::initializeChannels()
 
   // Update the instance ids
   queryInstanceIds();
-  
+
   // Getting total amount of instances
   const auto totalInstances = _instanceIds.size();
 
