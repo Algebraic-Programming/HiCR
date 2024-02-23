@@ -13,9 +13,6 @@ __USED__ inline void Instance::initializeChannels()
   // Getting my current instance
   const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
 
-  // Update the instance ids
-  queryInstanceIds();
-
   // Getting total amount of instances
   const auto totalInstances = _instanceIds.size();
 
