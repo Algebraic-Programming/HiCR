@@ -71,9 +71,7 @@ class Instance
                                         _topologyManagers(topologyManagers),
                                         _machineModel(&machineModel)
   {
-    // Getting instance ids into a sorted vector
-    for (const auto &instance : _instanceManager->getInstances()) _instanceIds.push_back(instance->getId());
-    std::sort(_instanceIds.begin(), _instanceIds.end());
+    queryInstanceIds();
   }
 
   virtual ~Instance() = default;
@@ -87,6 +85,17 @@ class Instance
    * This function should be used at the end of execution by all HiCR instances, to correctly finalize the execution environment
    */
   virtual void finalize() = 0;
+
+  /**
+   * Update the instance ids in when new instances are created.
+   */
+  void queryInstanceIds()
+  {
+    _instanceIds.clear();
+    // Getting instance ids into a sorted vector
+    for (const auto &instance : _instanceManager->getInstances()) _instanceIds.push_back(instance->getId());
+    std::sort(_instanceIds.begin(), _instanceIds.end());
+  }
 
   /**
    * Returns the internal HiCR instance object for the caller instance
