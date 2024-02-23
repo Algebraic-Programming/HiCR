@@ -90,6 +90,9 @@ class Coordinator final : public runtime::Instance
       _abort(-1);
     }
 
+    // Update instanceIds with the newly created instances
+    queryInstanceIds();
+
     // Running the assigned task id in the corresponding instance and registering it as worker
     for (auto &r : requests)
       for (auto &in : r.instances)
