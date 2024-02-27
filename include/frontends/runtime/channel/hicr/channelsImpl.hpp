@@ -212,6 +212,9 @@ __USED__ inline std::pair<const void *, size_t> Instance::recvMessage(const HiCR
   // Getting reference to the appropriate consumer channel
   const auto &channel = _consumerChannels[instanceId];
 
+  // Initial channel update to check whether new messages have arrived
+  channel->updateDepth();
+
   // If asynchronous and channel is empty, return immediately
   if (isAsync == true && channel->getDepth() == 0) return {NULL, 0};
 
