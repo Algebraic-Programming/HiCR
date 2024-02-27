@@ -93,6 +93,12 @@ int main(int argc, char *argv[])
     coordinator->sendMessage(worker.hicrInstance->getId(), &dataObjectId, sizeof(HiCR::runtime::DataObject::dataObjectId_t));
   }
 
+  // Sending a message to myself just to test self-comunication
+  size_t workerCount = coordinator->getWorkers().size();
+  coordinator->sendMessage(coordinator->getHiCRInstance()->getId(), &workerCount, sizeof(workerCount));
+  auto message = coordinator->recvMessage(coordinator->getHiCRInstance()->getId());
+  printf("[Coordinator] Received worker count: %lu from myself\n", *(size_t*)message.first);
+
   // Testing release completion for all data objects
   bool allDataObjectsReleased = false;
   while (allDataObjectsReleased == false)
