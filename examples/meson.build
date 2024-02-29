@@ -1,5 +1,5 @@
 subdir('hicr')
 subdir('machineModel')
-subdir('taskr')
+subdir('tasking')
 subdir('channels')
 subdir('runtime')
