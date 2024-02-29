@@ -88,4 +88,3 @@ class EventMap
 } // namespace tasking
 
 } // namespace HiCR
-

@@ -69,4 +69,4 @@ class Dispatcher
 
 } // namespace tasking
 
-} // namespace HICR
+} // namespace HiCR
