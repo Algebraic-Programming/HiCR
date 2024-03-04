@@ -162,16 +162,6 @@ class Runtime final
   }
 
   /**
-   * Returns a list of all the created instances
-   *
-   * @return The list of all created instances
-   */
-  HiCR::L1::InstanceManager::instanceList_t getInstances() const
-  {
-    return _instanceManager->getInstances();
-  }
-
-  /**
    * Returns a list of all the created instances id
    *
    * @return The list of the instances id
