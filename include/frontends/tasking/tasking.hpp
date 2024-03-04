@@ -16,6 +16,17 @@
 #include "worker.hpp"
 #include "common.hpp"
 
+#define CREATE_HICR_TASKING_HOOK   \
+  namespace HiCR                   \
+  {                                \
+  namespace tasking                \
+  {                                \
+  pthread_key_t _workerPointerKey; \
+  pthread_key_t _taskPointerKey;   \
+  bool _isInitialized = false;     \
+  }                                \
+  }
+
 namespace HiCR
 {
 

@@ -32,7 +32,7 @@ namespace tasking
 /**
  * Key identifier for thread-local identification of currently running task
  */
-__USED__ static pthread_key_t _taskPointerKey;
+extern pthread_key_t _taskPointerKey;
 
 /**
  * This class defines the basic execution unit managed by TaskR.
