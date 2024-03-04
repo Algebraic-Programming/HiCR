@@ -172,6 +172,16 @@ class Runtime final
   }
 
   /**
+   * Returns a list of all the created instances id
+   *
+   * @return The list of the instances id
+   */
+  std::vector<HiCR::L0::Instance::instanceId_t> getInstanceIds() const
+  {
+    return _currentInstance->getInstanceIds();
+  }
+
+  /**
    * Gets a pointer to the currently running runtime instance
    *
    * @return A pointer to the current instance
