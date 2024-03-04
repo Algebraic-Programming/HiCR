@@ -22,7 +22,6 @@
 #include <backends/host/L1/computeManager.hpp>
 #include "dispatcher.hpp"
 #include "task.hpp"
-#include "common.hpp"
 
 namespace HiCR
 {
@@ -33,7 +32,7 @@ namespace tasking
 /**
  * Key identifier for thread-local identification of currently running worker
  */
-__USED__ static pthread_key_t _workerPointerKey;
+extern pthread_key_t _workerPointerKey;
 
 /**
  * Type definition for the set of dispatchers a worker is subscribed to

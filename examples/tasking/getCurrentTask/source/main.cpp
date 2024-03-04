@@ -4,6 +4,7 @@
 #include "../../runtime.hpp"
 
 #define TASK_LABEL 42
+CREATE_HICR_TASKING_HOOK;
 
 int main(int argc, char **argv)
 {

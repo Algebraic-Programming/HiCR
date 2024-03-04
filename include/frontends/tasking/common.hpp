@@ -21,7 +21,7 @@ namespace tasking
 /**
  * Flag to indicate whether the tasking subsystem was initialized
  */
-static bool _isInitialized = false;
+extern bool _isInitialized;
 
 } // namespace tasking
 

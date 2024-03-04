@@ -16,6 +16,8 @@
 #include <frontends/tasking/task.hpp>
 #include <frontends/tasking/tasking.hpp>
 
+CREATE_HICR_TASKING_HOOK;
+
 TEST(Task, Construction)
 {
   HiCR::tasking::Task *t = NULL;

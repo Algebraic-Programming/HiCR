@@ -17,6 +17,8 @@
 #include <frontends/tasking/worker.hpp>
 #include <frontends/tasking/tasking.hpp>
 
+CREATE_HICR_TASKING_HOOK;
+
 TEST(Worker, Construction)
 {
   HiCR::tasking::Worker *w = NULL;

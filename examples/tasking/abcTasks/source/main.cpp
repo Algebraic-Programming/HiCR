@@ -3,6 +3,8 @@
 #include <backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/abcTasks.hpp"
 
+CREATE_HICR_TASKING_HOOK;
+
 int main(int argc, char **argv)
 {
   // Creating HWloc topology object

@@ -6,6 +6,8 @@
 #include "../runtime.hpp"
 #include "source/workTask.hpp"
 
+CREATE_HICR_TASKING_HOOK;
+
 int main(int argc, char **argv)
 {
   // Creating HWloc topology object
