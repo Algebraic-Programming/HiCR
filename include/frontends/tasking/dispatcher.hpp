@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <frontends/tasking/task.hpp>
+#include "task.hpp"
 
 namespace HiCR
 {

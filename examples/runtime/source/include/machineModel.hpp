@@ -173,7 +173,7 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
   return true;
 }
 
-std::vector<HiCR::MachineModel::request_t> loadMachineModelFromFile(const std::string& machineModelFile)
+std::vector<HiCR::MachineModel::request_t> loadMachineModelFromFile(const std::string &machineModelFile)
 {
   // Reading from machine model file
   std::string machineModelRaw;

@@ -15,14 +15,14 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include <pthread.h>
 #include <unistd.h>
 #include <hicr/definitions.hpp>
 #include <hicr/exceptions.hpp>
 #include <hicr/L0/processingUnit.hpp>
 #include <backends/host/L1/computeManager.hpp>
-#include <frontends/tasking/dispatcher.hpp>
-#include <frontends/tasking/task.hpp>
+#include "dispatcher.hpp"
+#include "task.hpp"
+#include "common.hpp"
 
 namespace HiCR
 {
@@ -36,21 +36,6 @@ namespace tasking
 typedef std::set<HiCR::tasking::Dispatcher *> dispatcherSet_t;
 
 /**
- * Key identifier for thread-local identification of currently running worker
- */
-static pthread_key_t _workerPointerKey;
-
-/**
- * Execute-once configuration for thread-local identification of currently running worker
- */
-static pthread_once_t _workerPointerKeyConfig = PTHREAD_ONCE_INIT;
-
-/**
- * Function for creating task pointer key (only once), for thread-local identification of currently running task
- */
-static void createWorkerPointerKey() { (void)pthread_key_create(&_workerPointerKey, NULL); }
-
-/**
  * Defines the worker class, which is in charge of executing tasks.
  *
  * To receive pending tasks for execution, the worker needs to subscribe to task dispatchers. Upon execution, the worker will constantly check the dispatchers in search for new tasks for execution.
@@ -60,29 +45,6 @@ static void createWorkerPointerKey() { (void)pthread_key_create(&_workerPointerK
 class Worker
 {
   public:
-
-  /**
-   * Function to return a pointer to the currently executing worker from a global context
-   *
-   * @return A pointer to the current HiCR worker, NULL if this function is called outside the context of a task run() function
-   */
-  __USED__ static inline HiCR::tasking::Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
-
-  /**
-   * Constructor for the worker class.
-   *
-   * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
-   */
-  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
-  {
-    // Checking the passed compute manager is of a supported type
-    if (_computeManager == NULL) HICR_THROW_LOGIC("TaskR workers can only be instantiated with a shared memory compute manages.");
-
-    // Making sure the worker-identifying key is created (only once) with the first created task
-    pthread_once(&_workerPointerKeyConfig, createWorkerPointerKey);
-  }
-
-  ~Worker() = default;
 
   /**
    * Complete state set that a worker can be in
@@ -121,6 +83,26 @@ class Worker
   };
 
   /**
+   * Constructor for the worker class.
+   *
+   * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
+   */
+  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
+  {
+    // Checking the passed compute manager is of a supported type
+    if (_computeManager == NULL) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");
+  }
+
+  ~Worker() = default;
+
+  /**
+   * Function to return a pointer to the currently executing worker from a global context
+   *
+   * @return A pointer to the current HiCR worker, NULL if this function is called outside the context of a task run() function
+   */
+  __USED__ static inline HiCR::tasking::Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
+
+  /**
    * Queries the worker's internal state.
    *
    * @return The worker's internal state
@@ -150,6 +132,8 @@ class Worker
    */
   __USED__ inline void start()
   {
+    if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
+
     // Checking state
     if (_state != state_t::ready) HICR_THROW_RUNTIME("Attempting to start worker that is not in the 'initialized' state");
 

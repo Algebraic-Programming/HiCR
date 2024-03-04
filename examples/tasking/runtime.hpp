@@ -17,6 +17,7 @@
 #include <mutex>
 #include <frontends/tasking/task.hpp>
 #include <frontends/tasking/worker.hpp>
+#include <frontends/tasking/tasking.hpp>
 #include <hicr/common/concurrentQueue.hpp>
 #include <hicr/common/parallelHashSet.hpp>
 
@@ -313,8 +314,11 @@ class Runtime
    */
   __USED__ inline void run(HiCR::L1::ComputeManager *computeManager)
   {
+    // Initializing HiCR tasking
+    HiCR::tasking::initialize();
+
     _dispatcher = new HiCR::tasking::Dispatcher([this]()
-                                        { return checkWaitingTasks(); }); //
+                                                { return checkWaitingTasks(); }); //
     _eventMap = new HiCR::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events
@@ -354,6 +358,9 @@ class Runtime
     _workers.clear();
     delete _dispatcher;
     delete _eventMap;
+
+    // Finalizing HiCR tasking
+    HiCR::tasking::finalize();
   }
 
   /**

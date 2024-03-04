@@ -2,7 +2,7 @@
 #include "include/machineModel.hpp"
 
 // Worker entry point functions
-void entryPointFc(HiCR::Runtime& runtime, const std::string &entryPointName)
+void entryPointFc(HiCR::Runtime &runtime, const std::string &entryPointName)
 {
   printf("Hello, I am worker %lu, executing entry point '%s'\n", runtime.getInstanceId(), entryPointName.c_str());
 
@@ -11,10 +11,10 @@ void entryPointFc(HiCR::Runtime& runtime, const std::string &entryPointName)
 
   // Getting message from coordinator
   const auto coordinatorInstanceId = runtime.getCoordinatorInstanceId();
-  auto message = currentInstance->recvMessage(coordinatorInstanceId);  
+  auto message = currentInstance->recvMessage(coordinatorInstanceId);
 
   // Getting data object id from message
-  const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t*) message.first);
+  const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t *)message.first);
 
   // Printing data object id
   printf("[Worker %lu] Requesting data object id %u from coordinator.\n", runtime.getInstanceId(), dataObjectId);
@@ -23,7 +23,7 @@ void entryPointFc(HiCR::Runtime& runtime, const std::string &entryPointName)
   auto dataObject = currentInstance->getDataObject(dataObjectId);
 
   // Printing data object contents
-  printf("[Worker %lu] Received message from coordinator: '%s'\n", runtime.getInstanceId(), (const char*) dataObject->getData());
+  printf("[Worker %lu] Received message from coordinator: '%s'\n", runtime.getInstanceId(), (const char *)dataObject->getData());
 
   // Freeing up internal buffer
   dataObject->destroyBuffer();
@@ -35,13 +35,16 @@ int main(int argc, char *argv[])
   HiCR::Runtime runtime(&argc, &argv);
 
   // Registering tasks for the workers
-  runtime.registerEntryPoint("A", [&]() { entryPointFc(runtime, "A"); });
-  runtime.registerEntryPoint("B", [&]() { entryPointFc(runtime, "B"); });
-  runtime.registerEntryPoint("C", [&]() { entryPointFc(runtime, "C"); });
+  runtime.registerEntryPoint("A", [&]()
+                             { entryPointFc(runtime, "A"); });
+  runtime.registerEntryPoint("B", [&]()
+                             { entryPointFc(runtime, "B"); });
+  runtime.registerEntryPoint("C", [&]()
+                             { entryPointFc(runtime, "C"); });
 
   // Initializing the HiCR runtime
   runtime.initialize();
-  
+
   // If the number of arguments passed is incorrect, abort execution and exit
   if (argc != 2)
   {
@@ -64,9 +67,9 @@ int main(int argc, char *argv[])
 
   // Finally, deploying machine model
   runtime.deploy(machineModel, &isTopologyAcceptable);
-  
+
   // Getting coordinator instance
-  auto coordinator = dynamic_cast<HiCR::runtime::Coordinator*>(runtime.getCurrentInstance());
+  auto coordinator = dynamic_cast<HiCR::runtime::Coordinator *>(runtime.getCurrentInstance());
 
   // Creating a welcome message
   std::string welcomeMsg = "Hello from the coordinator";
@@ -75,10 +78,10 @@ int main(int argc, char *argv[])
   std::vector<std::shared_ptr<HiCR::runtime::DataObject>> dataObjects;
 
   // Sending message to all the workers
-  for (auto& worker : coordinator->getWorkers()) 
+  for (auto &worker : coordinator->getWorkers())
   {
     // Creating data object with welcome message
-    auto dataObject = coordinator->createDataObject(welcomeMsg.data(), welcomeMsg.size()+1);
+    auto dataObject = coordinator->createDataObject(welcomeMsg.data(), welcomeMsg.size() + 1);
 
     // Getting data object identifier
     auto dataObjectId = dataObject->getId();
@@ -97,15 +100,15 @@ int main(int argc, char *argv[])
   size_t workerCount = coordinator->getWorkers().size();
   coordinator->sendMessage(coordinator->getHiCRInstance()->getId(), &workerCount, sizeof(workerCount));
   auto message = coordinator->recvMessage(coordinator->getHiCRInstance()->getId());
-  printf("[Coordinator] Received worker count: %lu from myself\n", *(size_t*)message.first);
+  printf("[Coordinator] Received worker count: %lu from myself\n", *(size_t *)message.first);
 
   // Testing release completion for all data objects
   bool allDataObjectsReleased = false;
   while (allDataObjectsReleased == false)
   {
     allDataObjectsReleased = true;
-    for (auto& dataObject : dataObjects)
-     allDataObjectsReleased &= dataObject->release();
+    for (auto &dataObject : dataObjects)
+      allDataObjectsReleased &= dataObject->release();
   }
 
   // Finalizing runtime

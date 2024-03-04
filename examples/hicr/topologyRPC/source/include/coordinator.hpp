@@ -4,7 +4,7 @@
 #include <hicr/L0/topology.hpp>
 #include <hicr/L1/instanceManager.hpp>
 
-void coordinatorFc(HiCR::L1::InstanceManager& instanceManager)
+void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
 {
   // Querying instance list
   auto &instances = instanceManager.getInstances();
@@ -31,7 +31,7 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager)
       auto topologyJson = nlohmann::json::parse(serializedTopology);
 
       // Freeing return value
-      free (returnValue);
+      free(returnValue);
 
       // HiCR topology object to obtain
       HiCR::L0::Topology topology;
