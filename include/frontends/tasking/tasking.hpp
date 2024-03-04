@@ -22,6 +22,12 @@ namespace HiCR
 namespace tasking
 {
 
+/**
+ * Initializes the HiCR tasking environment
+ *
+ * In particular, it initializes the thread-specific storage needed to recover exactly what task/worker is
+ * currently in execution.
+ */
 __USED__ inline void initialize()
 {
   if (_isInitialized == true) HICR_THROW_RUNTIME("HiCR Tasking functionality was already initialized");

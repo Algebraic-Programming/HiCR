@@ -12,25 +12,11 @@
 
 #pragma once
 
-#include <hicr/definitions.hpp>
-#include <hicr/exceptions.hpp>
-#include <pthread.h>
-
 namespace HiCR
 {
 
 namespace tasking
 {
-
-/**
- * Key identifier for thread-local identification of currently running task
- */
-static pthread_key_t _taskPointerKey;
-
-/**
- * Key identifier for thread-local identification of currently running worker
- */
-static pthread_key_t _workerPointerKey;
 
 /**
  * Flag to indicate whether the tasking subsystem was initialized

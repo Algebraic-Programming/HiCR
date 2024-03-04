@@ -31,6 +31,11 @@ namespace tasking
 {
 
 /**
+ * Key identifier for thread-local identification of currently running worker
+ */
+__USED__ static pthread_key_t _workerPointerKey;
+
+/**
  * Type definition for the set of dispatchers a worker is subscribed to
  */
 typedef std::set<HiCR::tasking::Dispatcher *> dispatcherSet_t;

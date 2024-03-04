@@ -30,6 +30,11 @@ namespace tasking
 {
 
 /**
+ * Key identifier for thread-local identification of currently running task
+ */
+__USED__ static pthread_key_t _taskPointerKey;
+
+/**
  * This class defines the basic execution unit managed by TaskR.
  *
  * It includes a function to execute, an internal state, and an event map that triggers callbacks (if defined) whenever a state transition occurs.

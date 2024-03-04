@@ -193,7 +193,7 @@ TEST(Worker, LifeCycle)
 
   // Checking the worker is terminated
   EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::terminated);
-  
+
   // Finalizing HiCR tasking
   HiCR::tasking::finalize();
 }
