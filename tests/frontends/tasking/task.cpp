@@ -14,6 +14,7 @@
 #include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <backends/host/pthreads/L1/computeManager.hpp>
 #include <frontends/tasking/task.hpp>
+#include <frontends/tasking/tasking.hpp>
 
 TEST(Task, Construction)
 {
@@ -41,6 +42,9 @@ TEST(Task, SetterAndGetters)
 
 TEST(Task, Run)
 {
+  // Initializing HiCR tasking
+  HiCR::tasking::initialize();
+
   // Creating HWloc topology object
   hwloc_topology_t topology;
 
@@ -118,10 +122,16 @@ TEST(Task, Run)
 
   // The task has now finished, so a third run should fail
   EXPECT_THROW(t->run(), HiCR::RuntimeException);
+
+  // Finalizing HiCR tasking
+  HiCR::tasking::finalize();
 }
 
 TEST(Task, Events)
 {
+  // Initializing HiCR tasking
+  HiCR::tasking::initialize();
+
   // Creating HWloc topology object
   hwloc_topology_t topology;
 
@@ -238,4 +248,7 @@ TEST(Task, Events)
 
   // Attempting to re-free memory (should fail catastrophically)
   EXPECT_DEATH_IF_SUPPORTED(delete t, "");
+
+  // Finalizing HiCR tasking
+  HiCR::tasking::finalize();
 }

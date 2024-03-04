@@ -1,4 +1,4 @@
- #include <mpi.h>
+#include <mpi.h>
 #include "include/common.hpp"
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
@@ -7,11 +7,11 @@
 #include <backends/mpi/L1/instanceManager.hpp>
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
-#include <backends/ascend/L1/topologyManager.hpp>
+  #include <backends/ascend/L1/topologyManager.hpp>
 #endif
 
 #ifdef _HICR_USE_HWLOC_BACKEND_
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+  #include <backends/host/hwloc/L1/topologyManager.hpp>
 #endif
 
 int main(int argc, char *argv[])
@@ -38,14 +38,14 @@ int main(int argc, char *argv[])
 
   // Parsing number of instances requested
   auto machineModelFile = std::string(argv[1]);
-  
+
   /////////////////////////// Detecting topology managers
 
   // Clearing current topology managers (if any)
   std::vector<std::unique_ptr<HiCR::L1::TopologyManager>> topologyManagers;
 
-  // Detecting Hwloc
-  #ifdef _HICR_USE_HWLOC_BACKEND_
+// Detecting Hwloc
+#ifdef _HICR_USE_HWLOC_BACKEND_
   {
     // Creating HWloc topology object
     auto topology = new hwloc_topology_t;
@@ -59,10 +59,10 @@ int main(int argc, char *argv[])
     // Adding topology manager to the list
     topologyManagers.push_back(std::move(tm));
   }
-  #endif
+#endif
 
-  // Detecting Ascend
-  #ifdef _HICR_USE_ASCEND_BACKEND_
+// Detecting Ascend
+#ifdef _HICR_USE_ASCEND_BACKEND_
 
   {
     // Initialize (Ascend's) ACL runtime
@@ -72,16 +72,16 @@ int main(int argc, char *argv[])
     // Initializing ascend topology manager
     auto tm = std::make_unique<HiCR::backend::ascend::L1::TopologyManager>();
 
-      // Adding topology manager to the list
+    // Adding topology manager to the list
     topologyManagers.push_back(std::move(tm));
   }
 
-  #endif
+#endif
 
   // Checking at least one topology manager was defined
   if (topologyManagers.empty() == true) HICR_THROW_LOGIC("No suitable backends for topology managers were found.\n");
-  std::vector<HiCR::L1::TopologyManager*> topologyManagerPointers;
-  for (const auto& tm : topologyManagers) topologyManagerPointers.push_back(tm.get());
+  std::vector<HiCR::L1::TopologyManager *> topologyManagerPointers;
+  for (const auto &tm : topologyManagers) topologyManagerPointers.push_back(tm.get());
 
   // Bifurcating paths based on whether the instance is root or not
   if (myInstance->isRootInstance() == true) coordinatorFc(instanceManager, machineModelFile, topologyManagerPointers, argc, argv);

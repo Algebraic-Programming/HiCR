@@ -15,6 +15,7 @@
 #include <backends/host/pthreads/L1/computeManager.hpp>
 #include <frontends/tasking/task.hpp>
 #include <frontends/tasking/worker.hpp>
+#include <frontends/tasking/tasking.hpp>
 
 TEST(Worker, Construction)
 {
@@ -77,6 +78,9 @@ TEST(Task, SetterAndGetters)
 
 TEST(Worker, LifeCycle)
 {
+  // Initializing HiCR tasking
+  HiCR::tasking::initialize();
+
   // Instantiating Pthread-based host (CPU) compute manager
   HiCR::backend::host::pthreads::L1::ComputeManager c;
 
@@ -189,4 +193,7 @@ TEST(Worker, LifeCycle)
 
   // Checking the worker is terminated
   EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::terminated);
+
+  // Finalizing HiCR tasking
+  HiCR::tasking::finalize();
 }

@@ -8,17 +8,17 @@
 #include <frontends/machineModel/machineModel.hpp>
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
-#include <backends/ascend/L0/computeResource.hpp>
-#include <backends/ascend/L0/device.hpp>
+  #include <backends/ascend/L0/computeResource.hpp>
+  #include <backends/ascend/L0/device.hpp>
 #endif
 
 #ifdef _HICR_USE_HWLOC_BACKEND_
-#include <backends/host/L0/computeResource.hpp>
-#include <backends/host/L0/memorySpace.hpp>
-#include <backends/host/L0/device.hpp>
+  #include <backends/host/L0/computeResource.hpp>
+  #include <backends/host/L0/memorySpace.hpp>
+  #include <backends/host/L0/device.hpp>
 #endif
 
-void finalizeExecution(HiCR::L1::InstanceManager& instanceManager, const int returnCode = 0)
+void finalizeExecution(HiCR::L1::InstanceManager &instanceManager, const int returnCode = 0)
 {
   // Querying instance list
   auto &instances = instanceManager.getInstances();
@@ -197,7 +197,7 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
   return true;
 }
 
-void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string &machineModelFilePath, std::vector<HiCR::L1::TopologyManager*>& topologyManagers, int argc, char **argv)
+void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string &machineModelFilePath, std::vector<HiCR::L1::TopologyManager *> &topologyManagers, int argc, char **argv)
 {
   // Reading from machine model file
   std::string machineModelRaw;
@@ -262,7 +262,7 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
       printf("[Coordinator] Received from instance %lu: '%s'\n", in->getId(), (const char *)returnValue);
 
       // Freeing return value
-      free (returnValue);
+      free(returnValue);
     }
 
   // Finalizing execution for all instances
