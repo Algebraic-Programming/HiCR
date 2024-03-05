@@ -162,13 +162,13 @@ class Runtime final
   }
 
   /**
-   * Returns a list of all the created instances
+   * Returns a list of all the created instances id
    *
-   * @return The list of all created instances
+   * @return The list of the instances id
    */
-  HiCR::L1::InstanceManager::instanceList_t getInstances() const
+  std::vector<HiCR::L0::Instance::instanceId_t> getInstanceIds() const
   {
-    return _instanceManager->getInstances();
+    return _currentInstance->getInstanceIds();
   }
 
   /**
