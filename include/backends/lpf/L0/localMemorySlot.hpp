@@ -67,6 +67,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * @return LPF slot
    */
   lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
+  __USED__ inline void * getLPFSwapPointer() { return &_swapValue; }
 
   private:
 
@@ -74,6 +75,11 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * Internal LPF slot represented by this HiCR memory slot
    */
   const lpf_memslot_t _lpfMemSlot;
+
+  /**
+   * Internal LPF swap value for acquire/release of global slots
+   */
+  uint64_t _swapValue;
 };
 
 } // namespace L0

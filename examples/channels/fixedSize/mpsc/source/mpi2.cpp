@@ -114,8 +114,8 @@ int main(int argc, char **argv)
 		  while (pos < 0) pos = consumer->peek();
 
 		  auto tokenBuffer = static_cast<ELEMENT_TYPE *>(tokenBufferSlot->getPointer());
-		  std::cout << "Rank " << rankId << " popped element with value = " << tokenBuffer[pos] << std::endl;
-		  consumer->pop();
+		  std::cout << "Rank " << rankId << " received element with value = " << tokenBuffer[pos] << std::endl;
+          while ( consumer->pop() == false) ;
 	  }
 
   }
