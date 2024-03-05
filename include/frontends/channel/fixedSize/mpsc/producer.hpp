@@ -101,7 +101,8 @@ class Producer final : public fixedSize::Base
     _communicationManager->memcpy(_coordinationBuffer, 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
 
     // Adding flush operation to ensure buffers are ready for re-use
-    _communicationManager->flush();
+    //_communicationManager->flush();
+    _communicationManager->fence(_coordinationBuffer, 0, 1);
 
     // Calculating current channel depth
     const auto depth = getDepth();
