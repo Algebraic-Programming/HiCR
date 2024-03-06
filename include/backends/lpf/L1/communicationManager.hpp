@@ -22,7 +22,6 @@
 #include <lpf/collectives.h>
 #include <lpf/core.h>
 
-
 namespace HiCR
 {
 
@@ -50,21 +49,21 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * localSwap is the varable holding the value we
    * compare against the global value at globalSwap
-  */
-  uint64_t _localSwap; 
+   */
+  uint64_t _localSwap;
   /**
    * localSwapSlot is the LPF slot representing localSwap var
-  */
+   */
   lpf_memslot_t _localSwapSlot;
   /**
    * globalSwap is a variable stored everywhere,
    * but at one of the ranks (a root) it gets globally advertised
-  */
-  //uint64_t globalSwap = 0ULL; 
+   */
+  // uint64_t globalSwap = 0ULL;
   /**
    * globalSwapSlot is the global LPF slot representing globalSlot var
-  */
-  //lpf_memslot_t globalSwapSlot = LPF_INVALID_MEMSLOT;
+   */
+  // lpf_memslot_t globalSwapSlot = LPF_INVALID_MEMSLOT;
 
   /**
    * Map of global slot id and MPI windows
@@ -83,7 +82,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * On the other hand, the resize message queue could also be locally
    * made, and placed elsewhere.
    */
-  CommunicationManager(size_t size, size_t rank, lpf_t lpf) : HiCR::L1::CommunicationManager(), _size(size), _rank(rank), _lpf(lpf) , _localSwap(0ULL), _localSwapSlot(LPF_INVALID_MEMSLOT) {
+  CommunicationManager(size_t size, size_t rank, lpf_t lpf) : HiCR::L1::CommunicationManager(), _size(size), _rank(rank), _lpf(lpf), _localSwap(0ULL), _localSwapSlot(LPF_INVALID_MEMSLOT)
+  {
   }
 
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
@@ -178,7 +178,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     CHECK(lpf_deregister(_lpf, slot_global_keys));
 
     CHECK(lpf_register_local(_lpf, &_localSwap, sizeof(uint64_t), &_localSwapSlot));
-    
+
     size_t localPointerPos = 0;
     for (size_t i = 0; i < globalSlotCount; i++)
     {
@@ -189,16 +189,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
       globalSwapSlotSizes[i] = sizeof(uint64_t);
       // If the slot is remote, do not specify any local size assigned to it
-      if (globalSlotProcessId[i] != _rank) {
-          globalSlotSizes[i] = 0;
-          globalSwapSlotSizes[i] = 0;
+      if (globalSlotProcessId[i] != _rank)
+      {
+        globalSlotSizes[i] = 0;
+        globalSwapSlotSizes[i] = 0;
       }
 
       // If it's local, then assign the local information to it
       if (globalSlotProcessId[i] == _rank)
       {
         auto memorySlot = memorySlots[localPointerPos++].second;
-        //auto hicrSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
         globalSlotPointer = memorySlot->getPointer();
         globalSwapSlotPointer = (dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot))->getLPFSwapPointer();
         globalSourceSlot = memorySlot;

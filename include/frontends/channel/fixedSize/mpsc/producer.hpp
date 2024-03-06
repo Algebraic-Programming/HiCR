@@ -110,8 +110,9 @@ class Producer final : public fixedSize::Base
     if (depth + n <= _circularBuffer->getCapacity())
     {
       // Copying with source increasing offset per token
-      for (size_t i = 0; i < n; i++) {
-          _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      for (size_t i = 0; i < n; i++)
+      {
+        _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
       }
       _communicationManager->flush();
 
@@ -122,7 +123,6 @@ class Producer final : public fixedSize::Base
       _communicationManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
       // Adding flush operation to ensure buffers are ready for re-use
       _communicationManager->flush();
-
 
       // Mark operation as successful
       successFlag = true;

@@ -67,7 +67,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * @return LPF slot
    */
   lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
-  __USED__ inline void * getLPFSwapPointer() { return &_swapValue; }
+  __USED__ inline void *getLPFSwapPointer() { return &_swapValue; }
 
   private:
 
