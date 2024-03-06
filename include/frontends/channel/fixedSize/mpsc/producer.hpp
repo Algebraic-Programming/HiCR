@@ -17,8 +17,6 @@
 #include <hicr/exceptions.hpp>
 #include <frontends/channel/fixedSize/base.hpp>
 
-#include <iostream>
-
 namespace HiCR
 {
 
