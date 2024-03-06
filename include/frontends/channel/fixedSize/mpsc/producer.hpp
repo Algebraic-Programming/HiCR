@@ -95,11 +95,11 @@ class Producer final : public fixedSize::Base
     // Locking remote token and coordination buffer slots
     if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
 
-    // Adding flush operation to ensure buffers are ready for re-use
-    _communicationManager->flush();
-
     // Updating local coordination buffer
     _communicationManager->memcpy(_coordinationBuffer, 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
+
+    // Adding flush operation to ensure buffers are ready for re-use
+    _communicationManager->flush();
 
     // Calculating current channel depth
     const auto depth = getDepth();
@@ -108,14 +108,17 @@ class Producer final : public fixedSize::Base
     if (depth + n <= _circularBuffer->getCapacity())
     {
       // Copying with source increasing offset per token
-      for (size_t i = 0; i < n; i++) _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      for (size_t i = 0; i < n; i++)
+      {
+        _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      }
+      _communicationManager->flush();
 
       // Advance head, as we have added a new element
       _circularBuffer->advanceHead(n);
 
       // Updating global coordination buffer
       _communicationManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
-
       // Adding flush operation to ensure buffers are ready for re-use
       _communicationManager->flush();
 

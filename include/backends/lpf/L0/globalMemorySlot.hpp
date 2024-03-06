@@ -38,6 +38,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * Constructor for a MemorySlot class for the LPF backend
    * @param[in] rank  Rank
    * @param[in] lpfMemSlot LPF slot this HiCR slot is associated with
+   * @param[in] lpfSwapSlot LPF swap slot for global acquire/release calls this HiCR slot is associated with
    * @param[in] globalTag The global tag associated to this global memory slot (for exchange purposes)
    * @param[in] globalKey The global key associated to this global memory slot (for exchange purposes
    * @param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
@@ -45,11 +46,13 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   GlobalMemorySlot(
     size_t rank,
     lpf_memslot_t lpfMemSlot,
+    lpf_memslot_t lpfSwapSlot,
     const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
     const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
     std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
                                                                                   _rank(rank),
-                                                                                  _lpfMemSlot(lpfMemSlot)
+                                                                                  _lpfMemSlot(lpfMemSlot),
+                                                                                  _lpfSwapSlot(lpfSwapSlot)
   {
   }
 
@@ -71,6 +74,13 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    */
   lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
 
+  /**
+   * Get LPF swap slot associated with this HiCR slot. This slot is only used for
+   * acquire/release operations on the HiCR slot.
+   * @return LPF slot
+   */
+  lpf_memslot_t getLPFSwapSlot() const { return _lpfSwapSlot; }
+
   private:
 
   /**
@@ -82,6 +92,12 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * Internal LPF slot represented by this HiCR memory slot
    */
   const lpf_memslot_t _lpfMemSlot;
+
+  /**
+   * Internal LPF slot only used for global acquire/release
+   * operations. It relies on IB Verbs atomic compare-and-swap
+   */
+  const lpf_memslot_t _lpfSwapSlot;
 };
 
 } // namespace L0
