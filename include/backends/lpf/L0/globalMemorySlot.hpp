@@ -38,6 +38,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * Constructor for a MemorySlot class for the LPF backend
    * @param[in] rank  Rank
    * @param[in] lpfMemSlot LPF slot this HiCR slot is associated with
+   * @param[in] lpfSwapSlot LPF swap slot for global acquire/release calls this HiCR slot is associated with
    * @param[in] globalTag The global tag associated to this global memory slot (for exchange purposes)
    * @param[in] globalKey The global key associated to this global memory slot (for exchange purposes
    * @param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
@@ -73,6 +74,11 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    */
   lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
 
+  /**
+   * Get LPF swap slot associated with this HiCR slot. This slot is only used for
+   * acquire/release operations on the HiCR slot.
+   * @return LPF slot
+   */
   lpf_memslot_t getLPFSwapSlot() const { return _lpfSwapSlot; }
 
   private:
