@@ -156,7 +156,7 @@ class Consumer final : public channel::fixedSize::Base
     _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
 
     // Updating pushed tokens count
-    auto receivedTokenCount = _tokenBuffer->getMessagesRecv();
+    auto receivedTokenCount = _tokenBuffer->getSourceLocalMemorySlot()->getMessagesRecv();
 
     // We advance the head locally as many times as newly received tokens
     _circularBuffer->setHead(receivedTokenCount);

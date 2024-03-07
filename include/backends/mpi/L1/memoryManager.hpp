@@ -14,9 +14,9 @@
 
 #include <mpi.h>
 #include <hicr/definitions.hpp>
-#include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L1/memoryManager.hpp>
 #include <backends/host/L0/memorySpace.hpp>
+#include <backends/mpi/L0/localMemorySlot.hpp>
 
 namespace HiCR
 {
@@ -76,23 +76,14 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
-    // Getting memory slot pointer
-    const auto pointer = memorySlot->getPointer();
-
-    // Checking whether the pointer is valid
-    if (pointer == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
-
-    // Deallocating memory using MPI's free mechanism
-    auto status = MPI_Free_mem(pointer);
-
-    // Check whether it was successful
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Could not free memory slot (ptr: 0x%lX, size: %lu)", pointer, memorySlot->getSize());
+    // We do not free up MPI local memory slots since they are freed upon promotion.
+    // If you did not promote the local memory slot, it will leak memory.
   }
 
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
-    auto memorySlot = std::make_shared<HiCR::L0::LocalMemorySlot>(ptr, size, memorySpace);
+    auto memorySlot = std::make_shared<HiCR::backend::mpi::L0::LocalMemorySlot>(ptr, size, memorySpace);
 
     // Returning new memory slot pointer
     return memorySlot;
