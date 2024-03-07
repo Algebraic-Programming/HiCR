@@ -89,14 +89,14 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   if (myProcess == RECEIVER_PROCESS)
   {
     c.queryMemorySlotUpdates(myPromotedSlot);
-    auto recvMsgs = myPromotedSlot->getMessagesRecv();
+    auto recvMsgs = myPromotedSlot->getSourceLocalMemorySlot()->getMessagesRecv();
     std::cout << "Received messages (before fence) = " << recvMsgs << std::endl;
 
     c.fence(CHANNEL_TAG);
     std::cout << "Received buffer = " << msgBuffer;
 
     c.queryMemorySlotUpdates(myPromotedSlot);
-    recvMsgs = myPromotedSlot->getMessagesRecv();
+    recvMsgs = myPromotedSlot->getSourceLocalMemorySlot()->getMessagesRecv();
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
   }
 

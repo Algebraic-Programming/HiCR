@@ -331,8 +331,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
     if (lpfSlot == LPF_INVALID_MEMSLOT) { HICR_THROW_LOGIC("This slot is not registered with LPF!"); }
     CHECK(lpf_counting_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, lpfSlot, expectedSent, expectedRcvd));
-    memSlot->setMessagesRecv(memSlot->getMessagesRecv() + expectedRcvd);
-    memSlot->setMessagesSent(memSlot->getMessagesSent() + expectedSent);
+    memSlot->getSourceLocalMemorySlot()->setMessagesRecv(memSlot->getSourceLocalMemorySlot()->getMessagesRecv() + expectedRcvd);
+    memSlot->getSourceLocalMemorySlot()->setMessagesSent(memSlot->getSourceLocalMemorySlot()->getMessagesSent() + expectedSent);
   }
 
   /**
@@ -375,7 +375,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
     lpf_get_rcvd_msg_count_per_slot(_lpf, &msg_cnt, lpfSlot);
-    memSlot->setMessagesRecv(msg_cnt);
+    memSlot->getSourceLocalMemorySlot()->setMessagesRecv(msg_cnt);
   }
 
   /**
@@ -390,7 +390,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
     lpf_get_sent_msg_count_per_slot(_lpf, &msg_cnt, lpfSlot);
-    memSlot->setMessagesSent(msg_cnt);
+    memSlot->getSourceLocalMemorySlot()->setMessagesSent(msg_cnt);
   }
 
   __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
