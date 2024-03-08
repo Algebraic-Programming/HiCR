@@ -62,79 +62,79 @@ class Runtime final
    */
   Runtime(int *pargc, char ***pargv) : _pargc(pargc), _pargv(pargv)
   {
-   /////////////////////////// Detecting instance manager
+/////////////////////////// Detecting instance manager
 
-   // Detecting MPI
-   #ifdef _HICR_USE_MPI_BACKEND_
-      _instanceManager = HiCR::backend::mpi::L1::InstanceManager::createDefault(_pargc, _pargv);
-   #endif
+// Detecting MPI
+#ifdef _HICR_USE_MPI_BACKEND_
+    _instanceManager = HiCR::backend::mpi::L1::InstanceManager::createDefault(_pargc, _pargv);
+#endif
 
-   // Detecting YuanRong
-   #ifdef _HICR_USE_YUANRONG_BACKEND_
-      _instanceManager = HiCR::backend::yuanrong::L1::InstanceManager::createDefault(_pargc, _pargv);
-   #endif
+// Detecting YuanRong
+#ifdef _HICR_USE_YUANRONG_BACKEND_
+    _instanceManager = HiCR::backend::yuanrong::L1::InstanceManager::createDefault(_pargc, _pargv);
+#endif
 
-   // Checking an instance manager has been found
-   if (_instanceManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the instance manager was found.\n");
+    // Checking an instance manager has been found
+    if (_instanceManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the instance manager was found.\n");
 
-   /////////////////////////// Detecting communication manager
+/////////////////////////// Detecting communication manager
 
-   // Detecting MPI
-   #ifdef _HICR_USE_MPI_BACKEND_
-      _communicationManager = std::make_unique<HiCR::backend::mpi::L1::CommunicationManager>();
-   #endif
+// Detecting MPI
+#ifdef _HICR_USE_MPI_BACKEND_
+    _communicationManager = std::make_unique<HiCR::backend::mpi::L1::CommunicationManager>();
+#endif
 
-   // Check if a communication manager is found if YuanRong is not used
-   #ifndef _HICR_USE_YUANRONG_BACKEND_
-      if (_communicationManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the communication manager was found.\n");
-   #endif
-   /////////////////////////// Detecting memory manager
+// Check if a communication manager is found if YuanRong is not used
+#ifndef _HICR_USE_YUANRONG_BACKEND_
+    if (_communicationManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the communication manager was found.\n");
+#endif
+/////////////////////////// Detecting memory manager
 
-   // Detecting HWLOC
-   #ifdef _HICR_USE_HWLOC_BACKEND_
-      hwloc_topology_t topology;
-      hwloc_topology_init(&topology);
-      _memoryManager = std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(&topology);
-   #endif
+// Detecting HWLOC
+#ifdef _HICR_USE_HWLOC_BACKEND_
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    _memoryManager = std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(&topology);
+#endif
 
-   // Detecting MPI
-   #ifdef _HICR_USE_MPI_BACKEND_
-      _memoryManager = std::make_unique<HiCR::backend::mpi::L1::MemoryManager>();
-   #endif
+// Detecting MPI
+#ifdef _HICR_USE_MPI_BACKEND_
+    _memoryManager = std::make_unique<HiCR::backend::mpi::L1::MemoryManager>();
+#endif
 
-   // Checking an instance manager has been found
-   if (_memoryManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the memory manager was found.\n");
+    // Checking an instance manager has been found
+    if (_memoryManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the memory manager was found.\n");
 
-   /////////////////////////// Detecting topology managers
+    /////////////////////////// Detecting topology managers
 
-   // Clearing current topology managers (if any)
-   _topologyManagers.clear();
+    // Clearing current topology managers (if any)
+    _topologyManagers.clear();
 
-   // Detecting Hwloc
-   #ifdef _HICR_USE_HWLOC_BACKEND_
-      _topologyManagers.push_back(std::move(HiCR::backend::host::hwloc::L1::TopologyManager::createDefault()));
-   #endif
+// Detecting Hwloc
+#ifdef _HICR_USE_HWLOC_BACKEND_
+    _topologyManagers.push_back(std::move(HiCR::backend::host::hwloc::L1::TopologyManager::createDefault()));
+#endif
 
-   // Detecting Ascend
-   #ifdef _HICR_USE_ASCEND_BACKEND_
-      _topologyManagers.push_back(std::move(HiCR::backend::ascend::L1::TopologyManager::createDefault()));
-   #endif
+// Detecting Ascend
+#ifdef _HICR_USE_ASCEND_BACKEND_
+    _topologyManagers.push_back(std::move(HiCR::backend::ascend::L1::TopologyManager::createDefault()));
+#endif
 
-   // Checking at least one topology manager was defined
-   if (_topologyManagers.empty() == true) HICR_THROW_LOGIC("No suitable backends for topology managers were found.\n");
+    // Checking at least one topology manager was defined
+    if (_topologyManagers.empty() == true) HICR_THROW_LOGIC("No suitable backends for topology managers were found.\n");
 
-   // Creating machine model object
-   std::vector<HiCR::L1::TopologyManager *> topologyManagers;
-   for (const auto &tm : _topologyManagers) topologyManagers.push_back(tm.get());
-   _machineModel = std::make_unique<HiCR::MachineModel>(*_instanceManager, topologyManagers);
+    // Creating machine model object
+    std::vector<HiCR::L1::TopologyManager *> topologyManagers;
+    for (const auto &tm : _topologyManagers) topologyManagers.push_back(tm.get());
+    _machineModel = std::make_unique<HiCR::MachineModel>(*_instanceManager, topologyManagers);
 
-   //////////////////////// Creating local HiCR Runtime instance, depending if worker or coordinator
+    //////////////////////// Creating local HiCR Runtime instance, depending if worker or coordinator
 
-   // Coordinator route
-   if (_instanceManager->getCurrentInstance()->isRootInstance() == true) _currentInstance = new HiCR::runtime::Coordinator(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
+    // Coordinator route
+    if (_instanceManager->getCurrentInstance()->isRootInstance() == true) _currentInstance = new HiCR::runtime::Coordinator(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
 
-   // Worker route
-   if (_instanceManager->getCurrentInstance()->isRootInstance() == false) _currentInstance = new HiCR::runtime::Worker(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
+    // Worker route
+    if (_instanceManager->getCurrentInstance()->isRootInstance() == false) _currentInstance = new HiCR::runtime::Worker(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
   }
 
   ~Runtime() = default;
