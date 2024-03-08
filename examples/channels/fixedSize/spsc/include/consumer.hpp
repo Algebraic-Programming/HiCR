@@ -41,9 +41,7 @@ void consumerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationM
   // Getting internal pointer of the token buffer slot
   auto tokenBuffer = (ELEMENT_TYPE *)tokenBufferSlot->getPointer();
 
-  printf("Consumer -- Channel Size: %lu\n", consumer.getDepth());
   printf("Received Value: %u\n", tokenBuffer[consumer.peek()]);
-  printf("Consumer -- Channel Size: %lu\n", consumer.getDepth());
   consumer.pop();
 
   // Getting two values from the channel at once
