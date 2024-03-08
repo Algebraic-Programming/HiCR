@@ -115,19 +115,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Locking MPI window to ensure the messages arrives before returning
     lockMPIWindow(rank, window, MPI_LOCK_EXCLUSIVE, 0);
 
-    // Getting remote counter into the local conter
-    size_t accumulatorBuffer = 0;
-    auto status = MPI_Get(&accumulatorBuffer, 1, MPI_UNSIGNED_LONG, rank, 0, 1, MPI_UNSIGNED_LONG, *window);
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Get) for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
-
-    // Waiting for the get operation to finish
-    MPI_Win_flush(rank, *window);
-
-    // Adding one to the local counter
-    accumulatorBuffer++;
-
-    // Replacing the remote counter with the local counter
-    status = MPI_Put(&accumulatorBuffer, 1, MPI_UNSIGNED_LONG, rank, 0, 1, MPI_UNSIGNED_LONG, *window);
+    const int one = 1;
+    int value;
+    auto status = MPI_Fetch_and_op(&one, &value, MPI_INT, rank, 0, MPI_SUM, *window);
 
     // Checking execution status
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Put) for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
