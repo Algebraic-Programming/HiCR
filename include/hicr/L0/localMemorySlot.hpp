@@ -118,7 +118,7 @@ class LocalMemorySlot
    * \returns The pointer to the sent message counter
    */
   __USED__ inline __volatile__ size_t *&getMessagesSentPointer() noexcept { return _messagesSent; }
-  
+
   private:
 
   /**
@@ -136,16 +136,16 @@ class LocalMemorySlot
    */
   std::shared_ptr<L0::MemorySpace> const _memorySpace;
 
-    /**
+  /**
    * Messages received into this slot
    */
-  __volatile__ size_t* _messagesRecv;
+  __volatile__ size_t *_messagesRecv;
 
   /**
    * Messages sent from this slot
    */
-  __volatile__ size_t* _messagesSent;
-  
+  __volatile__ size_t *_messagesSent;
+
   __volatile__ size_t _messagesRecvStorage;
   __volatile__ size_t _messagesSentStorage;
 };

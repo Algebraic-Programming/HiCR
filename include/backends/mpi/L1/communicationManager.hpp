@@ -370,7 +370,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       memorySlot->getSentMessageCountWindow() = std::make_unique<MPI_Win>();
 
       // Termporary storage for the pointer returned by MPI_Win_Allocate. We will assign this a new internal storage to the local memory slot
-      void* ptr = nullptr;
+      void *ptr = nullptr;
 
       // Creating MPI window for data transferring
       auto status = MPI_Win_allocate(
@@ -393,7 +393,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
         // Swapping pointers
         *(globalSlotPointers[i]) = ptr;
-      } 
+      }
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
 
@@ -406,17 +406,17 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         &ptr,
         memorySlot->getRecvMessageCountWindow().get());
 
-      // Unfortunately, we need to do an effective realloc of the messages recv counter 
+      // Unfortunately, we need to do an effective realloc of the messages recv counter
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
       if (globalSlotProcessId[i] == _rank)
       {
         // Copying existing data over to the new storage
-        *(size_t*)ptr = *memorySlot->getSourceLocalMemorySlot()->getMessagesRecvPointer();
+        *(size_t *)ptr = *memorySlot->getSourceLocalMemorySlot()->getMessagesRecvPointer();
 
         // Swapping pointers
-        memorySlot->getSourceLocalMemorySlot()->getMessagesRecvPointer() = (size_t*)ptr;
-      } 
-      
+        memorySlot->getSourceLocalMemorySlot()->getMessagesRecvPointer() = (size_t *)ptr;
+      }
+
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
 
       // Creating MPI window for message sent count transferring
@@ -428,16 +428,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         &ptr,
         memorySlot->getSentMessageCountWindow().get());
 
-      // Unfortunately, we need to do an effective realloc of the messages sent counter 
+      // Unfortunately, we need to do an effective realloc of the messages sent counter
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
       if (globalSlotProcessId[i] == _rank)
       {
         // Copying existing data over to the new storage
-        *(size_t*)ptr = *memorySlot->getSourceLocalMemorySlot()->getMessagesSentPointer();
+        *(size_t *)ptr = *memorySlot->getSourceLocalMemorySlot()->getMessagesSentPointer();
 
         // Assigning new pointer pointers
-        memorySlot->getSourceLocalMemorySlot()->getMessagesSentPointer() = (size_t*)ptr;
-      } 
+        memorySlot->getSourceLocalMemorySlot()->getMessagesSentPointer() = (size_t *)ptr;
+      }
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI sent message count window on exchange global memory slots.");
 

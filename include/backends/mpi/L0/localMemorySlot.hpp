@@ -37,7 +37,6 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
   /**
    * Constructor for a MemorySlot class for the MPI backend
    *
-   * \param[in] bindingType The binding type requested (and employed) for this memory slot
    * \param[in] pointer If this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
    * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
    * \param[in] memorySpace The memory space from whence this memory slot was created

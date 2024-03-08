@@ -315,7 +315,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(hicrSlot);
     lpf_memslot_t slot = memorySlot->getLPFSlot();
     CHECK(lpf_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, slot));
-    
+
     // Update message received counters only if this is a locally created global memory slot
     if (hicrSlot->getSourceLocalMemorySlot() != nullptr)
     {
