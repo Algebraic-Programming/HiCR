@@ -12,7 +12,6 @@
 #pragma once
 
 #include <hicr/definitions.hpp>
-#include <hicr/L0/memorySlot.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
 
 namespace HiCR
@@ -26,7 +25,7 @@ namespace L0
  *
  * - Represents a contiguous segment of memory located in a non-local memory space
  */
-class GlobalMemorySlot : public MemorySlot
+class GlobalMemorySlot
 {
   public:
 
@@ -51,8 +50,7 @@ class GlobalMemorySlot : public MemorySlot
   GlobalMemorySlot(
     const tag_t globalTag = 0,
     const globalKey_t globalKey = 0,
-    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : MemorySlot(),
-                                                                                  _globalTag(globalTag),
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : _globalTag(globalTag),
                                                                                   _globalKey(globalKey),
                                                                                   _sourceLocalMemorySlot(sourceLocalMemorySlot)
   {

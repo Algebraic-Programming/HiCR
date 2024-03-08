@@ -253,8 +253,8 @@ class Consumer final : public variableSize::Base
     _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
     _communicationManager->queryMemorySlotUpdates(_payloadBuffer);
 
-    size_t newPushedTokens = _tokenBuffer->getMessagesRecv() - _pushedTokens;
-    size_t newPushedPayloads = _payloadBuffer->getMessagesRecv() - _pushedPayloads;
+    size_t newPushedTokens = _tokenBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedTokens;
+    size_t newPushedPayloads = _payloadBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedPayloads;
     auto newTokensAndPayloads = std::min(newPushedTokens, newPushedPayloads);
     _pushedTokens += newTokensAndPayloads;
     _circularBuffer->setHead(_pushedTokens);

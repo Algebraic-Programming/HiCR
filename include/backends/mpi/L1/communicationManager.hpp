@@ -16,6 +16,7 @@
 #include <hicr/definitions.hpp>
 #include <hicr/L0/localMemorySlot.hpp>
 #include <hicr/L1/communicationManager.hpp>
+#include <backends/mpi/L0/localMemorySlot.hpp>
 #include <backends/mpi/L0/globalMemorySlot.hpp>
 
 namespace HiCR
@@ -321,7 +322,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     for (size_t i = 0; i < memorySlots.size(); i++)
     {
       const auto key = memorySlots[i].first;
-      const auto memorySlot = memorySlots[i].second;
+      const auto memorySlot = std::dynamic_pointer_cast<HiCR::backend::mpi::L0::LocalMemorySlot>(memorySlots[i].second);
+      if (memorySlot.get() == nullptr) HICR_THROW_LOGIC("Trying to use MPI to promote a non-MPI local memory slot.");
       localSlotSizes[i] = memorySlot->getSize();
       localSlotKeys[i] = key;
       localSlotProcessId[i] = _rank;
@@ -333,7 +335,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     MPI_Allgatherv(localSlotProcessId.data(), localSlotCount, MPI_INT, globalSlotProcessId.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_INT, _comm);
 
     // Now also creating pointer vector to remember local pointers, when required for memcpys
-    std::vector<void *> globalSlotPointers(globalSlotCount);
+    std::vector<void **> globalSlotPointers(globalSlotCount);
     std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> globalSourceSlots(globalSlotCount);
     size_t localPointerPos = 0;
     for (size_t i = 0; i < globalSlotPointers.size(); i++)
@@ -347,7 +349,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       else
       {
         const auto memorySlot = memorySlots[localPointerPos++].second;
-        globalSlotPointers[i] = memorySlot->getPointer();
+        globalSlotPointers[i] = &memorySlot->getPointer();
         globalSourceSlots[i] = memorySlot;
       }
     }
@@ -367,39 +369,75 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       memorySlot->getRecvMessageCountWindow() = std::make_unique<MPI_Win>();
       memorySlot->getSentMessageCountWindow() = std::make_unique<MPI_Win>();
 
-      // Debug info
-      // printf("Rank: %u, Pos %lu, GlobalSlot %lu, Key: %lu, Size: %lu, LocalPtr: 0x%lX, %s\n", _rank, i, globalSlotId, globalSlotKeys[i], globalSlotSizes[i], (uint64_t)globalSlotPointers[i], globalSlotProcessId[i] == _rank ? "x" : "");
+      // Termporary storage for the pointer returned by MPI_Win_Allocate. We will assign this a new internal storage to the local memory slot
+      void *ptr = nullptr;
 
       // Creating MPI window for data transferring
-      auto status = MPI_Win_create(
-        globalSlotPointers[i],
+      auto status = MPI_Win_allocate(
         globalSlotProcessId[i] == _rank ? globalSlotSizes[i] : 0,
         1,
         MPI_INFO_NULL,
         _comm,
+        &ptr,
         memorySlot->getDataWindow().get());
+
+      // Unfortunately, we need to do an effective duplucation of the original local memory slot storage
+      // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
+      if (globalSlotProcessId[i] == _rank)
+      {
+        // Copying existing data over to the new storage
+        std::memcpy(ptr, *(globalSlotPointers[i]), globalSlotSizes[i]);
+
+        // Freeing up memory
+        MPI_Free_mem(*(globalSlotPointers[i]));
+
+        // Swapping pointers
+        *(globalSlotPointers[i]) = ptr;
+      }
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
 
       // Creating MPI window for message received count transferring
-      status = MPI_Win_create(
-        globalSlotProcessId[i] == _rank ? (void *)memorySlot->getMessagesRecvPointer() : NULL,
+      status = MPI_Win_allocate(
         globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
         1,
         MPI_INFO_NULL,
         _comm,
+        &ptr,
         memorySlot->getRecvMessageCountWindow().get());
+
+      // Unfortunately, we need to do an effective realloc of the messages recv counter
+      // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
+      if (globalSlotProcessId[i] == _rank)
+      {
+        // Copying existing data over to the new storage
+        *(size_t *)ptr = *memorySlot->getSourceLocalMemorySlot()->getMessagesRecvPointer();
+
+        // Swapping pointers
+        memorySlot->getSourceLocalMemorySlot()->getMessagesRecvPointer() = (size_t *)ptr;
+      }
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
 
       // Creating MPI window for message sent count transferring
-      status = MPI_Win_create(
-        globalSlotProcessId[i] == _rank ? (void *)memorySlot->getMessagesSentPointer() : NULL,
+      status = MPI_Win_allocate(
         globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
         1,
         MPI_INFO_NULL,
         _comm,
+        &ptr,
         memorySlot->getSentMessageCountWindow().get());
+
+      // Unfortunately, we need to do an effective realloc of the messages sent counter
+      // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
+      if (globalSlotProcessId[i] == _rank)
+      {
+        // Copying existing data over to the new storage
+        *(size_t *)ptr = *memorySlot->getSourceLocalMemorySlot()->getMessagesSentPointer();
+
+        // Assigning new pointer pointers
+        memorySlot->getSourceLocalMemorySlot()->getMessagesSentPointer() = (size_t *)ptr;
+      }
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI sent message count window on exchange global memory slots.");
 
