@@ -60,17 +60,9 @@ class Runtime final
    * @param[in] pargc Pointer to the argc argument count
    * @param[in] pargv Pointer to the argc argument char arrays
    */
-  Runtime(int *pargc, char ***pargv) : _pargc(pargc), _pargv(pargv) {}
-  ~Runtime() = default;
-
-  /**
-   * This function detects the backends that HiCR has been compiled against and creates the relevant L1 classes based on that.
-   *
-   * It also creates the machine model object for future deployment and decides whether this instance is coordinator or worker.
-   */
-  __USED__ inline void initialize()
+  Runtime(int *pargc, char ***pargv) : _pargc(pargc), _pargv(pargv)
   {
-    /////////////////////////// Detecting instance manager
+/////////////////////////// Detecting instance manager
 
 // Detecting MPI
 #ifdef _HICR_USE_MPI_BACKEND_
@@ -138,14 +130,24 @@ class Runtime final
 
     //////////////////////// Creating local HiCR Runtime instance, depending if worker or coordinator
 
-    // Executing delayed entry point registration
-    for (const auto &entryPoint : _runtimeEntryPointVector) _instanceManager->addRPCTarget(entryPoint.first, entryPoint.second);
-
     // Coordinator route
     if (_instanceManager->getCurrentInstance()->isRootInstance() == true) _currentInstance = new HiCR::runtime::Coordinator(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
 
     // Worker route
     if (_instanceManager->getCurrentInstance()->isRootInstance() == false) _currentInstance = new HiCR::runtime::Worker(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
+  }
+
+  ~Runtime() = default;
+
+  /**
+   * This function detects the backends that HiCR has been compiled against and creates the relevant L1 classes based on that.
+   *
+   * It also creates the machine model object for future deployment and decides whether this instance is coordinator or worker.
+   */
+  __USED__ inline void initialize()
+  {
+    // Executing delayed entry point registration
+    for (const auto &entryPoint : _runtimeEntryPointVector) _instanceManager->addRPCTarget(entryPoint.first, entryPoint.second);
 
     // Initializing current instance
     _currentInstance->initialize();
