@@ -12,6 +12,7 @@ endif
 lpfrunExecutable = find_program('lpfrun', '/usr/bin/lpfrun', '/usr/local/bin/lpfrun', required : true)
 cc = meson.get_compiler('cpp')
 lib_lpfcore = cc.find_library('lpf_core_univ_ibverbs_generic')
+lib_lpfimp = cc.find_library('lpf_core_univ_imp_generic')
 lib_lpfhl = cc.find_library('lpf_hl')
 
 backendIncludes = include_directories([
@@ -20,6 +21,7 @@ backendIncludes = include_directories([
 backendDependencies = [
     lib_lpfcore,
     lib_lpfhl,
+    lib_lpfimp,
     mpiDep
 ]
     
