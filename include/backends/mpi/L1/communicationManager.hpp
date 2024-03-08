@@ -115,6 +115,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Locking MPI window to ensure the messages arrives before returning
     lockMPIWindow(rank, window, MPI_LOCK_EXCLUSIVE, 0);
 
+    // Use atomic MPI operation to increment counter
     const int one = 1;
     int value;
     auto status = MPI_Fetch_and_op(&one, &value, MPI_INT, rank, 0, MPI_SUM, *window);
