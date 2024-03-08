@@ -116,9 +116,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     lockMPIWindow(rank, window, MPI_LOCK_EXCLUSIVE, 0);
 
     // Use atomic MPI operation to increment counter
-    const int one = 1;
-    int value;
-    auto status = MPI_Fetch_and_op(&one, &value, MPI_INT, rank, 0, MPI_SUM, *window);
+    const size_t one = 1;
+    size_t value;
+    // There is no datatype in MPI for size_t (the counters), but
+    // MPI_AINT is supposed to be large enough and portable
+    auto status = MPI_Fetch_and_op(&one, &value, MPI_AINT, rank, 0, MPI_SUM, *window);
 
     // Checking execution status
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Put) for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
