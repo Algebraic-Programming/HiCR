@@ -89,8 +89,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       _lpf(lpf),
       _localSwap(0ULL),
       _localSwapSlot(LPF_INVALID_MEMSLOT)
-  {
-  }
+  {}
 
   __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
@@ -125,12 +124,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // end allgather block
 
     size_t globalSlotCount = 0;
-    for (size_t i = 0; i < _size; i++)
-      globalSlotCount += globalSlotCounts[i];
+    for (size_t i = 0; i < _size; i++) globalSlotCount += globalSlotCounts[i];
 
     std::vector<size_t> globalSlotCountsInBytes(_size);
-    for (size_t i = 0; i < _size; i++)
-      globalSlotCountsInBytes[i] = globalSlotCounts[i] * sizeof(size_t);
+    for (size_t i = 0; i < _size; i++) globalSlotCountsInBytes[i] = globalSlotCounts[i] * sizeof(size_t);
 
     // globalSlotSizes will hold exactly the union of all slot sizes at
     // each process (zero or more) to become global.
@@ -220,20 +217,18 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
 
       // Creating new memory slot object
-      auto memorySlot = std::make_shared<lpf::L0::GlobalMemorySlot>(
-        globalSlotProcessId[i],
-        newSlot,
-        swapValueSlot,
-        tag,
-        globalSlotKeys[i],
-        globalSourceSlot);
+      auto memorySlot = std::make_shared<lpf::L0::GlobalMemorySlot>(globalSlotProcessId[i], newSlot, swapValueSlot, tag, globalSlotKeys[i], globalSourceSlot);
 
       // Finally, registering the new global memory slot
       registerGlobalMemorySlot(memorySlot);
     }
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::GlobalMemorySlot> source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
+                                  const size_t                                dst_offset,
+                                  std::shared_ptr<HiCR::L0::GlobalMemorySlot> source,
+                                  const size_t                                src_offset,
+                                  const size_t                                size) override
   {
     // Getting up-casted pointer
     auto src = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(source);
@@ -258,7 +253,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     lpf_get(_lpf, remoteRank, srcSlot, src_offset, dstSlot, dst_offset, size, LPF_MSG_DEFAULT);
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
+                                  const size_t                                dst_offset,
+                                  std::shared_ptr<HiCR::L0::LocalMemorySlot>  source,
+                                  const size_t                                src_offset,
+                                  const size_t                                size) override
   {
     // Getting up-casted pointer
     auto src = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(source);
@@ -307,7 +306,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __USED__ inline globalKeyToMemorySlotMap_t getGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag)
   {
     // If the requested tag and key are not found, return empty storage
-    if (_globalMemorySlotTagKeyMap.contains(tag) == false) HICR_THROW_LOGIC("getGlobalMemorySlots: Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
+    if (_globalMemorySlotTagKeyMap.contains(tag) == false)
+      HICR_THROW_LOGIC("getGlobalMemorySlots: Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
     globalKeyToMemorySlotMap_t slotsForTag = _globalMemorySlotTagKeyMap.at(tag);
     return slotsForTag;
   }
@@ -404,15 +404,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     memSlot->getSourceLocalMemorySlot()->setMessagesSent(msg_cnt);
   }
 
-  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
-  {
-    fenceImpl(memorySlot);
-  }
+  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { fenceImpl(memorySlot); }
 
-  __USED__ inline void flush() override
-  {
-    lpf_flush(_lpf);
-  }
+  __USED__ inline void flush() override { lpf_flush(_lpf); }
 
   __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {

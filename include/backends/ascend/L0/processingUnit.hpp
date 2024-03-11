@@ -72,18 +72,12 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Internal implementation of suspendImpl
    */
-  __USED__ inline void suspendImpl() override
-  {
-    HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend");
-  }
+  __USED__ inline void suspendImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
 
   /**
    * Internal implementation of resumeImpl
    */
-  __USED__ inline void resumeImpl() override
-  {
-    HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend");
-  }
+  __USED__ inline void resumeImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
 
   /**
    * Ascend backend implementation that starts the execution state in the processing unit.
@@ -114,9 +108,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Internal implementation of terminateImpl
    */
-  __USED__ inline void terminateImpl() override
-  {
-  }
+  __USED__ inline void terminateImpl() override {}
 
   /**
    * Ascend backend implementation that wait for execution state completion

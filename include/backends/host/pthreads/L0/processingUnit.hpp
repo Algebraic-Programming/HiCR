@@ -170,9 +170,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
   }
 
-  __USED__ inline void initializeImpl() override
-  {
-  }
+  __USED__ inline void initializeImpl() override {}
 
   __USED__ inline void suspendImpl() override
   {
@@ -205,9 +203,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     pthread_barrier_destroy(&initializationBarrier);
   }
 
-  __USED__ inline void terminateImpl() override
-  {
-  }
+  __USED__ inline void terminateImpl() override {}
 
   __USED__ inline void awaitImpl() override
   {

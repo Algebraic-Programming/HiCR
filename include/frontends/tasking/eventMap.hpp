@@ -40,20 +40,14 @@ class EventMap
   /**
    * Clears the event map (no events will be triggered)
    */
-  __USED__ inline void clear()
-  {
-    _eventMap.clear();
-  }
+  __USED__ inline void clear() { _eventMap.clear(); }
 
   /**
    * Remove a particular event's callback from the map
    *
    * \param[in] event The event to remove from the map
    */
-  __USED__ inline void removeEvent(const E event)
-  {
-    _eventMap.erase(event);
-  }
+  __USED__ inline void removeEvent(const E event) { _eventMap.erase(event); }
 
   /**
    * Adds a callback for a particular event
@@ -61,10 +55,7 @@ class EventMap
    * \param[in] event The event to add
    * \param[in] fc The callback function to call when the event is triggered
    */
-  __USED__ inline void setEvent(const E event, eventCallback_t<T> fc)
-  {
-    _eventMap[event] = fc;
-  }
+  __USED__ inline void setEvent(const E event, eventCallback_t<T> fc) { _eventMap[event] = fc; }
 
   /**
    * Triggers the execution of the callback function for a given event

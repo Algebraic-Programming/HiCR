@@ -60,20 +60,11 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
   protected:
 
-  __USED__ inline void resumeImpl() override
-  {
-    _coroutine.resume();
-  }
+  __USED__ inline void resumeImpl() override { _coroutine.resume(); }
 
-  __USED__ inline void suspendImpl()
-  {
-    _coroutine.yield();
-  }
+  __USED__ inline void suspendImpl() { _coroutine.yield(); }
 
-  __USED__ inline bool checkFinalizationImpl() override
-  {
-    return _coroutine.hasFinished();
-  }
+  __USED__ inline bool checkFinalizationImpl() override { return _coroutine.hasFinished(); }
 
   private:
 

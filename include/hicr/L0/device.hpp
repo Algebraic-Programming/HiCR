@@ -171,8 +171,14 @@ class Device
     deserializeImpl(input);
 
     // Checking whether the deserialization was successful
-    if (_computeResources.size() != input[computeResourceKey].size()) HICR_THROW_LOGIC("Deserialization failed, as the number of compute resources created (%lu) differs from the ones provided in the serialized input (%lu)", _memorySpaces.size(), input[computeResourceKey].size());
-    if (_memorySpaces.size() != input[memorySpaceKey].size()) HICR_THROW_LOGIC("Deserialization failed, as the number of memory spaces created (%lu) differs from the ones provided in the serialized input (%lu)", _memorySpaces.size(), input[memorySpaceKey].size());
+    if (_computeResources.size() != input[computeResourceKey].size())
+      HICR_THROW_LOGIC("Deserialization failed, as the number of compute resources created (%lu) differs from the ones provided in the serialized input (%lu)",
+                       _memorySpaces.size(),
+                       input[computeResourceKey].size());
+    if (_memorySpaces.size() != input[memorySpaceKey].size())
+      HICR_THROW_LOGIC("Deserialization failed, as the number of memory spaces created (%lu) differs from the ones provided in the serialized input (%lu)",
+                       _memorySpaces.size(),
+                       input[memorySpaceKey].size());
   };
 
   protected:

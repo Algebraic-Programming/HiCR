@@ -171,15 +171,9 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
   }
 
-  __USED__ inline void finalize() override
-  {
-    MPI_Finalize();
-  }
+  __USED__ inline void finalize() override { MPI_Finalize(); }
 
-  __USED__ inline void abort(int errorCode) override
-  {
-    MPI_Abort(MPI_COMM_WORLD, errorCode);
-  }
+  __USED__ inline void abort(int errorCode) override { MPI_Abort(MPI_COMM_WORLD, errorCode); }
 
   /**
    * This function represents the default intializer for this backend
@@ -200,10 +194,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
   }
 
-  __USED__ inline HiCR::L0::Instance::instanceId_t getRootInstanceId() const
-  {
-    return _HICR_MPI_INSTANCE_ROOT_ID;
-  }
+  __USED__ inline HiCR::L0::Instance::instanceId_t getRootInstanceId() const { return _HICR_MPI_INSTANCE_ROOT_ID; }
 
   private:
 

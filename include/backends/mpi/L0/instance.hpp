@@ -45,8 +45,7 @@ class Instance final : public HiCR::L0::Instance
   Instance(const int rank)
     : HiCR::L0::Instance((instanceId_t)rank),
       _rank(rank)
-  {
-  }
+  {}
 
   /**
    * Default destructor

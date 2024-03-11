@@ -176,7 +176,8 @@ class Worker
   __USED__ inline void resume()
   {
     // Checking state
-    if (_state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state (Expected state: %u, found: %u)", state_t::suspended, _state);
+    if (_state != state_t::suspended)
+      HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state (Expected state: %u, found: %u)", state_t::suspended, _state);
 
     // Transitioning state
     _state = state_t::running;

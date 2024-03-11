@@ -136,10 +136,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return t;
   }
 
-  __USED__ inline HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override
-  {
-    return deserializeTopology(topology);
-  }
+  __USED__ inline HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override { return deserializeTopology(topology); }
 
   /**
    * This function represents the default intializer for this backend

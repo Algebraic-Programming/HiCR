@@ -67,7 +67,8 @@ class MemorySpace
    */
   __USED__ inline void increaseUsage(const size_t delta)
   {
-    if (_usage + delta > _size) HICR_THROW_LOGIC("Increasing memory space usage beyond its capacity (current_usage + increase > capacity | %lu + %lu > %lu)\n", _usage, delta, _size);
+    if (_usage + delta > _size)
+      HICR_THROW_LOGIC("Increasing memory space usage beyond its capacity (current_usage + increase > capacity | %lu + %lu > %lu)\n", _usage, delta, _size);
 
     _usage += delta;
   }

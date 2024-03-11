@@ -65,7 +65,8 @@ class ExecutionState
    */
   __USED__ inline void resume()
   {
-    if (_state != state_t::initialized && _state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to resume an execution state that is not in a initialized or suspended state (State: %d).\n", _state);
+    if (_state != state_t::initialized && _state != state_t::suspended)
+      HICR_THROW_RUNTIME("Attempting to resume an execution state that is not in a initialized or suspended state (State: %d).\n", _state);
 
     // Setting state as running
     _state = state_t::running;

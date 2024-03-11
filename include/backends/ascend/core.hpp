@@ -86,9 +86,7 @@ class Core final
   /**
    * Create ACL contexts for each available ascend device
    */
-  __USED__ inline void createContexts()
-  {
-  }
+  __USED__ inline void createContexts() {}
 };
 
 } // namespace ascend

@@ -5,7 +5,10 @@
 #include <hicr/L1/communicationManager.hpp>
 #include <frontends/channel/variableSize/spsc/producer.hpp>
 
-void producerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManager &communicationManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, const size_t channelCapacity)
+void producerFc(HiCR::L1::MemoryManager               &memoryManager,
+                HiCR::L1::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
+                const size_t                           channelCapacity)
 {
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
@@ -22,7 +25,8 @@ void producerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationM
   HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferForPayloads);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  communicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {{PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, coordinationBufferForCounts}, {PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, coordinationBufferForPayloads}});
+  communicationManager.exchangeGlobalMemorySlots(
+    CHANNEL_TAG, {{PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, coordinationBufferForCounts}, {PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, coordinationBufferForPayloads}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager.fence(CHANNEL_TAG);

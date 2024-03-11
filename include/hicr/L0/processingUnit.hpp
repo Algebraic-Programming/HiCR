@@ -91,10 +91,7 @@ class ProcessingUnit
    *
    * \return Retruns the current state
    */
-  __USED__ inline ProcessingUnit::state_t getState() const
-  {
-    return _state;
-  }
+  __USED__ inline ProcessingUnit::state_t getState() const { return _state; }
 
   /**
    * Initializes the resource and leaves it ready to execute work

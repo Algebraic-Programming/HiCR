@@ -66,16 +66,21 @@ class Base : public channel::Base
     // Checking that the provided coordination buffers have the right size
     auto requiredCoordinationBufferSize = 4 * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
     auto providedCoordinationBufferSize = coordinationBufferForPayloads->getSize() + coordinationBufferForCounts->getSize();
-    if (providedCoordinationBufferSize < requiredCoordinationBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a local coordination buffer size (%lu) smaller than the required size (%lu).\n", providedCoordinationBufferSize, requiredCoordinationBufferSize);
+    if (providedCoordinationBufferSize < requiredCoordinationBufferSize)
+      HICR_THROW_LOGIC("Attempting to create a channel with a local coordination buffer size (%lu) smaller than the required size (%lu).\n",
+                       providedCoordinationBufferSize,
+                       requiredCoordinationBufferSize);
 
     // Creating internal circular buffer
-    _circularBuffer = std::make_unique<channel::CircularBuffer>(capacity,
-                                                                (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForCounts->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
-                                                                (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForCounts->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
+    _circularBuffer = std::make_unique<channel::CircularBuffer>(
+      capacity,
+      (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForCounts->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
+      (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForCounts->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
 
-    _circularBufferForPayloads = std::make_unique<channel::CircularBuffer>(payloadCapacity,
-                                                                           (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForPayloads->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
-                                                                           (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForPayloads->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
+    _circularBufferForPayloads = std::make_unique<channel::CircularBuffer>(
+      payloadCapacity,
+      (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForPayloads->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
+      (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForPayloads->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
   }
 
   // virtual ~Base() = default;

@@ -47,15 +47,11 @@ class GlobalMemorySlot
    * \param[in] sourceLocalMemorySlot Indicates the source local memory slot (if any) that was promoted into this global memory slot.
    *                                  If none exists, a nullptr value is provided that encodes that the global memory slot is non-local (remote)
    */
-  GlobalMemorySlot(
-    const tag_t                                globalTag             = 0,
-    const globalKey_t                          globalKey             = 0,
-    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr)
+  GlobalMemorySlot(const tag_t globalTag = 0, const globalKey_t globalKey = 0, std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr)
     : _globalTag(globalTag),
       _globalKey(globalKey),
       _sourceLocalMemorySlot(sourceLocalMemorySlot)
-  {
-  }
+  {}
 
   /**
    * Default destructor

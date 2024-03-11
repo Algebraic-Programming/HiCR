@@ -32,8 +32,7 @@ ascend::ComputationKernel createComputeKernelFromDirectory(std::string          
                                                            std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
                                                            aclopAttr                                            *kernelAttributes);
 
-void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice,
-                   std::vector<ascend::Kernel *>     operations);
+void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice, std::vector<ascend::Kernel *> operations);
 
 int main(int argc, char **argv)
 {
@@ -97,23 +96,17 @@ int main(int argc, char **argv)
   if (kernelAttributes == NULL) HICR_THROW_RUNTIME("Can not create kernel attributes");
 
   // Prepare kernel input tensor data
-  std::vector<ascend::ComputationKernel::tensorData_t> inputs({ascend::ComputationKernel::createTensorData(input1Device, tensorDescriptor),
-                                                               ascend::ComputationKernel::createTensorData(input2Device, tensorDescriptor)});
+  std::vector<ascend::ComputationKernel::tensorData_t> inputs(
+    {ascend::ComputationKernel::createTensorData(input1Device, tensorDescriptor), ascend::ComputationKernel::createTensorData(input2Device, tensorDescriptor)});
 
   // Prepare kernel output tensor data
   std::vector<ascend::ComputationKernel::tensorData_t> outputs({ascend::ComputationKernel::createTensorData(outputDevice, tensorDescriptor)});
 
   // Create the ComputationKernel by reading it from file
-  auto fileComputationKernel = createComputeKernelFromFile("/../examples/hicr/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om",
-                                                           inputs,
-                                                           outputs,
-                                                           kernelAttributes);
+  auto fileComputationKernel = createComputeKernelFromFile("/../examples/hicr/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om", inputs, outputs, kernelAttributes);
 
   // Create the stream of Kernel operations to be executed on the device
-  auto operations = std::vector<ascend::Kernel *>{&copyInput1MemoryKernel,
-                                                  &copyInput2MemoryKernel,
-                                                  &fileComputationKernel,
-                                                  &copyOutputMemoryKernel};
+  auto operations = std::vector<ascend::Kernel *>{&copyInput1MemoryKernel, &copyInput2MemoryKernel, &fileComputationKernel, &copyOutputMemoryKernel};
 
   // Execute the stream of Kernels
   executeKernel(ascendDevice, operations);
@@ -127,16 +120,10 @@ int main(int argc, char **argv)
   populateMemorySlot(outputHost, 0.0);
 
   // Create the ComputationKernel by looking up in a directory
-  auto directoryComputationKernel = createComputeKernelFromDirectory("/../examples/hicr/kernel/op_models",
-                                                                     inputs,
-                                                                     outputs,
-                                                                     kernelAttributes);
+  auto directoryComputationKernel = createComputeKernelFromDirectory("/../examples/hicr/kernel/op_models", inputs, outputs, kernelAttributes);
 
   // Create the stream of Kernel operations to be executed on the device
-  operations = std::vector<ascend::Kernel *>{&copyInput1MemoryKernel,
-                                             &copyInput2MemoryKernel,
-                                             &directoryComputationKernel,
-                                             &copyOutputMemoryKernel};
+  operations = std::vector<ascend::Kernel *>{&copyInput1MemoryKernel, &copyInput2MemoryKernel, &directoryComputationKernel, &copyOutputMemoryKernel};
 
   // Execute the stream of Kernels
   executeKernel(ascendDevice, operations);
@@ -164,11 +151,10 @@ int main(int argc, char **argv)
   return 0;
 }
 
-ascend::ComputationKernel createComputeKernelFromFile(
-  std::string                                           path,
-  std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
-  std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
-  aclopAttr                                            *kernelAttributes)
+ascend::ComputationKernel createComputeKernelFromFile(std::string                                           path,
+                                                      std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
+                                                      std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+                                                      aclopAttr                                            *kernelAttributes)
 {
   auto currentPath = std::filesystem::current_path().string();
   auto kernelPath  = currentPath + std::string(path);
@@ -197,9 +183,7 @@ ascend::ComputationKernel createComputeKernelFromDirectory(std::string          
   return kernel;
 }
 
-void executeKernel(
-  std::shared_ptr<HiCR::L0::Device> ascendDevice,
-  std::vector<ascend::Kernel *>     operations)
+void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice, std::vector<ascend::Kernel *> operations)
 {
   // Instantiating Ascend computation manager
   HiCR::backend::ascend::L1::ComputeManager ascendComputeManager;

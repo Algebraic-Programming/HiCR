@@ -20,7 +20,7 @@
  * #CHECK(f...) Checks if an LPF function returns LPF_SUCCESS, else
  * it prints an error message
  */
-#define CHECK(f...) \
+#define CHECK(f...)                                                                                                                                                                \
   if (f != LPF_SUCCESS) { HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f); }
 
 namespace HiCR
@@ -49,15 +49,10 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * @param[in] size Comm size
    * @param[in] memorySpace The memory space from whence this memory slot was created
    */
-  LocalMemorySlot(
-    lpf_memslot_t                          lpfMemSlot,
-    void *const                            pointer,
-    const size_t                           size,
-    std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
+  LocalMemorySlot(lpf_memslot_t lpfMemSlot, void *const pointer, const size_t size, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
     : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
       _lpfMemSlot(lpfMemSlot)
-  {
-  }
+  {}
 
   /**
    * Default destructor

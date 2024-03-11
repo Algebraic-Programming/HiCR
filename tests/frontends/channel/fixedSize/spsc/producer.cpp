@@ -75,10 +75,12 @@ TEST(ProducerChannel, Construction)
   auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
 
   // Creating with incorrect parameters
-  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Producer(c, globalTokenBuffer, badCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::LogicException);
+  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Producer(c, globalTokenBuffer, badCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
+               HiCR::LogicException);
 
   // Creating with correct parameters
-  EXPECT_NO_THROW(new HiCR::channel::fixedSize::SPSC::Producer(c, globalTokenBuffer, correctProducerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));
+  EXPECT_NO_THROW(
+    new HiCR::channel::fixedSize::SPSC::Producer(c, globalTokenBuffer, correctProducerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));
 }
 
 TEST(ProducerChannel, Push)

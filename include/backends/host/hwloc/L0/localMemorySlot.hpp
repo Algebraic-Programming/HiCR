@@ -66,15 +66,10 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
    * \param[in] memorySpace The memory space from whence this memory slot was created
    */
-  LocalMemorySlot(
-    binding_type                           bindingType,
-    void *const                            pointer,
-    const size_t                           size,
-    std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
+  LocalMemorySlot(binding_type bindingType, void *const pointer, const size_t size, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
     : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
       _bindingType(bindingType)
-  {
-  }
+  {}
 
   ~LocalMemorySlot() = default;
 

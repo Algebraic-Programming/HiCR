@@ -89,8 +89,7 @@ class Producer final : public variableSize::Base
       _tokenBuffer(tokenBuffer),
       _producerCoordinationBufferForCounts(producerCoordinationBufferForCounts),
       _producerCoordinationBufferForPayloads(producerCoordinationBufferForPayloads)
-  {
-  }
+  {}
 
   ~Producer() {}
 
@@ -108,54 +107,36 @@ class Producer final : public variableSize::Base
    * advance payload buffer tail by a number of bytes
    * @param[in] n bytes to advance payload buffer tail by
    */
-  __USED__ inline void advancePayloadTail(const size_t n = 1)
-  {
-    _circularBufferForPayloads->advanceTail(n);
-  }
+  __USED__ inline void advancePayloadTail(const size_t n = 1) { _circularBufferForPayloads->advanceTail(n); }
 
   /**
    * advance payload buffer head by a number of bytes
    * @param[in] n bytes to advance payload buffer head by
    */
-  void advancePayloadHead(const size_t n = 1)
-  {
-    _circularBufferForPayloads->advanceHead(n);
-  }
+  void advancePayloadHead(const size_t n = 1) { _circularBufferForPayloads->advanceHead(n); }
   /**
    * get payload buffer head position
    * @return payload buffer head position (in bytes)
    */
-  __USED__ inline size_t getPayloadHeadPosition() const noexcept
-  {
-    return _circularBufferForPayloads->getHeadPosition();
-  }
+  __USED__ inline size_t getPayloadHeadPosition() const noexcept { return _circularBufferForPayloads->getHeadPosition(); }
 
   /**
    * get the datatype size used for payload buffer
    * @return datatype size (in bytes) for payload buffer
    */
-  inline size_t getPayloadSize()
-  {
-    return _payloadSize;
-  }
+  inline size_t getPayloadSize() { return _payloadSize; }
 
   /**
    * get payload buffer depth
    * @return payload buffer depth (in bytes)
    */
-  inline size_t getPayloadDepth()
-  {
-    return _circularBufferForPayloads->getDepth();
-  }
+  inline size_t getPayloadDepth() { return _circularBufferForPayloads->getDepth(); }
 
   /**
    * get payload buffer capacity
    * @return payload buffer capacity (in bytes)
    */
-  inline size_t getPayloadCapacity()
-  {
-    return _circularBufferForPayloads->getCapacity();
-  }
+  inline size_t getPayloadCapacity() { return _circularBufferForPayloads->getCapacity(); }
 
   /**
    * Puts new variable-sized messages unto the channel.
@@ -184,13 +165,19 @@ class Producer final : public variableSize::Base
 
     // Updating depth of token (message sizes) and payload buffers
     updateDepth();
-    if (getPayloadDepth() + requiredBufferSize > providedBufferCapacity) HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has depth (%lu). This would exceed capacity (%lu).\n", requiredBufferSize, getPayloadDepth(), providedBufferCapacity);
+    if (getPayloadDepth() + requiredBufferSize > providedBufferCapacity)
+      HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has depth (%lu). This would exceed capacity (%lu).\n",
+                         requiredBufferSize,
+                         getPayloadDepth(),
+                         providedBufferCapacity);
 
     size_t *sizeInfoBufferPtr = static_cast<size_t *>(_sizeInfoBuffer->getPointer());
     sizeInfoBufferPtr[0]      = requiredBufferSize;
 
     // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + 1 > _circularBuffer->getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", 1, getDepth(), _circularBuffer->getCapacity());
+    if (getDepth() + 1 > _circularBuffer->getCapacity())
+      HICR_THROW_RUNTIME(
+        "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", 1, getDepth(), _circularBuffer->getCapacity());
 
     // Copying with source increasing offset per token
     _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), _sizeInfoBuffer, 0, getTokenSize());
@@ -243,10 +230,7 @@ class Producer final : public variableSize::Base
    * \returns true, if both message count and payload buffers are empty
    * \returns false, if one of the buffers is not empty
    */
-  bool isEmpty()
-  {
-    return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0);
-  }
+  bool isEmpty() { return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0); }
 
   private:
 

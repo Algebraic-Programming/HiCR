@@ -61,8 +61,7 @@ class Consumer final : public channel::fixedSize::Base
            const size_t                          capacity)
     : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _consumerCoordinationBuffer(consumerCoordinationBuffer)
-  {
-  }
+  {}
   ~Consumer() = default;
 
   /**
@@ -91,7 +90,11 @@ class Consumer final : public channel::fixedSize::Base
   __USED__ inline ssize_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)", pos, pos + 1, _circularBuffer->getCapacity());
+    if (pos >= _circularBuffer->getCapacity())
+      HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)",
+                       pos,
+                       pos + 1,
+                       _circularBuffer->getCapacity());
 
     // Value to return, initially set as -1 as default (not able to find the requested value)
     ssize_t bufferPos = -1;

@@ -65,11 +65,7 @@ class ComputationKernel final : public Kernel
    * \param outputs kernel output tensor data descriptors
    * \param kernelAttrs kernel attributes
    */
-  ComputationKernel(
-    const char                      *kernelName,
-    const std::vector<tensorData_t> &inputs,
-    const std::vector<tensorData_t> &outputs,
-    const aclopAttr                 *kernelAttrs)
+  ComputationKernel(const char *kernelName, const std::vector<tensorData_t> &inputs, const std::vector<tensorData_t> &outputs, const aclopAttr *kernelAttrs)
     : Kernel(),
       _kernelName(kernelName),
       _kernelAttrs(kernelAttrs)
@@ -89,12 +85,7 @@ class ComputationKernel final : public Kernel
    * \param outputs kernel output tensor data descriptors
    * \param kernelAttrs kernel attributes
    */
-  ComputationKernel(
-    const char                      *kernelPath,
-    const char                      *kernelName,
-    const std::vector<tensorData_t> &inputs,
-    const std::vector<tensorData_t> &outputs,
-    const aclopAttr                 *kernelAttrs)
+  ComputationKernel(const char *kernelPath, const char *kernelName, const std::vector<tensorData_t> &inputs, const std::vector<tensorData_t> &outputs, const aclopAttr *kernelAttrs)
     : ComputationKernel(kernelName, inputs, outputs, kernelAttrs)
   {
     // load kernel in memory
@@ -186,10 +177,9 @@ class ComputationKernel final : public Kernel
    * \param[out] descriptors vector of tensor descriptors
    * \param[out] dataBuffers vector of data buffers
    */
-  __USED__ inline void initializeDataBuffersAndDescriptors(
-    const std::vector<tensorData_t>     tensors,
-    std::vector<const aclTensorDesc *> &descriptors,
-    std::vector<const aclDataBuffer *> &dataBuffers)
+  __USED__ inline void initializeDataBuffersAndDescriptors(const std::vector<tensorData_t>     tensors,
+                                                           std::vector<const aclTensorDesc *> &descriptors,
+                                                           std::vector<const aclDataBuffer *> &dataBuffers)
   {
     for (const auto &tensor : tensors)
     {

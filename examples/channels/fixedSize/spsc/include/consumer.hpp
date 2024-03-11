@@ -5,7 +5,10 @@
 #include <hicr/L1/communicationManager.hpp>
 #include <frontends/channel/fixedSize/spsc/consumer.hpp>
 
-void consumerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManager &communicationManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, const size_t channelCapacity)
+void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
+                HiCR::L1::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
+                const size_t                           channelCapacity)
 {
   // Getting required buffer sizes
   auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
@@ -33,7 +36,8 @@ void consumerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationM
   auto producerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto consumer = HiCR::channel::fixedSize::SPSC::Consumer(communicationManager, globalTokenBufferSlot, coordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto consumer =
+    HiCR::channel::fixedSize::SPSC::Consumer(communicationManager, globalTokenBufferSlot, coordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Getting a single value from the channel
   while (consumer.isEmpty()) consumer.updateDepth();

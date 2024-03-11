@@ -75,10 +75,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    *
    * @return The device id corresponding to this memory space
    */
-  __USED__ inline const std::weak_ptr<const ascend::L0::Device> getDevice() const
-  {
-    return _device;
-  }
+  __USED__ inline const std::weak_ptr<const ascend::L0::Device> getDevice() const { return _device; }
 
   private:
 

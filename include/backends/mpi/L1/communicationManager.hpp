@@ -125,13 +125,18 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto status = MPI_Fetch_and_op(&one, &value, MPI_AINT, rank, 0, MPI_SUM, *window);
 
     // Checking execution status
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Put) for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
+    if (status != MPI_SUCCESS)
+      HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Put) for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
 
     // Unlocking window after copy is completed
     unlockMPIWindow(rank, window);
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destinationSlot, const size_t dst_offset, std::shared_ptr<HiCR::L0::GlobalMemorySlot> sourceSlotPtr, const size_t sourceOffset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destinationSlot,
+                                  const size_t                                dst_offset,
+                                  std::shared_ptr<HiCR::L0::GlobalMemorySlot> sourceSlotPtr,
+                                  const size_t                                sourceOffset,
+                                  const size_t                                size) override
   {
     // Getting up-casted pointer for the execution unit
     auto source = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(sourceSlotPtr);
@@ -174,7 +179,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     destinationSlot->increaseMessagesRecv();
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destinationSlotPtr, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceSlot, const size_t sourceOffset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destinationSlotPtr,
+                                  const size_t                                dst_offset,
+                                  std::shared_ptr<HiCR::L0::LocalMemorySlot>  sourceSlot,
+                                  const size_t                                sourceOffset,
+                                  const size_t                                size) override
   {
     // Getting up-casted pointer for the execution unit
     auto destination = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(destinationSlotPtr);
@@ -223,9 +232,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
-  {
-  }
+  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override {}
 
   /**
    * Implementation of the fence operation for the mpi backend. For every single window corresponding
@@ -325,8 +332,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
 
     // Exchanging global sizes, keys and process ids
-    MPI_Allgatherv(localSlotSizes.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotSizes.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
-    MPI_Allgatherv(localSlotKeys.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotKeys.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
+    MPI_Allgatherv(
+      localSlotSizes.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotSizes.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
+    MPI_Allgatherv(
+      localSlotKeys.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotKeys.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
     MPI_Allgatherv(localSlotProcessId.data(), localSlotCount, MPI_INT, globalSlotProcessId.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_INT, _comm);
 
     // Now also creating pointer vector to remember local pointers, when required for memcpys
@@ -353,11 +362,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     for (size_t i = 0; i < globalSlotProcessId.size(); i++)
     {
       // Creating new memory slot object
-      auto memorySlot = std::make_shared<mpi::L0::GlobalMemorySlot>(
-        globalSlotProcessId[i],
-        tag,
-        globalSlotKeys[i],
-        globalSourceSlots[i]);
+      auto memorySlot = std::make_shared<mpi::L0::GlobalMemorySlot>(globalSlotProcessId[i], tag, globalSlotKeys[i], globalSourceSlots[i]);
 
       // Allocating MPI windows
       memorySlot->getDataWindow()             = std::make_unique<MPI_Win>();
@@ -368,13 +373,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       void *ptr = nullptr;
 
       // Creating MPI window for data transferring
-      auto status = MPI_Win_allocate(
-        globalSlotProcessId[i] == _rank ? globalSlotSizes[i] : 0,
-        1,
-        MPI_INFO_NULL,
-        _comm,
-        &ptr,
-        memorySlot->getDataWindow().get());
+      auto status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? globalSlotSizes[i] : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getDataWindow().get());
 
       // Unfortunately, we need to do an effective duplucation of the original local memory slot storage
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
@@ -393,13 +392,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
 
       // Creating MPI window for message received count transferring
-      status = MPI_Win_allocate(
-        globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
-        1,
-        MPI_INFO_NULL,
-        _comm,
-        &ptr,
-        memorySlot->getRecvMessageCountWindow().get());
+      status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getRecvMessageCountWindow().get());
 
       // Unfortunately, we need to do an effective realloc of the messages recv counter
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
@@ -415,13 +408,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
 
       // Creating MPI window for message sent count transferring
-      status = MPI_Win_allocate(
-        globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0,
-        1,
-        MPI_INFO_NULL,
-        _comm,
-        &ptr,
-        memorySlot->getSentMessageCountWindow().get());
+      status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getSentMessageCountWindow().get());
 
       // Unfortunately, we need to do an effective realloc of the messages sent counter
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore

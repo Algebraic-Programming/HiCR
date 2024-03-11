@@ -133,17 +133,16 @@ __USED__ inline void Instance::initializeChannels()
 
     // Creating channel
     printf("[Instance %lu] Adding consumer channel for instance %lu\n", currentInstanceId, _instanceIds[producerIdx]);
-    _consumerChannels[_instanceIds[producerIdx]] = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(
-      *_communicationManager,
-      consumerMessagePayloadBuffer,
-      consumerMessageSizesBuffer,
-      coordinationBufferMessageSizes,
-      coordinationBufferMessagePayloads,
-      producerSizesProducerBuffer,
-      producerPayloadProducerBuffer,
-      _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
-      sizeof(uint8_t),
-      _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
+    _consumerChannels[_instanceIds[producerIdx]] = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(*_communicationManager,
+                                                                                                                 consumerMessagePayloadBuffer,
+                                                                                                                 consumerMessageSizesBuffer,
+                                                                                                                 coordinationBufferMessageSizes,
+                                                                                                                 coordinationBufferMessagePayloads,
+                                                                                                                 producerSizesProducerBuffer,
+                                                                                                                 producerPayloadProducerBuffer,
+                                                                                                                 _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
+                                                                                                                 sizeof(uint8_t),
+                                                                                                                 _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
 
     if (_instanceIds[producerIdx] == currentInstanceId)
     {
@@ -160,18 +159,17 @@ __USED__ inline void Instance::initializeChannels()
         auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, consumerInstanceId);
 
         // Creating channel
-        _producerChannels[consumerInstanceId] = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(
-          *_communicationManager,
-          sizeInfoBufferMemorySlotVector[i],
-          consumerMessagePayloadBuffer,
-          consumerMessageSizesBuffer,
-          coordinationBufferMessageSizesVector[i].second,
-          coordinationBufferMessagePayloadsVector[i].second,
-          producerSizesProducerBuffer,
-          producerPayloadProducerBuffer,
-          _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
-          sizeof(uint8_t),
-          _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
+        _producerChannels[consumerInstanceId] = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(*_communicationManager,
+                                                                                                              sizeInfoBufferMemorySlotVector[i],
+                                                                                                              consumerMessagePayloadBuffer,
+                                                                                                              consumerMessageSizesBuffer,
+                                                                                                              coordinationBufferMessageSizesVector[i].second,
+                                                                                                              coordinationBufferMessagePayloadsVector[i].second,
+                                                                                                              producerSizesProducerBuffer,
+                                                                                                              producerPayloadProducerBuffer,
+                                                                                                              _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
+                                                                                                              sizeof(uint8_t),
+                                                                                                              _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
       }
     }
   }

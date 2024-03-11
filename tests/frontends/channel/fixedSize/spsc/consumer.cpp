@@ -70,7 +70,8 @@ TEST(ConsumerChannel, Construction)
   auto producerCoordinationBuffer    = m.allocateLocalMemorySlot(*memSpaces.begin(), producerCoordinationBufferSize);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}, {BAD_TOKEN_BUFFER_KEY, badTokenBuffer}});
+  c.exchangeGlobalMemorySlots(CHANNEL_TAG,
+                              {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}, {BAD_TOKEN_BUFFER_KEY, badTokenBuffer}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   c.fence(CHANNEL_TAG);
@@ -81,8 +82,10 @@ TEST(ConsumerChannel, Construction)
   auto badGlobalTokenBuffer             = c.getGlobalMemorySlot(CHANNEL_TAG, BAD_TOKEN_BUFFER_KEY);
 
   // Creating with incorrect parameters
-  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, globalTokenBuffer, badConsumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::LogicException);
-  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, badGlobalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::LogicException);
+  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, globalTokenBuffer, badConsumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
+               HiCR::LogicException);
+  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, badGlobalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
+               HiCR::LogicException);
 
   // Creating with correct parameters
   EXPECT_NO_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));

@@ -60,10 +60,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    *
    * @param[in] input A JSON-encoded serialized  processing unit information
    */
-  ComputeResource(const nlohmann::json &input)
-  {
-    deserialize(input);
-  }
+  ComputeResource(const nlohmann::json &input) { deserialize(input); }
 
   /**
    * Default destructor
@@ -127,8 +124,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
     bool        found    = false;
 
     // iterate over parents until we find a memory node
-    while (ancestor && !ancestor->memory_arity)
-      ancestor = ancestor->parent;
+    while (ancestor && !ancestor->memory_arity) ancestor = ancestor->parent;
 
     // iterate over potential sibling nodes (the likely behavior though is to run only once)
     for (size_t memChild = 0; memChild < ancestor->memory_arity; memChild++)
@@ -138,8 +134,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
       else if (nodeNUMA)
         nodeNUMA = nodeNUMA->next_sibling;
 
-      if (hwloc_obj_type_is_memory(nodeNUMA->type) &&
-          hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
+      if (hwloc_obj_type_is_memory(nodeNUMA->type) && hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
       {
         found = true;
         ret   = nodeNUMA->logical_index;
@@ -183,32 +178,22 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
       std::string         type;
 
       // Check if the current object is a cache-type object
-      if (cache->type == HWLOC_OBJ_L1CACHE || cache->type == HWLOC_OBJ_L2CACHE || cache->type == HWLOC_OBJ_L3CACHE || cache->type == HWLOC_OBJ_L4CACHE || cache->type == HWLOC_OBJ_L5CACHE || cache->type == HWLOC_OBJ_L1ICACHE || cache->type == HWLOC_OBJ_L2ICACHE || cache->type == HWLOC_OBJ_L3ICACHE)
+      if (cache->type == HWLOC_OBJ_L1CACHE || cache->type == HWLOC_OBJ_L2CACHE || cache->type == HWLOC_OBJ_L3CACHE || cache->type == HWLOC_OBJ_L4CACHE ||
+          cache->type == HWLOC_OBJ_L5CACHE || cache->type == HWLOC_OBJ_L1ICACHE || cache->type == HWLOC_OBJ_L2ICACHE || cache->type == HWLOC_OBJ_L3ICACHE)
       {
         // In case it is a cache, deduce the level from the types HWloc supports
         switch (cache->type)
         {
         case HWLOC_OBJ_L1CACHE:
-        case HWLOC_OBJ_L1ICACHE:
-          level = 1;
-          break;
+        case HWLOC_OBJ_L1ICACHE: level = 1; break;
         case HWLOC_OBJ_L2CACHE:
-        case HWLOC_OBJ_L2ICACHE:
-          level = 2;
-          break;
+        case HWLOC_OBJ_L2ICACHE: level = 2; break;
         case HWLOC_OBJ_L3CACHE:
-        case HWLOC_OBJ_L3ICACHE:
-          level = 3;
-          break;
-        case HWLOC_OBJ_L4CACHE:
-          level = 4;
-          break;
-        case HWLOC_OBJ_L5CACHE:
-          level = 5;
-          break;
+        case HWLOC_OBJ_L3ICACHE: level = 3; break;
+        case HWLOC_OBJ_L4CACHE: level = 4; break;
+        case HWLOC_OBJ_L5CACHE: level = 5; break;
         // We never expect to get here; this is for compiler warning suppresion
-        default:
-          level = 0;
+        default: level = 0;
         }
 
         // Storage for cache type
@@ -217,15 +202,9 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
         // Discover the type: Instruction, Data or Unified
         switch (cache->attr->cache.type)
         {
-        case HWLOC_OBJ_CACHE_UNIFIED:
-          type = "Unified";
-          break;
-        case HWLOC_OBJ_CACHE_INSTRUCTION:
-          type = "Instruction";
-          break;
-        case HWLOC_OBJ_CACHE_DATA:
-          type = "Data";
-          break;
+        case HWLOC_OBJ_CACHE_UNIFIED: type = "Unified"; break;
+        case HWLOC_OBJ_CACHE_INSTRUCTION: type = "Instruction"; break;
+        case HWLOC_OBJ_CACHE_DATA: type = "Data"; break;
         }
 
         // Storage for more cache information
@@ -278,8 +257,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
     bool        found    = false;
 
     // iterate over parents until we find a memory node
-    while (ancestor && !ancestor->memory_arity)
-      ancestor = ancestor->parent;
+    while (ancestor && !ancestor->memory_arity) ancestor = ancestor->parent;
 
     // iterate over potential sibling nodes (the likely behavior though is to run only once)
     for (size_t memChild = 0; memChild < ancestor->memory_arity; memChild++)

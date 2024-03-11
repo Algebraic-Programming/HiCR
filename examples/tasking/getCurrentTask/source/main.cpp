@@ -44,9 +44,10 @@ int main(int argc, char **argv)
 
   // Creating task  execution unit
   auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr]() {
-   // Printing associated task label
-   const auto taskrLabel = taskr.getCurrentTask()->getLabel();
-   printf("Current TaskR Task   label:    %lu\n", taskrLabel); });
+    // Printing associated task label
+    const auto taskrLabel = taskr.getCurrentTask()->getLabel();
+    printf("Current TaskR Task   label:    %lu\n", taskrLabel);
+  });
 
   // Creating a single task to print the internal references
   taskr.addTask(new HiCR::tasking::Task(TASK_LABEL, taskExecutionUnit));

@@ -35,8 +35,7 @@ int main(int argc, char **argv)
   // Getting access to all ascend devices memory spaces
   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> ascendMemorySpaces;
   for (const auto &d : ascendDevices)
-    for (const auto &m : d->getMemorySpaceList())
-      ascendMemorySpaces.push_back(m);
+    for (const auto &m : d->getMemorySpaceList()) ascendMemorySpaces.push_back(m);
 
   // Define the order of mem spaces for the telephone game
   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> memSpaceOrder;

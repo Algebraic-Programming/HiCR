@@ -51,8 +51,7 @@ class Cache
       _cacheSize(size),
       _lineSize(lineSize),
       _shared(shared)
-  {
-  }
+  {}
 
   /**
    * Deserializing constructor
@@ -62,60 +61,42 @@ class Cache
    *
    * @param[in] input A JSON-encoded serialized cache information
    */
-  Cache(const nlohmann::json &input)
-  {
-    deserialize(input);
-  }
+  Cache(const nlohmann::json &input) { deserialize(input); }
 
   /**
    * Obtain the size of the cache object
    *
    * \return The cache size in Bytes
    */
-  __USED__ inline size_t getSize() const
-  {
-    return _cacheSize;
-  }
+  __USED__ inline size_t getSize() const { return _cacheSize; }
 
   /**
    * Obtain the line size of the cache object
    *
    * \return The cache line size in Bytes
    */
-  __USED__ inline size_t getLineSize() const
-  {
-    return _lineSize;
-  }
+  __USED__ inline size_t getLineSize() const { return _lineSize; }
 
   /**
    * Obtain the type of the cache object
    *
    * \return The cache type in as a cacheType_t enum value
    */
-  __USED__ inline cacheLevel_t getLevel() const
-  {
-    return _level;
-  }
+  __USED__ inline cacheLevel_t getLevel() const { return _level; }
 
   /**
    * Indicates whether the cache is shared among other procesing units
    *
    * \return True, if the cache is shared; false, otherwise
    */
-  __USED__ inline bool getShared() const
-  {
-    return _shared;
-  }
+  __USED__ inline bool getShared() const { return _shared; }
 
   /**
    * Returns the cache type
    *
    * \return The cache type (instruction, data, unified)
    */
-  __USED__ inline const std::string &getType() const
-  {
-    return _type;
-  }
+  __USED__ inline const std::string &getType() const { return _type; }
 
   /**
    * Serialization function to enable sharing cache information

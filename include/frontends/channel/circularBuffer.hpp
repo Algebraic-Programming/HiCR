@@ -45,8 +45,7 @@ class CircularBuffer
     : _capacity(capacity),
       _headAdvanceCounter(headAdvanceCounter),
       _tailAdvanceCounter(tailAdvanceCounter)
-  {
-  }
+  {}
 
   virtual ~CircularBuffer() = default;
 
@@ -61,10 +60,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __USED__ inline size_t getHeadPosition() const noexcept
-  {
-    return *_headAdvanceCounter % _capacity;
-  }
+  __USED__ inline size_t getHeadPosition() const noexcept { return *_headAdvanceCounter % _capacity; }
 
   /**
    * @returns The current position of the buffer head
@@ -77,10 +73,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __USED__ inline size_t getTailPosition() const noexcept
-  {
-    return *_tailAdvanceCounter % _capacity;
-  }
+  __USED__ inline size_t getTailPosition() const noexcept { return *_tailAdvanceCounter % _capacity; }
 
   /**
    * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.
@@ -97,7 +90,8 @@ class CircularBuffer
     const auto newDepth = curDepth + n;
 
     // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("New buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", curDepth, n, newDepth, _capacity);
+    if (newDepth > _capacity)
+      HICR_THROW_FATAL("New buffer depth (_depth (%lu) + n (%lu) = %lu) exceeded capacity (%lu) on increase. This is probably a bug in HiCR.\n", curDepth, n, newDepth, _capacity);
 
     // Advance head
     *_headAdvanceCounter = *_headAdvanceCounter + n;
@@ -128,10 +122,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __USED__ inline size_t getCapacity() const noexcept
-  {
-    return _capacity;
-  }
+  __USED__ inline size_t getCapacity() const noexcept { return _capacity; }
 
   /**
    * Returns the current circular buffer depth.
@@ -144,10 +135,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __USED__ inline size_t getDepth() const noexcept
-  {
-    return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter);
-  }
+  __USED__ inline size_t getDepth() const noexcept { return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter); }
 
   /**
    * This function can be used to quickly check whether the circular buffer is full.
@@ -157,10 +145,7 @@ class CircularBuffer
    * \returns true, if the buffer is full
    * \returns false, if the buffer is not full
    */
-  __USED__ inline bool isFull() const noexcept
-  {
-    return getDepth() == _capacity;
-  }
+  __USED__ inline bool isFull() const noexcept { return getDepth() == _capacity; }
 
   /**
    * This function can be used to quickly check whether the circular buffer is empty.
@@ -170,10 +155,7 @@ class CircularBuffer
    * \returns true, if the buffer is empty
    * \returns false, if the buffer is not empty
    */
-  __USED__ inline bool isEmpty() const noexcept
-  {
-    return *_headAdvanceCounter == *_tailAdvanceCounter;
-  }
+  __USED__ inline bool isEmpty() const noexcept { return *_headAdvanceCounter == *_tailAdvanceCounter; }
 
   /**
    * Forces the head advance counter into a specific absolute value
@@ -183,7 +165,8 @@ class CircularBuffer
   __USED__ inline void setHead(const size_t headAdvanceCounter)
   {
     // Sanity check
-    if (*_tailAdvanceCounter > headAdvanceCounter) HICR_THROW_FATAL("Circular buffer new head advance value is smaller than tail's (%lu < %lu). This is probably a bug in HiCR.\n", headAdvanceCounter, *_tailAdvanceCounter);
+    if (*_tailAdvanceCounter > headAdvanceCounter)
+      HICR_THROW_FATAL("Circular buffer new head advance value is smaller than tail's (%lu < %lu). This is probably a bug in HiCR.\n", headAdvanceCounter, *_tailAdvanceCounter);
 
     // Calculating new depth
     const auto newDepth = calculateDepth(headAdvanceCounter, *_tailAdvanceCounter);
@@ -203,7 +186,8 @@ class CircularBuffer
   __USED__ inline void setTail(const size_t tailAdvanceCounter)
   {
     // Sanity check
-    if (tailAdvanceCounter > *_headAdvanceCounter) HICR_THROW_FATAL("Circular buffer new tail advance value exceeds head (%lu > %lu). This is probably a bug in HiCR.\n", tailAdvanceCounter, *_headAdvanceCounter);
+    if (tailAdvanceCounter > *_headAdvanceCounter)
+      HICR_THROW_FATAL("Circular buffer new tail advance value exceeds head (%lu > %lu). This is probably a bug in HiCR.\n", tailAdvanceCounter, *_headAdvanceCounter);
 
     // Calculating new depth
     const auto newDepth = calculateDepth(*_headAdvanceCounter, tailAdvanceCounter);
@@ -218,18 +202,12 @@ class CircularBuffer
   /**
    * @returns The absolute counter for the number of times the head was advanced
    */
-  __USED__ inline size_t getHeadAdvanceCounter() const noexcept
-  {
-    return *_headAdvanceCounter;
-  }
+  __USED__ inline size_t getHeadAdvanceCounter() const noexcept { return *_headAdvanceCounter; }
 
   /**
    * @returns The absolute counter for the number of times the tail was advanced
    */
-  __USED__ inline size_t getTailAdvanceCounter() const noexcept
-  {
-    return *_tailAdvanceCounter;
-  }
+  __USED__ inline size_t getTailAdvanceCounter() const noexcept { return *_tailAdvanceCounter; }
 
   private:
 
@@ -256,10 +234,7 @@ class CircularBuffer
    * @param[in] tailAdvanceCounter tail index
    * @return depth of buffer (in elements)
    */
-  __USED__ static inline size_t calculateDepth(const size_t headAdvanceCounter, const size_t tailAdvanceCounter)
-  {
-    return headAdvanceCounter - tailAdvanceCounter;
-  }
+  __USED__ static inline size_t calculateDepth(const size_t headAdvanceCounter, const size_t tailAdvanceCounter) { return headAdvanceCounter - tailAdvanceCounter; }
 };
 
 } // namespace channel

@@ -72,7 +72,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] memorySpace The memory space onto which to register the new memory slot
    * \return A newly created memory slot
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
+                                                                                         void *const                            ptr,
+                                                                                         const size_t                           size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);

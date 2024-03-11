@@ -78,7 +78,12 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] size the number of bytes to copy
    * \param[in] stream Ascend stream containing the state of the operation for later check
    */
-  __USED__ inline void memcpyAsync(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size, const aclrtStream stream)
+  __USED__ inline void memcpyAsync(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
+                                   const size_t                               dst_offset,
+                                   std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
+                                   const size_t                               src_offset,
+                                   const size_t                               size,
+                                   const aclrtStream                          stream)
   {
     memcpyInternal(destination, dst_offset, source, src_offset, size, stream);
   }
@@ -95,10 +100,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
-  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
-  {
-    HICR_THROW_RUNTIME("Not yet implemented for this backend");
-  }
+  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 
   /**
    * This memcpy implementation does support asynchronous inter-device communication, meaning the fence should be called when date are
@@ -113,12 +115,21 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] src_offset source offset
    * \param[in] size the number of bytes to copy
    */
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size) override
+  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
+                                  const size_t                               dst_offset,
+                                  std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
+                                  const size_t                               src_offset,
+                                  const size_t                               size) override
   {
     memcpyInternal(destination, dst_offset, source, src_offset, size, NULL);
   }
 
-  __USED__ inline void memcpyInternal(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size, const aclrtStream stream)
+  __USED__ inline void memcpyInternal(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
+                                      const size_t                               dst_offset,
+                                      std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
+                                      const size_t                               src_offset,
+                                      const size_t                               size,
+                                      const aclrtStream                          stream)
   {
     // Storage for device type
     deviceType_t srcType = deviceType_t::none;
@@ -192,15 +203,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Not yet implemented
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
-  {
-    HICR_THROW_RUNTIME("Not yet implemented for this backend");
-  }
+  __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 
-  __USED__ inline void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
-  {
-    HICR_THROW_RUNTIME("Not yet implemented for this backend");
-  }
+  __USED__ inline void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 };
 
 } // namespace L1

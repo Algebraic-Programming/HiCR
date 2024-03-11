@@ -133,10 +133,12 @@ class Runtime final
     //////////////////////// Creating local HiCR Runtime instance, depending if worker or coordinator
 
     // Coordinator route
-    if (_instanceManager->getCurrentInstance()->isRootInstance() == true) _currentInstance = new HiCR::runtime::Coordinator(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
+    if (_instanceManager->getCurrentInstance()->isRootInstance() == true)
+      _currentInstance = new HiCR::runtime::Coordinator(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
 
     // Worker route
-    if (_instanceManager->getCurrentInstance()->isRootInstance() == false) _currentInstance = new HiCR::runtime::Worker(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
+    if (_instanceManager->getCurrentInstance()->isRootInstance() == false)
+      _currentInstance = new HiCR::runtime::Worker(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
   }
 
   ~Runtime() = default;
@@ -160,20 +162,14 @@ class Runtime final
    *
    * @return The id of the coordinator instance
    */
-  HiCR::L0::Instance::instanceId_t getCoordinatorInstanceId() const
-  {
-    return _instanceManager->getRootInstanceId();
-  }
+  HiCR::L0::Instance::instanceId_t getCoordinatorInstanceId() const { return _instanceManager->getRootInstanceId(); }
 
   /**
    * Returns a list of all the created instances id
    *
    * @return The list of the instances id
    */
-  std::vector<HiCR::L0::Instance::instanceId_t> getInstanceIds() const
-  {
-    return _currentInstance->getInstanceIds();
-  }
+  std::vector<HiCR::L0::Instance::instanceId_t> getInstanceIds() const { return _currentInstance->getInstanceIds(); }
 
   /**
    * Gets a pointer to the currently running runtime instance
@@ -221,7 +217,10 @@ class Runtime final
    * @param[in] entryPointName A human-readable string that defines the name of the task. To be executed, this should coincide with the name of a task specified in the machine model requests.
    * @param[in] fc Actual function to be executed upon instantiation
    */
-  __USED__ inline void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc) { _runtimeEntryPointVector.push_back(entryPoint_t(entryPointName, fc)); }
+  __USED__ inline void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc)
+  {
+    _runtimeEntryPointVector.push_back(entryPoint_t(entryPointName, fc));
+  }
 
   /**
    * This function returns the unique numerical identifier for the caler instance

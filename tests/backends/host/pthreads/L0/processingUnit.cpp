@@ -295,8 +295,7 @@ TEST(ProcessingUnit, LifeCycle)
   EXPECT_NO_THROW(processingUnit->await());
 
   ///////////////// Creating case where the thread runs a function that finishes
-  auto fc3 = []() {
-  };
+  auto fc3 = []() {};
 
   // Creating execution unit
   auto executionUnit3 = std::make_shared<HiCR::backend::host::L0::ExecutionUnit>(fc3);

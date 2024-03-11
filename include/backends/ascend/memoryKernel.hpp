@@ -47,13 +47,12 @@ class MemoryKernel final : public Kernel
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(
-    ascend::L1::CommunicationManager          *commManager,
-    std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-    const size_t                               destinationOffset,
-    std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-    const size_t                               sourceOffset,
-    size_t                                     size)
+  MemoryKernel(ascend::L1::CommunicationManager          *commManager,
+               std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
+               const size_t                               destinationOffset,
+               std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
+               const size_t                               sourceOffset,
+               size_t                                     size)
     : ascend::Kernel(),
       _dst(destination),
       _src(source),
@@ -74,10 +73,7 @@ class MemoryKernel final : public Kernel
    *
    * \param stream ACL stream on which memcpy is executed
    */
-  __USED__ inline void start(const aclrtStream stream) override
-  {
-    _commManager->memcpyAsync(_dst, _dstOffset, _src, _srcOffset, _size, stream);
-  }
+  __USED__ inline void start(const aclrtStream stream) override { _commManager->memcpyAsync(_dst, _dstOffset, _src, _srcOffset, _size, stream); }
 
   private:
 

@@ -106,10 +106,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
   }
 
-  __USED__ inline void suspendImpl()
-  {
-    HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend");
-  }
+  __USED__ inline void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend"); }
 
   /**
    * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and

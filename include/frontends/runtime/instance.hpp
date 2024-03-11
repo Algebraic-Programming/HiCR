@@ -59,12 +59,11 @@ class Instance
    * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
    * @param[in] machineModel The machine model to use to deploy the workers
    */
-  Instance(
-    HiCR::L1::InstanceManager                &instanceManager,
-    HiCR::L1::CommunicationManager           &communicationManager,
-    HiCR::L1::MemoryManager                  &memoryManager,
-    std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
-    HiCR::MachineModel                       &machineModel)
+  Instance(HiCR::L1::InstanceManager                &instanceManager,
+           HiCR::L1::CommunicationManager           &communicationManager,
+           HiCR::L1::MemoryManager                  &memoryManager,
+           std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
+           HiCR::MachineModel                       &machineModel)
     : _HiCRInstance(instanceManager.getCurrentInstance()),
       _instanceManager(&instanceManager),
       _communicationManager(&communicationManager),
@@ -103,10 +102,7 @@ class Instance
    *
    * @return The list of the instances id
    */
-  std::vector<HiCR::L0::Instance::instanceId_t> getInstanceIds() const
-  {
-    return _instanceIds;
-  }
+  std::vector<HiCR::L0::Instance::instanceId_t> getInstanceIds() const { return _instanceIds; }
 
   /**
    * Returns the internal HiCR instance object for the caller instance
@@ -225,10 +221,7 @@ class Instance
    *
    * @param[in] errorCode The error code to produce upon abort
    */
-  void _abort(const int errorCode = 0)
-  {
-    _instanceManager->abort(errorCode);
-  }
+  void _abort(const int errorCode = 0) { _instanceManager->abort(errorCode); }
 
   /**
    *  The ids of other instances, sorted by Id

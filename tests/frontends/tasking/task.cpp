@@ -148,7 +148,10 @@ TEST(Task, Events)
   // Creating callbacks
   auto onExecuteCallback = [&onExecuteHasRun](HiCR::tasking::Task *t) { onExecuteHasRun = true; };
   auto onSuspendCallback = [&onSuspendHasRun](HiCR::tasking::Task *t) { onSuspendHasRun = true; };
-  auto onFinishCallback  = [&onFinishHasRun](HiCR::tasking::Task *t) { onFinishHasRun = true; delete t ; };
+  auto onFinishCallback  = [&onFinishHasRun](HiCR::tasking::Task *t) {
+    onFinishHasRun = true;
+    delete t;
+  };
 
   // Creating event map
   HiCR::tasking::Task::taskEventMap_t eventMap;
@@ -218,7 +221,14 @@ TEST(Task, Events)
   EXPECT_FALSE(onFinishHasRun);
 
   // Freeing memory
-  EXPECT_EXIT({ delete t; fprintf(stderr, "Delete worked"); exit(0); }, ::testing::ExitedWithCode(0), "Delete worked");
+  EXPECT_EXIT(
+    {
+      delete t;
+      fprintf(stderr, "Delete worked");
+      exit(0);
+    },
+    ::testing::ExitedWithCode(0),
+    "Delete worked");
 
   // Creating a task with an event map to make sure the functions are ran
   t = new HiCR::tasking::Task(1, u);

@@ -104,8 +104,7 @@ int main(int argc, char *argv[])
   while (allDataObjectsReleased == false)
   {
     allDataObjectsReleased = true;
-    for (auto &dataObject : dataObjects)
-      allDataObjectsReleased &= dataObject->release();
+    for (auto &dataObject : dataObjects) allDataObjectsReleased &= dataObject->release();
   }
 
   // Finalizing runtime
