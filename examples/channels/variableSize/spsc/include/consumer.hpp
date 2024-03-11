@@ -85,6 +85,7 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.deregisterGlobalMemorySlot(globalSizesBufferSlot);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBufferForCounts);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBufferForPayloads);
+  
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(payloadBufferSlot);
   memoryManager.freeLocalMemorySlot(sizesBufferSlot);

@@ -67,6 +67,5 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffer);
 
   // Freeing up local memory
-  // Currently investigating why following line causes issue #33
-  // memoryManager.freeLocalMemorySlot(coordinationBuffer);
+  memoryManager.freeLocalMemorySlot(coordinationBuffer);
 }
