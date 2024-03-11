@@ -47,7 +47,9 @@ class MemorySpace final : public HiCR::L0::MemorySpace
    * \param device The ascend device in which this memory space was detected
    * \param size The size of this memory space
    */
-  MemorySpace(const std::weak_ptr<ascend::L0::Device> device, const size_t size) : HiCR::L0::MemorySpace(size), _device(device){};
+  MemorySpace(const std::weak_ptr<ascend::L0::Device> device, const size_t size)
+    : HiCR::L0::MemorySpace(size),
+      _device(device){};
 
   /**
    * Default destructor
@@ -61,7 +63,8 @@ class MemorySpace final : public HiCR::L0::MemorySpace
    *
    * \note Backwards reference to device is null when deserializing. Do not try to use this class for any operations.
    */
-  MemorySpace(const nlohmann::json &input) : HiCR::L0::MemorySpace()
+  MemorySpace(const nlohmann::json &input)
+    : HiCR::L0::MemorySpace()
   {
     deserialize(input);
   }

@@ -40,7 +40,9 @@ class ComputeManager : public HiCR::L1::ComputeManager
   /**
    * The constructor is employed to reserve memory required for hwloc
    */
-  ComputeManager() : HiCR::L1::ComputeManager() {}
+  ComputeManager()
+    : HiCR::L1::ComputeManager()
+  {}
 
   /**
    * The constructor is employed to free memory required for hwloc

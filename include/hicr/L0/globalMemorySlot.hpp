@@ -50,9 +50,10 @@ class GlobalMemorySlot
   GlobalMemorySlot(
     const tag_t                                globalTag             = 0,
     const globalKey_t                          globalKey             = 0,
-    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : _globalTag(globalTag),
-                                                                                  _globalKey(globalKey),
-                                                                                  _sourceLocalMemorySlot(sourceLocalMemorySlot)
+    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr)
+    : _globalTag(globalTag),
+      _globalKey(globalKey),
+      _sourceLocalMemorySlot(sourceLocalMemorySlot)
   {
   }
 

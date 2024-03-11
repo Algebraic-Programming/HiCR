@@ -40,7 +40,9 @@ class ComputeManager : public HiCR::backend::host::L1::ComputeManager
 {
   public:
 
-  ComputeManager() : HiCR::backend::host::L1::ComputeManager() {}
+  ComputeManager()
+    : HiCR::backend::host::L1::ComputeManager()
+  {}
 
   /**
    * The constructor is employed to free memory required for hwloc

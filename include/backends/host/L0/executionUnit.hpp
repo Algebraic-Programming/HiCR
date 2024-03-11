@@ -40,7 +40,9 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    *
    * \param fc A replicable C++ function to run in this execution unit
    */
-  ExecutionUnit(Coroutine::coroutineFc_t fc) : HiCR::L0::ExecutionUnit(), _fc(fc){};
+  ExecutionUnit(Coroutine::coroutineFc_t fc)
+    : HiCR::L0::ExecutionUnit(),
+      _fc(fc){};
   ExecutionUnit() = delete;
 
   /**

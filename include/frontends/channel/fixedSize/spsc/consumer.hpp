@@ -58,9 +58,10 @@ class Consumer final : public channel::fixedSize::Base
            std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBuffer,
            const size_t                          tokenSize,
-           const size_t                          capacity) : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-                                    _tokenBuffer(tokenBuffer),
-                                    _producerCoordinationBuffer(producerCoordinationBuffer)
+           const size_t                          capacity)
+    : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+      _tokenBuffer(tokenBuffer),
+      _producerCoordinationBuffer(producerCoordinationBuffer)
 
   {
     // Checking whether the memory slot is local. This backend only supports local data transfers

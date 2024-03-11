@@ -183,9 +183,10 @@ class Base
   Base(L1::CommunicationManager            &communicationManager,
        std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer,
        const size_t                         tokenSize,
-       const size_t                         capacity) : _communicationManager(&communicationManager),
-                                _coordinationBuffer(coordinationBuffer),
-                                _tokenSize(tokenSize)
+       const size_t                         capacity)
+    : _communicationManager(&communicationManager),
+      _coordinationBuffer(coordinationBuffer),
+      _tokenSize(tokenSize)
   {
     if (tokenSize == 0) HICR_THROW_LOGIC("Attempting to create a channel with token size 0.\n");
     if (capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");

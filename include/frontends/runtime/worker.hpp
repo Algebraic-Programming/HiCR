@@ -44,7 +44,9 @@ class Worker final : public runtime::Instance
          HiCR::L1::CommunicationManager           &communicationManager,
          HiCR::L1::MemoryManager                  &memoryManager,
          std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
-         HiCR::MachineModel                       &machineModel) : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel) {}
+         HiCR::MachineModel                       &machineModel)
+    : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel)
+  {}
   Worker()  = delete;
   ~Worker() = default;
 

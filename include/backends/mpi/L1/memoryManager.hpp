@@ -42,7 +42,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Constructor for the mpi backend.
    */
-  MemoryManager() : HiCR::L1::MemoryManager() {}
+  MemoryManager()
+    : HiCR::L1::MemoryManager()
+  {}
   ~MemoryManager() = default;
 
   /**

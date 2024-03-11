@@ -53,13 +53,14 @@ class MemoryKernel final : public Kernel
     const size_t                               destinationOffset,
     std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
     const size_t                               sourceOffset,
-    size_t                                     size) : ascend::Kernel(),
-                   _dst(destination),
-                   _src(source),
-                   _dstOffset(destinationOffset),
-                   _srcOffset(sourceOffset),
-                   _size(size),
-                   _commManager(commManager){};
+    size_t                                     size)
+    : ascend::Kernel(),
+      _dst(destination),
+      _src(source),
+      _dstOffset(destinationOffset),
+      _srcOffset(sourceOffset),
+      _size(size),
+      _commManager(commManager){};
 
   MemoryKernel() = delete;
 

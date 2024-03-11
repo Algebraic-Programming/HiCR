@@ -64,11 +64,12 @@ class ComputeResource : public HiCR::L0::ComputeResource
   ComputeResource(const logicalProcessorId_t                                       logicalProcessorId,
                   const physicalProcessorId_t                                      physicalProcessorId,
                   const numaAffinity_t                                             numaAffinity,
-                  const std::unordered_set<std::shared_ptr<backend::host::Cache>> &caches) : HiCR::L0::ComputeResource(),
-                                                                                             _logicalProcessorId(logicalProcessorId),
-                                                                                             _physicalProcessorId(physicalProcessorId),
-                                                                                             _numaAffinity(numaAffinity),
-                                                                                             _caches(caches){};
+                  const std::unordered_set<std::shared_ptr<backend::host::Cache>> &caches)
+    : HiCR::L0::ComputeResource(),
+      _logicalProcessorId(logicalProcessorId),
+      _physicalProcessorId(physicalProcessorId),
+      _numaAffinity(numaAffinity),
+      _caches(caches){};
   ~ComputeResource() = default;
 
   /**

@@ -52,7 +52,10 @@ class Device final : public HiCR::L0::Device
   Device(
     const deviceIdentifier_t     id,
     const computeResourceList_t &computeResources,
-    const memorySpaceList_t     &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(std::make_unique<aclrtContext>())
+    const memorySpaceList_t     &memorySpaces)
+    : HiCR::L0::Device(computeResources, memorySpaces),
+      _id(id),
+      _context(std::make_unique<aclrtContext>())
   {
     // create ACL context for executing operations on the given device
     aclError err = aclrtCreateContext(_context.get(), id);
@@ -62,7 +65,9 @@ class Device final : public HiCR::L0::Device
   /**
    * Default constructor for resource requesting
    */
-  Device() : HiCR::L0::Device() {}
+  Device()
+    : HiCR::L0::Device()
+  {}
 
   /**
    * Deserializing constructor
@@ -72,7 +77,8 @@ class Device final : public HiCR::L0::Device
    *
    * @param[in] input A JSON-encoded serialized Ascend device information
    */
-  Device(const nlohmann::json &input) : HiCR::L0::Device()
+  Device(const nlohmann::json &input)
+    : HiCR::L0::Device()
   {
     deserialize(input);
   }

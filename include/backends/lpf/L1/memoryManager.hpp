@@ -59,7 +59,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * On the other hand, the resize message queue could also be locally
    * made, and placed elsewhere.
    */
-  MemoryManager(lpf_t lpf) : HiCR::L1::MemoryManager(), _lpf(lpf) {}
+  MemoryManager(lpf_t lpf)
+    : HiCR::L1::MemoryManager(),
+      _lpf(lpf)
+  {}
 
   /**
    * Associates a pointer locally-allocated manually and creates a local memory slot with it

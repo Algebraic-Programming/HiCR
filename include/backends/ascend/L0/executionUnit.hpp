@@ -43,7 +43,9 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    *
    * \param kernelOperations kernels to execute
    */
-  ExecutionUnit(const std::vector<ascend::Kernel *> &kernelOperations) : HiCR::L0::ExecutionUnit(), _kernels(kernelOperations){};
+  ExecutionUnit(const std::vector<ascend::Kernel *> &kernelOperations)
+    : HiCR::L0::ExecutionUnit(),
+      _kernels(kernelOperations){};
   ExecutionUnit() = delete;
 
   /**

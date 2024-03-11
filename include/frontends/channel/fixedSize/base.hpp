@@ -58,7 +58,8 @@ class Base : public channel::Base
   Base(L1::CommunicationManager            &communicationManager,
        std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer,
        const size_t                         tokenSize,
-       const size_t                         capacity) : channel::Base(communicationManager, coordinationBuffer, tokenSize, capacity)
+       const size_t                         capacity)
+    : channel::Base(communicationManager, coordinationBuffer, tokenSize, capacity)
   {
   }
 };

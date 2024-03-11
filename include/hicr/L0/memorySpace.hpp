@@ -145,7 +145,8 @@ class MemorySpace
    *
    * \param[in] size The size of the memory space to create
    */
-  MemorySpace(const size_t size) : _size(size){};
+  MemorySpace(const size_t size)
+    : _size(size){};
 
   /**
    * Default constructor for deserialization purposes

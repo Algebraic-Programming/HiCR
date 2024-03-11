@@ -58,8 +58,9 @@ class Consumer final : public channel::fixedSize::Base
            std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBuffer,
            const size_t                          tokenSize,
-           const size_t                          capacity) : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-                                    _consumerCoordinationBuffer(consumerCoordinationBuffer)
+           const size_t                          capacity)
+    : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+      _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {
   }
   ~Consumer() = default;

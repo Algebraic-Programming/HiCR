@@ -66,7 +66,9 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    *
    * \param[in] comm The MPI subcommunicator to use in instance detection and communication
    */
-  InstanceManager(MPI_Comm comm) : HiCR::L1::InstanceManager(), _comm(comm)
+  InstanceManager(MPI_Comm comm)
+    : HiCR::L1::InstanceManager(),
+      _comm(comm)
   {
     // Getting current rank within and size of communicator
     MPI_Comm_size(_comm, &_size);

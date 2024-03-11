@@ -41,9 +41,10 @@ class CircularBuffer
    * @param[in] headAdvanceCounter A pointer to storage for the head advance counter
    * @param[in] tailAdvanceCounter A pointer to storage fot the tail advance counter
    */
-  CircularBuffer(size_t capacity, __volatile__ size_t *headAdvanceCounter, __volatile__ size_t *tailAdvanceCounter) : _capacity(capacity),
-                                                                                                                      _headAdvanceCounter(headAdvanceCounter),
-                                                                                                                      _tailAdvanceCounter(tailAdvanceCounter)
+  CircularBuffer(size_t capacity, __volatile__ size_t *headAdvanceCounter, __volatile__ size_t *tailAdvanceCounter)
+    : _capacity(capacity),
+      _headAdvanceCounter(headAdvanceCounter),
+      _tailAdvanceCounter(tailAdvanceCounter)
   {
   }
 

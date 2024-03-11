@@ -46,7 +46,9 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    *
    * \param device The Ascend device that contains this compute resource
    */
-  ComputeResource(const std::shared_ptr<ascend::L0::Device> device) : HiCR::L0::ComputeResource(), _device(device){};
+  ComputeResource(const std::shared_ptr<ascend::L0::Device> device)
+    : HiCR::L0::ComputeResource(),
+      _device(device){};
 
   /**
    * Default destructor
@@ -60,7 +62,8 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    *
    * \note Backwards reference to device is null when deserializing. Do not try to use this class for any operations.
    */
-  ComputeResource(const nlohmann::json &input) : HiCR::L0::ComputeResource()
+  ComputeResource(const nlohmann::json &input)
+    : HiCR::L0::ComputeResource()
   {
     deserialize(input);
   }

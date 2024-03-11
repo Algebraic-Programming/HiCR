@@ -45,7 +45,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] topology An HWloc topology object that can be used to query the available memory resources
    */
-  MemoryManager(const hwloc_topology_t *topology) : HiCR::L1::MemoryManager(), _topology{topology} {}
+  MemoryManager(const hwloc_topology_t *topology)
+    : HiCR::L1::MemoryManager(),
+      _topology{topology}
+  {}
   ~MemoryManager() = default;
 
   /**

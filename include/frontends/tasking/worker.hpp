@@ -91,7 +91,8 @@ class Worker
    *
    * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
    */
-  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
+  Worker(HiCR::L1::ComputeManager *computeManager)
+    : _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
   {
     // Checking the passed compute manager is of a supported type
     if (_computeManager == NULL) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");

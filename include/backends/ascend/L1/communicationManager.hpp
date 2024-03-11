@@ -62,7 +62,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * Constructor for the ascend communication manager class for the ascend backend.
    */
-  CommunicationManager() : HiCR::L1::CommunicationManager(){};
+  CommunicationManager()
+    : HiCR::L1::CommunicationManager(){};
   ~CommunicationManager() = default;
 
   /**

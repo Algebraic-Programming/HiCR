@@ -101,7 +101,10 @@ class Task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(const label_t label, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskEventMap_t *eventMap = NULL) : _label(label), _executionUnit(executionUnit), _eventMap(eventMap){};
+  __USED__ Task(const label_t label, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskEventMap_t *eventMap = NULL)
+    : _label(label),
+      _executionUnit(executionUnit),
+      _eventMap(eventMap){};
 
   /**
    * Function to return a pointer to the currently executing task from a global context

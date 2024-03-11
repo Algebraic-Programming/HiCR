@@ -43,7 +43,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Constructor for the ascend memory manager class for the ascend backend.
    */
-  MemoryManager() : HiCR::L1::MemoryManager() {}
+  MemoryManager()
+    : HiCR::L1::MemoryManager()
+  {}
   ~MemoryManager() = default;
 
   private:

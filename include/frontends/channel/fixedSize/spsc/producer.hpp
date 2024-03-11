@@ -60,7 +60,8 @@ class Producer final : public channel::fixedSize::Base
            const size_t                          capacity)
     : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(tokenBuffer),
-      _producerCoordinationBuffer(producerCoordinationBuffer) {}
+      _producerCoordinationBuffer(producerCoordinationBuffer)
+  {}
 
   ~Producer() = default;
 

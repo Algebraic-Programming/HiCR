@@ -43,9 +43,10 @@ class DataObject final
    * @param[in] id Identifier for the new data object
    * @param[in] instanceId Identifier of the instance owning the data object
    */
-  DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId) : _buffer(buffer),
-                                                                                                                            _size(size),
-                                                                                                                            _id(id){};
+  DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId)
+    : _buffer(buffer),
+      _size(size),
+      _id(id){};
   ~DataObject() = default;
 
   /**

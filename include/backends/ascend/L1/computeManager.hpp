@@ -43,7 +43,8 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   /**
    * Constructor for the Compute Manager class for the ascend backend
    */
-  ComputeManager() : HiCR::L1::ComputeManager(){};
+  ComputeManager()
+    : HiCR::L1::ComputeManager(){};
   ~ComputeManager() = default;
 
   /**

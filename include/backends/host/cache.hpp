@@ -45,11 +45,12 @@ class Cache
    * @param[in] shared Indicates whether this cache is shared among others
    * @param[in] size The size of the detected cache
    */
-  Cache(const cacheLevel_t level, const std::string &type, const size_t size, const size_t lineSize, const bool shared) : _level(level),
-                                                                                                                          _type(type),
-                                                                                                                          _cacheSize(size),
-                                                                                                                          _lineSize(lineSize),
-                                                                                                                          _shared(shared)
+  Cache(const cacheLevel_t level, const std::string &type, const size_t size, const size_t lineSize, const bool shared)
+    : _level(level),
+      _type(type),
+      _cacheSize(size),
+      _lineSize(lineSize),
+      _shared(shared)
   {
   }
 

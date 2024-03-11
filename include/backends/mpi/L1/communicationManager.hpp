@@ -46,7 +46,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] comm The MPI subcommunicator to use in the communication operations in this backend.
    * If not specified, it will use MPI_COMM_WORLD
    */
-  CommunicationManager(MPI_Comm comm = MPI_COMM_WORLD) : HiCR::L1::CommunicationManager(), _comm(comm)
+  CommunicationManager(MPI_Comm comm = MPI_COMM_WORLD)
+    : HiCR::L1::CommunicationManager(),
+      _comm(comm)
   {
     MPI_Comm_size(_comm, &_size);
     MPI_Comm_rank(_comm, &_rank);

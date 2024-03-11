@@ -89,7 +89,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource Represents the compute resource (core) affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : HiCR::L0::ProcessingUnit(computeResource)
+  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+    : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the MPI instance
     auto c = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(computeResource);

@@ -41,7 +41,8 @@ class Core final
    * @param[in] configPath Path to the configuration file to use for ACL. NULL sets a default configuration.
    *
    */
-  Core(const char *configPath = NULL) : _configPath(configPath){};
+  Core(const char *configPath = NULL)
+    : _configPath(configPath){};
 
   /**
    * Default destructor

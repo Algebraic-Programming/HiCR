@@ -64,12 +64,13 @@ class Instance
     HiCR::L1::CommunicationManager           &communicationManager,
     HiCR::L1::MemoryManager                  &memoryManager,
     std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
-    HiCR::MachineModel                       &machineModel) : _HiCRInstance(instanceManager.getCurrentInstance()),
-                                        _instanceManager(&instanceManager),
-                                        _communicationManager(&communicationManager),
-                                        _memoryManager(&memoryManager),
-                                        _topologyManagers(topologyManagers),
-                                        _machineModel(&machineModel)
+    HiCR::MachineModel                       &machineModel)
+    : _HiCRInstance(instanceManager.getCurrentInstance()),
+      _instanceManager(&instanceManager),
+      _communicationManager(&communicationManager),
+      _memoryManager(&memoryManager),
+      _topologyManagers(topologyManagers),
+      _machineModel(&machineModel)
   {
     queryInstanceIds();
   }

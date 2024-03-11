@@ -46,7 +46,10 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    *
    * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
-  TopologyManager(hwloc_topology_t *topology) : HiCR::L1::TopologyManager(), _topology(topology) {}
+  TopologyManager(hwloc_topology_t *topology)
+    : HiCR::L1::TopologyManager(),
+      _topology(topology)
+  {}
 
   /**
    * The constructor is employed to free memory required for hwloc

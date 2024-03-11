@@ -81,7 +81,8 @@ class ProcessingUnit
    *
    * \param computeResource The instance of the compute resource to instantiate, as indicated by the backend
    */
-  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : _computeResource(computeResource){};
+  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+    : _computeResource(computeResource){};
 
   virtual ~ProcessingUnit() = default;
 

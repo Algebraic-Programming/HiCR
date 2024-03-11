@@ -43,7 +43,8 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    *
    * \param executionUnit execution unit containing the kernel to execute
    */
-  ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) : HiCR::L0::ExecutionState(executionUnit)
+  ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit)
+    : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_pointer_cast<ascend::L0::ExecutionUnit>(executionUnit);

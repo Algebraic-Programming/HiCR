@@ -82,7 +82,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * On the other hand, the resize message queue could also be locally
    * made, and placed elsewhere.
    */
-  CommunicationManager(size_t size, size_t rank, lpf_t lpf) : HiCR::L1::CommunicationManager(), _size(size), _rank(rank), _lpf(lpf), _localSwap(0ULL), _localSwapSlot(LPF_INVALID_MEMSLOT)
+  CommunicationManager(size_t size, size_t rank, lpf_t lpf)
+    : HiCR::L1::CommunicationManager(),
+      _size(size),
+      _rank(rank),
+      _lpf(lpf),
+      _localSwap(0ULL),
+      _localSwapSlot(LPF_INVALID_MEMSLOT)
   {
   }
 

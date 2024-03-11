@@ -57,8 +57,9 @@ class Base : public channel::Base
        std::shared_ptr<L0::LocalMemorySlot> coordinationBufferForCounts,
        std::shared_ptr<L0::LocalMemorySlot> coordinationBufferForPayloads,
        const size_t                         capacity,
-       const size_t                         payloadCapacity) : channel::Base(communicationManager, coordinationBufferForCounts, sizeof(size_t), capacity),
-                                       _coordinationBufferForPayloads(coordinationBufferForPayloads)
+       const size_t                         payloadCapacity)
+    : channel::Base(communicationManager, coordinationBufferForCounts, sizeof(size_t), capacity),
+      _coordinationBufferForPayloads(coordinationBufferForPayloads)
   {
     if (capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
 

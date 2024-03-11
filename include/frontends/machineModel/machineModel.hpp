@@ -94,8 +94,9 @@ class MachineModel
    * @param[in] instanceManager Specifies the instance manager to detect and create instances and send RPC requests
    * @param[in] topologyManagers Specifies the topology managers to employ for topology detection and serialization
    */
-  MachineModel(HiCR::L1::InstanceManager &instanceManager, std::vector<HiCR::L1::TopologyManager *> &topologyManagers) : _instanceManager(&instanceManager),
-                                                                                                                         _topologyManagers(topologyManagers)
+  MachineModel(HiCR::L1::InstanceManager &instanceManager, std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
+    : _instanceManager(&instanceManager),
+      _topologyManagers(topologyManagers)
   {
     // Registering Topology parsing function as callable RPC
     _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [&]() { submitTopology(&instanceManager, _topologyManagers); });

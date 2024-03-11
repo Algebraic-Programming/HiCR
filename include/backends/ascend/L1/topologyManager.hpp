@@ -41,7 +41,9 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * Default constructor
    */
-  TopologyManager() : HiCR::L1::TopologyManager() {}
+  TopologyManager()
+    : HiCR::L1::TopologyManager()
+  {}
 
   /**
    * Default destructor

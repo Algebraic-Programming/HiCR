@@ -60,7 +60,9 @@ class Runtime final
    * @param[in] pargc Pointer to the argc argument count
    * @param[in] pargv Pointer to the argc argument char arrays
    */
-  Runtime(int *pargc, char ***pargv) : _pargc(pargc), _pargv(pargv)
+  Runtime(int *pargc, char ***pargv)
+    : _pargc(pargc),
+      _pargv(pargv)
   {
 /////////////////////////// Detecting instance manager
 

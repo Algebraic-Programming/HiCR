@@ -51,7 +51,8 @@ class Dispatcher
    *
    * @param[in] pullFc The function to call for obraining (pulling) new tasks. Should return NULL if no tasks are to be executed.
    */
-  __USED__ Dispatcher(const pullFunction_t pullFc) : _pullFc(pullFc){};
+  __USED__ Dispatcher(const pullFunction_t pullFc)
+    : _pullFc(pullFc){};
   ~Dispatcher() = default;
 
   /**

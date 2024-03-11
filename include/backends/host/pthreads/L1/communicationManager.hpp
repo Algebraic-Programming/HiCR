@@ -47,7 +47,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
-  CommunicationManager(const size_t fenceCount = 1) : HiCR::L1::CommunicationManager()
+  CommunicationManager(const size_t fenceCount = 1)
+    : HiCR::L1::CommunicationManager()
   {
     // Initializing barrier for fence operation
     pthread_barrier_init(&_barrier, NULL, fenceCount);

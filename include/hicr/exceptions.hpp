@@ -88,7 +88,9 @@ class LogicException : public std::logic_error
    *
    * @param[in] message Explanation message for this exception
    */
-  __USED__ LogicException(const char *const message) : logic_error(message) {}
+  __USED__ LogicException(const char *const message)
+    : logic_error(message)
+  {}
 };
 
 /**
@@ -112,7 +114,9 @@ class RuntimeException : public std::runtime_error
    *
    * @param[in] message Explanation message for this exception
    */
-  __USED__ RuntimeException(const char *const message) : runtime_error(message) {}
+  __USED__ RuntimeException(const char *const message)
+    : runtime_error(message)
+  {}
 };
 
 /**
@@ -130,7 +134,9 @@ class FatalException : public std::runtime_error
    *
    * @param[in] message  Explanation message for this exception
    */
-  __USED__ FatalException(const char *const message) : runtime_error(message) {}
+  __USED__ FatalException(const char *const message)
+    : runtime_error(message)
+  {}
 };
 
 /**

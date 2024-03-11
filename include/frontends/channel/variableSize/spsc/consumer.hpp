@@ -112,15 +112,16 @@ class Consumer final : public variableSize::Base
     std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForPayloads,
     const size_t                          payloadCapacity,
     const size_t                          payloadSize,
-    const size_t                          capacity) : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
-                             _pushedTokens(0),
-                             _pushedPayloads(0),
-                             _pushedPayloadBytes(0),
-                             _payloadBuffer(payloadBuffer),
-                             _payloadSize(payloadSize),
-                             _tokenBuffer(tokenBuffer),
-                             _producerCoordinationBufferForCounts(producerCoordinationBufferForCounts),
-                             _producerCoordinationBufferForPayloads(producerCoordinationBufferForPayloads)
+    const size_t                          capacity)
+    : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
+      _pushedTokens(0),
+      _pushedPayloads(0),
+      _pushedPayloadBytes(0),
+      _payloadBuffer(payloadBuffer),
+      _payloadSize(payloadSize),
+      _tokenBuffer(tokenBuffer),
+      _producerCoordinationBufferForCounts(producerCoordinationBufferForCounts),
+      _producerCoordinationBufferForPayloads(producerCoordinationBufferForPayloads)
   {
     assert(internalCoordinationBufferForCounts != nullptr);
     assert(internalCoordinationBufferForPayloads != nullptr);

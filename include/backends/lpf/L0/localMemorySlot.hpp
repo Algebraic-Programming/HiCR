@@ -53,7 +53,9 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
     lpf_memslot_t                          lpfMemSlot,
     void *const                            pointer,
     const size_t                           size,
-    std::shared_ptr<HiCR::L0::MemorySpace> memorySpace) : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace), _lpfMemSlot(lpfMemSlot)
+    std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
+    : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
+      _lpfMemSlot(lpfMemSlot)
   {
   }
 
