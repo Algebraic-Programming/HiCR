@@ -50,9 +50,9 @@ class Device final : public HiCR::L0::Device
    * \param memorySpaces The memory spaces associated to this device (DRAM + other use-specific or high-bandwidth memories)
    */
   Device(
-    const deviceIdentifier_t id,
+    const deviceIdentifier_t     id,
     const computeResourceList_t &computeResources,
-    const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(std::make_unique<aclrtContext>())
+    const memorySpaceList_t     &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(std::make_unique<aclrtContext>())
   {
     // create ACL context for executing operations on the given device
     aclError err = aclrtCreateContext(_context.get(), id);

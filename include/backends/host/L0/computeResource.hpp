@@ -61,9 +61,9 @@ class ComputeResource : public HiCR::L0::ComputeResource
    * \param[in] caches The set of caches contained to or accessible by this core
    * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
-  ComputeResource(const logicalProcessorId_t logicalProcessorId,
-                  const physicalProcessorId_t physicalProcessorId,
-                  const numaAffinity_t numaAffinity,
+  ComputeResource(const logicalProcessorId_t                                       logicalProcessorId,
+                  const physicalProcessorId_t                                      physicalProcessorId,
+                  const numaAffinity_t                                             numaAffinity,
                   const std::unordered_set<std::shared_ptr<backend::host::Cache>> &caches) : HiCR::L0::ComputeResource(),
                                                                                              _logicalProcessorId(logicalProcessorId),
                                                                                              _physicalProcessorId(physicalProcessorId),
@@ -98,13 +98,13 @@ class ComputeResource : public HiCR::L0::ComputeResource
   __USED__ inline void serializeImpl(nlohmann::json &output) const override
   {
     // Writing core's information into the serialized object
-    output["Logical Processor Id"] = _logicalProcessorId;
+    output["Logical Processor Id"]  = _logicalProcessorId;
     output["Physical Processor Id"] = _physicalProcessorId;
-    output["NUMA Affinity"] = _numaAffinity;
+    output["NUMA Affinity"]         = _numaAffinity;
 
     // Writing Cache information
     std::string cachesKey = "Caches";
-    output[cachesKey] = std::vector<nlohmann::json>();
+    output[cachesKey]     = std::vector<nlohmann::json>();
     for (const auto &cache : _caches) output[cachesKey] += cache->serialize();
   }
 

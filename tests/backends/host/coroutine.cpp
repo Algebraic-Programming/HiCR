@@ -32,7 +32,7 @@ TEST(Coroutine, Construction)
 #define THREAD_COUNT 16
 
 // Storage for thread-local identification of running thread
-static pthread_key_t key;
+static pthread_key_t  key;
 static pthread_once_t key_once = PTHREAD_ONCE_INIT;
 
 // Declaring a barrier. It is important to make sure the two threads are alive while the coroutine is being used

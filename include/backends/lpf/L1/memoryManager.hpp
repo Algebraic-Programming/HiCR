@@ -78,7 +78,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     lpf_memslot_t lpfSlot = LPF_INVALID_MEMSLOT;
-    auto rc = lpf_register_local(_lpf, ptr, size, &lpfSlot);
+    auto          rc      = lpf_register_local(_lpf, ptr, size, &lpfSlot);
     if (rc != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Memory Manager: lpf_register_local failed");
 
     // Creating new memory slot object

@@ -48,12 +48,12 @@ class MemoryKernel final : public Kernel
    * \param size the number of bytes to copy
    */
   MemoryKernel(
-    ascend::L1::CommunicationManager *commManager,
+    ascend::L1::CommunicationManager          *commManager,
     std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-    const size_t destinationOffset,
+    const size_t                               destinationOffset,
     std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-    const size_t sourceOffset,
-    size_t size) : ascend::Kernel(),
+    const size_t                               sourceOffset,
+    size_t                                     size) : ascend::Kernel(),
                    _dst(destination),
                    _src(source),
                    _dstOffset(destinationOffset),

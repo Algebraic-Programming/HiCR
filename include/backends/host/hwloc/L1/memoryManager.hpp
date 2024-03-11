@@ -140,8 +140,8 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
     // Getting memory slot info
     const auto memorySlotBindingType = m->getBindingType();
-    const auto memorySlotPointer = m->getPointer();
-    const auto memorySlotSize = m->getSize();
+    const auto memorySlotPointer     = m->getPointer();
+    const auto memorySlotSize        = m->getSize();
 
     // If using strict binding, use hwloc_free to properly unmap the memory binding
     if (memorySlotBindingType == L0::LocalMemorySlot::binding_type::strict_binding)

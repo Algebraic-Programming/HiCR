@@ -316,7 +316,7 @@ class Runtime
     HiCR::tasking::initialize();
 
     _dispatcher = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); }); //
-    _eventMap = new HiCR::tasking::Task::taskEventMap_t();
+    _eventMap   = new HiCR::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events
     _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); }); //

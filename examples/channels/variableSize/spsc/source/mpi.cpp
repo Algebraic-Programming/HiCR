@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 
   // Getting MPI values
   int rankCount = 0;
-  int rankId = 0;
+  int rankId    = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rankId);
   MPI_Comm_size(MPI_COMM_WORLD, &rankCount);
 
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
   }
 
   // Instantiating backend
-  HiCR::backend::mpi::L1::MemoryManager m;
+  HiCR::backend::mpi::L1::MemoryManager        m;
   HiCR::backend::mpi::L1::CommunicationManager c(MPI_COMM_WORLD);
 
   // Creating HWloc topology object

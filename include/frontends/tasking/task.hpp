@@ -90,7 +90,7 @@ class Task
    */
   typedef std::queue<pendingOperationFunction_t> pendingOperationFunctionQueue_t;
 
-  Task() = delete;
+  Task()  = delete;
   ~Task() = default;
 
   /**

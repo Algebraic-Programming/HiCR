@@ -127,11 +127,11 @@ class Cache
     nlohmann::json output;
 
     // Getting Cache information
-    output["Size (Bytes)"] = getSize();
+    output["Size (Bytes)"]      = getSize();
     output["Line Size (Bytes)"] = getLineSize();
-    output["Level"] = getLevel();
-    output["Type"] = getType();
-    output["Shared"] = getShared();
+    output["Level"]             = getLevel();
+    output["Type"]              = getType();
+    output["Shared"]            = getShared();
 
     // Returning serialized information
     return output;

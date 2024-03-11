@@ -120,7 +120,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   {
     // Check if the event has been processed
     aclrtEventRecordedStatus status;
-    aclError err = aclrtQueryEventStatus(_syncEvent, &status);
+    aclError                 err = aclrtQueryEventStatus(_syncEvent, &status);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to query event status. err %d", err);
 
     // check the synchronization event status for stream completion

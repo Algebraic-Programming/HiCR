@@ -122,12 +122,12 @@ class Device
 
     // Serializing compute resource information
     std::string computeResourceKey = _HICR_DEVICE_COMPUTE_RESOURCES_KEY_;
-    output[computeResourceKey] = std::vector<nlohmann::json>();
+    output[computeResourceKey]     = std::vector<nlohmann::json>();
     for (const auto &computeResource : _computeResources) output[computeResourceKey] += computeResource->serialize();
 
     // Serializing memory space information
     std::string memorySpaceKey = _HICR_DEVICE_MEMORY_SPACES_KEY_;
-    output[memorySpaceKey] = std::vector<nlohmann::json>();
+    output[memorySpaceKey]     = std::vector<nlohmann::json>();
     for (const auto &memorySpace : _memorySpaces) output[memorySpaceKey] += memorySpace->serialize();
 
     // Returning serialized information

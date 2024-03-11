@@ -55,7 +55,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   auto memSpaces = d->getMemorySpaceList();
 
   // Creating LPF memory and communication managers
-  HiCR::backend::lpf::L1::MemoryManager m(lpf);
+  HiCR::backend::lpf::L1::MemoryManager        m(lpf);
   HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
 
   // Getting reference to the first memory space detected
@@ -94,12 +94,12 @@ int main(int argc, char **argv)
 
   lpf_args_t args;
   memset(&args, 0, sizeof(lpf_args_t));
-  args.input = &capacity;
-  args.input_size = sizeof(int);
-  args.output = nullptr;
+  args.input       = &capacity;
+  args.input_size  = sizeof(int);
+  args.output      = nullptr;
   args.output_size = 0;
-  args.f_size = 0;
-  args.f_symbols = nullptr;
+  args.f_size      = 0;
+  args.f_symbols   = nullptr;
   lpf_init_t init;
   CHECK(lpf_mpi_initialize_with_mpicomm(MPI_COMM_WORLD, &init));
   CHECK(lpf_hook(init, &spmd, args));

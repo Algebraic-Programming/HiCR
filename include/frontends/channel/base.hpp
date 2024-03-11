@@ -91,7 +91,7 @@ class Base
   {
     // Checking for correct size
     auto requiredSize = getCoordinationBufferSize();
-    auto size = coordinationBuffer->getSize();
+    auto size         = coordinationBuffer->getSize();
     if (size < requiredSize) HICR_THROW_LOGIC("Attempting to initialize coordination buffer size on a memory slot (%lu) smaller than the required size (%lu).\n", size, requiredSize);
 
     // Getting actual buffer of the coordination buffer
@@ -180,10 +180,10 @@ class Base
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(L1::CommunicationManager &communicationManager,
+  Base(L1::CommunicationManager            &communicationManager,
        std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer,
-       const size_t tokenSize,
-       const size_t capacity) : _communicationManager(&communicationManager),
+       const size_t                         tokenSize,
+       const size_t                         capacity) : _communicationManager(&communicationManager),
                                 _coordinationBuffer(coordinationBuffer),
                                 _tokenSize(tokenSize)
   {

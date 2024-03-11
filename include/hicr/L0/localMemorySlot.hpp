@@ -38,16 +38,16 @@ class LocalMemorySlot
    * \param[in] memorySpace Pointer to the memory space that this memory slot belongs to. NULL, if the memory slot is global (remote)
    */
   LocalMemorySlot(
-    void *const pointer,
-    const size_t size,
+    void *const                            pointer,
+    const size_t                           size,
     std::shared_ptr<HiCR::L0::MemorySpace> memorySpace = NULL) : _pointer(pointer),
                                                                  _size(size),
                                                                  _memorySpace(memorySpace)
   {
     _messagesRecvStorage = 0;
     _messagesSentStorage = 0;
-    _messagesRecv = &_messagesRecvStorage;
-    _messagesSent = &_messagesSentStorage;
+    _messagesRecv        = &_messagesRecvStorage;
+    _messagesSent        = &_messagesSentStorage;
   }
 
   /**

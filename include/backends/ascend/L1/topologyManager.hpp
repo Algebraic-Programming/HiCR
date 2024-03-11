@@ -161,7 +161,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    */
   __USED__ inline void setupInterDeviceCommunication(std::unordered_set<std::shared_ptr<ascend::L0::Device>> &ascendDeviceList)
   {
-    int32_t canAccessPeer = 0;
+    int32_t  canAccessPeer = 0;
     aclError err;
 
     // enable communication among each pair of ascend cards

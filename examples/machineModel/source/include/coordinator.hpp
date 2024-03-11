@@ -201,7 +201,7 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string
 {
   // Reading from machine model file
   std::string machineModelRaw;
-  auto status = loadStringFromFile(machineModelRaw, machineModelFilePath);
+  auto        status = loadStringFromFile(machineModelRaw, machineModelFilePath);
   if (status == false)
   {
     fprintf(stderr, "could not read from machine model file: '%s'\n", machineModelFilePath.c_str());

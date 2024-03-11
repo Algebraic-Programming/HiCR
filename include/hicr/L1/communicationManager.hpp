@@ -113,7 +113,7 @@ class CommunicationManager
   __USED__ inline void deregisterGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
-    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Locking access to prevent concurrency issues
@@ -329,7 +329,7 @@ class CommunicationManager
   __USED__ inline bool acquireGlobalLock(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
-    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Checking whether the memory slot is correctly registered as global
@@ -350,7 +350,7 @@ class CommunicationManager
   __USED__ inline void releaseGlobalLock(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
-    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Locking access to prevent concurrency issues
@@ -394,7 +394,7 @@ class CommunicationManager
   __USED__ inline void registerGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot information
-    const auto tag = memorySlot->getGlobalTag();
+    const auto tag       = memorySlot->getGlobalTag();
     const auto globalKey = memorySlot->getGlobalKey();
 
     // Locking access to prevent concurrency issues

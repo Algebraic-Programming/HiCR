@@ -117,7 +117,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Use atomic MPI operation to increment counter
     const size_t one = 1;
-    size_t value;
+    size_t       value;
     // There is no datatype in MPI for size_t (the counters), but
     // MPI_AINT is supposed to be large enough and portable
     auto status = MPI_Fetch_and_op(&one, &value, MPI_AINT, rank, 0, MPI_SUM, *window);
@@ -292,7 +292,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Calculating respective offsets
     std::vector<int> perProcessSlotOffsets(_size);
-    int currentOffset = 0;
+    int              currentOffset = 0;
     for (int i = 0; i < _size; i++)
     {
       perProcessSlotOffsets[i] += currentOffset;
@@ -304,21 +304,21 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     for (const auto count : perProcessSlotCount) globalSlotCount += count;
 
     // Allocating storage for local and global memory slot sizes, keys and process id
-    std::vector<size_t> localSlotSizes(localSlotCount);
-    std::vector<size_t> globalSlotSizes(globalSlotCount);
+    std::vector<size_t>                                  localSlotSizes(localSlotCount);
+    std::vector<size_t>                                  globalSlotSizes(globalSlotCount);
     std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t> localSlotKeys(localSlotCount);
     std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t> globalSlotKeys(globalSlotCount);
-    std::vector<int> localSlotProcessId(localSlotCount);
-    std::vector<int> globalSlotProcessId(globalSlotCount);
+    std::vector<int>                                     localSlotProcessId(localSlotCount);
+    std::vector<int>                                     globalSlotProcessId(globalSlotCount);
 
     // Filling in the local size and keys storage
     for (size_t i = 0; i < memorySlots.size(); i++)
     {
-      const auto key = memorySlots[i].first;
+      const auto key        = memorySlots[i].first;
       const auto memorySlot = std::dynamic_pointer_cast<HiCR::backend::mpi::L0::LocalMemorySlot>(memorySlots[i].second);
       if (memorySlot.get() == nullptr) HICR_THROW_LOGIC("Trying to use MPI to promote a non-MPI local memory slot.");
-      localSlotSizes[i] = memorySlot->getSize();
-      localSlotKeys[i] = key;
+      localSlotSizes[i]     = memorySlot->getSize();
+      localSlotKeys[i]      = key;
       localSlotProcessId[i] = _rank;
     }
 
@@ -328,22 +328,22 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     MPI_Allgatherv(localSlotProcessId.data(), localSlotCount, MPI_INT, globalSlotProcessId.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_INT, _comm);
 
     // Now also creating pointer vector to remember local pointers, when required for memcpys
-    std::vector<void **> globalSlotPointers(globalSlotCount);
+    std::vector<void **>                                    globalSlotPointers(globalSlotCount);
     std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> globalSourceSlots(globalSlotCount);
-    size_t localPointerPos = 0;
+    size_t                                                  localPointerPos = 0;
     for (size_t i = 0; i < globalSlotPointers.size(); i++)
     {
       // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
       if (globalSlotProcessId[i] != _rank)
       {
         globalSlotPointers[i] = NULL;
-        globalSourceSlots[i] = NULL;
+        globalSourceSlots[i]  = NULL;
       }
       else
       {
         const auto memorySlot = memorySlots[localPointerPos++].second;
         globalSlotPointers[i] = &memorySlot->getPointer();
-        globalSourceSlots[i] = memorySlot;
+        globalSourceSlots[i]  = memorySlot;
       }
     }
 
@@ -358,7 +358,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         globalSourceSlots[i]);
 
       // Allocating MPI windows
-      memorySlot->getDataWindow() = std::make_unique<MPI_Win>();
+      memorySlot->getDataWindow()             = std::make_unique<MPI_Win>();
       memorySlot->getRecvMessageCountWindow() = std::make_unique<MPI_Win>();
       memorySlot->getSentMessageCountWindow() = std::make_unique<MPI_Win>();
 

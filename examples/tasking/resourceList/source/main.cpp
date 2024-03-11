@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
   // Getting work task count
   size_t workTaskCount = 100;
-  size_t iterations = 5000;
+  size_t iterations    = 5000;
   if (argc > 1) workTaskCount = std::atoi(argv[1]);
   if (argc > 2) iterations = std::atoi(argv[2]);
 

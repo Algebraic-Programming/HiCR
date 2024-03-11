@@ -71,17 +71,17 @@ class Producer final : public variableSize::Base
    * \param[in] payloadSize size in bytes of the datatype used for variable-sized messages
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager &communicationManager,
-           std::shared_ptr<L0::LocalMemorySlot> sizeInfoBuffer,
+  Producer(L1::CommunicationManager             &communicationManager,
+           std::shared_ptr<L0::LocalMemorySlot>  sizeInfoBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> payloadBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBufferForCounts,
-           std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBufferForPayloads,
+           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForCounts,
+           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForPayloads,
            std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForCounts,
            std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForPayloads,
-           const size_t payloadCapacity,
-           const size_t payloadSize,
-           const size_t capacity)
+           const size_t                          payloadCapacity,
+           const size_t                          payloadSize,
+           const size_t                          capacity)
     : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
       _payloadBuffer(payloadBuffer),
       _sizeInfoBuffer(sizeInfoBuffer),
@@ -179,7 +179,7 @@ class Producer final : public variableSize::Base
     if (n != 1) HICR_THROW_RUNTIME("HiCR currently has no implementation for n != 1 with push(sourceSlot, n) for variable size version.");
 
     // Make sure source slot is beg enough to satisfy the operation
-    size_t requiredBufferSize = sourceSlot->getSize();
+    size_t requiredBufferSize     = sourceSlot->getSize();
     size_t providedBufferCapacity = getPayloadCapacity();
 
     // Updating depth of token (message sizes) and payload buffers
@@ -187,7 +187,7 @@ class Producer final : public variableSize::Base
     if (getPayloadDepth() + requiredBufferSize > providedBufferCapacity) HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has depth (%lu). This would exceed capacity (%lu).\n", requiredBufferSize, getPayloadDepth(), providedBufferCapacity);
 
     size_t *sizeInfoBufferPtr = static_cast<size_t *>(_sizeInfoBuffer->getPointer());
-    sizeInfoBufferPtr[0] = requiredBufferSize;
+    sizeInfoBufferPtr[0]      = requiredBufferSize;
 
     // If the exchange buffer does not have n free slots, reject the operation
     if (getDepth() + 1 > _circularBuffer->getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", 1, getDepth(), _circularBuffer->getCapacity());
@@ -207,7 +207,7 @@ class Producer final : public variableSize::Base
      */
     if (requiredBufferSize + getPayloadHeadPosition() > getPayloadCapacity())
     {
-      size_t first_chunk = getPayloadCapacity() - getPayloadHeadPosition();
+      size_t first_chunk  = getPayloadCapacity() - getPayloadHeadPosition();
       size_t second_chunk = requiredBufferSize - first_chunk;
 
       // copy first part to end of buffer

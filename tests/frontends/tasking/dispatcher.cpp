@@ -31,7 +31,7 @@ TEST(Dispatcher, Construction)
 TEST(Dispatcher, Pull)
 {
   HiCR::tasking::Dispatcher d([]() { return (HiCR::tasking::Task *)NULL; });
-  HiCR::tasking::Task *t = NULL;
+  HiCR::tasking::Task      *t = NULL;
   EXPECT_NO_THROW(t = d.pull());
   EXPECT_EQ(t, (HiCR::tasking::Task *)NULL);
 }

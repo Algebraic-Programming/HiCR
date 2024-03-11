@@ -76,7 +76,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ static std::set<int> getAffinity()
   {
     std::set<int> affinity;
-    cpu_set_t cpuset;
+    cpu_set_t     cpuset;
     if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem obtaining affinity.");
     for (int i = 0; i < CPU_SETSIZE; i++)
       if (CPU_ISSET(i, &cpuset)) affinity.insert(i);
@@ -154,8 +154,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __USED__ inline static void catchSuspendResumeSignal(int sig)
   {
-    int status = 0;
-    int signalSet;
+    int      status = 0;
+    int      signalSet;
     sigset_t suspendSet;
 
     // Waiting for that signal to arrive

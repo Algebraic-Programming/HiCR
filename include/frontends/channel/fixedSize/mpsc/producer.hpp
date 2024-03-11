@@ -52,12 +52,12 @@ class Producer final : public fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager &communicationManager,
+  Producer(L1::CommunicationManager             &communicationManager,
            std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBuffer,
+           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBuffer,
-           const size_t tokenSize,
-           const size_t capacity) : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+           const size_t                          tokenSize,
+           const size_t                          capacity) : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
                                     _tokenBuffer(tokenBuffer),
                                     _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {

@@ -169,9 +169,9 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     auto hwlocObj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, numaDomainId);
 
     // Checking whther bound memory allocation and freeing is supported
-    auto bindingSupport = L0::LocalMemorySlot::binding_type::strict_non_binding;
-    size_t size = 1024;
-    auto ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+    auto   bindingSupport = L0::LocalMemorySlot::binding_type::strict_non_binding;
+    size_t size           = 1024;
+    auto   ptr            = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
     if (ptr != NULL)
     {
       // Attempting to free with hwloc

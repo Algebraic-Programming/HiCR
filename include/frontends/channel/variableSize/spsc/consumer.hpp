@@ -103,16 +103,16 @@ class Consumer final : public variableSize::Base
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
   Consumer(
-    L1::CommunicationManager &communicationManager,
+    L1::CommunicationManager             &communicationManager,
     std::shared_ptr<L0::GlobalMemorySlot> payloadBuffer,
     std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-    std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBufferForCounts,
-    std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBufferForPayloads,
+    std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForCounts,
+    std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForPayloads,
     std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForCounts,
     std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForPayloads,
-    const size_t payloadCapacity,
-    const size_t payloadSize,
-    const size_t capacity) : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
+    const size_t                          payloadCapacity,
+    const size_t                          payloadSize,
+    const size_t                          capacity) : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
                              _pushedTokens(0),
                              _pushedPayloads(0),
                              _pushedPayloadBytes(0),
@@ -192,10 +192,10 @@ class Consumer final : public variableSize::Base
     }
 
     std::array<size_t, 2> result;
-    result[0] = _circularBufferForPayloads->getTailPosition() % _circularBufferForPayloads->getCapacity();
+    result[0]              = _circularBufferForPayloads->getTailPosition() % _circularBufferForPayloads->getCapacity();
     size_t *tokenBufferPtr = static_cast<size_t *>(_tokenBuffer->getSourceLocalMemorySlot()->getPointer());
-    auto tokenPos = basePeek(pos);
-    result[1] = tokenBufferPtr[tokenPos];
+    auto    tokenPos       = basePeek(pos);
+    result[1]              = tokenBufferPtr[tokenPos];
 
     return result;
   }
@@ -214,8 +214,8 @@ class Consumer final : public variableSize::Base
     for (size_t i = 0; i < n; i++)
     {
       assert(i >= 0);
-      size_t pos = basePeek(i);
-      auto payloadSize = tokenBufferPtr[pos];
+      size_t pos         = basePeek(i);
+      auto   payloadSize = tokenBufferPtr[pos];
       payloadBytes += payloadSize;
     }
     return payloadBytes;
@@ -230,13 +230,13 @@ class Consumer final : public variableSize::Base
   {
     if (n == 0) return 0;
     size_t *tokenBufferPtr = static_cast<size_t *>(_tokenBuffer->getSourceLocalMemorySlot()->getPointer());
-    size_t payloadBytes = 0;
+    size_t  payloadBytes   = 0;
     for (size_t i = 0; i < n; i++)
     {
       size_t ind = _circularBuffer->getDepth() - 1 - i;
       assert(ind >= 0);
-      size_t pos = basePeek(ind);
-      auto payloadSize = tokenBufferPtr[pos];
+      size_t pos         = basePeek(ind);
+      auto   payloadSize = tokenBufferPtr[pos];
       payloadBytes += payloadSize;
     }
 
@@ -253,9 +253,9 @@ class Consumer final : public variableSize::Base
     _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
     _communicationManager->queryMemorySlotUpdates(_payloadBuffer);
 
-    size_t newPushedTokens = _tokenBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedTokens;
-    size_t newPushedPayloads = _payloadBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedPayloads;
-    auto newTokensAndPayloads = std::min(newPushedTokens, newPushedPayloads);
+    size_t newPushedTokens      = _tokenBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedTokens;
+    size_t newPushedPayloads    = _payloadBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedPayloads;
+    auto   newTokensAndPayloads = std::min(newPushedTokens, newPushedPayloads);
     _pushedTokens += newTokensAndPayloads;
     _circularBuffer->setHead(_pushedTokens);
     _pushedPayloads += newTokensAndPayloads;

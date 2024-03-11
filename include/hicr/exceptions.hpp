@@ -144,7 +144,7 @@ class FatalException : public std::runtime_error
  */
 __USED__ inline void throwException [[noreturn]] (const exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
 {
-  char *outstr = 0;
+  char   *outstr = 0;
   va_list ap;
   va_start(ap, format);
   auto res = vasprintf(&outstr, format, ap);

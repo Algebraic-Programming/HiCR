@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 
   // Allocating memory slots in different NUMA domains
   auto firstMemSpace = *memSpaces.begin();
-  auto input = m.allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE); // First NUMA Domain
+  auto input         = m.allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE); // First NUMA Domain
 
   // Initializing values in memory slot 1
   sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");

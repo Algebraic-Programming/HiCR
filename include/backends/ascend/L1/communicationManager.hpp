@@ -140,30 +140,30 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Storage for pointers and memcpy kind
     aclrtMemcpyKind memcpyKind;
-    auto srcPtr = source->getPointer();
-    auto dstPtr = destination->getPointer();
+    auto            srcPtr = source->getPointer();
+    auto            dstPtr = destination->getPointer();
 
     // Determining which device context to use for copying
     std::shared_ptr<ascend::L0::LocalMemorySlot> deviceMemSlot = NULL;
     if (srcType == deviceType_t::host && dstType == deviceType_t::host)
     {
       deviceMemSlot = NULL;
-      memcpyKind = ACL_MEMCPY_HOST_TO_HOST;
+      memcpyKind    = ACL_MEMCPY_HOST_TO_HOST;
     }
     if (srcType == deviceType_t::host && dstType == deviceType_t::device)
     {
       deviceMemSlot = dd;
-      memcpyKind = ACL_MEMCPY_HOST_TO_DEVICE;
+      memcpyKind    = ACL_MEMCPY_HOST_TO_DEVICE;
     }
     if (srcType == deviceType_t::device && dstType == deviceType_t::host)
     {
       deviceMemSlot = sd;
-      memcpyKind = ACL_MEMCPY_DEVICE_TO_HOST;
+      memcpyKind    = ACL_MEMCPY_DEVICE_TO_HOST;
     }
     if (srcType == deviceType_t::device && dstType == deviceType_t::device)
     {
       deviceMemSlot = dd;
-      memcpyKind = ACL_MEMCPY_DEVICE_TO_DEVICE;
+      memcpyKind    = ACL_MEMCPY_DEVICE_TO_DEVICE;
     }
 
     // Calculating actual offsets

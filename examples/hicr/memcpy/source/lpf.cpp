@@ -57,16 +57,16 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   auto memSpaces = d->getMemorySpaceList();
 
   (void)args; // ignore args parameter passed by lpf_exec
-  HiCR::backend::lpf::L1::MemoryManager m(lpf);
+  HiCR::backend::lpf::L1::MemoryManager        m(lpf);
   HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
 
   // Getting current process id
   size_t myProcess = pid;
 
   // Creating new destination buffer
-  auto msgBuffer = (char *)malloc(BUFFER_SIZE);
+  auto msgBuffer     = (char *)malloc(BUFFER_SIZE);
   auto firstMemSpace = *memSpaces.begin();
-  auto dstSlot = m.registerLocalMemorySlot(firstMemSpace, msgBuffer, BUFFER_SIZE);
+  auto dstSlot       = m.registerLocalMemorySlot(firstMemSpace, msgBuffer, BUFFER_SIZE);
 
   // Performing all pending local to global memory slot promotions now
   c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{myProcess, dstSlot}});

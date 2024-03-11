@@ -66,10 +66,10 @@ class ComputationKernel final : public Kernel
    * \param kernelAttrs kernel attributes
    */
   ComputationKernel(
-    const char *kernelName,
+    const char                      *kernelName,
     const std::vector<tensorData_t> &inputs,
     const std::vector<tensorData_t> &outputs,
-    const aclopAttr *kernelAttrs)
+    const aclopAttr                 *kernelAttrs)
     : Kernel(),
       _kernelName(kernelName),
       _kernelAttrs(kernelAttrs)
@@ -90,18 +90,18 @@ class ComputationKernel final : public Kernel
    * \param kernelAttrs kernel attributes
    */
   ComputationKernel(
-    const char *kernelPath,
-    const char *kernelName,
+    const char                      *kernelPath,
+    const char                      *kernelName,
     const std::vector<tensorData_t> &inputs,
     const std::vector<tensorData_t> &outputs,
-    const aclopAttr *kernelAttrs)
+    const aclopAttr                 *kernelAttrs)
     : ComputationKernel(kernelName, inputs, outputs, kernelAttrs)
   {
     // load kernel in memory
     loadKernel(std::string(kernelPath));
   };
 
-  ComputationKernel() = delete;
+  ComputationKernel()  = delete;
   ~ComputationKernel() = default;
 
   /**
@@ -187,7 +187,7 @@ class ComputationKernel final : public Kernel
    * \param[out] dataBuffers vector of data buffers
    */
   __USED__ inline void initializeDataBuffersAndDescriptors(
-    const std::vector<tensorData_t> tensors,
+    const std::vector<tensorData_t>     tensors,
     std::vector<const aclTensorDesc *> &descriptors,
     std::vector<const aclDataBuffer *> &dataBuffers)
   {
@@ -207,7 +207,7 @@ class ComputationKernel final : public Kernel
   {
     // get size of file to know how much memory to allocate
     std::uintmax_t filesize = std::filesystem::file_size(kernelPath);
-    _kernelSize = filesize;
+    _kernelSize             = filesize;
 
     // allocate buffer to hold file
     _kernelPtr.resize(_kernelSize);

@@ -52,11 +52,11 @@ TEST(ConsumerChannel, Construction)
   auto memSpaces = d->getMemorySpaceList();
 
   // Channel configuration
-  const auto tokenSize = sizeof(size_t);
+  const auto tokenSize       = sizeof(size_t);
   const auto channelCapacity = 16;
 
   // Getting required buffer sizes
-  auto tokenBufferSize = HiCR::channel::fixedSize::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity);
+  auto tokenBufferSize                = HiCR::channel::fixedSize::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity);
   auto producerCoordinationBufferSize = HiCR::channel::fixedSize::SPSC::Producer::getCoordinationBufferSize();
   auto consumerCoordinationBufferSize = HiCR::channel::fixedSize::SPSC::Producer::getCoordinationBufferSize();
 
@@ -64,10 +64,10 @@ TEST(ConsumerChannel, Construction)
   auto badTokenBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize - 1);
 
   // Allocating correct memory slots
-  auto tokenBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
-  auto consumerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), consumerCoordinationBufferSize);
+  auto tokenBuffer                   = m.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
+  auto consumerCoordinationBuffer    = m.allocateLocalMemorySlot(*memSpaces.begin(), consumerCoordinationBufferSize);
   auto badConsumerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), consumerCoordinationBufferSize - 1);
-  auto producerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), producerCoordinationBufferSize);
+  auto producerCoordinationBuffer    = m.allocateLocalMemorySlot(*memSpaces.begin(), producerCoordinationBufferSize);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
   c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}, {BAD_TOKEN_BUFFER_KEY, badTokenBuffer}});
@@ -76,9 +76,9 @@ TEST(ConsumerChannel, Construction)
   c.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto globalTokenBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+  auto globalTokenBuffer                = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
-  auto badGlobalTokenBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, BAD_TOKEN_BUFFER_KEY);
+  auto badGlobalTokenBuffer             = c.getGlobalMemorySlot(CHANNEL_TAG, BAD_TOKEN_BUFFER_KEY);
 
   // Creating with incorrect parameters
   EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, globalTokenBuffer, badConsumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity), HiCR::LogicException);
@@ -115,11 +115,11 @@ TEST(ConsumerChannel, PeekPop)
   auto memSpaces = d->getMemorySpaceList();
 
   // Channel configuration
-  const auto tokenSize = sizeof(size_t);
+  const auto tokenSize       = sizeof(size_t);
   const auto channelCapacity = 16;
 
   // Allocating correct memory slots
-  auto tokenBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
+  auto tokenBuffer                = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
   auto producerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Producer::getCoordinationBufferSize());
   auto consumerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getCoordinationBufferSize());
 
@@ -134,7 +134,7 @@ TEST(ConsumerChannel, PeekPop)
   c.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto globalTokenBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+  auto globalTokenBuffer                = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and Consumer channels
@@ -143,8 +143,8 @@ TEST(ConsumerChannel, PeekPop)
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
-  auto sendBufferSize = sendBufferCapacity * tokenSize;
-  auto sendBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
+  auto sendBufferSize     = sendBufferCapacity * tokenSize;
+  auto sendBuffer         = m.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
 
   // Attempting pop and peek
   EXPECT_THROW(consumer.pop(), HiCR::RuntimeException);
@@ -202,11 +202,11 @@ TEST(ConsumerChannel, PeekWait)
   auto memSpaces = d->getMemorySpaceList();
 
   // Channel configuration
-  const auto tokenSize = sizeof(size_t);
+  const auto tokenSize       = sizeof(size_t);
   const auto channelCapacity = 1;
 
   // Allocating correct memory slots
-  auto tokenBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
+  auto tokenBuffer                = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
   auto producerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Producer::getCoordinationBufferSize());
   auto consumerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getCoordinationBufferSize());
 
@@ -224,7 +224,7 @@ TEST(ConsumerChannel, PeekWait)
   c.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto globalTokenBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+  auto globalTokenBuffer                = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
 
   // Creating channel
@@ -236,10 +236,10 @@ TEST(ConsumerChannel, PeekWait)
 
   // Producer function
   const size_t expectedValue = 42;
-  bool hasStarted = false;
-  bool hasConsumed = false;
-  size_t readValue = 0;
-  auto consumerFc = [&consumer, &hasStarted, &hasConsumed, &readValue, &recvBuffer]() {
+  bool         hasStarted    = false;
+  bool         hasConsumed   = false;
+  size_t       readValue     = 0;
+  auto         consumerFc    = [&consumer, &hasStarted, &hasConsumed, &readValue, &recvBuffer]() {
     hasStarted = true;
 
     // Wait until the producer pushes a message
@@ -247,7 +247,7 @@ TEST(ConsumerChannel, PeekWait)
 
     // Raise consumed flag and read actual value
     hasConsumed = true;
-    readValue = recvBuffer[consumer.peek(0)];
+    readValue   = recvBuffer[consumer.peek(0)];
 
     // Pop message
     consumer.pop();
@@ -267,10 +267,10 @@ TEST(ConsumerChannel, PeekWait)
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
-  auto sendBufferSize = sendBufferCapacity * tokenSize;
-  auto sendBufferSlot = m.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
-  auto sendBuffer = (size_t *)sendBufferSlot->getPointer();
-  *sendBuffer = expectedValue;
+  auto sendBufferSize     = sendBufferCapacity * tokenSize;
+  auto sendBufferSlot     = m.allocateLocalMemorySlot(*memSpaces.begin(), sendBufferSize);
+  auto sendBuffer         = (size_t *)sendBufferSlot->getPointer();
+  *sendBuffer             = expectedValue;
 
   // Pushing message
   EXPECT_FALSE(hasConsumed);

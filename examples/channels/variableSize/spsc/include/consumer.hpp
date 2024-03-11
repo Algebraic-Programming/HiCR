@@ -37,10 +37,10 @@ void consumerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationM
   communicationManager.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  std::shared_ptr<HiCR::L0::GlobalMemorySlot> globalSizesBufferSlot = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
-  auto producerCoordinationBufferForCounts = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
-  auto producerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
-  auto payloadBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
+  std::shared_ptr<HiCR::L0::GlobalMemorySlot> globalSizesBufferSlot                 = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
+  auto                                        producerCoordinationBufferForCounts   = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  auto                                        producerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  auto                                        payloadBuffer                         = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
 
   // Creating producer and consumer channels
   auto consumer = HiCR::channel::variableSize::SPSC::Consumer(communicationManager, payloadBuffer /*payload buffer */, globalSizesBufferSlot, coordinationBufferForCounts, coordinationBufferForPayloads, producerCoordinationBufferForCounts, producerCoordinationBufferForPayloads, PAYLOAD_CAPACITY, sizeof(ELEMENT_TYPE), channelCapacity);

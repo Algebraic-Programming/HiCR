@@ -124,7 +124,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
     // obj is a leaf/PU; get to its parents to discover the hwloc memory space it belongs to
     hwloc_obj_t ancestor = obj->parent;
     hwloc_obj_t nodeNUMA = nullptr;
-    bool found = false;
+    bool        found    = false;
 
     // iterate over parents until we find a memory node
     while (ancestor && !ancestor->memory_arity)
@@ -142,7 +142,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
           hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
       {
         found = true;
-        ret = nodeNUMA->logical_index;
+        ret   = nodeNUMA->logical_index;
         break;
       }
     }
@@ -180,7 +180,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
     while (cache)
     {
       Cache::cacheLevel_t level;
-      std::string type;
+      std::string         type;
 
       // Check if the current object is a cache-type object
       if (cache->type == HWLOC_OBJ_L1CACHE || cache->type == HWLOC_OBJ_L2CACHE || cache->type == HWLOC_OBJ_L3CACHE || cache->type == HWLOC_OBJ_L4CACHE || cache->type == HWLOC_OBJ_L5CACHE || cache->type == HWLOC_OBJ_L1ICACHE || cache->type == HWLOC_OBJ_L2ICACHE || cache->type == HWLOC_OBJ_L3ICACHE)
@@ -229,8 +229,8 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
         }
 
         // Storage for more cache information
-        const bool shared = cache->arity > 1;
-        const auto size = cache->attr->cache.size;
+        const bool shared   = cache->arity > 1;
+        const auto size     = cache->attr->cache.size;
         const auto lineSize = cache->attr->cache.linesize;
 
         // Insert element to our return container
@@ -275,7 +275,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
     // obj is a leaf/PU; get to its parents to discover the hwloc memory space it belongs to
     hwloc_obj_t ancestor = obj->parent;
     hwloc_obj_t nodeNUMA = nullptr;
-    bool found = false;
+    bool        found    = false;
 
     // iterate over parents until we find a memory node
     while (ancestor && !ancestor->memory_arity)
@@ -292,7 +292,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
       if (hwloc_obj_type_is_memory(nodeNUMA->type) && hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
       {
         found = true;
-        ret = nodeNUMA->logical_index;
+        ret   = nodeNUMA->logical_index;
         break;
       }
     }

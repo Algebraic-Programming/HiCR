@@ -11,7 +11,7 @@ void entryPointFc(HiCR::Runtime &runtime, const std::string &entryPointName)
 
   // Getting message from coordinator
   const auto coordinatorInstanceId = runtime.getCoordinatorInstanceId();
-  auto message = currentInstance->recvMessage(coordinatorInstanceId);
+  auto       message               = currentInstance->recvMessage(coordinatorInstanceId);
 
   // Getting data object id from message
   const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t *)message.first);

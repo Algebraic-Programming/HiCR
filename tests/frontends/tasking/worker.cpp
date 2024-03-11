@@ -21,8 +21,8 @@ CREATE_HICR_TASKING_HOOK;
 
 TEST(Worker, Construction)
 {
-  HiCR::tasking::Worker *w = NULL;
-  HiCR::L1::ComputeManager *m1 = NULL;
+  HiCR::tasking::Worker                            *w  = NULL;
+  HiCR::L1::ComputeManager                         *m1 = NULL;
   HiCR::backend::host::pthreads::L1::ComputeManager m2;
 
   EXPECT_THROW(w = new HiCR::tasking::Worker(m1), HiCR::LogicException);

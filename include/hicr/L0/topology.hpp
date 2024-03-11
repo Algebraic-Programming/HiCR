@@ -37,7 +37,7 @@ class Topology
    */
   typedef std::unordered_set<std::shared_ptr<L0::Device>> deviceList_t;
 
-  Topology() = default;
+  Topology()  = default;
   ~Topology() = default;
 
   /**
@@ -76,7 +76,7 @@ class Topology
 
     // Adding serialized devices information into the array
     std::string devicesKey = "Devices";
-    output[devicesKey] = std::vector<nlohmann::json>();
+    output[devicesKey]     = std::vector<nlohmann::json>();
     for (const auto &device : _deviceList) output[devicesKey] += device->serialize();
 
     // Returning topology

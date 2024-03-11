@@ -20,7 +20,7 @@ CREATE_HICR_TASKING_HOOK;
 
 TEST(Task, Construction)
 {
-  HiCR::tasking::Task *t = NULL;
+  HiCR::tasking::Task                     *t = NULL;
   std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
 
   EXPECT_NO_THROW(t = new HiCR::tasking::Task(0, u, NULL));
@@ -31,7 +31,7 @@ TEST(Task, Construction)
 TEST(Task, SetterAndGetters)
 {
   std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
-  HiCR::tasking::Task t(0, u, NULL);
+  HiCR::tasking::Task                      t(0, u, NULL);
 
   HiCR::tasking::Task::taskEventMap_t e;
   EXPECT_NO_THROW(t.setEventMap(&e));
@@ -54,7 +54,7 @@ TEST(Task, Run)
   hwloc_topology_init(&topology);
 
   // Storage for internal checks in the task
-  bool hasRunningState = false;
+  bool hasRunningState       = false;
   bool hasCorrectTaskPointer = false;
 
   // Pointer for the task to create
@@ -140,15 +140,15 @@ TEST(Task, Events)
   hwloc_topology_init(&topology);
 
   // Test flags
-  bool onExecuteHasRun = false;
+  bool onExecuteHasRun  = false;
   bool onExecuteUpdated = false;
-  bool onSuspendHasRun = false;
-  bool onFinishHasRun = false;
+  bool onSuspendHasRun  = false;
+  bool onFinishHasRun   = false;
 
   // Creating callbacks
   auto onExecuteCallback = [&onExecuteHasRun](HiCR::tasking::Task *t) { onExecuteHasRun = true; };
   auto onSuspendCallback = [&onSuspendHasRun](HiCR::tasking::Task *t) { onSuspendHasRun = true; };
-  auto onFinishCallback = [&onFinishHasRun](HiCR::tasking::Task *t) { onFinishHasRun = true; delete t ; };
+  auto onFinishCallback  = [&onFinishHasRun](HiCR::tasking::Task *t) { onFinishHasRun = true; delete t ; };
 
   // Creating event map
   HiCR::tasking::Task::taskEventMap_t eventMap;

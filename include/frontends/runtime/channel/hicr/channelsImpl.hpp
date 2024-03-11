@@ -22,7 +22,7 @@ __USED__ inline void Instance::initializeChannels()
     // Storage for producer channels
     std::vector<std::pair<HiCR::L0::Instance::instanceId_t, std::shared_ptr<HiCR::L0::LocalMemorySlot>>> coordinationBufferMessageSizesVector;
     std::vector<std::pair<HiCR::L0::Instance::instanceId_t, std::shared_ptr<HiCR::L0::LocalMemorySlot>>> coordinationBufferMessagePayloadsVector;
-    std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> sizeInfoBufferMemorySlotVector;
+    std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>                                              sizeInfoBufferMemorySlotVector;
 
     // If the producer Id is this instance, then create all producer channels for the other instances
     if (_instanceIds[producerIdx] == currentInstanceId)
@@ -51,9 +51,9 @@ __USED__ inline void Instance::initializeChannels()
       for (size_t i = 0; i < totalInstances; i++)
       {
         // Allocating coordination buffers
-        auto coordinationBufferMessageSizes = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+        auto coordinationBufferMessageSizes    = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
         auto coordinationBufferMessagePayloads = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
-        auto sizeInfoBufferMemorySlot = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, sizeof(size_t));
+        auto sizeInfoBufferMemorySlot          = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, sizeof(size_t));
 
         // Initializing coordination buffers
         HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferMessageSizes);
@@ -99,7 +99,7 @@ __USED__ inline void Instance::initializeChannels()
     auto coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
 
     // Allocating coordination buffers
-    auto coordinationBufferMessageSizes = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+    auto coordinationBufferMessageSizes    = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
     auto coordinationBufferMessagePayloads = _memoryManager->allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
 
     // Initializing coordination buffers
@@ -126,9 +126,9 @@ __USED__ inline void Instance::initializeChannels()
     _communicationManager->fence(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG);
 
     // Obtaining the globally exchanged memory slots
-    auto consumerMessageSizesBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, currentInstanceId);
-    auto consumerMessagePayloadBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, currentInstanceId);
-    auto producerSizesProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, currentInstanceId);
+    auto consumerMessageSizesBuffer    = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, currentInstanceId);
+    auto consumerMessagePayloadBuffer  = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, currentInstanceId);
+    auto producerSizesProducerBuffer   = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, currentInstanceId);
     auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, currentInstanceId);
 
     // Creating channel
@@ -154,9 +154,9 @@ __USED__ inline void Instance::initializeChannels()
         const auto consumerInstanceId = _instanceIds[i];
 
         // Obtaining the globally exchanged memory slots
-        auto consumerMessageSizesBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, consumerInstanceId);
-        auto consumerMessagePayloadBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, consumerInstanceId);
-        auto producerSizesProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, consumerInstanceId);
+        auto consumerMessageSizesBuffer    = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, consumerInstanceId);
+        auto consumerMessagePayloadBuffer  = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, consumerInstanceId);
+        auto producerSizesProducerBuffer   = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, consumerInstanceId);
         auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, consumerInstanceId);
 
         // Creating channel
@@ -223,11 +223,11 @@ __USED__ inline std::pair<const void *, size_t> Instance::recvMessage(const HiCR
 
   // Get internal pointer of the token buffer slot and the offset
   auto payloadBufferMemorySlot = channel->getPayloadBufferMemorySlot();
-  auto payloadBufferPtr = (const char *)payloadBufferMemorySlot->getSourceLocalMemorySlot()->getPointer();
+  auto payloadBufferPtr        = (const char *)payloadBufferMemorySlot->getSourceLocalMemorySlot()->getPointer();
 
   // Obtaining pointer from the offset + base pointer
-  auto offset = channel->peek()[0];
-  const void *ptr = &payloadBufferPtr[offset];
+  auto        offset = channel->peek()[0];
+  const void *ptr    = &payloadBufferPtr[offset];
 
   // Obtaining size
   const size_t size = channel->peek()[1];
