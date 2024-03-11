@@ -53,13 +53,13 @@ TEST(MemoryManager, Memory)
   // Getting first device found
   HiCR::L0::Topology::deviceList_t dList;
   EXPECT_NO_THROW(dList = t.getDevices());
-  ASSERT_GT(dList.size(), 0);
+  ASSERT_GT(dList.size(), (unsigned int)0);
   auto d = *dList.begin();
 
   // Getting memory resource list (should be size 1)
   HiCR::L0::Device::memorySpaceList_t mList;
   EXPECT_NO_THROW(mList = d->getMemorySpaceList());
-  ASSERT_GT(mList.size(), 0);
+  ASSERT_GT(mList.size(), (unsigned int)0);
 
   // Getting memory resource
   auto r = *mList.begin();

@@ -38,16 +38,9 @@ hicrBuildDep = declare_dependency(
 
 # Define HiCR standard test configuration and create a new dependency
 
-hicrTestDeps = [
-  dependency('gtest', required: true)
-]
+gtest_dep = dependency('gtest', main: true, required: true)
 
 hicrTestCppFlags = [
-]
-
-hicrTestLinkFlags = [
-  '-lgtest_main',
-  '-lgtest'
 ]
 
 cpp = meson.get_compiler('cpp')
@@ -69,6 +62,5 @@ endif
 
 hicrTestDep = declare_dependency(
     compile_args: hicrTestCppFlags,
-    link_args: hicrTestLinkFlags,
-    dependencies:  hicrTestDeps,
+    dependencies:  gtest_dep
     )
