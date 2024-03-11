@@ -21,24 +21,26 @@ AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: false
 BinPackParameters: false
 AllowShortLambdasOnASingleLine: All
+BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterClass:      false
-  AfterControlStatement: false
-  AfterEnum:       false
-  AfterFunction:   false
-  AfterNamespace:  false
-  AfterObjCDeclaration: false
-  AfterStruct:     false
-  AfterUnion:      false
-  AfterExternBlock: false
-  BeforeCatch:     false
-  BeforeElse:      false
-  IndentBraces:    false
+  AfterClass:      true
+  AfterCaseLabel : true
+  AfterControlStatement: true
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  true
+  AfterObjCDeclaration: true
+  AfterStruct:     true
+  AfterUnion:      true
+  BeforeCatch:     true
+  BeforeElse:      true
+  BeforeLambdaBody: false
+  BeforeWhile: true
+  IndentBraces: false
   SplitEmptyFunction: false
-  SplitEmptyRecord: true
-  SplitEmptyNamespace: true
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
 BreakBeforeBinaryOperators: None
-BreakBeforeBraces: Allman
 BreakBeforeInheritanceComma: false
 BreakInheritanceList: BeforeColon
 BreakBeforeTernaryOperators: true

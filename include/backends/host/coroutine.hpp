@@ -82,8 +82,7 @@ class Coroutine
    */
   __USED__ inline void start(coroutineFc_t fc)
   {
-    const auto coroutineFc = [this, fc](boost::context::continuation &&sink)
-    {
+    const auto coroutineFc = [this, fc](boost::context::continuation &&sink) {
       // Storing caller context
       _context = std::move(sink);
 

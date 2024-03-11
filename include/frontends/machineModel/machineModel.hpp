@@ -98,8 +98,7 @@ class MachineModel
                                                                                                                          _topologyManagers(topologyManagers)
   {
     // Registering Topology parsing function as callable RPC
-    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [&]()
-                                   { submitTopology(&instanceManager, _topologyManagers); });
+    _instanceManager->addRPCTarget(_HICR_TOPOLOGY_RPC_NAME, [&]() { submitTopology(&instanceManager, _topologyManagers); });
   }
 
   /**

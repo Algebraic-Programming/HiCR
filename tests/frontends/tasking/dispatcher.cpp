@@ -20,20 +20,17 @@ CREATE_HICR_TASKING_HOOK;
 TEST(Dispatcher, Construction)
 {
   // Creating by context
-  EXPECT_NO_THROW(HiCR::tasking::Dispatcher([]()
-                                            { return (HiCR::tasking::Task *)NULL; }));
+  EXPECT_NO_THROW(HiCR::tasking::Dispatcher([]() { return (HiCR::tasking::Task *)NULL; }));
 
   // Creating by new
   HiCR::tasking::Dispatcher *d = NULL;
-  EXPECT_NO_THROW(d = new HiCR::tasking::Dispatcher([]()
-                                                    { return (HiCR::tasking::Task *)NULL; }));
+  EXPECT_NO_THROW(d = new HiCR::tasking::Dispatcher([]() { return (HiCR::tasking::Task *)NULL; }));
   delete d;
 }
 
 TEST(Dispatcher, Pull)
 {
-  HiCR::tasking::Dispatcher d([]()
-                              { return (HiCR::tasking::Task *)NULL; });
+  HiCR::tasking::Dispatcher d([]() { return (HiCR::tasking::Task *)NULL; });
   HiCR::tasking::Task *t = NULL;
   EXPECT_NO_THROW(t = d.pull());
   EXPECT_EQ(t, (HiCR::tasking::Task *)NULL);

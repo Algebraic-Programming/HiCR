@@ -228,8 +228,7 @@ TEST(ProducerChannel, PushWait)
   EXPECT_NO_THROW(producer.push(sendBuffer, channelCapacity));
 
   // Producer function
-  auto producerFc = [&producer, &sendBuffer]()
-  {
+  auto producerFc = [&producer, &sendBuffer]() {
     // Wait until the channel gets freed up
     while (producer.isFull()) producer.updateDepth();
 

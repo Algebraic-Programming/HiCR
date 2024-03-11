@@ -43,8 +43,7 @@ int main(int argc, char **argv)
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr]()
-                                                              {
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&taskr]() {
    // Printing associated task label
    const auto taskrLabel = taskr.getCurrentTask()->getLabel();
    printf("Current TaskR Task   label:    %lu\n", taskrLabel); });

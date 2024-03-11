@@ -315,13 +315,11 @@ class Runtime
     // Initializing HiCR tasking
     HiCR::tasking::initialize();
 
-    _dispatcher = new HiCR::tasking::Dispatcher([this]()
-                                                { return checkWaitingTasks(); }); //
+    _dispatcher = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); }); //
     _eventMap = new HiCR::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task)
-                        { onTaskFinish(task); }); //
+    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); }); //
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)

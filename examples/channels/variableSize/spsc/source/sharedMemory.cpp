@@ -54,10 +54,8 @@ int main(int argc, char **argv)
   auto firstMemorySpace = *memSpaces.begin();
 
   // Creating new threads (one for consumer, one for produer)
-  auto consumerThread = std::thread([&]()
-                                    { consumerFc(m, c, firstMemorySpace, channelCapacity); });
-  auto producerThread = std::thread([&]()
-                                    { producerFc(m, c, firstMemorySpace, channelCapacity); });
+  auto consumerThread = std::thread([&]() { consumerFc(m, c, firstMemorySpace, channelCapacity); });
+  auto producerThread = std::thread([&]() { producerFc(m, c, firstMemorySpace, channelCapacity); });
 
   // Waiting on threads
   consumerThread.join();

@@ -61,8 +61,7 @@ TEST(Task, Run)
   HiCR::tasking::Task *t = NULL;
 
   // Creating task function
-  auto f = [&t, &hasRunningState, &hasCorrectTaskPointer]()
-  {
+  auto f = [&t, &hasRunningState, &hasCorrectTaskPointer]() {
     // Checking whether the state is correctly assigned
     if (t->getState() == HiCR::L0::ExecutionState::state_t::running) hasRunningState = true;
 
@@ -147,12 +146,9 @@ TEST(Task, Events)
   bool onFinishHasRun = false;
 
   // Creating callbacks
-  auto onExecuteCallback = [&onExecuteHasRun](HiCR::tasking::Task *t)
-  { onExecuteHasRun = true; };
-  auto onSuspendCallback = [&onSuspendHasRun](HiCR::tasking::Task *t)
-  { onSuspendHasRun = true; };
-  auto onFinishCallback = [&onFinishHasRun](HiCR::tasking::Task *t)
-  { onFinishHasRun = true; delete t ; };
+  auto onExecuteCallback = [&onExecuteHasRun](HiCR::tasking::Task *t) { onExecuteHasRun = true; };
+  auto onSuspendCallback = [&onSuspendHasRun](HiCR::tasking::Task *t) { onSuspendHasRun = true; };
+  auto onFinishCallback = [&onFinishHasRun](HiCR::tasking::Task *t) { onFinishHasRun = true; delete t ; };
 
   // Creating event map
   HiCR::tasking::Task::taskEventMap_t eventMap;
@@ -166,8 +162,7 @@ TEST(Task, Events)
   HiCR::tasking::Task *t = NULL;
 
   // Creating task function
-  auto f = [&t, &onExecuteHasRun, &onExecuteUpdated]()
-  {
+  auto f = [&t, &onExecuteHasRun, &onExecuteUpdated]() {
     // Checking on execute flag has updated correctly
     if (onExecuteHasRun == true) onExecuteUpdated = true;
 

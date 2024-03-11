@@ -56,10 +56,8 @@ class Worker final : public runtime::Instance
     bool continueListening = true;
 
     // Adding RPC targets, specifying a name and the execution unit to execute
-    _instanceManager->addRPCTarget("__finalize", [&]()
-                                   { continueListening = false; });
-    _instanceManager->addRPCTarget("__initializeChannels", [this]()
-                                   { initializeChannels(); });
+    _instanceManager->addRPCTarget("__finalize", [&]() { continueListening = false; });
+    _instanceManager->addRPCTarget("__initializeChannels", [this]() { initializeChannels(); });
 
     // Listening for RPC requests
     while (continueListening == true) _instanceManager->listen();

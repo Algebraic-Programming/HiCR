@@ -65,8 +65,7 @@ void sendTopology(HiCR::L1::InstanceManager &instanceManager)
 void workerFc(HiCR::L1::InstanceManager &instanceManager)
 {
   // Adding RPC target by name and the execution unit id to run
-  instanceManager.addRPCTarget(TOPOLOGY_RPC_NAME, [&]()
-                               { sendTopology(instanceManager); });
+  instanceManager.addRPCTarget(TOPOLOGY_RPC_NAME, [&]() { sendTopology(instanceManager); });
 
   // Listening for RPC requests
   instanceManager.listen();

@@ -88,9 +88,10 @@ int main(int argc, char **argv)
   if (argc != 2)
   {
     if (rankId == 0) fprintf(stderr, "Error: Must provide the channel capacity as argument.\n");
-      return MPI_Finalize();
+    return MPI_Finalize();
   }
-  if (rankId == 0) {
+  if (rankId == 0)
+  {
     // For portability, only read STDIN from process 0
     capacity = atoi(argv[1]);
   }

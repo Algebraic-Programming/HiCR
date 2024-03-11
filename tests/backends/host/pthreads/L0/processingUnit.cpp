@@ -75,8 +75,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   __volatile__ bool checkedAffinity = false;
 
   // Creating affinity checking function
-  auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]()
-  {
+  auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]() {
     // Getting actual affinity set from the running thread
     auto actualThreadAffinity = HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity();
 
@@ -138,8 +137,7 @@ TEST(ProcessingUnit, LifeCycle)
   pthread_barrier_init(&barrier, NULL, 2);
 
   // Creating runner function
-  auto fc1 = [&resumeCounter, &barrier, &suspendCounter]()
-  {
+  auto fc1 = [&resumeCounter, &barrier, &suspendCounter]() {
     // Checking correct execution
     resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);
@@ -268,8 +266,7 @@ TEST(ProcessingUnit, LifeCycle)
   ///////// Checking re-run same thread
 
   // Creating re-runner function
-  auto fc2 = [&resumeCounter, &barrier]()
-  {
+  auto fc2 = [&resumeCounter, &barrier]() {
     // Checking correct execution
     resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);

@@ -239,8 +239,7 @@ TEST(ConsumerChannel, PeekWait)
   bool hasStarted = false;
   bool hasConsumed = false;
   size_t readValue = 0;
-  auto consumerFc = [&consumer, &hasStarted, &hasConsumed, &readValue, &recvBuffer]()
-  {
+  auto consumerFc = [&consumer, &hasStarted, &hasConsumed, &readValue, &recvBuffer]() {
     hasStarted = true;
 
     // Wait until the producer pushes a message

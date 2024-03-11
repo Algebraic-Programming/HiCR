@@ -145,8 +145,7 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = _computeManager->createExecutionUnit([this]()
-                                                              { this->mainLoop(); });
+    auto executionUnit = _computeManager->createExecutionUnit([this]() { this->mainLoop(); });
 
     // Creating worker's execution state
     auto executionState = _computeManager->createExecutionState(executionUnit);

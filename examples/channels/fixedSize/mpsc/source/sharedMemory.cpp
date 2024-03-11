@@ -64,13 +64,11 @@ int main(int argc, char **argv)
   auto firstMemorySpace = *memSpaces.begin();
 
   // Creating single consumer thread
-  auto consumerThread = std::thread([&]()
-                                    { consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount); });
+  auto consumerThread = std::thread([&]() { consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount); });
 
   // Creating producer threads
   std::vector<std::thread *> producerThreads(producerCount);
-  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&]()
-                                                                                  { producerFc(m, c, firstMemorySpace, channelCapacity, i); });
+  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&]() { producerFc(m, c, firstMemorySpace, channelCapacity, i); });
 
   // Waiting on threads
   consumerThread.join();

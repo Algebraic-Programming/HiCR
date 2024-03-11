@@ -35,12 +35,9 @@ int main(int argc, char *argv[])
   HiCR::Runtime runtime(&argc, &argv);
 
   // Registering tasks for the workers
-  runtime.registerEntryPoint("A", [&]()
-                             { entryPointFc(runtime, "A"); });
-  runtime.registerEntryPoint("B", [&]()
-                             { entryPointFc(runtime, "B"); });
-  runtime.registerEntryPoint("C", [&]()
-                             { entryPointFc(runtime, "C"); });
+  runtime.registerEntryPoint("A", [&]() { entryPointFc(runtime, "A"); });
+  runtime.registerEntryPoint("B", [&]() { entryPointFc(runtime, "B"); });
+  runtime.registerEntryPoint("C", [&]() { entryPointFc(runtime, "C"); });
 
   // Initializing the HiCR runtime
   runtime.initialize();
