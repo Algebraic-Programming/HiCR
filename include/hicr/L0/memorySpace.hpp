@@ -67,7 +67,8 @@ class MemorySpace
    */
   __USED__ inline void increaseUsage(const size_t delta)
   {
-    if (_usage + delta > _size) HICR_THROW_LOGIC("Increasing memory space usage beyond its capacity (current_usage + increase > capacity | %lu + %lu > %lu)\n", _usage, delta, _size);
+    if (_usage + delta > _size)
+      HICR_THROW_LOGIC("Increasing memory space usage beyond its capacity (current_usage + increase > capacity | %lu + %lu > %lu)\n", _usage, delta, _size);
 
     _usage += delta;
   }
@@ -145,7 +146,8 @@ class MemorySpace
    *
    * \param[in] size The size of the memory space to create
    */
-  MemorySpace(const size_t size) : _size(size){};
+  MemorySpace(const size_t size)
+    : _size(size){};
 
   /**
    * Default constructor for deserialization purposes

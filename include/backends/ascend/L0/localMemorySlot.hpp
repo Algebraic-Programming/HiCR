@@ -42,11 +42,9 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * \param dataBuffer the ACL data buffer created for the memory slot
    * \param memorySpace the Ascend memory from which this memory slot was obtained
    */
-  LocalMemorySlot(
-    void *const pointer,
-    size_t size,
-    const aclDataBuffer *dataBuffer,
-    std::shared_ptr<HiCR::L0::MemorySpace> memorySpace) : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace), _dataBuffer(dataBuffer){};
+  LocalMemorySlot(void *const pointer, size_t size, const aclDataBuffer *dataBuffer, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
+    : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
+      _dataBuffer(dataBuffer){};
 
   /**
    * Default destructor

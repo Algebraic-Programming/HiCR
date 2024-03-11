@@ -43,7 +43,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource The compute resource from which this processing unit is instantiated
    */
-  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : HiCR::L0::ProcessingUnit(computeResource)
+  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+    : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the instance
     auto c = dynamic_pointer_cast<ascend::L0::ComputeResource>(computeResource);
@@ -71,18 +72,12 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Internal implementation of suspendImpl
    */
-  __USED__ inline void suspendImpl() override
-  {
-    HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend");
-  }
+  __USED__ inline void suspendImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
 
   /**
    * Internal implementation of resumeImpl
    */
-  __USED__ inline void resumeImpl() override
-  {
-    HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend");
-  }
+  __USED__ inline void resumeImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
 
   /**
    * Ascend backend implementation that starts the execution state in the processing unit.
@@ -113,9 +108,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Internal implementation of terminateImpl
    */
-  __USED__ inline void terminateImpl() override
-  {
-  }
+  __USED__ inline void terminateImpl() override {}
 
   /**
    * Ascend backend implementation that wait for execution state completion

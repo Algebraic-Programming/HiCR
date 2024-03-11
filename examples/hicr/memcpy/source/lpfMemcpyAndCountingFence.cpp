@@ -57,15 +57,15 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   auto memSpaces = d->getMemorySpaceList();
 
   (void)args; // ignore args parameter passed by lpf_exec
-  HiCR::backend::lpf::L1::MemoryManager m(lpf);
+  HiCR::backend::lpf::L1::MemoryManager        m(lpf);
   HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
-  size_t myProcess = pid;
+  size_t                                       myProcess = pid;
 
   char *srcBuffer = nullptr;
   char *dstBuffer = nullptr;
   // HiCR::backend::lpf::L0::GlobalMemorySlot * srcSlot = nullptr;
   // HiCR::backend::lpf::L0::GlobalMemorySlot * dstSlot = nullptr;
-  auto firstMemSpace = *memSpaces.begin();
+  auto                                       firstMemSpace = *memSpaces.begin();
   std::shared_ptr<HiCR::L0::LocalMemorySlot> srcSlot;
   if (myProcess == 0)
   {
@@ -76,7 +76,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   }
   if (myProcess == 1)
   {
-    dstBuffer = new char[BUFFER_SIZE];
+    dstBuffer    = new char[BUFFER_SIZE];
     auto dstSlot = m.registerLocalMemorySlot(firstMemSpace, dstBuffer, BUFFER_SIZE);
     c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{myProcess, dstSlot}});
   }

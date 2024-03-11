@@ -177,7 +177,7 @@ std::vector<HiCR::MachineModel::request_t> loadMachineModelFromFile(const std::s
 {
   // Reading from machine model file
   std::string machineModelRaw;
-  auto status = loadStringFromFile(machineModelRaw, machineModelFile);
+  auto        status = loadStringFromFile(machineModelRaw, machineModelFile);
   if (status == false)
   {
     fprintf(stderr, "could not read from machine model file: '%s'\n", machineModelFile.c_str());

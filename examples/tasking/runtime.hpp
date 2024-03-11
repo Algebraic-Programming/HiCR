@@ -137,8 +137,7 @@ class Runtime
     {
       // If the number of workers exceeds that of maximum active workers,
       // suspend current worker
-      if (_maximumActiveWorkers > 0 &&
-          _activeWorkerCount > (ssize_t)_maximumActiveWorkers)
+      if (_maximumActiveWorkers > 0 && _activeWorkerCount > (ssize_t)_maximumActiveWorkers)
       {
         // Adding worker to the queue
         _suspendedWorkerQueue.push(worker);
@@ -160,9 +159,7 @@ class Runtime
 
       // If the new maximum is higher than the number of active workers, we need
       // to re-awaken some of them
-      while ((_maximumActiveWorkers == 0 ||
-              (ssize_t)_maximumActiveWorkers > _activeWorkerCount) &&
-             _suspendedWorkerQueue.isEmpty() == false)
+      while ((_maximumActiveWorkers == 0 || (ssize_t)_maximumActiveWorkers > _activeWorkerCount) && _suspendedWorkerQueue.isEmpty() == false)
       {
         // Getting the worker from the queue of suspended workers
         auto w = _suspendedWorkerQueue.pop();
@@ -195,10 +192,7 @@ class Runtime
    *
    * \param[in] pu The processing unit to add
    */
-  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu)
-  {
-    _processingUnits.push_back(std::move(pu));
-  }
+  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
    * Sets the maximum active worker count. If the current number of active workers exceeds this maximu, TaskR will put as many
@@ -315,13 +309,11 @@ class Runtime
     // Initializing HiCR tasking
     HiCR::tasking::initialize();
 
-    _dispatcher = new HiCR::tasking::Dispatcher([this]()
-                                                { return checkWaitingTasks(); }); //
-    _eventMap = new HiCR::tasking::Task::taskEventMap_t();
+    _dispatcher = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); }); //
+    _eventMap   = new HiCR::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task)
-                        { onTaskFinish(task); }); //
+    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); }); //
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)

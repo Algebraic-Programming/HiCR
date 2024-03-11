@@ -18,8 +18,7 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::shared_ptr<HiCR::
   auto abortLambda = []() {};
 
   // Creating worker functions
-  auto testLambda = [&]()
-  {
+  auto testLambda = [&]() {
     // Getting memory manager
     auto mm = instanceManager.getMemoryManager();
 

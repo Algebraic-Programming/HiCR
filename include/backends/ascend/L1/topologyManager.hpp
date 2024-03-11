@@ -41,7 +41,9 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * Default constructor
    */
-  TopologyManager() : HiCR::L1::TopologyManager() {}
+  TopologyManager()
+    : HiCR::L1::TopologyManager()
+  {}
 
   /**
    * Default destructor
@@ -134,10 +136,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return t;
   }
 
-  __USED__ inline HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override
-  {
-    return deserializeTopology(topology);
-  }
+  __USED__ inline HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override { return deserializeTopology(topology); }
 
   /**
    * This function represents the default intializer for this backend
@@ -161,7 +160,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    */
   __USED__ inline void setupInterDeviceCommunication(std::unordered_set<std::shared_ptr<ascend::L0::Device>> &ascendDeviceList)
   {
-    int32_t canAccessPeer = 0;
+    int32_t  canAccessPeer = 0;
     aclError err;
 
     // enable communication among each pair of ascend cards

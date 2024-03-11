@@ -43,18 +43,17 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * @param[in] globalKey The global key associated to this global memory slot (for exchange purposes
    * @param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
    */
-  GlobalMemorySlot(
-    size_t rank,
-    lpf_memslot_t lpfMemSlot,
-    lpf_memslot_t lpfSwapSlot,
-    const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
-    const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
-    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
-                                                                                  _rank(rank),
-                                                                                  _lpfMemSlot(lpfMemSlot),
-                                                                                  _lpfSwapSlot(lpfSwapSlot)
-  {
-  }
+  GlobalMemorySlot(size_t                                        rank,
+                   lpf_memslot_t                                 lpfMemSlot,
+                   lpf_memslot_t                                 lpfSwapSlot,
+                   const HiCR::L0::GlobalMemorySlot::tag_t       globalTag             = 0,
+                   const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey             = 0,
+                   std::shared_ptr<HiCR::L0::LocalMemorySlot>    sourceLocalMemorySlot = nullptr)
+    : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
+      _rank(rank),
+      _lpfMemSlot(lpfMemSlot),
+      _lpfSwapSlot(lpfSwapSlot)
+  {}
 
   /**
    * Default destructor

@@ -52,15 +52,16 @@ class Producer final : public channel::fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager &communicationManager,
+  Producer(L1::CommunicationManager             &communicationManager,
            std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBuffer,
+           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBuffer,
-           const size_t tokenSize,
-           const size_t capacity)
+           const size_t                          tokenSize,
+           const size_t                          capacity)
     : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(tokenBuffer),
-      _producerCoordinationBuffer(producerCoordinationBuffer) {}
+      _producerCoordinationBuffer(producerCoordinationBuffer)
+  {}
 
   ~Producer() = default;
 
@@ -86,7 +87,12 @@ class Producer final : public channel::fixedSize::Base
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
     auto providedBufferSize = sourceSlot->getSize();
-    if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
+    if (providedBufferSize < requiredBufferSize)
+      HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n",
+                       providedBufferSize,
+                       getTokenSize(),
+                       n,
+                       requiredBufferSize);
 
     // Updating channel depth
     updateDepth();
@@ -95,7 +101,9 @@ class Producer final : public channel::fixedSize::Base
     auto curDepth = _circularBuffer->getDepth();
 
     // If the exchange buffer does not have n free slots, reject the operation
-    if (curDepth + n > _circularBuffer->getCapacity()) HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, _circularBuffer->getCapacity());
+    if (curDepth + n > _circularBuffer->getCapacity())
+      HICR_THROW_RUNTIME(
+        "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, _circularBuffer->getCapacity());
 
     // Copying with source increasing offset per token
     for (size_t i = 0; i < n; i++) _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());

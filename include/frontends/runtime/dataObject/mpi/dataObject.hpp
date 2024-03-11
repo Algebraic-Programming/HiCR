@@ -43,9 +43,10 @@ class DataObject final
    * @param[in] id Identifier for the new data object
    * @param[in] instanceId Identifier of the instance owning the data object
    */
-  DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId) : _buffer(buffer),
-                                                                                                                            _size(size),
-                                                                                                                            _id(id){};
+  DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId)
+    : _buffer(buffer),
+      _size(size),
+      _id(id){};
   ~DataObject() = default;
 
   /**
@@ -115,7 +116,9 @@ class DataObject final
    * @param[in] currentInstanceId Id of the instance that will own the data object
    * @return A shared pointer to the data object obtained from the remote instance
    */
-  __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t dataObjectId, HiCR::L0::Instance::instanceId_t remoteInstanceId, HiCR::L0::Instance::instanceId_t currentInstanceId)
+  __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t       dataObjectId,
+                                                                   HiCR::L0::Instance::instanceId_t remoteInstanceId,
+                                                                   HiCR::L0::Instance::instanceId_t currentInstanceId)
   {
     // Pick the first 15 bits of the id and use it as MPI Tag
     const int dataObjectIdTag = dataObjectId & mpiTagMask;
@@ -158,10 +161,7 @@ class DataObject final
    *
    * The same semantics of a normal free() function applies. Double frees must be avoided.
    */
-  __USED__ inline void destroyBuffer()
-  {
-    free(_buffer);
-  }
+  __USED__ inline void destroyBuffer() { free(_buffer); }
 
   private:
 

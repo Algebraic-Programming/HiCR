@@ -102,25 +102,25 @@ class Consumer final : public variableSize::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
-  Consumer(
-    L1::CommunicationManager &communicationManager,
-    std::shared_ptr<L0::GlobalMemorySlot> payloadBuffer,
-    std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-    std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBufferForCounts,
-    std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBufferForPayloads,
-    std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForCounts,
-    std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForPayloads,
-    const size_t payloadCapacity,
-    const size_t payloadSize,
-    const size_t capacity) : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
-                             _pushedTokens(0),
-                             _pushedPayloads(0),
-                             _pushedPayloadBytes(0),
-                             _payloadBuffer(payloadBuffer),
-                             _payloadSize(payloadSize),
-                             _tokenBuffer(tokenBuffer),
-                             _producerCoordinationBufferForCounts(producerCoordinationBufferForCounts),
-                             _producerCoordinationBufferForPayloads(producerCoordinationBufferForPayloads)
+  Consumer(L1::CommunicationManager             &communicationManager,
+           std::shared_ptr<L0::GlobalMemorySlot> payloadBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
+           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForCounts,
+           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForPayloads,
+           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForCounts,
+           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForPayloads,
+           const size_t                          payloadCapacity,
+           const size_t                          payloadSize,
+           const size_t                          capacity)
+    : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
+      _pushedTokens(0),
+      _pushedPayloads(0),
+      _pushedPayloadBytes(0),
+      _payloadBuffer(payloadBuffer),
+      _payloadSize(payloadSize),
+      _tokenBuffer(tokenBuffer),
+      _producerCoordinationBufferForCounts(producerCoordinationBufferForCounts),
+      _producerCoordinationBufferForPayloads(producerCoordinationBufferForPayloads)
   {
     assert(internalCoordinationBufferForCounts != nullptr);
     assert(internalCoordinationBufferForPayloads != nullptr);
@@ -153,7 +153,8 @@ class Consumer final : public variableSize::Base
   __USED__ inline size_t basePeek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBuffer->getCapacity());
+    if (pos >= _circularBuffer->getCapacity())
+      HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBuffer->getCapacity());
 
     // Updating channel depth
     updateDepth();
@@ -180,10 +181,7 @@ class Consumer final : public variableSize::Base
    */
   __USED__ inline std::array<size_t, 2> peek(const size_t pos = 0)
   {
-    if (pos != 0)
-    {
-      HICR_THROW_FATAL("peek only implemented for n = 0 at the moment!");
-    }
+    if (pos != 0) { HICR_THROW_FATAL("peek only implemented for n = 0 at the moment!"); }
     updateDepth();
 
     if (pos >= _circularBuffer->getDepth())
@@ -192,10 +190,10 @@ class Consumer final : public variableSize::Base
     }
 
     std::array<size_t, 2> result;
-    result[0] = _circularBufferForPayloads->getTailPosition() % _circularBufferForPayloads->getCapacity();
+    result[0]              = _circularBufferForPayloads->getTailPosition() % _circularBufferForPayloads->getCapacity();
     size_t *tokenBufferPtr = static_cast<size_t *>(_tokenBuffer->getSourceLocalMemorySlot()->getPointer());
-    auto tokenPos = basePeek(pos);
-    result[1] = tokenBufferPtr[tokenPos];
+    auto    tokenPos       = basePeek(pos);
+    result[1]              = tokenBufferPtr[tokenPos];
 
     return result;
   }
@@ -214,8 +212,8 @@ class Consumer final : public variableSize::Base
     for (size_t i = 0; i < n; i++)
     {
       assert(i >= 0);
-      size_t pos = basePeek(i);
-      auto payloadSize = tokenBufferPtr[pos];
+      size_t pos         = basePeek(i);
+      auto   payloadSize = tokenBufferPtr[pos];
       payloadBytes += payloadSize;
     }
     return payloadBytes;
@@ -230,13 +228,13 @@ class Consumer final : public variableSize::Base
   {
     if (n == 0) return 0;
     size_t *tokenBufferPtr = static_cast<size_t *>(_tokenBuffer->getSourceLocalMemorySlot()->getPointer());
-    size_t payloadBytes = 0;
+    size_t  payloadBytes   = 0;
     for (size_t i = 0; i < n; i++)
     {
       size_t ind = _circularBuffer->getDepth() - 1 - i;
       assert(ind >= 0);
-      size_t pos = basePeek(ind);
-      auto payloadSize = tokenBufferPtr[pos];
+      size_t pos         = basePeek(ind);
+      auto   payloadSize = tokenBufferPtr[pos];
       payloadBytes += payloadSize;
     }
 
@@ -253,9 +251,9 @@ class Consumer final : public variableSize::Base
     _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
     _communicationManager->queryMemorySlotUpdates(_payloadBuffer);
 
-    size_t newPushedTokens = _tokenBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedTokens;
-    size_t newPushedPayloads = _payloadBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedPayloads;
-    auto newTokensAndPayloads = std::min(newPushedTokens, newPushedPayloads);
+    size_t newPushedTokens      = _tokenBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedTokens;
+    size_t newPushedPayloads    = _payloadBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedPayloads;
+    auto   newTokensAndPayloads = std::min(newPushedTokens, newPushedPayloads);
     _pushedTokens += newTokensAndPayloads;
     _circularBuffer->setHead(_pushedTokens);
     _pushedPayloads += newTokensAndPayloads;
@@ -281,10 +279,7 @@ class Consumer final : public variableSize::Base
    *
    * This function when called on a valid channel instance will never fail.
    */
-  __USED__ inline size_t getPayloadDepth()
-  {
-    return _circularBufferForPayloads->getDepth();
-  }
+  __USED__ inline size_t getPayloadDepth() { return _circularBufferForPayloads->getDepth(); }
 
   /**
    * Removes the last \n variable-sized elements from the payload buffer, and
@@ -304,7 +299,8 @@ class Consumer final : public variableSize::Base
     updateDepth();
 
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (n > _circularBuffer->getDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _circularBuffer->getDepth());
+    if (n > _circularBuffer->getDepth())
+      HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _circularBuffer->getDepth());
     auto payloadBytes = getOldPayloadBytes(n);
     _circularBuffer->advanceTail(n);
     _circularBufferForPayloads->advanceTail(payloadBytes);
@@ -348,10 +344,7 @@ class Consumer final : public variableSize::Base
    * \returns true, if both message count and payload buffers are empty
    * \returns false, if one of the buffers is not empty
    */
-  bool isEmpty()
-  {
-    return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0);
-  }
+  bool isEmpty() { return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0); }
 
   /**
    * Retrieves the pointer to the channel's payload buffer

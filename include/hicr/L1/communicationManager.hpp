@@ -113,7 +113,7 @@ class CommunicationManager
   __USED__ inline void deregisterGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
-    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Locking access to prevent concurrency issues
@@ -162,7 +162,11 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __USED__ inline void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, const size_t src_offset, const size_t size)
+  __USED__ inline void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination,
+                              const size_t                         dst_offset,
+                              std::shared_ptr<L0::LocalMemorySlot> source,
+                              const size_t                         src_offset,
+                              const size_t                         size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -173,10 +177,12 @@ class CommunicationManager
     const auto actualDstSize = size + dst_offset;
 
     // Checking size doesn't exceed slot size
-    if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).", size, src_offset, actualSrcSize, source, srcSize);
+    if (actualSrcSize > srcSize)
+      HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).", size, src_offset, actualSrcSize, source, srcSize);
 
     // Checking size doesn't exceed slot size
-    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
+    if (actualDstSize > dstSize)
+      HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
 
     // To enable concurrent memcpy operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
@@ -199,7 +205,11 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __USED__ inline void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, const size_t src_offset, const size_t size)
+  __USED__ inline void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination,
+                              const size_t                          dst_offset,
+                              std::shared_ptr<L0::LocalMemorySlot>  source,
+                              const size_t                          src_offset,
+                              const size_t                          size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -208,7 +218,8 @@ class CommunicationManager
     const auto actualSrcSize = size + src_offset;
 
     // Checking size doesn't exceed slot size
-    if (actualSrcSize > srcSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).", size, src_offset, actualSrcSize, source, srcSize);
+    if (actualSrcSize > srcSize)
+      HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds source slot (%lu) capacity (%lu).", size, src_offset, actualSrcSize, source, srcSize);
 
     // Now calling internal memcpy function to give us a function that satisfies the operation
     memcpyImpl(destination, dst_offset, source, src_offset, size);
@@ -227,7 +238,11 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __USED__ inline void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<L0::GlobalMemorySlot> source, const size_t src_offset, const size_t size)
+  __USED__ inline void memcpy(std::shared_ptr<L0::LocalMemorySlot>  destination,
+                              const size_t                          dst_offset,
+                              std::shared_ptr<L0::GlobalMemorySlot> source,
+                              const size_t                          src_offset,
+                              const size_t                          size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto dstSize = destination->getSize();
@@ -236,7 +251,8 @@ class CommunicationManager
     const auto actualDstSize = size + dst_offset;
 
     // Checking size doesn't exceed slot size
-    if (actualDstSize > dstSize) HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
+    if (actualDstSize > dstSize)
+      HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%lu) capacity (%lu).", size, dst_offset, actualDstSize, destination, dstSize);
 
     // Now calling internal memcpy function to give us a function that satisfies the operation
     memcpyImpl(destination, dst_offset, source, src_offset, size);
@@ -329,14 +345,16 @@ class CommunicationManager
   __USED__ inline bool acquireGlobalLock(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
-    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
+    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
+      HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
+    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false)
+      HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
 
     // Calling internal implementation
     return acquireGlobalLockImpl(memorySlot);
@@ -350,7 +368,7 @@ class CommunicationManager
   __USED__ inline void releaseGlobalLock(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
-    const auto memorySlotTag = memorySlot->getGlobalTag();
+    const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Locking access to prevent concurrency issues
@@ -394,7 +412,7 @@ class CommunicationManager
   __USED__ inline void registerGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot information
-    const auto tag = memorySlot->getGlobalTag();
+    const auto tag       = memorySlot->getGlobalTag();
     const auto globalKey = memorySlot->getGlobalKey();
 
     // Locking access to prevent concurrency issues
@@ -448,7 +466,14 @@ class CommunicationManager
    * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size) { HICR_THROW_LOGIC("Local->Local memcpy operations are unsupported by the given backend"); };
+  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
+                          const size_t                               dst_offset,
+                          std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
+                          const size_t                               src_offset,
+                          const size_t                               size)
+  {
+    HICR_THROW_LOGIC("Local->Local memcpy operations are unsupported by the given backend");
+  };
 
   /**
    * Backend-internal implementation of the memcpy function
@@ -459,7 +484,14 @@ class CommunicationManager
    * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::LocalMemorySlot> source, const size_t src_offset, const size_t size) { HICR_THROW_LOGIC("Local->Global memcpy operations are unsupported by the given backend"); };
+  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
+                          const size_t                                dst_offset,
+                          std::shared_ptr<HiCR::L0::LocalMemorySlot>  source,
+                          const size_t                                src_offset,
+                          const size_t                                size)
+  {
+    HICR_THROW_LOGIC("Local->Global memcpy operations are unsupported by the given backend");
+  };
 
   /**
    * Backend-internal implementation of the memcpy function
@@ -470,7 +502,14 @@ class CommunicationManager
    * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination, const size_t dst_offset, std::shared_ptr<HiCR::L0::GlobalMemorySlot> source, const size_t src_offset, const size_t size) { HICR_THROW_LOGIC("Global->Local memcpy operations are unsupported by the given backend"); };
+  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
+                          const size_t                                dst_offset,
+                          std::shared_ptr<HiCR::L0::GlobalMemorySlot> source,
+                          const size_t                                src_offset,
+                          const size_t                                size)
+  {
+    HICR_THROW_LOGIC("Global->Local memcpy operations are unsupported by the given backend");
+  };
 
   /**
    * Backend-internal implementation of the fence on a local memory slot

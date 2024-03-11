@@ -28,8 +28,7 @@ void finalizeExecution(HiCR::L1::InstanceManager &instanceManager, const int ret
 
   // Requesting workers to abort and printing error message
   for (const auto &instance : instances)
-    if (instance->getId() != coordinator->getId())
-      instanceManager.launchRPC(*instance, "Finalize");
+    if (instance->getId() != coordinator->getId()) instanceManager.launchRPC(*instance, "Finalize");
 
   instanceManager.finalize();
   exit(returnCode);
@@ -197,11 +196,15 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
   return true;
 }
 
-void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string &machineModelFilePath, std::vector<HiCR::L1::TopologyManager *> &topologyManagers, int argc, char **argv)
+void coordinatorFc(HiCR::L1::InstanceManager                &instanceManager,
+                   const std::string                        &machineModelFilePath,
+                   std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
+                   int                                       argc,
+                   char                                    **argv)
 {
   // Reading from machine model file
   std::string machineModelRaw;
-  auto status = loadStringFromFile(machineModelRaw, machineModelFilePath);
+  auto        status = loadStringFromFile(machineModelRaw, machineModelFilePath);
   if (status == false)
   {
     fprintf(stderr, "could not read from machine model file: '%s'\n", machineModelFilePath.c_str());
@@ -248,8 +251,7 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager, const std::string
 
   // Running the assigned task id in the correspondng instance
   for (auto &r : requests)
-    for (auto &in : r.instances)
-      instanceManager.launchRPC(*in, r.entryPointName);
+    for (auto &in : r.instances) instanceManager.launchRPC(*in, r.entryPointName);
 
   // Now waiting for return values to arrive
   for (auto &r : requests)

@@ -52,16 +52,16 @@ class Producer final : public fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager &communicationManager,
+  Producer(L1::CommunicationManager             &communicationManager,
            std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBuffer,
+           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBuffer,
-           const size_t tokenSize,
-           const size_t capacity) : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-                                    _tokenBuffer(tokenBuffer),
-                                    _consumerCoordinationBuffer(consumerCoordinationBuffer)
-  {
-  }
+           const size_t                          tokenSize,
+           const size_t                          capacity)
+    : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+      _tokenBuffer(tokenBuffer),
+      _consumerCoordinationBuffer(consumerCoordinationBuffer)
+  {}
   ~Producer() = default;
 
   /**
@@ -87,7 +87,12 @@ class Producer final : public fixedSize::Base
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
     auto providedBufferSize = sourceSlot->getSize();
-    if (providedBufferSize < requiredBufferSize) HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n", providedBufferSize, getTokenSize(), n, requiredBufferSize);
+    if (providedBufferSize < requiredBufferSize)
+      HICR_THROW_LOGIC("Attempting to push with a source buffer size (%lu) smaller than the required size (Token Size (%lu) x n (%lu) = %lu).\n",
+                       providedBufferSize,
+                       getTokenSize(),
+                       n,
+                       requiredBufferSize);
 
     // Flag to record whether the operation was successful or not (it simplifies code by releasing locks only once)
     bool successFlag = false;

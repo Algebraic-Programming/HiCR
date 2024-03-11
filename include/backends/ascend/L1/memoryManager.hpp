@@ -43,7 +43,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Constructor for the ascend memory manager class for the ascend backend.
    */
-  MemoryManager() : HiCR::L1::MemoryManager() {}
+  MemoryManager()
+    : HiCR::L1::MemoryManager()
+  {}
   ~MemoryManager() = default;
 
   private:
@@ -67,13 +69,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalDeviceMemorySlot(const std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size)
   {
-    void *ptr = NULL;
+    void          *ptr = NULL;
     aclDataBuffer *dataBuffer;
 
     // do a malloc on the ascend and create the databuffer
     auto ascendMemSpace = dynamic_pointer_cast<ascend::L0::MemorySpace>(memorySpace);
-    ptr = deviceAlloc(ascendMemSpace, size);
-    dataBuffer = aclCreateDataBuffer(ptr, size);
+    ptr                 = deviceAlloc(ascendMemSpace, size);
+    dataBuffer          = aclCreateDataBuffer(ptr, size);
     if (dataBuffer == NULL) HICR_THROW_RUNTIME("Can not create data buffer in device");
 
     // create the new memory slot
@@ -135,7 +137,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return ptr;
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
+                                                                                         void *const                            ptr,
+                                                                                         const size_t                           size) override
   {
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
@@ -153,10 +157,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   __USED__ inline void freeLocalDeviceMemorySlot(std::shared_ptr<L0::LocalMemorySlot> memorySlot)
   {
     // Getting memory slot info
-    const auto memorySlotPointer = memorySlot->getPointer();
+    const auto memorySlotPointer     = memorySlot->getPointer();
     const auto memorySlotMemorySpace = dynamic_pointer_cast<HiCR::backend::ascend::L0::MemorySpace>(memorySlot->getMemorySpace());
-    const auto memorySlotDevice = memorySlotMemorySpace->getDevice().lock();
-    const auto memorySlotDeviceId = memorySlotDevice->getId();
+    const auto memorySlotDevice      = memorySlotMemorySpace->getDevice().lock();
+    const auto memorySlotDeviceId    = memorySlotDevice->getId();
 
     aclError err = aclrtFree(memorySlotPointer);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while freeing device %d memory. Error %d", memorySlotDeviceId, err);
@@ -176,10 +180,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] memorySlot memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
-  {
-    HICR_THROW_RUNTIME("Not yet implemented for this backend");
-  }
+  __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 };
 
 } // namespace L1

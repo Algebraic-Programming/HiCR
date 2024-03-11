@@ -20,7 +20,7 @@
 TEST(ProcessingUnit, Construction)
 {
   auto computeResource = HiCR::backend::host::L0::ComputeResource(0, 0, 0, {});
-  auto cPtr = std::make_shared<HiCR::backend::host::L0::ComputeResource>(computeResource);
+  auto cPtr            = std::make_shared<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
   HiCR::backend::host::pthreads::L0::ProcessingUnit *p = nullptr;
   EXPECT_NO_THROW(p = new HiCR::backend::host::pthreads::L0::ProcessingUnit(cPtr));
@@ -57,7 +57,7 @@ TEST(ProcessingUnit, ThreadAffinity)
 
   // Creating compute resource (core) manually
   auto computeResource = HiCR::backend::host::L0::ComputeResource(0, 0, 0, {});
-  auto cPtr = std::make_shared<HiCR::backend::host::L0::ComputeResource>(computeResource);
+  auto cPtr            = std::make_shared<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(cPtr);
@@ -72,11 +72,10 @@ TEST(ProcessingUnit, ThreadAffinity)
   EXPECT_NO_THROW(processingUnit->initialize());
 
   __volatile__ bool hasCorrectAffinity = false;
-  __volatile__ bool checkedAffinity = false;
+  __volatile__ bool checkedAffinity    = false;
 
   // Creating affinity checking function
-  auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]()
-  {
+  auto fc = [&hasCorrectAffinity, &checkedAffinity, &threadAffinitySet]() {
     // Getting actual affinity set from the running thread
     auto actualThreadAffinity = HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity();
 
@@ -124,22 +123,21 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Creating compute resource (core) manually
   auto computeResource = HiCR::backend::host::L0::ComputeResource(0, 0, 0, {});
-  auto cPtr = std::make_shared<HiCR::backend::host::L0::ComputeResource>(computeResource);
+  auto cPtr            = std::make_shared<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
   // Creating processing unit from resource
   auto processingUnit = m.createProcessingUnit(cPtr);
 
   // Values for correct suspension/resume checking
   __volatile__ int suspendCounter = 0;
-  __volatile__ int resumeCounter = 0;
+  __volatile__ int resumeCounter  = 0;
 
   // Barrier for synchronization
   pthread_barrier_t barrier;
   pthread_barrier_init(&barrier, NULL, 2);
 
   // Creating runner function
-  auto fc1 = [&resumeCounter, &barrier, &suspendCounter]()
-  {
+  auto fc1 = [&resumeCounter, &barrier, &suspendCounter]() {
     // Checking correct execution
     resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);
@@ -268,8 +266,7 @@ TEST(ProcessingUnit, LifeCycle)
   ///////// Checking re-run same thread
 
   // Creating re-runner function
-  auto fc2 = [&resumeCounter, &barrier]()
-  {
+  auto fc2 = [&resumeCounter, &barrier]() {
     // Checking correct execution
     resumeCounter = resumeCounter + 1;
     pthread_barrier_wait(&barrier);
@@ -298,8 +295,7 @@ TEST(ProcessingUnit, LifeCycle)
   EXPECT_NO_THROW(processingUnit->await());
 
   ///////////////// Creating case where the thread runs a function that finishes
-  auto fc3 = []() {
-  };
+  auto fc3 = []() {};
 
   // Creating execution unit
   auto executionUnit3 = std::make_shared<HiCR::backend::host::L0::ExecutionUnit>(fc3);

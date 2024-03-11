@@ -81,7 +81,8 @@ class ProcessingUnit
    *
    * \param computeResource The instance of the compute resource to instantiate, as indicated by the backend
    */
-  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : _computeResource(computeResource){};
+  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+    : _computeResource(computeResource){};
 
   virtual ~ProcessingUnit() = default;
 
@@ -90,10 +91,7 @@ class ProcessingUnit
    *
    * \return Retruns the current state
    */
-  __USED__ inline ProcessingUnit::state_t getState() const
-  {
-    return _state;
-  }
+  __USED__ inline ProcessingUnit::state_t getState() const { return _state; }
 
   /**
    * Initializes the resource and leaves it ready to execute work

@@ -27,14 +27,10 @@ void workerFc(HiCR::L1::InstanceManager &instanceManager, std::vector<HiCR::L1::
   HiCR::MachineModel machineModel(instanceManager, topologyManagers);
 
   // Adding RPC targets, specifying a name and the execution unit to execute
-  instanceManager.addRPCTarget("Finalize", [&]()
-                               { continueListening = false; });
-  instanceManager.addRPCTarget("Task A", [&]()
-                               { taskFc("A", instanceManager); });
-  instanceManager.addRPCTarget("Task B", [&]()
-                               { taskFc("B", instanceManager); });
-  instanceManager.addRPCTarget("Task C", [&]()
-                               { taskFc("C", instanceManager); });
+  instanceManager.addRPCTarget("Finalize", [&]() { continueListening = false; });
+  instanceManager.addRPCTarget("Task A", [&]() { taskFc("A", instanceManager); });
+  instanceManager.addRPCTarget("Task B", [&]() { taskFc("B", instanceManager); });
+  instanceManager.addRPCTarget("Task C", [&]() { taskFc("C", instanceManager); });
 
   // Listening for RPC requests
   while (continueListening == true) instanceManager.listen();

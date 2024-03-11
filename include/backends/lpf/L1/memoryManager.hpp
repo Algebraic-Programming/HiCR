@@ -59,7 +59,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * On the other hand, the resize message queue could also be locally
    * made, and placed elsewhere.
    */
-  MemoryManager(lpf_t lpf) : HiCR::L1::MemoryManager(), _lpf(lpf) {}
+  MemoryManager(lpf_t lpf)
+    : HiCR::L1::MemoryManager(),
+      _lpf(lpf)
+  {}
 
   /**
    * Associates a pointer locally-allocated manually and creates a local memory slot with it
@@ -69,7 +72,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] memorySpace The memory space onto which to register the new memory slot
    * \return A newly created memory slot
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
+                                                                                         void *const                            ptr,
+                                                                                         const size_t                           size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
@@ -78,7 +83,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     lpf_memslot_t lpfSlot = LPF_INVALID_MEMSLOT;
-    auto rc = lpf_register_local(_lpf, ptr, size, &lpfSlot);
+    auto          rc      = lpf_register_local(_lpf, ptr, size, &lpfSlot);
     if (rc != LPF_SUCCESS) HICR_THROW_RUNTIME("LPF Memory Manager: lpf_register_local failed");
 
     // Creating new memory slot object

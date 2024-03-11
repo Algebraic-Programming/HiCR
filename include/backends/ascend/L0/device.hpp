@@ -49,10 +49,10 @@ class Device final : public HiCR::L0::Device
    * \param computeResources The compute resources associated to this device (typically just one, the main Ascend processor)
    * \param memorySpaces The memory spaces associated to this device (DRAM + other use-specific or high-bandwidth memories)
    */
-  Device(
-    const deviceIdentifier_t id,
-    const computeResourceList_t &computeResources,
-    const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces), _id(id), _context(std::make_unique<aclrtContext>())
+  Device(const deviceIdentifier_t id, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces)
+    : HiCR::L0::Device(computeResources, memorySpaces),
+      _id(id),
+      _context(std::make_unique<aclrtContext>())
   {
     // create ACL context for executing operations on the given device
     aclError err = aclrtCreateContext(_context.get(), id);
@@ -62,7 +62,9 @@ class Device final : public HiCR::L0::Device
   /**
    * Default constructor for resource requesting
    */
-  Device() : HiCR::L0::Device() {}
+  Device()
+    : HiCR::L0::Device()
+  {}
 
   /**
    * Deserializing constructor
@@ -72,7 +74,8 @@ class Device final : public HiCR::L0::Device
    *
    * @param[in] input A JSON-encoded serialized Ascend device information
    */
-  Device(const nlohmann::json &input) : HiCR::L0::Device()
+  Device(const nlohmann::json &input)
+    : HiCR::L0::Device()
   {
     deserialize(input);
   }
@@ -93,10 +96,7 @@ class Device final : public HiCR::L0::Device
   /**
    * Set this device as the one on which the operations needs to be executed
    */
-  __USED__ inline void select() const
-  {
-    selectDevice(_context.get(), _id);
-  }
+  __USED__ inline void select() const { selectDevice(_context.get(), _id); }
 
   /**
    * Device destructor

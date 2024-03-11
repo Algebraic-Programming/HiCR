@@ -48,13 +48,15 @@ class Device : public HiCR::L0::Device
    * @param[in] computeResources The compute resources (cores or hyperthreads) detected in this device (CPU)
    * @param[in] memorySpaces The memory spaces (e.g., NUMA domains) detected in this device (CPU)
    */
-  Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : HiCR::L0::Device(computeResources, memorySpaces),
-                                                                                                                                    _NUMADomainId(NUMADomainId){};
+  Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces)
+    : HiCR::L0::Device(computeResources, memorySpaces),
+      _NUMADomainId(NUMADomainId){};
 
   /**
    * Empty constructor for serialization / deserialization
    */
-  Device() : HiCR::L0::Device(){};
+  Device()
+    : HiCR::L0::Device(){};
 
   /**
    * Default destructor

@@ -53,23 +53,27 @@ class Consumer final : public channel::fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::CommunicationManager &communicationManager,
+  Consumer(L1::CommunicationManager             &communicationManager,
            std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot> internalCoordinationBuffer,
+           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
            std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBuffer,
-           const size_t tokenSize,
-           const size_t capacity) : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-                                    _tokenBuffer(tokenBuffer),
-                                    _producerCoordinationBuffer(producerCoordinationBuffer)
+           const size_t                          tokenSize,
+           const size_t                          capacity)
+    : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+      _tokenBuffer(tokenBuffer),
+      _producerCoordinationBuffer(producerCoordinationBuffer)
 
   {
     // Checking whether the memory slot is local. This backend only supports local data transfers
-    if (tokenBuffer->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed coordination slot was not created locally (it must be to be used internally by the channel implementation)\n");
+    if (tokenBuffer->getSourceLocalMemorySlot() == nullptr)
+      HICR_THROW_LOGIC("The passed coordination slot was not created locally (it must be to be used internally by the channel implementation)\n");
 
     // Checking that the provided token exchange  buffer has the right size
     auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, capacity);
     auto providedTokenBufferSize = tokenBuffer->getSourceLocalMemorySlot()->getSize();
-    if (providedTokenBufferSize < requiredTokenBufferSize) HICR_THROW_LOGIC("Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
+    if (providedTokenBufferSize < requiredTokenBufferSize)
+      HICR_THROW_LOGIC(
+        "Attempting to create a channel with a token data buffer size (%lu) smaller than the required size (%lu).\n", providedTokenBufferSize, requiredTokenBufferSize);
   }
   ~Consumer() = default;
 
@@ -99,7 +103,8 @@ class Consumer final : public channel::fixedSize::Base
   __USED__ inline size_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBuffer->getCapacity());
+    if (pos >= _circularBuffer->getCapacity())
+      HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBuffer->getCapacity());
 
     // Updating channel depth
     updateDepth();
@@ -135,13 +140,18 @@ class Consumer final : public channel::fixedSize::Base
     updateDepth();
 
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (n > _circularBuffer->getDepth()) HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _circularBuffer->getDepth());
+    if (n > _circularBuffer->getDepth())
+      HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _circularBuffer->getDepth());
 
     // Advancing tail (removes elements from the circular buffer)
     _circularBuffer->advanceTail(n);
 
     // Notifying producer(s) of buffer liberation
-    _communicationManager->memcpy(_producerCoordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, _coordinationBuffer, _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+    _communicationManager->memcpy(_producerCoordinationBuffer,
+                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX,
+                                  _coordinationBuffer,
+                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX,
+                                  sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
   }
 
   /**

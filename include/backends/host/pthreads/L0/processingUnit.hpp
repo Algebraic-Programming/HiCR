@@ -76,7 +76,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __USED__ static std::set<int> getAffinity()
   {
     std::set<int> affinity;
-    cpu_set_t cpuset;
+    cpu_set_t     cpuset;
     if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem obtaining affinity.");
     for (int i = 0; i < CPU_SETSIZE; i++)
       if (CPU_ISSET(i, &cpuset)) affinity.insert(i);
@@ -89,7 +89,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource Represents the compute resource (core) affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) : HiCR::L0::ProcessingUnit(computeResource)
+  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+    : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the MPI instance
     auto c = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(computeResource);
@@ -154,8 +155,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __USED__ inline static void catchSuspendResumeSignal(int sig)
   {
-    int status = 0;
-    int signalSet;
+    int      status = 0;
+    int      signalSet;
     sigset_t suspendSet;
 
     // Waiting for that signal to arrive
@@ -169,9 +170,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
   }
 
-  __USED__ inline void initializeImpl() override
-  {
-  }
+  __USED__ inline void initializeImpl() override {}
 
   __USED__ inline void suspendImpl() override
   {
@@ -204,9 +203,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     pthread_barrier_destroy(&initializationBarrier);
   }
 
-  __USED__ inline void terminateImpl() override
-  {
-  }
+  __USED__ inline void terminateImpl() override {}
 
   __USED__ inline void awaitImpl() override
   {

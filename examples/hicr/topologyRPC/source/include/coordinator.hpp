@@ -14,8 +14,7 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
 
   // Printing instance information and invoking a simple RPC if its not ourselves
   for (const auto &instance : instances)
-    if (instance->getId() != coordinator->getId())
-      instanceManager.launchRPC(*instance, TOPOLOGY_RPC_NAME);
+    if (instance->getId() != coordinator->getId()) instanceManager.launchRPC(*instance, TOPOLOGY_RPC_NAME);
 
   // Getting return values from the RPCs containing each of the worker's topology
   for (const auto &instance : instances)
@@ -51,7 +50,8 @@ void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
       {
         printf("  + '%s'\n", d->getType().c_str());
         printf("    Compute Resources: %lu %s(s)\n", d->getComputeResourceList().size(), (*d->getComputeResourceList().begin())->getType().c_str());
-        for (const auto &m : d->getMemorySpaceList()) printf("    Memory Space:     '%s', %f Gb\n", m->getType().c_str(), (double)m->getSize() / (double)(1024ul * 1024ul * 1024ul));
+        for (const auto &m : d->getMemorySpaceList())
+          printf("    Memory Space:     '%s', %f Gb\n", m->getType().c_str(), (double)m->getSize() / (double)(1024ul * 1024ul * 1024ul));
       }
     }
 }

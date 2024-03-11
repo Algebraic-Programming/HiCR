@@ -39,7 +39,9 @@ class MemorySpace : public HiCR::L0::MemorySpace
    *
    * \param size The maximum allocatable size detected for this memory space
    */
-  MemorySpace(const size_t size) : HiCR::L0::MemorySpace(size) {}
+  MemorySpace(const size_t size)
+    : HiCR::L0::MemorySpace(size)
+  {}
 
   /**
    * Default destructor

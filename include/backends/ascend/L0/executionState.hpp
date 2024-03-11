@@ -43,7 +43,8 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    *
    * \param executionUnit execution unit containing the kernel to execute
    */
-  ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) : HiCR::L0::ExecutionState(executionUnit)
+  ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit)
+    : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_pointer_cast<ascend::L0::ExecutionUnit>(executionUnit);
@@ -105,10 +106,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
   }
 
-  __USED__ inline void suspendImpl()
-  {
-    HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend");
-  }
+  __USED__ inline void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend"); }
 
   /**
    * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and
@@ -120,7 +118,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   {
     // Check if the event has been processed
     aclrtEventRecordedStatus status;
-    aclError err = aclrtQueryEventStatus(_syncEvent, &status);
+    aclError                 err = aclrtQueryEventStatus(_syncEvent, &status);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("failed to query event status. err %d", err);
 
     // check the synchronization event status for stream completion

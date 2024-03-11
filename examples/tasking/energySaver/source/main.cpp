@@ -38,8 +38,8 @@ int main(int argc, char **argv)
 {
   // Getting arguments, if provided
   size_t workTaskCount = 1000;
-  size_t secondsDelay = 5;
-  size_t iterations = 5000;
+  size_t secondsDelay  = 5;
+  size_t iterations    = 5000;
   if (argc > 1) workTaskCount = std::atoi(argv[1]);
   if (argc > 2) secondsDelay = std::atoi(argv[2]);
   if (argc > 3) iterations = std::atoi(argv[3]);
@@ -69,12 +69,10 @@ int main(int argc, char **argv)
   taskr::Runtime taskr;
 
   // Creating task work execution unit
-  auto workExecutionUnit = computeManager.createExecutionUnit([&iterations]()
-                                                              { workFc(iterations); });
+  auto workExecutionUnit = computeManager.createExecutionUnit([&iterations]() { workFc(iterations); });
 
   // Creating task wait execution unit
-  auto waitExecutionUnit = computeManager.createExecutionUnit([&taskr, &secondsDelay]()
-                                                              { waitFc(&taskr, secondsDelay); });
+  auto waitExecutionUnit = computeManager.createExecutionUnit([&taskr, &secondsDelay]() { waitFc(&taskr, secondsDelay); });
 
   // Create processing units from the detected compute resource list and giving them to taskr
   for (auto &resource : computeResources)

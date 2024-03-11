@@ -5,7 +5,10 @@
 #include <hicr/L1/communicationManager.hpp>
 #include <frontends/channel/variableSize/spsc/producer.hpp>
 
-void producerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManager &communicationManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, const size_t channelCapacity)
+void producerFc(HiCR::L1::MemoryManager               &memoryManager,
+                HiCR::L1::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
+                const size_t                           channelCapacity)
 {
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
@@ -22,16 +25,17 @@ void producerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationM
   HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferForPayloads);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  communicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {{PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, coordinationBufferForCounts}, {PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, coordinationBufferForPayloads}});
+  communicationManager.exchangeGlobalMemorySlots(
+    CHANNEL_TAG, {{PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, coordinationBufferForCounts}, {PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, coordinationBufferForPayloads}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto sizesBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
-  auto producerCoordinationBufferForCounts = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  auto sizesBuffer                           = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
+  auto producerCoordinationBufferForCounts   = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   auto producerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
-  auto payloadBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
+  auto payloadBuffer                         = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
 
   // Creating producer and consumer channels
   auto producer = HiCR::channel::variableSize::SPSC::Producer(communicationManager,
@@ -47,15 +51,15 @@ void producerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationM
                                                               channelCapacity);
 
   // Allocating a send slot to put the values we want to communicate
-  ELEMENT_TYPE sendBuffer[4] = {0, 1, 2, 3};
+  ELEMENT_TYPE sendBuffer[4]  = {0, 1, 2, 3};
   ELEMENT_TYPE sendBuffer2[3] = {4, 5, 6};
   ELEMENT_TYPE sendBuffer3[2] = {7, 8};
-  auto sendBufferPtr = &sendBuffer;
-  auto sendBuffer2Ptr = &sendBuffer2;
-  auto sendBuffer3Ptr = &sendBuffer3;
-  auto sendSlot = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBufferPtr, sizeof(sendBuffer));
-  auto sendSlot2 = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBuffer2Ptr, sizeof(sendBuffer2));
-  auto sendSlot3 = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBuffer3Ptr, sizeof(sendBuffer3));
+  auto         sendBufferPtr  = &sendBuffer;
+  auto         sendBuffer2Ptr = &sendBuffer2;
+  auto         sendBuffer3Ptr = &sendBuffer3;
+  auto         sendSlot       = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBufferPtr, sizeof(sendBuffer));
+  auto         sendSlot2      = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBuffer2Ptr, sizeof(sendBuffer2));
+  auto         sendSlot3      = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBuffer3Ptr, sizeof(sendBuffer3));
 
   // Pushing first batch
   producer.push(sendSlot);

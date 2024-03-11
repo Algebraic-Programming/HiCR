@@ -90,7 +90,7 @@ class Task
    */
   typedef std::queue<pendingOperationFunction_t> pendingOperationFunctionQueue_t;
 
-  Task() = delete;
+  Task()  = delete;
   ~Task() = default;
 
   /**
@@ -101,7 +101,10 @@ class Task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(const label_t label, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskEventMap_t *eventMap = NULL) : _label(label), _executionUnit(executionUnit), _eventMap(eventMap){};
+  __USED__ Task(const label_t label, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskEventMap_t *eventMap = NULL)
+    : _label(label),
+      _executionUnit(executionUnit),
+      _eventMap(eventMap){};
 
   /**
    * Function to return a pointer to the currently executing task from a global context
@@ -159,10 +162,7 @@ class Task
    *
    * @param[in] op The pending operation
    */
-  __USED__ inline void registerPendingOperation(pendingOperationFunction_t op)
-  {
-    _pendingOperations.push(op);
-  }
+  __USED__ inline void registerPendingOperation(pendingOperationFunction_t op) { _pendingOperations.push(op); }
 
   /**
    * Checks for the finalization of all the task's pending operations and reports whether they have finished
@@ -199,7 +199,8 @@ class Task
    */
   __USED__ inline void initialize(std::unique_ptr<HiCR::L0::ExecutionState> executionState)
   {
-    if (getState() != HiCR::L0::ExecutionState::state_t::uninitialized) HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", getState());
+    if (getState() != HiCR::L0::ExecutionState::state_t::uninitialized)
+      HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", getState());
 
     // Getting execution state as a unique pointer (to prevent sharing the same state among different tasks)
     _executionState = std::move(executionState);
@@ -214,7 +215,8 @@ class Task
   {
     if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
 
-    if (getState() != HiCR::L0::ExecutionState::state_t::initialized && getState() != HiCR::L0::ExecutionState::state_t::suspended) HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", getState());
+    if (getState() != HiCR::L0::ExecutionState::state_t::initialized && getState() != HiCR::L0::ExecutionState::state_t::suspended)
+      HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", getState());
 
     // Also map task pointer to the running thread it into static storage for global access.
     pthread_setspecific(_taskPointerKey, this);
@@ -269,20 +271,14 @@ class Task
    *
    * \param[in] task The label of the task upon whose completion this task should depend
    */
-  __USED__ inline void addTaskDependency(const label_t task)
-  {
-    _taskDependencies.push_back(task);
-  };
+  __USED__ inline void addTaskDependency(const label_t task) { _taskDependencies.push_back(task); };
 
   /**
    * Returns Returns this task's dependency list.
    *
    * \return A constant reference to this task's dependencies vector.
    */
-  __USED__ inline const std::vector<label_t> &getDependencies()
-  {
-    return _taskDependencies;
-  }
+  __USED__ inline const std::vector<label_t> &getDependencies() { return _taskDependencies; }
 
   private:
 

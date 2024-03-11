@@ -40,7 +40,7 @@ TEST(MemoryManager, Memory)
 
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
-  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::L1::MemoryManager           m(&topology);
   HiCR::backend::host::pthreads::L1::CommunicationManager c;
 
   // Initializing hwloc-based topology manager
@@ -66,7 +66,7 @@ TEST(MemoryManager, Memory)
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;
-  size_t totalMem = 0;
+  size_t totalMem         = 0;
   EXPECT_NO_THROW(totalMem = r->getSize());
 
   // Making sure the system has enough memory for the next test

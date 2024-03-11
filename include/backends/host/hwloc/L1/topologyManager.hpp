@@ -46,7 +46,10 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    *
    * \param[in] topology An HWloc topology object that can be used to query the available computational resources
    */
-  TopologyManager(hwloc_topology_t *topology) : HiCR::L1::TopologyManager(), _topology(topology) {}
+  TopologyManager(hwloc_topology_t *topology)
+    : HiCR::L1::TopologyManager(),
+      _topology(topology)
+  {}
 
   /**
    * The constructor is employed to free memory required for hwloc
@@ -106,10 +109,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return t;
   }
 
-  __USED__ inline HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override
-  {
-    return deserializeTopology(topology);
-  }
+  __USED__ inline HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override { return deserializeTopology(topology); }
 
   /**
    * This function represents the default intializer for this backend
@@ -169,9 +169,9 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     auto hwlocObj = hwloc_get_obj_by_type(*_topology, HWLOC_OBJ_NUMANODE, numaDomainId);
 
     // Checking whther bound memory allocation and freeing is supported
-    auto bindingSupport = L0::LocalMemorySlot::binding_type::strict_non_binding;
-    size_t size = 1024;
-    auto ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
+    auto   bindingSupport = L0::LocalMemorySlot::binding_type::strict_non_binding;
+    size_t size           = 1024;
+    auto   ptr            = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
     if (ptr != NULL)
     {
       // Attempting to free with hwloc

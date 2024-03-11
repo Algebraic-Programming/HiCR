@@ -40,12 +40,14 @@ class Worker final : public runtime::Instance
    * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
    * @param[in] machineModel The machine model to use to deploy the workers
    */
-  Worker(HiCR::L1::InstanceManager &instanceManager,
-         HiCR::L1::CommunicationManager &communicationManager,
-         HiCR::L1::MemoryManager &memoryManager,
+  Worker(HiCR::L1::InstanceManager                &instanceManager,
+         HiCR::L1::CommunicationManager           &communicationManager,
+         HiCR::L1::MemoryManager                  &memoryManager,
          std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
-         HiCR::MachineModel &machineModel) : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel) {}
-  Worker() = delete;
+         HiCR::MachineModel                       &machineModel)
+    : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel)
+  {}
+  Worker()  = delete;
   ~Worker() = default;
 
   __USED__ inline void initialize() override
@@ -56,10 +58,8 @@ class Worker final : public runtime::Instance
     bool continueListening = true;
 
     // Adding RPC targets, specifying a name and the execution unit to execute
-    _instanceManager->addRPCTarget("__finalize", [&]()
-                                   { continueListening = false; });
-    _instanceManager->addRPCTarget("__initializeChannels", [this]()
-                                   { initializeChannels(); });
+    _instanceManager->addRPCTarget("__finalize", [&]() { continueListening = false; });
+    _instanceManager->addRPCTarget("__initializeChannels", [this]() { initializeChannels(); });
 
     // Listening for RPC requests
     while (continueListening == true) _instanceManager->listen();

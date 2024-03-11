@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
   // Getting work task count
   size_t workTaskCount = 100;
-  size_t iterations = 5000;
+  size_t iterations    = 5000;
   if (argc > 1) workTaskCount = std::atoi(argv[1]);
   if (argc > 2) iterations = std::atoi(argv[2]);
 
@@ -69,8 +69,7 @@ int main(int argc, char **argv)
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]()
-                                                              { work(iterations); });
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]() { work(iterations); });
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());

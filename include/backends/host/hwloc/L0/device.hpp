@@ -51,7 +51,8 @@ class Device final : public HiCR::backend::host::L0::Device
    * @param[in] computeResources The compute resources (cores or hyperthreads) detected in this device (CPU)
    * @param[in] memorySpaces The memory spaces (e.g., NUMA domains) detected in this device (CPU)
    */
-  Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces) : HiCR::backend::host::L0::Device(NUMADomainId, computeResources, memorySpaces){};
+  Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces)
+    : HiCR::backend::host::L0::Device(NUMADomainId, computeResources, memorySpaces){};
 
   /**
    * Deserializing constructor
@@ -61,7 +62,8 @@ class Device final : public HiCR::backend::host::L0::Device
    *
    * @param[in] input A JSON-encoded serialized NUMA domain information
    */
-  Device(const nlohmann::json &input) : HiCR::backend::host::L0::Device()
+  Device(const nlohmann::json &input)
+    : HiCR::backend::host::L0::Device()
   {
     deserialize(input);
   }

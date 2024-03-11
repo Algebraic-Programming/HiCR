@@ -22,8 +22,7 @@ int main(int argc, char **argv)
   // Initializing Pthread-based host (CPU) compute manager
   HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
-  auto fcLambda = []()
-  { printf("Hello, World!\n"); };
+  auto fcLambda = []() { printf("Hello, World!\n"); };
 
   // Creating execution unit
   auto executionUnit = computeManager.createExecutionUnit(fcLambda);

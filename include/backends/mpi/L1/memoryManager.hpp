@@ -42,7 +42,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   /**
    * Constructor for the mpi backend.
    */
-  MemoryManager() : HiCR::L1::MemoryManager() {}
+  MemoryManager()
+    : HiCR::L1::MemoryManager()
+  {}
   ~MemoryManager() = default;
 
   /**
@@ -80,7 +82,9 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // If you did not promote the local memory slot, it will leak memory.
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
+  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
+                                                                                         void *const                            ptr,
+                                                                                         const size_t                           size) override
   {
     // Creating new memory slot object
     auto memorySlot = std::make_shared<HiCR::backend::mpi::L0::LocalMemorySlot>(ptr, size, memorySpace);

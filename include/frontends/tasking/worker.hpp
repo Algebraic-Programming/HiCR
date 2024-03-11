@@ -91,7 +91,8 @@ class Worker
    *
    * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
    */
-  Worker(HiCR::L1::ComputeManager *computeManager) : _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
+  Worker(HiCR::L1::ComputeManager *computeManager)
+    : _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
   {
     // Checking the passed compute manager is of a supported type
     if (_computeManager == NULL) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");
@@ -145,8 +146,7 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = _computeManager->createExecutionUnit([this]()
-                                                              { this->mainLoop(); });
+    auto executionUnit = _computeManager->createExecutionUnit([this]() { this->mainLoop(); });
 
     // Creating worker's execution state
     auto executionState = _computeManager->createExecutionState(executionUnit);
@@ -176,7 +176,8 @@ class Worker
   __USED__ inline void resume()
   {
     // Checking state
-    if (_state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state (Expected state: %u, found: %u)", state_t::suspended, _state);
+    if (_state != state_t::suspended)
+      HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state (Expected state: %u, found: %u)", state_t::suspended, _state);
 
     // Transitioning state
     _state = state_t::running;

@@ -43,14 +43,13 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * \param[in] globalKey Unique identifier for that memory slot that this slot occupies.
    * \param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
    */
-  GlobalMemorySlot(
-    int rank,
-    const HiCR::L0::GlobalMemorySlot::tag_t globalTag = 0,
-    const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey = 0,
-    std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr) : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
-                                                                                  _rank(rank)
-  {
-  }
+  GlobalMemorySlot(int                                           rank,
+                   const HiCR::L0::GlobalMemorySlot::tag_t       globalTag             = 0,
+                   const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey             = 0,
+                   std::shared_ptr<HiCR::L0::LocalMemorySlot>    sourceLocalMemorySlot = nullptr)
+    : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
+      _rank(rank)
+  {}
 
   /**
    * Default destructor

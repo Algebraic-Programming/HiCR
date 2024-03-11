@@ -21,8 +21,8 @@ CREATE_HICR_TASKING_HOOK;
 
 TEST(Worker, Construction)
 {
-  HiCR::tasking::Worker *w = NULL;
-  HiCR::L1::ComputeManager *m1 = NULL;
+  HiCR::tasking::Worker                            *w  = NULL;
+  HiCR::L1::ComputeManager                         *m1 = NULL;
   HiCR::backend::host::pthreads::L1::ComputeManager m2;
 
   EXPECT_THROW(w = new HiCR::tasking::Worker(m1), HiCR::LogicException);
@@ -44,8 +44,7 @@ TEST(Task, SetterAndGetters)
   EXPECT_TRUE(w.getDispatchers().empty());
 
   // Now adding something to the lists/sets
-  auto dispatcher = HiCR::tasking::Dispatcher([]()
-                                              { return (HiCR::tasking::Task *)NULL; });
+  auto dispatcher = HiCR::tasking::Dispatcher([]() { return (HiCR::tasking::Task *)NULL; });
 
   // Subscribing worker to dispatcher
   w.subscribe(&dispatcher);
@@ -143,8 +142,7 @@ TEST(Worker, LifeCycle)
   __volatile__ bool runningStateFound = false;
 
   // Creating task function
-  auto f = [&runningStateFound]()
-  {
+  auto f = [&runningStateFound]() {
     // Getting worker pointer
     auto w = HiCR::tasking::Worker::getCurrentWorker();
 
@@ -162,8 +160,7 @@ TEST(Worker, LifeCycle)
   HiCR::tasking::Task task(0, u);
 
   // Creating task dispatcher
-  auto dispatcher = HiCR::tasking::Dispatcher([&task]()
-                                              { return &task; });
+  auto dispatcher = HiCR::tasking::Dispatcher([&task]() { return &task; });
 
   // Suscribing worker to dispatcher
   EXPECT_NO_THROW(w.subscribe(&dispatcher));
