@@ -71,6 +71,7 @@ docs:
   - echo "Checking HiCR source and test formatting..."
   - .build-tools/style/check-style.sh check include
   - .build-tools/style/check-style.sh check tests
+  - .build-tools/style/check-style.sh check examples
   - echo "Building code documentation..."
   - make -j1 -C docs
   only: 
