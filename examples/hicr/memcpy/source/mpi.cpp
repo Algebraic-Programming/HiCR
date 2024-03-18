@@ -14,10 +14,9 @@
 
 int main(int argc, char **argv)
 {
-
   MPI_Init(&argc, &argv);
   MPI_Comm comm = MPI_COMM_WORLD;
-  int rank;
+  int      rank;
   MPI_Comm_rank(comm, &rank);
 
   // Creating HWloc topology object
@@ -37,7 +36,6 @@ int main(int argc, char **argv)
 
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();
-   
 
   HiCR::backend::mpi::L1::MemoryManager        m;
   HiCR::backend::mpi::L1::CommunicationManager c(comm);
@@ -47,7 +45,7 @@ int main(int argc, char **argv)
 
   // Creating local buffer
   auto firstMemSpace = *memSpaces.begin();
-  auto localSlot = m.allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE);
+  auto localSlot     = m.allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE);
 
   // Performing all pending local to global memory slot promotions now
   c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{myProcess, localSlot}});
@@ -87,5 +85,4 @@ int main(int argc, char **argv)
   m.freeLocalMemorySlot(localSlot);
 
   MPI_Finalize();
-
 }

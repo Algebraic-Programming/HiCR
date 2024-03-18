@@ -65,7 +65,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 
   // Creating local buffer
   auto firstMemSpace = *memSpaces.begin();
-  auto localSlot = m.allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE);
+  auto localSlot     = m.allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE);
 
   // Performing all pending local to global memory slot promotions now
   c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{myProcess, localSlot}});
