@@ -1,6 +1,5 @@
 # HiCR MPI Backend Configuration
 
-# Try to get MPICH, which is a special case
 mpiDep = dependency('mpi', language: 'cpp', required: true)
     
 # If also not found, then trigger a failure
