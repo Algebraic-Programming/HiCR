@@ -1,9 +1,7 @@
-#include <backends/lpf/L1/memoryManager.hpp>
-#include <backends/lpf/L1/communicationManager.hpp>
+#include <backends/mpi/L1/memoryManager.hpp>
+#include <backends/mpi/L1/communicationManager.hpp>
 #include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <iostream>
-#include <lpf/core.h>
-#include <lpf/mpi.h>
 #include <mpi.h>
 
 #define BUFFER_SIZE 8
@@ -14,29 +12,13 @@
 #define SRC_OFFSET 0
 #define CHANNEL_TAG 0
 
-// flag needed when using MPI to launch
-const int LPF_MPI_AUTO_INITIALIZE = 0;
-
-/**
- * #DEFAULT_MEMSLOTS The memory slots used by LPF
- * in lpf_resize_memory_register . This value is currently
- * guessed as sufficiently large for a program
- */
-#define DEFAULT_MEMSLOTS 100
-
-/**
- * #DEFAULT_MSGSLOTS The message slots used by LPF
- * in lpf_resize_message_queue . This value is currently
- * guessed as sufficiently large for a program
- */
-#define DEFAULT_MSGSLOTS 100
-
-void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
+int main(int argc, char **argv)
 {
-  // Initializing LPF
-  CHECK(lpf_resize_message_queue(lpf, DEFAULT_MSGSLOTS));
-  CHECK(lpf_resize_memory_register(lpf, DEFAULT_MEMSLOTS));
-  CHECK(lpf_sync(lpf, LPF_SYNC_DEFAULT));
+
+  MPI_Init(&argc, &argv);
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int rank;
+  MPI_Comm_rank(comm, &rank);
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -55,13 +37,13 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 
   // Obtaining memory spaces
   auto memSpaces = d->getMemorySpaceList();
+   
 
-  (void)args; // ignore args parameter passed by lpf_exec
-  HiCR::backend::lpf::L1::MemoryManager        m(lpf);
-  HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
+  HiCR::backend::mpi::L1::MemoryManager        m;
+  HiCR::backend::mpi::L1::CommunicationManager c(comm);
 
   // Getting current process id
-  size_t myProcess = pid;
+  size_t myProcess = rank;
 
   // Creating local buffer
   auto firstMemSpace = *memSpaces.begin();
@@ -103,17 +85,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   c.deregisterGlobalMemorySlot(receiverSlot);
 
   m.freeLocalMemorySlot(localSlot);
-}
 
-int main(int argc, char **argv)
-{
-  MPI_Init(&argc, &argv);
-  lpf_init_t init;
-  lpf_args_t args;
-
-  CHECK(lpf_mpi_initialize_with_mpicomm(MPI_COMM_WORLD, &init));
-  CHECK(lpf_hook(init, &spmd, args));
-  CHECK(lpf_mpi_finalize(init));
   MPI_Finalize();
-  return 0;
+
 }
