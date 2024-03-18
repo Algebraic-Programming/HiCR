@@ -125,10 +125,15 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     // Storage for the new pointer
-    void *ptr = malloc(size);
+    const size_t MIN_BYTES = 32;
+    const auto   newSize   = std::max(size, MIN_BYTES);
+    void        *ptr       = malloc(newSize);
+    if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", newSize);
 
+    // Update the memory usage for the memory space
+    memorySpace->increaseUsage(newSize - size);
     // Creating and returning new memory slot
-    return registerLocalMemorySlotImpl(memorySpace, ptr, size);
+    return registerLocalMemorySlotImpl(memorySpace, ptr, newSize);
   }
 
   /**
