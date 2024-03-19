@@ -185,10 +185,15 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   __USED__ static inline std::unique_ptr<HiCR::L1::InstanceManager> createDefault(int *argc, char ***argv)
   {
     // Initializing MPI
-    int requested = MPI_THREAD_SERIALIZED;
-    int provided;
-    MPI_Init_thread(argc, argv, requested, &provided);
-    if (provided < requested) fprintf(stderr, "Warning, this example may not work properly if MPI does not support (serialized) threaded access\n");
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized == 0)
+    {
+      int requested = MPI_THREAD_SERIALIZED;
+      int provided;
+      MPI_Init_thread(argc, argv, requested, &provided);
+      if (provided < requested) fprintf(stderr, "Warning, your application may not work properly if MPI does not support (serialized) threaded access\n");
+    }
 
     // Creating instance manager
     return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
