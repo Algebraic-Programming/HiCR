@@ -40,11 +40,11 @@ class Worker final : public runtime::Instance
    * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
    * @param[in] machineModel The machine model to use to deploy the workers
    */
-  Worker(HiCR::L1::InstanceManager                &instanceManager,
-         HiCR::L1::CommunicationManager           &communicationManager,
-         HiCR::L1::MemoryManager                  &memoryManager,
-         std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
-         HiCR::MachineModel                       &machineModel)
+  Worker(HiCR::L1::InstanceManager*                instanceManager,
+         HiCR::L1::CommunicationManager*           communicationManager,
+         HiCR::L1::MemoryManager*                  memoryManager,
+         std::vector<HiCR::L1::TopologyManager *>  topologyManagers,
+         HiCR::MachineModel*                       machineModel)
     : runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, machineModel)
   {}
   Worker()  = delete;

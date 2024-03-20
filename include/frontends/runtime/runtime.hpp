@@ -134,11 +134,11 @@ class Runtime final
 
     // Coordinator route
     if (_instanceManager->getCurrentInstance()->isRootInstance() == true)
-      _currentInstance = new HiCR::runtime::Coordinator(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
+      _currentInstance = new HiCR::runtime::Coordinator(_instanceManager.get(), _communicationManager.get(), _memoryManager.get(), topologyManagers, _machineModel.get());
 
     // Worker route
     if (_instanceManager->getCurrentInstance()->isRootInstance() == false)
-      _currentInstance = new HiCR::runtime::Worker(*_instanceManager, *_communicationManager, *_memoryManager, topologyManagers, *_machineModel);
+      _currentInstance = new HiCR::runtime::Worker(_instanceManager.get(), _communicationManager.get(), _memoryManager.get(), topologyManagers, _machineModel.get());
   }
 
   ~Runtime() = default;
