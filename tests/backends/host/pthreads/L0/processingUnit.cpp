@@ -23,8 +23,8 @@ TEST(ProcessingUnit, Construction)
   auto cPtr            = std::make_shared<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
   HiCR::backend::host::pthreads::L0::ProcessingUnit *p = nullptr;
-  EXPECT_NO_THROW(p = new HiCR::backend::host::pthreads::L0::ProcessingUnit(cPtr));
-  EXPECT_FALSE(p == nullptr);
+  ASSERT_NO_THROW(p = new HiCR::backend::host::pthreads::L0::ProcessingUnit(cPtr));
+  ASSERT_FALSE(p == nullptr);
   delete p;
 }
 
@@ -32,16 +32,16 @@ TEST(ProcessingUnit, AffinityFunctions)
 {
   // Storing current affinity set
   std::set<int> originalAffinitySet;
-  EXPECT_NO_THROW(originalAffinitySet = HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity());
+  ASSERT_NO_THROW(originalAffinitySet = HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity());
 
   // Attempting to set and check new affinity set
   std::set<int> newAffinitySet({0, 1});
-  EXPECT_NO_THROW(HiCR::backend::host::pthreads::L0::ProcessingUnit::updateAffinity(newAffinitySet));
-  EXPECT_EQ(newAffinitySet, HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity());
+  ASSERT_NO_THROW(HiCR::backend::host::pthreads::L0::ProcessingUnit::updateAffinity(newAffinitySet));
+  ASSERT_EQ(newAffinitySet, HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity());
 
   // Re-setting affinity set
-  EXPECT_NO_THROW(HiCR::backend::host::pthreads::L0::ProcessingUnit::updateAffinity(originalAffinitySet));
-  EXPECT_EQ(originalAffinitySet, HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity());
+  ASSERT_NO_THROW(HiCR::backend::host::pthreads::L0::ProcessingUnit::updateAffinity(originalAffinitySet));
+  ASSERT_EQ(originalAffinitySet, HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity());
 }
 
 TEST(ProcessingUnit, ThreadAffinity)
@@ -69,7 +69,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   std::set<int> threadAffinitySet({threadAffinity});
 
   // Initializing processing unit
-  EXPECT_NO_THROW(processingUnit->initialize());
+  ASSERT_NO_THROW(processingUnit->initialize());
 
   __volatile__ bool hasCorrectAffinity = false;
   __volatile__ bool checkedAffinity    = false;
@@ -91,23 +91,23 @@ TEST(ProcessingUnit, ThreadAffinity)
 
   // Creating and initializing execution state
   std::unique_ptr<HiCR::L0::ExecutionState> executionState = NULL;
-  EXPECT_NO_THROW(executionState = std::move(m.createExecutionState(executionUnit)));
+  ASSERT_NO_THROW(executionState = std::move(m.createExecutionState(executionUnit)));
 
   // Starting execution state execution
-  EXPECT_NO_THROW(processingUnit->start(std::move(executionState)));
+  ASSERT_NO_THROW(processingUnit->start(std::move(executionState)));
 
   // Waiting for the thread to report
   while (checkedAffinity == false)
     ;
 
   // Checking if the thread's affinity was correctly set
-  EXPECT_TRUE(hasCorrectAffinity);
+  ASSERT_TRUE(hasCorrectAffinity);
 
   // Re-terminating
-  EXPECT_NO_THROW(processingUnit->terminate());
+  ASSERT_NO_THROW(processingUnit->terminate());
 
   // Re-awaiting
-  EXPECT_NO_THROW(processingUnit->await());
+  ASSERT_NO_THROW(processingUnit->await());
 }
 
 TEST(ProcessingUnit, LifeCycle)
@@ -165,70 +165,65 @@ TEST(ProcessingUnit, LifeCycle)
   auto executionState1 = m.createExecutionState(executionUnit1);
 
   // Testing forbidden transitions
-  EXPECT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->resume(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->terminate(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->await(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
 
   // Initializing
-  EXPECT_NO_THROW(processingUnit->initialize());
+  ASSERT_NO_THROW(processingUnit->initialize());
 
   // Testing forbidden transitions
-  EXPECT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->resume(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->terminate(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->await(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
 
   // Running
   executionState1 = m.createExecutionState(executionUnit1);
-  EXPECT_NO_THROW(processingUnit->start(std::move(executionState1)));
+  ASSERT_NO_THROW(processingUnit->start(std::move(executionState1)));
 
   // Waiting for execution times to update
   pthread_barrier_wait(&barrier);
-  EXPECT_EQ(resumeCounter, 1);
+  ASSERT_EQ(resumeCounter, 1);
 
   // Testing forbidden transitions
   executionState1 = m.createExecutionState(executionUnit1);
-  EXPECT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->resume(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
 
   // Requesting the thread to suspend
-  EXPECT_NO_THROW(processingUnit->suspend());
+  ASSERT_NO_THROW(processingUnit->suspend());
 
   // Updating suspend flag
   suspendCounter = suspendCounter + 1;
 
   // Testing forbidden transitions
   executionState1 = m.createExecutionState(executionUnit1);
-  EXPECT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->terminate(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
 
   // Checking resume counter value has not updated (this is probabilistic only)
   sched_yield();
   usleep(150000);
   sched_yield();
-  EXPECT_EQ(resumeCounter, 1);
+  ASSERT_EQ(resumeCounter, 1);
 
   // Resuming to terminate function
-  EXPECT_NO_THROW(processingUnit->resume());
+  ASSERT_NO_THROW(processingUnit->resume());
 
   // Waiting for execution times to update
   pthread_barrier_wait(&barrier);
-  EXPECT_EQ(resumeCounter, 2);
+  ASSERT_EQ(resumeCounter, 2);
 
   // Testing forbidden transitions
   executionState1 = m.createExecutionState(executionUnit1);
-  EXPECT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->resume(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
 
   // Re-suspend
-  EXPECT_NO_THROW(processingUnit->suspend());
+  ASSERT_NO_THROW(processingUnit->suspend());
 
   // Updating suspend flag and waiting a bit
   suspendCounter = suspendCounter + 1;
@@ -237,31 +232,28 @@ TEST(ProcessingUnit, LifeCycle)
   sched_yield();
   usleep(50000);
   sched_yield();
-  EXPECT_EQ(resumeCounter, 2);
+  ASSERT_EQ(resumeCounter, 2);
 
   // Re-Resume
-  EXPECT_NO_THROW(processingUnit->resume());
-  EXPECT_NO_THROW(processingUnit->terminate());
+  ASSERT_NO_THROW(processingUnit->resume());
+  ASSERT_NO_THROW(processingUnit->terminate());
 
   // Waiting for execution times to update
   pthread_barrier_wait(&barrier);
-  EXPECT_EQ(resumeCounter, 3);
+  ASSERT_EQ(resumeCounter, 3);
 
   // Terminate
   executionState1 = m.createExecutionState(executionUnit1);
-  EXPECT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->resume(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->terminate(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->initialize(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
 
   // Awaiting termination
   executionState1 = m.createExecutionState(executionUnit1);
-  EXPECT_NO_THROW(processingUnit->await());
-  EXPECT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->resume(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
-  EXPECT_THROW(processingUnit->terminate(), HiCR::RuntimeException);
+  ASSERT_NO_THROW(processingUnit->await());
+  ASSERT_THROW(processingUnit->start(std::move(executionState1)), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
+  ASSERT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
 
   ///////// Checking re-run same thread
 
@@ -276,23 +268,23 @@ TEST(ProcessingUnit, LifeCycle)
   auto executionUnit2 = std::make_shared<HiCR::backend::host::L0::ExecutionUnit>(fc2);
 
   // Reinitializing
-  EXPECT_NO_THROW(processingUnit->initialize());
+  ASSERT_NO_THROW(processingUnit->initialize());
 
   // Creating and initializing execution state
   auto executionState2 = m.createExecutionState(executionUnit2);
 
   // Re-running
-  EXPECT_NO_THROW(processingUnit->start(std::move(executionState2)));
+  ASSERT_NO_THROW(processingUnit->start(std::move(executionState2)));
 
   // Waiting for resume counter to update
   pthread_barrier_wait(&barrier);
-  EXPECT_EQ(resumeCounter, 4);
+  ASSERT_EQ(resumeCounter, 4);
 
   // Re-terminating
-  EXPECT_NO_THROW(processingUnit->terminate());
+  ASSERT_NO_THROW(processingUnit->terminate());
 
   // Re-awaiting
-  EXPECT_NO_THROW(processingUnit->await());
+  ASSERT_NO_THROW(processingUnit->await());
 
   ///////////////// Creating case where the thread runs a function that finishes
   auto fc3 = []() {};
@@ -304,14 +296,14 @@ TEST(ProcessingUnit, LifeCycle)
   auto executionState3 = m.createExecutionState(executionUnit3);
 
   // Reinitializing
-  EXPECT_NO_THROW(processingUnit->initialize());
+  ASSERT_NO_THROW(processingUnit->initialize());
 
   // Re-running
-  EXPECT_NO_THROW(processingUnit->start(std::move(executionState3)));
+  ASSERT_NO_THROW(processingUnit->start(std::move(executionState3)));
 
   // Re-terminating
-  EXPECT_NO_THROW(processingUnit->terminate());
+  ASSERT_NO_THROW(processingUnit->terminate());
 
   // Re-awaiting
-  EXPECT_NO_THROW(processingUnit->await());
+  ASSERT_NO_THROW(processingUnit->await());
 }
