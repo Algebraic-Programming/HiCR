@@ -160,9 +160,6 @@ class ProcessingUnit
    */
   __USED__ inline void terminate()
   {
-    // Checking state
-    if (_state != ProcessingUnit::running) HICR_THROW_RUNTIME("Attempting to stop processing unit that is not in the 'running' state");
-
     // Transitioning state
     _state = ProcessingUnit::terminating;
 
@@ -176,8 +173,7 @@ class ProcessingUnit
   __USED__ inline void await()
   {
     // Checking state
-    if (_state != ProcessingUnit::terminating && _state != ProcessingUnit::running && _state != ProcessingUnit::suspended)
-      HICR_THROW_RUNTIME("Attempting to wait for a processing unit that has not yet started or has already terminated");
+    if (_state != ProcessingUnit::terminating && _state != ProcessingUnit::running && _state != ProcessingUnit::suspended) return;
 
     // Calling internal implementation of the await function
     awaitImpl();
