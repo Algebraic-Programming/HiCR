@@ -142,7 +142,7 @@ class DataObject final
     MPI_Recv(buffer, size, MPI_BYTE, remoteInstanceId, _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     // Creating data object
-    return std::make_shared<DataObject>(buffer, size, dataObjectId, currentInstanceId);
+    return std::make_shared<DataObject>(buffer, size, dataObjectId, currentInstanceId, seed);
   }
 
   /**
