@@ -121,7 +121,7 @@ class DataObject final
   __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t       dataObjectId,
                                                                    HiCR::L0::Instance::instanceId_t remoteInstanceId,
                                                                    HiCR::L0::Instance::instanceId_t currentInstanceId,
-								   HiCR::L0::Instance::instanceId_t seed)
+                                                                   HiCR::L0::Instance::instanceId_t seed)
   {
     // Pick the first 15 bits of the id and use it as MPI Tag
     const int dataObjectIdTag = dataObjectId & mpiTagMask;
