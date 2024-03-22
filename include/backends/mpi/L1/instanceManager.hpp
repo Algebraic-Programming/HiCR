@@ -195,6 +195,8 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   }
 
   __USED__ inline HiCR::L0::Instance::instanceId_t getRootInstanceId() const { return _HICR_MPI_INSTANCE_ROOT_ID; }
+  
+  __USED__ inline HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
 
   private:
 

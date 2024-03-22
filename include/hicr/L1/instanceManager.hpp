@@ -174,6 +174,12 @@ class InstanceManager
    */
   virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
 
+  /**
+   * Returns the random seed generated at the startup
+   * @return the random seed
+   */
+  virtual HiCR::L0::Instance::instanceId_t getSeed() const = 0;
+
   protected:
 
   /**
