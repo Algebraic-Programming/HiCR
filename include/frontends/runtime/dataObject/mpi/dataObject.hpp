@@ -42,8 +42,9 @@ class DataObject final
    * @param[in] size The size of the internal buffer
    * @param[in] id Identifier for the new data object
    * @param[in] instanceId Identifier of the instance owning the data object
+   * @param[in] seed random application seed  
    */
-  DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId)
+  DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId, const HiCR::L0::Instance::instanceId_t seed)
     : _buffer(buffer),
       _size(size),
       _id(id){};
@@ -114,11 +115,13 @@ class DataObject final
    * @param[in] dataObjectId The data object id to take from a remote instance
    * @param[in] remoteInstanceId Id of the remote instance to take the published data object from
    * @param[in] currentInstanceId Id of the instance that will own the data object
+   * @param[in] seed unique random seed 
    * @return A shared pointer to the data object obtained from the remote instance
    */
   __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t       dataObjectId,
                                                                    HiCR::L0::Instance::instanceId_t remoteInstanceId,
-                                                                   HiCR::L0::Instance::instanceId_t currentInstanceId)
+                                                                   HiCR::L0::Instance::instanceId_t currentInstanceId,
+                                                                   HiCR::L0::Instance::instanceId_t seed)
   {
     // Pick the first 15 bits of the id and use it as MPI Tag
     const int dataObjectIdTag = dataObjectId & mpiTagMask;
@@ -139,7 +142,7 @@ class DataObject final
     MPI_Recv(buffer, size, MPI_BYTE, remoteInstanceId, _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     // Creating data object
-    return std::make_shared<DataObject>(buffer, size, dataObjectId, currentInstanceId);
+    return std::make_shared<DataObject>(buffer, size, dataObjectId, currentInstanceId, seed);
   }
 
   /**

@@ -165,7 +165,7 @@ class Instance
     // Truncate it to fit into the data object id
     std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
 
-    return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId());
+    return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId(), _instanceManager->getSeed());
   }
 
   /**
@@ -183,7 +183,7 @@ class Instance
     const auto coordinatorId     = _instanceManager->getRootInstanceId();
     const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
     // Creating data object from id and remote instance id
-    return DataObject::getDataObject(dataObjectId, coordinatorId, currentInstanceId);
+    return DataObject::getDataObject(dataObjectId, coordinatorId, currentInstanceId, _instanceManager->getSeed());
   }
 
   /**
