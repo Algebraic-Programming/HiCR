@@ -1,4 +1,5 @@
 subdir('abcTasks')
+subdir('mutex')
 subdir('energySaver')
 subdir('getCurrentTask')
 subdir('resourceList')
