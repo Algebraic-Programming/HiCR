@@ -16,6 +16,7 @@
 #include "worker.hpp"
 #include "common.hpp"
 #include "mutex.hpp"
+#include "conditionVariable.hpp"
 
 #define CREATE_HICR_TASKING_HOOK                                                                                                                                                   \
   namespace HiCR                                                                                                                                                                   \
