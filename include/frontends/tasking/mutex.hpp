@@ -13,6 +13,7 @@
 #pragma once
 
 #include <atomic>
+#include <hicr/exceptions.hpp>
 #include "task.hpp"
 
 namespace HiCR
@@ -28,6 +29,12 @@ class Mutex
   Mutex() = default;
   ~Mutex() = default;
 
+  __USED__ inline bool ownsLock()
+  {
+    auto currentTask = HiCR::tasking::Task::getCurrentTask();
+    return _lockValue.load() == currentTask;
+  }
+
   __USED__ inline bool trylock()
   {
     auto currentTask = HiCR::tasking::Task::getCurrentTask();
@@ -42,8 +49,8 @@ class Mutex
 
   __USED__ inline void unlock()
   {
-    auto currentTask = HiCR::tasking::Task::getCurrentTask();
-    lockBlockingImpl(currentTask, nullptr);
+    if (ownsLock() == false) HICR_THROW_LOGIC("Trying to unlock a mutex that doesn't belong to this task");
+    _lockValue = nullptr;
   }
 
   private:

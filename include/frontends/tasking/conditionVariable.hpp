@@ -13,7 +13,6 @@
 #pragma once
 
 #include <set>
-#include <thread>
 #include "mutex.hpp"
 #include "task.hpp"
 
@@ -30,28 +29,46 @@ class ConditionVariable
   ConditionVariable() = default;
   ~ConditionVariable() = default;
 
-  void wait()
+  void wait(tasking::Mutex& conditionMutex, std::function<bool(void)> conditionFunction)
   {
-     auto currentTask = HiCR::tasking::Task::getCurrentTask();
-     bool keepWaiting = true;
+    auto currentTask = HiCR::tasking::Task::getCurrentTask();
  
-    _mutex.lock();
-    _waitingTasks.insert(currentTask);
-    _mutex.unlock();
+    // Checking on the condition
+    conditionMutex.lock();
+    bool keepWaiting = conditionFunction() == false;
+    conditionMutex.unlock();
 
+    // If the condition is not satisfied:
     while (keepWaiting == true)
     {
-      currentTask->suspend();
+      // Insert oneself in the waiting task list
       _mutex.lock();
-      keepWaiting = _waitingTasks.contains(currentTask);
+      _waitingTasks.insert(currentTask);
       _mutex.unlock();
+
+      // Suspend execution
+      currentTask->suspend();
+
+      // Do not wake up until notified
+      bool isNotified = false;
+      while(isNotified == false)
+      {
+        _mutex.lock();
+        isNotified = _waitingTasks.contains(currentTask) == false;
+        _mutex.unlock();
+      }
+
+      // Now we were notified, get condition lock and check condition again
+      conditionMutex.lock();
+      keepWaiting = conditionFunction() == false;
+      conditionMutex.unlock();
     }
   }
 
   void notifyOne()
   {
     _mutex.lock();
-    _waitingTasks.erase(_waitingTasks.begin());
+    if (_waitingTasks.empty() == false) _waitingTasks.erase(_waitingTasks.begin());
     _mutex.unlock();
   }
 

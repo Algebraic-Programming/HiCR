@@ -20,24 +20,47 @@ void conditionVariable(HiCR::backend::host::L1::ComputeManager *computeManager, 
   // Contention value
   size_t value = 0;
 
-  // Task-aware mutex
+  // Mutex for the condition variable
+  HiCR::tasking::Mutex mutex;
+
+  // Task-aware conditional variable
   HiCR::tasking::ConditionVariable cv;
 
   // Creating task functions
   auto thread1Fc = computeManager->createExecutionUnit([&]()
-   {
-     std::this_thread::sleep_for(500ms);
-     value = 7;
-     cv.notifyOne();
-     cv.wait();
-     value = value + 7;
-   });
+  {
+    // Using lock to update the value
+    mutex.lock();
+    printf("Thread 1: I go first and set value to 1\n");
+    value += 1;
+    mutex.unlock();
+
+    // Notifiying the other thread
+    printf("Thread 1: Now I notify anybody waiting\n");
+    cv.notifyOne();
+
+    // Waiting for the other thread's update now
+    printf("Thread 1: I wait for the value to turn 2\n");
+    cv.wait(mutex, [&](){ return value == 2; });
+    printf("Thread 1: The condition (value == 2) is satisfied now\n");
+  });
 
   auto thread2Fc = computeManager->createExecutionUnit([&]()
   {
-    cv.wait();
-    value = value + 7;
-    std::this_thread::sleep_for(500ms);
+
+    // Waiting for the other thread to set the first value
+    printf("Thread 2: First, I'll wait for the value to become 1\n");
+    cv.wait(mutex, [&](){ return value == 1; });
+    printf("Thread 2: The condition (value == 1) is satisfied now\n");
+
+    // Now updating the value ourselves
+    printf("Thread 2: Now I update the value to 2\n");
+    mutex.lock();
+    value += 1;
+    mutex.unlock();
+
+    // Notifying the other thread
+    printf("Thread 2: Notifying anybody interested\n");
     cv.notifyOne();
   });
 
@@ -48,7 +71,7 @@ void conditionVariable(HiCR::backend::host::L1::ComputeManager *computeManager, 
   taskr.run(computeManager);
 
   // Value should be equal to concurrent task count
-  size_t expectedValue = _INITIAL_VALUE * 3;
+  size_t expectedValue = 2;
   printf("Value %lu / Expected %lu\n", value, expectedValue);
   assert(value == expectedValue);
 }
