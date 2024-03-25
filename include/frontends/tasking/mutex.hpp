@@ -28,30 +28,40 @@ class Mutex
   Mutex() = default;
   ~Mutex() = default;
 
+  __USED__ inline bool trylock()
+  {
+    auto currentTask = HiCR::tasking::Task::getCurrentTask();
+    return lockNotBlockingImpl(nullptr, currentTask);
+  }
+
   __USED__ inline void lock()
   {
     auto currentTask = HiCR::tasking::Task::getCurrentTask();
-    lockImpl(nullptr, currentTask);
+    lockBlockingImpl(nullptr, currentTask);
   }
 
   __USED__ inline void unlock()
   {
     auto currentTask = HiCR::tasking::Task::getCurrentTask();
-    lockImpl(currentTask, nullptr);
+    lockBlockingImpl(currentTask, nullptr);
   }
 
   private:
 
-  __USED__ inline void lockImpl(HiCR::tasking::Task* expected, HiCR::tasking::Task* desired)
+  __USED__ inline void lockBlockingImpl(HiCR::tasking::Task* expected, HiCR::tasking::Task* desired)
   {
     bool success = false;
 
     while(success == false)
     {
-      auto e = expected;
-      success = _lockValue.compare_exchange_weak(e, desired);
+      success = lockNotBlockingImpl(expected, desired);
       if (success == false) HiCR::tasking::Task::getCurrentTask()->suspend();
     }
+  }
+
+  __USED__ inline bool lockNotBlockingImpl(HiCR::tasking::Task* expected, HiCR::tasking::Task* desired)
+  {
+    return _lockValue.compare_exchange_weak(expected, desired);
   }
 
   std::atomic<HiCR::tasking::Task*> _lockValue = nullptr;
