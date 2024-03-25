@@ -4,7 +4,7 @@
 #include <backends/host/L1/computeManager.hpp>
 #include "../runtime.hpp"
  
-#define _CONCURRENT_TASKS 10000ul
+#define _CONCURRENT_TASKS 1000ul
 
 void mutex(HiCR::backend::host::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t &computeResources)
 {

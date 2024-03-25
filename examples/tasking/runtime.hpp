@@ -229,7 +229,7 @@ class Runtime
    * (required for dependency management of any tasks that depend on this task) and terminates execution of the current worker if all tasks have
    * finished.
    *
-   * \param[in] task Task to add.
+   * \param[in] task Finalized task pointer
    */
   __USED__ inline void onTaskFinish(HiCR::tasking::Task *task)
   {
@@ -242,6 +242,17 @@ class Runtime
     // Free task's memory to prevent leaks. Could not use unique_ptr because the
     // type is not supported by boost's lock-free queue
     delete task;
+  }
+
+  /**
+   * A callback function for HiCR to run upon the suspension of a given task. It adds it back to the task queue for reevaluation later.
+   *
+   * \param[in] task Suspended task pointer
+   */
+  __USED__ inline void onTaskSuspend(HiCR::tasking::Task *task)
+  {
+    // Re-adding task to the waiting list
+    _waitingTaskQueue.push(task);
   }
 
   /**
@@ -309,11 +320,12 @@ class Runtime
     // Initializing HiCR tasking
     HiCR::tasking::initialize();
 
-    _dispatcher = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); }); //
+    _dispatcher = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); }); 
     _eventMap   = new HiCR::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); }); //
+    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish,  [this](HiCR::tasking::Task *task) { onTaskFinish(task); }); //
+    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskSuspend, [this](HiCR::tasking::Task *task) { onTaskSuspend(task); }); //
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)
