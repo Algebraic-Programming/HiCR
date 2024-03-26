@@ -20,8 +20,6 @@ namespace HiCR
 namespace tasking
 {
 
-class Worker;
-
 /**
  * Defines a standard type for a pull function.
  */
