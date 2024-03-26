@@ -70,25 +70,18 @@ class Task
     /**
      * Triggered as the task finishes execution
      */
-    onTaskFinish
+    onTaskFinish,
+
+    /**
+     * Triggered as the task is notified
+    */
+    onTaskNotify,
   };
 
   /**
    * Type definition for the task's event map
    */
   typedef HiCR::tasking::EventMap<Task, event_t> taskEventMap_t;
-
-  /**
-   * Definition for a task function that register operations that have been started by the task but not yet finalized
-   *
-   * Running the function must return True, if the operation has finished, and; False, if the operation finished
-   */
-  typedef std::function<bool()> pendingOperationFunction_t;
-
-  /**
-   * Definition for the collection of pending operations
-   */
-  typedef std::queue<pendingOperationFunction_t> pendingOperationFunctionQueue_t;
 
   Task()  = delete;
   ~Task() = default;
@@ -128,6 +121,11 @@ class Task
   __USED__ inline taskEventMap_t *getEventMap() { return _eventMap; }
 
   /**
+   * Notifies a task, triggering the associated event
+   */
+  __USED__ inline void notify() { _eventMap->trigger(this, HiCR::tasking::Task::event_t::onTaskNotify); }
+
+  /**
    * Queries the task's internal state.
    *
    * @return The task internal state
@@ -156,41 +154,6 @@ class Task
    * \return The execution unit assigned to this task
    */
   __USED__ inline std::shared_ptr<HiCR::L0::ExecutionUnit> getExecutionUnit() const { return _executionUnit; }
-
-  /**
-   * Registers an operation that has been started by the task but has not yet finished
-   *
-   * @param[in] op The pending operation
-   */
-  __USED__ inline void registerPendingOperation(pendingOperationFunction_t op) { _pendingOperations.push(op); }
-
-  /**
-   * Checks for the finalization of all the task's pending operations and reports whether they have finished
-   *
-   * Operations that have finished are removed from the Task's storage. These will be removed, even if some might remain and the return is false
-   *
-   * @return True, if the task no longer contains pending operations; false, if pending operations remain.
-   */
-  __USED__ inline bool checkPendingOperations()
-  {
-    while (_pendingOperations.empty() == false)
-    {
-      // Getting the pending function
-      const auto &fc = _pendingOperations.front();
-
-      // Running it to see whether it has finished
-      bool finished = fc();
-
-      // If it hasn't, return false immediately
-      if (finished == false) return false;
-
-      // Otherwise, remove current element
-      _pendingOperations.pop();
-    }
-
-    // No pending operations remain, return true
-    return true;
-  }
 
   /**
    * Implements the initialization routine of a task, that stores and initializes the execution state to run to completion
@@ -301,11 +264,6 @@ class Task
    *  Map of events to trigger
    */
   taskEventMap_t *_eventMap = NULL;
-
-  /**
-   * List of pending operations initiated by the task but not yet finished
-   */
-  pendingOperationFunctionQueue_t _pendingOperations;
 
   /**
    * Internal execution state of the task. Will change based on runtime scheduling events

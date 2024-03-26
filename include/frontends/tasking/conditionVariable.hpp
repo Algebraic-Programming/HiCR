@@ -60,48 +60,48 @@ class ConditionVariable
       _waitingTasks.insert(currentTask);
       _mutex.unlock();
 
-      // Register a pending operation that will prevent task from being rescheduled until finished
-      currentTask->registerPendingOperation([&]() {
-        // Gaining lock by insisting until we get it
-        while (_mutex.trylock(currentTask) == false)
-          ;
+      // // Register a pending operation that will prevent task from being rescheduled until finished
+      // currentTask->registerPendingOperation([&]() {
+      //   // Gaining lock by insisting until we get it
+      //   while (_mutex.trylock(currentTask) == false)
+      //     ;
 
-        // Checking whether this task has been notified
-        bool isNotified = _waitingTasks.contains(currentTask) == false;
+      //   // Checking whether this task has been notified
+      //   bool isNotified = _waitingTasks.contains(currentTask) == false;
 
-        // Releasing lock
-        _mutex.unlock(currentTask);
+      //   // Releasing lock
+      //   _mutex.unlock(currentTask);
 
-        // If not notified, re-add task to notification list and stop evaluating
-        if (isNotified == false)
-        {
-          // Gaining lock by insisting until we get it
-          while (_mutex.trylock(currentTask) == false)
-            ;
+      //   // If not notified, re-add task to notification list and stop evaluating
+      //   if (isNotified == false)
+      //   {
+      //     // Gaining lock by insisting until we get it
+      //     while (_mutex.trylock(currentTask) == false)
+      //       ;
 
-          // Reinserting ourselves in the waiting task list
-          _waitingTasks.insert(currentTask);
+      //     // Reinserting ourselves in the waiting task list
+      //     _waitingTasks.insert(currentTask);
 
-          // Releasing lock
-          _mutex.unlock(currentTask);
+      //     // Releasing lock
+      //     _mutex.unlock(currentTask);
 
-          // Returning false because we haven't yet been notified
-          return false;
-        }
+      //     // Returning false because we haven't yet been notified
+      //     return false;
+      //   }
 
-        // Gaining lock by insisting until we get it
-        while (conditionMutex.trylock(currentTask) == false)
-          ;
+      //   // Gaining lock by insisting until we get it
+      //   while (conditionMutex.trylock(currentTask) == false)
+      //     ;
 
-        // Checking actual condition
-        bool isConditionSatisfied = conditionPredicate();
+      //   // Checking actual condition
+      //   bool isConditionSatisfied = conditionPredicate();
 
-        // Releasing lock
-        conditionMutex.unlock(currentTask);
+      //   // Releasing lock
+      //   conditionMutex.unlock(currentTask);
 
-        // Return whether the condition is satisfied
-        return isConditionSatisfied;
-      });
+      //   // Return whether the condition is satisfied
+      //   return isConditionSatisfied;
+      // });
 
       // Suspending task
       currentTask->suspend();
