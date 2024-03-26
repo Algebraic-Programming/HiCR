@@ -57,12 +57,20 @@ class Mutex
 
   __USED__ inline void lockBlockingImpl(HiCR::tasking::Task* expected, HiCR::tasking::Task* desired)
   {
-    bool success = false;
+    // Getting current task
+    auto currentTask = HiCR::tasking::Task::getCurrentTask();
 
-    while(success == false)
+    // Checking right away if we can get the lock
+    bool success = lockNotBlockingImpl(expected, desired);
+    
+    // If not successful, then suspend the task
+    if (success == false) 
     {
-      success = lockNotBlockingImpl(expected, desired);
-      if (success == false) HiCR::tasking::Task::getCurrentTask()->suspend();
+      // Register a pending operation that will prevent task from being rescheduled until finished
+      currentTask->registerPendingOperation([&]() { return lockNotBlockingImpl(expected, desired); });
+
+      // Prevent from re-executing task until the lock is obtained
+      currentTask->suspend();
     }
   }
 

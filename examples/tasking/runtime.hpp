@@ -112,7 +112,10 @@ class Runtime
   {
     const auto &dependencies = task->getDependencies();
 
-    // Checking Task dependencies
+    // Checking task pending operations
+    if (task->checkPendingOperations() == false) return false;;
+
+    // Checking task dependencies
     for (size_t i = 0; i < dependencies.size(); i++)
       if (_finishedTaskHashSet.contains(dependencies[i]) == false)
         return false; // If any unsatisfied dependency was found, return

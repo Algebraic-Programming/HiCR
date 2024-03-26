@@ -38,30 +38,42 @@ class ConditionVariable
     bool keepWaiting = conditionFunction() == false;
     conditionMutex.unlock();
 
-    // If the condition is not satisfied:
-    while (keepWaiting == true)
+    // If the condition is not satisfied, suspend until we're notified and the condition is satisfied
+    if (keepWaiting == true)
     {
       // Insert oneself in the waiting task list
       _mutex.lock();
       _waitingTasks.insert(currentTask);
       _mutex.unlock();
 
-      // Suspend execution
-      currentTask->suspend();
-
-      // Do not wake up until notified
-      bool isNotified = false;
-      while(isNotified == false)
+      // Register a pending operation that will prevent task from being rescheduled until finished
+      currentTask->registerPendingOperation([&]()
       {
+        // Checking whether this task has been notified
         _mutex.lock();
-        isNotified = _waitingTasks.contains(currentTask) == false;
+        bool isNotified = _waitingTasks.contains(currentTask) == false;
         _mutex.unlock();
-      }
 
-      // Now we were notified, get condition lock and check condition again
-      conditionMutex.lock();
-      keepWaiting = conditionFunction() == false;
-      conditionMutex.unlock();
+        // If not notified, re-add task to notification list and stop evaluating
+        if (isNotified == false)
+        {
+          _mutex.lock();
+          _waitingTasks.insert(currentTask);
+          _mutex.unlock();
+          return false;
+        } 
+
+        // Checking actual condition
+        conditionMutex.lock();
+        bool isConditionSatisfied = conditionFunction();
+        conditionMutex.unlock();
+
+        // Return whether the condition is satisfied 
+        return isConditionSatisfied;
+      });
+
+      // Suspending task
+      currentTask->suspend();
     }
   }
 
