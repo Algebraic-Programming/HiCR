@@ -62,9 +62,9 @@ class ConditionVariable
 
       // Register a pending operation that will prevent task from being rescheduled until finished
       currentTask->registerPendingOperation([&]() {
-        // Attempting to gain lock. If unsuccessful, stop evaluation
-        bool lockObtained = _mutex.trylock(currentTask);
-        if (lockObtained == false) return false;
+        // Gaining lock by insisting until we get it
+        while (_mutex.trylock(currentTask) == false)
+          ;
 
         // Checking whether this task has been notified
         bool isNotified = _waitingTasks.contains(currentTask) == false;
@@ -75,20 +75,23 @@ class ConditionVariable
         // If not notified, re-add task to notification list and stop evaluating
         if (isNotified == false)
         {
-          // Attempting to gain lock. If unsuccessful, stop evaluation
-          bool lockObtained = _mutex.trylock(currentTask);
-          if (lockObtained == false) return false;
+          // Gaining lock by insisting until we get it
+          while (_mutex.trylock(currentTask) == false)
+            ;
 
+          // Reinserting ourselves in the waiting task list
           _waitingTasks.insert(currentTask);
 
           // Releasing lock
           _mutex.unlock(currentTask);
 
+          // Returning false because we haven't yet been notified
           return false;
         }
 
-        // Attempting to gain lock. If unsuccessful, stop evaluation
-        lockObtained = conditionMutex.trylock(currentTask);
+        // Gaining lock by insisting until we get it
+        while (conditionMutex.trylock(currentTask) == false)
+          ;
 
         // Checking actual condition
         bool isConditionSatisfied = conditionPredicate();
