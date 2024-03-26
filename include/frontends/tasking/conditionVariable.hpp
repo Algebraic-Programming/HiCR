@@ -53,59 +53,39 @@ class ConditionVariable
     conditionMutex.unlock();
 
     // If the condition is not satisfied, suspend until we're notified and the condition is satisfied
-    if (keepWaiting == true)
+    while (keepWaiting == true)
     {
       // Insert oneself in the waiting task list
       _mutex.lock();
-      _waitingTasks.insert(currentTask);
+      _waitingTasks.push(currentTask);
       _mutex.unlock();
 
-      // Register a pending operation that will prevent task from being rescheduled until finished
-      currentTask->registerPendingOperation([&]() {
-        // Gaining lock by insisting until we get it
-        while (_mutex.trylock(currentTask) == false)
-          ;
-
-        // Checking whether this task has been notified
-        bool isNotified = _waitingTasks.contains(currentTask) == false;
-
-        // Releasing lock
-        _mutex.unlock(currentTask);
-
-        // If not notified, re-add task to notification list and stop evaluating
-        if (isNotified == false)
-        {
-          // Gaining lock by insisting until we get it
-          while (_mutex.trylock(currentTask) == false)
-            ;
-
-          // Reinserting ourselves in the waiting task list
-          _waitingTasks.insert(currentTask);
-
-          // Releasing lock
-          _mutex.unlock(currentTask);
-
-          // Returning false because we haven't yet been notified
-          return false;
-        }
-
-        // Gaining lock by insisting until we get it
-        while (conditionMutex.trylock(currentTask) == false)
-          ;
-
-        // Checking actual condition
-        bool isConditionSatisfied = conditionPredicate();
-
-        // Releasing lock
-        conditionMutex.unlock(currentTask);
-
-        // Return whether the condition is satisfied
-        return isConditionSatisfied;
-      });
-
-      // Suspending task
+      // Suspending task now
       currentTask->suspend();
+
+      // After being notified, check on the condition again
+      conditionMutex.lock();
+      keepWaiting = conditionPredicate() == false;
+      conditionMutex.unlock();
     }
+  }
+
+  /**
+   * Suspends the tasks unconditionally, and resumes after notification
+   * 
+   * \note The suspension of the task will not block the running thread.
+  */
+  void wait()
+  {
+    auto currentTask = HiCR::tasking::Task::getCurrentTask();
+
+    // Insert oneself in the waiting task list
+    _mutex.lock();
+    _waitingTasks.push(currentTask);
+    _mutex.unlock();
+
+    // Suspending task now
+    currentTask->suspend();
   }
 
   /**
@@ -115,8 +95,17 @@ class ConditionVariable
   */
   void notifyOne()
   {
+    // Grabbing queue lock
     _mutex.lock();
-    if (_waitingTasks.empty() == false) _waitingTasks.erase(_waitingTasks.begin());
+
+    // If there is a task waiting to be notified, do that now and take it out of the queue
+    if (_waitingTasks.empty() == false)
+    {
+      _waitingTasks.front()->notify();
+      _waitingTasks.pop();
+    };
+
+    // Releasing queue lock
     _mutex.unlock();
   }
 
@@ -125,8 +114,17 @@ class ConditionVariable
   */
   void notifyAll()
   {
+    // Grabbing queue lock
     _mutex.lock();
-    _waitingTasks.clear();
+
+    // If there are tasks waiting to be notified, do that now and take them out of the queue
+    while (_waitingTasks.empty() == false)
+    {
+      _waitingTasks.front()->notify();
+      _waitingTasks.pop();
+    };
+
+    // Releasing queue lock
     _mutex.unlock();
   }
 
@@ -140,7 +138,7 @@ class ConditionVariable
   /**
    * A set of waiting tasks. No ordering is enforced here.
   */
-  std::unordered_set<HiCR::tasking::Task *> _waitingTasks;
+  std::queue<HiCR::tasking::Task *> _waitingTasks;
 };
 
 } // namespace tasking

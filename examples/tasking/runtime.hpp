@@ -112,10 +112,6 @@ class Runtime
   {
     const auto &dependencies = task->getDependencies();
 
-    // Checking task pending operations
-    if (task->checkPendingOperations() == false) return false;
-    ;
-
     // Checking task dependencies
     for (size_t i = 0; i < dependencies.size(); i++)
       if (_finishedTaskHashSet.contains(dependencies[i]) == false)
@@ -253,7 +249,7 @@ class Runtime
    *
    * \param[in] task Suspended task pointer
    */
-  __USED__ inline void onTaskSuspend(HiCR::tasking::Task *task)
+  __USED__ inline void onTaskNotify(HiCR::tasking::Task *task)
   {
     // Re-adding task to the waiting list
     _waitingTaskQueue.push(task);
@@ -328,8 +324,8 @@ class Runtime
     _eventMap   = new HiCR::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); });   //
-    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskSuspend, [this](HiCR::tasking::Task *task) { onTaskSuspend(task); }); //
+    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); }); //
+    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskNotify, [this](HiCR::tasking::Task *task) { onTaskNotify(task); }); //
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)
