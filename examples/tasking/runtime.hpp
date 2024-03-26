@@ -324,7 +324,7 @@ class Runtime
     _eventMap   = new HiCR::tasking::Task::taskEventMap_t();
 
     // Creating event map ands events
-    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); });   //
+    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); }); //
     _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskNotify, [this](HiCR::tasking::Task *task) { onTaskNotify(task); }); //
 
     // Creating one worker per processung unit in the list

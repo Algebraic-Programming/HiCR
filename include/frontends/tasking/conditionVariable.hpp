@@ -70,7 +70,7 @@ class ConditionVariable
     }
   }
 
-   /**
+  /**
    * Suspends the tasks unconditionally, and resumes after notification
    * 
    * \note The suspension of the task will not block the running thread.
@@ -99,7 +99,11 @@ class ConditionVariable
     _mutex.lock();
 
     // If there is a task waiting to be notified, do that now and take it out of the queue
-    if (_waitingTasks.empty() == false) { _waitingTasks.front()->notify(); _waitingTasks.pop(); };
+    if (_waitingTasks.empty() == false)
+    {
+      _waitingTasks.front()->notify();
+      _waitingTasks.pop();
+    };
 
     // Releasing queue lock
     _mutex.unlock();
@@ -114,7 +118,11 @@ class ConditionVariable
     _mutex.lock();
 
     // If there are tasks waiting to be notified, do that now and take them out of the queue
-    while(_waitingTasks.empty() == false) { _waitingTasks.front()->notify(); _waitingTasks.pop(); };
+    while (_waitingTasks.empty() == false)
+    {
+      _waitingTasks.front()->notify();
+      _waitingTasks.pop();
+    };
 
     // Releasing queue lock
     _mutex.unlock();

@@ -48,12 +48,12 @@ class Mutex
    * @return True, if it succeeded in obtaining the lock; false, otherwise.
   */
   __USED__ inline bool trylock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask())
-   {
-     _mutex.lock();
-     bool success = lockNotBlockingImpl(task);
-     _mutex.unlock();
-     return success;
-   }
+  {
+    _mutex.lock();
+    bool success = lockNotBlockingImpl(task);
+    _mutex.unlock();
+    return success;
+  }
 
   /**
    * Obtains the mutual exclusion lock.
@@ -79,7 +79,7 @@ class Mutex
 
     _ownerTask = nullptr;
     if (_queue.empty() == false)
-    { 
+    {
       _ownerTask = _queue.front();
       _queue.pop();
       _ownerTask->notify();
@@ -99,7 +99,7 @@ class Mutex
   {
     _mutex.lock();
 
-     bool isLockFree = lockNotBlockingImpl(task);
+    bool isLockFree = lockNotBlockingImpl(task);
 
     // If not successful, then insert task in the pending queue and suspend it
     if (isLockFree == false)
@@ -123,16 +123,15 @@ class Mutex
   /**
    * Internal implementation of the non-blocking lock obtaining mechanism
    * 
-   * \param[in] freeValue The expected value to see in the internal atomic lock value. The lock will fail and suspend the task if this value is not observed.
    * \param[in] task The desired value to assign to the lock value. If the expected value is observed, then this value is assigned atomically to the locl value.
    * \return True, if succeeded in acquiring the lock; false, otherwise.
   */
   __USED__ inline bool lockNotBlockingImpl(HiCR::tasking::Task *task)
-   {
-     bool isLockFree = _ownerTask == nullptr;
-     if (isLockFree) _ownerTask = task;
+  {
+    bool isLockFree = _ownerTask == nullptr;
+    if (isLockFree) _ownerTask = task;
     return isLockFree;
-   }
+  }
 
   /**
    * Internal mutex for protecting the internal state and the task queue
@@ -142,14 +141,12 @@ class Mutex
   /**
    * Internal state
   */
-  HiCR::tasking::Task * _ownerTask = nullptr;
+  HiCR::tasking::Task *_ownerTask = nullptr;
 
   /**
    * Pending task queue
   */
-  std::queue<HiCR::tasking::Task*> _queue;
-  
-
+  std::queue<HiCR::tasking::Task *> _queue;
 };
 
 } // namespace tasking
