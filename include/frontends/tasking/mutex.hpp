@@ -29,7 +29,7 @@ class Mutex
 {
   public:
 
-  Mutex() = default;
+  Mutex()  = default;
   ~Mutex() = default;
 
   /**
@@ -38,10 +38,7 @@ class Mutex
    * \param[in] task The task to check ownership for
    * @return True, if the task owns the lock; false, otherwise.
   */
-  __USED__ inline bool ownsLock(HiCR::tasking::Task* task = HiCR::tasking::Task::getCurrentTask())
-  {
-    return _lockValue.load() == task;
-  }
+  __USED__ inline bool ownsLock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask()) { return _lockValue.load() == task; }
 
   /**
    * Tries to obtain the lock and returns immediately if it fails.
@@ -49,10 +46,7 @@ class Mutex
    * \param[in] task The task acquiring the lock
    * @return True, if it succeeded in obtaining the lock; false, otherwise.
   */
-  __USED__ inline bool trylock(HiCR::tasking::Task* task = HiCR::tasking::Task::getCurrentTask())
-  {
-    return lockNotBlockingImpl(task);
-  }
+  __USED__ inline bool trylock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask()) { return lockNotBlockingImpl(task); }
 
   /**
    * Obtains the mutual exclusion lock.
@@ -62,10 +56,7 @@ class Mutex
    * 
    * \param[in] task The task acquiring the lock
   */
-  __USED__ inline void lock(HiCR::tasking::Task* task = HiCR::tasking::Task::getCurrentTask())
-  {
-    lockBlockingImpl(task);
-  }
+  __USED__ inline void lock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask()) { lockBlockingImpl(task); }
 
   /**
    * Releases a lock currently owned by the currently running task.
@@ -73,7 +64,7 @@ class Mutex
    * \param[in] task The task releasing the lock
    * \note This function will produce an exception if trying to unlock a mutex not owned by the calling task. 
   */
-  __USED__ inline void unlock(HiCR::tasking::Task* task = HiCR::tasking::Task::getCurrentTask())
+  __USED__ inline void unlock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask())
   {
     if (ownsLock(task) == false) HICR_THROW_LOGIC("Trying to unlock a mutex that doesn't belong to this task");
     _lockValue = nullptr;
@@ -81,19 +72,18 @@ class Mutex
 
   private:
 
-
   /**
    * Internal implementation of the blocking lock obtaining mechanism
    * 
    * \param[in] task The task acquiring the lock
   */
-  __USED__ inline void lockBlockingImpl(HiCR::tasking::Task* task)
+  __USED__ inline void lockBlockingImpl(HiCR::tasking::Task *task)
   {
     // Checking right away if we can get the lock
     bool success = lockNotBlockingImpl(task);
-    
+
     // If not successful, then suspend the task
-    if (success == false) 
+    if (success == false)
     {
       // Register a pending operation that will prevent task from being rescheduled until finished
       task->registerPendingOperation([&]() { return lockNotBlockingImpl(task); });
@@ -110,15 +100,12 @@ class Mutex
    * \param[in] task The desired value to assign to the lock value. If the expected value is observed, then this value is assigned atomically to the locl value.
    * \return True, if succeeded in acquiring the lock; false, otherwise.
   */
-  __USED__ inline bool lockNotBlockingImpl(HiCR::tasking::Task* task, HiCR::tasking::Task* freeValue = nullptr)
-  {
-    return _lockValue.compare_exchange_weak(freeValue, task);
-  }
+  __USED__ inline bool lockNotBlockingImpl(HiCR::tasking::Task *task, HiCR::tasking::Task *freeValue = nullptr) { return _lockValue.compare_exchange_weak(freeValue, task); }
 
   /**
    * Internal atomic value of the task-aware lock
   */
-  std::atomic<HiCR::tasking::Task*> _lockValue = nullptr;
+  std::atomic<HiCR::tasking::Task *> _lockValue = nullptr;
 };
 
 } // namespace tasking

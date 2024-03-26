@@ -29,7 +29,7 @@ class ConditionVariable
 {
   public:
 
-  ConditionVariable() = default;
+  ConditionVariable()  = default;
   ~ConditionVariable() = default;
 
   /**
@@ -43,10 +43,10 @@ class ConditionVariable
    * \param[in] conditionMutex The mutual exclusion mechanism to use to prevent two tasks from evaluating the condition predicate simultaneously
    * \param[in] conditionPredicate The function that returns a boolean true if the condition is satisfied; false, if not.
   */
-  void wait(tasking::Mutex& conditionMutex, std::function<bool(void)> conditionPredicate)
+  void wait(tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate)
   {
     auto currentTask = HiCR::tasking::Task::getCurrentTask();
- 
+
     // Checking on the condition
     conditionMutex.lock();
     bool keepWaiting = conditionPredicate() == false;
@@ -61,8 +61,7 @@ class ConditionVariable
       _mutex.unlock();
 
       // Register a pending operation that will prevent task from being rescheduled until finished
-      currentTask->registerPendingOperation([&]()
-      {
+      currentTask->registerPendingOperation([&]() {
         // Attempting to gain lock. If unsuccessful, stop evaluation
         bool lockObtained = _mutex.trylock(currentTask);
         if (lockObtained == false) return false;
@@ -86,7 +85,7 @@ class ConditionVariable
           _mutex.unlock(currentTask);
 
           return false;
-        } 
+        }
 
         // Attempting to gain lock. If unsuccessful, stop evaluation
         lockObtained = conditionMutex.trylock(currentTask);
@@ -97,7 +96,7 @@ class ConditionVariable
         // Releasing lock
         conditionMutex.unlock(currentTask);
 
-        // Return whether the condition is satisfied 
+        // Return whether the condition is satisfied
         return isConditionSatisfied;
       });
 
@@ -138,7 +137,7 @@ class ConditionVariable
   /**
    * A set of waiting tasks. No ordering is enforced here.
   */
-  std::unordered_set<HiCR::tasking::Task*> _waitingTasks;
+  std::unordered_set<HiCR::tasking::Task *> _waitingTasks;
 };
 
 } // namespace tasking

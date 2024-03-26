@@ -5,7 +5,7 @@
 #include <hicr/L0/device.hpp>
 #include <backends/host/L1/computeManager.hpp>
 #include "../runtime.hpp"
- 
+
 using namespace std::chrono_literals;
 #define _INITIAL_VALUE 7ul
 
@@ -27,8 +27,7 @@ void conditionVariable(HiCR::backend::host::L1::ComputeManager *computeManager, 
   HiCR::tasking::ConditionVariable cv;
 
   // Creating task functions
-  auto thread1Fc = computeManager->createExecutionUnit([&]()
-  {
+  auto thread1Fc = computeManager->createExecutionUnit([&]() {
     // Using lock to update the value
     mutex.lock();
     printf("Thread 1: I go first and set value to 1\n");
@@ -41,16 +40,14 @@ void conditionVariable(HiCR::backend::host::L1::ComputeManager *computeManager, 
 
     // Waiting for the other thread's update now
     printf("Thread 1: I wait for the value to turn 2\n");
-    cv.wait(mutex, [&](){ return value == 2; });
+    cv.wait(mutex, [&]() { return value == 2; });
     printf("Thread 1: The condition (value == 2) is satisfied now\n");
   });
 
-  auto thread2Fc = computeManager->createExecutionUnit([&]()
-  {
-
+  auto thread2Fc = computeManager->createExecutionUnit([&]() {
     // Waiting for the other thread to set the first value
     printf("Thread 2: First, I'll wait for the value to become 1\n");
-    cv.wait(mutex, [&](){ return value == 1; });
+    cv.wait(mutex, [&]() { return value == 1; });
     printf("Thread 2: The condition (value == 1) is satisfied now\n");
 
     // Now updating the value ourselves
