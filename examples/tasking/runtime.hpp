@@ -325,7 +325,7 @@ class Runtime
 
     // Creating event map ands events
     _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); });
-    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskSync,   [this](HiCR::tasking::Task *task) { onTaskSync(task); });
+    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskSync, [this](HiCR::tasking::Task *task) { onTaskSync(task); });
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)
