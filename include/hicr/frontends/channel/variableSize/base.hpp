@@ -43,10 +43,8 @@ class Base : public channel::Base
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
    * \param[in] communicationManager The backend's memory manager to facilitate communication between the producer and consumer sides
-   * \param[in] coordinationBufferForCounts This is a small buffer that needs to be allocated at the producer side. It
-   *            enables the consumer to signal how many payloads (as a count) it has popped.
-   * \param[in] coordinationBufferForPayloads This is a small buffer that needs to be allocated at the producer side. It
-   *            enables the consumer to signal how many bytes from the payload data it has popped.
+   * \param[in] coordinationBufferForCounts This is a small buffer that enables the consumer to signal how many payloads (as a count) it has popped.
+   * \param[in] coordinationBufferForPayloads This is a small buffer that enables the consumer to signal how many bytes from the payload data it has popped.
    * \param[in] capacity The maximum number of elements (possibly different-sized) that can be held by this channel
    * \param[in] payloadCapacity The maximum number of total bytes (including all different sized elements) that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
