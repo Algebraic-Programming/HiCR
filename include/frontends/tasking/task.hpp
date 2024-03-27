@@ -73,9 +73,9 @@ class Task
     onTaskFinish,
 
     /**
-     * Triggered as the task is notified
+     * Triggered as the task receives a sync signal (used for mutual exclusion mechanisms)
     */
-    onTaskNotify,
+    onTaskSync,
   };
 
   /**
@@ -121,9 +121,9 @@ class Task
   __USED__ inline taskEventMap_t *getEventMap() { return _eventMap; }
 
   /**
-   * Notifies a task, triggering the associated event
+   * Sends a sync signal, triggering the associated event
    */
-  __USED__ inline void notify() { _eventMap->trigger(this, HiCR::tasking::Task::event_t::onTaskNotify); }
+  __USED__ inline void sendSyncSignal() { _eventMap->trigger(this, HiCR::tasking::Task::event_t::onTaskSync); }
 
   /**
    * Queries the task's internal state.

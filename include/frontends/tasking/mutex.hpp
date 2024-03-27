@@ -82,7 +82,7 @@ class Mutex
     {
       _ownerTask = _queue.front();
       _queue.pop();
-      _ownerTask->notify();
+      _ownerTask->sendSyncSignal();
     }
 
     _mutex.unlock();
