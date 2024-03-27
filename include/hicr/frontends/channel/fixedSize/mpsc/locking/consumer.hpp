@@ -40,6 +40,13 @@ namespace locking
  */
 class Consumer final : public channel::fixedSize::Base
 {
+  private:
+
+  /*
+   * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
+   */
+  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _consumerCoordinationBuffer;
+
   public:
 
   /**
@@ -159,13 +166,6 @@ class Consumer final : public channel::fixedSize::Base
     // Operation was successful
     return successFlag;
   }
-
-  private:
-
-  /*
-   * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
-   */
-  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _consumerCoordinationBuffer;
 };
 
 } // namespace locking

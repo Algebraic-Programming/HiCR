@@ -32,8 +32,12 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   auto consumerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto producer = HiCR::channel::fixedSize::MPSC::locking::Producer(
-    communicationManager, globalTokenBufferSlot, coordinationBuffer, consumerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto producer = HiCR::channel::fixedSize::MPSC::locking::Producer(communicationManager,
+                                                                    globalTokenBufferSlot, /* tokenBuffer */
+                                                                    coordinationBuffer,    /* internalCoordinationBuffer */
+                                                                    consumerCoordinationBuffer,
+                                                                    sizeof(ELEMENT_TYPE),
+                                                                    channelCapacity);
 
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer    = 0;

@@ -37,6 +37,20 @@ namespace SPSC
  */
 class Consumer final : public channel::fixedSize::Base
 {
+  private:
+
+  /**
+   * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
+   * for updates (received messages) from the remote producer.
+   */
+  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _tokenBuffer;
+
+  /**
+   * The memory slot pertaining to the producer's coordination buffer. This is a global slot to enable remote
+   * update of the producer's internal circular buffer when doing a pop() operation
+   */
+  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _producerCoordinationBuffer;
+
   public:
 
   /**
@@ -176,18 +190,6 @@ class Consumer final : public channel::fixedSize::Base
     // We advance the head locally as many times as newly received tokens
     _circularBuffer->setHead(receivedTokenCount);
   }
-
-  /**
-   * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
-   * for updates (received messages) from the remote producer.
-   */
-  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _tokenBuffer;
-
-  /**
-   * The memory slot pertaining to the producer's coordination buffer. This is a global slot to enable remote
-   * update of the producer's internal circular buffer when doing a pop() operation
-   */
-  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _producerCoordinationBuffer;
 };
 
 } // namespace SPSC

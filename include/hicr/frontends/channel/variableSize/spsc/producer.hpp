@@ -50,6 +50,21 @@ class Producer final : public variableSize::Base
    */
   size_t _payloadSize;
 
+  /**
+   * Memory slot that represents the token buffer that producer sends data to
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
+
+  /**
+   * Global Memory slot pointing to the producer's own coordination buffer for message size info
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForCounts;
+
+  /**
+   * Global Memory slot pointing to the producer's own coordination buffer for payload info
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForPayloads;
+
   public:
 
   /**
@@ -60,9 +75,10 @@ class Producer final : public variableSize::Base
    * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
    * \param[in] sizeInfoBuffer The local memory slot used to hold the information about the next message size
    * \param[in] payloadBuffer The global memory slot pertaining to the payload of all messages. The producer will push messages into this
-   * buffer, while there is enough space. This buffer should be big enough to hold at least the largest of the variable-size messages.
+   *            buffer, while there is enough space. This buffer should be big enough to hold at least the largest of the variable-size messages.
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer, which is used to hold message size data.
-   * The producer will push message sizes into this buffer, while there is enough space. This buffer should be big enough to hold at least one message size.
+   *            The producer will push message sizes into this buffer, while there is enough space. This buffer should be big enough to
+   *            hold at least one message size.
    * \param[in] internalCoordinationBufferForCounts This is a small buffer to hold the internal (local) state of the channel's message counts
    * \param[in] internalCoordinationBufferForPayloads This is a small buffer to hold the internal (local) state of the channel's payload sizes (in bytes)
    * \param[in] producerCoordinationBufferForCounts A global reference of the producer's own coordination buffer to check for updates on message counts
@@ -112,7 +128,7 @@ class Producer final : public variableSize::Base
   /**
    * advance payload buffer head by a number of bytes
    * @param[in] n bytes to advance payload buffer head by
-   * @param[in] cachedDepth A boolean which is true if a cached depth should be used, 
+   * @param[in] cachedDepth A boolean which is true if a cached depth should be used,
    * otherwise the current depth should be used. For details see \ref CircularBuffer::advanceHead
    * documentation
    */
@@ -186,7 +202,11 @@ class Producer final : public variableSize::Base
     // Advance head, as we have added new elements
     // It is important to do the advanceHead and copy together,
     // or else issues such as advancing head index too early or too late might occur!
-    _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), _sizeInfoBuffer, 0, getTokenSize());
+    _communicationManager->memcpy(_tokenBuffer,                                        /* destination */
+                                  getTokenSize() * _circularBuffer->getHeadPosition(), /* dst_offset */
+                                  _sizeInfoBuffer,                                     /* source */
+                                  0,                                                   /* src_offset */
+                                  getTokenSize());                                     /* size */
     _communicationManager->fence(_sizeInfoBuffer, 1, 0);
     _circularBuffer->advanceHead(1, true);
 
@@ -205,9 +225,17 @@ class Producer final : public variableSize::Base
       size_t second_chunk = requiredBufferSize - first_chunk;
 
       // copy first part to end of buffer
-      _communicationManager->memcpy(_payloadBuffer, getPayloadHeadPosition(), sourceSlot, 0, first_chunk);
+      _communicationManager->memcpy(_payloadBuffer,           /* destination */
+                                    getPayloadHeadPosition(), /* dst_offset */
+                                    sourceSlot,               /* source */
+                                    0,                        /* src_offset */
+                                    first_chunk);             /* size */
       // copy second part to beginning of buffer
-      _communicationManager->memcpy(_payloadBuffer, 0, sourceSlot, first_chunk, second_chunk);
+      _communicationManager->memcpy(_payloadBuffer, /* destination */
+                                    0,              /* dst_offset */
+                                    sourceSlot,     /* source */
+                                    first_chunk,    /* src_offset */
+                                    second_chunk);  /* size */
       _communicationManager->fence(sourceSlot, 2, 0);
     }
     else
@@ -239,22 +267,6 @@ class Producer final : public variableSize::Base
    * \returns false, if one of the buffers is not empty
    */
   bool isEmpty() { return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0); }
-
-  private:
-
-  /**
-   * Memory slot that represents the token buffer that producer sends data to
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
-
-  /*
-   * Global Memory slot pointing to the producer's own coordination buffer for message size info
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForCounts;
-  /*
-   * Global Memory slot pointing to the producer's own coordination buffer for payload info
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForPayloads;
 };
 
 } // namespace SPSC
