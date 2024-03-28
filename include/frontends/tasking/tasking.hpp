@@ -41,7 +41,7 @@ namespace tasking
  * In particular, it initializes the thread-specific storage needed to recover exactly what task/worker is
  * currently in execution.
  */
-__USED__ inline void initialize()
+__INLINE__ void initialize()
 {
   if (_isInitialized == true) HICR_THROW_RUNTIME("HiCR Tasking functionality was already initialized");
 
@@ -59,7 +59,7 @@ __USED__ inline void initialize()
  * Concurrency issues may arise if any remaining thread try to access the keys here
  * while we finalize. Make sure all HiCR workers are stopped before finalizing
  */
-__USED__ inline void finalize()
+__INLINE__ void finalize()
 {
   if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
 

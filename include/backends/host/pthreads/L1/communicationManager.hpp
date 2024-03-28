@@ -81,12 +81,12 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   pthread_mutex_t _mutex;
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Nothing to do here
   }
 
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Synchronize all intervening threads in this call
     barrier();
@@ -111,7 +111,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     barrier();
   }
 
-  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // This function should check and update the abstract class for completed memcpy operations
   }
@@ -119,16 +119,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * A barrier implementation that synchronizes all threads in the HiCR instance
    */
-  __USED__ inline void barrier() { pthread_barrier_wait(&_barrier); }
+  __INLINE__ void barrier() { pthread_barrier_wait(&_barrier); }
 
   /**
    * Implementation of the fence operation for the shared memory backend. In this case, nothing needs to be done, as
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __USED__ inline void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override { barrier(); }
+  __INLINE__ void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override { barrier(); }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
+  __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
                                   const size_t                               dst_offset,
                                   std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
                                   const size_t                               src_offset,
@@ -146,7 +146,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     std::memcpy(actualDstPtr, actualSrcPtr, size);
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
+  __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
                                   const size_t                                dst_offset,
                                   std::shared_ptr<HiCR::L0::LocalMemorySlot>  source,
                                   const size_t                                src_offset,
@@ -169,7 +169,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     source->increaseMessagesSent();
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
+  __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
                                   const size_t                                dst_offset,
                                   std::shared_ptr<HiCR::L0::GlobalMemorySlot> source,
                                   const size_t                                src_offset,
@@ -192,7 +192,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     source->getSourceLocalMemorySlot()->increaseMessagesSent();
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_pointer_cast<host::L0::GlobalMemorySlot>(memorySlot);
@@ -204,7 +204,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     return m->trylock();
   }
 
-  __USED__ inline void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_pointer_cast<host::L0::GlobalMemorySlot>(memorySlot);
@@ -216,13 +216,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     m->unlock();
   }
 
-  __USED__ inline void lock() override
+  __INLINE__ void lock() override
   {
     // Locking the pthread mutex
     pthread_mutex_lock(&_mutex);
   }
 
-  __USED__ inline void unlock() override
+  __INLINE__ void unlock() override
   {
     // Locking the pthread mutex
     pthread_mutex_unlock(&_mutex);

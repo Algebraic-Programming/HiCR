@@ -56,7 +56,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    */
   ~TopologyManager() = default;
 
-  __USED__ inline HiCR::L0::Topology queryTopology() override
+  __INLINE__ HiCR::L0::Topology queryTopology() override
   {
     // Disable filters in order to detect instr. caches
     hwloc_topology_set_icache_types_filter(*_topology, HWLOC_TYPE_FILTER_KEEP_ALL);
@@ -87,7 +87,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    * @param[in] topology see: _deserializeTopology
    * @return see: _deserializeTopology
    */
-  __USED__ static inline HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
+  __INLINE__ static inline HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
   {
     // Verifying input's syntax
     HiCR::L0::Topology::verify(topology);
@@ -109,14 +109,14 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return t;
   }
 
-  __USED__ inline HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override { return deserializeTopology(topology); }
+  __INLINE__ HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override { return deserializeTopology(topology); }
 
   /**
    * This function represents the default intializer for this backend
    *
    * @return A unique pointer to the newly instantiated backend class
    */
-  __USED__ static inline std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
+  __INLINE__ static inline std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
   {
     // Creating HWloc topology object
     auto topology = new hwloc_topology_t;
@@ -133,7 +133,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * Hwloc implementation of the queryComputeResources() function. This will add one compute resource object per HW Thread / Processing Unit (PU) found
    */
-  __USED__ inline HiCR::L0::Device::computeResourceList_t queryComputeResources(const host::L0::Device::NUMADomainID_t numaDomainId)
+  __INLINE__ HiCR::L0::Device::computeResourceList_t queryComputeResources(const host::L0::Device::NUMADomainID_t numaDomainId)
   {
     // New compute resource list to return
     HiCR::L0::Device::computeResourceList_t computeResourceList;
@@ -160,7 +160,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * Hwloc implementation of the Backend queryMemorySpaces() function. This will add one memory space object per NUMA domain found
    */
-  __USED__ inline HiCR::L0::Device::memorySpaceList_t queryMemorySpaces(const host::L0::Device::NUMADomainID_t numaDomainId)
+  __INLINE__ HiCR::L0::Device::memorySpaceList_t queryMemorySpaces(const host::L0::Device::NUMADomainID_t numaDomainId)
   {
     // New memory space list to return
     HiCR::L0::Device::memorySpaceList_t memorySpaceList;

@@ -62,7 +62,7 @@ class Instance final : public HiCR::L0::Instance
    * Retrieves this HiCR Instance's MPI rank
    * \return The MPI rank corresponding to this instance
    */
-  __USED__ inline int getRank() const { return _rank; }
+  __INLINE__ int getRank() const { return _rank; }
 
   /**
    * Remembers the MPI rank this instance belongs to

@@ -91,7 +91,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       _localSwapSlot(LPF_INVALID_MEMSLOT)
   {}
 
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange
     size_t localSlotCount = memorySlots.size();
@@ -224,7 +224,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
+  __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
                                   const size_t                                dst_offset,
                                   std::shared_ptr<HiCR::L0::GlobalMemorySlot> source,
                                   const size_t                                src_offset,
@@ -253,7 +253,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     lpf_get(_lpf, remoteRank, srcSlot, src_offset, dstSlot, dst_offset, size, LPF_MSG_DEFAULT);
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
+  __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
                                   const size_t                                dst_offset,
                                   std::shared_ptr<HiCR::L0::LocalMemorySlot>  source,
                                   const size_t                                src_offset,
@@ -288,7 +288,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * @param[in] tag Tags used as filter to decide which slots to fence against
    * \todo: Implement tags in LPF !!!
    */
-  __USED__ inline void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
+  __INLINE__ void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
   {
     globalKeyToMemorySlotMap_t slotsForTag = getGlobalMemorySlots(tag);
     for (auto &i : slotsForTag)
@@ -303,7 +303,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] tag Tag associated with a set of memory slots
    * \return The global memory slots associated with this tag
    */
-  __USED__ inline globalKeyToMemorySlotMap_t getGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag)
+  __INLINE__ globalKeyToMemorySlotMap_t getGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag)
   {
     // If the requested tag and key are not found, return empty storage
     if (_globalMemorySlotTagKeyMap.contains(tag) == false)
@@ -316,7 +316,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * Implementaion of fence on a specific global memory slot for the LPF backend
    * \param[in] hicrSlot global memory slot to fence on
    */
-  __USED__ inline void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> hicrSlot)
+  __INLINE__ void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> hicrSlot)
   {
     auto          memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(hicrSlot);
     lpf_memslot_t slot       = memorySlot->getLPFSlot();
@@ -336,7 +336,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] expectedSent message count to be blockingly sent out on this slot
    * \param[in] expectedRcvd message count to be blockingly received on this slot
    */
-  __USED__ inline void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd)
+  __INLINE__ void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd)
   {
     auto          memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(slot);
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
@@ -352,7 +352,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] expectedSent message count to be blockingly sent out on this slot
    * \param[in] expectedRcvd message count to be blockingly received on this slot
    */
-  __USED__ inline void fenceImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd)
+  __INLINE__ void fenceImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd)
   {
     auto          memSlot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(slot);
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
@@ -362,7 +362,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     memSlot->setMessagesSent(memSlot->getMessagesSent() + expectedSent);
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
+  __INLINE__ void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
   {
     // Getting up-casted pointer for the execution unit
     auto memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlotPtr);
@@ -380,7 +380,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * additional polling on messages.
    * \param[out] memorySlot HiCr memory slot to update
    */
-  __USED__ inline void updateMessagesRecv(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void updateMessagesRecv(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot)
   {
     size_t        msg_cnt;
     auto          memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
@@ -395,7 +395,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * additional polling on messages.
    * \param[out] memorySlot HiCr memory slot to update
    */
-  __USED__ inline void updateMessagesSent(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void updateMessagesSent(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot)
   {
     size_t        msg_cnt;
     auto          memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
@@ -404,11 +404,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     memSlot->getSourceLocalMemorySlot()->setMessagesSent(msg_cnt);
   }
 
-  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { fenceImpl(memorySlot); }
+  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { fenceImpl(memorySlot); }
 
-  __USED__ inline void flush() override { lpf_flush(_lpf); }
+  __INLINE__ void flush() override { lpf_flush(_lpf); }
 
-  __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     auto          hicrSlot    = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
     lpf_memslot_t lpfSwapSlot = hicrSlot->getLPFSwapSlot();
@@ -417,7 +417,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     return true;
   }
 
-  __USED__ inline void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     auto          hicrSlot    = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
     auto          slotRank    = hicrSlot->getRank();

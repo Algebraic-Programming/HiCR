@@ -56,7 +56,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    *
    * \return the ACL data buffer associated to the memory slot
    */
-  __USED__ inline const aclDataBuffer *getDataBuffer() const { return _dataBuffer; }
+  __INLINE__ const aclDataBuffer *getDataBuffer() const { return _dataBuffer; }
 
   private:
 

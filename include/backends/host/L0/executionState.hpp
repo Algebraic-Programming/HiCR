@@ -42,7 +42,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    * Creates a new suspendable execution state (coroutine) for execution based on a sequential execution unit
    * \param[in] executionUnit The replicable stateless execution unit to instantiate
    */
-  __USED__ inline ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit)
+  __INLINE__ ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit)
     : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
@@ -60,11 +60,11 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
   protected:
 
-  __USED__ inline void resumeImpl() override { _coroutine.resume(); }
+  __INLINE__ void resumeImpl() override { _coroutine.resume(); }
 
-  __USED__ inline void suspendImpl() { _coroutine.yield(); }
+  __INLINE__ void suspendImpl() { _coroutine.yield(); }
 
-  __USED__ inline bool checkFinalizationImpl() override { return _coroutine.hasFinished(); }
+  __INLINE__ bool checkFinalizationImpl() override { return _coroutine.hasFinished(); }
 
   private:
 

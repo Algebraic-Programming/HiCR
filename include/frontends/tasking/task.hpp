@@ -94,7 +94,7 @@ class Task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] eventMap Pointer to the event map callbacks to be called by the task
    */
-  __USED__ Task(const label_t label, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskEventMap_t *eventMap = NULL)
+  __INLINE__ Task(const label_t label, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskEventMap_t *eventMap = NULL)
     : _label(label),
       _executionUnit(executionUnit),
       _eventMap(eventMap){};
@@ -104,26 +104,26 @@ class Task
    *
    * @return A pointer to the current HiCR task, NULL if this function is called outside the context of a task run() function
    */
-  __USED__ static inline Task *getCurrentTask() { return (Task *)pthread_getspecific(_taskPointerKey); }
+  __INLINE__ static inline Task *getCurrentTask() { return (Task *)pthread_getspecific(_taskPointerKey); }
 
   /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
    *
    * @param[in] eventMap A pointer to an event map
    */
-  __USED__ inline void setEventMap(taskEventMap_t *eventMap) { _eventMap = eventMap; }
+  __INLINE__ void setEventMap(taskEventMap_t *eventMap) { _eventMap = eventMap; }
 
   /**
    * Gets the task's event map.
    *
    * @return A pointer to the task's an event map. NULL, if not defined.
    */
-  __USED__ inline taskEventMap_t *getEventMap() { return _eventMap; }
+  __INLINE__ taskEventMap_t *getEventMap() { return _eventMap; }
 
   /**
    * Sends a sync signal, triggering the associated event
    */
-  __USED__ inline void sendSyncSignal() { _eventMap->trigger(this, HiCR::tasking::Task::event_t::onTaskSync); }
+  __INLINE__ void sendSyncSignal() { _eventMap->trigger(this, HiCR::tasking::Task::event_t::onTaskSync); }
 
   /**
    * Queries the task's internal state.
@@ -132,7 +132,7 @@ class Task
    *
    * \internal This is not a thread safe operation.
    */
-  __USED__ inline const HiCR::L0::ExecutionState::state_t getState()
+  __INLINE__ const HiCR::L0::ExecutionState::state_t getState()
   {
     // If the execution state has not been initialized then return the value expliclitly
     if (_executionState == NULL) return HiCR::L0::ExecutionState::state_t::uninitialized;
@@ -146,21 +146,21 @@ class Task
    *
    * \param[in] executionUnit The execution unit to assign to this task
    */
-  __USED__ inline void setExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnit = executionUnit; }
+  __INLINE__ void setExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnit = executionUnit; }
 
   /**
    * Returns the execution unit assigned to this task
    *
    * \return The execution unit assigned to this task
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::ExecutionUnit> getExecutionUnit() const { return _executionUnit; }
+  __INLINE__ std::shared_ptr<HiCR::L0::ExecutionUnit> getExecutionUnit() const { return _executionUnit; }
 
   /**
    * Implements the initialization routine of a task, that stores and initializes the execution state to run to completion
    *
    * \param[in] executionState A previously initialized execution state
    */
-  __USED__ inline void initialize(std::unique_ptr<HiCR::L0::ExecutionState> executionState)
+  __INLINE__ void initialize(std::unique_ptr<HiCR::L0::ExecutionState> executionState)
   {
     if (getState() != HiCR::L0::ExecutionState::state_t::uninitialized)
       HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", getState());
@@ -174,7 +174,7 @@ class Task
    *
    * The execution of the task will trigger change of state from initialized to running. Before reaching the terminated state, the task might transition to some of the suspended states.
    */
-  __USED__ inline void run()
+  __INLINE__ void run()
   {
     if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
 
@@ -210,7 +210,7 @@ class Task
   /**
    * This function yields the execution of the task, and returns to the worker's context.
    */
-  __USED__ inline void suspend()
+  __INLINE__ void suspend()
   {
     if (getState() != HiCR::L0::ExecutionState::state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", getState());
 
@@ -226,7 +226,7 @@ class Task
    *
    * \return The task's label
    */
-  __USED__ inline label_t getLabel() const { return _label; }
+  __INLINE__ label_t getLabel() const { return _label; }
 
   /**
    * Adds an execution depedency to this task. This means that this task will not be ready to execute until and unless
@@ -234,14 +234,14 @@ class Task
    *
    * \param[in] task The label of the task upon whose completion this task should depend
    */
-  __USED__ inline void addTaskDependency(const label_t task) { _taskDependencies.push_back(task); };
+  __INLINE__ void addTaskDependency(const label_t task) { _taskDependencies.push_back(task); };
 
   /**
    * Returns Returns this task's dependency list.
    *
    * \return A constant reference to this task's dependencies vector.
    */
-  __USED__ inline const std::vector<label_t> &getDependencies() { return _taskDependencies; }
+  __INLINE__ const std::vector<label_t> &getDependencies() { return _taskDependencies; }
 
   private:
 

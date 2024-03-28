@@ -88,7 +88,7 @@ class LogicException : public std::logic_error
    *
    * @param[in] message Explanation message for this exception
    */
-  __USED__ LogicException(const char *const message)
+  __INLINE__ LogicException(const char *const message)
     : logic_error(message)
   {}
 };
@@ -114,7 +114,7 @@ class RuntimeException : public std::runtime_error
    *
    * @param[in] message Explanation message for this exception
    */
-  __USED__ RuntimeException(const char *const message)
+  __INLINE__ RuntimeException(const char *const message)
     : runtime_error(message)
   {}
 };
@@ -134,7 +134,7 @@ class FatalException : public std::runtime_error
    *
    * @param[in] message  Explanation message for this exception
    */
-  __USED__ FatalException(const char *const message)
+  __INLINE__ FatalException(const char *const message)
     : runtime_error(message)
   {}
 };
@@ -148,7 +148,7 @@ class FatalException : public std::runtime_error
  * @param[in] format C-Formatted message provided by the user explaining the reason of the exception
  * @param[in] ... Arguments, if any, to the C-Formatted message
  */
-__USED__ inline void throwException [[noreturn]] (const exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
+__INLINE__ void throwException [[noreturn]] (const exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
 {
   char   *outstr = 0;
   va_list ap;

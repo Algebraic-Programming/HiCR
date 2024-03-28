@@ -148,7 +148,7 @@ class Runtime final
    *
    * It also creates the machine model object for future deployment and decides whether this instance is coordinator or worker.
    */
-  __USED__ inline void initialize()
+  __INLINE__ void initialize()
   {
     // Executing delayed entry point registration
     for (const auto &entryPoint : _runtimeEntryPointVector) _instanceManager->addRPCTarget(entryPoint.first, entryPoint.second);
@@ -190,7 +190,7 @@ class Runtime final
    *
    * @param[in] errorCode The error code to produce upon abortin execution
    */
-  __USED__ inline void abort(const int errorCode)
+  __INLINE__ void abort(const int errorCode)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling abort before HiCR has been initialized.\n");
 
@@ -203,7 +203,7 @@ class Runtime final
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
    */
-  __USED__ inline void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
+  __INLINE__ void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling deploy before HiCR has been initialized.\n");
 
@@ -217,7 +217,7 @@ class Runtime final
    * @param[in] entryPointName A human-readable string that defines the name of the task. To be executed, this should coincide with the name of a task specified in the machine model requests.
    * @param[in] fc Actual function to be executed upon instantiation
    */
-  __USED__ inline void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc)
+  __INLINE__ void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc)
   {
     _runtimeEntryPointVector.push_back(entryPoint_t(entryPointName, fc));
   }
@@ -227,7 +227,7 @@ class Runtime final
    *
    * @return An integer number containing the HiCR instance identifier
    */
-  __USED__ inline HiCR::L0::Instance::instanceId_t getInstanceId()
+  __INLINE__ HiCR::L0::Instance::instanceId_t getInstanceId()
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getInstanceId before HiCR has been initialized.\n");
 
@@ -237,7 +237,7 @@ class Runtime final
   /**
    * This function should be used at the end of execution by all HiCR instances, to correctly finalize the execution environment
    */
-  __USED__ inline void finalize()
+  __INLINE__ void finalize()
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling finalize before HiCR has been initialized.\n");
 

@@ -49,7 +49,7 @@ class Dispatcher
    *
    * @param[in] pullFc The function to call for obraining (pulling) new tasks. Should return NULL if no tasks are to be executed.
    */
-  __USED__ Dispatcher(const pullFunction_t pullFc)
+  __INLINE__ Dispatcher(const pullFunction_t pullFc)
     : _pullFc(pullFc){};
   ~Dispatcher() = default;
 
@@ -60,7 +60,7 @@ class Dispatcher
    *
    * \return Returns the pointer of a Task, as given by the pull function callback. If the callback returns no tasks for execution, then this function returns a NULL pointer.
    */
-  __USED__ inline Task *pull() { return _pullFc(); }
+  __INLINE__ Task *pull() { return _pullFc(); }
 };
 
 } // namespace tasking

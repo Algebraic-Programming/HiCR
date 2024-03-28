@@ -63,7 +63,7 @@ class ExecutionState
   /**
    * This function starts a newly initialized execution states or resumes a suspended one
    */
-  __USED__ inline void resume()
+  __INLINE__ void resume()
   {
     if (_state != state_t::initialized && _state != state_t::suspended)
       HICR_THROW_RUNTIME("Attempting to resume an execution state that is not in a initialized or suspended state (State: %d).\n", _state);
@@ -78,7 +78,7 @@ class ExecutionState
   /**
    * This function suspends the execution of a running execution state
    */
-  __USED__ inline void suspend()
+  __INLINE__ void suspend()
   {
     if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to suspend an execution state that is not in a running state (State: %d).\n", _state);
 
@@ -94,7 +94,7 @@ class ExecutionState
    *
    * \return True, if the execution has finalized; False, otherwise.
    */
-  __USED__ inline bool checkFinalization()
+  __INLINE__ bool checkFinalization()
   {
     // Calling internal implementation of the checkFinalization routine
     auto isFinished = checkFinalizationImpl();
@@ -111,7 +111,7 @@ class ExecutionState
    *
    * \return The current execution state
    */
-  __USED__ inline state_t getState() { return _state; }
+  __INLINE__ state_t getState() { return _state; }
 
   /**
    * Default constructor is deleted to prevent instantiation without proper arguments

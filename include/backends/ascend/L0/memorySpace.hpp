@@ -69,23 +69,23 @@ class MemorySpace final : public HiCR::L0::MemorySpace
     deserialize(input);
   }
 
-  __USED__ inline std::string getType() const override { return "Ascend Device RAM"; }
+  __INLINE__ std::string getType() const override { return "Ascend Device RAM"; }
 
   /**
    * Function to get the ascend device associated to this memory space
    *
    * @return The ascend device corresponding to this memory space
    */
-  __USED__ inline const std::weak_ptr<const ascend::L0::Device> getDevice() const { return _device; }
+  __INLINE__ const std::weak_ptr<const ascend::L0::Device> getDevice() const { return _device; }
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
     // No additional information to serialize for now
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
     // No additional information to deserialize for now
   }

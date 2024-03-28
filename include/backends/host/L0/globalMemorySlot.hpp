@@ -58,19 +58,19 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    *
    * @return True, if successful; false, otherwise.
    */
-  __USED__ inline bool trylock() { return _mutex.try_lock(); }
+  __INLINE__ bool trylock() { return _mutex.try_lock(); }
 
   /**
    * Attempts to lock memory lock using its mutex object
    *
    * This function might block the caller if the memory slot is already locked
    */
-  __USED__ inline void lock() { _mutex.lock(); }
+  __INLINE__ void lock() { _mutex.lock(); }
 
   /**
    * Unlocks the memory slot, if previously locked by the caller
    */
-  __USED__ inline void unlock() { _mutex.unlock(); }
+  __INLINE__ void unlock() { _mutex.unlock(); }
 
   private:
 

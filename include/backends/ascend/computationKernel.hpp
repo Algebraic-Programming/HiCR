@@ -119,7 +119,7 @@ class ComputationKernel final : public Kernel
    *
    * \param stream the ACL stream on which the kernel is to be executed
    */
-  __USED__ inline void start(const aclrtStream stream) override
+  __INLINE__ void start(const aclrtStream stream) override
   {
     // start the kernel
     aclError err = aclopExecuteV2(_kernelName.c_str(),
@@ -177,7 +177,7 @@ class ComputationKernel final : public Kernel
    * \param[out] descriptors vector of tensor descriptors
    * \param[out] dataBuffers vector of data buffers
    */
-  __USED__ inline void initializeDataBuffersAndDescriptors(const std::vector<tensorData_t>     tensors,
+  __INLINE__ void initializeDataBuffersAndDescriptors(const std::vector<tensorData_t>     tensors,
                                                            std::vector<const aclTensorDesc *> &descriptors,
                                                            std::vector<const aclDataBuffer *> &dataBuffers)
   {
@@ -193,7 +193,7 @@ class ComputationKernel final : public Kernel
    *
    * \param[in] kernelPath path to the compiled kernel file
    */
-  __USED__ inline void loadKernel(const std::string kernelPath)
+  __INLINE__ void loadKernel(const std::string kernelPath)
   {
     // get size of file to know how much memory to allocate
     std::uintmax_t filesize = std::filesystem::file_size(kernelPath);

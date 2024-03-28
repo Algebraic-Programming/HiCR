@@ -60,7 +60,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __USED__ inline size_t getHeadPosition() const noexcept { return *_headAdvanceCounter % _capacity; }
+  __INLINE__ size_t getHeadPosition() const noexcept { return *_headAdvanceCounter % _capacity; }
 
   /**
    * @returns The current position of the buffer head
@@ -73,7 +73,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __USED__ inline size_t getTailPosition() const noexcept { return *_tailAdvanceCounter % _capacity; }
+  __INLINE__ size_t getTailPosition() const noexcept { return *_tailAdvanceCounter % _capacity; }
 
   /**
    * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.
@@ -81,7 +81,7 @@ class CircularBuffer
    *
    * \param[in] n The number of positions to advance
    */
-  __USED__ inline void advanceHead(const size_t n = 1)
+  __INLINE__ void advanceHead(const size_t n = 1)
   {
     // Current depth
     const auto curDepth = getDepth();
@@ -103,7 +103,7 @@ class CircularBuffer
    *
    * \param[in] n The number of positions to advance the head of the circular buffer
    */
-  __USED__ inline void advanceTail(const size_t n = 1)
+  __INLINE__ void advanceTail(const size_t n = 1)
   {
     // Current depth
     const auto curDepth = getDepth();
@@ -122,7 +122,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __USED__ inline size_t getCapacity() const noexcept { return _capacity; }
+  __INLINE__ size_t getCapacity() const noexcept { return _capacity; }
 
   /**
    * Returns the current circular buffer depth.
@@ -135,7 +135,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __USED__ inline size_t getDepth() const noexcept { return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter); }
+  __INLINE__ size_t getDepth() const noexcept { return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter); }
 
   /**
    * This function can be used to quickly check whether the circular buffer is full.
@@ -145,7 +145,7 @@ class CircularBuffer
    * \returns true, if the buffer is full
    * \returns false, if the buffer is not full
    */
-  __USED__ inline bool isFull() const noexcept { return getDepth() == _capacity; }
+  __INLINE__ bool isFull() const noexcept { return getDepth() == _capacity; }
 
   /**
    * This function can be used to quickly check whether the circular buffer is empty.
@@ -155,14 +155,14 @@ class CircularBuffer
    * \returns true, if the buffer is empty
    * \returns false, if the buffer is not empty
    */
-  __USED__ inline bool isEmpty() const noexcept { return *_headAdvanceCounter == *_tailAdvanceCounter; }
+  __INLINE__ bool isEmpty() const noexcept { return *_headAdvanceCounter == *_tailAdvanceCounter; }
 
   /**
    * Forces the head advance counter into a specific absolute value
    *
    * @param[in] headAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the circular buffer has negative depth
    */
-  __USED__ inline void setHead(const size_t headAdvanceCounter)
+  __INLINE__ void setHead(const size_t headAdvanceCounter)
   {
     // Sanity check
     if (*_tailAdvanceCounter > headAdvanceCounter)
@@ -183,7 +183,7 @@ class CircularBuffer
    *
    * @param[in] tailAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the circular buffer has negative depth
    */
-  __USED__ inline void setTail(const size_t tailAdvanceCounter)
+  __INLINE__ void setTail(const size_t tailAdvanceCounter)
   {
     // Sanity check
     if (tailAdvanceCounter > *_headAdvanceCounter)
@@ -202,12 +202,12 @@ class CircularBuffer
   /**
    * @returns The absolute counter for the number of times the head was advanced
    */
-  __USED__ inline size_t getHeadAdvanceCounter() const noexcept { return *_headAdvanceCounter; }
+  __INLINE__ size_t getHeadAdvanceCounter() const noexcept { return *_headAdvanceCounter; }
 
   /**
    * @returns The absolute counter for the number of times the tail was advanced
    */
-  __USED__ inline size_t getTailAdvanceCounter() const noexcept { return *_tailAdvanceCounter; }
+  __INLINE__ size_t getTailAdvanceCounter() const noexcept { return *_tailAdvanceCounter; }
 
   private:
 
@@ -234,7 +234,7 @@ class CircularBuffer
    * @param[in] tailAdvanceCounter tail index
    * @return depth of buffer (in elements)
    */
-  __USED__ static inline size_t calculateDepth(const size_t headAdvanceCounter, const size_t tailAdvanceCounter) { return headAdvanceCounter - tailAdvanceCounter; }
+  __INLINE__ static inline size_t calculateDepth(const size_t headAdvanceCounter, const size_t tailAdvanceCounter) { return headAdvanceCounter - tailAdvanceCounter; }
 };
 
 } // namespace channel

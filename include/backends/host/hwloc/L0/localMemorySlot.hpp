@@ -78,7 +78,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    *
    * \return The binding type used to allocate/register this memory slot
    */
-  __USED__ inline binding_type getBindingType() const { return _bindingType; }
+  __INLINE__ binding_type getBindingType() const { return _bindingType; }
 
   private:
 

@@ -97,7 +97,7 @@ class Producer final : public variableSize::Base
    * Identical to Producer::updateDepth(), but this coordination buffer
    * is larger and contains payload information as well as token metadata
    */
-  __USED__ inline void updateDepth()
+  __INLINE__ void updateDepth()
   {
     _communicationManager->queryMemorySlotUpdates(_producerCoordinationBufferForCounts);
     _communicationManager->queryMemorySlotUpdates(_producerCoordinationBufferForPayloads);
@@ -107,7 +107,7 @@ class Producer final : public variableSize::Base
    * advance payload buffer tail by a number of bytes
    * @param[in] n bytes to advance payload buffer tail by
    */
-  __USED__ inline void advancePayloadTail(const size_t n = 1) { _circularBufferForPayloads->advanceTail(n); }
+  __INLINE__ void advancePayloadTail(const size_t n = 1) { _circularBufferForPayloads->advanceTail(n); }
 
   /**
    * advance payload buffer head by a number of bytes
@@ -118,7 +118,7 @@ class Producer final : public variableSize::Base
    * get payload buffer head position
    * @return payload buffer head position (in bytes)
    */
-  __USED__ inline size_t getPayloadHeadPosition() const noexcept { return _circularBufferForPayloads->getHeadPosition(); }
+  __INLINE__ size_t getPayloadHeadPosition() const noexcept { return _circularBufferForPayloads->getHeadPosition(); }
 
   /**
    * get the datatype size used for payload buffer
@@ -155,7 +155,7 @@ class Producer final : public variableSize::Base
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline void push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
+  __INLINE__ void push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
   {
     if (n != 1) HICR_THROW_RUNTIME("HiCR currently has no implementation for n != 1 with push(sourceSlot, n) for variable size version.");
 

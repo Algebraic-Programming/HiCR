@@ -75,7 +75,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    * \param[in] depth Stores the current exploration depth level, necessary to return only the processing units at the leaf level
    * \param[out] threadPUs Storage for the found procesing units
    */
-  __USED__ inline static void detectThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
+  __INLINE__ static void detectThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
   {
     if (obj->arity == 0) threadPUs.push_back(obj->logical_index);
     for (unsigned int i = 0; i < obj->arity; i++) detectThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
@@ -88,7 +88,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    * \param[in] logicalProcessorId The logical ID of the processor we are doing the search for
    * \returns The ID of the associated physical identifier related to the passed logical processor id
    */
-  __USED__ inline static physicalProcessorId_t detectPhysicalProcessorId(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __INLINE__ static physicalProcessorId_t detectPhysicalProcessorId(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
     if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
@@ -109,7 +109,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    * \param[in] logicalProcessorId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
-  __USED__ static numaAffinity_t detectCoreNUMAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __INLINE__ static numaAffinity_t detectCoreNUMAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
@@ -161,7 +161,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    *          P/S:   may be "Private" or "Shared"
    *          associated IDs: (optional, for Shared cache) a list of core IDs, e.g. "0 1 2 3"
    */
-  __USED__ static inline std::unordered_set<std::shared_ptr<backend::host::Cache>> detectCpuCaches(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __INLINE__ static inline std::unordered_set<std::shared_ptr<backend::host::Cache>> detectCpuCaches(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
@@ -223,13 +223,13 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
     return ret;
   }
 
-  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
     // Calling the base class serializer
     this->HiCR::backend::host::L0::ComputeResource::serializeImpl(output);
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
     // Calling the base class deserializer
     this->HiCR::backend::host::L0::ComputeResource::deserializeImpl(input);
@@ -242,7 +242,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    * \param[in] logicalProcessorId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
-  __USED__ inline static int getCpuNumaAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __INLINE__ static int getCpuNumaAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);

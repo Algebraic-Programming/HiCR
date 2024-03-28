@@ -60,7 +60,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   /**
    * Synchronize and destroy the currently used stream
    */
-  __USED__ inline void finalizeStream()
+  __INLINE__ void finalizeStream()
   {
     if (_isStreamActive)
     {
@@ -86,7 +86,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   /**
    * Internal implementation of resume routine.
    */
-  __USED__ inline void resumeImpl() override
+  __INLINE__ void resumeImpl() override
   {
     aclError err = aclrtCreateEvent(&_syncEvent);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
@@ -106,7 +106,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
   }
 
-  __USED__ inline void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend"); }
+  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend"); }
 
   /**
    * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and
@@ -114,7 +114,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    *
    * \return whether all the kernels described in the execution unit finished.
    */
-  __USED__ inline bool checkFinalizationImpl() override
+  __INLINE__ bool checkFinalizationImpl() override
   {
     // Check if the event has been processed
     aclrtEventRecordedStatus status;

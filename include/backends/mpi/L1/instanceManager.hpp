@@ -97,7 +97,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    * @param[in] RPCTargetName The name of the target RPC to execute
    *
    */
-  __USED__ inline void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCTargetName) const override
+  __INLINE__ void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCTargetName) const override
   {
     // Calculating hash for the RPC target's name
     auto hash = getHashFromString(RPCTargetName);
@@ -115,7 +115,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Send(&hash, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_RPC_TAG, _comm);
   }
 
-  __USED__ inline void *getReturnValueImpl(HiCR::L0::Instance &instance) const override
+  __INLINE__ void *getReturnValueImpl(HiCR::L0::Instance &instance) const override
   {
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *const>(&instance);
@@ -139,7 +139,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return buffer;
   }
 
-  __USED__ inline void submitReturnValueImpl(const void *pointer, const size_t size) const override
+  __INLINE__ void submitReturnValueImpl(const void *pointer, const size_t size) const override
   {
     // Sending message size
     MPI_Ssend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);
@@ -148,7 +148,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Ssend(pointer, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm);
   }
 
-  __USED__ inline void listenImpl() override
+  __INLINE__ void listenImpl() override
   {
     // We need to preserve the status to receive more information about the RPC
     MPI_Status status;
@@ -166,14 +166,14 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     executeRPC(rpcIdx);
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::Instance> createInstanceImpl [[noreturn]] (const HiCR::L0::Topology &requestedTopology, int argc, char *argv[])
+  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstanceImpl [[noreturn]] (const HiCR::L0::Topology &requestedTopology, int argc, char *argv[])
   {
     HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
   }
 
-  __USED__ inline void finalize() override { MPI_Finalize(); }
+  __INLINE__ void finalize() override { MPI_Finalize(); }
 
-  __USED__ inline void abort(int errorCode) override { MPI_Abort(MPI_COMM_WORLD, errorCode); }
+  __INLINE__ void abort(int errorCode) override { MPI_Abort(MPI_COMM_WORLD, errorCode); }
 
   /**
    * This function represents the default intializer for this backend
@@ -182,7 +182,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    * @param[in] argv A pointer to the argv value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
    * @return A unique pointer to the newly instantiated backend class
    */
-  __USED__ static inline std::unique_ptr<HiCR::L1::InstanceManager> createDefault(int *argc, char ***argv)
+  __INLINE__ static inline std::unique_ptr<HiCR::L1::InstanceManager> createDefault(int *argc, char ***argv)
   {
     // Initializing MPI
     int initialized = 0;
@@ -199,9 +199,9 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
   }
 
-  __USED__ inline HiCR::L0::Instance::instanceId_t getRootInstanceId() const { return _HICR_MPI_INSTANCE_ROOT_ID; }
+  __INLINE__ HiCR::L0::Instance::instanceId_t getRootInstanceId() const { return _HICR_MPI_INSTANCE_ROOT_ID; }
 
-  __USED__ inline HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
+  __INLINE__ HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
 
   private:
 

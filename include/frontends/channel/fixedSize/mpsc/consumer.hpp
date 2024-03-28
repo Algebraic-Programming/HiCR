@@ -87,7 +87,7 @@ class Consumer final : public channel::fixedSize::Base
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
    */
-  __USED__ inline ssize_t peek(const size_t pos = 0)
+  __INLINE__ ssize_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
     if (pos >= _circularBuffer->getCapacity())
@@ -129,7 +129,7 @@ class Consumer final : public channel::fixedSize::Base
    * @see queryDepth to determine whether the channel has an item to pop before calling
    * this function.
    */
-  __USED__ inline bool pop(const size_t n = 1)
+  __INLINE__ bool pop(const size_t n = 1)
   {
     if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
 

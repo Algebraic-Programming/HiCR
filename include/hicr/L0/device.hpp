@@ -66,28 +66,28 @@ class Device
    *
    * \return The list of compute resources contained in this device
    */
-  __USED__ inline const computeResourceList_t &getComputeResourceList() { return _computeResources; }
+  __INLINE__ const computeResourceList_t &getComputeResourceList() { return _computeResources; }
 
   /**
    * This function returns the list of queried memory spaces, as visible by the device.
    *
    * \return The list of memory spaces contained in this device
    */
-  __USED__ inline const memorySpaceList_t &getMemorySpaceList() { return _memorySpaces; }
+  __INLINE__ const memorySpaceList_t &getMemorySpaceList() { return _memorySpaces; }
 
   /**
    * This function allows the deferred addition (post construction) of compute resources
    *
    * \param[in] computeResource The compute resource to add
    */
-  __USED__ inline void addComputeResource(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) { _computeResources.insert(computeResource); }
+  __INLINE__ void addComputeResource(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) { _computeResources.insert(computeResource); }
 
   /**
    * This function allows the deferred addition (post construction) of memory spaces
    *
    * \param[in] memorySpace The compute resource to add
    */
-  __USED__ inline void addMemorySpace(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace) { _memorySpaces.insert(memorySpace); }
+  __INLINE__ void addMemorySpace(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace) { _memorySpaces.insert(memorySpace); }
 
   /**
    * Default destructor
@@ -109,7 +109,7 @@ class Device
    *
    * @return JSON-formatted serialized device information
    */
-  __USED__ inline nlohmann::json serialize() const
+  __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -142,7 +142,7 @@ class Device
    * \note Important: Deserialized devices are not meant to be used in any from other than printing or reporting its topology.
    *       Any attempt of actually using them for computation or data transfers will result in undefined behavior.
    */
-  __USED__ inline void deserialize(const nlohmann::json &input)
+  __INLINE__ void deserialize(const nlohmann::json &input)
   {
     // First, discard all existing information
     _computeResources.clear();

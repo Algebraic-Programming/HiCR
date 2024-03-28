@@ -82,7 +82,7 @@ class Producer final : public channel::fixedSize::Base
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline void push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
+  __INLINE__ void push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
@@ -118,7 +118,7 @@ class Producer final : public channel::fixedSize::Base
   /**
    * This function updates the internal value of the channel depth
    */
-  __USED__ inline void updateDepth()
+  __INLINE__ void updateDepth()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
     _communicationManager->queryMemorySlotUpdates(_producerCoordinationBuffer);

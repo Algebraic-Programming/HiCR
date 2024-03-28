@@ -68,23 +68,23 @@ class ComputeResource final : public HiCR::L0::ComputeResource
     deserialize(input);
   }
 
-  __USED__ inline std::string getType() const override { return "Ascend Processor"; }
+  __INLINE__ std::string getType() const override { return "Ascend Processor"; }
 
   /**
    * Function to get the device id associated to this memory space
    *
    * @return The device id corresponding to this memory space
    */
-  __USED__ inline const std::weak_ptr<const ascend::L0::Device> getDevice() const { return _device; }
+  __INLINE__ const std::weak_ptr<const ascend::L0::Device> getDevice() const { return _device; }
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
     // Nothing extra to serialize here
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
     // Nothing extra  to deserialize here
   }

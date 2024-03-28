@@ -155,7 +155,7 @@ class Instance
    * @param[in] size The size of the internal buffer to use
    * @return A shared pointer to the newly created data object
    */
-  __USED__ inline std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
+  __INLINE__ std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
   {
     DataObject::dataObjectId_t dataObjectId;
 
@@ -177,7 +177,7 @@ class Instance
    * @param[in] dataObjectId The id of the data object to get from the coordinator instance
    * @return A shared pointer to the obtained data object
    */
-  __USED__ inline std::shared_ptr<DataObject> getDataObject(const DataObject::dataObjectId_t dataObjectId)
+  __INLINE__ std::shared_ptr<DataObject> getDataObject(const DataObject::dataObjectId_t dataObjectId)
   {
     // Getting instance id of coordinator instance
     const auto coordinatorId     = _instanceManager->getRootInstanceId();
@@ -193,7 +193,7 @@ class Instance
    * @param[in] messagePtr The pointer to the message buffer
    * @param[in] messageSize The message size in bytes
    */
-  __USED__ inline void sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize);
+  __INLINE__ void sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize);
 
   /**
    * Synchronous function to receive a message from another instance
@@ -202,7 +202,7 @@ class Instance
    * @param[in] isAsync Whether the function must return immediately if no message was found
    * @return A pair containing a pointer to the start of the message binary data and the message's size
    */
-  __USED__ inline std::pair<const void *, size_t> recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync = false);
+  __INLINE__ std::pair<const void *, size_t> recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync = false);
 
   /**
    * Asynchronous function to receive a message from another instance
@@ -212,7 +212,7 @@ class Instance
    * @param[in] instanceId The id of the instance for which channel we check for incoming messages
    * @return A pair containing a pointer to the start of the message binary data and the message's size. The pointer will be NULL if no messages were there when called.
    */
-  __USED__ inline std::pair<const void *, size_t> recvMessageAsync(const HiCR::L0::Instance::instanceId_t instanceId) { return recvMessage(instanceId, true); }
+  __INLINE__ std::pair<const void *, size_t> recvMessageAsync(const HiCR::L0::Instance::instanceId_t instanceId) { return recvMessage(instanceId, true); }
 
   protected:
 

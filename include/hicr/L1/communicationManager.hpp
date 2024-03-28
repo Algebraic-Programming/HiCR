@@ -65,7 +65,7 @@ class CommunicationManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __USED__ inline void exchangeGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
+  __INLINE__ void exchangeGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
   {
     // Calling internal implementation of this function
     exchangeGlobalMemorySlotsImpl(tag, memorySlots);
@@ -78,7 +78,7 @@ class CommunicationManager
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  __USED__ inline std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlot(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey)
+  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlot(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey)
   {
     // Locking access to prevent concurrency issues
     this->lock();
@@ -110,7 +110,7 @@ class CommunicationManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void deregisterGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
     const auto memorySlotTag       = memorySlot->getGlobalTag();
@@ -143,7 +143,7 @@ class CommunicationManager
    *
    * \param[in] memorySlot Identifier of the memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdates(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void queryMemorySlotUpdates(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting value by copy
     queryMemorySlotUpdatesImpl(memorySlot);
@@ -162,7 +162,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __USED__ inline void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination,
+  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination,
                               const size_t                         dst_offset,
                               std::shared_ptr<L0::LocalMemorySlot> source,
                               const size_t                         src_offset,
@@ -205,7 +205,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __USED__ inline void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination,
+  __INLINE__ void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination,
                               const size_t                          dst_offset,
                               std::shared_ptr<L0::LocalMemorySlot>  source,
                               const size_t                          src_offset,
@@ -238,7 +238,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __USED__ inline void memcpy(std::shared_ptr<L0::LocalMemorySlot>  destination,
+  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot>  destination,
                               const size_t                          dst_offset,
                               std::shared_ptr<L0::GlobalMemorySlot> source,
                               const size_t                          src_offset,
@@ -282,7 +282,7 @@ class CommunicationManager
    *
    * \todo This all should be threading safe.
    */
-  __USED__ inline void fence(const L0::GlobalMemorySlot::tag_t tag)
+  __INLINE__ void fence(const L0::GlobalMemorySlot::tag_t tag)
   {
     // To enable concurrent fence operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
@@ -303,7 +303,7 @@ class CommunicationManager
    * \param[in] expectedSent number of messages to finish sending on slot before returning
    * \param[in] expectedRecvd number of messages to finish receiving on slot before returning
    */
-  __USED__ inline void fence(std::shared_ptr<L0::LocalMemorySlot> slot, size_t expectedSent, size_t expectedRecvd)
+  __INLINE__ void fence(std::shared_ptr<L0::LocalMemorySlot> slot, size_t expectedSent, size_t expectedRecvd)
   {
     // To enable concurrent fence operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
@@ -324,7 +324,7 @@ class CommunicationManager
    * \param[in] expectedSent number of messages to finish sending on slot before returning
    * \param[in] expectedRecvd number of messages to finish receiving on slot before returning
    */
-  __USED__ inline void fence(std::shared_ptr<L0::GlobalMemorySlot> slot, size_t expectedSent, size_t expectedRecvd)
+  __INLINE__ void fence(std::shared_ptr<L0::GlobalMemorySlot> slot, size_t expectedSent, size_t expectedRecvd)
   {
     // To enable concurrent fence operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
@@ -342,7 +342,7 @@ class CommunicationManager
    * @param[in] memorySlot The memory slot to reserve
    * @return true, if the lock was acquired successfully; false, otherwise
    */
-  __USED__ inline bool acquireGlobalLock(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ bool acquireGlobalLock(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
     const auto memorySlotTag       = memorySlot->getGlobalTag();
@@ -365,7 +365,7 @@ class CommunicationManager
    *
    * @param[in] memorySlot The memory slot to release
    */
-  __USED__ inline void releaseGlobalLock(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void releaseGlobalLock(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot global information
     const auto memorySlotTag       = memorySlot->getGlobalTag();
@@ -398,7 +398,7 @@ class CommunicationManager
   /**
    * This function flushes pending memcpy operations
    */
-  __USED__ virtual inline void flush() {}
+  __INLINE__ virtual inline void flush() {}
 
   protected:
 
@@ -409,7 +409,7 @@ class CommunicationManager
    *
    * \internal This function is only meant to be called internally
    */
-  __USED__ inline void registerGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void registerGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
     // Getting memory slot information
     const auto tag       = memorySlot->getGlobalTag();

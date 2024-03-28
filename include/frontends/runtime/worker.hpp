@@ -50,7 +50,7 @@ class Worker final : public runtime::Instance
   Worker()  = delete;
   ~Worker() = default;
 
-  __USED__ inline void initialize() override
+  __INLINE__ void initialize() override
   {
     // Starting to listen
 
@@ -68,7 +68,7 @@ class Worker final : public runtime::Instance
     finalize();
   }
 
-  __USED__ inline void finalize() override
+  __INLINE__ void finalize() override
   {
     uint8_t ack = 0;
 

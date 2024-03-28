@@ -46,7 +46,7 @@ class Coroutine
   /**
    * Resumes the execution of the coroutine. The coroutine needs to have been started before this, otherwise undefined behavior is to be expected.
    */
-  __USED__ inline void resume()
+  __INLINE__ void resume()
   {
     if (_hasFinished == true) HICR_THROW_RUNTIME("Attempting to resume a coroutine that has already finished");
     if (_runningContext == true) HICR_THROW_RUNTIME("Attempting to resume a coroutine that is already running");
@@ -61,7 +61,7 @@ class Coroutine
   /**
    * Yields the execution of the coroutine. The coroutine needs to be 'resumed' when running this function, otherwise undefined behavior is to be expected.
    */
-  __USED__ inline void yield()
+  __INLINE__ void yield()
   {
     if (_hasFinished == true) HICR_THROW_RUNTIME("Attempting to suspend a coroutine that has already finished");
     if (_runningContext == false) HICR_THROW_RUNTIME("Attempting to suspend a coroutine that is not running");
@@ -80,7 +80,7 @@ class Coroutine
    *
    * \param[in] fc Function to run by the coroutine
    */
-  __USED__ inline void start(coroutineFc_t fc)
+  __INLINE__ void start(coroutineFc_t fc)
   {
     const auto coroutineFc = [this, fc](boost::context::continuation &&sink) {
       // Storing caller context
@@ -114,7 +114,7 @@ class Coroutine
    *
    * \return True, if the coroutine has finished; False, otherwise.
    */
-  __USED__ inline bool hasFinished() { return _hasFinished; }
+  __INLINE__ bool hasFinished() { return _hasFinished; }
 
   private:
 

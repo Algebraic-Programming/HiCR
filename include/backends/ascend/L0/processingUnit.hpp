@@ -43,7 +43,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource The compute resource from which this processing unit is instantiated
    */
-  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+  __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
     : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the instance
@@ -60,7 +60,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Internal implementation of initailizeImpl
    */
-  __USED__ inline void initializeImpl() override
+  __INLINE__ void initializeImpl() override
   {
     // Getting device id associated to the underlying compute resource (ascend)
     auto deviceId = dynamic_pointer_cast<ascend::L0::ComputeResource>(getComputeResource())->getDevice().lock()->getId();
@@ -72,19 +72,19 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Internal implementation of suspendImpl
    */
-  __USED__ inline void suspendImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
+  __INLINE__ void suspendImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
 
   /**
    * Internal implementation of resumeImpl
    */
-  __USED__ inline void resumeImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
+  __INLINE__ void resumeImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
 
   /**
    * Ascend backend implementation that starts the execution state in the processing unit.
    *
    * \param executionState the execution state to start
    */
-  __USED__ inline void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
+  __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
   {
     // Getting up-casted pointer for the execution unit
     auto e = std::unique_ptr<ExecutionState>(dynamic_cast<ExecutionState *>(executionState.release()));
@@ -108,12 +108,12 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Internal implementation of terminateImpl
    */
-  __USED__ inline void terminateImpl() override {}
+  __INLINE__ void terminateImpl() override {}
 
   /**
    * Ascend backend implementation that wait for execution state completion
    */
-  __USED__ inline void awaitImpl() override
+  __INLINE__ void awaitImpl() override
   {
     // Getting up-casted pointer for the instance
     auto c = static_cast<ascend::L0::ComputeResource *>(getComputeResource().get());

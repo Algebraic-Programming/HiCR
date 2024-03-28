@@ -108,7 +108,7 @@ class Runtime
    * \param[in] task The task to check
    * \return true, if the task is ready; false, if the task is not ready
    */
-  __USED__ inline bool checkTaskReady(HiCR::tasking::Task *task)
+  __INLINE__ bool checkTaskReady(HiCR::tasking::Task *task)
   {
     const auto &dependencies = task->getDependencies();
 
@@ -127,7 +127,7 @@ class Runtime
    * If the number of active workers is smaller than the maximum, it will try to 'wake up' other suspended workers, if any,
    * until the maximum is reached again.
    */
-  __USED__ inline void checkMaximumActiveWorkerCount()
+  __INLINE__ void checkMaximumActiveWorkerCount()
   {
     // Getting a pointer to the currently executing worker
     auto worker = HiCR::tasking::Worker::getCurrentWorker();
@@ -192,7 +192,7 @@ class Runtime
    *
    * \param[in] pu The processing unit to add
    */
-  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
+  __INLINE__ void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
    * Sets the maximum active worker count. If the current number of active workers exceeds this maximu, TaskR will put as many
@@ -201,7 +201,7 @@ class Runtime
    *
    * \param[in] max The desired number of maximum workers. A non-positive value means that there is no limit.
    */
-  __USED__ inline void setMaximumActiveWorkers(const size_t max)
+  __INLINE__ void setMaximumActiveWorkers(const size_t max)
   {
     // Storing new maximum active worker count
     _maximumActiveWorkers = max;
@@ -212,7 +212,7 @@ class Runtime
    *
    * \param[in] task Task to add.
    */
-  __USED__ inline void addTask(HiCR::tasking::Task *task)
+  __INLINE__ void addTask(HiCR::tasking::Task *task)
   {
     // Increasing task count
     _taskCount++;
@@ -231,7 +231,7 @@ class Runtime
    *
    * \param[in] task Finalized task pointer
    */
-  __USED__ inline void onTaskFinish(HiCR::tasking::Task *task)
+  __INLINE__ void onTaskFinish(HiCR::tasking::Task *task)
   {
     // Decreasing overall task count
     _taskCount--;
@@ -249,7 +249,7 @@ class Runtime
    *
    * \param[in] task Suspended task pointer
    */
-  __USED__ inline void onTaskSync(HiCR::tasking::Task *task)
+  __INLINE__ void onTaskSync(HiCR::tasking::Task *task)
   {
     // Re-adding task to the waiting list
     _waitingTaskQueue.push(task);
@@ -263,7 +263,7 @@ class Runtime
    *
    * \return A pointer to a HiCR task to execute. NULL if there are no pending tasks.
    */
-  __USED__ inline HiCR::tasking::Task *checkWaitingTasks()
+  __INLINE__ HiCR::tasking::Task *checkWaitingTasks()
   {
     // If all tasks finished, then terminate execution immediately
     if (_taskCount == 0)
@@ -315,7 +315,7 @@ class Runtime
    *
    * \param[in] computeManager The compute manager to use to coordinate the execution of processing units and tasks
    */
-  __USED__ inline void run(HiCR::L1::ComputeManager *computeManager)
+  __INLINE__ void run(HiCR::L1::ComputeManager *computeManager)
   {
     // Initializing HiCR tasking
     HiCR::tasking::initialize();
@@ -370,7 +370,7 @@ class Runtime
    *
    * \return A pointer to the currently executing TaskR task
    */
-  __USED__ inline HiCR::tasking::Task *getCurrentTask() { return HiCR::tasking::Task::getCurrentTask(); }
+  __INLINE__ HiCR::tasking::Task *getCurrentTask() { return HiCR::tasking::Task::getCurrentTask(); }
 
 }; // class Runtime
 

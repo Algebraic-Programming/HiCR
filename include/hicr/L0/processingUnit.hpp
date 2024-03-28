@@ -81,7 +81,7 @@ class ProcessingUnit
    *
    * \param computeResource The instance of the compute resource to instantiate, as indicated by the backend
    */
-  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+  __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
     : _computeResource(computeResource){};
 
   virtual ~ProcessingUnit() = default;
@@ -91,12 +91,12 @@ class ProcessingUnit
    *
    * \return Retruns the current state
    */
-  __USED__ inline ProcessingUnit::state_t getState() const { return _state; }
+  __INLINE__ ProcessingUnit::state_t getState() const { return _state; }
 
   /**
    * Initializes the resource and leaves it ready to execute work
    */
-  __USED__ inline void initialize()
+  __INLINE__ void initialize()
   {
     // Checking internal state
     if (_state != ProcessingUnit::uninitialized && _state != ProcessingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
@@ -113,7 +113,7 @@ class ProcessingUnit
    *
    * @param[in] executionState The execution state to start running with this processing  unit
    */
-  __USED__ inline void start(std::unique_ptr<HiCR::L0::ExecutionState> executionState)
+  __INLINE__ void start(std::unique_ptr<HiCR::L0::ExecutionState> executionState)
   {
     // Checking internal state
     if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'ready' state");
@@ -128,7 +128,7 @@ class ProcessingUnit
   /**
    * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
    */
-  __USED__ inline void suspend()
+  __INLINE__ void suspend()
   {
     // Checking state
     if (_state != ProcessingUnit::running) HICR_THROW_RUNTIME("Attempting to suspend processing unit that is not in the 'running' state");
@@ -143,7 +143,7 @@ class ProcessingUnit
   /**
    * Resumes the execution of the resource.
    */
-  __USED__ inline void resume()
+  __INLINE__ void resume()
   {
     // Checking state
     if (_state != ProcessingUnit::suspended) HICR_THROW_RUNTIME("Attempting to resume processing unit that is not in the 'suspended' state");
@@ -158,7 +158,7 @@ class ProcessingUnit
   /**
    * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
    */
-  __USED__ inline void terminate()
+  __INLINE__ void terminate()
   {
     // Transitioning state
     _state = ProcessingUnit::terminating;
@@ -170,7 +170,7 @@ class ProcessingUnit
   /**
    * Suspends the execution of the caller until the finalization is ultimately completed
    */
-  __USED__ inline void await()
+  __INLINE__ void await()
   {
     // Checking state
     if (_state != ProcessingUnit::terminating && _state != ProcessingUnit::running && _state != ProcessingUnit::suspended) return;
@@ -187,7 +187,7 @@ class ProcessingUnit
    *
    * \return The identifier of the compute resource associated to this processing unit.
    */
-  __USED__ inline std::shared_ptr<ComputeResource> getComputeResource() { return _computeResource; }
+  __INLINE__ std::shared_ptr<ComputeResource> getComputeResource() { return _computeResource; }
 
   protected:
 

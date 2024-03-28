@@ -54,7 +54,7 @@ class Core final
    *
    * \return a map containing for each device Id its corresponding ascendState_t structure
    */
-  __USED__ inline const std::unordered_map<deviceIdentifier_t, ascendState_t> &getContexts() const { return _deviceStatusMap; }
+  __INLINE__ const std::unordered_map<deviceIdentifier_t, ascendState_t> &getContexts() const { return _deviceStatusMap; }
 
   /**
    * Discover available ascend devices, get memory information (HBM per single card), and create dedicated ACL contexts per device
@@ -70,7 +70,7 @@ class Core final
   /**
    * Finalize the ACL environment by destroying the device contexts
    */
-  __USED__ inline void finalize()
+  __INLINE__ void finalize()
   {
     aclError err = aclFinalize();
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize Ascend Computing Language. Error %d", err);
@@ -86,7 +86,7 @@ class Core final
   /**
    * Create ACL contexts for each available ascend device
    */
-  __USED__ inline void createContexts() {}
+  __INLINE__ void createContexts() {}
 };
 
 } // namespace ascend

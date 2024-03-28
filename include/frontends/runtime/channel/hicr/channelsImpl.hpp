@@ -8,7 +8,7 @@
 #define _HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG _HICR_RUNTIME_CHANNEL_BASE_TAG + 5
 #define _HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG _HICR_RUNTIME_CHANNEL_BASE_TAG + 6
 
-__USED__ inline void Instance::initializeChannels()
+__INLINE__ void Instance::initializeChannels()
 {
   // Getting my current instance
   const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
@@ -175,7 +175,7 @@ __USED__ inline void Instance::initializeChannels()
   }
 }
 
-__USED__ inline void Instance::sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize)
+__INLINE__ void Instance::sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize)
 {
   // Sanity check
   if (_producerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the producer channel map");
@@ -203,7 +203,7 @@ __USED__ inline void Instance::sendMessage(const HiCR::L0::Instance::instanceId_
   channel->push(messageSendSlot);
 }
 
-__USED__ inline std::pair<const void *, size_t> Instance::recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync)
+__INLINE__ std::pair<const void *, size_t> Instance::recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync)
 {
   if (_consumerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the consumer channel map");
 

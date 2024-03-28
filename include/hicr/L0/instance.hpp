@@ -43,7 +43,7 @@ class Instance
    * This function returns the (hopefully) unique identifier of the current instance
    * @return The instance identifier
    */
-  __USED__ inline instanceId_t getId() const { return _id; }
+  __INLINE__ instanceId_t getId() const { return _id; }
 
   /**
    * This function reports whether the caller is the root instance
@@ -71,7 +71,7 @@ class Instance
    * \param[in] id Identifier to assign to this instance
    *
    */
-  __USED__ Instance(instanceId_t id)
+  __INLINE__ Instance(instanceId_t id)
     : _id(id){};
 
   private:

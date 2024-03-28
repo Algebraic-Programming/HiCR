@@ -75,24 +75,24 @@ class MemorySpace final : public HiCR::backend::host::L0::MemorySpace
    *
    * @return The supported memory binding type by the memory space
    */
-  __USED__ inline host::hwloc::L0::LocalMemorySlot::binding_type getSupportedBindingType() const { return _bindingSupport; }
+  __INLINE__ host::hwloc::L0::LocalMemorySlot::binding_type getSupportedBindingType() const { return _bindingSupport; }
 
   /**
    * Function to get the internal HWLoc object represented by this memory space
    *
    * @return The internal HWLoc object
    */
-  __USED__ inline const hwloc_obj_t getHWLocObject() const { return _hwlocObject; }
+  __INLINE__ const hwloc_obj_t getHWLocObject() const { return _hwlocObject; }
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
     // Writing HWLoc-specific information into the serialized object
     output["Binding Support"] = _bindingSupport;
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
     std::string key = "Binding Support";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());

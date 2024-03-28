@@ -49,7 +49,7 @@ class ComputeManager : public HiCR::backend::host::L1::ComputeManager
    */
   ~ComputeManager() = default;
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
+  __INLINE__ std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
   {
     return std::make_unique<host::pthreads::L0::ProcessingUnit>(computeResource);
   }

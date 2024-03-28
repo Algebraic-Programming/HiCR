@@ -65,20 +65,20 @@ class Device : public HiCR::L0::Device
 
   protected:
 
-  __USED__ inline std::string getType() const override { return "NUMA Domain"; }
+  __INLINE__ std::string getType() const override { return "NUMA Domain"; }
 
   /**
    * Identifier for the NUMA domain represented by this class
    */
   NUMADomainID_t _NUMADomainId;
 
-  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
     // Storing numa domain identifier
     output["NUMA Domain Id"] = _NUMADomainId;
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
     // Getting device id
     std::string key = "NUMA Domain Id";

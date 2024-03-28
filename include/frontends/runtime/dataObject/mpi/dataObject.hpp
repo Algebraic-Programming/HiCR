@@ -53,7 +53,7 @@ class DataObject final
   /**
    * Exposes a data object to be obtained (stealed) by another instance
    */
-  __USED__ inline void publish()
+  __INLINE__ void publish()
   {
     // Pick the first 15 bits of the id and use it as MPI Tag
     const int dataObjectIdTag = _id & mpiTagMask;
@@ -67,7 +67,7 @@ class DataObject final
    *
    * @return True, if the data object was successfully release (copied to another instance), or was already released; false, if nobody claimed the data object
    */
-  __USED__ inline bool release()
+  __INLINE__ bool release()
   {
     // If transfered already, return true
     if (_isReleased == true) return true;
@@ -118,7 +118,7 @@ class DataObject final
    * @param[in] seed unique random seed 
    * @return A shared pointer to the data object obtained from the remote instance
    */
-  __USED__ inline static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t       dataObjectId,
+  __INLINE__ static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t       dataObjectId,
                                                                    HiCR::L0::Instance::instanceId_t remoteInstanceId,
                                                                    HiCR::L0::Instance::instanceId_t currentInstanceId,
                                                                    HiCR::L0::Instance::instanceId_t seed)
@@ -150,21 +150,21 @@ class DataObject final
    *
    * @return A pointer to the internal data object buffer
    */
-  __USED__ inline void *getData() const { return _buffer; }
+  __INLINE__ void *getData() const { return _buffer; }
 
   /**
    * Gets the size of the data object's internal data buffer
    *
    * @return The size of the data object's internal data buffer
    */
-  __USED__ inline size_t getSize() const { return _size; }
+  __INLINE__ size_t getSize() const { return _size; }
 
   /**
    * Frees up the internal buffer of the data object.
    *
    * The same semantics of a normal free() function applies. Double frees must be avoided.
    */
-  __USED__ inline void destroyBuffer() { free(_buffer); }
+  __INLINE__ void destroyBuffer() { free(_buffer); }
 
   private:
 

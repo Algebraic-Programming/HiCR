@@ -48,7 +48,7 @@ class MemorySpace
    *
    * \return The memory space's size
    */
-  __USED__ virtual inline const size_t getSize() const { return _size; }
+  __INLINE__ virtual inline const size_t getSize() const { return _size; }
 
   /**
    *  If supported, obtain the amount of memory currently in use.
@@ -58,14 +58,14 @@ class MemorySpace
    *
    * \return The current memory usage for this memory space
    */
-  __USED__ virtual inline size_t getUsage() const { return _usage; };
+  __INLINE__ virtual inline size_t getUsage() const { return _usage; };
 
   /**
    * Registers an increase in the used memory size of the current memory space, either by allocation or manual registering
    *
    * \param delta How much (in bytes) has the memory usage increased
    */
-  __USED__ inline void increaseUsage(const size_t delta)
+  __INLINE__ void increaseUsage(const size_t delta)
   {
     if (_usage + delta > _size)
       HICR_THROW_LOGIC("Increasing memory space usage beyond its capacity (current_usage + increase > capacity | %lu + %lu > %lu)\n", _usage, delta, _size);
@@ -78,7 +78,7 @@ class MemorySpace
    *
    * \param delta How much (in bytes) has the memory usage decreased
    */
-  __USED__ inline void decreaseUsage(const size_t delta)
+  __INLINE__ void decreaseUsage(const size_t delta)
   {
     if (delta > _usage) HICR_THROW_LOGIC("Decreasing memory space usage below zero (probably a bug in HiCR) (current_usage - decrease < 0 | %lu - %lu < 0)\n", _usage, delta);
 
@@ -95,7 +95,7 @@ class MemorySpace
    *
    * @return JSON-formatted serialized memory space information
    */
-  __USED__ inline nlohmann::json serialize() const
+  __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -121,7 +121,7 @@ class MemorySpace
    *
    * @param[in] input JSON-formatted serialized memory space information
    */
-  __USED__ inline void deserialize(const nlohmann::json &input)
+  __INLINE__ void deserialize(const nlohmann::json &input)
   {
     // Obtaining backend-specific information
     deserializeImpl(input);

@@ -150,7 +150,7 @@ class Consumer final : public variableSize::Base
    * \note While this function does not modify the state of the channel, the
    *       contents of the token may be modified by the caller.
    */
-  __USED__ inline size_t basePeek(const size_t pos = 0)
+  __INLINE__ size_t basePeek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
     if (pos >= _circularBuffer->getCapacity())
@@ -179,7 +179,7 @@ class Consumer final : public variableSize::Base
    *  - the first value is the starting position in bytes of element \p pos in the payload buffer (in relation to starting address of payload buffer)
    *  - the second value is the size in bytes of element \p pos in the payload buffer.
    */
-  __USED__ inline std::array<size_t, 2> peek(const size_t pos = 0)
+  __INLINE__ std::array<size_t, 2> peek(const size_t pos = 0)
   {
     if (pos != 0) { HICR_THROW_FATAL("peek only implemented for n = 0 at the moment!"); }
     updateDepth();
@@ -246,7 +246,7 @@ class Consumer final : public variableSize::Base
    * - message size metadata (in token slot)
    * - payload data (in payload)
    */
-  __USED__ inline void updateDepth()
+  __INLINE__ void updateDepth()
   {
     _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
     _communicationManager->queryMemorySlotUpdates(_payloadBuffer);
@@ -279,7 +279,7 @@ class Consumer final : public variableSize::Base
    *
    * This function when called on a valid channel instance will never fail.
    */
-  __USED__ inline size_t getPayloadDepth() { return _circularBufferForPayloads->getDepth(); }
+  __INLINE__ size_t getPayloadDepth() { return _circularBufferForPayloads->getDepth(); }
 
   /**
    * Removes the last \n variable-sized elements from the payload buffer, and
@@ -291,7 +291,7 @@ class Consumer final : public variableSize::Base
    * In case there are less than n elements in the channel, no elements will be popped.
    *
    */
-  __USED__ inline void pop(const size_t n = 1)
+  __INLINE__ void pop(const size_t n = 1)
   {
     if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
 

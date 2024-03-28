@@ -77,14 +77,14 @@ class ComputeResource : public HiCR::L0::ComputeResource
    */
   ComputeResource() = default;
 
-  __USED__ inline std::string getType() const override { return "Processing Unit"; }
+  __INLINE__ std::string getType() const override { return "Processing Unit"; }
 
   /**
    * Function to return the compute resource processor id
    *
    * @returns The processor id
    */
-  __USED__ inline int getProcessorId() const { return _logicalProcessorId; }
+  __INLINE__ int getProcessorId() const { return _logicalProcessorId; }
 
   /**
    * Obtains the Core ID of the CPU; in non SMT systems that will be the actual id;
@@ -92,11 +92,11 @@ class ComputeResource : public HiCR::L0::ComputeResource
    *
    * \return The physical ID of the hardware Core
    */
-  __USED__ inline physicalProcessorId_t getPhysicalProcessorId() const { return _physicalProcessorId; }
+  __INLINE__ physicalProcessorId_t getPhysicalProcessorId() const { return _physicalProcessorId; }
 
   protected:
 
-  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
     // Writing core's information into the serialized object
     output["Logical Processor Id"]  = _logicalProcessorId;
@@ -109,7 +109,7 @@ class ComputeResource : public HiCR::L0::ComputeResource
     for (const auto &cache : _caches) output[cachesKey] += cache->serialize();
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
     std::string key = "Logical Processor Id";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());

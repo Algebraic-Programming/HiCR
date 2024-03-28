@@ -48,7 +48,7 @@ class MemorySpace : public HiCR::L0::MemorySpace
    */
   ~MemorySpace() = default;
 
-  __USED__ inline std::string getType() const override { return "RAM"; }
+  __INLINE__ std::string getType() const override { return "RAM"; }
 
   protected:
 
@@ -59,12 +59,12 @@ class MemorySpace : public HiCR::L0::MemorySpace
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
     // No additional information to serialize for now
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
     // No additional information to deserialize for now
   }

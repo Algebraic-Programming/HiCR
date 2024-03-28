@@ -65,7 +65,7 @@ class Base
    *
    * This function when called on a valid channel instance will never fail.
    */
-  __USED__ inline size_t getTokenSize() const noexcept { return _tokenSize; }
+  __INLINE__ size_t getTokenSize() const noexcept { return _tokenSize; }
 
   /**
    * This function can be used to check the size of the coordination buffer that needs to be provided
@@ -73,7 +73,7 @@ class Base
    *
    * \return Size (bytes) of the coordination buffer
    */
-  __USED__ static inline size_t getCoordinationBufferSize() noexcept
+  __INLINE__ static inline size_t getCoordinationBufferSize() noexcept
   {
     return _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
   }
@@ -84,7 +84,7 @@ class Base
    *
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __USED__ static inline void initializeCoordinationBuffer(std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer)
+  __INLINE__ static inline void initializeCoordinationBuffer(std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer)
   {
     // Checking for correct size
     auto requiredSize = getCoordinationBufferSize();
@@ -107,7 +107,7 @@ class Base
    * \param[in] capacity The expected capacity (in token count) to use in the channel
    * \return Minimum size (bytes) required of the token buffer
    */
-  __USED__ static inline size_t getTokenBufferSize(const size_t tokenSize, const size_t capacity) noexcept { return tokenSize * capacity; }
+  __INLINE__ static inline size_t getTokenBufferSize(const size_t tokenSize, const size_t capacity) noexcept { return tokenSize * capacity; }
 
   /**
    * Returns the current channel depth.
@@ -125,7 +125,7 @@ class Base
    *
    * This function when called on a valid channel instance will never fail.
    */
-  __USED__ inline size_t getDepth() const noexcept { return _circularBuffer->getDepth(); }
+  __INLINE__ size_t getDepth() const noexcept { return _circularBuffer->getDepth(); }
 
   /**
    * This function can be used to quickly check whether the channel is full.
@@ -135,7 +135,7 @@ class Base
    * \returns true, if the buffer is full
    * \returns false, if the buffer is not full
    */
-  __USED__ inline bool isFull() const noexcept { return _circularBuffer->isFull(); }
+  __INLINE__ bool isFull() const noexcept { return _circularBuffer->isFull(); }
 
   /**
    * This function can be used to quickly check whether the channel is empty.
@@ -145,7 +145,7 @@ class Base
    * \returns true, if the buffer is empty
    * \returns false, if the buffer is not empty
    */
-  __USED__ inline bool isEmpty() const noexcept { return _circularBuffer->isEmpty(); }
+  __INLINE__ bool isEmpty() const noexcept { return _circularBuffer->isEmpty(); }
 
   protected:
 

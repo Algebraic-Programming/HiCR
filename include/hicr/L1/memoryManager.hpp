@@ -50,7 +50,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly allocated memory slot
    */
-  __USED__ inline std::shared_ptr<L0::LocalMemorySlot> allocateLocalMemorySlot(std::shared_ptr<L0::MemorySpace> memorySpace, const size_t size)
+  __INLINE__ std::shared_ptr<L0::LocalMemorySlot> allocateLocalMemorySlot(std::shared_ptr<L0::MemorySpace> memorySpace, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -87,7 +87,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __USED__ inline void deregisterLocalMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
+  __INLINE__ void deregisterLocalMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
   {
     // Decreasing memory space usage
     memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
@@ -101,7 +101,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to free up. It becomes unusable after freeing.
    */
-  __USED__ inline void freeLocalMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
+  __INLINE__ void freeLocalMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
   {
     // Decreasing memory space usage
     memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());

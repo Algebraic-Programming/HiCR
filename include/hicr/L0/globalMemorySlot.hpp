@@ -62,20 +62,20 @@ class GlobalMemorySlot
    * Getter function for the memory slot's global tag
    * \returns The memory slot's global tag
    */
-  __USED__ inline tag_t getGlobalTag() const noexcept { return _globalTag; }
+  __INLINE__ tag_t getGlobalTag() const noexcept { return _globalTag; }
 
   /**
    * Getter function for the memory slot's global key
    * \returns The memory slot's global key
    */
-  __USED__ inline globalKey_t getGlobalKey() const noexcept { return _globalKey; }
+  __INLINE__ globalKey_t getGlobalKey() const noexcept { return _globalKey; }
 
   /**
    * Function to return the source local memory slot from which this global slot was created, if one exists (if not, it's a remote memory slot)
    *
    * \return A pointer to the local memory slot from which this global memory slot was created, if one exists. A null pointer, otherwise.
    */
-  __USED__ std::shared_ptr<HiCR::L0::LocalMemorySlot> getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
+  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
 
   private:
 

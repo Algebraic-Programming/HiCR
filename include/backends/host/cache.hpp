@@ -68,42 +68,42 @@ class Cache
    *
    * \return The cache size in Bytes
    */
-  __USED__ inline size_t getSize() const { return _cacheSize; }
+  __INLINE__ size_t getSize() const { return _cacheSize; }
 
   /**
    * Obtain the line size of the cache object
    *
    * \return The cache line size in Bytes
    */
-  __USED__ inline size_t getLineSize() const { return _lineSize; }
+  __INLINE__ size_t getLineSize() const { return _lineSize; }
 
   /**
    * Obtain the type of the cache object
    *
    * \return The cache type in as a cacheType_t enum value
    */
-  __USED__ inline cacheLevel_t getLevel() const { return _level; }
+  __INLINE__ cacheLevel_t getLevel() const { return _level; }
 
   /**
    * Indicates whether the cache is shared among other procesing units
    *
    * \return True, if the cache is shared; false, otherwise
    */
-  __USED__ inline bool getShared() const { return _shared; }
+  __INLINE__ bool getShared() const { return _shared; }
 
   /**
    * Returns the cache type
    *
    * \return The cache type (instruction, data, unified)
    */
-  __USED__ inline const std::string &getType() const { return _type; }
+  __INLINE__ const std::string &getType() const { return _type; }
 
   /**
    * Serialization function to enable sharing cache information
    *
    * @return JSON-formatted serialized cache information
    */
-  __USED__ inline nlohmann::json serialize() const
+  __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -124,7 +124,7 @@ class Cache
    *
    * @param[in] input JSON-formatted serialized cache information
    */
-  __USED__ inline void deserialize(const nlohmann::json &input)
+  __INLINE__ void deserialize(const nlohmann::json &input)
   {
     std::string key = "Size (Bytes)";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());

@@ -57,65 +57,65 @@ class LocalMemorySlot
    * Getter function for the memory slot's pointer
    * \returns The memory slot's internal pointer
    */
-  __USED__ inline void *&getPointer() noexcept { return _pointer; }
+  __INLINE__ void *&getPointer() noexcept { return _pointer; }
 
   /**
    * Getter function for the memory slot's size
    * \returns The memory slot's size
    */
-  __USED__ inline size_t getSize() const noexcept { return _size; }
+  __INLINE__ size_t getSize() const noexcept { return _size; }
 
   /**
    * Getter function for the memory slot's associated memory space
    * \returns The memory slot's associated memory space
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::MemorySpace> getMemorySpace() const noexcept { return _memorySpace; }
+  __INLINE__ std::shared_ptr<HiCR::L0::MemorySpace> getMemorySpace() const noexcept { return _memorySpace; }
 
   /**
    * Getter function for the memory slot's received message counter
    * \returns The memory slot's received message counter
    */
-  __USED__ inline size_t getMessagesRecv() const noexcept { return *_messagesRecv; }
+  __INLINE__ size_t getMessagesRecv() const noexcept { return *_messagesRecv; }
 
   /**
    * Getter function for the memory slot's sent message counter
    * \returns The memory slot's sent message counter
    */
-  __USED__ inline size_t getMessagesSent() const noexcept { return *_messagesSent; }
+  __INLINE__ size_t getMessagesSent() const noexcept { return *_messagesSent; }
 
   /**
    * Setter function for the memory slot's received message counter
    * @param[in] count The memory slot's recv message counter to set
    */
-  __USED__ inline void setMessagesRecv(const size_t count) noexcept { *_messagesRecv = count; }
+  __INLINE__ void setMessagesRecv(const size_t count) noexcept { *_messagesRecv = count; }
 
   /**
    * Setter function for the memory slot's sent message counter
    * @param[in] count The memory slot's sent message counter to set
    */
-  __USED__ inline void setMessagesSent(const size_t count) noexcept { *_messagesSent = count; }
+  __INLINE__ void setMessagesSent(const size_t count) noexcept { *_messagesSent = count; }
 
   /**
    * Increase counter function for the memory slot's received message counter
    */
-  __USED__ inline void increaseMessagesRecv() noexcept { *_messagesRecv = *_messagesRecv + 1; }
+  __INLINE__ void increaseMessagesRecv() noexcept { *_messagesRecv = *_messagesRecv + 1; }
 
   /**
    * Increase counter function for the memory slot's sent message counter
    */
-  __USED__ inline void increaseMessagesSent() noexcept { *_messagesSent = *_messagesSent + 1; }
+  __INLINE__ void increaseMessagesSent() noexcept { *_messagesSent = *_messagesSent + 1; }
 
   /**
    * Gets the pointer for the received message counter
    * \returns The pointer to the received message counter
    */
-  __USED__ inline __volatile__ size_t *&getMessagesRecvPointer() noexcept { return _messagesRecv; }
+  __INLINE__ __volatile__ size_t *&getMessagesRecvPointer() noexcept { return _messagesRecv; }
 
   /**
    * Gets the pointer for the sent message counter
    * \returns The pointer to the sent message counter
    */
-  __USED__ inline __volatile__ size_t *&getMessagesSentPointer() noexcept { return _messagesSent; }
+  __INLINE__ __volatile__ size_t *&getMessagesSentPointer() noexcept { return _messagesSent; }
 
   private:
 

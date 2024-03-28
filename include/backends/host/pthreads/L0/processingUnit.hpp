@@ -60,7 +60,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param[in] affinity New affinity to use
    */
-  __USED__ static void updateAffinity(const std::set<int> &affinity)
+  __INLINE__ static void updateAffinity(const std::set<int> &affinity)
   {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
@@ -73,7 +73,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \return The set of cores/processing units that this thread is bound to
    */
-  __USED__ static std::set<int> getAffinity()
+  __INLINE__ static std::set<int> getAffinity()
   {
     std::set<int> affinity;
     cpu_set_t     cpuset;
@@ -89,7 +89,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource Represents the compute resource (core) affinity to associate this processing unit to
    */
-  __USED__ inline ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+  __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
     : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the MPI instance
@@ -121,7 +121,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param[in] p Pointer to a ProcessingUnit class to recover the calling instance from inside wrapper
    */
-  __USED__ inline static void *launchWrapper(void *p)
+  __INLINE__ static void *launchWrapper(void *p)
   {
     // Gathering thread object
     auto thread = (host::pthreads::L0::ProcessingUnit *)p;
@@ -153,7 +153,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param[in] sig Signal detected, set by the operating system upon detecting the signal
    */
-  __USED__ inline static void catchSuspendResumeSignal(int sig)
+  __INLINE__ static void catchSuspendResumeSignal(int sig)
   {
     int      status = 0;
     int      signalSet;
@@ -170,21 +170,21 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
   }
 
-  __USED__ inline void initializeImpl() override {}
+  __INLINE__ void initializeImpl() override {}
 
-  __USED__ inline void suspendImpl() override
+  __INLINE__ void suspendImpl() override
   {
     auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void resumeImpl() override
+  __INLINE__ void resumeImpl() override
   {
     auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
-  __USED__ inline void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
+  __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
   {
     // Initializing barrier
     pthread_barrier_init(&initializationBarrier, NULL, 2);
@@ -203,9 +203,9 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     pthread_barrier_destroy(&initializationBarrier);
   }
 
-  __USED__ inline void terminateImpl() override {}
+  __INLINE__ void terminateImpl() override {}
 
-  __USED__ inline void awaitImpl() override
+  __INLINE__ void awaitImpl() override
   {
     // Waiting for thread after execution
     pthread_join(_pthreadId, NULL);

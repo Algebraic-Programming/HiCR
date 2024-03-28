@@ -50,14 +50,14 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    */
   ~ExecutionUnit() = default;
 
-  __USED__ inline std::string getType() const override { return "C++ Function"; }
+  __INLINE__ std::string getType() const override { return "C++ Function"; }
 
   /**
    * Returns the internal function stored inside this execution unit
    *
    * \return The internal function stored inside this execution unit
    */
-  __USED__ inline const Coroutine::coroutineFc_t &getFunction() const { return _fc; }
+  __INLINE__ const Coroutine::coroutineFc_t &getFunction() const { return _fc; }
 
   private:
 

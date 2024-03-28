@@ -105,19 +105,19 @@ class Worker
    *
    * @return A pointer to the current HiCR worker, NULL if this function is called outside the context of a task run() function
    */
-  __USED__ static inline HiCR::tasking::Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
+  __INLINE__ static inline HiCR::tasking::Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
 
   /**
    * Queries the worker's internal state.
    *
    * @return The worker's internal state
    */
-  __USED__ inline const state_t getState() { return _state; }
+  __INLINE__ const state_t getState() { return _state; }
 
   /**
    * Initializes the worker and its resources
    */
-  __USED__ inline void initialize()
+  __INLINE__ void initialize()
   {
     // Checking we have at least one assigned resource
     if (_processingUnits.empty()) HICR_THROW_LOGIC("Attempting to initialize worker without any assigned resources");
@@ -135,7 +135,7 @@ class Worker
   /**
    * Initializes the worker's task execution loop
    */
-  __USED__ inline void start()
+  __INLINE__ void start()
   {
     if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
 
@@ -158,7 +158,7 @@ class Worker
   /**
    * Suspends the execution of the underlying resource(s). The resources are guaranteed to be suspended after this function is called
    */
-  __USED__ inline void suspend()
+  __INLINE__ void suspend()
   {
     // Checking state
     if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to suspend worker that is not in the 'running' state");
@@ -173,7 +173,7 @@ class Worker
   /**
    * Resumes the execution of the underlying resource(s) after suspension
    */
-  __USED__ inline void resume()
+  __INLINE__ void resume()
   {
     // Checking state
     if (_state != state_t::suspended)
@@ -189,7 +189,7 @@ class Worker
   /**
    * Terminates the worker's task execution loop. After stopping it can be restarted later
    */
-  __USED__ inline void terminate()
+  __INLINE__ void terminate()
   {
     // Checking state
     if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to stop worker that is not in the 'running' state");
@@ -201,7 +201,7 @@ class Worker
   /**
    * A function that will suspend the execution of the caller until the worker has stopped
    */
-  __USED__ inline void await()
+  __INLINE__ void await()
   {
     if (_state != state_t::terminating && _state != state_t::running && _state != state_t::suspended)
       HICR_THROW_RUNTIME("Attempting to wait for a worker that has not yet started or has already terminated");
@@ -218,28 +218,28 @@ class Worker
    *
    * @param[in] dispatcher The dispatcher to subscribe the worker to
    */
-  __USED__ inline void subscribe(HiCR::tasking::Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
+  __INLINE__ void subscribe(HiCR::tasking::Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
 
   /**
    * Adds a processing unit to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
    *
    * @param[in] pu Processing unit to assign to the worker
    */
-  __USED__ inline void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
+  __INLINE__ void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
    * Gets a reference to the workers assigned processing units.
    *
    * @return A container with the worker's resources
    */
-  __USED__ inline std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> &getProcessingUnits() { return _processingUnits; }
+  __INLINE__ std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> &getProcessingUnits() { return _processingUnits; }
 
   /**
    * Gets a reference to the dispatchers the worker has been subscribed to
    *
    * @return A container with the worker's subscribed dispatchers
    */
-  __USED__ inline dispatcherSet_t &getDispatchers() { return _dispatchers; }
+  __INLINE__ dispatcherSet_t &getDispatchers() { return _dispatchers; }
 
   private:
 
@@ -266,7 +266,7 @@ class Worker
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
    */
-  __USED__ inline void mainLoop()
+  __INLINE__ void mainLoop()
   {
     while (_state == state_t::running)
     {

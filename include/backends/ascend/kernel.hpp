@@ -33,19 +33,19 @@ class Kernel
 {
   public:
 
-  __USED__ inline Kernel(){};
+  __INLINE__ Kernel(){};
 
   /**
    * Default destructor
    */
-  __USED__ inline ~Kernel() = default;
+  __INLINE__ ~Kernel() = default;
 
   /**
    * Start the execution of the kernel on the given \p stream
    *
    * \param stream the stream on which the kernel is started
    */
-  __USED__ inline virtual void start(const aclrtStream stream) = 0;
+  __INLINE__ virtual void start(const aclrtStream stream) = 0;
 };
 
 } // namespace ascend

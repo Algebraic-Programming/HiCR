@@ -46,14 +46,14 @@ class ConcurrentQueue
    *
    * \param[in] obj The object to push into the queue.
    */
-  __USED__ inline void push(P obj) { _queue.push(obj); }
+  __INLINE__ void push(P obj) { _queue.push(obj); }
 
   /**
    * Function to pop an object from the queue. Poping removes an object from the front of the queue and returns it to the caller. This is a thread-safe lock-free operation
    *
    * \return The until-now front object of the queue.
    */
-  __USED__ inline P pop()
+  __INLINE__ P pop()
   {
     P obj = NULL;
 
@@ -69,7 +69,7 @@ class ConcurrentQueue
    *
    * \return True, if it is empty; false if its not
    */
-  __USED__ inline bool isEmpty() { return _queue.was_empty(); }
+  __INLINE__ bool isEmpty() { return _queue.was_empty(); }
 
   private:
 

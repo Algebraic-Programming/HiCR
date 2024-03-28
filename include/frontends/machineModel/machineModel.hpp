@@ -201,7 +201,7 @@ class MachineModel
     return detectedInstances;
   }
 
-  __USED__ static inline void submitTopology(HiCR::L1::InstanceManager *instanceManager, std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
+  __INLINE__ static inline void submitTopology(HiCR::L1::InstanceManager *instanceManager, std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
   {
     // Storage for the topology to send
     HiCR::L0::Topology workerTopology;

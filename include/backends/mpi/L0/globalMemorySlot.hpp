@@ -61,42 +61,42 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    *
    * \return The rank to which this memory slot belongs
    */
-  __USED__ inline const int getRank() { return _rank; }
+  __INLINE__ const int getRank() { return _rank; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the actual memory slot data
    *
    * \return A pointer to the MPI window for the actual memory slot data
    */
-  __USED__ inline std::unique_ptr<MPI_Win> &getDataWindow() { return _dataWindow; }
+  __INLINE__ std::unique_ptr<MPI_Win> &getDataWindow() { return _dataWindow; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the received message count
    *
    * \return A pointer to the MPI window for the received message count
    */
-  __USED__ inline std::unique_ptr<MPI_Win> &getRecvMessageCountWindow() { return _recvMessageCountWindow; }
+  __INLINE__ std::unique_ptr<MPI_Win> &getRecvMessageCountWindow() { return _recvMessageCountWindow; }
 
   /**
    * If this is a global slot, it returns a pointer to the MPI window for the sent message count
    *
    * \return A pointer to the MPI window for the sent message count
    */
-  __USED__ inline std::unique_ptr<MPI_Win> &getSentMessageCountWindow() { return _sentMessageCountWindow; }
+  __INLINE__ std::unique_ptr<MPI_Win> &getSentMessageCountWindow() { return _sentMessageCountWindow; }
 
   /**
    * Returns whether the memory slot lock has been acquired by the current MPI instance
    *
    * @return The internal state of _lockAcquired
    */
-  __USED__ inline bool getLockAcquiredValue() const { return _lockAcquired; }
+  __INLINE__ bool getLockAcquiredValue() const { return _lockAcquired; }
 
   /**
    * Sets memory slot lock state (whether it has been acquired by the current MPI instance or not)
    *
    * @param[in] value The internal state of _lockAcquired to set
    */
-  __USED__ inline void setLockAcquiredValue(const bool value) { _lockAcquired = value; }
+  __INLINE__ void setLockAcquiredValue(const bool value) { _lockAcquired = value; }
 
   private:
 

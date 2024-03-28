@@ -91,7 +91,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   int _rank;
 
-  __USED__ inline void lockMPIWindow(const int rank, MPI_Win *window, int MPILockType, int MPIAssert)
+  __INLINE__ void lockMPIWindow(const int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
     // Locking MPI window to ensure the messages arrives before returning
     auto status = MPI_Win_lock(MPILockType, rank, MPIAssert, *window);
@@ -100,7 +100,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
   }
 
-  __USED__ inline void unlockMPIWindow(const int rank, MPI_Win *window)
+  __INLINE__ void unlockMPIWindow(const int rank, MPI_Win *window)
   {
     // Unlocking window after copy is completed
     auto status = MPI_Win_unlock(rank, *window);
@@ -109,7 +109,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
   }
 
-  __USED__ inline void increaseWindowCounter(const int rank, MPI_Win *window)
+  __INLINE__ void increaseWindowCounter(const int rank, MPI_Win *window)
   {
     // This operation should be possible to do in one go with MPI_Accumulate or MPI_Fetch_and_op. However, the current implementation of openMPI deadlocks
     // on these operations, so I rather do the whole thing manually.
@@ -132,7 +132,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     unlockMPIWindow(rank, window);
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destinationSlot,
+  __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destinationSlot,
                                   const size_t                                dst_offset,
                                   std::shared_ptr<HiCR::L0::GlobalMemorySlot> sourceSlotPtr,
                                   const size_t                                sourceOffset,
@@ -179,7 +179,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     destinationSlot->increaseMessagesRecv();
   }
 
-  __USED__ inline void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destinationSlotPtr,
+  __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destinationSlotPtr,
                                   const size_t                                dst_offset,
                                   std::shared_ptr<HiCR::L0::LocalMemorySlot>  sourceSlot,
                                   const size_t                                sourceOffset,
@@ -232,13 +232,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override {}
+  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override {}
 
   /**
    * Implementation of the fence operation for the mpi backend. For every single window corresponding
    * to a memory slot associated with the tag, a fence needs to be executed
    */
-  __USED__ inline void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
+  __INLINE__ void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
   {
     // For every key-valued subset, and its elements, execute a fence
     for (const auto &entry : _globalMemorySlotTagKeyMap[tag])
@@ -272,7 +272,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
   }
 
-  __USED__ inline void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
+  __INLINE__ void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
   {
     // Getting up-casted pointer for the execution unit
     auto memorySlot = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlotPtr);
@@ -290,7 +290,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI sent message count window");
   }
 
-  __USED__ inline void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange
     int localSlotCount = (int)memorySlots.size();
@@ -428,7 +428,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
   }
 
-  __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlot);
@@ -446,7 +446,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     return true;
   }
 
-  __USED__ inline void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlot);

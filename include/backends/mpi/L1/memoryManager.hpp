@@ -55,7 +55,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The address of the newly allocated memory slot
    */
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
+  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
@@ -76,13 +76,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return registerLocalMemorySlotImpl(memorySpace, ptr, size);
   }
 
-  __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
+  __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // We do not free up MPI local memory slots since they are freed upon promotion.
     // If you did not promote the local memory slot, it will leak memory.
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
+  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
                                                                                          void *const                            ptr,
                                                                                          const size_t                           size) override
   {
@@ -93,7 +93,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return memorySlot;
   }
 
-  __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
+  __INLINE__ void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Nothing to do here for this backend
   }

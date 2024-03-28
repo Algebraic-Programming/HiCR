@@ -69,7 +69,7 @@ class Coordinator final : public runtime::Instance
   Coordinator()  = delete;
   ~Coordinator() = default;
 
-  __USED__ inline void initialize() override {}
+  __INLINE__ void initialize() override {}
 
   /**
    * Deploys the requested machine model and uses the a user-provided acceptance criteria function to evaluate whether the allotted resources satisfy the request
@@ -79,7 +79,7 @@ class Coordinator final : public runtime::Instance
    * @param[in] argc The number of command line arguments
    * @param[in] argv Poiners to the character string for the command line arguments
    */
-  __USED__ inline void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc, char *argv[])
+  __INLINE__ void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc, char *argv[])
   {
     // Execute requests by finding or creating an instance that matches their topology requirements
     try
@@ -116,7 +116,7 @@ class Coordinator final : public runtime::Instance
     for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, w.request.entryPointName);
   }
 
-  __USED__ inline void finalize()
+  __INLINE__ void finalize()
   {
     // Launching finalization RPC
     for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, "__finalize");
@@ -132,7 +132,7 @@ class Coordinator final : public runtime::Instance
    *
    * @return A reference to the worker vector
    */
-  __USED__ inline std::vector<worker_t> &getWorkers() { return _workers; }
+  __INLINE__ std::vector<worker_t> &getWorkers() { return _workers; }
 
   private:
 

@@ -58,14 +58,14 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    *
    * \return a string indicating the execution unit type
    */
-  __USED__ inline std::string getType() const override { return "Ascend Kernel"; }
+  __INLINE__ std::string getType() const override { return "Ascend Kernel"; }
 
   /**
    * Start the sequence of kernels on the specified \p stream
    *
    * \param stream stream on which kernels are scheduled
    */
-  __USED__ inline void start(const aclrtStream stream) const
+  __INLINE__ void start(const aclrtStream stream) const
   {
     for (auto kernel : _kernels) kernel->start(stream);
   }

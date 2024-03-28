@@ -48,7 +48,7 @@ class ComputeResource
    *
    * @return JSON-formatted serialized compute resource information
    */
-  __USED__ inline nlohmann::json serialize() const
+  __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -68,7 +68,7 @@ class ComputeResource
    *
    * @param[in] input JSON-formatted serialized compute resource information
    */
-  __USED__ inline void deserialize(const nlohmann::json &input)
+  __INLINE__ void deserialize(const nlohmann::json &input)
   {
     // Then call the backend-specific deserialization function
     deserializeImpl(input);

@@ -78,7 +78,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    */
   const hwloc_topology_t *const _topology;
 
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
+  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_pointer_cast<L0::MemorySpace>(memorySpace);
@@ -124,7 +124,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return memorySlot;
   }
 
-  __USED__ inline std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
+  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
                                                                                          void *const                            ptr,
                                                                                          const size_t                           size) override
   {
@@ -135,12 +135,12 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return memorySlot;
   }
 
-  __USED__ inline void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
+  __INLINE__ void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Nothing to do here
   }
 
-  __USED__ inline void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
+  __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the execution unit
     auto m = dynamic_pointer_cast<L0::LocalMemorySlot>(memorySlot);

@@ -73,7 +73,7 @@ class MemoryKernel final : public Kernel
    *
    * \param stream ACL stream on which memcpy is executed
    */
-  __USED__ inline void start(const aclrtStream stream) override { _commManager->memcpyAsync(_dst, _dstOffset, _src, _srcOffset, _size, stream); }
+  __INLINE__ void start(const aclrtStream stream) override { _commManager->memcpyAsync(_dst, _dstOffset, _src, _srcOffset, _size, stream); }
 
   private:
 

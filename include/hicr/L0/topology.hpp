@@ -44,21 +44,21 @@ class Topology
    * This function prompts the backend to perform the necessary steps to return  existing devices
    * \return A set of pointers to HiCR instances that refer to both local and remote instances
    */
-  __USED__ inline const deviceList_t &getDevices() const { return _deviceList; }
+  __INLINE__ const deviceList_t &getDevices() const { return _deviceList; }
 
   /**
    * This function allows manually adding a new device into an existing topology
    *
    * @param[in] device The device to add
    */
-  __USED__ inline void addDevice(const std::shared_ptr<HiCR::L0::Device> device) { _deviceList.insert(device); }
+  __INLINE__ void addDevice(const std::shared_ptr<HiCR::L0::Device> device) { _deviceList.insert(device); }
 
   /**
    * This function allows manually merging one topology information into another
    *
    * @param[in] source The source topology to add into this instance
    */
-  __USED__ inline void merge(const Topology &source)
+  __INLINE__ void merge(const Topology &source)
   {
     // Adding each device separately
     for (const auto &d : source.getDevices()) addDevice(d);
@@ -69,7 +69,7 @@ class Topology
    *
    * @return JSON-formatted serialized topology, as detected by this topology manager
    */
-  __USED__ inline nlohmann::json serialize() const
+  __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -88,7 +88,7 @@ class Topology
    *
    * @param[in] input JSON-formatted serialized topology
    */
-  __USED__ static inline void verify(const nlohmann::json &input)
+  __INLINE__ static inline void verify(const nlohmann::json &input)
   {
     // Sanity checks
     if (input.contains("Devices") == false) HICR_THROW_LOGIC("Serialized topology manager information is invalid, as it lacks the 'Devices' entry");

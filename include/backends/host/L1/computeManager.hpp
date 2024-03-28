@@ -56,12 +56,12 @@ class ComputeManager : public HiCR::L1::ComputeManager
    * \param[in] executionUnit The replicable function to execute
    * @return The newly created execution unit
    */
-  __USED__ static inline std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(Coroutine::coroutineFc_t executionUnit)
+  __INLINE__ static inline std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(Coroutine::coroutineFc_t executionUnit)
   {
     return std::make_shared<host::L0::ExecutionUnit>(executionUnit);
   }
 
-  __USED__ inline std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) const override
+  __INLINE__ std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) const override
   {
     // Creating and returning new execution state
     return std::make_unique<host::L0::ExecutionState>(executionUnit);

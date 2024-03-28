@@ -86,7 +86,7 @@ class Device final : public HiCR::L0::Device
    * \param deviceContext the device ACL context
    * \param deviceId the device identifier
    */
-  __USED__ static inline void selectDevice(const aclrtContext *deviceContext, const deviceIdentifier_t deviceId)
+  __INLINE__ static inline void selectDevice(const aclrtContext *deviceContext, const deviceIdentifier_t deviceId)
   {
     // select the device context on which operations shoud be executed
     aclError err = aclrtSetCurrentContext(*deviceContext);
@@ -96,7 +96,7 @@ class Device final : public HiCR::L0::Device
   /**
    * Set this device as the one on which the operations needs to be executed
    */
-  __USED__ inline void select() const { selectDevice(_context.get(), _id); }
+  __INLINE__ void select() const { selectDevice(_context.get(), _id); }
 
   /**
    * Device destructor
@@ -108,31 +108,31 @@ class Device final : public HiCR::L0::Device
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy context for device %ld. Error %d", _id, err);
   };
 
-  __USED__ inline std::string getType() const override { return "Ascend Device"; }
+  __INLINE__ std::string getType() const override { return "Ascend Device"; }
 
   /**
    * Returns the internal id of the current Ascend device
    *
    * \return The id of the ascend device
    */
-  __USED__ inline deviceIdentifier_t getId() const { return _id; }
+  __INLINE__ deviceIdentifier_t getId() const { return _id; }
 
   /**
    * Returns the ACL context corresponding to this compute resource
    *
    * \return The ACL context
    */
-  __USED__ inline aclrtContext *getContext() const { return _context.get(); }
+  __INLINE__ aclrtContext *getContext() const { return _context.get(); }
 
   private:
 
-  __USED__ inline void serializeImpl(nlohmann::json &output) const override
+  __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
     // Storing device identifier
     output["Device Identifier"] = _id;
   }
 
-  __USED__ inline void deserializeImpl(const nlohmann::json &input) override
+  __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
     // Getting device id
     std::string key = "Device Identifier";

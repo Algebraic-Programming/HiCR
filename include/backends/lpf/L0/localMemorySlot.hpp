@@ -69,7 +69,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * Getter function for the memory slot's swap value pointer
    * \returns The memory slot's swap value internal pointer
    */
-  __USED__ inline void *getLPFSwapPointer() { return &_swapValue; }
+  __INLINE__ void *getLPFSwapPointer() { return &_swapValue; }
 
   private:
 

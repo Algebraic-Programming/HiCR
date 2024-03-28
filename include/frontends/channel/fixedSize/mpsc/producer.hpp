@@ -82,7 +82,7 @@ class Producer final : public fixedSize::Base
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __USED__ inline bool push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
+  __INLINE__ bool push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is beg enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
