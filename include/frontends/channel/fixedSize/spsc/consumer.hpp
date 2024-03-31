@@ -106,6 +106,9 @@ class Consumer final : public channel::fixedSize::Base
     if (pos >= _circularBuffer->getCapacity())
       HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBuffer->getCapacity());
 
+    // Make sure receiver queues are occasionally processed
+    _communicationManager->flushReceived();
+
     // Updating channel depth
     updateDepth();
 
@@ -146,12 +149,13 @@ class Consumer final : public channel::fixedSize::Base
     // Advancing tail (removes elements from the circular buffer)
     _circularBuffer->advanceTail(n);
 
+    const auto coordBuffElemSize = sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
     // Notifying producer(s) of buffer liberation
     _communicationManager->memcpy(_producerCoordinationBuffer,
-                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX,
+                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
                                   _coordinationBuffer,
-                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX,
-                                  sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                  coordBuffElemSize);
   }
 
   /**

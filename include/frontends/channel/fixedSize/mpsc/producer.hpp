@@ -103,8 +103,8 @@ class Producer final : public fixedSize::Base
     // Updating local coordination buffer
     _communicationManager->memcpy(_coordinationBuffer, 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
 
-    // Adding flush operation to ensure buffers are ready for re-use
-    _communicationManager->flush();
+    // Adding fence operation to ensure buffers are ready for re-use
+    _communicationManager->fence(_coordinationBuffer, 0, 1);
 
     // Calculating current channel depth
     const auto depth = getDepth();
@@ -117,15 +117,15 @@ class Producer final : public fixedSize::Base
       {
         _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
       }
-      _communicationManager->flush();
+      _communicationManager->fence(sourceSlot, n, 0);
 
       // Advance head, as we have added a new element
       _circularBuffer->advanceHead(n);
 
       // Updating global coordination buffer
       _communicationManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
-      // Adding flush operation to ensure buffers are ready for re-use
-      _communicationManager->flush();
+      // Adding fence operation to ensure buffers are ready for re-use
+      _communicationManager->fence(_coordinationBuffer, 1, 0);
 
       // Mark operation as successful
       successFlag = true;

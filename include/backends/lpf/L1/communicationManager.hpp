@@ -406,7 +406,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
   __USED__ inline void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { fenceImpl(memorySlot); }
 
-  __USED__ inline void flush() override { lpf_flush(_lpf); }
+  __USED__ inline void flushSent() override { lpf_flush_sent(_lpf); }
+  __USED__ inline void flushReceived() override { lpf_flush_received(_lpf); }
 
   __USED__ inline bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
   {
