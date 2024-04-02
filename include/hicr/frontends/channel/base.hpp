@@ -73,10 +73,7 @@ class Base
    *
    * \return Size (bytes) of the coordination buffer
    */
-  __INLINE__ static size_t getCoordinationBufferSize() noexcept
-  {
-    return _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
-  }
+  __INLINE__ static size_t getCoordinationBufferSize() noexcept { return _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE); }
 
   /**
    * This function can be used to check the size of the coordination buffer that needs to be provided

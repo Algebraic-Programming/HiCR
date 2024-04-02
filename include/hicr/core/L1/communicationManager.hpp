@@ -163,10 +163,10 @@ class CommunicationManager
    *                         destination
    */
   __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination,
-                              const size_t                         dst_offset,
-                              std::shared_ptr<L0::LocalMemorySlot> source,
-                              const size_t                         src_offset,
-                              const size_t                         size)
+                         const size_t                         dst_offset,
+                         std::shared_ptr<L0::LocalMemorySlot> source,
+                         const size_t                         src_offset,
+                         const size_t                         size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -206,10 +206,10 @@ class CommunicationManager
    *                         destination
    */
   __INLINE__ void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination,
-                              const size_t                          dst_offset,
-                              std::shared_ptr<L0::LocalMemorySlot>  source,
-                              const size_t                          src_offset,
-                              const size_t                          size)
+                         const size_t                          dst_offset,
+                         std::shared_ptr<L0::LocalMemorySlot>  source,
+                         const size_t                          src_offset,
+                         const size_t                          size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -239,10 +239,10 @@ class CommunicationManager
    *                         destination
    */
   __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot>  destination,
-                              const size_t                          dst_offset,
-                              std::shared_ptr<L0::GlobalMemorySlot> source,
-                              const size_t                          src_offset,
-                              const size_t                          size)
+                         const size_t                          dst_offset,
+                         std::shared_ptr<L0::GlobalMemorySlot> source,
+                         const size_t                          src_offset,
+                         const size_t                          size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto dstSize = destination->getSize();

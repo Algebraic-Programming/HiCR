@@ -178,8 +178,8 @@ class ComputationKernel final : public Kernel
    * \param[out] dataBuffers vector of data buffers
    */
   __INLINE__ void initializeDataBuffersAndDescriptors(const std::vector<tensorData_t>     tensors,
-                                                           std::vector<const aclTensorDesc *> &descriptors,
-                                                           std::vector<const aclDataBuffer *> &dataBuffers)
+                                                      std::vector<const aclTensorDesc *> &descriptors,
+                                                      std::vector<const aclDataBuffer *> &dataBuffers)
   {
     for (const auto &tensor : tensors)
     {

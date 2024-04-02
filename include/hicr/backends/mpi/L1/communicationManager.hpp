@@ -133,10 +133,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destinationSlot,
-                                  const size_t                                dst_offset,
-                                  std::shared_ptr<HiCR::L0::GlobalMemorySlot> sourceSlotPtr,
-                                  const size_t                                sourceOffset,
-                                  const size_t                                size) override
+                             const size_t                                dst_offset,
+                             std::shared_ptr<HiCR::L0::GlobalMemorySlot> sourceSlotPtr,
+                             const size_t                                sourceOffset,
+                             const size_t                                size) override
   {
     // Getting up-casted pointer for the execution unit
     auto source = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(sourceSlotPtr);
@@ -180,10 +180,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destinationSlotPtr,
-                                  const size_t                                dst_offset,
-                                  std::shared_ptr<HiCR::L0::LocalMemorySlot>  sourceSlot,
-                                  const size_t                                sourceOffset,
-                                  const size_t                                size) override
+                             const size_t                                dst_offset,
+                             std::shared_ptr<HiCR::L0::LocalMemorySlot>  sourceSlot,
+                             const size_t                                sourceOffset,
+                             const size_t                                size) override
   {
     // Getting up-casted pointer for the execution unit
     auto destination = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(destinationSlotPtr);

@@ -5,7 +5,6 @@
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 
-
 int main(int argc, char **argv)
 {
   // Initializing MPI

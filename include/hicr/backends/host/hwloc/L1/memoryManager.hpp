@@ -124,9 +124,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     return memorySlot;
   }
 
-  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace,
-                                                                                         void *const                            ptr,
-                                                                                         const size_t                           size) override
+  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     // Creating new memory slot object
     auto memorySlot = std::make_shared<L0::LocalMemorySlot>(L0::LocalMemorySlot::binding_type::strict_non_binding, ptr, size, memorySpace);
