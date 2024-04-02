@@ -148,7 +148,7 @@ class FatalException : public std::runtime_error
  * @param[in] format C-Formatted message provided by the user explaining the reason of the exception
  * @param[in] ... Arguments, if any, to the C-Formatted message
  */
-__INLINE__ void throwException [[noreturn]] (const exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
+__INLINE__ static void throwException [[noreturn]] (const exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
 {
   char   *outstr = 0;
   va_list ap;

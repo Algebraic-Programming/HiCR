@@ -8,7 +8,7 @@ namespace HiCR
 #if defined __GNUC__ && defined ENABLE_COVERAGE
   #define __INLINE__ __attribute__((__used__)) inline
 #else
-  #define __INLINE__
+  #define __INLINE__ inline
 #endif
 
 } // namespace HiCR
