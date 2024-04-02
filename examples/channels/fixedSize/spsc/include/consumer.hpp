@@ -1,9 +1,9 @@
 #pragma once
 
 #include "common.hpp"
-#include <hicr/L1/memoryManager.hpp>
-#include <hicr/L1/communicationManager.hpp>
-#include <frontends/channel/fixedSize/spsc/consumer.hpp>
+#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 
 void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
                 HiCR::L1::CommunicationManager        &communicationManager,

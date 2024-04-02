@@ -1,10 +1,10 @@
 #pragma once
 
+#include <hicr/core/L0/memorySpace.hpp>
+#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/frontends/channel/fixedSize/mpsc/producer.hpp>
 #include "common.hpp"
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L1/memoryManager.hpp>
-#include <hicr/L1/communicationManager.hpp>
-#include <frontends/channel/fixedSize/mpsc/producer.hpp>
 
 void producerFc(HiCR::L1::MemoryManager               &memoryManager,
                 HiCR::L1::CommunicationManager        &communicationManager,

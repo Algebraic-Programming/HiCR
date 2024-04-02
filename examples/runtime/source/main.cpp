@@ -1,4 +1,4 @@
-#include <frontends/runtime/runtime.hpp>
+#include <hicr/frontends/runtime/runtime.hpp>
 #include "include/machineModel.hpp"
 
 // Worker entry point functions

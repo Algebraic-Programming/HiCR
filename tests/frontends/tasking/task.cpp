@@ -11,10 +11,10 @@
  */
 
 #include "gtest/gtest.h"
-#include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <backends/host/pthreads/L1/computeManager.hpp>
-#include <frontends/tasking/task.hpp>
-#include <frontends/tasking/tasking.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+#include <hicr/frontends/tasking/task.hpp>
+#include <hicr/frontends/tasking/tasking.hpp>
 
 CREATE_HICR_TASKING_HOOK;
 

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <hicr/core/L0/memorySpace.hpp>
+#include <hicr/core/L0/topology.hpp>
+#include <hicr/core/L1/topologyManager.hpp>
+#include <hicr/core/L1/instanceManager.hpp>
 #include "common.hpp"
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L0/topology.hpp>
-#include <hicr/L1/topologyManager.hpp>
-#include <hicr/L1/instanceManager.hpp>
 
 void sendTopology(HiCR::L1::InstanceManager &instanceManager)
 {

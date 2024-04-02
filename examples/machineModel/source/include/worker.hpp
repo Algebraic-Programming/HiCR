@@ -1,9 +1,9 @@
 #pragma once
 
+#include <hicr/core/L1/instanceManager.hpp>
+#include <hicr/core/L1/topologyManager.hpp>
+#include <hicr/frontends/machineModel/machineModel.hpp>
 #include "common.hpp"
-#include <hicr/L1/instanceManager.hpp>
-#include <hicr/L1/topologyManager.hpp>
-#include <frontends/machineModel/machineModel.hpp>
 
 // Worker task functions
 void taskFc(const std::string &taskName, HiCR::L1::InstanceManager &instanceManager)

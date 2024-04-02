@@ -1,9 +1,9 @@
+#include <thread>
+#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/pthreads/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <thread>
 
 #define CONCURRENT_THREADS 2
 

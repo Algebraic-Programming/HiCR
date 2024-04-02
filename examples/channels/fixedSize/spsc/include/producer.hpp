@@ -1,9 +1,9 @@
 #pragma once
 
 #include "common.hpp"
-#include <hicr/L1/memoryManager.hpp>
-#include <hicr/L1/communicationManager.hpp>
-#include <frontends/channel/fixedSize/spsc/producer.hpp>
+#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
 
 void producerFc(HiCR::L1::MemoryManager               &memoryManager,
                 HiCR::L1::CommunicationManager        &communicationManager,

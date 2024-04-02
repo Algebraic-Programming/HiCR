@@ -1,8 +1,8 @@
-#include <backends/mpi/L1/memoryManager.hpp>
-#include <backends/mpi/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <iostream>
 #include <mpi.h>
+#include <hicr/backends/mpi/L1/memoryManager.hpp>
+#include <hicr/backends/mpi/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 
 #define BUFFER_SIZE 8
 #define SENDER_PROCESS 0

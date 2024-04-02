@@ -12,11 +12,11 @@
 
 #include <limits>
 #include "gtest/gtest.h"
-#include <hicr/L0/topology.hpp>
-#include <hicr/L0/device.hpp>
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/pthreads/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/core/L0/topology.hpp>
+#include <hicr/core/L0/device.hpp>
+#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 
 TEST(MemoryManager, Construction)
 {

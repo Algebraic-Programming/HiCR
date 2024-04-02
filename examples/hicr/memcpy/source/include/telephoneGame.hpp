@@ -1,9 +1,11 @@
+#pragma once 
+
 #include <vector>
 #include <memory>
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L0/localMemorySlot.hpp>
-#include <hicr/L1/memoryManager.hpp>
-#include <hicr/L1/communicationManager.hpp>
+#include <hicr/core/L0/memorySpace.hpp>
+#include <hicr/core/L0/localMemorySlot.hpp>
+#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/core/L1/communicationManager.hpp>
 
 #define BUFFER_SIZE 256
 #define ITERATIONS 3

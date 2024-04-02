@@ -2,16 +2,16 @@
 #include <iomanip>
 #include <stdio.h>
 #include <acl/acl.h>
-#include <backends/ascend/computationKernel.hpp>
-#include <backends/ascend/kernel.hpp>
-#include <backends/ascend/memoryKernel.hpp>
-#include <backends/ascend/L0/executionUnit.hpp>
-#include <backends/ascend/L0/processingUnit.hpp>
-#include <backends/ascend/L1/memoryManager.hpp>
-#include <backends/ascend/L1/topologyManager.hpp>
-#include <backends/ascend/L1/communicationManager.hpp>
-#include <backends/ascend/L1/computeManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/ascend/computationKernel.hpp>
+#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/backends/ascend/memoryKernel.hpp>
+#include <hicr/backends/ascend/L0/executionUnit.hpp>
+#include <hicr/backends/ascend/L0/processingUnit.hpp>
+#include <hicr/backends/ascend/L1/memoryManager.hpp>
+#include <hicr/backends/ascend/L1/topologyManager.hpp>
+#include <hicr/backends/ascend/L1/communicationManager.hpp>
+#include <hicr/backends/ascend/L1/computeManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 
 #define BUFF_SIZE 192
 

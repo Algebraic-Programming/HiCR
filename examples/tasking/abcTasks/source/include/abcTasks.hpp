@@ -1,6 +1,6 @@
 #include <cstdio>
-#include <hicr/L0/device.hpp>
-#include <backends/host/L1/computeManager.hpp>
+#include <hicr/core/L0/device.hpp>
+#include <hicr/backends/host/L1/computeManager.hpp>
 #include "../runtime.hpp"
 
 #define ITERATIONS 10

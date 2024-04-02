@@ -12,11 +12,11 @@
 
 #include <thread>
 #include "gtest/gtest.h"
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/pthreads/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <frontends/channel/fixedSize/spsc/consumer.hpp>
-#include <frontends/channel/fixedSize/spsc/producer.hpp>
+#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
+#include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
 
 #define CHANNEL_TAG 0
 #define TOKEN_BUFFER_KEY 0

@@ -15,9 +15,9 @@
 #include <atomic>
 #include <map>
 #include <mutex>
-#include <frontends/tasking/tasking.hpp>
-#include <hicr/common/concurrentQueue.hpp>
-#include <hicr/common/parallelHashSet.hpp>
+#include <hicr/frontends/tasking/tasking.hpp>
+#include <hicr/core/common/concurrentQueue.hpp>
+#include <hicr/core/common/parallelHashSet.hpp>
 
 #ifndef MAX_SIMULTANEOUS_WORKERS
   /**

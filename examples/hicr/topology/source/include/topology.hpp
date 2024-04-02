@@ -1,6 +1,6 @@
 #pragma once
 
-#include <hicr/L1/topologyManager.hpp>
+#include <hicr/core/L1/topologyManager.hpp>
 
 void topologyFc(HiCR::L1::TopologyManager &topologyManager)
 {

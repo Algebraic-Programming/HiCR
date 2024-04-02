@@ -1,10 +1,11 @@
-#include <backends/lpf/L1/memoryManager.hpp>
-#include <backends/lpf/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <iostream>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <mpi.h>
+
+#include <hicr/backends/lpf/L1/memoryManager.hpp>
+#include <hicr/backends/lpf/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 
 #define BUFFER_SIZE 256
 #define SENDER_PROCESS 0

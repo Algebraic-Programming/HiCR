@@ -1,6 +1,6 @@
-#include <backends/host/pthreads/L1/computeManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <stdio.h>
+#include <cstdio>
+#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 
 int main(int argc, char **argv)
 {
