@@ -396,9 +396,14 @@ class CommunicationManager
   }
 
   /**
-   * This function flushes pending memcpy operations
+   * This function flushes pending send operations
    */
-  __USED__ virtual inline void flush() {}
+  __USED__ virtual inline void flushSent() {}
+
+  /**
+   * This function flushes receives registered at remote queue of receiver
+   */
+  __USED__ virtual inline void flushReceived() {}
 
   protected:
 

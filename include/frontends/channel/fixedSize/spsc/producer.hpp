@@ -111,8 +111,8 @@ class Producer final : public channel::fixedSize::Base
     // Advance head, as we have added new elements
     _circularBuffer->advanceHead(n);
 
-    // Adding flush operation to ensure buffers are ready for re-use
-    _communicationManager->flush();
+    // Adding fence operation to ensure buffers are ready for re-use
+    _communicationManager->fence(sourceSlot, n, 0);
   }
 
   /**
