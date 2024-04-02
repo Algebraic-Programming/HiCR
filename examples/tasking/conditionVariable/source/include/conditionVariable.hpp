@@ -2,8 +2,8 @@
 #include <cassert>
 #include <thread>
 #include <chrono>
-#include <hicr/L0/device.hpp>
-#include <backends/host/L1/computeManager.hpp>
+#include <hicr/core/L0/device.hpp>
+#include <hicr/backends/host/L1/computeManager.hpp>
 #include "../runtime.hpp"
 
 using namespace std::chrono_literals;

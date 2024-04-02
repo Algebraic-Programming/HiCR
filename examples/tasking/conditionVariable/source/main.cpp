@@ -1,6 +1,6 @@
 #include <hwloc.h>
-#include <backends/host/pthreads/L1/computeManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/conditionVariable.hpp"
 
 CREATE_HICR_TASKING_HOOK;

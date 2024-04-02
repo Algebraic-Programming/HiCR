@@ -11,9 +11,9 @@
  */
 
 #include "gtest/gtest.h"
-#include <frontends/tasking/dispatcher.hpp>
-#include <frontends/tasking/tasking.hpp>
-#include <frontends/tasking/task.hpp>
+#include <hicr/frontends/tasking/dispatcher.hpp>
+#include <hicr/frontends/tasking/tasking.hpp>
+#include <hicr/frontends/tasking/task.hpp>
 
 CREATE_HICR_TASKING_HOOK;
 

@@ -1,8 +1,8 @@
 #include <chrono>
 #include <cstdio>
 #include <hwloc.h>
-#include <backends/host/pthreads/L1/computeManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "../runtime.hpp"
 #include "source/workTask.hpp"
 

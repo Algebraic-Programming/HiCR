@@ -10,11 +10,11 @@
  * @date 7/9/2023
  */
 
-#include "gtest/gtest.h"
-#include <backends/host/coroutine.hpp>
 #include <pthread.h>
 #include <unistd.h>
 #include <mutex>
+#include "gtest/gtest.h"
+#include <hicr/backends/host/coroutine.hpp>
 
 TEST(Coroutine, Construction)
 {

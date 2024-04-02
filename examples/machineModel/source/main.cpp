@@ -1,17 +1,17 @@
 #include <mpi.h>
+#include <hicr/core/L1/topologyManager.hpp>
+#include <hicr/backends/mpi/L1/memoryManager.hpp>
+#include <hicr/backends/mpi/L1/instanceManager.hpp>
 #include "include/common.hpp"
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
-#include <hicr/L1/topologyManager.hpp>
-#include <backends/mpi/L1/memoryManager.hpp>
-#include <backends/mpi/L1/instanceManager.hpp>
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
-  #include <backends/ascend/L1/topologyManager.hpp>
+  #include <hicr/backends/ascend/L1/topologyManager.hpp>
 #endif
 
 #ifdef _HICR_USE_HWLOC_BACKEND_
-  #include <backends/host/hwloc/L1/topologyManager.hpp>
+  #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #endif
 
 int main(int argc, char *argv[])

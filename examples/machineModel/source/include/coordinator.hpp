@@ -3,19 +3,19 @@
 #include <unordered_set>
 #include "common.hpp"
 #include "nlohmann_json/json.hpp"
-#include <hicr/L0/topology.hpp>
-#include <hicr/L1/instanceManager.hpp>
-#include <frontends/machineModel/machineModel.hpp>
+#include <hicr/core/L0/topology.hpp>
+#include <hicr/core/L1/instanceManager.hpp>
+#include <hicr/frontends/machineModel/machineModel.hpp>
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
-  #include <backends/ascend/L0/computeResource.hpp>
-  #include <backends/ascend/L0/device.hpp>
+  #include <hicr/backends/ascend/L0/computeResource.hpp>
+  #include <hicr/backends/ascend/L0/device.hpp>
 #endif
 
 #ifdef _HICR_USE_HWLOC_BACKEND_
-  #include <backends/host/L0/computeResource.hpp>
-  #include <backends/host/L0/memorySpace.hpp>
-  #include <backends/host/L0/device.hpp>
+  #include <hicr/backends/host/L0/computeResource.hpp>
+  #include <hicr/backends/host/L0/memorySpace.hpp>
+  #include <hicr/backends/host/L0/device.hpp>
 #endif
 
 void finalizeExecution(HiCR::L1::InstanceManager &instanceManager, const int returnCode = 0)

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <hicr/L0/topology.hpp>
-#include <frontends/machineModel/machineModel.hpp>
-#include <backends/host/L0/device.hpp>
-#include <backends/host/L0/memorySpace.hpp>
-#include <backends/host/L0/computeResource.hpp>
 #include <memory>
 #include <fstream>
 #include <sstream>
+#include <hicr/core/L0/topology.hpp>
+#include <hicr/frontends/machineModel/machineModel.hpp>
+#include <hicr/backends/host/L0/device.hpp>
+#include <hicr/backends/host/L0/memorySpace.hpp>
+#include <hicr/backends/host/L0/computeResource.hpp>
 
 // Taken from https://stackoverflow.com/questions/116038/how-do-i-read-an-entire-file-into-a-stdstring-in-c/116220#116220
 inline std::string slurp(std::ifstream &in)

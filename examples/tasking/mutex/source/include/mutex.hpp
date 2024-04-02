@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cassert>
-#include <hicr/L0/device.hpp>
-#include <backends/host/L1/computeManager.hpp>
+#include <hicr/core/L0/device.hpp>
+#include <hicr/backends/host/L1/computeManager.hpp>
 #include "../runtime.hpp"
 
 #define _CONCURRENT_TASKS 1000ul

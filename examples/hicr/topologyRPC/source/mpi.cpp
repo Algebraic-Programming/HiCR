@@ -1,7 +1,7 @@
+#include <mpi.h>
+#include <hicr/backends/mpi/L1/instanceManager.hpp>
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
-#include <backends/mpi/L1/instanceManager.hpp>
-#include <mpi.h>
 
 int main(int argc, char **argv)
 {

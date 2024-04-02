@@ -10,12 +10,12 @@
  * @date 12/9/2023
  */
 
-#include "gtest/gtest.h"
 #include <set>
 #include <memory>
-#include <hicr/exceptions.hpp>
-#include <backends/host/pthreads/L0/processingUnit.hpp>
-#include <backends/host/pthreads/L1/computeManager.hpp>
+#include "gtest/gtest.h"
+#include <hicr/core/exceptions.hpp>
+#include <hicr/backends/host/pthreads/L0/processingUnit.hpp>
+#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
 
 TEST(ProcessingUnit, Construction)
 {
