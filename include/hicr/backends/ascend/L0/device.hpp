@@ -86,7 +86,7 @@ class Device final : public HiCR::L0::Device
    * \param deviceContext the device ACL context
    * \param deviceId the device identifier
    */
-  __INLINE__ static inline void selectDevice(const aclrtContext *deviceContext, const deviceIdentifier_t deviceId)
+  __INLINE__ static void selectDevice(const aclrtContext *deviceContext, const deviceIdentifier_t deviceId)
   {
     // select the device context on which operations shoud be executed
     aclError err = aclrtSetCurrentContext(*deviceContext);

@@ -87,7 +87,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    * @param[in] topology see: _deserializeTopology
    * @return see: _deserializeTopology
    */
-  __INLINE__ static inline HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
+  __INLINE__ static HiCR::L0::Topology deserializeTopology(const nlohmann::json &topology)
   {
     // Verifying input's syntax
     HiCR::L0::Topology::verify(topology);
@@ -116,7 +116,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
    *
    * @return A unique pointer to the newly instantiated backend class
    */
-  __INLINE__ static inline std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
+  __INLINE__ static std::unique_ptr<HiCR::L1::TopologyManager> createDefault()
   {
     // Creating HWloc topology object
     auto topology = new hwloc_topology_t;

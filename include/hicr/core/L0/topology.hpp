@@ -88,7 +88,7 @@ class Topology
    *
    * @param[in] input JSON-formatted serialized topology
    */
-  __INLINE__ static inline void verify(const nlohmann::json &input)
+  __INLINE__ static void verify(const nlohmann::json &input)
   {
     // Sanity checks
     if (input.contains("Devices") == false) HICR_THROW_LOGIC("Serialized topology manager information is invalid, as it lacks the 'Devices' entry");

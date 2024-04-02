@@ -182,7 +182,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    * @param[in] argv A pointer to the argv value, as passed to main() necessary for new HiCR instances to count with argument information upon creation.
    * @return A unique pointer to the newly instantiated backend class
    */
-  __INLINE__ static inline std::unique_ptr<HiCR::L1::InstanceManager> createDefault(int *argc, char ***argv)
+  __INLINE__ static std::unique_ptr<HiCR::L1::InstanceManager> createDefault(int *argc, char ***argv)
   {
     // Initializing MPI
     int initialized = 0;

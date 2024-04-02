@@ -398,12 +398,12 @@ class CommunicationManager
   /**
    * This function flushes pending send operations
    */
-  __INLINE__ virtual inline void flushSent() {}
+  __INLINE__ virtual void flushSent() {}
 
   /**
    * This function flushes receives registered at remote queue of receiver
    */
-  __INLINE__ virtual inline void flushReceived() {}
+  __INLINE__ virtual void flushReceived() {}
 
   protected:
 

@@ -266,7 +266,7 @@ class Instance
   /**
    * Function to initialize producer and consumer channels with all the rest of the instances
    */
-  inline void initializeChannels();
+  __INLINE__ void initializeChannels();
 
   /**
    * Producer channels for sending messages to all other instances

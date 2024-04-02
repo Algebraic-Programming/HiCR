@@ -104,7 +104,7 @@ class Task
    *
    * @return A pointer to the current HiCR task, NULL if this function is called outside the context of a task run() function
    */
-  __INLINE__ static inline Task *getCurrentTask() { return (Task *)pthread_getspecific(_taskPointerKey); }
+  __INLINE__ static Task *getCurrentTask() { return (Task *)pthread_getspecific(_taskPointerKey); }
 
   /**
    * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.

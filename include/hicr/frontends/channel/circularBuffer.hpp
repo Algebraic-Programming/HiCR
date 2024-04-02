@@ -234,7 +234,7 @@ class CircularBuffer
    * @param[in] tailAdvanceCounter tail index
    * @return depth of buffer (in elements)
    */
-  __INLINE__ static inline size_t calculateDepth(const size_t headAdvanceCounter, const size_t tailAdvanceCounter) { return headAdvanceCounter - tailAdvanceCounter; }
+  __INLINE__ static size_t calculateDepth(const size_t headAdvanceCounter, const size_t tailAdvanceCounter) { return headAdvanceCounter - tailAdvanceCounter; }
 };
 
 } // namespace channel

@@ -161,7 +161,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    *          P/S:   may be "Private" or "Shared"
    *          associated IDs: (optional, for Shared cache) a list of core IDs, e.g. "0 1 2 3"
    */
-  __INLINE__ static inline std::unordered_set<std::shared_ptr<backend::host::Cache>> detectCpuCaches(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __INLINE__ static std::unordered_set<std::shared_ptr<backend::host::Cache>> detectCpuCaches(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);

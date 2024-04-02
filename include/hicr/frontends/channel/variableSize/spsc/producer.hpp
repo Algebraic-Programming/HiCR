@@ -124,19 +124,19 @@ class Producer final : public variableSize::Base
    * get the datatype size used for payload buffer
    * @return datatype size (in bytes) for payload buffer
    */
-  inline size_t getPayloadSize() { return _payloadSize; }
+  __INLINE__ size_t getPayloadSize() { return _payloadSize; }
 
   /**
    * get payload buffer depth
    * @return payload buffer depth (in bytes)
    */
-  inline size_t getPayloadDepth() { return _circularBufferForPayloads->getDepth(); }
+  __INLINE__ size_t getPayloadDepth() { return _circularBufferForPayloads->getDepth(); }
 
   /**
    * get payload buffer capacity
    * @return payload buffer capacity (in bytes)
    */
-  inline size_t getPayloadCapacity() { return _circularBufferForPayloads->getCapacity(); }
+  __INLINE__ size_t getPayloadCapacity() { return _circularBufferForPayloads->getCapacity(); }
 
   /**
    * Puts new variable-sized messages unto the channel.

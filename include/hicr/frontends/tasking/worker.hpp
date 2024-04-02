@@ -105,7 +105,7 @@ class Worker
    *
    * @return A pointer to the current HiCR worker, NULL if this function is called outside the context of a task run() function
    */
-  __INLINE__ static inline HiCR::tasking::Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
+  __INLINE__ static HiCR::tasking::Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
 
   /**
    * Queries the worker's internal state.

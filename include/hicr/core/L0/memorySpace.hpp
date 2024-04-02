@@ -48,7 +48,7 @@ class MemorySpace
    *
    * \return The memory space's size
    */
-  __INLINE__ virtual inline const size_t getSize() const { return _size; }
+  __INLINE__ virtual const size_t getSize() const { return _size; }
 
   /**
    *  If supported, obtain the amount of memory currently in use.
@@ -58,7 +58,7 @@ class MemorySpace
    *
    * \return The current memory usage for this memory space
    */
-  __INLINE__ virtual inline size_t getUsage() const { return _usage; };
+  __INLINE__ virtual size_t getUsage() const { return _usage; };
 
   /**
    * Registers an increase in the used memory size of the current memory space, either by allocation or manual registering
