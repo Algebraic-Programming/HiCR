@@ -1,10 +1,10 @@
 #include <vector>
 #include <acl/acl.h>
-#include <backends/ascend/L1/memoryManager.hpp>
-#include <backends/ascend/L1/topologyManager.hpp>
-#include <backends/ascend/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/ascend/L1/memoryManager.hpp>
+#include <hicr/backends/ascend/L1/topologyManager.hpp>
+#include <hicr/backends/ascend/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/telephoneGame.hpp"
 
 int main(int argc, char **argv)

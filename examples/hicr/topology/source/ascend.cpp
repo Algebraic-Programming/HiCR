@@ -1,5 +1,5 @@
 #include <acl/acl.h>
-#include <backends/ascend/L1/topologyManager.hpp>
+#include <hicr/backends/ascend/L1/topologyManager.hpp>
 #include "include/topology.hpp"
 
 int main(int argc, char **argv)
