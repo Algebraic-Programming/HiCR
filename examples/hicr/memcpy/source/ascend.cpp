@@ -1,10 +1,10 @@
 #include <vector>
 #include <acl/acl.h>
-#include <backends/ascend/L1/memoryManager.hpp>
-#include <backends/ascend/L1/topologyManager.hpp>
-#include <backends/ascend/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/ascend/L1/memoryManager.hpp>
+#include <hicr/backends/ascend/L1/topologyManager.hpp>
+#include <hicr/backends/ascend/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/telephoneGame.hpp"
 
 int main(int argc, char **argv)
@@ -17,8 +17,8 @@ int main(int argc, char **argv)
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::host::hwloc::L1::TopologyManager hostDeviceManager(&topology);
-  const auto hostTopology = hostDeviceManager.queryTopology();
-  auto hostDevice = *hostTopology.getDevices().begin();
+  const auto                                      hostTopology = hostDeviceManager.queryTopology();
+  auto                                            hostDevice   = *hostTopology.getDevices().begin();
 
   // Getting access to the host memory space
   auto hostMemorySpace = *hostDevice->getMemorySpaceList().begin();
@@ -29,14 +29,13 @@ int main(int argc, char **argv)
 
   // Initializing ascend topology manager
   HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
-  const auto deviceTopology = ascendTopologyManager.queryTopology();
-  auto ascendDevices = deviceTopology.getDevices();
+  const auto                                 deviceTopology = ascendTopologyManager.queryTopology();
+  auto                                       ascendDevices  = deviceTopology.getDevices();
 
   // Getting access to all ascend devices memory spaces
   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> ascendMemorySpaces;
   for (const auto &d : ascendDevices)
-    for (const auto &m : d->getMemorySpaceList())
-      ascendMemorySpaces.push_back(m);
+    for (const auto &m : d->getMemorySpaceList()) ascendMemorySpaces.push_back(m);
 
   // Define the order of mem spaces for the telephone game
   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> memSpaceOrder;
@@ -46,11 +45,11 @@ int main(int argc, char **argv)
 
   // Allocate and populate input memory slot
   HiCR::backend::host::hwloc::L1::MemoryManager hostMemoryManager(&topology);
-  auto input = hostMemoryManager.allocateLocalMemorySlot(hostMemorySpace, BUFFER_SIZE);
+  auto                                          input = hostMemoryManager.allocateLocalMemorySlot(hostMemorySpace, BUFFER_SIZE);
   sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 
   // Instantiating Ascend memory and communication managers
-  HiCR::backend::ascend::L1::MemoryManager ascendMemoryManager;
+  HiCR::backend::ascend::L1::MemoryManager        ascendMemoryManager;
   HiCR::backend::ascend::L1::CommunicationManager ascendCommunicationManager;
 
   // Run the telephone game

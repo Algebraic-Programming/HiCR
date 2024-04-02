@@ -12,11 +12,11 @@
 
 #include <limits>
 #include "gtest/gtest.h"
-#include <hicr/L0/topology.hpp>
-#include <hicr/L0/device.hpp>
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/pthreads/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/core/L0/topology.hpp>
+#include <hicr/core/L0/device.hpp>
+#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 
 TEST(MemoryManager, Construction)
 {
@@ -40,7 +40,7 @@ TEST(MemoryManager, Memory)
 
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
-  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::L1::MemoryManager           m(&topology);
   HiCR::backend::host::pthreads::L1::CommunicationManager c;
 
   // Initializing hwloc-based topology manager
@@ -53,20 +53,20 @@ TEST(MemoryManager, Memory)
   // Getting first device found
   HiCR::L0::Topology::deviceList_t dList;
   EXPECT_NO_THROW(dList = t.getDevices());
-  ASSERT_GT(dList.size(), 0);
+  ASSERT_GT(dList.size(), (unsigned int)0);
   auto d = *dList.begin();
 
   // Getting memory resource list (should be size 1)
   HiCR::L0::Device::memorySpaceList_t mList;
   EXPECT_NO_THROW(mList = d->getMemorySpaceList());
-  ASSERT_GT(mList.size(), 0);
+  ASSERT_GT(mList.size(), (unsigned int)0);
 
   // Getting memory resource
   auto r = *mList.begin();
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;
-  size_t totalMem = 0;
+  size_t totalMem         = 0;
   EXPECT_NO_THROW(totalMem = r->getSize());
 
   // Making sure the system has enough memory for the next test

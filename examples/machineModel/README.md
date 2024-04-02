@@ -1,5 +1,5 @@
-HiCR RPC Examples
+HiCR Machine Model
 =====================
 
-Simple examples that use HiCR to send and execute RPCs across different HiCR instances and getting their return values
+This example shows how a HiCR deployment can be accomplished based on a configuration file.
 

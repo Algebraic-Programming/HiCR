@@ -1,12 +1,16 @@
 #pragma once
 
+#include <hicr/core/L0/memorySpace.hpp>
+#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/frontends/channel/fixedSize/mpsc/consumer.hpp>
 #include "common.hpp"
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L1/memoryManager.hpp>
-#include <hicr/L1/communicationManager.hpp>
-#include <frontends/channel/fixedSize/mpsc/consumer.hpp>
 
-void consumerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManager &communicationManager, std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace, const size_t channelCapacity, const size_t producerCount)
+void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
+                HiCR::L1::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
+                const size_t                           channelCapacity,
+                const size_t                           producerCount)
 {
   // Getting required buffer sizes
   auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
@@ -30,11 +34,12 @@ void consumerFc(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationM
   communicationManager.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto globalTokenBufferSlot = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+  auto globalTokenBufferSlot      = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto consumerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto consumer = HiCR::channel::fixedSize::MPSC::Consumer(communicationManager, globalTokenBufferSlot, coordinationBuffer, consumerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto consumer =
+    HiCR::channel::fixedSize::MPSC::Consumer(communicationManager, globalTokenBufferSlot, coordinationBuffer, consumerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Getting internal pointer of the token buffer slot
   auto tokenBuffer = (ELEMENT_TYPE *)tokenBufferSlot->getPointer();

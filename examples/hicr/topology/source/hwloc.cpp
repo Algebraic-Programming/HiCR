@@ -1,5 +1,5 @@
-#include "hwloc.h"
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <hwloc.h>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/topology.hpp"
 
 int main(int argc, char **argv)

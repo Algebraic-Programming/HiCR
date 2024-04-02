@@ -1,2 +1,2 @@
-subdir('taskr')
+subdir('tasking')
 subdir('channel')

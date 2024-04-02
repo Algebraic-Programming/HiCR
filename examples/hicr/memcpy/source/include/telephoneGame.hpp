@@ -1,24 +1,29 @@
+#pragma once
+
 #include <vector>
 #include <memory>
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L0/localMemorySlot.hpp>
-#include <hicr/L1/memoryManager.hpp>
-#include <hicr/L1/communicationManager.hpp>
+#include <hicr/core/L0/memorySpace.hpp>
+#include <hicr/core/L0/localMemorySlot.hpp>
+#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/core/L1/communicationManager.hpp>
 
 #define BUFFER_SIZE 256
 #define ITERATIONS 3
 #define DST_OFFSET 0
 #define SRC_OFFSET 0
 
-void telephoneGame(HiCR::L1::MemoryManager &m, HiCR::L1::CommunicationManager &c, std::shared_ptr<HiCR::L0::LocalMemorySlot> input, std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> memSpaces, int iterations)
+void telephoneGame(HiCR::L1::MemoryManager                            &m,
+                   HiCR::L1::CommunicationManager                     &c,
+                   std::shared_ptr<HiCR::L0::LocalMemorySlot>          input,
+                   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> memSpaces,
+                   int                                                 iterations)
 {
   // Collect the newly created memory slots
   auto memSlots = std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>{};
 
   // iterate all over the memory spaces and create multiple memory slots in each one
   for (const auto &memSpace : memSpaces)
-    for (int i = 0; i < iterations; i++)
-      memSlots.emplace_back(m.allocateLocalMemorySlot(memSpace, BUFFER_SIZE));
+    for (int i = 0; i < iterations; i++) memSlots.emplace_back(m.allocateLocalMemorySlot(memSpace, BUFFER_SIZE));
 
   // Getting input memory slot
   auto srcMemSlot = input;

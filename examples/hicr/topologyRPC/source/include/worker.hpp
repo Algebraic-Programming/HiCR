@@ -1,12 +1,12 @@
 #pragma once
 
+#include <hicr/core/L0/memorySpace.hpp>
+#include <hicr/core/L0/topology.hpp>
+#include <hicr/core/L1/topologyManager.hpp>
+#include <hicr/core/L1/instanceManager.hpp>
 #include "common.hpp"
-#include <hicr/L0/memorySpace.hpp>
-#include <hicr/L0/topology.hpp>
-#include <hicr/L1/topologyManager.hpp>
-#include <hicr/L1/instanceManager.hpp>
 
-void sendTopology(HiCR::L1::InstanceManager& instanceManager)
+void sendTopology(HiCR::L1::InstanceManager &instanceManager)
 {
   // Storage for the topology to send
   HiCR::L0::Topology workerTopology;
@@ -62,7 +62,7 @@ void sendTopology(HiCR::L1::InstanceManager& instanceManager)
   instanceManager.submitReturnValue(message.data(), message.size() + 1);
 }
 
-void workerFc(HiCR::L1::InstanceManager& instanceManager)
+void workerFc(HiCR::L1::InstanceManager &instanceManager)
 {
   // Adding RPC target by name and the execution unit id to run
   instanceManager.addRPCTarget(TOPOLOGY_RPC_NAME, [&]() { sendTopology(instanceManager); });

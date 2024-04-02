@@ -12,27 +12,27 @@ enabledBackends = get_option('backends')
 HiCRBackendDependencies = [ ]
 
 if 'hwloc' in enabledBackends
-  subdir('include/backends/host/hwloc')
+  subdir('include/hicr/backends/host/hwloc')
 endif
 
 if 'pthreads' in enabledBackends
-  subdir('include/backends/host/pthreads')
+  subdir('include/hicr/backends/host/pthreads')
 endif
 
 if 'mpi' in enabledBackends
-  subdir('include/backends/mpi')
+  subdir('include/hicr/backends/mpi')
 endif
 
 if 'lpf' in enabledBackends
-  subdir('include/backends/lpf')
+  subdir('include/hicr/backends/lpf')
 endif
 
 if 'ascend' in enabledBackends    
-  subdir('include/backends/ascend')
+  subdir('include/hicr/backends/ascend')
 endif    
 
-# Creating HiCR Configuration and Dependency
-subdir('include/hicr')
+# Creating HiCR Core Configuration and Dependency
+subdir('include/hicr/core')
 
 # Build targets are only relevant if HiCR is being loaded as a subproject
 if meson.is_subproject() == false

@@ -10,11 +10,11 @@
  * @date 7/9/2023
  */
 
-#include "gtest/gtest.h"
-#include <backends/host/coroutine.hpp>
 #include <pthread.h>
 #include <unistd.h>
 #include <mutex>
+#include "gtest/gtest.h"
+#include <hicr/backends/host/coroutine.hpp>
 
 TEST(Coroutine, Construction)
 {
@@ -32,7 +32,7 @@ TEST(Coroutine, Construction)
 #define THREAD_COUNT 16
 
 // Storage for thread-local identification of running thread
-static pthread_key_t key;
+static pthread_key_t  key;
 static pthread_once_t key_once = PTHREAD_ONCE_INIT;
 
 // Declaring a barrier. It is important to make sure the two threads are alive while the coroutine is being used
@@ -93,8 +93,7 @@ TEST(Coroutine, TLS)
   for (size_t i = 0; i < COROUTINE_COUNT; i++) _mutexes[i] = new std::mutex;
 
   // Creating coroutine function
-  auto fc = [](void *arg)
-  {
+  auto fc = [](void *arg) {
     // Recovering a pointer to the coroutine
     auto coroutine = (HiCR::backend::host::Coroutine *)arg;
 
@@ -113,8 +112,7 @@ TEST(Coroutine, TLS)
   };
 
   // Starting coroutines
-  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, fc]()
-                                                                    { fc(coroutines[i]); });
+  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i]->start([i, fc]() { fc(coroutines[i]); });
 
   // Initializing barrier
   pthread_barrier_init(&_barrier, NULL, THREAD_COUNT);

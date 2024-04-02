@@ -1,12 +1,13 @@
-#include <backends/lpf/L1/memoryManager.hpp>
-#include <backends/lpf/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
 #include <iostream>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <mpi.h>
 
-#define BUFFER_SIZE 256
+#include <hicr/backends/lpf/L1/memoryManager.hpp>
+#include <hicr/backends/lpf/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+
+#define BUFFER_SIZE 8
 #define SENDER_PROCESS 0
 #define RECEIVER_PROCESS 1
 #define TAG 0
@@ -57,55 +58,52 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   auto memSpaces = d->getMemorySpaceList();
 
   (void)args; // ignore args parameter passed by lpf_exec
-  HiCR::backend::lpf::L1::MemoryManager m(lpf);
+  HiCR::backend::lpf::L1::MemoryManager        m(lpf);
   HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
 
   // Getting current process id
   size_t myProcess = pid;
 
-  // Creating new destination buffer
-  auto msgBuffer = (char *)malloc(BUFFER_SIZE);
+  // Creating local buffer
   auto firstMemSpace = *memSpaces.begin();
-  auto dstSlot = m.registerLocalMemorySlot(firstMemSpace, msgBuffer, BUFFER_SIZE);
+  auto localSlot     = m.allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE);
 
   // Performing all pending local to global memory slot promotions now
-  c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{myProcess, dstSlot}});
+  c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{myProcess, localSlot}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   c.fence(CHANNEL_TAG);
 
-  // Getting promoted slot
-  auto myPromotedSlot = c.getGlobalMemorySlot(CHANNEL_TAG, RECEIVER_PROCESS);
+  // Getting promoted slot at receiver end
+  auto receiverSlot = c.getGlobalMemorySlot(CHANNEL_TAG, RECEIVER_PROCESS);
 
   if (myProcess == SENDER_PROCESS)
   {
     char *buffer2 = new char[BUFFER_SIZE];
-    sprintf(static_cast<char *>(buffer2), "Hello, HiCR user!\n");
+    sprintf(static_cast<char *>(buffer2), "Hi!\n");
     auto srcSlot = m.registerLocalMemorySlot(firstMemSpace, buffer2, BUFFER_SIZE);
-    c.memcpy(myPromotedSlot, DST_OFFSET, srcSlot, SRC_OFFSET, BUFFER_SIZE);
+    c.memcpy(receiverSlot, DST_OFFSET, srcSlot, SRC_OFFSET, BUFFER_SIZE);
     c.fence(CHANNEL_TAG);
   }
 
   if (myProcess == RECEIVER_PROCESS)
   {
-    c.queryMemorySlotUpdates(myPromotedSlot);
-    auto recvMsgs = myPromotedSlot->getMessagesRecv();
+    c.queryMemorySlotUpdates(receiverSlot);
+    auto recvMsgs = receiverSlot->getSourceLocalMemorySlot()->getMessagesRecv();
     std::cout << "Received messages (before fence) = " << recvMsgs << std::endl;
 
     c.fence(CHANNEL_TAG);
-    std::cout << "Received buffer = " << msgBuffer;
+    std::cout << "Received buffer = " << static_cast<char *>(localSlot->getPointer()) << std::endl;
 
-    c.queryMemorySlotUpdates(myPromotedSlot);
-    recvMsgs = myPromotedSlot->getMessagesRecv();
+    c.queryMemorySlotUpdates(receiverSlot);
+    recvMsgs = receiverSlot->getSourceLocalMemorySlot()->getMessagesRecv();
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
   }
 
   // De-registering global slots (collective call)
-  c.deregisterGlobalMemorySlot(myPromotedSlot);
+  c.deregisterGlobalMemorySlot(receiverSlot);
 
-  // Freeing up local memory
-  m.deregisterLocalMemorySlot(dstSlot);
-  free(msgBuffer);
+  m.freeLocalMemorySlot(localSlot);
 }
 
 int main(int argc, char **argv)

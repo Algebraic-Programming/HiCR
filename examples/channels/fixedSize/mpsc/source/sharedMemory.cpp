@@ -1,10 +1,10 @@
-#include <backends/host/hwloc/L1/memoryManager.hpp>
-#include <backends/host/pthreads/L1/communicationManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
+#include <thread>
+#include <hwloc.h>
+#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
-#include <hwloc.h>
-#include <thread>
 
 int main(int argc, char **argv)
 {
@@ -64,13 +64,11 @@ int main(int argc, char **argv)
   auto firstMemorySpace = *memSpaces.begin();
 
   // Creating single consumer thread
-  auto consumerThread = std::thread([&]()
-                                    { consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount); });
+  auto consumerThread = std::thread([&]() { consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount); });
 
   // Creating producer threads
   std::vector<std::thread *> producerThreads(producerCount);
-  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&]()
-                                                                                  { producerFc(m, c, firstMemorySpace, channelCapacity, i); });
+  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&]() { producerFc(m, c, firstMemorySpace, channelCapacity, i); });
 
   // Waiting on threads
   consumerThread.join();

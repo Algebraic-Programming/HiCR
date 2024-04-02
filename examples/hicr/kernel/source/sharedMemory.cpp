@@ -1,6 +1,6 @@
-#include <backends/host/pthreads/L1/computeManager.hpp>
-#include <backends/host/hwloc/L1/topologyManager.hpp>
-#include <stdio.h>
+#include <cstdio>
+#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 
 int main(int argc, char **argv)
 {
@@ -22,8 +22,7 @@ int main(int argc, char **argv)
   // Initializing Pthread-based host (CPU) compute manager
   HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
-  auto fcLambda = []()
-  { printf("Hello, World!\n"); };
+  auto fcLambda = []() { printf("Hello, World!\n"); };
 
   // Creating execution unit
   auto executionUnit = computeManager.createExecutionUnit(fcLambda);

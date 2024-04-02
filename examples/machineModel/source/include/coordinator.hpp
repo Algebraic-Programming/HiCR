@@ -3,11 +3,22 @@
 #include <unordered_set>
 #include "common.hpp"
 #include "nlohmann_json/json.hpp"
-#include <hicr/L0/topology.hpp>
-#include <hicr/L1/instanceManager.hpp>
-#include <frontends/machineModel/machineModel.hpp>
+#include <hicr/core/L0/topology.hpp>
+#include <hicr/core/L1/instanceManager.hpp>
+#include <hicr/frontends/machineModel/machineModel.hpp>
 
-void finalizeExecution(HiCR::L1::InstanceManager& instanceManager, const int returnCode = 0)
+#ifdef _HICR_USE_ASCEND_BACKEND_
+  #include <hicr/backends/ascend/L0/computeResource.hpp>
+  #include <hicr/backends/ascend/L0/device.hpp>
+#endif
+
+#ifdef _HICR_USE_HWLOC_BACKEND_
+  #include <hicr/backends/host/L0/computeResource.hpp>
+  #include <hicr/backends/host/L0/memorySpace.hpp>
+  #include <hicr/backends/host/L0/device.hpp>
+#endif
+
+void finalizeExecution(HiCR::L1::InstanceManager &instanceManager, const int returnCode = 0)
 {
   // Querying instance list
   auto &instances = instanceManager.getInstances();
@@ -17,8 +28,7 @@ void finalizeExecution(HiCR::L1::InstanceManager& instanceManager, const int ret
 
   // Requesting workers to abort and printing error message
   for (const auto &instance : instances)
-    if (instance->getId() != coordinator->getId())
-      instanceManager.launchRPC(*instance, "Finalize");
+    if (instance->getId() != coordinator->getId()) instanceManager.launchRPC(*instance, "Finalize");
 
   instanceManager.finalize();
   exit(returnCode);
@@ -43,6 +53,8 @@ HiCR::L0::Topology parseTopology(const nlohmann::json &topologyJson)
   if (topologyJson["Host RAM Size (Gb)"].is_number() == false) throw std::runtime_error("The instance topology 'Host RAM Size (Gb)' entry is not a number\n");
   auto hostRamSize = (size_t)std::ceil(topologyJson["Host RAM Size (Gb)"].get<double>() * 1024.0 * 1024.0 * 1024.0);
 
+#ifdef _HICR_USE_HWLOC_BACKEND_
+
   // Creating list of memory spaces (only one, with the total host memory)
   HiCR::L0::Device::memorySpaceList_t memorySpaces({std::make_shared<HiCR::backend::host::L0::MemorySpace>(hostRamSize)});
 
@@ -51,6 +63,8 @@ HiCR::L0::Topology parseTopology(const nlohmann::json &topologyJson)
 
   // Adding host device to the topology
   topology.addDevice(hostDevice);
+
+#endif
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
 
@@ -91,9 +105,9 @@ std::vector<HiCR::MachineModel::request_t> parseMachineModel(const nlohmann::jso
     HiCR::MachineModel::request_t newRequestedInstance;
 
     // Parsing task name
-    if (instance.contains("Task") == false) throw std::runtime_error("the requested instance does not contain a 'Task' entry\n");
-    if (instance["Task"].is_string() == false) throw std::runtime_error("The instance 'Task' entry is not a string\n");
-    newRequestedInstance.taskName = instance["Task"].get<std::string>();
+    if (instance.contains("Entry Point") == false) throw std::runtime_error("the requested instance does not contain a 'Entry Point' entry\n");
+    if (instance["Entry Point"].is_string() == false) throw std::runtime_error("The instance 'Entry Point' entry is not a string\n");
+    newRequestedInstance.entryPointName = instance["Entry Point"].get<std::string>();
 
     // Parsing replica count
     if (instance.contains("Replicas") == false) throw std::runtime_error("the requested instance does not contain a 'Replicas' entry\n");
@@ -182,11 +196,15 @@ bool isTopologyAcceptable(const HiCR::L0::Topology &a, const HiCR::L0::Topology 
   return true;
 }
 
-void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string &machineModelFilePath)
+void coordinatorFc(HiCR::L1::InstanceManager                &instanceManager,
+                   const std::string                        &machineModelFilePath,
+                   std::vector<HiCR::L1::TopologyManager *> &topologyManagers,
+                   int                                       argc,
+                   char                                    **argv)
 {
   // Reading from machine model file
   std::string machineModelRaw;
-  auto status = loadStringFromFile(machineModelRaw, machineModelFilePath);
+  auto        status = loadStringFromFile(machineModelRaw, machineModelFilePath);
   if (status == false)
   {
     fprintf(stderr, "could not read from machine model file: '%s'\n", machineModelFilePath.c_str());
@@ -206,7 +224,7 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
   }
 
   // Creating machine model to handle the instance creation and task execution
-  HiCR::MachineModel machineModel(instanceManager);
+  HiCR::MachineModel machineModel(instanceManager, topologyManagers);
 
   // Parsing the machine model into a request vector. Here the vector implies ordering, which allows the user specify which instances need to be allocated first
   std::vector<HiCR::MachineModel::request_t> requests;
@@ -223,7 +241,7 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
   // Execute requests by finding or creating an instance that matches their topology requirements
   try
   {
-    machineModel.deploy(requests, &isTopologyAcceptable);
+    machineModel.deploy(requests, &isTopologyAcceptable, argc, argv);
   }
   catch (const std::exception &e)
   {
@@ -233,8 +251,7 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
 
   // Running the assigned task id in the correspondng instance
   for (auto &r : requests)
-    for (auto &in : r.instances)
-      instanceManager.launchRPC(*in, r.taskName);
+    for (auto &in : r.instances) instanceManager.launchRPC(*in, r.entryPointName);
 
   // Now waiting for return values to arrive
   for (auto &r : requests)
@@ -247,7 +264,7 @@ void coordinatorFc(HiCR::L1::InstanceManager& instanceManager, const std::string
       printf("[Coordinator] Received from instance %lu: '%s'\n", in->getId(), (const char *)returnValue);
 
       // Freeing return value
-      free (returnValue);
+      free(returnValue);
     }
 
   // Finalizing execution for all instances
