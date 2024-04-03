@@ -8,15 +8,16 @@ build:
   - x86
   - infiniband
   script:
+  - export HOME=/home/hicr
   - source /home/hicr/.hicr-env.sh
   - echo "Compiling LPF..."
-  - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false; make -j24; make install; popd
+  - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false -DCMAKE_INSTALL_PREFIX=/home/hicr/lpf; make -j24; make install; popd
   - echo "Building..."
   - mkdir build
   - meson setup build -Dbuildtype=debug -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,lpf -DbuildTests=true -DbuildExamples=true  -DcompileWarningsAsErrors=true
   - meson compile -C build
   - echo "Running tests..."
-  - OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 meson test -C build
+  - meson test -C build
   - echo "Creating coverage report..."
   - ninja -C build coverage
   coverage: /^\s*lines:\s*\d+.\d+\%/
