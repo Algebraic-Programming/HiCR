@@ -8,4 +8,4 @@ fi
 folder=${1}
 arch=${2}
 
-docker run --name hicr -it "registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/${folder}-${arch}:latest" bash 
+docker run --name hicr --shm-size=1024M --privileged -td "registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/${folder}-${arch}:latest" bash 
