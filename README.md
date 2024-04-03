@@ -64,4 +64,33 @@ Run [Single-Producer Single-Consumer Channel](examples/channels/fixedSize/spsc/i
 ```
 mpirun -n 2 examples/channels/fixedSize/spsc/mpi 3
 ```
+## Contributing
+
+All new features mush branch out of the `main` branch and can only be incorporated via pull requests. For reference, see the [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) branching system.
+
+Before merging back to `main`, all pull requests must meet these conditions:
+
+- Must compile successfully.
+
+- Compilation must produce zero warnings.
+
+- Must pass all CI tests. To run the tests locally, you can run:
+
+  ```
+  cd build/
+  meson test
+  ```
+
+- Code must comply with the automated [styling format](.clang-format). To automatically fix style, you can run:
+
+  ```
+  ./.fix-style.sh
+  ```
+
+- Have all new classes, fields, functions and arguments annotated in Doxygen format.  
+
+Prefered, yet not enforced:
+
+- Preserve a healthy (>90%) test coverage ratio (see Jenkins CI report)
+  
 
