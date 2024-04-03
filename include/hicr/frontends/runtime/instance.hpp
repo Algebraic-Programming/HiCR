@@ -281,7 +281,7 @@ class Instance
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <frontends/runtime/channel/yuanrong/channelsImpl.hpp>
+  #include <hicr/frontends/runtime/channel/yuanrong/channelsImpl.hpp>
 #else
   #include "channel/hicr/channelsImpl.hpp"
 #endif
