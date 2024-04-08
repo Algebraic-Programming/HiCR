@@ -62,7 +62,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
   __INLINE__ void resumeImpl() override { _coroutine.resume(); }
 
-  __INLINE__ void suspendImpl() { _coroutine.yield(); }
+  __INLINE__ void suspendImpl() override { _coroutine.yield(); }
 
   __INLINE__ bool checkFinalizationImpl() override { return _coroutine.hasFinished(); }
 
