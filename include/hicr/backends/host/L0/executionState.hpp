@@ -49,7 +49,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     auto e = dynamic_pointer_cast<host::L0::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType());
+    if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType().c_str());
 
     // Getting function to execution from the execution unit
     const auto &fc = e->getFunction();

@@ -115,12 +115,12 @@ class Runtime final
 
 // Detecting Hwloc
 #ifdef _HICR_USE_HWLOC_BACKEND_
-    _topologyManagers.push_back(std::move(HiCR::backend::host::hwloc::L1::TopologyManager::createDefault()));
+    _topologyManagers.push_back(HiCR::backend::host::hwloc::L1::TopologyManager::createDefault());
 #endif
 
 // Detecting Ascend
 #ifdef _HICR_USE_ASCEND_BACKEND_
-    _topologyManagers.push_back(std::move(HiCR::backend::ascend::L1::TopologyManager::createDefault()));
+    _topologyManagers.push_back(HiCR::backend::ascend::L1::TopologyManager::createDefault());
 #endif
 
     // Checking at least one topology manager was defined

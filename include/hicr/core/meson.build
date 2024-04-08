@@ -15,6 +15,10 @@ if get_option('compileWarningsAsErrors') == true
   warningAsErrorFlags=[ '-Werror' ]
 endif
 
+hicrBuildLinkArgs = [
+  '-latomic'
+]
+
 hicrBuildDeps = [
     HiCRBackendDependencies
    ]
@@ -32,6 +36,7 @@ hicrBuildIncludes = include_directories([
   
 hicrBuildDep = declare_dependency(
     compile_args: hicrBuildCppArgs,
+    link_args: hicrBuildLinkArgs,
     dependencies:  hicrBuildDeps,
     include_directories: hicrBuildIncludes,
     )

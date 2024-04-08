@@ -116,7 +116,7 @@ class Coordinator final : public runtime::Instance
     for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, w.request.entryPointName);
   }
 
-  __INLINE__ void finalize()
+  __INLINE__ void finalize() override
   {
     // Launching finalization RPC
     for (auto &w : _workers) _instanceManager->launchRPC(*w.hicrInstance, "__finalize");
