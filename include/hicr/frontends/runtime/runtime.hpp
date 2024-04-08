@@ -13,35 +13,18 @@
 #pragma once
 
 #include <vector>
+#include <hicr/core/exceptions.hpp>
 #include <hicr/core/L1/instanceManager.hpp>
 #include <hicr/core/L1/memoryManager.hpp>
 #include <hicr/core/L1/communicationManager.hpp>
 #include <hicr/core/L1/topologyManager.hpp>
 #include <hicr/frontends/machineModel/machineModel.hpp>
+#include <hicr/backends/host/L1/instanceManager.hpp>
+#include "instance.hpp"
 
 #ifdef _HICR_USE_MPI_BACKEND_
-  #include <hicr/backends/mpi/L1/instanceManager.hpp>
-  #include <hicr/backends/mpi/L1/communicationManager.hpp>
-  #include <hicr/backends/mpi/L1/memoryManager.hpp>
   #include "dataObject/mpi/dataObject.hpp"
 #endif
-
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <hicr/backends/yuanrong/L1/instanceManager.hpp>
-#endif
-
-#ifdef _HICR_USE_HWLOC_BACKEND_
-  #include <hwloc.h>
-  #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
-  #include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
-#endif
-
-#ifdef _HICR_USE_ASCEND_BACKEND_
-  #include <hicr/backends/ascend/L1/topologyManager.hpp>
-#endif
-
-#include "worker.hpp"
-#include "coordinator.hpp"
 
 namespace HiCR
 {
@@ -56,90 +39,25 @@ class Runtime final
   public:
 
   /**
-   * The constructor for the HiCR runtime singleton takes the argc and argv pointers, as passed to the main() function
+   * Constructor for the HiCR Runtime class
    *
-   * @param[in] pargc Pointer to the argc argument count
-   * @param[in] pargv Pointer to the argc argument char arrays
+   * @param[in] instanceManager The instance manager backend to use
+   * @param[in] communicationManager The communication manager backend to use
+   * @param[in] memoryManager The memory manager backend to use
+   * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
+   * @param[in] machineModel The machine model to use to deploy the workers
    */
-  Runtime(int *pargc, char ***pargv)
-    : _pargc(pargc),
-      _pargv(pargv)
+  Runtime(    HiCR::L1::InstanceManager      *instanceManager,
+              HiCR::L1::CommunicationManager *communicationManager,
+              HiCR::L1::MemoryManager        *memoryManager,
+              std::vector<HiCR::L1::TopologyManager*>&   topologyManagers) :
+              _instanceManager(instanceManager)
   {
-/////////////////////////// Detecting instance manager
-
-// Detecting MPI
-#ifdef _HICR_USE_MPI_BACKEND_
-    _instanceManager = HiCR::backend::mpi::L1::InstanceManager::createDefault(_pargc, _pargv);
-#endif
-
-// Detecting YuanRong
-#ifdef _HICR_USE_YUANRONG_BACKEND_
-    _instanceManager = HiCR::backend::yuanrong::L1::InstanceManager::createDefault(_pargc, _pargv);
-#endif
-
-    // Checking an instance manager has been found
-    if (_instanceManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the instance manager was found.\n");
-
-/////////////////////////// Detecting communication manager
-
-// Detecting MPI
-#ifdef _HICR_USE_MPI_BACKEND_
-    _communicationManager = std::make_unique<HiCR::backend::mpi::L1::CommunicationManager>();
-#endif
-
-// Check if a communication manager is found if YuanRong is not used
-#ifndef _HICR_USE_YUANRONG_BACKEND_
-    if (_communicationManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the communication manager was found.\n");
-#endif
-/////////////////////////// Detecting memory manager
-
-// Detecting HWLOC
-#ifdef _HICR_USE_HWLOC_BACKEND_
-    hwloc_topology_t topology;
-    hwloc_topology_init(&topology);
-    _memoryManager = std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(&topology);
-#endif
-
-// Detecting MPI
-#ifdef _HICR_USE_MPI_BACKEND_
-    _memoryManager = std::make_unique<HiCR::backend::mpi::L1::MemoryManager>();
-#endif
-
-    // Checking an instance manager has been found
-    if (_memoryManager.get() == nullptr) HICR_THROW_LOGIC("No suitable backend for the memory manager was found.\n");
-
-    /////////////////////////// Detecting topology managers
-
-    // Clearing current topology managers (if any)
-    _topologyManagers.clear();
-
-// Detecting Hwloc
-#ifdef _HICR_USE_HWLOC_BACKEND_
-    _topologyManagers.push_back(std::move(HiCR::backend::host::hwloc::L1::TopologyManager::createDefault()));
-#endif
-
-// Detecting Ascend
-#ifdef _HICR_USE_ASCEND_BACKEND_
-    _topologyManagers.push_back(std::move(HiCR::backend::ascend::L1::TopologyManager::createDefault()));
-#endif
-
-    // Checking at least one topology manager was defined
-    if (_topologyManagers.empty() == true) HICR_THROW_LOGIC("No suitable backends for topology managers were found.\n");
-
     // Creating machine model object
-    std::vector<HiCR::L1::TopologyManager *> topologyManagers;
-    for (const auto &tm : _topologyManagers) topologyManagers.push_back(tm.get());
     _machineModel = std::make_unique<HiCR::MachineModel>(*_instanceManager, topologyManagers);
 
-    //////////////////////// Creating local HiCR Runtime instance, depending if worker or coordinator
-
-    // Coordinator route
-    if (_instanceManager->getCurrentInstance()->isRootInstance() == true)
-      _currentInstance = new HiCR::runtime::Coordinator(_instanceManager.get(), _communicationManager.get(), _memoryManager.get(), topologyManagers, _machineModel.get());
-
-    // Worker route
-    if (_instanceManager->getCurrentInstance()->isRootInstance() == false)
-      _currentInstance = new HiCR::runtime::Worker(_instanceManager.get(), _communicationManager.get(), _memoryManager.get(), topologyManagers, _machineModel.get());
+    // Creating local HiCR Runtime instance
+    _currentInstance = new HiCR::runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, _machineModel.get());
   }
 
   ~Runtime() = default;
@@ -154,8 +72,8 @@ class Runtime final
     // Executing delayed entry point registration
     for (const auto &entryPoint : _runtimeEntryPointVector) _instanceManager->addRPCTarget(entryPoint.first, entryPoint.second);
 
-    // Initializing current instance
-    _currentInstance->initialize();
+    // If this is not the root instance, then start listening for RPC requests
+    if (_currentInstance->getHiCRInstance()->getId() != _instanceManager->getRootInstanceId()) _currentInstance->listen();
   }
 
   /**
@@ -164,13 +82,6 @@ class Runtime final
    * @return The id of the coordinator instance
    */
   HiCR::L0::Instance::instanceId_t getCoordinatorInstanceId() const { return _instanceManager->getRootInstanceId(); }
-
-  /**
-   * Returns a list of all the created instances id
-   *
-   * @return The list of the instances id
-   */
-  std::vector<HiCR::L0::Instance::instanceId_t> getInstanceIds() const { return _currentInstance->getInstanceIds(); }
 
   /**
    * Gets a pointer to the currently running runtime instance
@@ -194,7 +105,6 @@ class Runtime final
   __INLINE__ void abort(const int errorCode)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling abort before HiCR has been initialized.\n");
-
     _instanceManager->abort(errorCode);
   }
 
@@ -203,13 +113,39 @@ class Runtime final
    *
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
+   * @param[in] argc The number of command line arguments
+   * @param[in] argv Poiners to the character string for the command line arguments
    */
-  __INLINE__ void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
+  __INLINE__ void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc = 0, char *argv[] = nullptr)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling deploy before HiCR has been initialized.\n");
 
-    // Calling coordinator's deploy function
-    dynamic_cast<HiCR::runtime::Coordinator *>(_currentInstance)->deploy(requests, acceptanceCriteriaFc, *_pargc, *_pargv);
+    // Execute requests by finding or creating an instance that matches their topology requirements
+    try { _machineModel->deploy(requests, acceptanceCriteriaFc, argc, argv); }
+    catch (const std::exception &e) 
+    {
+      fprintf(stderr, "Error while executing deployment requests. Reason: '%s'\n", e.what());
+      abort(exceptions::exception_t::runtime);
+    }
+
+    // Registering new deployed instances and launching channel initialization procedure
+    for (auto &request : requests)
+      for (auto &instance : request.instances)
+      {
+        // Registering instance
+        _deployedInstances.push_back(instance);
+
+        // Launching channel creation routine for deployed instance
+        _instanceManager->launchRPC(*instance, "__initializeChannels");
+      }
+        
+    // Initializing channel for the current instance
+    _currentInstance->initializeChannels();
+
+    // Launching instances's entry point function
+    for (auto &request : requests)
+     for (auto &instance : request.instances)
+       _instanceManager->launchRPC(*instance, request.entryPointName);
   }
 
   /**
@@ -242,24 +178,20 @@ class Runtime final
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling finalize before HiCR has been initialized.\n");
 
-    // Initializing current instance
-    _currentInstance->finalize();
+    // Launching finalization RPC on all deployed instances
+    for (auto &instance : _deployedInstances) _instanceManager->launchRPC(*instance, "__finalize");
+
+    // Waiting for return ack
+    for (auto &instance : _deployedInstances) _instanceManager->getReturnValue(*instance);
+
+    // Finalizing instance manager
+    _instanceManager->finalize();
 
     // Freeing up instance memory
     delete _currentInstance;
   }
 
   private:
-
-  /**
-   * Storage pointer for argc
-   */
-  int *const _pargc;
-
-  /**
-   * Storage pointer for argv
-   */
-  char ***const _pargv;
 
   /**
    * The entry point type is the combination of its name (a string) and the associated function to execute
@@ -272,34 +204,24 @@ class Runtime final
   std::vector<entryPoint_t> _runtimeEntryPointVector;
 
   /**
+   * Machine model object for deployment
+   */
+  std::unique_ptr<HiCR::MachineModel> _machineModel;
+
+   /**
    * The currently running instance
    */
   HiCR::runtime::Instance *_currentInstance = nullptr;
 
-  /**
-   * Detected instance manager to use for detecting and creating HiCR instances (only one allowed)
+   /**
+   * Instance manager to use for detecting and creating HiCR instances (only one allowed)
    */
-  std::unique_ptr<HiCR::L1::InstanceManager> _instanceManager = nullptr;
+  HiCR::L1::InstanceManager* const _instanceManager;
 
   /**
-   * Detected communication manager to use for communicating between HiCR instances
+   * Storage for the deployed instances. This object is only mantained and usable by the coordinator instance
    */
-  std::unique_ptr<HiCR::L1::CommunicationManager> _communicationManager = nullptr;
-
-  /**
-   * Detected memory manager to use for allocating memory
-   */
-  std::unique_ptr<HiCR::L1::MemoryManager> _memoryManager = nullptr;
-
-  /**
-   * Detected topology managers to use for resource discovery
-   */
-  std::vector<std::unique_ptr<HiCR::L1::TopologyManager>> _topologyManagers;
-
-  /**
-   * Machine model object for deployment
-   */
-  std::unique_ptr<HiCR::MachineModel> _machineModel;
+  std::vector<std::shared_ptr<HiCR::L0::Instance>> _deployedInstances;
 };
 
 } // namespace HiCR

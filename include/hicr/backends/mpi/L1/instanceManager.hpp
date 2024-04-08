@@ -139,7 +139,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return buffer;
   }
 
-  __INLINE__ void submitReturnValueImpl(const void *pointer, const size_t size) const override
+  __INLINE__ void submitReturnValueImpl(const void *pointer, const size_t size) override
   {
     // Sending message size
     MPI_Ssend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);

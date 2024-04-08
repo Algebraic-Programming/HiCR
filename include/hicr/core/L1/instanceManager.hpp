@@ -139,7 +139,7 @@ class InstanceManager
    * \param[in] pointer Pointer to the start of the data buffer to send
    * \param[in] size Size of the data buffer to send
    */
-  __INLINE__ void submitReturnValue(void *pointer, const size_t size) const
+  __INLINE__ void submitReturnValue(void *pointer, const size_t size)
   {
     // Calling backend-specific implementation of this function
     submitReturnValueImpl(pointer, size);
@@ -194,11 +194,11 @@ class InstanceManager
    * Internal function used to initiate the execution of the requested RPC
    * \param[in] rpcIdx Index to the RPC to run (hash to save overhead, the name is no longer recoverable)
    */
-  __INLINE__ void executeRPC(const RPCTargetIndex_t rpcIdx)
+  __INLINE__ void executeRPC(const RPCTargetIndex_t rpcIdx) const
   {
     // Getting RPC target from the index
     if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
-    auto &fc = _RPCTargetMap[rpcIdx];
+    auto &fc = _RPCTargetMap.at(rpcIdx);
 
     // Running RPC function
     fc();
@@ -225,7 +225,7 @@ class InstanceManager
    * \param[in] pointer Pointer to the start of the data buffer to send
    * \param[in] size Size of the data buffer to send
    */
-  virtual void submitReturnValueImpl(const void *pointer, const size_t size) const = 0;
+  virtual void submitReturnValueImpl(const void *pointer, const size_t size) = 0;
 
   /**
    * Backend-specific implementation of the listen function

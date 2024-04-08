@@ -1,5 +1,15 @@
+#include <hwloc.h>
 #include <hicr/frontends/runtime/runtime.hpp>
-#include "include/machineModel.hpp"
+#include <hicr/backends/mpi/L1/instanceManager.hpp>
+#include <hicr/backends/mpi/L1/communicationManager.hpp>
+#include <hicr/backends/mpi/L1/memoryManager.hpp>
+#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+
+#ifdef _HICR_USE_ASCEND_BACKEND_
+  #include <hicr/backends/ascend/L1/topologyManager.hpp>
+#endif
+
+#include "../../common.hpp"
 
 // Worker entry point functions
 void entryPointFc(HiCR::Runtime &runtime, const std::string &entryPointName)
@@ -31,8 +41,24 @@ void entryPointFc(HiCR::Runtime &runtime, const std::string &entryPointName)
 
 int main(int argc, char *argv[])
 {
+  // Using MPI as instance, communication and memory manager for multiple instances
+  auto instanceManager = HiCR::backend::mpi::L1::InstanceManager::createDefault(&argc, &argv);
+  auto communicationManager = std::make_unique<HiCR::backend::mpi::L1::CommunicationManager>();
+  auto memoryManager = std::make_unique<HiCR::backend::mpi::L1::MemoryManager>();
+
+  // Using HWLoc and Ascend (if configured) as topology managers
+  std::vector<HiCR::L1::TopologyManager *> topologyManagers;
+  auto hwlocTopologyManager = HiCR::backend::host::hwloc::L1::TopologyManager::createDefault();
+  topologyManagers.push_back(hwlocTopologyManager.get());
+
+  // Detecting Ascend
+  #ifdef _HICR_USE_ASCEND_BACKEND_
+      auto ascendTopologyManager = HiCR::backend::ascend::L1::TopologyManager::createDefault();
+      topologyManagers.push_back(ascendTopologyManager.get());
+  #endif
+
   // Creating HiCR Runtime
-  HiCR::Runtime runtime(&argc, &argv);
+  auto runtime = HiCR::Runtime(instanceManager.get(), communicationManager.get(), memoryManager.get(), topologyManagers);
 
   // Registering tasks for the workers
   runtime.registerEntryPoint("A", [&]() { entryPointFc(runtime, "A"); });
@@ -66,7 +92,7 @@ int main(int argc, char *argv[])
   runtime.deploy(machineModel, &isTopologyAcceptable);
 
   // Getting coordinator instance
-  auto coordinator = dynamic_cast<HiCR::runtime::Coordinator *>(runtime.getCurrentInstance());
+  auto coordinator = runtime.getCurrentInstance();
 
   // Creating a welcome message
   std::string welcomeMsg = "Hello from the coordinator";
@@ -75,26 +101,27 @@ int main(int argc, char *argv[])
   std::vector<std::shared_ptr<HiCR::runtime::DataObject>> dataObjects;
 
   // Sending message to all the workers
-  for (auto &worker : coordinator->getWorkers())
-  {
-    // Creating data object with welcome message
-    auto dataObject = coordinator->createDataObject(welcomeMsg.data(), welcomeMsg.size() + 1);
+  for (auto &instance : instanceManager->getInstances()) 
+   if (instance->getId() != coordinator->getHiCRInstance()->getId())
+    {
+      // Creating data object with welcome message
+      auto dataObject = coordinator->createDataObject(welcomeMsg.data(), welcomeMsg.size() + 1);
 
-    // Getting data object identifier
-    auto dataObjectId = dataObject->getId();
+      // Getting data object identifier
+      auto dataObjectId = dataObject->getId();
 
-    // Publishing data object
-    dataObject->publish();
+      // Publishing data object
+      dataObject->publish();
 
-    // Adding data object to the vector
-    dataObjects.push_back(dataObject);
+      // Adding data object to the vector
+      dataObjects.push_back(dataObject);
 
-    // Sending message with only the data object identifier
-    coordinator->sendMessage(worker.hicrInstance->getId(), &dataObjectId, sizeof(HiCR::runtime::DataObject::dataObjectId_t));
-  }
+      // Sending message with only the data object identifier
+      coordinator->sendMessage(instance->getId(), &dataObjectId, sizeof(HiCR::runtime::DataObject::dataObjectId_t));
+    }
 
   // Sending a message to myself just to test self-comunication
-  size_t workerCount = coordinator->getWorkers().size();
+  size_t workerCount = instanceManager->getInstances().size() - 1;
   coordinator->sendMessage(coordinator->getHiCRInstance()->getId(), &workerCount, sizeof(workerCount));
   auto message = coordinator->recvMessage(coordinator->getHiCRInstance()->getId());
   printf("[Coordinator] Received worker count: %lu from myself\n", *(size_t *)message.first);
