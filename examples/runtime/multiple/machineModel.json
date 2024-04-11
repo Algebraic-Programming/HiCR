@@ -11,7 +11,7 @@
 	      "Ascend Devices": 0
       }
     },
-    
+
     {
       "Entry Point": "Worker A",
       "Replicas": 1,

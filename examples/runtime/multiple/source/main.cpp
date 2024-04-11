@@ -51,7 +51,7 @@ void coordinatorEntryPointFc(HiCR::Runtime &runtime)
   size_t workerCount = instanceManager->getInstances().size() - 1;
   coordinator->sendMessage(coordinator->getHiCRInstance()->getId(), &workerCount, sizeof(workerCount));
   auto message = coordinator->recvMessage(coordinator->getHiCRInstance()->getId());
-  printf("[Coordinator] Received worker count: %lu from myself\n", *(size_t *)message.first);
+  printf("[Coordinator] Received worker count: %lu from myself\n", *(size_t *)message.data);
 
   // Testing release completion for all data objects
   bool allDataObjectsReleased = false;
@@ -72,12 +72,17 @@ void workerEntryPointFc(HiCR::Runtime &runtime, const std::string &entryPointNam
   // Getting my current worker instance
   auto currentInstance = runtime.getCurrentInstance();
 
-  // Getting message from coordinator
-  const auto coordinatorInstanceId = runtime.getCoordinatorInstanceId();
-  auto       message               = currentInstance->recvMessage(coordinatorInstanceId);
+  // Iterating over all other instances to get a message from the coordinator
+  HiCR::runtime::Instance::message_t message;
+  while (message.size == 0)
+      for (auto& instance : runtime.getInstanceManager()->getInstances())
+      {
+        message = currentInstance->recvMessageAsync(instance->getId());
+        if (message.size > 0) break;
+      }
 
   // Getting data object id from message
-  const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t *)message.first);
+  const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t *)message.data);
 
   // Printing data object id
   printf("[Worker %lu] Requesting data object id %u from coordinator.\n", runtime.getInstanceId(), dataObjectId);

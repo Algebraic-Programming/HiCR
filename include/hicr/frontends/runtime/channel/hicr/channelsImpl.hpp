@@ -210,7 +210,7 @@ __INLINE__ void Instance::sendMessage(const HiCR::L0::Instance::instanceId_t ins
   channel->push(messageSendSlot);
 }
 
-__INLINE__ std::pair<const void *, size_t> Instance::recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync)
+__INLINE__ Instance::message_t Instance::recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync)
 {
   if (_consumerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the consumer channel map");
 
@@ -241,5 +241,5 @@ __INLINE__ std::pair<const void *, size_t> Instance::recvMessage(const HiCR::L0:
   channel->pop();
 
   // Returning ptr + size pair
-  return std::make_pair(ptr, size);
+  return message_t { .data = ptr, .size = size };
 }

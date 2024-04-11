@@ -77,13 +77,6 @@ class Runtime final
   }
 
   /**
-   * Returns the id of the coordinator instance
-   *
-   * @return The id of the coordinator instance
-   */
-  HiCR::L0::Instance::instanceId_t getCoordinatorInstanceId() const { return _instanceManager->getRootInstanceId(); }
-
-  /**
    * Gets a pointer to the currently running runtime instance
    *
    * @return A pointer to the current instance
@@ -159,7 +152,6 @@ class Runtime final
       auto idx = _instanceManager->getRPCTargetIndexFromString(currentInstanceEntryPoint);
 
       // Running entry point
-       printf("deploy my instance id: %lu - fc %s\n", _currentInstance->getHiCRInstance()->getId(), currentInstanceEntryPoint.c_str());
       _instanceManager->executeRPC(idx);
     }
   }
