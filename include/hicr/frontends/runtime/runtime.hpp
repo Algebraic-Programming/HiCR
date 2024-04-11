@@ -131,6 +131,7 @@ class Runtime final
     // Registering new deployed instances and launching channel initialization procedure
     for (auto &request : requests)
       for (auto &instance : request.instances)
+       if (instance->getId() != _currentInstance->getHiCRInstance()->getId())
       {
         // Registering instance
         _deployedInstances.push_back(instance);
@@ -142,10 +143,25 @@ class Runtime final
     // Initializing channel for the current instance
     _currentInstance->initializeChannels();
 
-    // Launching instances's entry point function
+    // Launching other's instances entry point function first, remembering our own entry point
+    std::string currentInstanceEntryPoint;
     for (auto &request : requests)
      for (auto &instance : request.instances)
+      if (instance->getId() != _currentInstance->getHiCRInstance()->getId())
        _instanceManager->launchRPC(*instance, request.entryPointName);
+      else
+       currentInstanceEntryPoint = request.entryPointName;
+
+    // Running current instance's own entry point, if defined
+    if (currentInstanceEntryPoint != "") 
+    {
+      // Calculating hash for the RPC target's name
+      auto idx = _instanceManager->getRPCTargetIndexFromString(currentInstanceEntryPoint);
+
+      // Running entry point
+       printf("deploy my instance id: %lu - fc %s\n", _currentInstance->getHiCRInstance()->getId(), currentInstanceEntryPoint.c_str());
+      _instanceManager->executeRPC(idx);
+    }
   }
 
   /**
@@ -190,6 +206,8 @@ class Runtime final
     // Freeing up instance memory
     delete _currentInstance;
   }
+
+  __INLINE__ HiCR::L1::InstanceManager* getInstanceManager() { return _instanceManager; }
 
   private:
 

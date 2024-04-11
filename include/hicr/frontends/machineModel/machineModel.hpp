@@ -147,7 +147,14 @@ class MachineModel
         if (requestAssigned == true) continue;
 
         // If no remaining detected instances satisfied the request, then try to create a new instance ad hoc
-        auto newInstance = _instanceManager->createInstance(requests[i].topology, argc, argv);
+        std::shared_ptr<HiCR::L0::Instance> newInstance;
+        try {
+          newInstance = _instanceManager->createInstance(requests[i].topology, argc, argv);
+        }
+        catch (std::exception& e)
+        {
+          HICR_THROW_RUNTIME("Tried to create new instances while deploying to satisfy the machine model requests, but an error ocurred: '%s'", e.what());
+        }
 
         // Adding new instance to the detected instance set
         requests[i].instances.push_back(newInstance);
@@ -165,14 +172,17 @@ class MachineModel
     // Storage for the detected instances
     std::vector<detectedInstance_t> detectedInstances;
 
-    // Getting the pointer to our own (coordinator) instance
-    auto coordinator = instanceManager.getCurrentInstance();
+    // Getting the pointer and adding the local (currentInstance) instance first
+    detectedInstance_t currentInstance;
+    currentInstance.instance = instanceManager.getCurrentInstance();
+    currentInstance.topology.merge(getTopology(_topologyManagers));
+    detectedInstances.push_back(currentInstance);
 
-    // Obtaining each of the instances HiCR topology
+    // Obtaining each of the other detectable instances' HiCR topology
     for (const auto &instance : instanceManager.getInstances())
-      if (instance->getId() != coordinator->getId())
+     if (instance->getId() != instanceManager.getCurrentInstance()->getId())
       {
-        // Storage for the newly detected instance
+        // Storage for this detected instance
         detectedInstance_t detectedInstance;
 
         // Assigning instance pointer
@@ -204,7 +214,7 @@ class MachineModel
   __INLINE__ static void submitTopology(HiCR::L1::InstanceManager *instanceManager, std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
   {
     // Storage for the topology to send
-    HiCR::L0::Topology workerTopology;
+    auto workerTopology = getTopology(topologyManagers);
 
     // For each topology manager detected
     for (const auto tm : topologyManagers)
@@ -222,6 +232,26 @@ class MachineModel
     // Registering return value
     instanceManager->submitReturnValue(message.data(), message.size() + 1);
   };
+
+  private:
+
+  __INLINE__ static HiCR::L0::Topology getTopology(std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
+  {
+    // Storage for the topology to send
+    HiCR::L0::Topology topology;
+
+    // For each topology manager detected
+    for (const auto tm : topologyManagers)
+    {
+      // Getting the topology information from the topology manager
+      const auto t = tm->queryTopology();
+
+      // Merging its information to the worker topology object to send
+      topology.merge(t);
+    }
+
+    return topology;
+  }
 
   /**
    * Instance manager to use for instance detection

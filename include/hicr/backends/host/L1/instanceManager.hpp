@@ -42,8 +42,8 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   InstanceManager() : HiCR::L1::InstanceManager()
   {
     // A single instance (the currently running) is created and is deemed as the root
-    auto instance = std::make_shared<HiCR::backend::host::L0::Instance>();
-    _instances.insert(std::move(instance));
+     _currentInstance = std::make_shared<HiCR::backend::host::L0::Instance>();
+    _instances.insert(_currentInstance);
   }
 
   ~InstanceManager() = default;
@@ -57,11 +57,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
    */
   __INLINE__ void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCTargetName) const override
   {
-    // Calculating hash for the RPC target's name
-    auto hash = getHashFromString(RPCTargetName);
+    // Calculating index for the RPC target's name
+    auto idx = getRPCTargetIndexFromString(RPCTargetName);
 
     // Executing the RPC directly
-    executeRPC(hash);
+    executeRPC(idx);
   }
 
   __INLINE__ void *getReturnValueImpl(HiCR::L0::Instance &instance) const override

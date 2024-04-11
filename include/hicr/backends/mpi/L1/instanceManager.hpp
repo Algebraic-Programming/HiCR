@@ -100,7 +100,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   __INLINE__ void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCTargetName) const override
   {
     // Calculating hash for the RPC target's name
-    auto hash = getHashFromString(RPCTargetName);
+    auto hash = getRPCTargetIndexFromString(RPCTargetName);
 
     // Getting up-casted pointer for the MPI instance
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *>(&instance);

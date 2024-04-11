@@ -139,7 +139,7 @@ __INLINE__ void Instance::initializeChannels()
     auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, currentInstanceId);
 
     // Creating channel
-    printf("[Instance %lu] Adding consumer channel for instance %lu\n", currentInstanceId, instanceIds[producerIdx]);
+    //printf("[Instance %lu] Adding consumer channel for instance %lu\n", currentInstanceId, instanceIds[producerIdx]);
     _consumerChannels[instanceIds[producerIdx]] = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(*_communicationManager,
                                                                                                                  consumerMessagePayloadBuffer,
                                                                                                                  consumerMessageSizesBuffer,

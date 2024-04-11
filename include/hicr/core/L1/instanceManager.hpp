@@ -112,10 +112,10 @@ class InstanceManager
   __INLINE__ void addRPCTarget(const std::string &RPCName, const RPCFunction_t fc)
   {
     // Obtaining hash from the RPC name
-    const auto nameHash = getHashFromString(RPCName);
+    const auto idx = getRPCTargetIndexFromString(RPCName);
 
     // Inserting the new entry
-    _RPCTargetMap[nameHash] = fc;
+    _RPCTargetMap[idx] = fc;
   }
 
   /**
@@ -180,15 +180,13 @@ class InstanceManager
    */
   virtual HiCR::L0::Instance::instanceId_t getSeed() const = 0;
 
-  protected:
-
   /**
    * Generates a 64-bit hash value from a given string. Useful for compressing the name of RPCs
    *
    * @param[in] name A string (e.g., the name of an RPC to compress)
    * @return The 64-bit hashed value of the name provided
    */
-  static uint64_t getHashFromString(const std::string &name) { return std::hash<std::string>()(name); }
+  static RPCTargetIndex_t getRPCTargetIndexFromString(const std::string &name) { return std::hash<std::string>()(name); }
 
   /**
    * Internal function used to initiate the execution of the requested RPC
@@ -203,6 +201,8 @@ class InstanceManager
     // Running RPC function
     fc();
   }
+  
+  protected:
 
   /**
    * Backend-specific implementation of the createInstance function

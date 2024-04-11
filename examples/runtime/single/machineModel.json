@@ -1,5 +1,15 @@
 {
   "Instances":
   [
+    {
+      "Entry Point": "Coordinator",
+      "Replicas": 1,
+      "Topology": 
+      {
+	      "CPU Cores": 1,
+        "Host RAM Size (Gb)": 1,
+	      "Ascend Devices": 0
+      }
+    }
   ]
 }

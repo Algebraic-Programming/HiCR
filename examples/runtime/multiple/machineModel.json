@@ -2,7 +2,18 @@
   "Instances":
   [
     {
-      "Entry Point": "A",
+      "Entry Point": "Coordinator",
+      "Replicas": 1,
+      "Topology": 
+      {
+	      "CPU Cores": 1,
+        "Host RAM Size (Gb)": 1,
+	      "Ascend Devices": 0
+      }
+    },
+    
+    {
+      "Entry Point": "Worker A",
       "Replicas": 1,
       "Topology": 
       {
@@ -13,7 +24,7 @@
     },
 
     {
-      "Entry Point": "B",
+      "Entry Point": "Worker B",
       "Replicas": 2,
       "Topology": 
       {
@@ -24,7 +35,7 @@
     },
 
     {
-      "Entry Point": "C",
+      "Entry Point": "Worker C",
       "Replicas": 3,
       "Topology": 
       {
