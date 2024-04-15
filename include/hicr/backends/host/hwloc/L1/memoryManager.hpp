@@ -164,6 +164,24 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // If using strict non binding, use system's free
     if (memorySlotBindingType == L0::LocalMemorySlot::binding_type::strict_non_binding) { free(memorySlotPointer); }
   }
+
+   /**
+   * This function represents the default intializer for this backend
+   *
+   * @return A unique pointer to the newly instantiated backend class
+   */
+  __INLINE__ static std::unique_ptr<HiCR::L1::MemoryManager> createDefault()
+  {
+    // Creating HWloc topology object
+    auto topology = new hwloc_topology_t;
+
+    // Reserving memory for hwloc
+    hwloc_topology_init(topology);
+
+    // Initializing HWLoc-based host (CPU) topology manager
+    return std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(topology);
+  }
+
 };
 
 } // namespace L1
