@@ -84,7 +84,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     HICR_THROW_LOGIC("Calling listen using the Host instance manager results in a deadlock (nobody else to notify us). Aborting.");
   }
 
-  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstanceImpl [[noreturn]] (const HiCR::L0::Topology &requestedTopology, int argc, char *argv[])
+  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstanceImpl (const HiCR::L0::Topology &requestedTopology, int argc, char *argv[]) override
   {
     HICR_THROW_LOGIC("The Host backend does not currently support the launching of new instances during runtime");
   }
@@ -106,7 +106,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return std::make_unique<HiCR::backend::host::L1::InstanceManager>();
   }
 
-  __INLINE__ HiCR::L0::Instance::instanceId_t getRootInstanceId() const { return 0; }
+  __INLINE__ HiCR::L0::Instance::instanceId_t getRootInstanceId() const override { return 0; }
 
   __INLINE__ HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
 

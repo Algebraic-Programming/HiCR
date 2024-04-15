@@ -11,7 +11,7 @@ void abcTasks(HiCR::backend::host::L1::ComputeManager *computeManager, const HiC
   taskr::Runtime taskr;
 
   // Assigning processing Re to TaskR
-  for (const auto &computeResource : computeResources) taskr.addProcessingUnit(std::move(computeManager->createProcessingUnit(computeResource)));
+  for (const auto &computeResource : computeResources) taskr.addProcessingUnit(computeManager->createProcessingUnit(computeResource));
 
   // Creating task functions
   auto taskAfc = computeManager->createExecutionUnit([&taskr]() { printf("Task A %lu\n", taskr.getCurrentTask()->getLabel()); });
