@@ -187,10 +187,14 @@ class Runtime final
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling finalize before HiCR has been initialized.\n");
 
     // Launching finalization RPC on all deployed instances
-    for (auto &instance : _deployedInstances) _instanceManager->launchRPC(*instance, "__finalize");
+    for (auto &instance : _deployedInstances)
+     if (instance->getId() != _currentInstance->getHiCRInstance()->getId())
+      _instanceManager->launchRPC(*instance, "__finalize");
 
     // Waiting for return ack
-    for (auto &instance : _deployedInstances) _instanceManager->getReturnValue(*instance);
+    for (auto &instance : _deployedInstances)
+     if (instance->getId() != _currentInstance->getHiCRInstance()->getId())
+      _instanceManager->getReturnValue(*instance);
 
     // Finalizing instance manager
     _instanceManager->finalize();
