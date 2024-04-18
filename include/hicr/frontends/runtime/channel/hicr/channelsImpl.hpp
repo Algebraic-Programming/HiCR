@@ -141,15 +141,15 @@ __INLINE__ void Instance::initializeChannels()
     // Creating channel
     //printf("[Instance %lu] Adding consumer channel for instance %lu\n", currentInstanceId, instanceIds[producerIdx]);
     _consumerChannels[instanceIds[producerIdx]] = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(*_communicationManager,
-                                                                                                                 consumerMessagePayloadBuffer,
-                                                                                                                 consumerMessageSizesBuffer,
-                                                                                                                 coordinationBufferMessageSizes,
-                                                                                                                 coordinationBufferMessagePayloads,
-                                                                                                                 producerSizesProducerBuffer,
-                                                                                                                 producerPayloadProducerBuffer,
-                                                                                                                 _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
-                                                                                                                 sizeof(uint8_t),
-                                                                                                                 _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
+                                                                                                                consumerMessagePayloadBuffer,
+                                                                                                                consumerMessageSizesBuffer,
+                                                                                                                coordinationBufferMessageSizes,
+                                                                                                                coordinationBufferMessagePayloads,
+                                                                                                                producerSizesProducerBuffer,
+                                                                                                                producerPayloadProducerBuffer,
+                                                                                                                _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
+                                                                                                                sizeof(uint8_t),
+                                                                                                                _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);
 
     if (instanceIds[producerIdx] == currentInstanceId)
     {
@@ -241,5 +241,5 @@ __INLINE__ Instance::message_t Instance::recvMessage(const HiCR::L0::Instance::i
   channel->pop();
 
   // Returning ptr + size pair
-  return message_t { .data = ptr, .size = size };
+  return message_t{.data = ptr, .size = size};
 }

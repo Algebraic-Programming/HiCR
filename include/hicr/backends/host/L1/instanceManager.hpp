@@ -39,10 +39,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   /**
    * Constructor for the host instance manager
    */
-  InstanceManager() : HiCR::L1::InstanceManager()
+  InstanceManager()
+    : HiCR::L1::InstanceManager()
   {
     // A single instance (the currently running) is created and is deemed as the root
-     _currentInstance = std::make_shared<HiCR::backend::host::L0::Instance>();
+    _currentInstance = std::make_shared<HiCR::backend::host::L0::Instance>();
     _instances.insert(_currentInstance);
   }
 
@@ -79,17 +80,14 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     memcpy(_returnValueBuffer, pointer, size);
   }
 
-  __INLINE__ void listenImpl() override
-  {
-    HICR_THROW_LOGIC("Calling listen using the Host instance manager results in a deadlock (nobody else to notify us). Aborting.");
-  }
+  __INLINE__ void listenImpl() override { HICR_THROW_LOGIC("Calling listen using the Host instance manager results in a deadlock (nobody else to notify us). Aborting."); }
 
-  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstanceImpl (const HiCR::L0::Topology &requestedTopology, int argc, char *argv[]) override
+  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology, int argc, char *argv[]) override
   {
     HICR_THROW_LOGIC("The Host backend does not currently support the launching of new instances during runtime");
   }
 
-  __INLINE__ void finalize() override {  }
+  __INLINE__ void finalize() override {}
 
   __INLINE__ void abort(int errorCode) override { std::abort(); }
 
@@ -114,8 +112,8 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
   /**
    * The return value buffer is stored locally 
-  */ 
-  void* _returnValueBuffer;
+  */
+  void *_returnValueBuffer;
 };
 
 } // namespace L1

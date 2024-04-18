@@ -35,7 +35,8 @@ class Instance final : public HiCR::L0::Instance
   /**
    * Constructor for a Instance class for the Host backend
    */
-  Instance() : HiCR::L0::Instance(0)
+  Instance()
+    : HiCR::L0::Instance(0)
   {}
 
   /**
@@ -48,7 +49,6 @@ class Instance final : public HiCR::L0::Instance
     // Only a single instance exists (the currently running one), hence always true
     return true;
   };
-
 };
 
 } // namespace L0

@@ -201,7 +201,7 @@ class InstanceManager
     // Running RPC function
     fc();
   }
-  
+
   protected:
 
   /**

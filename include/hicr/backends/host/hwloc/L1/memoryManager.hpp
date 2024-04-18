@@ -65,7 +65,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    */
   L0::LocalMemorySlot::binding_type getRequestedBindingType() const { return _hwlocBindingRequested; }
 
-   /**
+  /**
    * This function represents the default intializer for this backend
    *
    * @return A unique pointer to the newly instantiated backend class
@@ -81,7 +81,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // Initializing HWLoc-based host (CPU) topology manager
     return std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(topology);
   }
-  
+
   private:
 
   /**

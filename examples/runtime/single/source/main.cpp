@@ -6,10 +6,7 @@
 #include "../../common.hpp"
 
 // Worker entry point functions
-void entryPointFc(HiCR::Runtime &runtime)
-{
-  printf("Hello, I am the coordinator itself\n");
-};
+void entryPointFc(HiCR::Runtime &runtime) { printf("Hello, I am the coordinator itself\n"); };
 
 int main(int argc, char *argv[])
 {
@@ -20,13 +17,13 @@ int main(int argc, char *argv[])
   hwloc_topology_init(&topology);
 
   // Using MPI as instance, communication and memory manager for multiple instances
-  auto instanceManager = HiCR::backend::host::L1::InstanceManager::createDefault(&argc, &argv);
+  auto instanceManager      = HiCR::backend::host::L1::InstanceManager::createDefault(&argc, &argv);
   auto communicationManager = std::make_unique<HiCR::backend::host::pthreads::L1::CommunicationManager>();
-  auto memoryManager = std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(&topology);
+  auto memoryManager        = std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(&topology);
 
   // Using HWLoc as topology managers
   std::vector<HiCR::L1::TopologyManager *> topologyManagers;
-  auto hwlocTopologyManager = std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(&topology);
+  auto                                     hwlocTopologyManager = std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(&topology);
   topologyManagers.push_back(hwlocTopologyManager.get());
 
   // Creating HiCR Runtime

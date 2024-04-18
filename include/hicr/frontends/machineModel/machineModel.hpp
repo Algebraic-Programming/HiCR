@@ -148,10 +148,11 @@ class MachineModel
 
         // If no remaining detected instances satisfied the request, then try to create a new instance ad hoc
         std::shared_ptr<HiCR::L0::Instance> newInstance;
-        try {
+        try
+        {
           newInstance = _instanceManager->createInstance(requests[i].topology, argc, argv);
         }
-        catch (std::exception& e)
+        catch (std::exception &e)
         {
           HICR_THROW_RUNTIME("Tried to create new instances while deploying to satisfy the machine model requests, but an error ocurred: '%s'", e.what());
         }
@@ -180,7 +181,7 @@ class MachineModel
 
     // Obtaining each of the other detectable instances' HiCR topology
     for (const auto &instance : instanceManager.getInstances())
-     if (instance->getId() != instanceManager.getCurrentInstance()->getId())
+      if (instance->getId() != instanceManager.getCurrentInstance()->getId())
       {
         // Storage for this detected instance
         detectedInstance_t detectedInstance;

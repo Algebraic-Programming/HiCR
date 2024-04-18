@@ -182,7 +182,8 @@ class CommunicationManager
 
     // Checking size doesn't exceed slot size
     if (actualDstSize > dstSize)
-      HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%p) capacity (%lu).", size, dst_offset, actualDstSize, destination->getPointer(), dstSize);
+      HICR_THROW_RUNTIME(
+        "Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%p) capacity (%lu).", size, dst_offset, actualDstSize, destination->getPointer(), dstSize);
 
     // To enable concurrent memcpy operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
@@ -252,7 +253,8 @@ class CommunicationManager
 
     // Checking size doesn't exceed slot size
     if (actualDstSize > dstSize)
-      HICR_THROW_RUNTIME("Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%p) capacity (%lu).", size, dst_offset, actualDstSize, destination->getPointer(), dstSize);
+      HICR_THROW_RUNTIME(
+        "Memcpy size (%lu) + offset (%lu) = (%lu) exceeds destination slot (%p) capacity (%lu).", size, dst_offset, actualDstSize, destination->getPointer(), dstSize);
 
     // Now calling internal memcpy function to give us a function that satisfies the operation
     memcpyImpl(destination, dst_offset, source, src_offset, size);

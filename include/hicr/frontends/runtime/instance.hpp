@@ -50,7 +50,7 @@ class Instance
 
   struct message_t
   {
-    const void* data = nullptr;
+    const void *data = nullptr;
 
     size_t size = 0;
   };
@@ -77,8 +77,7 @@ class Instance
       _memoryManager(memoryManager),
       _topologyManagers(topologyManagers),
       _machineModel(machineModel)
-  {
-  }
+  {}
 
   virtual ~Instance() = default;
 

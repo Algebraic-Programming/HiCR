@@ -27,8 +27,8 @@ void coordinatorEntryPointFc(HiCR::Runtime &runtime)
   std::vector<std::shared_ptr<HiCR::runtime::DataObject>> dataObjects;
 
   // Sending message to all the workers
-  for (auto &instance : instanceManager->getInstances()) 
-   if (instance->getId() != coordinator->getHiCRInstance()->getId())
+  for (auto &instance : instanceManager->getInstances())
+    if (instance->getId() != coordinator->getHiCRInstance()->getId())
     {
       printf("Coordinator (%lu) sending message to instance %lu\n", coordinator->getHiCRInstance()->getId(), instance->getId());
       // Creating data object with welcome message
@@ -75,11 +75,11 @@ void workerEntryPointFc(HiCR::Runtime &runtime, const std::string &entryPointNam
   // Iterating over all other instances to get a message from the coordinator
   HiCR::runtime::Instance::message_t message;
   while (message.size == 0)
-      for (auto& instance : runtime.getInstanceManager()->getInstances())
-      {
-        message = currentInstance->recvMessageAsync(instance->getId());
-        if (message.size > 0) break;
-      }
+    for (auto &instance : runtime.getInstanceManager()->getInstances())
+    {
+      message = currentInstance->recvMessageAsync(instance->getId());
+      if (message.size > 0) break;
+    }
 
   // Getting data object id from message
   const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t *)message.data);
@@ -100,29 +100,29 @@ void workerEntryPointFc(HiCR::Runtime &runtime, const std::string &entryPointNam
 int main(int argc, char *argv[])
 {
   // Using MPI as instance, communication and memory manager for multiple instances
-  auto instanceManager = HiCR::backend::mpi::L1::InstanceManager::createDefault(&argc, &argv);
+  auto instanceManager      = HiCR::backend::mpi::L1::InstanceManager::createDefault(&argc, &argv);
   auto communicationManager = std::make_unique<HiCR::backend::mpi::L1::CommunicationManager>();
-  auto memoryManager = std::make_unique<HiCR::backend::mpi::L1::MemoryManager>();
+  auto memoryManager        = std::make_unique<HiCR::backend::mpi::L1::MemoryManager>();
 
   // Using HWLoc and Ascend (if configured) as topology managers
   std::vector<HiCR::L1::TopologyManager *> topologyManagers;
-  auto hwlocTopologyManager = HiCR::backend::host::hwloc::L1::TopologyManager::createDefault();
+  auto                                     hwlocTopologyManager = HiCR::backend::host::hwloc::L1::TopologyManager::createDefault();
   topologyManagers.push_back(hwlocTopologyManager.get());
 
-  // Detecting Ascend
-  #ifdef _HICR_USE_ASCEND_BACKEND_
-      auto ascendTopologyManager = HiCR::backend::ascend::L1::TopologyManager::createDefault();
-      topologyManagers.push_back(ascendTopologyManager.get());
-  #endif
+// Detecting Ascend
+#ifdef _HICR_USE_ASCEND_BACKEND_
+  auto ascendTopologyManager = HiCR::backend::ascend::L1::TopologyManager::createDefault();
+  topologyManagers.push_back(ascendTopologyManager.get());
+#endif
 
   // Creating HiCR Runtime
   auto runtime = HiCR::Runtime(instanceManager.get(), communicationManager.get(), memoryManager.get(), topologyManagers);
 
   // Registering tasks for the coordinator and the workers
   runtime.registerEntryPoint("Coordinator", [&]() { coordinatorEntryPointFc(runtime); });
-  runtime.registerEntryPoint("Worker A",    [&]() { workerEntryPointFc(runtime, "A"); });
-  runtime.registerEntryPoint("Worker B",    [&]() { workerEntryPointFc(runtime, "B"); });
-  runtime.registerEntryPoint("Worker C",    [&]() { workerEntryPointFc(runtime, "C"); });
+  runtime.registerEntryPoint("Worker A", [&]() { workerEntryPointFc(runtime, "A"); });
+  runtime.registerEntryPoint("Worker B", [&]() { workerEntryPointFc(runtime, "B"); });
+  runtime.registerEntryPoint("Worker C", [&]() { workerEntryPointFc(runtime, "C"); });
 
   // Initializing the HiCR runtime
   runtime.initialize();
