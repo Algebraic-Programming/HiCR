@@ -45,7 +45,6 @@ class Runtime final
    * @param[in] communicationManager The communication manager backend to use
    * @param[in] memoryManager The memory manager backend to use
    * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
-   * @param[in] machineModel The machine model to use to deploy the workers
    */
   Runtime(HiCR::L1::InstanceManager                *instanceManager,
           HiCR::L1::CommunicationManager           *communicationManager,
@@ -207,6 +206,11 @@ class Runtime final
     delete _currentInstance;
   }
 
+  /**
+   * This function retreives the instance manager used to configure the runtime
+   * 
+   * @return A pointer to the instance manager
+  */
   __INLINE__ HiCR::L1::InstanceManager *getInstanceManager() { return _instanceManager; }
 
   private:

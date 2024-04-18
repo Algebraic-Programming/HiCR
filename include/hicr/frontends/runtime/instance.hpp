@@ -48,10 +48,15 @@ class Instance
 {
   public:
 
+  /**
+   * Storage for inter-instance message information
+  */
   struct message_t
   {
+    /// Pointer to the message's data allocation
     const void *data = nullptr;
 
+    /// Size of the message
     size_t size = 0;
   };
 
