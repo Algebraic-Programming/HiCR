@@ -171,6 +171,11 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
   }
 
+  __INLINE__ std::shared_ptr<HiCR::L0::Instance> addInstanceImpl(HiCR::L0::Instance::instanceId_t instanceId) override
+  {
+    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
+  }
+
   __INLINE__ void finalize() override { MPI_Finalize(); }
 
   __INLINE__ void abort(int errorCode) override { MPI_Abort(MPI_COMM_WORLD, errorCode); }
