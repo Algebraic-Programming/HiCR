@@ -28,10 +28,16 @@
   #include <hicr/frontends/runtime/channel/yuanrong/producerChannel.hpp>
   #include <hicr/frontends/runtime/channel/yuanrong/consumerChannel.hpp>
 #else
-  #include "dataObject/mpi/dataObject.hpp"
-  #include "channel/hicr/producerChannel.hpp"
-  #include "channel/hicr/consumerChannel.hpp"
-#endif
+  #ifdef _HICR_USE_MPI_BACKEND_
+    #include "dataObject/mpi/dataObject.hpp"
+    #include "channel/hicr/producerChannel.hpp"
+    #include "channel/hicr/consumerChannel.hpp"
+  #else
+    #include "dataObject/local/dataObject.hpp"
+    #include "channel/hicr/producerChannel.hpp"
+    #include "channel/hicr/consumerChannel.hpp"
+  #endif // _HICR_USE_MPI_BACKEND_
+#endif   // _HICR_USE_YUANRONG_BACKEND_
 
 namespace HiCR
 {
@@ -47,6 +53,18 @@ namespace runtime
 class Instance
 {
   public:
+
+  /**
+   * Storage for inter-instance message information
+  */
+  struct message_t
+  {
+    /// Pointer to the message's data allocation
+    const void *data = nullptr;
+
+    /// Size of the message
+    size_t size = 0;
+  };
 
   Instance() = delete;
 
@@ -70,39 +88,9 @@ class Instance
       _memoryManager(memoryManager),
       _topologyManagers(topologyManagers),
       _machineModel(machineModel)
-  {
-    queryInstanceIds();
-  }
+  {}
 
   virtual ~Instance() = default;
-
-  /**
-   * Initializer function for the instance
-   */
-  virtual void initialize() = 0;
-
-  /**
-   * This function should be used at the end of execution by all HiCR instances, to correctly finalize the execution environment
-   */
-  virtual void finalize() = 0;
-
-  /**
-   * Update the instance ids in when new instances are created.
-   */
-  void queryInstanceIds()
-  {
-    _instanceIds.clear();
-    // Getting instance ids into a sorted vector
-    for (const auto &instance : _instanceManager->getInstances()) _instanceIds.push_back(instance->getId());
-    std::sort(_instanceIds.begin(), _instanceIds.end());
-  }
-
-  /**
-   * Returns a list of all the created instances id
-   *
-   * @return The list of the instances id
-   */
-  std::vector<HiCR::L0::Instance::instanceId_t> getInstanceIds() const { return _instanceIds; }
 
   /**
    * Returns the internal HiCR instance object for the caller instance
@@ -202,7 +190,7 @@ class Instance
    * @param[in] isAsync Whether the function must return immediately if no message was found
    * @return A pair containing a pointer to the start of the message binary data and the message's size
    */
-  __INLINE__ std::pair<const void *, size_t> recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync = false);
+  __INLINE__ message_t recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync = false);
 
   /**
    * Asynchronous function to receive a message from another instance
@@ -212,21 +200,42 @@ class Instance
    * @param[in] instanceId The id of the instance for which channel we check for incoming messages
    * @return A pair containing a pointer to the start of the message binary data and the message's size. The pointer will be NULL if no messages were there when called.
    */
-  __INLINE__ std::pair<const void *, size_t> recvMessageAsync(const HiCR::L0::Instance::instanceId_t instanceId) { return recvMessage(instanceId, true); }
+  __INLINE__ message_t recvMessageAsync(const HiCR::L0::Instance::instanceId_t instanceId) { return recvMessage(instanceId, true); }
+
+  /**
+   * Function to initialize producer and consumer channels with all the rest of the instances
+   */
+  __INLINE__ void initializeChannels();
+
+  /**
+  * Prompts the currently running instance to start listening for incoming RPCs
+  */
+  __INLINE__ void listen()
+  {
+    // Flag to indicate whether the worker should continue listening
+    bool continueListening = true;
+
+    // Adding RPC targets, specifying a name and the execution unit to execute
+    _instanceManager->addRPCTarget("__finalize", [&]() { continueListening = false; });
+    _instanceManager->addRPCTarget("__initializeChannels", [this]() { initializeChannels(); });
+
+    // Listening for RPC requests
+    while (continueListening == true) _instanceManager->listen();
+
+    // Finalizing by sending a last acknowledgment as return value to the "__finalize" RPC
+    uint8_t ack = 0;
+
+    // Registering an empty return value to ack on finalization
+    _instanceManager->submitReturnValue(&ack, sizeof(ack));
+
+    // Finalizing instance manager
+    _instanceManager->finalize();
+
+    // Exiting now
+    exit(0);
+  }
 
   protected:
-
-  /**
-   * Internal implementation of the abort function
-   *
-   * @param[in] errorCode The error code to produce upon abort
-   */
-  void _abort(const int errorCode = 0) { _instanceManager->abort(errorCode); }
-
-  /**
-   *  The ids of other instances, sorted by Id
-   */
-  std::vector<HiCR::L0::Instance::instanceId_t> _instanceIds;
 
   /**
    * Internal HiCR instance represented by this runtime instance
@@ -262,11 +271,6 @@ class Instance
    * Global counter for the current data object pertaining to this instance
    */
   DataObject::dataObjectId_t _currentDataObjectId = 0;
-
-  /**
-   * Function to initialize producer and consumer channels with all the rest of the instances
-   */
-  __INLINE__ void initializeChannels();
 
   /**
    * Producer channels for sending messages to all other instances

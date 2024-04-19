@@ -91,7 +91,7 @@ TEST(ProcessingUnit, ThreadAffinity)
 
   // Creating and initializing execution state
   std::unique_ptr<HiCR::L0::ExecutionState> executionState = NULL;
-  ASSERT_NO_THROW(executionState = std::move(m.createExecutionState(executionUnit)));
+  ASSERT_NO_THROW(executionState = m.createExecutionState(executionUnit));
 
   // Starting execution state execution
   ASSERT_NO_THROW(processingUnit->start(std::move(executionState)));

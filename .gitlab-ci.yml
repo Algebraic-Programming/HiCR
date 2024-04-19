@@ -67,7 +67,8 @@ docs:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
   tags:
   - docker
-  - tiny 
+  - tiny
+  - interactive
   script:
   - echo "Checking HiCR source and test formatting..."
   - .build-tools/style/check-style.sh check include
@@ -85,7 +86,8 @@ pages:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
   tags:
   - docker
-  - tiny 
+  - tiny
+  - interactive
   script:
   - echo "Building code documentation..."
   - make -j1 -C docs

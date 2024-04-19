@@ -112,10 +112,10 @@ class InstanceManager
   __INLINE__ void addRPCTarget(const std::string &RPCName, const RPCFunction_t fc)
   {
     // Obtaining hash from the RPC name
-    const auto nameHash = getHashFromString(RPCName);
+    const auto idx = getRPCTargetIndexFromString(RPCName);
 
     // Inserting the new entry
-    _RPCTargetMap[nameHash] = fc;
+    _RPCTargetMap[idx] = fc;
   }
 
   /**
@@ -139,7 +139,7 @@ class InstanceManager
    * \param[in] pointer Pointer to the start of the data buffer to send
    * \param[in] size Size of the data buffer to send
    */
-  __INLINE__ void submitReturnValue(void *pointer, const size_t size) const
+  __INLINE__ void submitReturnValue(void *pointer, const size_t size)
   {
     // Calling backend-specific implementation of this function
     submitReturnValueImpl(pointer, size);
@@ -180,29 +180,29 @@ class InstanceManager
    */
   virtual HiCR::L0::Instance::instanceId_t getSeed() const = 0;
 
-  protected:
-
   /**
    * Generates a 64-bit hash value from a given string. Useful for compressing the name of RPCs
    *
    * @param[in] name A string (e.g., the name of an RPC to compress)
    * @return The 64-bit hashed value of the name provided
    */
-  static uint64_t getHashFromString(const std::string &name) { return std::hash<std::string>()(name); }
+  static RPCTargetIndex_t getRPCTargetIndexFromString(const std::string &name) { return std::hash<std::string>()(name); }
 
   /**
    * Internal function used to initiate the execution of the requested RPC
    * \param[in] rpcIdx Index to the RPC to run (hash to save overhead, the name is no longer recoverable)
    */
-  __INLINE__ void executeRPC(const RPCTargetIndex_t rpcIdx)
+  __INLINE__ void executeRPC(const RPCTargetIndex_t rpcIdx) const
   {
     // Getting RPC target from the index
     if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
-    auto &fc = _RPCTargetMap[rpcIdx];
+    auto &fc = _RPCTargetMap.at(rpcIdx);
 
     // Running RPC function
     fc();
   }
+
+  protected:
 
   /**
    * Backend-specific implementation of the createInstance function
@@ -225,7 +225,7 @@ class InstanceManager
    * \param[in] pointer Pointer to the start of the data buffer to send
    * \param[in] size Size of the data buffer to send
    */
-  virtual void submitReturnValueImpl(const void *pointer, const size_t size) const = 0;
+  virtual void submitReturnValueImpl(const void *pointer, const size_t size) = 0;
 
   /**
    * Backend-specific implementation of the listen function

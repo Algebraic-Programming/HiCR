@@ -15,7 +15,7 @@ void conditionVariable(HiCR::backend::host::L1::ComputeManager *computeManager, 
   taskr::Runtime taskr;
 
   // Assigning processing Re to TaskR
-  for (const auto &computeResource : computeResources) taskr.addProcessingUnit(std::move(computeManager->createProcessingUnit(computeResource)));
+  for (const auto &computeResource : computeResources) taskr.addProcessingUnit(computeManager->createProcessingUnit(computeResource));
 
   // Contention value
   size_t value = 0;
