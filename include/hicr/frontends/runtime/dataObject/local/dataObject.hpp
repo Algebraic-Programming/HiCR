@@ -15,7 +15,7 @@ namespace runtime
 class DataObject final
 {
   public:
-  
+
   /**
    * Type definition for a data object id
    */
