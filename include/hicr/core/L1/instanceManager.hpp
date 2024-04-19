@@ -105,6 +105,17 @@ class InstanceManager
   }
 
   /**
+   * Function to add a new instance to the set of instances tracked by the instance manager.
+   * 
+   * \param[in] instanceId the id of the instance
+  */
+  __INLINE__ void addInstance(HiCR::L0::Instance::instanceId_t instanceId)
+  {
+    auto instance = addInstanceImpl(instanceId);
+    _instances.insert(instance);
+  }
+
+  /**
    * Function to add an RPC target with a name, and the combination of a execution unit and the processing unit that is in charge of executing it
    * \param[in] RPCName Name of the RPC to add
    * \param[in] fc Indicates function to run when this RPC is triggered
@@ -212,6 +223,13 @@ class InstanceManager
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
   virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology, int argc, char *argv[]) = 0;
+
+  /**
+   * Backend-specific implementation of the addInstance function
+   * \param[in] instanceId the id of the instance
+   * \return A pointer to the backend-specific instance
+  */
+  virtual std::shared_ptr<HiCR::L0::Instance> addInstanceImpl(HiCR::L0::Instance::instanceId_t instanceId) = 0;
 
   /**
    * Backend-specific implementation of the getReturnValue function
