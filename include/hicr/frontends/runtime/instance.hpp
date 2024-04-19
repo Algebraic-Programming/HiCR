@@ -28,10 +28,16 @@
   #include <hicr/frontends/runtime/channel/yuanrong/producerChannel.hpp>
   #include <hicr/frontends/runtime/channel/yuanrong/consumerChannel.hpp>
 #else
+#ifdef _HICR_USE_MPI_BACKEND_
   #include "dataObject/mpi/dataObject.hpp"
   #include "channel/hicr/producerChannel.hpp"
   #include "channel/hicr/consumerChannel.hpp"
-#endif
+#else
+  #include "dataObject/local/dataObject.hpp"
+  #include "channel/hicr/producerChannel.hpp"
+  #include "channel/hicr/consumerChannel.hpp"
+#endif // _HICR_USE_MPI_BACKEND_
+#endif // _HICR_USE_YUANRONG_BACKEND_
 
 namespace HiCR
 {

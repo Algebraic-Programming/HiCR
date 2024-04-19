@@ -88,7 +88,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * Specifies the biding support requested by the user.
    * This is set to relaxed binding by default, to try to accomplish the request but falling back to the non-binding on failure.
    */
-  L0::LocalMemorySlot::binding_type _hwlocBindingRequested = L0::LocalMemorySlot::binding_type::relaxed_binding;
+  L0::LocalMemorySlot::binding_type _hwlocBindingRequested = L0::LocalMemorySlot::binding_type::strict_non_binding;
 
   /**
    * Local processor and memory hierarchy topology, as detected by Hwloc
