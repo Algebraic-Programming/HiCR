@@ -105,20 +105,15 @@ class Runtime final
    *
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
-   * @param[in] argc The number of command line arguments
-   * @param[in] argv Poiners to the character string for the command line arguments
    */
-  __INLINE__ void deploy(std::vector<HiCR::MachineModel::request_t>        &requests,
-                         HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc,
-                         int                                                argc   = 0,
-                         char                                              *argv[] = nullptr)
+  __INLINE__ void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling deploy before HiCR has been initialized.\n");
 
     // Execute requests by finding or creating an instance that matches their topology requirements
     try
     {
-      _machineModel->deploy(requests, acceptanceCriteriaFc, argc, argv);
+      _machineModel->deploy(requests, acceptanceCriteriaFc);
     }
     catch (const std::exception &e)
     {

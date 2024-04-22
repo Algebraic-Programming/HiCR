@@ -68,7 +68,6 @@ docs:
   tags:
   - docker
   - tiny
-  - interactive
   script:
   - echo "Checking HiCR source and test formatting..."
   - .build-tools/style/check-style.sh check include

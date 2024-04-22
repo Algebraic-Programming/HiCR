@@ -82,7 +82,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
   __INLINE__ void listenImpl() override { HICR_THROW_LOGIC("Calling listen using the Host instance manager results in a deadlock (nobody else to notify us). Aborting."); }
 
-  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology, int argc, char *argv[]) override
+  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology) override
   {
     HICR_THROW_LOGIC("The Host backend does not currently support the launching of new instances during runtime");
   }
