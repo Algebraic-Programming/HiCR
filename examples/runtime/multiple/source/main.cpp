@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
   std::vector<HiCR::L1::TopologyManager *> topologyManagers;
   hwloc_topology_t                         topology;
   hwloc_topology_init(&topology);
-  auto hwlocTopologyManager = std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(topology);
+  auto hwlocTopologyManager = std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(&topology);
   topologyManagers.push_back(hwlocTopologyManager.get());
 
 // Detecting Ascend
