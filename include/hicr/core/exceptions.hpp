@@ -15,6 +15,8 @@
 #include <cstdlib>
 #include <cstdarg>
 #include <stdexcept>
+#include <string>
+#include <cstdio>
 #include <hicr/core/definitions.hpp>
 
 namespace HiCR
