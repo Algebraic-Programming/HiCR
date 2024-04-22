@@ -111,10 +111,8 @@ class MachineModel
    *
    * @param[in] requests A vector of machine requests. The requests will be resolved in the order provided.
    * @param[in] acceptanceCriteriaFc A function that determines, given the detect topology and the requested topology, if the former satisfies the latter
-   * @param[in] argc argc to pass to the newly created instance
-   * @param[in] argv argv to pass to the newly created instance
    */
-  void deploy(std::vector<request_t> &requests, topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc, int argc = 0, char *argv[] = nullptr)
+  void deploy(std::vector<request_t> &requests, topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
   {
     // Getting information about the currently deployed instances and their topology
     auto detectedInstances = detectInstances(*_instanceManager);
@@ -150,7 +148,7 @@ class MachineModel
         std::shared_ptr<HiCR::L0::Instance> newInstance;
         try
         {
-          newInstance = _instanceManager->createInstance(requests[i].topology, argc, argv);
+          newInstance = _instanceManager->createInstance(requests[i].topology);
         }
         catch (std::exception &e)
         {
