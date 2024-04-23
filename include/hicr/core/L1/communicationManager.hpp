@@ -80,29 +80,35 @@ class CommunicationManager
    */
   __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlot(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey)
   {
-    // Locking access to prevent concurrency issues
-    this->lock();
+    auto globalSlotImpl = getGlobalMemorySlotImpl(tag, globalKey);
 
-    // If the requested tag and key are not found, return empty storage
-    if (_globalMemorySlotTagKeyMap.contains(tag) == false)
+    if (globalSlotImpl != nullptr) { return globalSlotImpl; }
+    else
     {
+      // Locking access to prevent concurrency issues
+      this->lock();
+
+      // If the requested tag and key are not found, return empty storage
+      if (_globalMemorySlotTagKeyMap.contains(tag) == false)
+      {
+        this->unlock();
+        HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
+      }
+      if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false)
+      {
+        this->unlock();
+        HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
+      }
+
+      // Getting requested memory slot
+      auto value = _globalMemorySlotTagKeyMap.at(tag).at(globalKey);
+
+      // Releasing lock
       this->unlock();
-      HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
+
+      // Returning value
+      return value;
     }
-    if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false)
-    {
-      this->unlock();
-      HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
-    }
-
-    // Getting requested memory slot
-    auto value = _globalMemorySlotTagKeyMap.at(tag).at(globalKey);
-
-    // Releasing lock
-    this->unlock();
-
-    // Returning value
-    return value;
   }
 
   /**
@@ -438,6 +444,17 @@ class CommunicationManager
    * \param[in] memorySlot Memory slot to deregister.
    */
   virtual void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) = 0;
+
+  /**
+   * Backend-internal implementation of the getGlobalMemorySlot function
+   *
+   * Retrieves the map of globally registered slots
+   *
+   * \param[in] tag Tag that identifies a subset of all global memory slots
+   * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
+   * \return The map of registered global memory slots, filtered by tag and mapped by key
+   */
+  virtual std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey) = 0;
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication

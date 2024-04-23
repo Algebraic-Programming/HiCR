@@ -460,6 +460,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Setting memory slot lock as released
     m->setLockAcquiredValue(false);
   }
+
+  std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override
+  {
+    return nullptr;
+  }
 };
 
 } // namespace L1

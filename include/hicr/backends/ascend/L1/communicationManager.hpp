@@ -102,6 +102,12 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
   __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 
+  __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::L0::GlobalMemorySlot::tag_t       tag,
+                                                                                 const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override
+  {
+    return nullptr;
+  }
+
   /**
    * This memcpy implementation does support asynchronous inter-device communication, meaning the fence should be called when date are
    * moved among different ascend devices.

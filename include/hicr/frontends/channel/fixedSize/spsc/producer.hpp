@@ -35,7 +35,7 @@ namespace SPSC
  * It exposes the functionality to be expected for a producer channel
  *
  */
-class Producer final : public channel::fixedSize::Base
+class Producer : public channel::fixedSize::Base
 {
   public:
 

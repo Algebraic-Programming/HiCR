@@ -5,10 +5,10 @@
  */
 
 /**
- * @file fixedSize/mpsc/consumer.hpp
- * @brief Provides Consumer functionality for a Multiple-Producer Single-Consumer Channel (MPSC) over HiCR
- * @author S. M Martin
- * @date 14/11/2023
+ * @file fixedSize/mpsc/locking/consumer.hpp
+ * @brief Provides Consumer functionality for a lock-based MPSC channel
+ * @author S. M Martin, K. Dichev
+ * @date 08/04/2024
  */
 
 #pragma once
@@ -27,6 +27,9 @@ namespace fixedSize
 {
 
 namespace MPSC
+{
+
+namespace locking
 {
 
 /**
@@ -102,6 +105,7 @@ class Consumer final : public channel::fixedSize::Base
     // Obtaining coordination buffer slot lock
     if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return bufferPos;
 
+    _communicationManager->flushReceived();
     // Calculating current channel depth
     const auto curDepth = getDepth();
 
@@ -163,6 +167,8 @@ class Consumer final : public channel::fixedSize::Base
    */
   const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _consumerCoordinationBuffer;
 };
+
+} // namespace locking
 
 } // namespace MPSC
 
