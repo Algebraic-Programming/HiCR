@@ -69,6 +69,18 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     pthread_mutex_destroy(&_mutex);
   }
 
+  __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey)
+  {
+    if (_shadowMap.find(tag) != _shadowMap.end())
+    {
+      if (_shadowMap[tag].find(globalKey) != _shadowMap[tag].end())
+        return _shadowMap[tag][globalKey];
+      else
+        return nullptr;
+    }
+    else { return nullptr; }
+  }
+
   private:
 
   /**
@@ -105,6 +117,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
+      _shadowMap[tag][globalKey] = globalMemorySlot;
     }
 
     // Do not allow any thread to continue until the exchange is made
@@ -227,6 +240,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Locking the pthread mutex
     pthread_mutex_unlock(&_mutex);
   }
+
+  private:
+
+  // this map shadows the core HiCR map _globalMemorySlotTagKeyMap
+  // to support getGlobalMemorySlot implementation
+  // for this backend
+  globalMemorySlotTagKeyMap_t _shadowMap;
 };
 
 } // namespace L1

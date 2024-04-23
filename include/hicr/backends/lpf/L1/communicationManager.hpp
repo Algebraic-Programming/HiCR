@@ -91,6 +91,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       _localSwapSlot(LPF_INVALID_MEMSLOT)
   {}
 
+  std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override
+  {
+    return nullptr;
+  }
+
   __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange

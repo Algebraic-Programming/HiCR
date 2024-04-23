@@ -5,10 +5,10 @@
  */
 
 /**
- * @file fixedSize/mpsc/producer.hpp
- * @brief Provides producer functionality for a Multiple-Producer Single-Consumer Channel (MPSC) over HiCR
- * @author S. M Martin
- * @date 14/11/2023
+ * @file fixedSize/mpsc/locking/producer.hpp
+ * @brief Provides producer functionality for a lock-based MPSC Channel
+ * @author S. M Martin, K. Dichev
+ * @date 08/04/2024
  */
 
 #pragma once
@@ -27,6 +27,9 @@ namespace fixedSize
 {
 
 namespace MPSC
+{
+
+namespace locking
 {
 
 /**
@@ -150,6 +153,8 @@ class Producer final : public fixedSize::Base
    */
   const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _consumerCoordinationBuffer;
 };
+
+} // namespace locking
 
 } // namespace MPSC
 
