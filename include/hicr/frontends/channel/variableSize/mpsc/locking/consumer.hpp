@@ -309,7 +309,7 @@ class Consumer final : public variableSize::Base
 
     // Locking remote coordination buffer slot
     if (_communicationManager->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false)
-      return successFlag; // by internal definitions it should be impossible to get here; see acquireGlobalLockImpl for MPI backend.
+      return successFlag;
 
     // If the exchange buffer does not have n tokens pushed, reject operation
     if (n > _circularBuffer->getDepth())

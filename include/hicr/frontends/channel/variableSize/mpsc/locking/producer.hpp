@@ -140,18 +140,6 @@ class Producer final : public variableSize::Base
   }
 
   /**
-   * advance payload buffer tail by a number of bytes
-   * @param[in] n bytes to advance payload buffer tail by
-   */
-  __INLINE__ void advancePayloadTail(const size_t n = 1) { _circularBufferForPayloads->advanceTail(n); }
-
-  /**
-   * advance payload buffer head by a number of bytes
-   * @param[in] n bytes to advance payload buffer head by
-   */
-  __INLINE__ void advancePayloadHead(const size_t n = 1) { _circularBufferForPayloads->advanceHead(n); }
-
-  /**
    * get payload buffer head position
    * @return payload buffer head position (in bytes)
    */
@@ -197,7 +185,7 @@ class Producer final : public variableSize::Base
   {
     if (n != 1) HICR_THROW_RUNTIME("HiCR currently has no implementation for n != 1 with push(sourceSlot, n) for variable size version.");
 
-    // Make sure source slot is beg enough to satisfy the operation
+    // Make sure source slot is big enough to satisfy the operation
     size_t requiredBufferSize     = sourceSlot->getSize();
     size_t providedBufferCapacity = getPayloadCapacity();
 
@@ -268,7 +256,7 @@ class Producer final : public variableSize::Base
       _communicationManager->memcpy(_payloadBuffer, getPayloadHeadPosition(), sourceSlot, 0, requiredBufferSize);
       _communicationManager->fence(sourceSlot, 1, 0);
     }
-    advancePayloadHead(requiredBufferSize);
+    _circularBufferForPayloads->advanceHead(requiredBufferSize);
 
     // Updating global coordination buffer
     _communicationManager->memcpy(_consumerCoordinationBufferForCounts, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
