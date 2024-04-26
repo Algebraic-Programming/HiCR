@@ -192,25 +192,31 @@ class Producer final : public variableSize::Base
     // Flag to record whether the operation was successful or not (it simplifies code by releasing locks only once)
     bool successFlag = false;
 
-    if (getPayloadDepth() + requiredBufferSize > providedBufferCapacity)
-      HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has depth (%lu). This would exceed capacity (%lu).\n",
-                         requiredBufferSize,
-                         getPayloadDepth(),
-                         providedBufferCapacity);
-
-    size_t *sizeInfoBufferPtr = static_cast<size_t *>(_sizeInfoBuffer->getPointer());
-    sizeInfoBufferPtr[0]      = requiredBufferSize;
-
-    // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + 1 > _circularBuffer->getCapacity())
-      HICR_THROW_RUNTIME(
-        "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", 1, getDepth(), _circularBuffer->getCapacity());
-
     // Locking remote token and coordination buffer slots
     if (_communicationManager->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false) return successFlag;
 
     // Updating depth of token (message sizes) and payload buffers, updating both coordination buffers
     updateDepth();
+
+    if (getPayloadDepth() + requiredBufferSize > providedBufferCapacity) {
+      _communicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
+      return successFlag;
+    }
+//      HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has depth (%lu). This would exceed capacity (%lu).\n",
+//                         requiredBufferSize,
+//                         getPayloadDepth(),
+//                         providedBufferCapacity);
+
+    size_t *sizeInfoBufferPtr = static_cast<size_t *>(_sizeInfoBuffer->getPointer());
+    sizeInfoBufferPtr[0]      = requiredBufferSize;
+
+    // If the exchange buffer does not have n free slots, reject the operation
+    if (getDepth() + 1 > _circularBuffer->getCapacity()) {
+      _communicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
+      return successFlag;
+    }
+//      HICR_THROW_RUNTIME(
+//        "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", 1, getDepth(), _circularBuffer->getCapacity());
 
     // Copying with source increasing offset per token
     _communicationManager->memcpy(_tokenSizeBuffer,                                    /* destination */

@@ -302,14 +302,14 @@ class Consumer final : public variableSize::Base
   {
     if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
 
-    // Updating channel depth
-    updateDepth();
-
     bool successFlag = false;
 
     // Locking remote coordination buffer slot
     if (_communicationManager->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false)
       return successFlag;
+
+    // Updating channel depth
+    updateDepth();
 
     // If the exchange buffer does not have n tokens pushed, reject operation
     if (n > _circularBuffer->getDepth())
