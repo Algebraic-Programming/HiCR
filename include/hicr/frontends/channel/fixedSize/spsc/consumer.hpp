@@ -156,6 +156,7 @@ class Consumer final : public channel::fixedSize::Base
                                   _coordinationBuffer,
                                   _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
                                   coordBuffElemSize);
+    _communicationManager->fence(_coordinationBuffer, 1, 0);
   }
 
   /**

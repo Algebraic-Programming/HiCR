@@ -112,8 +112,11 @@ class Producer final : public variableSize::Base
   /**
    * advance payload buffer head by a number of bytes
    * @param[in] n bytes to advance payload buffer head by
+   * @param[in] cachedDepth A boolean which is true if a cached depth should be used, 
+   * otherwise the current depth should be used. For details see \ref CircularBuffer::advanceHead
+   * documentation
    */
-  void advancePayloadHead(const size_t n = 1) { _circularBufferForPayloads->advanceHead(n); }
+  void advancePayloadHead(const size_t n = 1, bool cachedDepth = false) { _circularBufferForPayloads->advanceHead(n, cachedDepth); }
   /**
    * get payload buffer head position
    * @return payload buffer head position (in bytes)
@@ -179,10 +182,13 @@ class Producer final : public variableSize::Base
       HICR_THROW_RUNTIME(
         "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", 1, getDepth(), _circularBuffer->getCapacity());
 
-    // Copying with source increasing offset per token
+    _circularBuffer->setCachedDepth(_circularBuffer->getDepth());
+    // Advance head, as we have added new elements
+    // It is important to do the advanceHead and copy together,
+    // or else issues such as advancing head index too early or too late might occur!
     _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), _sizeInfoBuffer, 0, getTokenSize());
     _communicationManager->fence(_sizeInfoBuffer, 1, 0);
-    _circularBuffer->advanceHead(1);
+    _circularBuffer->advanceHead(1, true);
 
     /**
      * Payload copy:
@@ -192,6 +198,7 @@ class Producer final : public variableSize::Base
      *  beginning. Cover this corner case below
      *
      */
+    _circularBufferForPayloads->setCachedDepth(getPayloadDepth());
     if (requiredBufferSize + getPayloadHeadPosition() > getPayloadCapacity())
     {
       size_t first_chunk  = getPayloadCapacity() - getPayloadHeadPosition();
@@ -205,10 +212,11 @@ class Producer final : public variableSize::Base
     }
     else
     {
+      _circularBufferForPayloads->setCachedDepth(getPayloadDepth());
       _communicationManager->memcpy(_payloadBuffer, getPayloadHeadPosition(), sourceSlot, 0, requiredBufferSize);
       _communicationManager->fence(sourceSlot, 1, 0);
     }
-    advancePayloadHead(requiredBufferSize);
+    advancePayloadHead(requiredBufferSize, true);
   }
 
   /**

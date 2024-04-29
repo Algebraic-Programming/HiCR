@@ -44,7 +44,8 @@ class CircularBuffer
   CircularBuffer(size_t capacity, __volatile__ size_t *headAdvanceCounter, __volatile__ size_t *tailAdvanceCounter)
     : _capacity(capacity),
       _headAdvanceCounter(headAdvanceCounter),
-      _tailAdvanceCounter(tailAdvanceCounter)
+      _tailAdvanceCounter(tailAdvanceCounter),
+      _cachedDepth(0)
   {}
 
   virtual ~CircularBuffer() = default;
@@ -80,11 +81,17 @@ class CircularBuffer
    * The head cannot advance in such a way that the depth exceeds capacity.
    *
    * \param[in] n The number of positions to advance
+   * \param[in] useCachedDepth A boolean signalling if we should read a cached,
+   * slightly outdated channel depth. This parameter can be used if
+   * in a combination of push from producer and pop from consumer the two
+   * might cross over and lead to a brief tail index > head index.
+   * This is normally illegal. In this scenario, getCached = true 
+   * allows a crossover between push and pop to complete 
    */
-  __INLINE__ void advanceHead(const size_t n = 1)
+  __INLINE__ void advanceHead(const size_t n = 1, bool useCachedDepth = false)
   {
     // Current depth
-    const auto curDepth = getDepth();
+    const auto curDepth = useCachedDepth ? getCachedDepth() : getDepth();
 
     // Calculating new depth
     const auto newDepth = curDepth + n;
@@ -136,6 +143,20 @@ class CircularBuffer
    * This function when called on a valid circular buffer instance will never fail.
    */
   __INLINE__ size_t getDepth() const noexcept { return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter); }
+
+  /**
+   * A setter function for the attribute
+   * cached depth of the channel
+   * @param[in] depth Value to set _cachedDepth to
+   */
+  void setCachedDepth(size_t depth) { _cachedDepth = depth; }
+
+  /**
+   * A getter function for the attribute
+   * _cachedDepth
+   * @returns cached depth of channel
+   */
+  __INLINE__ size_t getCachedDepth() const noexcept { return _cachedDepth; }
 
   /**
    * This function can be used to quickly check whether the circular buffer is full.
@@ -225,6 +246,11 @@ class CircularBuffer
    * Stores how many position has the tail advanced so far
    */
   __volatile__ size_t *const _tailAdvanceCounter;
+
+  /**
+   * A cached depth value only set via setCachedDepth
+   */
+  size_t _cachedDepth;
 
   protected:
 
