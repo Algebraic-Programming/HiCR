@@ -22,6 +22,8 @@ if 'mpi' in enabledBackends and 'hwloc' in enabledBackends
 endif
 
 if 'lpf' in enabledBackends and 'hwloc' in enabledBackends 
-	lpf = executable('lpf', [ 'source/lpf.cpp' ], dependencies: hicrBuildDep, include_directories: [exampleBuildIncludes] )
-	test('lpf', lpfrunExecutable, args : [ '-n', '2', lpf.full_path(), '3' ], timeout: test_timeout, suite: testSuite )
+    lpf = executable('lpf', [ 'source/lpf.cpp' ], dependencies: hicrBuildDep, include_directories: [exampleBuildIncludes] )
+    if get_option('buildTests')
+        test('lpf', lpfrunExecutable, args : [ '-np', '16', '-engine', 'ibverbs', lpf.full_path(), '3' ], timeout: test_timeout, suite: testSuite )
+    endif
 endif

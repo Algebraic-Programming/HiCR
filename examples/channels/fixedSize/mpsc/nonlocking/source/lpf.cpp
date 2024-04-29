@@ -67,7 +67,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 
   // Rank 0 is consumer, the rest are producers
   if (rankId == 0) consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);
-  if (rankId >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, rankId, producerCount);
+  if (rankId >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, rankId - 1, producerCount);
 }
 
 int main(int argc, char **argv)
