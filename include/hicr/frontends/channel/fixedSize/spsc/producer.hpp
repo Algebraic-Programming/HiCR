@@ -105,14 +105,21 @@ class Producer : public channel::fixedSize::Base
       HICR_THROW_RUNTIME(
         "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, _circularBuffer->getCapacity());
 
-    // Copying with source increasing offset per token
-    for (size_t i = 0; i < n; i++) _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
-
-    // Advance head, as we have added new elements
-    _circularBuffer->advanceHead(n);
-
-    // Adding fence operation to ensure buffers are ready for re-use
-    _communicationManager->fence(sourceSlot, n, 0);
+    /**
+     * Because it is possible that head advance (by producer)
+     * and tail advance (signalled by consumer) overlap,
+     * we allow for temporary illegal (tail > head) by using the 
+     * cached depth when advancing the head
+     */
+    _circularBuffer->setCachedDepth(_circularBuffer->getDepth());
+    for (size_t i = 0; i < n; i++)
+    {
+      // Copying with source increasing offset per token
+      _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      _communicationManager->fence(sourceSlot, 1, 0);
+      // read potentially outdated depth here
+    }
+    _circularBuffer->advanceHead(n, true);
   }
 
   /**
