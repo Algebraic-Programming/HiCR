@@ -5,7 +5,7 @@ backendIncludes = include_directories([
 
 backendDependencies = [
     dependency('threads', required: true),
-    dependency('boost',  modules : ['context'],  required : true)
+    dependency('boost', version: '>=1.71', modules : ['context'],  required : true)
 ]
     
 backendCppArgs = [

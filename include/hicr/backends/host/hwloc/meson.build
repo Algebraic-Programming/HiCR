@@ -4,7 +4,7 @@ backendIncludes = include_directories([
 ])
 
 backendDependencies = [
-   dependency('hwloc', required: true)
+   dependency('hwloc', version: '>=2.1.0', required: true)
 ]
     
 backendCppArgs = [
