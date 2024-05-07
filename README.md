@@ -16,7 +16,8 @@ meson (version >1.0.0)
 minja (version >1.0.0)
 OpenMPI (version >= 5.0.2)
 python (version >= 3.9)
-hwloc
+hwloc (version >= 2.1.0)
+libboost-context-dev (version >= 1.71)
 gtest
 ```
 
