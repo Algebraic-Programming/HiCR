@@ -14,6 +14,7 @@
 
 #include <csignal>
 #include <set>
+#include <sched.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -23,6 +24,11 @@
 #include <hicr/backends/host/L0/executionState.hpp>
 #include <hicr/backends/host/L0/executionUnit.hpp>
 #include <hicr/backends/host/L0/computeResource.hpp>
+
+#ifndef _GNU_SOURCE
+  /// Required by sched_getaffinity
+  #define _GNU_SOURCE
+#endif
 
 namespace HiCR
 {
@@ -64,8 +70,16 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    for (const auto c : affinity) CPU_SET(c, &cpuset);
-    if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem assigning affinity.");
+    for (const auto c : affinity) CPU_SET_S(c, sizeof(cpu_set_t), &cpuset);
+
+    // Attempting to use the pthread interface first
+    int status = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+    // If failed, attempt to use the sched interface
+    if (status != 0) status = sched_getaffinity(getpid(), sizeof(cpu_set_t), &cpuset);
+
+    // Throw exception if none of them worked
+    if (status != 0) HICR_THROW_RUNTIME("Problem assigning affinity.");
   }
 
   /**
@@ -77,7 +91,15 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   {
     std::set<int> affinity;
     cpu_set_t     cpuset;
-    if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) != 0) HICR_THROW_RUNTIME("Problem obtaining affinity.");
+
+    // Attempting to use the pthread interface first
+    int status = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+    // If failed, attempt to use the sched interface
+    if (status != 0) status = sched_getaffinity(getpid(), sizeof(cpu_set_t), &cpuset);
+
+    // Throw exception if none of them worked
+    if (status != 0) HICR_THROW_RUNTIME("Problem obtaining affinity.");
     for (int i = 0; i < CPU_SETSIZE; i++)
       if (CPU_ISSET(i, &cpuset)) affinity.insert(i);
 
