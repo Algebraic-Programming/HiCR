@@ -25,11 +25,9 @@ int main(int argc, char **argv)
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
 
-  // Getting first device found
-  auto d = *t.getDevices().begin();
-
-  // Updating the compute resource list
-  auto computeResources = d->getComputeResourceList();
+  // Getting compute resource lists from devices
+  std::vector<HiCR::L0::Device::computeResourceList_t> computeResourceLists;
+  for (auto d : t.getDevices()) computeResourceLists.push_back(d->getComputeResourceList());
 
   // Initializing taskr
   taskr::Runtime taskr;
@@ -52,21 +50,22 @@ int main(int argc, char **argv)
   }
 
   // Create processing units from the detected compute resource list and giving them to taskr
-  for (auto computeResource : computeResources)
-  {
-    // Interpreting compute resource as core
-    auto core = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(computeResource);
-
-    // If the core affinity is included in the list, create new processing unit
-    if (coreSubset.contains(core->getProcessorId()))
+  for (auto computeResourceList : computeResourceLists)
+    for (auto computeResource : computeResourceList)
     {
-      // Creating a processing unit out of the computational resource
-      auto processingUnit = computeManager.createProcessingUnit(computeResource);
+      // Interpreting compute resource as core
+      auto core = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
-      // Assigning resource to the taskr
-      taskr.addProcessingUnit(std::move(processingUnit));
+      // If the core affinity is included in the list, create new processing unit
+      if (coreSubset.contains(core->getProcessorId()))
+      {
+        // Creating a processing unit out of the computational resource
+        auto processingUnit = computeManager.createProcessingUnit(computeResource);
+
+        // Assigning resource to the taskr
+        taskr.addProcessingUnit(std::move(processingUnit));
+      }
     }
-  }
 
   // Creating task  execution unit
   auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]() { work(iterations); });
