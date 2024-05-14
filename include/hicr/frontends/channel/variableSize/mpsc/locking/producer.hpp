@@ -115,15 +115,15 @@ class Producer final : public variableSize::Base
   ~Producer() {}
 
   /**
-   * Identical to Producer::updateDepth(), but this coordination buffer
-   * is larger and contains payload information as well as token metadata
+   * This call gets the head/tail indices from the consumer.
+   * The assumption is we hold the global lock.
    */
   __INLINE__ void updateDepth() // NOTE: we DO know we have the lock!!!!
   {
     _communicationManager->queryMemorySlotUpdates(_consumerCoordinationBufferForCounts);
     _communicationManager->queryMemorySlotUpdates(_consumerCoordinationBufferForPayloads);
 
-    _communicationManager->memcpy(_coordinationBuffer,                                         /* destination */
+    _communicationManager->memcpy(_coordinationBufferForCounts,                                /* destination */
                                   0,                                                           /* dst_offset */
                                   _consumerCoordinationBufferForCounts,                        /* source */
                                   0,                                                           /* src_offset */
@@ -135,15 +135,12 @@ class Producer final : public variableSize::Base
                                   0,                                                           /* src_offset */
                                   2 * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE)); /* size */
 
-    _communicationManager->fence(_coordinationBuffer, 0, 1);
+    _communicationManager->fence(_coordinationBufferForCounts, 0, 1);
     _communicationManager->fence(_coordinationBufferForPayloads, 0, 1);
+    /**
+     * Now we know the exact buffer state at the consumer
+     */
   }
-
-  /**
-   * get payload buffer head position
-   * @return payload buffer head position (in bytes)
-   */
-  __INLINE__ size_t getPayloadHeadPosition() const noexcept { return _circularBufferForPayloads->getHeadPosition(); }
 
   /**
    * get the datatype size used for payload buffer
@@ -156,12 +153,6 @@ class Producer final : public variableSize::Base
    * @return payload buffer depth (in bytes)
    */
   inline size_t getPayloadDepth() { return _circularBufferForPayloads->getDepth(); }
-
-  /**
-   * get payload buffer capacity
-   * @return payload buffer capacity (in bytes)
-   */
-  inline size_t getPayloadCapacity() { return _circularBufferForPayloads->getCapacity(); }
 
   /**
    * Puts new variable-sized messages unto the channel.
@@ -186,8 +177,7 @@ class Producer final : public variableSize::Base
     if (n != 1) HICR_THROW_RUNTIME("HiCR currently has no implementation for n != 1 with push(sourceSlot, n) for variable size version.");
 
     // Make sure source slot is big enough to satisfy the operation
-    size_t requiredBufferSize     = sourceSlot->getSize();
-    size_t providedBufferCapacity = getPayloadCapacity();
+    size_t requiredBufferSize = sourceSlot->getSize();
 
     // Flag to record whether the operation was successful or not (it simplifies code by releasing locks only once)
     bool successFlag = false;
@@ -195,59 +185,58 @@ class Producer final : public variableSize::Base
     // Locking remote token and coordination buffer slots
     if (_communicationManager->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false) return successFlag;
 
-    // Updating depth of token (message sizes) and payload buffers, updating both coordination buffers
+    // Updating depth of token (message sizes) and payload buffers from the consumer
     updateDepth();
 
-    if (getPayloadDepth() + requiredBufferSize > providedBufferCapacity) {
+    // Check if the amount of data we wish to write (requiredBufferSize)
+    // would fit in the consumer payload buffer in its current state.
+    // If not, reject the operation
+    if (_circularBufferForPayloads->getDepth() + requiredBufferSize > _circularBufferForPayloads->getCapacity())
+    {
       _communicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
       return successFlag;
     }
-//      HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has depth (%lu). This would exceed capacity (%lu).\n",
-//                         requiredBufferSize,
-//                         getPayloadDepth(),
-//                         providedBufferCapacity);
 
     size_t *sizeInfoBufferPtr = static_cast<size_t *>(_sizeInfoBuffer->getPointer());
     sizeInfoBufferPtr[0]      = requiredBufferSize;
 
-    // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + 1 > _circularBuffer->getCapacity()) {
+    // Check if the consumer buffer has n free slots. If not, reject the operation
+    if (_circularBufferForCounts->getDepth() + 1 > _circularBufferForCounts->getCapacity())
+    {
       _communicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
       return successFlag;
     }
-//      HICR_THROW_RUNTIME(
-//        "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", 1, getDepth(), _circularBuffer->getCapacity());
 
-    // Copying with source increasing offset per token
-    _communicationManager->memcpy(_tokenSizeBuffer,                                    /* destination */
-                                  getTokenSize() * _circularBuffer->getHeadPosition(), /* dst_offset */
-                                  _sizeInfoBuffer,                                     /* source */
-                                  0,                                                   /* src_offset */
-                                  getTokenSize());                                     /* size */
+    /**
+     * Phase 1: Update the size (in bytes) of the pending payload
+     * at the consumer
+     */
+    _communicationManager->memcpy(_tokenSizeBuffer,                                             /* destination */
+                                  getTokenSize() * _circularBufferForCounts->getHeadPosition(), /* dst_offset */
+                                  _sizeInfoBuffer,                                              /* source */
+                                  0,                                                            /* src_offset */
+                                  getTokenSize());                                              /* size */
     _communicationManager->fence(_sizeInfoBuffer, 1, 0);
-    _circularBuffer->advanceHead(1);
-
     successFlag = true;
 
     /**
-     * Payload copy:
+     * Phase 2: Payload copy:
      *  - We have checked (requiredBufferSize  <= depth)
      *  that the payload fits into available circular buffer,
      *  but it is possible it spills over the end into the
      *  beginning. Cover this corner case below
      *
      */
-    if (requiredBufferSize + getPayloadHeadPosition() > getPayloadCapacity())
+    if (requiredBufferSize + _circularBufferForPayloads->getHeadPosition() > _circularBufferForPayloads->getCapacity())
     {
-      size_t first_chunk  = getPayloadCapacity() - getPayloadHeadPosition();
+      size_t first_chunk  = _circularBufferForPayloads->getCapacity() - _circularBufferForPayloads->getHeadPosition();
       size_t second_chunk = requiredBufferSize - first_chunk;
-
       // copy first part to end of buffer
-      _communicationManager->memcpy(_payloadBuffer,           /* destination */
-                                    getPayloadHeadPosition(), /* dst_offset */
-                                    sourceSlot,               /* source */
-                                    0,                        /* src_offset */
-                                    first_chunk);             /* size */
+      _communicationManager->memcpy(_payloadBuffer,                                /* destination */
+                                    _circularBufferForPayloads->getHeadPosition(), /* dst_offset */
+                                    sourceSlot,                                    /* source */
+                                    0,                                             /* src_offset */
+                                    first_chunk);                                  /* size */
       // copy second part to beginning of buffer
       _communicationManager->memcpy(_payloadBuffer, /* destination */
                                     0,              /* dst_offset */
@@ -259,15 +248,20 @@ class Producer final : public variableSize::Base
     }
     else
     {
-      _communicationManager->memcpy(_payloadBuffer, getPayloadHeadPosition(), sourceSlot, 0, requiredBufferSize);
+      _communicationManager->memcpy(_payloadBuffer, _circularBufferForPayloads->getHeadPosition(), sourceSlot, 0, requiredBufferSize);
       _communicationManager->fence(sourceSlot, 1, 0);
     }
+
+    // Remotely push an element into consumer side, updating consumer head indices
+    _circularBufferForCounts->advanceHead(1);
     _circularBufferForPayloads->advanceHead(requiredBufferSize);
 
-    // Updating global coordination buffer
-    _communicationManager->memcpy(_consumerCoordinationBufferForCounts, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
-    _communicationManager->memcpy(_consumerCoordinationBufferForPayloads, 0, _coordinationBufferForPayloads, 0, getCoordinationBufferSize());
-    _communicationManager->fence(_coordinationBuffer, 1, 0);
+    // only update head index at consumer (byte size = one buffer element)
+    _communicationManager->memcpy(_consumerCoordinationBufferForCounts, 0, _coordinationBufferForCounts, 0, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+    // only update head index at consumer (byte size = one buffer element)
+    _communicationManager->memcpy(_consumerCoordinationBufferForPayloads, 0, _coordinationBufferForPayloads, 0, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+    // backend LPF needs this to complete
+    _communicationManager->fence(_coordinationBufferForCounts, 1, 0);
     _communicationManager->fence(_coordinationBufferForPayloads, 1, 0);
 
     _communicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
@@ -284,7 +278,7 @@ class Producer final : public variableSize::Base
     // Because the current implementation first receives the message size in the token buffer, followed
     // by the message payload, it is possible for the token buffer to have a larged depth (by 1) than the payload buffer.
     // Therefore, we need to return the minimum of the two depths
-    return std::min(_circularBuffer->getDepth(), _circularBufferForPayloads->getDepth() / getPayloadSize());
+    return std::min(_circularBufferForCounts->getDepth(), _circularBufferForPayloads->getDepth() / getPayloadSize());
   }
 
   /**
@@ -295,7 +289,7 @@ class Producer final : public variableSize::Base
    * \returns true, if both message count and payload buffers are empty
    * \returns false, if one of the buffers is not empty
    */
-  __INLINE__ bool isEmpty() { return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0); }
+  __INLINE__ bool isEmpty() { return (_circularBufferForCounts->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0); }
 };
 
 } // namespace locking

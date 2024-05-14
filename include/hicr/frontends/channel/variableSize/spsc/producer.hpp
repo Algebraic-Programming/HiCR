@@ -240,7 +240,6 @@ class Producer final : public variableSize::Base
     }
     else
     {
-      _circularBufferForPayloads->setCachedDepth(getPayloadDepth());
       _communicationManager->memcpy(_payloadBuffer, getPayloadHeadPosition(), sourceSlot, 0, requiredBufferSize);
       _communicationManager->fence(sourceSlot, 1, 0);
     }
