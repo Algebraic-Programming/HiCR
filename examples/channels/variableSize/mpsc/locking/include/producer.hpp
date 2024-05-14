@@ -37,6 +37,7 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   auto consumerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
   auto payloadBuffer                         = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
 
+  const size_t payloadCapacity = channelCapacity * sizeof(ELEMENT_TYPE);
   // Creating producer and consumer channels
   auto producer = HiCR::channel::variableSize::MPSC::locking::Producer(communicationManager,
                                                                        sizeInfoBuffer,
@@ -46,14 +47,14 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
                                                                        coordinationBufferForPayloads,
                                                                        consumerCoordinationBufferForCounts,
                                                                        consumerCoordinationBufferForPayloads,
-                                                                       PAYLOAD_CAPACITY,
+                                                                       payloadCapacity,
                                                                        sizeof(ELEMENT_TYPE),
                                                                        channelCapacity);
 
   // Allocating a send slot to put the values we want to communicate
-  ELEMENT_TYPE sendBuffer1[4] = {0u * producerId, 1u * producerId, 2u * producerId, 3u * producerId};
-  ELEMENT_TYPE sendBuffer2[3] = {4u * producerId, 5u * producerId, 6u * producerId};
-  ELEMENT_TYPE sendBuffer3[2] = {7u * producerId, 8u * producerId};
+  ELEMENT_TYPE sendBuffer1[5] = {1u * producerId, 0u * producerId, 1u * producerId, 2u * producerId, 3u * producerId};
+  ELEMENT_TYPE sendBuffer2[4] = {1u * producerId, 4u * producerId, 5u * producerId, 6u * producerId};
+  ELEMENT_TYPE sendBuffer3[3] = {1u * producerId, 7u * producerId, 8u * producerId};
   auto         sendBuffer1Ptr = &sendBuffer1;
   auto         sendBuffer2Ptr = &sendBuffer2;
   auto         sendBuffer3Ptr = &sendBuffer3;
@@ -62,19 +63,21 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   auto         sendSlot3      = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBuffer3Ptr, sizeof(sendBuffer3));
 
   // Pushing first batch
+  char prefix[64] = {'\0'};
+  sprintf(prefix, "PRODUCER %u sent:", producerId);
   while (producer.push(sendSlot1) == false)
     ;
-  Printer<ELEMENT_TYPE>::printBytes("PRODUCER sent:", sendBuffer1Ptr, sizeof(sendBuffer1), 0, sizeof(sendBuffer1));
+  Printer<ELEMENT_TYPE>::printBytes(prefix, sendBuffer1Ptr, sizeof(sendBuffer1), 0, sizeof(sendBuffer1));
 
   // Sending second batch
   while (producer.push(sendSlot2) == false)
     ;
-  Printer<ELEMENT_TYPE>::printBytes("PRODUCER sent:", sendBuffer2Ptr, sizeof(sendBuffer2), 0, sizeof(sendBuffer2));
+  Printer<ELEMENT_TYPE>::printBytes(prefix, sendBuffer2Ptr, sizeof(sendBuffer2), 0, sizeof(sendBuffer2));
 
   // Sending third batch (same as first batch)
   while (producer.push(sendSlot3) == false)
     ;
-  Printer<ELEMENT_TYPE>::printBytes("PRODUCER sent:", sendBuffer3Ptr, sizeof(sendBuffer3), 0, sizeof(sendBuffer3));
+  Printer<ELEMENT_TYPE>::printBytes(prefix, sendBuffer3Ptr, sizeof(sendBuffer3), 0, sizeof(sendBuffer3));
 
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager.fence(CHANNEL_TAG);
@@ -85,9 +88,7 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBufferForPayloads);
 
   // Freeing up local memory
-  // Currently investigating why following line causes issue #33
-  // issue #33, hence commented
-  // memoryManager.freeLocalMemorySlot(coordinationBufferForCounts);
-  // memoryManager.freeLocalMemorySlot(coordinationBufferForPayloads);
+  memoryManager.freeLocalMemorySlot(coordinationBufferForCounts);
+  memoryManager.freeLocalMemorySlot(coordinationBufferForPayloads);
   memoryManager.freeLocalMemorySlot(sizeInfoBuffer);
 }

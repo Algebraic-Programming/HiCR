@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
   // Creating producer threads
   std::vector<std::thread *> producerThreads(producerCount);
-  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&]() { producerFc(m, c, firstMemorySpace, channelCapacity, i); });
+  for (size_t i = 0; i < producerCount; i++) producerThreads[i] = new std::thread([&, i]() { producerFc(m, c, firstMemorySpace, channelCapacity, i + 1); });
 
   // Waiting on threads
   consumerThread.join();

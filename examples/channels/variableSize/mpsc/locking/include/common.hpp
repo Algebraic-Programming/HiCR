@@ -5,7 +5,6 @@
 #include <iterator>
 
 #define CHANNEL_TAG 0
-#define PAYLOAD_CAPACITY 256
 #define SIZES_BUFFER_KEY 0
 #define CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY 1
 #define CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY 2
@@ -28,7 +27,7 @@ class Printer
     }
 
     cout << "=====\n";
-    cout << prepend;
+    cout << prepend << " reading " << bytes << " bytes ";
     if (buffer == NULL)
     {
       cerr << "buffer is NULL in print routine" << endl;

@@ -17,8 +17,10 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   // Allocating sizes buffer as a local memory slot
   auto sizesBufferSlot = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, sizesBufferSize);
 
+  const size_t payloadCapacity = channelCapacity * sizeof(ELEMENT_TYPE);
+
   // Allocating payload buffer as a local memory slot
-  auto payloadBufferSlot = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, PAYLOAD_CAPACITY);
+  auto payloadBufferSlot = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, payloadCapacity);
 
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
@@ -58,8 +60,8 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
                                                                        coordinationBufferForPayloads,
                                                                        consumerCoordinationBufferForCounts,
                                                                        consumerCoordinationBufferForPayloads,
-                                                                       PAYLOAD_CAPACITY,
-                                                                       sizeof(ELEMENT_TYPE),
+                                                                       payloadCapacity,
+                                                                       sizeof(ELEMENT_TYPE), /* payloadSize */
                                                                        channelCapacity);
 
   // Getting internal pointer of the token buffer slot
@@ -69,11 +71,18 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   size_t expectedMessageCount = MESSAGES_PER_PRODUCER * producerCount;
 
   size_t poppedElems = 0;
+  char   prefix[64]  = {'\0'};
   while (poppedElems < expectedMessageCount)
   {
-    while (consumer.isEmpty()) consumer.updateDepth();
+    while (consumer.isEmpty())
+      ; // spin
     auto res = consumer.peek();
-    Printer<ELEMENT_TYPE>::printBytes("CONSUMER:", payloadBufferPtr, PAYLOAD_CAPACITY, res[0], res[1]);
+    /**
+     * An example-specific way to deduce the sender rank
+     */
+    sprintf(prefix, "CONSUMER receives from PRODUCER %u:", payloadBufferPtr[res[0] / sizeof(ELEMENT_TYPE)]);
+
+    Printer<ELEMENT_TYPE>::printBytes(prefix, payloadBufferPtr, payloadCapacity, res[0], res[1]);
 
     while (consumer.pop() == false)
       ;
