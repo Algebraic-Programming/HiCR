@@ -40,6 +40,18 @@ namespace locking
  */
 class Producer final : public fixedSize::Base
 {
+  private:
+
+  /**
+   * Memory slot that represents the token buffer that producer sends data to
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
+
+  /*
+   * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
+   */
+  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _consumerCoordinationBuffer;
+
   public:
 
   /**
@@ -87,7 +99,7 @@ class Producer final : public fixedSize::Base
    */
   __INLINE__ bool push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
   {
-    // Make sure source slot is beg enough to satisfy the operation
+    // Make sure source slot is big enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
     auto providedBufferSize = sourceSlot->getSize();
     if (providedBufferSize < requiredBufferSize)
@@ -118,7 +130,11 @@ class Producer final : public fixedSize::Base
       // Copying with source increasing offset per token
       for (size_t i = 0; i < n; i++)
       {
-        _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+        _communicationManager->memcpy(_tokenBuffer,                                        /* destination */
+                                      getTokenSize() * _circularBuffer->getHeadPosition(), /* dst_offset */
+                                      sourceSlot,                                          /* source */
+                                      i * getTokenSize(),                                  /* src_offset */
+                                      getTokenSize());                                     /* size*/
       }
       _communicationManager->fence(sourceSlot, n, 0);
 
@@ -140,18 +156,6 @@ class Producer final : public fixedSize::Base
     // Succeeded
     return successFlag;
   }
-
-  private:
-
-  /**
-   * Memory slot that represents the token buffer that producer sends data to
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
-
-  /*
-   * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
-   */
-  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _consumerCoordinationBuffer;
 };
 
 } // namespace locking

@@ -201,14 +201,14 @@ class CommunicationManager
 
   /**
    * Instructs the backend to perform an asynchronous memory copy from
-   * within a  global memory slot, to within a local memory slot.
+   * within a local memory slot, to within a global memory slot.
    *
-   * @param[in] source       The local source memory slot
-   * @param[in] src_offset   The offset (in bytes) within \a source at
-   *                         \a src_locality
    * @param[in] destination  The destination global memory slot
    * @param[in] dst_offset   The offset (in bytes) within \a destination at
    *                         \a dst_locality
+   * @param[in] source       The local source memory slot
+   * @param[in] src_offset   The offset (in bytes) within \a source at
+   *                         \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
@@ -234,14 +234,14 @@ class CommunicationManager
 
   /**
    * Instructs the backend to perform an asynchronous memory copy from
-   * within a  local memory slot, to within a global memory slot.
+   * within a global memory slot, to within a local memory slot.
    *
-   * @param[in] source       The global source memory slot
-   * @param[in] src_offset   The offset (in bytes) within \a source at
-   *                         \a src_locality
    * @param[in] destination  The destination local memory slot
    * @param[in] dst_offset   The offset (in bytes) within \a destination at
    *                         \a dst_locality
+   * @param[in] source       The global source memory slot
+   * @param[in] src_offset   The offset (in bytes) within \a source at
+   *                         \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
@@ -484,10 +484,10 @@ class CommunicationManager
   /**
    * Backend-internal implementation of the memcpy function
    *
-   * @param[in] source       The source local memory slot
-   * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] destination  The destination local memory slot
    * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
+   * @param[in] source       The source local memory slot
+   * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
   virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
@@ -502,10 +502,10 @@ class CommunicationManager
   /**
    * Backend-internal implementation of the memcpy function
    *
-   * @param[in] source       The source local memory slot
-   * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] destination  The destination global memory slot
    * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
+   * @param[in] source       The source local memory slot
+   * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
   virtual void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
@@ -520,10 +520,10 @@ class CommunicationManager
   /**
    * Backend-internal implementation of the memcpy function
    *
-   * @param[in] source       The source global memory slot
-   * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] destination  The destination local memory slot
    * @param[in] dst_offset   The offset (in bytes) within \a destination at \a dst_locality
+   * @param[in] source       The source global memory slot
+   * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
   virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,

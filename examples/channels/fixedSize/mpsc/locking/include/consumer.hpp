@@ -28,7 +28,9 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(coordinationBuffer);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  communicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBufferSlot}, {CONSUMER_COORDINATION_BUFFER_KEY, coordinationBuffer}});
+  communicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG,                          /* global tag */
+                                                 {{TOKEN_BUFFER_KEY, tokenBufferSlot}, /* key-slot pairs */
+                                                  {CONSUMER_COORDINATION_BUFFER_KEY, coordinationBuffer}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager.fence(CHANNEL_TAG);
@@ -38,8 +40,12 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   auto consumerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto consumer = HiCR::channel::fixedSize::MPSC::locking::Consumer(
-    communicationManager, globalTokenBufferSlot, coordinationBuffer, consumerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto consumer = HiCR::channel::fixedSize::MPSC::locking::Consumer(communicationManager,
+                                                                    globalTokenBufferSlot, /* tokenBuffer */
+                                                                    coordinationBuffer,    /* internalCoordinationBuffer */
+                                                                    consumerCoordinationBuffer,
+                                                                    sizeof(ELEMENT_TYPE),
+                                                                    channelCapacity);
 
   // Getting internal pointer of the token buffer slot
   auto tokenBuffer = (ELEMENT_TYPE *)tokenBufferSlot->getPointer();

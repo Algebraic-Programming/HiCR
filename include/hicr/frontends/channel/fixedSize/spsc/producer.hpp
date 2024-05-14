@@ -35,8 +35,20 @@ namespace SPSC
  * It exposes the functionality to be expected for a producer channel
  *
  */
-class Producer : public channel::fixedSize::Base
+class Producer : public fixedSize::Base
 {
+  private:
+
+  /**
+   * Memory slot that represents the token buffer that producer sends data to
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
+
+  /*
+   * Global Memory slot pointing to the producer's own coordination buffer
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBuffer;
+
   public:
 
   /**
@@ -48,7 +60,8 @@ class Producer : public channel::fixedSize::Base
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    *            tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
    * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
-   * \param[in] producerCoordinationBuffer A global reference of the producer's own coordination buffer to check for pop updates produced by the remote consumer
+   * \param[in] producerCoordinationBuffer A global reference of the producer's own coordination buffer to check for pop updates
+   *            produced by the remote consumer
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
@@ -84,7 +97,7 @@ class Producer : public channel::fixedSize::Base
    */
   __INLINE__ void push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
   {
-    // Make sure source slot is beg enough to satisfy the operation
+    // Make sure source slot is big enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
     auto providedBufferSize = sourceSlot->getSize();
     if (providedBufferSize < requiredBufferSize)
@@ -108,14 +121,18 @@ class Producer : public channel::fixedSize::Base
     /**
      * Because it is possible that head advance (by producer)
      * and tail advance (signalled by consumer) overlap,
-     * we allow for temporary illegal (tail > head) by using the 
+     * we allow for temporary illegal (tail > head) by using the
      * cached depth when advancing the head
      */
     _circularBuffer->setCachedDepth(_circularBuffer->getDepth());
     for (size_t i = 0; i < n; i++)
     {
       // Copying with source increasing offset per token
-      _communicationManager->memcpy(_tokenBuffer, getTokenSize() * _circularBuffer->getHeadPosition(), sourceSlot, i * getTokenSize(), getTokenSize());
+      _communicationManager->memcpy(_tokenBuffer,                                        /* destination */
+                                    getTokenSize() * _circularBuffer->getHeadPosition(), /* dst_offset */
+                                    sourceSlot,                                          /* source */
+                                    i * getTokenSize(),                                  /* src_offset */
+                                    getTokenSize());                                     /* size */
       _communicationManager->fence(sourceSlot, 1, 0);
       // read potentially outdated depth here
     }
@@ -130,18 +147,6 @@ class Producer : public channel::fixedSize::Base
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
     _communicationManager->queryMemorySlotUpdates(_producerCoordinationBuffer);
   }
-
-  private:
-
-  /**
-   * Memory slot that represents the token buffer that producer sends data to
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
-
-  /*
-   * Global Memory slot pointing to the producer's own coordination buffer
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBuffer;
 };
 
 } // namespace SPSC

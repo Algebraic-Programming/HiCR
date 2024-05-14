@@ -43,10 +43,8 @@ class Base : public channel::Base
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
    * \param[in] communicationManager The backend's memory manager to facilitate communication between the producer and consumer sides
-   * \param[in] coordinationBufferForCounts This is a small buffer that needs to be allocated at the producer side. It
-   *            enables the consumer to signal how many payloads (as a count) it has popped.
-   * \param[in] coordinationBufferForPayloads This is a small buffer that needs to be allocated at the producer side. It
-   *            enables the consumer to signal how many bytes from the payload data it has popped.
+   * \param[in] coordinationBufferForCounts This is a small buffer that enables the consumer to signal how many payloads (as a count) it has popped.
+   * \param[in] coordinationBufferForPayloads This is a small buffer that enables the consumer to signal how many bytes from the payload data it has popped.
    * \param[in] capacity The maximum number of elements (possibly different-sized) that can be held by this channel
    * \param[in] payloadCapacity The maximum number of total bytes (including all different sized elements) that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
@@ -59,6 +57,7 @@ class Base : public channel::Base
        const size_t                         capacity,
        const size_t                         payloadCapacity)
     : channel::Base(communicationManager, coordinationBufferForCounts, sizeof(size_t), capacity),
+      _coordinationBufferForCounts(coordinationBufferForCounts),
       _coordinationBufferForPayloads(coordinationBufferForPayloads)
   {
     if (capacity == 0) HICR_THROW_LOGIC("Attempting to create a channel with zero capacity \n");
@@ -72,7 +71,7 @@ class Base : public channel::Base
                        requiredCoordinationBufferSize);
 
     // Creating internal circular buffer
-    _circularBuffer = std::make_unique<channel::CircularBuffer>(
+    _circularBufferForCounts = std::make_unique<channel::CircularBuffer>(
       capacity,
       (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForCounts->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
       (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBufferForCounts->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
@@ -88,11 +87,19 @@ class Base : public channel::Base
   protected:
 
   /**
+   * Circular buffer holding size counts (head/tail)
+   */
+  std::unique_ptr<channel::CircularBuffer> _circularBufferForCounts;
+  /**
    * Circular buffer holding payload (head/tail)
    */
   std::unique_ptr<channel::CircularBuffer> _circularBufferForPayloads;
   /**
-   * Local storage of coordination metadata relating to payload head/tail
+   * Pointer to Local slot associated with circular buffer for counts
+   */
+  const std::shared_ptr<L0::LocalMemorySlot> _coordinationBufferForCounts;
+  /**
+   * Pointer to Local slot associated with circular buffer for payloads
    */
   const std::shared_ptr<L0::LocalMemorySlot> _coordinationBufferForPayloads;
 };
