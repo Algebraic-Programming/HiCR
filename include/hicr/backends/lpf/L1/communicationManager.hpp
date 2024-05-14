@@ -293,15 +293,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * @param[in] tag Tags used as filter to decide which slots to fence against
    * \todo: Implement tags in LPF !!!
    */
-  __INLINE__ void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
-  {
-    globalKeyToMemorySlotMap_t slotsForTag = getGlobalMemorySlots(tag);
-    for (auto &i : slotsForTag)
-    {
-      auto hicrSlot = i.second;
-      fenceImpl(hicrSlot);
-    }
-  }
+  __INLINE__ void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override { CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT)); }
 
   /**
    * gets global memory slots associated with a tag
