@@ -190,6 +190,9 @@ class Runtime final
     for (auto &instance : _deployedInstances)
       if (instance->getId() != _currentInstance->getHiCRInstance()->getId()) _instanceManager->launchRPC(*instance, "__finalize");
 
+    // Finalize channels created on the current instance
+    _currentInstance->finalizeChannels();
+
     // Waiting for return ack
     for (auto &instance : _deployedInstances)
       if (instance->getId() != _currentInstance->getHiCRInstance()->getId()) _instanceManager->getReturnValue(*instance);
