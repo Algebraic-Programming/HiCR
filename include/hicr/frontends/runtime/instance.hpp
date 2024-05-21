@@ -208,6 +208,11 @@ class Instance
   __INLINE__ void initializeChannels();
 
   /**
+   * Function to finalize producer and consumer channels with all the rest of the instances
+   */
+  __INLINE__ void finalizeChannels();
+
+  /**
   * Prompts the currently running instance to start listening for incoming RPCs
   */
   __INLINE__ void listen()
@@ -227,6 +232,9 @@ class Instance
 
     // Registering an empty return value to ack on finalization
     _instanceManager->submitReturnValue(&ack, sizeof(ack));
+
+    // Finalizeing producer and consumer channels
+    finalizeChannels();
 
     // Finalizing instance manager
     _instanceManager->finalize();

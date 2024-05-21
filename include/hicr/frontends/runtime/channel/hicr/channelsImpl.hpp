@@ -182,6 +182,8 @@ __INLINE__ void Instance::initializeChannels()
   }
 }
 
+__INLINE__ void Instance::finalizeChannels() {}
+
 __INLINE__ void Instance::sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize)
 {
   // Sanity check
