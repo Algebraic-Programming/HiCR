@@ -79,6 +79,9 @@ class Topology
     output[devicesKey]     = std::vector<nlohmann::json>();
     for (const auto &device : _deviceList) output[devicesKey] += device->serialize();
 
+    // Adding metadata, if defined
+    output["Metadata"] = _metadata;
+
     // Returning topology
     return output;
   }
@@ -101,12 +104,25 @@ class Topology
     }
   };
 
+  /**
+   * A function to get or modify internal topology metadata
+  */
+  nlohmann::json& getMetadata() { return _metadata; }
+
   protected:
 
   /**
    * Map of devices queried by this topology manager
    */
   deviceList_t _deviceList;
+
+  /**
+   * Optional metadata storage for specifying anything about the topology that does not fit within the device class.
+   * 
+   * Note: This must be use sparingly as its misuse can break the implementation abstraction guarantee in HiCR
+  */
+  nlohmann::json _metadata
+
 };
 
 } // namespace L0
