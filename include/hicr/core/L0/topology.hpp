@@ -106,6 +106,8 @@ class Topology
 
   /**
    * A function to get or modify internal topology metadata
+   * 
+   * @return The internal topology metadata
   */
   nlohmann::json &getMetadata() { return _metadata; }
 
