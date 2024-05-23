@@ -107,7 +107,7 @@ class Topology
   /**
    * A function to get or modify internal topology metadata
   */
-  nlohmann::json& getMetadata() { return _metadata; }
+  nlohmann::json &getMetadata() { return _metadata; }
 
   protected:
 
@@ -121,8 +121,7 @@ class Topology
    * 
    * Note: This must be use sparingly as its misuse can break the implementation abstraction guarantee in HiCR
   */
-  nlohmann::json _metadata
-
+  nlohmann::json _metadata;
 };
 
 } // namespace L0
