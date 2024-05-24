@@ -105,11 +105,18 @@ class Topology
   };
 
   /**
-   * A function to get or modify internal topology metadata
+   * A function to get internal topology metadata
    * 
    * @return The internal topology metadata
   */
   nlohmann::json &getMetadata() { return _metadata; }
+
+  /**
+   * A const variant of the function to get internal topology metadata
+   * 
+   * @return The internal topology metadata
+  */
+  const nlohmann::json &getMetadata() const { return _metadata; }
 
   protected:
 
