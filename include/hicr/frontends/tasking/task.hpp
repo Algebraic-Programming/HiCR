@@ -15,6 +15,7 @@
 #include <memory>
 #include <queue>
 #include <vector>
+#include <mutex>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/executionState.hpp>
@@ -176,6 +177,9 @@ class Task
    */
   __INLINE__ void run()
   {
+    // Preventing this function from being accessed simultaneously (that would be a bug in the callers code)
+    _mutex.lock();
+
     if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
 
     if (getState() != HiCR::L0::ExecutionState::state_t::initialized && getState() != HiCR::L0::ExecutionState::state_t::suspended)
@@ -193,18 +197,24 @@ class Task
     // Checking execution state finalization
     _executionState->checkFinalization();
 
+    // Getting state after execution
+    const auto state = getState();
+
     // If the task is suspended and event map is defined, trigger the corresponding event.
-    if (getState() == HiCR::L0::ExecutionState::state_t::suspended)
+    if (state == HiCR::L0::ExecutionState::state_t::suspended)
       if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskSuspend);
 
     // If the task is still running (no suspension), then the task has fully finished executing. If so,
     // trigger the corresponding event, if the event map is defined. It is important that this function
     // is called from outside the context of a task to allow the upper layer to free its memory upon finishing
-    if (getState() == HiCR::L0::ExecutionState::state_t::finished)
+    if (state == HiCR::L0::ExecutionState::state_t::finished)
       if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskFinish);
 
     // Relenting current task pointer
     pthread_setspecific(_taskPointerKey, NULL);
+
+    // Releasing lock
+    _mutex.unlock();
   }
 
   /**
@@ -269,6 +279,11 @@ class Task
    * Internal execution state of the task. Will change based on runtime scheduling events
    */
   std::unique_ptr<HiCR::L0::ExecutionState> _executionState = NULL;
+
+  /**
+   * Mutex to prevent task from being executed concurrently
+  */
+  std::mutex _mutex;
 
 }; // class Task
 
