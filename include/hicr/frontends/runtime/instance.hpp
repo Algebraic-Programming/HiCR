@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <list>
 #include <vector>
 #include <algorithm>
 #include <boost/uuid/uuid.hpp>
@@ -157,6 +158,52 @@ class Instance
   }
 
   /**
+   * Publishes a data object to enable it to be obtained by another instance
+   *
+   * This method stores the published data objects internally to later check for releasing
+   * 
+   * @param[in] dataObject A reference to the data object to publish
+   */
+  __INLINE__ void publishDataObject(DataObject &dataObject)
+  {
+    // Publishing data object
+    dataObject.publish();
+
+    // Adding data object to list of data object pending release
+    _pendingDataObjectsMutex.lock();
+    _pendingDataObjects.push_back(&dataObject);
+    _pendingDataObjectsMutex.unlock();
+  }
+
+  /**
+   * Releases any pending data objects, if they have been obtained by another instance
+   */
+  __INLINE__ void releasePendingDataObjects()
+  {
+    _pendingDataObjectsMutex.lock();
+
+    // Iterate over the entire pending data object list to see if we can  release them (they were taken)
+    auto it = _pendingDataObjects.begin();
+    while (it != _pendingDataObjects.end())
+    {
+      // If the current data object is released
+      if ((*it)->tryRelease() == true)
+      {
+        // Remove it from the list
+        it = _pendingDataObjects.erase(it);
+
+        // Continue without advancing the pointer
+        continue;
+      };
+
+      // Advancing to the next data object in the list
+      it++;
+    }
+
+    _pendingDataObjectsMutex.unlock();
+  }
+
+  /**
    * Allows a worker to obtain a data object by id from the coordinator instance
    *
    * This is a blocking function.
@@ -165,13 +212,13 @@ class Instance
    * @param[in] dataObjectId The id of the data object to get from the coordinator instance
    * @return A shared pointer to the obtained data object
    */
-  __INLINE__ std::shared_ptr<DataObject> getDataObject(const DataObject::dataObjectId_t dataObjectId)
+  __INLINE__ std::shared_ptr<DataObject> getDataObject(const HiCR::L0::Instance::instanceId_t srcInstanceId, const DataObject::dataObjectId_t dataObjectId)
   {
     // Getting instance id of coordinator instance
-    const auto coordinatorId     = _instanceManager->getRootInstanceId();
     const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
+
     // Creating data object from id and remote instance id
-    return DataObject::getDataObject(dataObjectId, coordinatorId, currentInstanceId, _instanceManager->getSeed());
+    return DataObject::getDataObject(dataObjectId, srcInstanceId, currentInstanceId, _instanceManager->getSeed());
   }
 
   /**
@@ -289,6 +336,16 @@ class Instance
    * Consumer channels for sending messages to all other instances
    */
   std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<runtime::ConsumerChannel>> _consumerChannels;
+
+  /**
+   * Mutex to protect the list of data objects
+  */
+  std::mutex _pendingDataObjectsMutex;
+
+  /**
+   * List of data objects pending release
+  */
+  std::list<DataObject *> _pendingDataObjects;
 };
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes

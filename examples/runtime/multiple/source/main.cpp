@@ -58,7 +58,7 @@ void coordinatorEntryPointFc(HiCR::Runtime &runtime)
   while (allDataObjectsReleased == false)
   {
     allDataObjectsReleased = true;
-    for (auto &dataObject : dataObjects) allDataObjectsReleased &= dataObject->release();
+    for (auto &dataObject : dataObjects) allDataObjectsReleased &= dataObject->tryRelease();
   }
 
   printf("Coordinator Reached End Function\n");
@@ -71,6 +71,9 @@ void workerEntryPointFc(HiCR::Runtime &runtime, const std::string &entryPointNam
 
   // Getting my current worker instance
   auto currentInstance = runtime.getCurrentInstance();
+
+  // Getting root (coordinator) instance id
+  auto coordinatorInstanceId = runtime.getInstanceManager()->getRootInstanceId();
 
   // Iterating over all other instances to get a message from the coordinator
   HiCR::runtime::Instance::message_t message;
@@ -88,7 +91,7 @@ void workerEntryPointFc(HiCR::Runtime &runtime, const std::string &entryPointNam
   printf("[Worker %lu] Requesting data object id %u from coordinator.\n", runtime.getInstanceId(), dataObjectId);
 
   // Getting data object from coordinator
-  auto dataObject = currentInstance->getDataObject(dataObjectId);
+  auto dataObject = currentInstance->getDataObject(coordinatorInstanceId, dataObjectId);
 
   // Printing data object contents
   printf("[Worker %lu] Received message from coordinator: '%s'\n", runtime.getInstanceId(), (const char *)dataObject->getData());
