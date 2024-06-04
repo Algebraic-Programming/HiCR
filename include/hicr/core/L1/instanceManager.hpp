@@ -61,7 +61,7 @@ class InstanceManager
   /**
    * Type definition for an unsorted set of unique pointers to the detected instances
    */
-  typedef std::unordered_set<std::shared_ptr<HiCR::L0::Instance>> instanceList_t;
+  typedef std::vector<std::shared_ptr<HiCR::L0::Instance>> instanceList_t;
 
   /**
    * Default constructor is deleted, this class requires the passing of a memory manager
@@ -96,7 +96,7 @@ class InstanceManager
     auto newInstance = createInstanceImpl(requestedTopology);
 
     // If successul, adding the instance to the internal list
-    _instances.insert(newInstance);
+    _instances.push_back(newInstance);
 
     // Returning value for immediate use
     return newInstance;
@@ -110,7 +110,7 @@ class InstanceManager
   __INLINE__ void addInstance(HiCR::L0::Instance::instanceId_t instanceId)
   {
     auto instance = addInstanceImpl(instanceId);
-    _instances.insert(instance);
+    _instances.push_back(instance);
   }
 
   /**
