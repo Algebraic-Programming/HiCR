@@ -67,7 +67,7 @@ class DataObject final
    *
    * @return True, if the data object was successfully release (copied to another instance), or was already released; false, if nobody claimed the data object
    */
-  __INLINE__ bool release()
+  __INLINE__ bool tryRelease()
   {
     // If transfered already, return true
     if (_isReleased == true) return true;

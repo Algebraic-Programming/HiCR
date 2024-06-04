@@ -50,7 +50,7 @@ class DataObject final
    *
    * @return True, if the data object was successfully release (copied to another instance), or was already released; false, if nobody claimed the data object
    */
-  __INLINE__ bool release()
+  __INLINE__ bool tryRelease()
   {
     // Here an exception is must be produced since the application is releasing this data object to other non-existent instances, leading to a potential deadlock
     // HICR_THROW_LOGIC("Attempting to release a data object when using the host (single instace) runtime mode.");
