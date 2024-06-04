@@ -205,12 +205,13 @@ class Instance
   }
 
   /**
-   * Allows a worker to obtain a data object by id from the coordinator instance
+   * Allows a worker to obtain a data object by id from the another instance
    *
    * This is a blocking function.
-   * The data object must be published (either before or after this call) by the coordinator for this function to succeed.
+   * The data object must be published (either before or after this call) by the source instance for this function to succeed.
    *
-   * @param[in] dataObjectId The id of the data object to get from the coordinator instance
+   * @param[in] srcInstanceId The id of the instance from whence we will get the data object
+   * @param[in] dataObjectId The id of the data object to get
    * @return A shared pointer to the obtained data object
    */
   __INLINE__ std::shared_ptr<DataObject> getDataObject(const HiCR::L0::Instance::instanceId_t srcInstanceId, const DataObject::dataObjectId_t dataObjectId)
