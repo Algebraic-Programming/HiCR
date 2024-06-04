@@ -44,7 +44,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   {
     // A single instance (the currently running) is created and is deemed as the root
     _currentInstance = std::make_shared<HiCR::backend::host::L0::Instance>();
-    _instances.insert(_currentInstance);
+    _instances.push_back(_currentInstance);
   }
 
   ~InstanceManager() = default;

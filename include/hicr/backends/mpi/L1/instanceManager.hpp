@@ -84,7 +84,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
       if (i == _rank) _currentInstance = instance;
 
       // Adding instance to the collection
-      _instances.insert(std::move(instance));
+      _instances.push_back(std::move(instance));
     }
   }
 
