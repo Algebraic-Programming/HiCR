@@ -15,6 +15,7 @@
 #include <list>
 #include <vector>
 #include <algorithm>
+#include <mutex>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <hicr/core/L1/instanceManager.hpp>
