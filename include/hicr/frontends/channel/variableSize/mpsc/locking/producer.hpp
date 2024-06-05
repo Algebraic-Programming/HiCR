@@ -8,7 +8,7 @@
  * @file variableSize/mpsc/locking/producer.hpp
  * @brief Provides functionality for a var-size MPSC producer channel
  * @author O. Korakitis & K. Dichev
- * @date 11/03/2024
+ * @date 04/06/2024
  */
 
 #pragma once
@@ -120,9 +120,6 @@ class Producer final : public variableSize::Base
    */
   __INLINE__ void updateDepth() // NOTE: we DO know we have the lock!!!!
   {
-    _communicationManager->queryMemorySlotUpdates(_consumerCoordinationBufferForCounts);
-    _communicationManager->queryMemorySlotUpdates(_consumerCoordinationBufferForPayloads);
-
     _communicationManager->memcpy(_coordinationBufferForCounts,                                /* destination */
                                   0,                                                           /* dst_offset */
                                   _consumerCoordinationBufferForCounts,                        /* source */

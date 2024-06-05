@@ -100,7 +100,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
-  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
+  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 
   __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::L0::GlobalMemorySlot::tag_t       tag,
                                                                                  const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override

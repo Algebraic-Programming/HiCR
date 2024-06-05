@@ -20,7 +20,6 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(coordinationBuffer);
 
   // these vectors hold all producer buffers and are only used for later deregistration
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> producerCoordinationBuffers;
   std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalTokenBuffers;
 
   // get from consumer all the token buffer information
@@ -30,19 +29,20 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_TAG, {{producerId, coordinationBuffer}});
   communicationManager.fence(PRODUCER_COORDINATION_TAG);
 
+  communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_TAG, {});
+  communicationManager.fence(CONSUMER_COORDINATION_TAG);
+
   for (size_t i = 0; i < producerCount; i++)
   {
     auto globalTokenBufferSlot = communicationManager.getGlobalMemorySlot(TOKEN_TAG, i);
     globalTokenBuffers.push_back(globalTokenBufferSlot);
-    auto producerCoordinationBuffer = communicationManager.getGlobalMemorySlot(PRODUCER_COORDINATION_TAG, i);
-    producerCoordinationBuffers.push_back(producerCoordinationBuffer);
   }
-
+  auto consumerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CONSUMER_COORDINATION_TAG, producerId);
   // Creating producer channel
   // This call does the same as the SPSC Producer constructor, as
   // the producer of MPSC::nonlocking has the same view
   auto producer = HiCR::channel::fixedSize::MPSC::nonlocking::Producer(
-    communicationManager, globalTokenBuffers[producerId], coordinationBuffer, producerCoordinationBuffers[producerId], sizeof(ELEMENT_TYPE), channelCapacity);
+    communicationManager, globalTokenBuffers[producerId], coordinationBuffer, consumerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer    = 0;
@@ -66,12 +66,9 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
 
   communicationManager.fence(TOKEN_TAG);
   communicationManager.fence(PRODUCER_COORDINATION_TAG);
+  communicationManager.fence(CONSUMER_COORDINATION_TAG);
 
-  for (size_t i = 0; i < producerCount; i++)
-  {
-    communicationManager.deregisterGlobalMemorySlot(globalTokenBuffers[i]);
-    communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffers[i]);
-  }
+  for (size_t i = 0; i < producerCount; i++) { communicationManager.deregisterGlobalMemorySlot(globalTokenBuffers[i]); }
 
   memoryManager.freeLocalMemorySlot(coordinationBuffer);
 }

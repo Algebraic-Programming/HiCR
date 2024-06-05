@@ -61,10 +61,16 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
   ~LocalMemorySlot() = default;
 
   /**
-   * Get LPF slot associated with this HiCR slot
+   * Get internal LPF slot (lpf_memslot_t) associated with this HiCR slot
    * @return LPF slot
    */
   lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
+
+  /**
+   * @param[in] lpfMemSlot The LPF memory slot
+   * Set internal LPF slot (lpf_memslot_t) associated with this HiCR slot
+   */
+  void setLPFSlot(lpf_memslot_t lpfMemSlot) { _lpfMemSlot = lpfMemSlot; }
 
   /**
    * Getter function for the memory slot's swap value pointer
@@ -75,9 +81,11 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
   private:
 
   /**
-   * Internal LPF slot represented by this HiCR memory slot
+   * Internal LPF slot represented by this HiCR memory slot. It may be
+   * modified during its lifecycle since a promoted slot needs to update
+   * its _lpfMemSlot
    */
-  const lpf_memslot_t _lpfMemSlot;
+  lpf_memslot_t _lpfMemSlot;
 
   /**
    * Internal LPF swap value for acquire/release of global slots.

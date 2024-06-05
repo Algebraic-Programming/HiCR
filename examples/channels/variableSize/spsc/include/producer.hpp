@@ -36,6 +36,8 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   auto sizesBuffer                           = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
   auto producerCoordinationBufferForCounts   = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   auto producerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  auto consumerCoordinationBufferForCounts   = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  auto consumerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
   auto payloadBuffer                         = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
 
   // Creating producer and consumer channels
@@ -45,8 +47,8 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
                                                               sizesBuffer,
                                                               coordinationBufferForCounts,
                                                               coordinationBufferForPayloads,
-                                                              producerCoordinationBufferForCounts,
-                                                              producerCoordinationBufferForPayloads,
+                                                              consumerCoordinationBufferForCounts,
+                                                              consumerCoordinationBufferForPayloads,
                                                               PAYLOAD_CAPACITY,
                                                               sizeof(ELEMENT_TYPE),
                                                               channelCapacity);
@@ -87,6 +89,8 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.deregisterGlobalMemorySlot(sizesBuffer);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBufferForCounts);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBufferForPayloads);
+  communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBufferForCounts);
+  communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBufferForPayloads);
 
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(coordinationBufferForCounts);

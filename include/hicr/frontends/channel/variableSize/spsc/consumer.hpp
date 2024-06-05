@@ -130,8 +130,8 @@ class Consumer final : public variableSize::Base
     assert(internalCoordinationBufferForPayloads != nullptr);
     assert(producerCoordinationBufferForCounts != nullptr);
     assert(producerCoordinationBufferForCounts != nullptr);
-    _communicationManager->queryMemorySlotUpdates(_tokenSizeBuffer);
-    _communicationManager->queryMemorySlotUpdates(_payloadBuffer);
+    _communicationManager->queryMemorySlotUpdates(_tokenSizeBuffer->getSourceLocalMemorySlot());
+    _communicationManager->queryMemorySlotUpdates(_payloadBuffer->getSourceLocalMemorySlot());
   }
 
   /**
@@ -246,28 +246,6 @@ class Consumer final : public variableSize::Base
   }
 
   /**
-   * This method updates the depth of both:
-   * - message size metadata (in token slot)
-   * - payload data (in payload)
-   */
-  __INLINE__ void updateDepth()
-  {
-    _communicationManager->queryMemorySlotUpdates(_tokenSizeBuffer);
-    _communicationManager->queryMemorySlotUpdates(_payloadBuffer);
-
-    size_t newPushedTokens      = _tokenSizeBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedTokens;
-    size_t newPushedPayloads    = _payloadBuffer->getSourceLocalMemorySlot()->getMessagesRecv() - _pushedPayloads;
-    auto   newTokensAndPayloads = std::min(newPushedTokens, newPushedPayloads);
-    _pushedTokens += newTokensAndPayloads;
-    _circularBuffer->setHead(_pushedTokens);
-    _pushedPayloads += newTokensAndPayloads;
-    auto newPayloadBytes = getNewPayloadBytes(newTokensAndPayloads);
-    _pushedPayloadBytes += newPayloadBytes;
-
-    _circularBufferForPayloads->setHead(_pushedPayloadBytes);
-  }
-
-  /**
    * Returns the current payload buffer depth, in bytes.
    *
    * If the current channel is a consumer, it corresponds to how many bytes
@@ -309,21 +287,31 @@ class Consumer final : public variableSize::Base
     _circularBuffer->advanceTail(n);
     _circularBufferForPayloads->advanceTail(payloadBytes);
 
+    const auto coordBuffElemSize = sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
     // Notifying producer(s) of buffer liberation
-    _communicationManager->memcpy(_producerCoordinationBufferForCounts,                        /* destination */
-                                  0,                                                           /* dst_offset */
-                                  _coordinationBuffer,                                         /* source */
-                                  0,                                                           /* src_offset */
-                                  2 * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE)); /* size */
-    _communicationManager->fence(_coordinationBuffer, 1, 0);
+    _communicationManager->memcpy(_producerCoordinationBufferForCounts, /* destination */
+                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                  _coordinationBufferForCounts,
+                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                  coordBuffElemSize);
 
-    _communicationManager->memcpy(_producerCoordinationBufferForPayloads,                      /* destination */
-                                  0,                                                           /* dst_offset */
-                                  _coordinationBufferForPayloads,                              /* source */
-                                  0,                                                           /* src_offset */
-                                  2 * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE)); /* size */
+    _communicationManager->memcpy(_producerCoordinationBufferForPayloads, /* destination */
+                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                  _coordinationBufferForPayloads, /* source */
+                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                  coordBuffElemSize);
+
+    _communicationManager->fence(_coordinationBufferForCounts, 1, 0);
     _communicationManager->fence(_coordinationBufferForPayloads, 1, 0);
   }
+
+  /**
+   * In this implementation of SPSC, updateDepth for the consumer is a NOP.
+   * Any push by the producer leads the producer to update the consumer head index
+   * in a one-sided manner. The consumer does not need to update the depth for this
+   * case.
+   */
+  __INLINE__ void updateDepth() {}
 
   /**
    * Returns the current variable-sized channel depth.

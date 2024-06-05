@@ -67,7 +67,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // HiCR::backend::lpf::L0::GlobalMemorySlot * srcSlot = nullptr;
   // HiCR::backend::lpf::L0::GlobalMemorySlot * dstSlot = nullptr;
   auto                                       firstMemSpace = *memSpaces.begin();
-  std::shared_ptr<HiCR::L0::LocalMemorySlot> srcSlot;
+  std::shared_ptr<HiCR::L0::LocalMemorySlot> srcSlot, dstSlot;
   if (myProcess == 0)
   {
     srcBuffer = new char[BUFFER_SIZE];
@@ -77,8 +77,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   }
   if (myProcess == 1)
   {
-    dstBuffer    = new char[BUFFER_SIZE];
-    auto dstSlot = m.registerLocalMemorySlot(firstMemSpace, dstBuffer, BUFFER_SIZE);
+    dstBuffer = new char[BUFFER_SIZE];
+    dstSlot   = m.registerLocalMemorySlot(firstMemSpace, dstBuffer, BUFFER_SIZE);
     c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{myProcess, dstSlot}});
   }
 
@@ -99,14 +99,14 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 
   if (myProcess == RECEIVER_PROCESS)
   {
-    c.queryMemorySlotUpdates(dstSlotGlobal);
-    auto recvMsgs = dstSlotGlobal->getSourceLocalMemorySlot()->getMessagesRecv();
+    c.queryMemorySlotUpdates(dstSlot);
+    auto recvMsgs = dstSlot->getMessagesRecv();
     std::cout << "Received messages (before fence) = " << recvMsgs << std::endl;
     c.fence(dstSlotGlobal, 0, 1);
     std::cout << "Received buffer = " << dstBuffer;
 
-    c.queryMemorySlotUpdates(dstSlotGlobal);
-    recvMsgs = dstSlotGlobal->getSourceLocalMemorySlot()->getMessagesRecv();
+    c.queryMemorySlotUpdates(dstSlot);
+    recvMsgs = dstSlot->getMessagesRecv();
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
   }
 

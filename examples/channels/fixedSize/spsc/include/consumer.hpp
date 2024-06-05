@@ -34,6 +34,7 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   // Obtaining the globally exchanged memory slots
   auto globalTokenBufferSlot      = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto producerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto consumerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
   auto consumer =
@@ -60,6 +61,7 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   // De-registering global slots (collective calls)
   communicationManager.deregisterGlobalMemorySlot(globalTokenBufferSlot);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffer);
+  communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
 
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(tokenBufferSlot);

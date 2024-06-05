@@ -17,6 +17,7 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
 
   std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> tokenBuffers;
+  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffers;
   std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               producerCoordinationBuffers;
   std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalTokenBuffers;
   std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>                localCoordinationBuffers;
@@ -31,6 +32,7 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
     auto coordinationBuffer     = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
     HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(coordinationBuffer);
     localCoordinationBuffers.push_back(coordinationBuffer);
+    consumerCoordinationBuffers.push_back(std::make_pair(i, coordinationBuffer));
   }
 
   // communicate to producers the token buffer references
@@ -39,6 +41,9 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   // get from producers their coordination buffer references
   communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_TAG, {});
   communicationManager.fence(PRODUCER_COORDINATION_TAG);
+  // communicate to producers the consumer buffers
+  communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_TAG, consumerCoordinationBuffers);
+  communicationManager.fence(CONSUMER_COORDINATION_TAG);
 
   for (size_t i = 0; i < producerCount; i++)
   {
@@ -83,12 +88,13 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
 
   communicationManager.fence(TOKEN_TAG);
   communicationManager.fence(PRODUCER_COORDINATION_TAG);
+  communicationManager.fence(CONSUMER_COORDINATION_TAG);
 
   for (size_t i = 0; i < producerCount; i++)
   {
     communicationManager.deregisterGlobalMemorySlot(globalTokenBuffers[i]);
     memoryManager.freeLocalMemorySlot(globalTokenBuffers[i]->getSourceLocalMemorySlot());
-    communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffers[i]);
+    //communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffers[i]);
     memoryManager.freeLocalMemorySlot(localCoordinationBuffers[i]);
   }
 }

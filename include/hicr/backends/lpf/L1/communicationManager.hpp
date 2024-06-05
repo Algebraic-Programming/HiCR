@@ -203,23 +203,28 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         globalSwapSlotSizes[i] = 0;
       }
 
+      lpf_memslot_t                             newSlot       = LPF_INVALID_MEMSLOT;
+      lpf_memslot_t                             swapValueSlot = LPF_INVALID_MEMSLOT;
+      std::shared_ptr<lpf::L0::LocalMemorySlot> localSlot;
       // If it's local, then assign the local information to it
       if (globalSlotProcessId[i] == _rank)
       {
         auto memorySlot       = memorySlots[localPointerPos++].second;
         globalSlotPointer     = memorySlot->getPointer();
-        globalSwapSlotPointer = (dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot))->getLPFSwapPointer();
+        localSlot             = (dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot));
+        globalSwapSlotPointer = localSlot->getLPFSwapPointer();
         globalSourceSlot      = memorySlot;
       }
-
       // Registering with the LPF library
-      lpf_memslot_t newSlot       = LPF_INVALID_MEMSLOT;
-      lpf_memslot_t swapValueSlot = LPF_INVALID_MEMSLOT;
       CHECK(lpf_register_global(_lpf, globalSlotPointer, globalSlotSizes[i], &newSlot));
       CHECK(lpf_register_global(_lpf, globalSwapSlotPointer, globalSwapSlotSizes[i], &swapValueSlot));
-
       // Synchronizing with others
       CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+
+      // Make sure the newly promoted slot points to the new
+      // lpf_memslot_t reference -- otherwise querying the local slot
+      // would yield incorrect results
+      if (globalSlotProcessId[i] == _rank) { localSlot->setLPFSlot(newSlot); }
 
       // Creating new memory slot object
       auto memorySlot = std::make_shared<lpf::L0::GlobalMemorySlot>(globalSlotProcessId[i], newSlot, swapValueSlot, tag, globalSlotKeys[i], globalSourceSlot);
@@ -310,37 +315,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   }
 
   /**
-   * Implementaion of fence on a specific global memory slot for the LPF backend
-   * \param[in] hicrSlot global memory slot to fence on
+   * Implementaion of fence on a specific local memory slot for the LPF backend
+   * \param[in] hicrSlot local memory slot to fence on
    */
-  __INLINE__ void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> hicrSlot)
+  __INLINE__ void fenceImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> hicrSlot)
   {
-    auto          memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(hicrSlot);
+    auto          memorySlot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(hicrSlot);
     lpf_memslot_t slot       = memorySlot->getLPFSlot();
     CHECK(lpf_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, slot));
-
-    // Update message received counters only if this is a locally created global memory slot
-    if (hicrSlot->getSourceLocalMemorySlot() != nullptr)
-    {
-      updateMessagesRecv(memorySlot);
-      updateMessagesSent(memorySlot);
-    }
-  }
-
-  /**
-   * Implementaion of fence on a specific global memory slot for the LPF backend
-   * \param[in] slot global memory slot to fence on
-   * \param[in] expectedSent message count to be blockingly sent out on this slot
-   * \param[in] expectedRcvd message count to be blockingly received on this slot
-   */
-  __INLINE__ void fenceImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> slot, size_t expectedSent, size_t expectedRcvd)
-  {
-    auto          memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(slot);
-    lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
-    if (lpfSlot == LPF_INVALID_MEMSLOT) { HICR_THROW_LOGIC("This slot is not registered with LPF!"); }
-    CHECK(lpf_counting_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, lpfSlot, expectedSent, expectedRcvd));
-    memSlot->getSourceLocalMemorySlot()->setMessagesRecv(memSlot->getSourceLocalMemorySlot()->getMessagesRecv() + expectedRcvd);
-    memSlot->getSourceLocalMemorySlot()->setMessagesSent(memSlot->getSourceLocalMemorySlot()->getMessagesSent() + expectedSent);
+    updateMessagesRecv(memorySlot);
+    updateMessagesSent(memorySlot);
   }
 
   /**
@@ -377,13 +361,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * additional polling on messages.
    * \param[out] memorySlot HiCr memory slot to update
    */
-  __INLINE__ void updateMessagesRecv(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void updateMessagesRecv(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
   {
     size_t        msg_cnt;
-    auto          memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
+    auto          memSlot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot);
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
     lpf_get_rcvd_msg_count_per_slot(_lpf, &msg_cnt, lpfSlot);
-    memSlot->getSourceLocalMemorySlot()->setMessagesRecv(msg_cnt);
+    memSlot->setMessagesRecv(msg_cnt);
   }
 
   /**
@@ -392,16 +376,16 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * additional polling on messages.
    * \param[out] memorySlot HiCr memory slot to update
    */
-  __INLINE__ void updateMessagesSent(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void updateMessagesSent(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
   {
     size_t        msg_cnt;
-    auto          memSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
+    auto          memSlot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot);
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
     lpf_get_sent_msg_count_per_slot(_lpf, &msg_cnt, lpfSlot);
-    memSlot->getSourceLocalMemorySlot()->setMessagesSent(msg_cnt);
+    memSlot->setMessagesSent(msg_cnt);
   }
 
-  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { fenceImpl(memorySlot); }
+  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override { fenceImpl(memorySlot); }
 
   __INLINE__ void flushSent() override { lpf_flush_sent(_lpf); }
   __INLINE__ void flushReceived() override { lpf_flush_received(_lpf); }

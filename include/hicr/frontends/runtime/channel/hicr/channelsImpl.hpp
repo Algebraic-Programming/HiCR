@@ -139,7 +139,6 @@ __INLINE__ void Instance::initializeChannels()
     auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, currentInstanceId);
 
     // Creating channel
-    //printf("[Instance %lu] Adding consumer channel for instance %lu\n", currentInstanceId, instanceIds[producerIdx]);
     _consumerChannels[instanceIds[producerIdx]] = std::make_shared<HiCR::channel::variableSize::SPSC::Consumer>(*_communicationManager,
                                                                                                                 consumerMessagePayloadBuffer,
                                                                                                                 consumerMessageSizesBuffer,
@@ -162,8 +161,8 @@ __INLINE__ void Instance::initializeChannels()
         // Obtaining the globally exchanged memory slots
         auto consumerMessageSizesBuffer    = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_SIZES_BUFFER_TAG, consumerInstanceId);
         auto consumerMessagePayloadBuffer  = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_PAYLOAD_BUFFER_TAG, consumerInstanceId);
-        auto producerSizesProducerBuffer   = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG, consumerInstanceId);
-        auto producerPayloadProducerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG, consumerInstanceId);
+        auto producerSizesConsumerBuffer   = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_COORDINATION_BUFFER_SIZES_TAG, consumerInstanceId);
+        auto producerPayloadConsumerBuffer = _communicationManager->getGlobalMemorySlot(_HICR_RUNTIME_CHANNEL_CONSUMER_COORDINATION_BUFFER_PAYLOADS_TAG, consumerInstanceId);
 
         // Creating channel
         _producerChannels[consumerInstanceId] = std::make_shared<HiCR::channel::variableSize::SPSC::Producer>(*_communicationManager,
@@ -172,8 +171,8 @@ __INLINE__ void Instance::initializeChannels()
                                                                                                               consumerMessageSizesBuffer,
                                                                                                               coordinationBufferMessageSizesVector[i].second,
                                                                                                               coordinationBufferMessagePayloadsVector[i].second,
-                                                                                                              producerSizesProducerBuffer,
-                                                                                                              producerPayloadProducerBuffer,
+                                                                                                              producerSizesConsumerBuffer,
+                                                                                                              producerPayloadConsumerBuffer,
                                                                                                               _HICR_RUNTIME_CHANNEL_PAYLOAD_CAPACITY,
                                                                                                               sizeof(uint8_t),
                                                                                                               _HICR_RUNTIME_CHANNEL_COUNT_CAPACITY);

@@ -130,8 +130,8 @@ class Consumer final : public variableSize::Base
     assert(internalCoordinationBufferForPayloads != nullptr);
     assert(consumerCoordinationBufferForCounts != nullptr);
     assert(consumerCoordinationBufferForCounts != nullptr);
-    _communicationManager->queryMemorySlotUpdates(_tokenSizeBuffer);
-    _communicationManager->queryMemorySlotUpdates(_payloadBuffer);
+    _communicationManager->queryMemorySlotUpdates(_tokenSizeBuffer->getSourceLocalMemorySlot());
+    _communicationManager->queryMemorySlotUpdates(_payloadBuffer->getSourceLocalMemorySlot());
   }
 
   /**
