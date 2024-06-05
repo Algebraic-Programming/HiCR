@@ -232,7 +232,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] memorySlot Memory slot to query for updates.
    */
-  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override {}
+  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override {}
 
   /**
    * Implementation of the fence operation for the mpi backend. For every single window corresponding

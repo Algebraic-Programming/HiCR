@@ -7,8 +7,8 @@
 /**
  * @file fixedSize/spsc/consumer.hpp
  * @brief Provides consumer functionality for a fixed size SPSC channel over HiCR
- * @author A. N. Yzelman & S. M Martin
- * @date 15/9/2023
+ * @author A. N. Yzelman & S. M Martin & K. Dichev
+ * @date 04/06/2024
  */
 
 #pragma once
@@ -174,22 +174,11 @@ class Consumer final : public channel::fixedSize::Base
   }
 
   /**
-   * This function updates the internal value of the channel depth
-   *
-   * This is a non-blocking non-collective function that requests the channel (and its underlying backend)
-   * to check for the arrival of new messages. If this function is not called, then updates are not registered.
+   * In this implementation of SPSC, updateDepth for the consumer is a NOP.
+   * Any push by the producer leads the producer to update the consumer head index
+   * in a one-sided manner. This implementation has some advantages for MPSC using SPSC.
    */
-  __INLINE__ void updateDepth()
-  {
-    // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _communicationManager->queryMemorySlotUpdates(_tokenBuffer);
-
-    // Updating pushed tokens count
-    auto receivedTokenCount = _tokenBuffer->getSourceLocalMemorySlot()->getMessagesRecv();
-
-    // We advance the head locally as many times as newly received tokens
-    _circularBuffer->setHead(receivedTokenCount);
-  }
+  __INLINE__ void updateDepth() {}
 };
 
 } // namespace SPSC

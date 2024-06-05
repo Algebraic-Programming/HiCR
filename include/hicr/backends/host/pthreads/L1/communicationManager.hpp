@@ -124,7 +124,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     barrier();
   }
 
-  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // This function should check and update the abstract class for completed memcpy operations
   }

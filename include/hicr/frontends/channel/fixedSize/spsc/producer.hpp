@@ -7,8 +7,8 @@
 /**
  * @file fixedSize/spsc/producer.hpp
  * @brief Provides producer functionality for a fixed-size SPSC channel over HiCR
- * @author A. N. Yzelman & S. M Martin
- * @date 28/7/2023
+ * @author A. N. Yzelman & S. M Martin & K. Dichev
+ * @date 04/06/2024
  */
 
 #pragma once
@@ -45,9 +45,9 @@ class Producer : public fixedSize::Base
   const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
 
   /*
-   * Global Memory slot pointing to the producer's own coordination buffer
+   * Global Memory slot pointing to the consumer coordination buffer
    */
-  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBuffer;
+  const std::shared_ptr<L0::GlobalMemorySlot> _consumerCoordinationBuffer;
 
   public:
 
@@ -60,7 +60,7 @@ class Producer : public fixedSize::Base
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    *            tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
    * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
-   * \param[in] producerCoordinationBuffer A global reference of the producer's own coordination buffer to check for pop updates
+   * \param[in] consumerCoordinationBuffer A global reference to the consumer's coordination buffer in order to push tokens and update their head index
    *            produced by the remote consumer
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
@@ -68,12 +68,12 @@ class Producer : public fixedSize::Base
   Producer(L1::CommunicationManager             &communicationManager,
            std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
            std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBuffer,
            const size_t                          tokenSize,
            const size_t                          capacity)
     : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(tokenBuffer),
-      _producerCoordinationBuffer(producerCoordinationBuffer)
+      _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {}
 
   ~Producer() = default;
@@ -124,7 +124,7 @@ class Producer : public fixedSize::Base
      * we allow for temporary illegal (tail > head) by using the
      * cached depth when advancing the head
      */
-    _circularBuffer->setCachedDepth(_circularBuffer->getDepth());
+    _circularBuffer->setCachedDepth(curDepth);
     for (size_t i = 0; i < n; i++)
     {
       // Copying with source increasing offset per token
@@ -133,10 +133,24 @@ class Producer : public fixedSize::Base
                                     sourceSlot,                                          /* source */
                                     i * getTokenSize(),                                  /* src_offset */
                                     getTokenSize());                                     /* size */
-      _communicationManager->fence(sourceSlot, 1, 0);
-      // read potentially outdated depth here
     }
+    _communicationManager->fence(sourceSlot, n, 0);
+
+    // read possibly slightly outdated depth here (will be updated next round)
     _circularBuffer->advanceHead(n, true);
+
+    /*
+     * In this implementation of producer-consumer, the producer
+     * actively and in a one-sided manner updates the depth at the consumer.
+     * This implementation has some advantages for MPSC implementations
+     * on top of SPSC
+     */
+    _communicationManager->memcpy(_consumerCoordinationBuffer,
+                                  _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
+                                  _coordinationBuffer,
+                                  _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
+                                  sizeof(size_t));
+    _communicationManager->fence(_coordinationBuffer, 1, 0);
   }
 
   /**
@@ -145,7 +159,7 @@ class Producer : public fixedSize::Base
   __INLINE__ void updateDepth()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    _communicationManager->queryMemorySlotUpdates(_producerCoordinationBuffer);
+    _communicationManager->queryMemorySlotUpdates(_coordinationBuffer);
   }
 };
 

@@ -21,6 +21,7 @@
 #define CHANNEL_TAG 0
 #define TOKEN_BUFFER_KEY 0
 #define PRODUCER_COORDINATION_BUFFER_KEY 1
+#define CONSUMER_COORDINATION_BUFFER_KEY 2
 #define BAD_PRODUCER_COORDINATION_BUFFER_KEY 3
 
 TEST(ProducerChannel, Construction)
@@ -63,9 +64,12 @@ TEST(ProducerChannel, Construction)
   // Allocating correct memory slots
   auto correctTokenBuffer                = m.allocateLocalMemorySlot(*memSpaces.begin(), tokenBufferSize);
   auto correctProducerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
+  auto consumerCoordinationBuffer        = m.allocateLocalMemorySlot(*memSpaces.begin(), coordinationBufferSize);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, correctTokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, correctProducerCoordinationBuffer}});
+  c.exchangeGlobalMemorySlots(
+    CHANNEL_TAG,
+    {{TOKEN_BUFFER_KEY, correctTokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, correctProducerCoordinationBuffer}, {CONSUMER_COORDINATION_BUFFER_KEY, consumerCoordinationBuffer}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   c.fence(CHANNEL_TAG);
@@ -73,6 +77,7 @@ TEST(ProducerChannel, Construction)
   // Obtaining the globally exchanged memory slots
   auto globalTokenBuffer                = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating with incorrect parameters
   EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Producer(c, globalTokenBuffer, badCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
@@ -123,7 +128,9 @@ TEST(ProducerChannel, Push)
   HiCR::channel::fixedSize::SPSC::Consumer::initializeCoordinationBuffer(consumerCoordinationBuffer);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}});
+
+  c.exchangeGlobalMemorySlots(
+    CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}, {CONSUMER_COORDINATION_BUFFER_KEY, consumerCoordinationBuffer}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   c.fence(CHANNEL_TAG);
@@ -131,9 +138,10 @@ TEST(ProducerChannel, Push)
   // Obtaining the globally exchanged memory slots
   auto globalTokenBuffer                = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer channel
-  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
@@ -205,7 +213,8 @@ TEST(ProducerChannel, PushWait)
   HiCR::channel::fixedSize::SPSC::Consumer::initializeCoordinationBuffer(consumerCoordinationBuffer);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  c.exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}});
+  c.exchangeGlobalMemorySlots(
+    CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}, {CONSUMER_COORDINATION_BUFFER_KEY, consumerCoordinationBuffer}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   c.fence(CHANNEL_TAG);
@@ -213,9 +222,10 @@ TEST(ProducerChannel, PushWait)
   // Obtaining the globally exchanged memory slots
   auto globalTokenBuffer                = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
   auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
   HiCR::channel::fixedSize::SPSC::Consumer consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Creating send buffer

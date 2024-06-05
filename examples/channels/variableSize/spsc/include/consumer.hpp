@@ -47,6 +47,8 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   std::shared_ptr<HiCR::L0::GlobalMemorySlot> globalSizesBufferSlot = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
   auto producerCoordinationBufferForCounts                          = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   auto producerCoordinationBufferForPayloads                        = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  auto consumerCoordinationBufferForCounts                          = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  auto consumerCoordinationBufferForPayloads                        = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
   auto payloadBuffer                                                = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
 
   // Creating producer and consumer channels
@@ -85,6 +87,8 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.deregisterGlobalMemorySlot(globalSizesBufferSlot);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBufferForCounts);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBufferForPayloads);
+  communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBufferForCounts);
+  communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBufferForPayloads);
 
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(payloadBufferSlot);

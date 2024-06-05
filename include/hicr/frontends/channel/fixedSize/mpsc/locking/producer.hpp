@@ -127,6 +127,12 @@ class Producer final : public fixedSize::Base
     // If the exchange buffer does not have n free slots, reject the operation
     if (depth + n <= _circularBuffer->getCapacity())
     {
+      // setting the cached depth is done to avoid the situation
+      // when the effect of a consumer popping an element is pushed to the producer
+      // after the consumer releases the lock and after the producer acquires it
+      // for a push, resulting in temporary illegal depth of the circular buffer
+      _circularBuffer->setCachedDepth(depth);
+
       // Copying with source increasing offset per token
       for (size_t i = 0; i < n; i++)
       {
@@ -138,8 +144,8 @@ class Producer final : public fixedSize::Base
       }
       _communicationManager->fence(sourceSlot, n, 0);
 
-      // Advance head, as we have added a new element
-      _circularBuffer->advanceHead(n);
+      // Advance head, as we have added n new elements
+      _circularBuffer->advanceHead(n, true);
 
       // Updating global coordination buffer
       _communicationManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());

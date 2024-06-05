@@ -56,14 +56,14 @@ class Producer final : public variableSize::Base
   const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
 
   /**
-   * Global Memory slot pointing to the producer's own coordination buffer for message size info
+   * Global Memory slot pointing to the consumer coordination buffer for message size info
    */
-  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForCounts;
+  const std::shared_ptr<L0::GlobalMemorySlot> _consumerCoordinationBufferForCounts;
 
   /**
-   * Global Memory slot pointing to the producer's own coordination buffer for payload info
+   * Global Memory slot pointing to the consumer coordination buffer for payload info
    */
-  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForPayloads;
+  const std::shared_ptr<L0::GlobalMemorySlot> _consumerCoordinationBufferForPayloads;
 
   public:
 
@@ -81,8 +81,8 @@ class Producer final : public variableSize::Base
    *            hold at least one message size.
    * \param[in] internalCoordinationBufferForCounts This is a small buffer to hold the internal (local) state of the channel's message counts
    * \param[in] internalCoordinationBufferForPayloads This is a small buffer to hold the internal (local) state of the channel's payload sizes (in bytes)
-   * \param[in] producerCoordinationBufferForCounts A global reference of the producer's own coordination buffer to check for updates on message counts
-   * \param[in] producerCoordinationBufferForPayloads A global reference of the producer's own coordination buffer to check for updates on payload sizes (in bytes)
+   * \param[in] consumerCoordinationBufferForCounts A global reference of the consumer's own coordination buffer to check for updates on message counts
+   * \param[in] consumerCoordinationBufferForPayloads A global reference of the consumer's own coordination buffer to check for updates on payload sizes (in bytes)
    * \param[in] payloadCapacity capacity in bytes of the buffer for message payloads
    * \param[in] payloadSize size in bytes of the datatype used for variable-sized messages
    * \param[in] capacity The maximum number of tokens that will be held by this channel
@@ -93,8 +93,8 @@ class Producer final : public variableSize::Base
            std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
            std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForCounts,
            std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForPayloads,
-           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForCounts,
-           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForPayloads,
+           std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBufferForCounts,
+           std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBufferForPayloads,
            const size_t                          payloadCapacity,
            const size_t                          payloadSize,
            const size_t                          capacity)
@@ -103,8 +103,8 @@ class Producer final : public variableSize::Base
       _sizeInfoBuffer(sizeInfoBuffer),
       _payloadSize(payloadSize),
       _tokenBuffer(tokenBuffer),
-      _producerCoordinationBufferForCounts(producerCoordinationBufferForCounts),
-      _producerCoordinationBufferForPayloads(producerCoordinationBufferForPayloads)
+      _consumerCoordinationBufferForCounts(consumerCoordinationBufferForCounts),
+      _consumerCoordinationBufferForPayloads(consumerCoordinationBufferForPayloads)
   {}
 
   ~Producer() {}
@@ -115,8 +115,8 @@ class Producer final : public variableSize::Base
    */
   __INLINE__ void updateDepth()
   {
-    _communicationManager->queryMemorySlotUpdates(_producerCoordinationBufferForCounts);
-    _communicationManager->queryMemorySlotUpdates(_producerCoordinationBufferForPayloads);
+    _communicationManager->queryMemorySlotUpdates(_coordinationBufferForCounts);
+    _communicationManager->queryMemorySlotUpdates(_coordinationBufferForPayloads);
   }
 
   /**
@@ -184,21 +184,24 @@ class Producer final : public variableSize::Base
 
     // Updating depth of token (message sizes) and payload buffers
     updateDepth();
-    if (getPayloadDepth() + requiredBufferSize > providedBufferCapacity)
-      HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has depth (%lu). This would exceed capacity (%lu).\n",
+    auto currentCountsDepth  = _circularBufferForCounts->getDepth();
+    auto currentPayloadDepth = getPayloadDepth();
+    auto currentDepth        = getDepth();
+    if (currentPayloadDepth + requiredBufferSize > providedBufferCapacity)
+      HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has payload depth (%lu). This would exceed capacity (%lu).\n",
                          requiredBufferSize,
-                         getPayloadDepth(),
+                         currentPayloadDepth,
                          providedBufferCapacity);
 
     size_t *sizeInfoBufferPtr = static_cast<size_t *>(_sizeInfoBuffer->getPointer());
     sizeInfoBufferPtr[0]      = requiredBufferSize;
 
     // If the exchange buffer does not have n free slots, reject the operation
-    if (getDepth() + 1 > _circularBuffer->getCapacity())
+    if (currentDepth + 1 > _circularBufferForCounts->getCapacity())
       HICR_THROW_RUNTIME(
         "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", 1, getDepth(), _circularBuffer->getCapacity());
 
-    _circularBuffer->setCachedDepth(_circularBuffer->getDepth());
+    _circularBufferForCounts->setCachedDepth(currentCountsDepth);
     // Advance head, as we have added new elements
     // It is important to do the advanceHead and copy together,
     // or else issues such as advancing head index too early or too late might occur!
@@ -218,7 +221,7 @@ class Producer final : public variableSize::Base
      *  beginning. Cover this corner case below
      *
      */
-    _circularBufferForPayloads->setCachedDepth(getPayloadDepth());
+    _circularBufferForPayloads->setCachedDepth(currentPayloadDepth);
     if (requiredBufferSize + getPayloadHeadPosition() > getPayloadCapacity())
     {
       size_t first_chunk  = getPayloadCapacity() - getPayloadHeadPosition();
@@ -243,7 +246,24 @@ class Producer final : public variableSize::Base
       _communicationManager->memcpy(_payloadBuffer, getPayloadHeadPosition(), sourceSlot, 0, requiredBufferSize);
       _communicationManager->fence(sourceSlot, 1, 0);
     }
+
     advancePayloadHead(requiredBufferSize, true);
+
+    // update the consumer coordination buffers (consumer does not update
+    // its own coordination head positions)
+    _communicationManager->memcpy(_consumerCoordinationBufferForCounts,
+                                  _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
+                                  _coordinationBufferForCounts,
+                                  _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
+                                  sizeof(size_t));
+
+    _communicationManager->memcpy(_consumerCoordinationBufferForPayloads,
+                                  _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
+                                  _coordinationBufferForPayloads,
+                                  _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
+                                  sizeof(size_t));
+    _communicationManager->fence(_coordinationBufferForCounts, 1, 0);
+    _communicationManager->fence(_coordinationBufferForPayloads, 1, 0);
   }
 
   /**
@@ -254,7 +274,7 @@ class Producer final : public variableSize::Base
   {
     // Because the current implementation first receives the message size in the token buffer, followed
     // by the message payload, it is possible for the token buffer to have a larged depth (by 1) than the payload buffer. Therefore, we need to return the minimum of the two depths
-    return std::min(_circularBuffer->getDepth(), _circularBufferForPayloads->getDepth() / getPayloadSize());
+    return std::min(_circularBufferForCounts->getDepth(), _circularBufferForPayloads->getDepth() / getPayloadSize());
   }
 
   /**
@@ -265,7 +285,7 @@ class Producer final : public variableSize::Base
    * \returns true, if both message count and payload buffers are empty
    * \returns false, if one of the buffers is not empty
    */
-  bool isEmpty() { return (_circularBuffer->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0); }
+  bool isEmpty() { return (_circularBufferForCounts->getDepth() == 0) && (_circularBufferForPayloads->getDepth() == 0); }
 };
 
 } // namespace SPSC

@@ -149,7 +149,7 @@ class CommunicationManager
    *
    * \param[in] memorySlot Identifier of the memory slot to query for updates.
    */
-  __INLINE__ void queryMemorySlotUpdates(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
+  __INLINE__ void queryMemorySlotUpdates(std::shared_ptr<L0::LocalMemorySlot> memorySlot)
   {
     // Getting value by copy
     queryMemorySlotUpdatesImpl(memorySlot);
@@ -469,7 +469,7 @@ class CommunicationManager
    *
    * \param[in] memorySlot Memory slot to query updates for.
    */
-  virtual void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) = 0;
+  virtual void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the locking of a mutual exclusion mechanism. By default, no concurrency is assumed

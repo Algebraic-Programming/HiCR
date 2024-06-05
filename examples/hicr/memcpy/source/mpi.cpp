@@ -67,15 +67,15 @@ int main(int argc, char **argv)
 
   if (myProcess == RECEIVER_PROCESS)
   {
-    c.queryMemorySlotUpdates(receiverSlot);
-    auto recvMsgs = receiverSlot->getSourceLocalMemorySlot()->getMessagesRecv();
+    c.queryMemorySlotUpdates(localSlot);
+    auto recvMsgs = localSlot->getMessagesRecv();
     std::cout << "Received messages (before fence) = " << recvMsgs << std::endl;
 
     c.fence(CHANNEL_TAG);
     std::cout << "Received buffer = " << static_cast<char *>(localSlot->getPointer()) << std::endl;
 
-    c.queryMemorySlotUpdates(receiverSlot);
-    recvMsgs = receiverSlot->getSourceLocalMemorySlot()->getMessagesRecv();
+    c.queryMemorySlotUpdates(localSlot);
+    recvMsgs = localSlot->getMessagesRecv();
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
   }
 
