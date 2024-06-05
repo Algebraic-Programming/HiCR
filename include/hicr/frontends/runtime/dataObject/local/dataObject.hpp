@@ -70,14 +70,12 @@ class DataObject final
    *
    * This function will stall until and unless the specified remote instance published the given data object
    *
-   * @param[in] dataObjectId The data object id to take from a remote instance
-   * @param[in] remoteInstanceId Id of the remote instance to take the published data object from
+   * @param[in] dataObject The data object to take from a remote instance
    * @param[in] currentInstanceId Id of the instance that will own the data object
    * @param[in] seed unique random seed 
    * @return A shared pointer to the data object obtained from the remote instance
    */
-  __INLINE__ static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t       dataObjectId,
-                                                              HiCR::L0::Instance::instanceId_t remoteInstanceId,
+  __INLINE__ static std::shared_ptr<DataObject> getDataObject(HiCR::runtime::DataObject       &dataObject,
                                                               HiCR::L0::Instance::instanceId_t currentInstanceId,
                                                               HiCR::L0::Instance::instanceId_t seed)
   {
@@ -85,7 +83,7 @@ class DataObject final
     HICR_THROW_LOGIC("Attempting to get a data object when using the host (single instance) runtime mode.");
 
     // Creating data object
-    return std::make_shared<DataObject>(nullptr, 0, dataObjectId, currentInstanceId, seed);
+    return std::make_shared<DataObject>(nullptr, 0, 0, 0, seed);
   }
 
   /**

@@ -90,8 +90,11 @@ void workerEntryPointFc(HiCR::Runtime &runtime, const std::string &entryPointNam
   // Printing data object id
   printf("[Worker %lu] Requesting data object id %u from coordinator.\n", runtime.getInstanceId(), dataObjectId);
 
+  // Creating data object reference
+  HiCR::runtime::DataObject srcDataObject(nullptr, 0, dataObjectId, coordinatorInstanceId, 0);
+
   // Getting data object from coordinator
-  auto dataObject = currentInstance->getDataObject(coordinatorInstanceId, dataObjectId);
+  auto dataObject = currentInstance->getDataObject(srcDataObject);
 
   // Printing data object contents
   printf("[Worker %lu] Received message from coordinator: '%s'\n", runtime.getInstanceId(), (const char *)dataObject->getData());
