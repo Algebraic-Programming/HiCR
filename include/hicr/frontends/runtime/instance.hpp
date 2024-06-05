@@ -205,6 +205,35 @@ class Instance
   }
 
   /**
+  * Releases any pending data objects, if they have been obtained by another instance
+  * @param[in] dataObjectId The id of the data object to remove
+  */
+  __INLINE__ void removePendingDataObject(const DataObject::dataObjectId_t dataObjectId)
+  {
+    _pendingDataObjectsMutex.lock();
+
+    // Iterate over the entire pending data object list to see if we can  release them (they were taken)
+    auto it = _pendingDataObjects.begin();
+    while (it != _pendingDataObjects.end())
+    {
+      // If the current data object is found
+      if ((*it)->getId() == dataObjectId)
+      {
+        // Remove it from the list
+        it = _pendingDataObjects.erase(it);
+
+        // Continue without advancing the pointer
+        continue;
+      };
+
+      // Advancing to the next data object in the list
+      it++;
+    }
+
+    _pendingDataObjectsMutex.unlock();
+  }
+
+  /**
    * Allows a worker to obtain a data object by id from the another instance
    *
    * This is a blocking function.
