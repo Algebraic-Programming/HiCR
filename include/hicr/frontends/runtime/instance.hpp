@@ -210,17 +210,16 @@ class Instance
    * This is a blocking function.
    * The data object must be published (either before or after this call) by the source instance for this function to succeed.
    *
-   * @param[in] srcInstanceId The id of the instance from whence we will get the data object
-   * @param[in] dataObjectId The id of the data object to get
+   * @param[in] dataObject The data object to get from a remote instance
    * @return A shared pointer to the obtained data object
    */
-  __INLINE__ std::shared_ptr<DataObject> getDataObject(const HiCR::L0::Instance::instanceId_t srcInstanceId, const DataObject::dataObjectId_t dataObjectId)
+  __INLINE__ std::shared_ptr<DataObject> getDataObject(HiCR::runtime::DataObject &dataObject)
   {
     // Getting instance id of coordinator instance
     const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
 
     // Creating data object from id and remote instance id
-    return DataObject::getDataObject(dataObjectId, srcInstanceId, currentInstanceId, _instanceManager->getSeed());
+    return DataObject::getDataObject(dataObject, currentInstanceId, _instanceManager->getSeed());
   }
 
   /**

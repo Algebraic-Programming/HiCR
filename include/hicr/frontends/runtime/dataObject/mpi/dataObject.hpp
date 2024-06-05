@@ -46,6 +46,7 @@ class DataObject final
    */
   DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId, const HiCR::L0::Instance::instanceId_t seed)
     : _buffer(buffer),
+      _instanceId(instanceId),
       _size(size),
       _id(id){};
   ~DataObject() = default;
@@ -101,6 +102,45 @@ class DataObject final
   }
 
   /**
+   * Obtains a data object from a remote instance, based on its id
+   *
+   * This function will stall until and unless the specified remote instance published the given data object
+   *
+   * @param[in] dataObject The data object to take from a remote instance
+   * @param[in] currentInstanceId Id of the instance that will own the data object
+   * @param[in] seed unique random seed 
+   * @return A shared pointer to the data object obtained from the remote instance
+   */
+  __INLINE__ static std::shared_ptr<DataObject> getDataObject(HiCR::runtime::DataObject       &dataObject,
+                                                              HiCR::L0::Instance::instanceId_t currentInstanceId,
+                                                              HiCR::L0::Instance::instanceId_t seed)
+  {
+    // Pick the first 15 bits of the id and use it as MPI Tag
+    const int dataObjectIdTag = dataObject.getId() & mpiTagMask;
+
+    // Get the corresponding MPI rank where this data object is located
+    int sourceRank = (int)dataObject.getInstanceId();
+
+    // Sending request
+    MPI_Send(nullptr, 0, MPI_BYTE, sourceRank, dataObjectIdTag, MPI_COMM_WORLD);
+
+    // Buffer to store the size
+    size_t size = 0;
+
+    // Getting return value size
+    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, sourceRank, _HICR_RUNTIME_DATA_OBJECT_RETURN_SIZE_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    // Allocating memory slot to store the return value
+    auto buffer = malloc(size);
+
+    // Getting data directly
+    MPI_Recv(buffer, size, MPI_BYTE, sourceRank, _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    // Creating data object
+    return std::make_shared<DataObject>(buffer, size, dataObject.getId(), currentInstanceId, seed);
+  }
+
+  /**
    * Gets the data object id
    *
    * @return The data object id
@@ -108,42 +148,11 @@ class DataObject final
   dataObjectId_t getId() const { return _id; }
 
   /**
-   * Obtains a data object from a remote instance, based on its id
+   * Get data object instance id that owns it
    *
-   * This function will stall until and unless the specified remote instance published the given data object
-   *
-   * @param[in] dataObjectId The data object id to take from a remote instance
-   * @param[in] remoteInstanceId Id of the remote instance to take the published data object from
-   * @param[in] currentInstanceId Id of the instance that will own the data object
-   * @param[in] seed unique random seed 
-   * @return A shared pointer to the data object obtained from the remote instance
+   * @return The instance id
    */
-  __INLINE__ static std::shared_ptr<DataObject> getDataObject(DataObject::dataObjectId_t       dataObjectId,
-                                                              HiCR::L0::Instance::instanceId_t remoteInstanceId,
-                                                              HiCR::L0::Instance::instanceId_t currentInstanceId,
-                                                              HiCR::L0::Instance::instanceId_t seed)
-  {
-    // Pick the first 15 bits of the id and use it as MPI Tag
-    const int dataObjectIdTag = dataObjectId & mpiTagMask;
-
-    // Sending request
-    MPI_Send(nullptr, 0, MPI_BYTE, remoteInstanceId, dataObjectIdTag, MPI_COMM_WORLD);
-
-    // Buffer to store the size
-    size_t size = 0;
-
-    // Getting return value size
-    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, remoteInstanceId, _HICR_RUNTIME_DATA_OBJECT_RETURN_SIZE_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    // Allocating memory slot to store the return value
-    auto buffer = malloc(size);
-
-    // Getting data directly
-    MPI_Recv(buffer, size, MPI_BYTE, remoteInstanceId, _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    // Creating data object
-    return std::make_shared<DataObject>(buffer, size, dataObjectId, currentInstanceId, seed);
-  }
+  HiCR::L0::Instance::instanceId_t getInstanceId() const { return _instanceId; }
 
   /**
    * Gets access to the internal data object buffer
@@ -177,6 +186,11 @@ class DataObject final
    * The data object's internal data buffer
    */
   void *const _buffer;
+
+  /**
+   * The data object's source isntance id
+   */
+  const HiCR::L0::Instance::instanceId_t _instanceId;
 
   /**
    * The data object's internal data size
