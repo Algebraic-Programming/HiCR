@@ -30,7 +30,7 @@
   /**
    * Maximum simultaneous tasks supported
    */
-  #define MAX_SIMULTANEOUS_TASKS 65536
+  #define MAX_SIMULTANEOUS_TASKS 262144
 #endif
 
 namespace taskr
@@ -185,7 +185,32 @@ class Runtime
   /**
    * Constructor of the TaskR Runtime.
    */
-  Runtime() = default;
+  Runtime()
+  {
+    _dispatcher = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); });
+    _eventMap   = new HiCR::tasking::Task::taskEventMap_t();
+  }
+
+  // Destructor (frees previous allocations)
+  ~Runtime()
+  {
+    delete _dispatcher;
+    delete _eventMap;
+  }
+
+  /**
+   * A callback function for HiCR to awaken a task after it had been suspended. Here simply we put it back into the task queue
+   */
+  __INLINE__ void awakenTask(HiCR::tasking::Task *task)
+  {
+    // Adding task label to finished task set
+    _waitingTaskQueue.push(task);
+  }
+
+  /**
+   * This function allow setting up an event handler
+  */
+  __INLINE__ void setEventHandler(const HiCR::tasking::Task::event_t event, HiCR::tasking::eventCallback_t<HiCR::tasking::Task> fc) { _eventMap->setEvent(event, fc); }
 
   /**
    * This function adds a processing unit to be used by TaskR in the execution of tasks
@@ -242,17 +267,6 @@ class Runtime
     // Free task's memory to prevent leaks. Could not use unique_ptr because the
     // type is not supported by boost's lock-free queue
     delete task;
-  }
-
-  /**
-   * A callback function for HiCR to run upon the suspension of a given task. It adds it back to the task queue for reevaluation later.
-   *
-   * \param[in] task Suspended task pointer
-   */
-  __INLINE__ void onTaskSync(HiCR::tasking::Task *task)
-  {
-    // Re-adding task to the waiting list
-    _waitingTaskQueue.push(task);
   }
 
   /**
@@ -320,12 +334,8 @@ class Runtime
     // Initializing HiCR tasking
     HiCR::tasking::initialize();
 
-    _dispatcher = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); });
-    _eventMap   = new HiCR::tasking::Task::taskEventMap_t();
-
     // Creating event map ands events
     _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish(task); });
-    _eventMap->setEvent(HiCR::tasking::Task::event_t::onTaskSync, [this](HiCR::tasking::Task *task) { onTaskSync(task); });
 
     // Creating one worker per processung unit in the list
     for (auto &pu : _processingUnits)
@@ -358,8 +368,6 @@ class Runtime
     // Clearing created objects
     for (auto &w : _workers) delete w;
     _workers.clear();
-    delete _dispatcher;
-    delete _eventMap;
 
     // Finalizing HiCR tasking
     HiCR::tasking::finalize();
