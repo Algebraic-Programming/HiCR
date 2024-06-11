@@ -1,4 +1,3 @@
-#include <chrono>
 #include <cstdio>
 #include <hwloc.h>
 #include <hicr/backends/host/pthreads/L1/computeManager.hpp>
@@ -19,6 +18,13 @@ int main(int argc, char **argv)
   // Reading argument
   uint64_t initialValue = std::atoi(argv[1]);
 
+  // Checking for maximum fibonacci number to request
+  if (initialValue > 30)
+  {
+    fprintf(stderr, "Error: can only request fibonacci numbers up to 30.\n");
+    exit(0);
+  }
+
   // Creating HWloc topology object
   hwloc_topology_t topology;
 
@@ -31,23 +37,27 @@ int main(int argc, char **argv)
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
 
-  // Getting first device found
-  auto d = *t.getDevices().begin();
+  // Compute resources to use
+  HiCR::L0::Device::computeResourceList_t computeResources;
 
-  // Updating the compute resource list
-  auto computeResources = d->getComputeResourceList();
+  // Adding all compute resources found
+  for (auto &d : t.getDevices())
+  {
+    // Getting compute resources in this device
+    auto cr = d->getComputeResourceList();
+
+    // Adding it to the list
+    computeResources.insert(cr.begin(), cr.end());
+  }
 
   // Initializing Pthreads-based compute manager to run tasks in parallel
   HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
-  // Running ABCtasks example
-  auto startTime   = std::chrono::high_resolution_clock::now();
-  auto result      = fibonacciDriver(initialValue, &computeManager, computeResources);
-  auto endTime     = std::chrono::high_resolution_clock::now();
-  auto computeTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+  // Running Fibonacci example
+  auto result = fibonacciDriver(initialValue, &computeManager, computeResources);
 
   // Printing result
-  printf("Fib(%lu) = %lu. Time: %0.5fs\n", initialValue, result, computeTime.count());
+  printf("Fib(%lu) = %lu\n", initialValue, result);
 
   // Freeing up memory
   hwloc_topology_destroy(topology);

@@ -19,19 +19,8 @@
 #include <hicr/core/common/concurrentQueue.hpp>
 #include <hicr/core/common/parallelHashSet.hpp>
 
-#ifndef MAX_SIMULTANEOUS_WORKERS
-  /**
-   * Maximum simultaneous workers supported
-   */
-  #define MAX_SIMULTANEOUS_WORKERS 1024
-#endif
-
-#ifndef MAX_SIMULTANEOUS_TASKS
-  /**
-   * Maximum simultaneous tasks supported
-   */
-  #define MAX_SIMULTANEOUS_TASKS 262144
-#endif
+#define __TASKR_DEFAULT_MAX_TASKS 65536
+#define __TASKR_DEFAULT_MAX_WORKERS 1024
 
 namespace taskr
 {
@@ -67,11 +56,6 @@ class Runtime
   std::atomic<uint64_t> _taskCount;
 
   /**
-   * Lock-free queue for waiting tasks.
-   */
-  HiCR::common::ConcurrentQueue<HiCR::tasking::Task *, MAX_SIMULTANEOUS_TASKS> _waitingTaskQueue;
-
-  /**
    * Hash map for quick location of tasks based on their hashed names
    */
   HiCR::common::parallelHashSet_t<HiCR::tasking::Task::label_t> _finishedTaskHashSet;
@@ -93,14 +77,29 @@ class Runtime
   ssize_t _activeWorkerCount;
 
   /**
+   * Lock-free queue for waiting tasks.
+   */
+  HiCR::common::ConcurrentQueue<HiCR::tasking::Task> *_waitingTaskQueue;
+
+  /**
    * Lock-free queue storing workers that remain in suspension. Required for the max active workers mechanism
    */
-  HiCR::common::ConcurrentQueue<HiCR::tasking::Worker *, MAX_SIMULTANEOUS_WORKERS> _suspendedWorkerQueue;
+  HiCR::common::ConcurrentQueue<HiCR::tasking::Worker> *_suspendedWorkerQueue;
 
   /**
    * The processing units assigned to taskr to run workers from
    */
   std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnits;
+
+  /**
+   * Determines the maximum amount of tasks (required by the lock-free queue)
+  */
+  const size_t _maxTasks;
+
+  /**
+   * Determines the maximum amount of workers (required by the lock-free queue)
+  */
+  const size_t _maxWorkers;
 
   /**
    * This function checks whether a given task is ready to go (i.e., all its dependencies have been satisfied)
@@ -140,7 +139,7 @@ class Runtime
       if (_maximumActiveWorkers > 0 && _activeWorkerCount > (ssize_t)_maximumActiveWorkers)
       {
         // Adding worker to the queue
-        _suspendedWorkerQueue.push(worker);
+        _suspendedWorkerQueue->push(worker);
 
         // Reducing active worker count
         _activeWorkerCount--;
@@ -159,10 +158,10 @@ class Runtime
 
       // If the new maximum is higher than the number of active workers, we need
       // to re-awaken some of them
-      while ((_maximumActiveWorkers == 0 || (ssize_t)_maximumActiveWorkers > _activeWorkerCount) && _suspendedWorkerQueue.isEmpty() == false)
+      while ((_maximumActiveWorkers == 0 || (ssize_t)_maximumActiveWorkers > _activeWorkerCount) && _suspendedWorkerQueue->isEmpty() == false)
       {
         // Getting the worker from the queue of suspended workers
-        auto w = _suspendedWorkerQueue.pop();
+        auto w = _suspendedWorkerQueue->pop();
 
         // Do the following if a worker was obtained
         if (w != NULL)
@@ -185,10 +184,14 @@ class Runtime
   /**
    * Constructor of the TaskR Runtime.
    */
-  Runtime()
+  Runtime(const size_t maxTasks = __TASKR_DEFAULT_MAX_TASKS, const size_t maxWorkers = __TASKR_DEFAULT_MAX_WORKERS)
+    : _maxTasks(maxTasks),
+      _maxWorkers(maxWorkers)
   {
-    _dispatcher = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); });
-    _eventMap   = new HiCR::tasking::Task::taskEventMap_t();
+    _dispatcher           = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); });
+    _eventMap             = new HiCR::tasking::Task::taskEventMap_t();
+    _waitingTaskQueue     = new HiCR::common::ConcurrentQueue<HiCR::tasking::Task>(maxTasks);
+    _suspendedWorkerQueue = new HiCR::common::ConcurrentQueue<HiCR::tasking::Worker>(maxWorkers);
   }
 
   // Destructor (frees previous allocations)
@@ -204,7 +207,7 @@ class Runtime
   __INLINE__ void awakenTask(HiCR::tasking::Task *task)
   {
     // Adding task label to finished task set
-    _waitingTaskQueue.push(task);
+    _waitingTaskQueue->push(task);
   }
 
   /**
@@ -242,11 +245,8 @@ class Runtime
     // Increasing task count
     _taskCount++;
 
-    // Checking if maximum was exceeded
-    if (_taskCount >= MAX_SIMULTANEOUS_TASKS) HICR_THROW_LOGIC("Maximum task size (MAX_SIMULTANEOUS_TASKS = %lu) exceeded.\n", MAX_SIMULTANEOUS_TASKS);
-
     // Adding task to the waiting lis, it will be cleared out later
-    _waitingTaskQueue.push(task);
+    _waitingTaskQueue->push(task);
   }
 
   /**
@@ -296,7 +296,7 @@ class Runtime
     checkMaximumActiveWorkerCount();
 
     // Poping next task from the lock-free queue
-    auto task = _waitingTaskQueue.pop();
+    auto task = _waitingTaskQueue->pop();
 
     // If no task was found (queue was empty), then return an empty task
     if (task == NULL) return NULL;
@@ -316,7 +316,7 @@ class Runtime
     }
 
     // Otherwise, put it at the back of the waiting task pile and return
-    _waitingTaskQueue.push(task);
+    _waitingTaskQueue->push(task);
 
     // And return a null task
     return NULL;
