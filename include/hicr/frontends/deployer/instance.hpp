@@ -5,7 +5,7 @@
 
 /**
  * @file worker.hpp
- * @brief Provides a definition for the Runtime worker class.
+ * @brief Provides a definition for the Deployer worker class.
  * @author S. M. Martin
  * @date 5/2/2024
  */
@@ -26,9 +26,9 @@
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <hicr/frontends/runtime/dataObject/yuanrong/dataObject.hpp>
-  #include <hicr/frontends/runtime/channel/yuanrong/producerChannel.hpp>
-  #include <hicr/frontends/runtime/channel/yuanrong/consumerChannel.hpp>
+  #include <hicr/frontends/deployer/dataObject/yuanrong/dataObject.hpp>
+  #include <hicr/frontends/deployer/channel/yuanrong/producerChannel.hpp>
+  #include <hicr/frontends/deployer/channel/yuanrong/consumerChannel.hpp>
 #else
   #ifdef _HICR_USE_MPI_BACKEND_
     #include "dataObject/mpi/dataObject.hpp"
@@ -44,13 +44,13 @@
 namespace HiCR
 {
 
-namespace runtime
+namespace deployer
 {
 
 /**
  * Defines the worker class, which represents a self-contained instance of HiCR with access to compute and memory resources.
  *
- * Workers may be created during runtime (if the process managing backend allows for it), or activated/suspended on demand.
+ * Workers may be created during deployer (if the process managing backend allows for it), or activated/suspended on demand.
  */
 class Instance
 {
@@ -104,28 +104,28 @@ class Instance
   /**
    * Function to obtain the instance manager from the instance
    *
-   * @return The HiCR runtime's instance manager
+   * @return The HiCR deployer's instance manager
    */
   HiCR::L1::InstanceManager *getInstanceManager() const { return _instanceManager; }
 
   /**
    * Function to obtain the communication manager from the instance
    *
-   * @return The HiCR runtime's communication manager
+   * @return The HiCR deployer's communication manager
    */
   HiCR::L1::InstanceManager *getCommunicationManager() const { return _instanceManager; }
 
   /**
    * Function to obtain the memory manager from the instance
    *
-   * @return The HiCR runtime's memory manager
+   * @return The HiCR deployer's memory manager
    */
   HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
 
   /**
    * Function to obtain the topology managers from the instance
    *
-   * @return The HiCR runtime's topology managers
+   * @return The HiCR deployer's topology managers
    */
   std::vector<HiCR::L1::TopologyManager *> getTopologyManagers() const { return _topologyManagers; }
 
@@ -242,7 +242,7 @@ class Instance
    * @param[in] dataObject The data object to get from a remote instance
    * @return A shared pointer to the obtained data object
    */
-  __INLINE__ std::shared_ptr<DataObject> getDataObject(HiCR::runtime::DataObject &dataObject)
+  __INLINE__ std::shared_ptr<DataObject> getDataObject(HiCR::deployer::DataObject &dataObject)
   {
     // Getting instance id of coordinator instance
     const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
@@ -263,21 +263,19 @@ class Instance
   /**
    * Synchronous function to receive a message from another instance
    *
-   * @param[in] instanceId The id of the instance for which channel we check for incoming messages
    * @param[in] isAsync Whether the function must return immediately if no message was found
    * @return A pair containing a pointer to the start of the message binary data and the message's size
    */
-  __INLINE__ message_t recvMessage(const HiCR::L0::Instance::instanceId_t instanceId, const bool isAsync = false);
+  __INLINE__ message_t recvMessage(const bool isAsync = false);
 
   /**
    * Asynchronous function to receive a message from another instance
    *
    * This function returns immediately.
    *
-   * @param[in] instanceId The id of the instance for which channel we check for incoming messages
    * @return A pair containing a pointer to the start of the message binary data and the message's size. The pointer will be NULL if no messages were there when called.
    */
-  __INLINE__ message_t recvMessageAsync(const HiCR::L0::Instance::instanceId_t instanceId) { return recvMessage(instanceId, true); }
+  __INLINE__ message_t recvMessageAsync() { return recvMessage(true); }
 
   /**
    * Function to initialize producer and consumer channels with all the rest of the instances
@@ -323,7 +321,7 @@ class Instance
   protected:
 
   /**
-   * Internal HiCR instance represented by this runtime instance
+   * Internal HiCR instance represented by this deployer instance
    */
   const std::shared_ptr<HiCR::L0::Instance> _HiCRInstance;
 
@@ -360,12 +358,12 @@ class Instance
   /**
    * Producer channels for sending messages to all other instances
    */
-  std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<runtime::ProducerChannel>> _producerChannels;
+  std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<deployer::ProducerChannel>> _producerChannels;
 
   /**
-   * Consumer channels for sending messages to all other instances
+   * Consumer channels for receiving messages from all other instances
    */
-  std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<runtime::ConsumerChannel>> _consumerChannels;
+  std::shared_ptr<deployer::ConsumerChannel> _consumerChannel;
 
   /**
    * Mutex to protect the list of data objects
@@ -380,11 +378,11 @@ class Instance
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <hicr/frontends/runtime/channel/yuanrong/channelsImpl.hpp>
+  #include <hicr/frontends/deployer/channel/yuanrong/channelsImpl.hpp>
 #else
   #include "channel/hicr/channelsImpl.hpp"
 #endif
 
-} // namespace runtime
+} // namespace deployer
 
 } // namespace HiCR

@@ -4,7 +4,7 @@
  */
 
 /**
- * @file runtime.hpp
+ * @file tasking.hpp
  * @brief This file implements the HiCR tasking initializers
  * @author Sergio Martin
  * @date 3/4/2024
@@ -18,6 +18,9 @@
 #include "mutex.hpp"
 #include "conditionVariable.hpp"
 
+/**
+* Defines a hook required to be added and compiled by all applications using the tasking frontend. It defines some necessary state objects that cannot be placed as include-only.
+*/
 #define CREATE_HICR_TASKING_HOOK                                                                                                                                                   \
   namespace HiCR                                                                                                                                                                   \
   {                                                                                                                                                                                \

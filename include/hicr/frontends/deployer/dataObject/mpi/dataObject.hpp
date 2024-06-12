@@ -4,14 +4,14 @@
 #include <mpi.h>
 #include <hicr/core/L0/instance.hpp>
 
-#define _HICR_RUNTIME_DATA_OBJECT_BASE_TAG 0x00010000
-#define _HICR_RUNTIME_DATA_OBJECT_RETURN_SIZE_TAG _HICR_RUNTIME_DATA_OBJECT_BASE_TAG + 1
-#define _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG _HICR_RUNTIME_DATA_OBJECT_BASE_TAG + 2
+#define _HICR_DEPLOYER_DATA_OBJECT_BASE_TAG 0x00010000
+#define _HICR_DEPLOYER_DATA_OBJECT_RETURN_SIZE_TAG _HICR_DEPLOYER_DATA_OBJECT_BASE_TAG + 1
+#define _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG _HICR_DEPLOYER_DATA_OBJECT_BASE_TAG + 2
 
 namespace HiCR
 {
 
-namespace runtime
+namespace deployer
 {
 
 /**
@@ -89,10 +89,10 @@ class DataObject final
     auto requester = status.MPI_SOURCE;
 
     // Sending message size first
-    MPI_Ssend(&_size, 1, MPI_UNSIGNED_LONG, requester, _HICR_RUNTIME_DATA_OBJECT_RETURN_SIZE_TAG, MPI_COMM_WORLD);
+    MPI_Ssend(&_size, 1, MPI_UNSIGNED_LONG, requester, _HICR_DEPLOYER_DATA_OBJECT_RETURN_SIZE_TAG, MPI_COMM_WORLD);
 
     // Getting RPC execution unit index
-    MPI_Ssend(_buffer, _size, MPI_BYTE, requester, _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD);
+    MPI_Ssend(_buffer, _size, MPI_BYTE, requester, _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD);
 
     // Changing state to transfered
     _isReleased = true;
@@ -111,7 +111,7 @@ class DataObject final
    * @param[in] seed unique random seed 
    * @return A shared pointer to the data object obtained from the remote instance
    */
-  __INLINE__ static std::shared_ptr<DataObject> getDataObject(HiCR::runtime::DataObject       &dataObject,
+  __INLINE__ static std::shared_ptr<DataObject> getDataObject(HiCR::deployer::DataObject      &dataObject,
                                                               HiCR::L0::Instance::instanceId_t currentInstanceId,
                                                               HiCR::L0::Instance::instanceId_t seed)
   {
@@ -128,13 +128,13 @@ class DataObject final
     size_t size = 0;
 
     // Getting return value size
-    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, sourceRank, _HICR_RUNTIME_DATA_OBJECT_RETURN_SIZE_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, sourceRank, _HICR_DEPLOYER_DATA_OBJECT_RETURN_SIZE_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     // Allocating memory slot to store the return value
     auto buffer = malloc(size);
 
     // Getting data directly
-    MPI_Recv(buffer, size, MPI_BYTE, sourceRank, _HICR_RUNTIME_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(buffer, size, MPI_BYTE, sourceRank, _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     // Creating data object
     return std::make_shared<DataObject>(buffer, size, dataObject.getId(), currentInstanceId, seed);
@@ -208,6 +208,6 @@ class DataObject final
   MPI_Request publishRequest;
 };
 
-} // namespace runtime
+} // namespace deployer
 
 } // namespace HiCR

@@ -1,12 +1,12 @@
 #include <hwloc.h>
-#include <hicr/frontends/runtime/runtime.hpp>
+#include <hicr/frontends/deployer/deployer.hpp>
 #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
 #include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
 #include "../../common.hpp"
 
 // Worker entry point functions
-void entryPointFc(HiCR::Runtime &runtime) { printf("Hello, I am the coordinator itself\n"); };
+void entryPointFc(HiCR::Deployer &deployer) { printf("Hello, I am the coordinator itself\n"); };
 
 int main(int argc, char *argv[])
 {
@@ -26,20 +26,20 @@ int main(int argc, char *argv[])
   auto                                     hwlocTopologyManager = std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(&topology);
   topologyManagers.push_back(hwlocTopologyManager.get());
 
-  // Creating HiCR Runtime
-  auto runtime = HiCR::Runtime(instanceManager.get(), communicationManager.get(), memoryManager.get(), topologyManagers);
+  // Creating HiCR Deployer
+  auto deployer = HiCR::Deployer(instanceManager.get(), communicationManager.get(), memoryManager.get(), topologyManagers);
 
   // Registering tasks for the workers
-  runtime.registerEntryPoint("Coordinator", [&]() { entryPointFc(runtime); });
+  deployer.registerEntryPoint("Coordinator", [&]() { entryPointFc(deployer); });
 
-  // Initializing the HiCR runtime
-  runtime.initialize();
+  // Initializing the HiCR deployer
+  deployer.initialize();
 
   // If the number of arguments passed is incorrect, abort execution and exit
   if (argc != 2)
   {
     fprintf(stderr, "Launch error. No machine model file provided\n");
-    runtime.abort(-1);
+    deployer.abort(-1);
   }
 
   // Parsing number of instances requested
@@ -49,10 +49,10 @@ int main(int argc, char *argv[])
   auto machineModel = loadMachineModelFromFile(machineModelFile);
 
   // Finally, deploying machine model
-  runtime.deploy(machineModel, &isTopologyAcceptable);
+  deployer.deploy(machineModel, &isTopologyAcceptable);
 
-  // Finalizing runtime
-  runtime.finalize();
+  // Finalizing deployer
+  deployer.finalize();
 
   return 0;
 }

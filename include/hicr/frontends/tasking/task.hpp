@@ -4,7 +4,7 @@
  */
 
 /**
- * @file runtime.hpp
+ * @file deployer.hpp
  * @brief This file implements the HiCR task class
  * @author Sergio Martin
  * @date 8/8/2023

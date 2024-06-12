@@ -4,8 +4,8 @@
  */
 
 /**
- * @file runtime.hpp
- * @brief This file implements the runtime class
+ * @file deployer.hpp
+ * @brief This file implements the deployer class
  * @author S. M Martin
  * @date 31/01/2024
  */
@@ -30,36 +30,35 @@ namespace HiCR
 {
 
 /**
- * The runtime class represents a singleton that exposes many HiCR's (and its frontends') functionalities with a simplified API
- * and performs backend detect and initialization of a selected set of backends. This class goal is to be FF3 RTS's backend library
- * but it can used by other libraries as well.
+ * The deployer class represents a singleton that helps deploying multiple HiCR instances based on a machine model configuration and
+ * creates channels of communication among them for a quick distributed deployment in the cloud or datacenter
  */
-class Runtime final
+class Deployer final
 {
   public:
 
   /**
-   * Constructor for the HiCR Runtime class
+   * Constructor for the HiCR Deployer class
    *
    * @param[in] instanceManager The instance manager backend to use
    * @param[in] communicationManager The communication manager backend to use
    * @param[in] memoryManager The memory manager backend to use
    * @param[in] topologyManagers The topology managers backend to use to discover the system's resources
    */
-  Runtime(HiCR::L1::InstanceManager                *instanceManager,
-          HiCR::L1::CommunicationManager           *communicationManager,
-          HiCR::L1::MemoryManager                  *memoryManager,
-          std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
+  Deployer(HiCR::L1::InstanceManager                *instanceManager,
+           HiCR::L1::CommunicationManager           *communicationManager,
+           HiCR::L1::MemoryManager                  *memoryManager,
+           std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
     : _instanceManager(instanceManager)
   {
     // Creating machine model object
     _machineModel = std::make_unique<HiCR::MachineModel>(*_instanceManager, topologyManagers);
 
-    // Creating local HiCR Runtime instance
-    _currentInstance = new HiCR::runtime::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, _machineModel.get());
+    // Creating local HiCR Deployer instance
+    _currentInstance = new HiCR::deployer::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, _machineModel.get());
   }
 
-  ~Runtime() = default;
+  ~Deployer() = default;
 
   /**
    * This function detects the backends that HiCR has been compiled against and creates the relevant L1 classes based on that.
@@ -76,11 +75,11 @@ class Runtime final
   }
 
   /**
-   * Gets a pointer to the currently running runtime instance
+   * Gets a pointer to the currently running deployer instance
    *
    * @return A pointer to the current instance
    */
-  HiCR::runtime::Instance *getCurrentInstance() const
+  HiCR::deployer::Instance *getCurrentInstance() const
   {
     // Sanity check
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance before HiCR has been initialized.\n");
@@ -205,7 +204,7 @@ class Runtime final
   }
 
   /**
-   * This function retreives the instance manager used to configure the runtime
+   * This function retreives the instance manager used to configure the deployer
    * 
    * @return A pointer to the instance manager
   */
@@ -231,7 +230,7 @@ class Runtime final
   /**
    * The currently running instance
    */
-  HiCR::runtime::Instance *_currentInstance = nullptr;
+  HiCR::deployer::Instance *_currentInstance = nullptr;
 
   /**
    * Instance manager to use for detecting and creating HiCR instances (only one allowed)
