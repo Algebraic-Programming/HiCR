@@ -1,4 +1,4 @@
-testSuite = [ 'examples', 'runtime', 'multiple' ]
+testSuite = [ 'examples', 'deployer', 'multiple' ]
 test_timeout = 60
 
 if 'mpi' in enabledBackends and 'pthreads' in enabledBackends and 'hwloc' in enabledBackends

@@ -1,8 +1,8 @@
-testSuite = [ 'examples', 'runtime', 'single' ]
+testSuite = [ 'examples', 'deployer', 'single' ]
 test_timeout = 60
 
 if 'pthreads' in enabledBackends and 'hwloc' in enabledBackends
-	host = executable('host', [ 'source/main.cpp'], dependencies: hicrBuildDep, include_directories: ['source'], cpp_args: [ '-D_HICR_RUNTIME_DISABLE_AUTODETECT' ] )
+	host = executable('host', [ 'source/main.cpp'], dependencies: hicrBuildDep, include_directories: ['source'], cpp_args: [ '-D_HICR_DEPLOYER_DISABLE_AUTODETECT' ] )
 
 	if get_option('buildTests')
 	  test('host', host, args : [ meson.current_source_dir() + '/machineModel.json'  ], timeout: test_timeout, suite: testSuite )

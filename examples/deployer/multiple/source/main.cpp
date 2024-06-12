@@ -1,5 +1,5 @@
 #include <hwloc.h>
-#include <hicr/frontends/runtime/runtime.hpp>
+#include <hicr/frontends/deployer/deployer.hpp>
 #include <hicr/backends/mpi/L1/instanceManager.hpp>
 #include <hicr/backends/mpi/L1/communicationManager.hpp>
 #include <hicr/backends/mpi/L1/memoryManager.hpp>
@@ -12,19 +12,19 @@
 #include "../../common.hpp"
 
 // Coordinator entry point functions
-void coordinatorEntryPointFc(HiCR::Runtime &runtime)
+void coordinatorEntryPointFc(HiCR::Deployer &deployer)
 {
-  // Getting instance manager from the runtime
-  auto instanceManager = runtime.getInstanceManager();
+  // Getting instance manager from the deployer
+  auto instanceManager = deployer.getInstanceManager();
 
   // Getting coordinator instance
-  auto coordinator = runtime.getCurrentInstance();
+  auto coordinator = deployer.getCurrentInstance();
 
   // Creating a welcome message
   std::string welcomeMsg = "Hello from the coordinator";
 
   // Buffer for data objects to transfer
-  std::vector<std::shared_ptr<HiCR::runtime::DataObject>> dataObjects;
+  std::vector<std::shared_ptr<HiCR::deployer::DataObject>> dataObjects;
 
   // Sending message to all the workers
   for (auto &instance : instanceManager->getInstances())
@@ -44,7 +44,7 @@ void coordinatorEntryPointFc(HiCR::Runtime &runtime)
       dataObjects.push_back(dataObject);
 
       // Sending message with only the data object identifier
-      coordinator->sendMessage(instance->getId(), &dataObjectId, sizeof(HiCR::runtime::DataObject::dataObjectId_t));
+      coordinator->sendMessage(instance->getId(), &dataObjectId, sizeof(HiCR::deployer::DataObject::dataObjectId_t));
     }
 
   // Sending a message to myself just to test self-comunication
@@ -65,39 +65,34 @@ void coordinatorEntryPointFc(HiCR::Runtime &runtime)
 }
 
 // Worker entry point function
-void workerEntryPointFc(HiCR::Runtime &runtime, const std::string &entryPointName)
+void workerEntryPointFc(HiCR::Deployer &deployer, const std::string &entryPointName)
 {
-  printf("Hello, I am instance Id %lu, executing entry point '%s'\n", runtime.getInstanceId(), entryPointName.c_str());
+  printf("Hello, I am instance Id %lu, executing entry point '%s'\n", deployer.getInstanceId(), entryPointName.c_str());
 
   // Getting my current worker instance
-  auto currentInstance = runtime.getCurrentInstance();
+  auto currentInstance = deployer.getCurrentInstance();
 
   // Getting root (coordinator) instance id
-  auto coordinatorInstanceId = runtime.getInstanceManager()->getRootInstanceId();
+  auto coordinatorInstanceId = deployer.getInstanceManager()->getRootInstanceId();
 
-  // Iterating over all other instances to get a message from the coordinator
-  HiCR::runtime::Instance::message_t message;
-  while (message.size == 0)
-    for (auto &instance : runtime.getInstanceManager()->getInstances())
-    {
-      message = currentInstance->recvMessageAsync(instance->getId());
-      if (message.size > 0) break;
-    }
+  // Get a message from the coordinator
+  HiCR::deployer::Instance::message_t message;
+  while (message.size == 0) message = currentInstance->recvMessageAsync();
 
   // Getting data object id from message
-  const auto dataObjectId = *((HiCR::runtime::DataObject::dataObjectId_t *)message.data);
+  const auto dataObjectId = *((HiCR::deployer::DataObject::dataObjectId_t *)message.data);
 
   // Printing data object id
-  printf("[Worker %lu] Requesting data object id %u from coordinator.\n", runtime.getInstanceId(), dataObjectId);
+  printf("[Worker %lu] Requesting data object id %u from coordinator.\n", deployer.getInstanceId(), dataObjectId);
 
   // Creating data object reference
-  HiCR::runtime::DataObject srcDataObject(nullptr, 0, dataObjectId, coordinatorInstanceId, 0);
+  HiCR::deployer::DataObject srcDataObject(nullptr, 0, dataObjectId, coordinatorInstanceId, 0);
 
   // Getting data object from coordinator
   auto dataObject = currentInstance->getDataObject(srcDataObject);
 
   // Printing data object contents
-  printf("[Worker %lu] Received message from coordinator: '%s'\n", runtime.getInstanceId(), (const char *)dataObject->getData());
+  printf("[Worker %lu] Received message from coordinator: '%s'\n", deployer.getInstanceId(), (const char *)dataObject->getData());
 
   // Freeing up internal buffer
   dataObject->destroyBuffer();
@@ -123,26 +118,23 @@ int main(int argc, char *argv[])
   topologyManagers.push_back(ascendTopologyManager.get());
 #endif
 
-  // Creating HiCR Runtime
-  auto runtime = HiCR::Runtime(instanceManager.get(), communicationManager.get(), memoryManager.get(), topologyManagers);
+  // Creating HiCR Deployer
+  auto deployer = HiCR::Deployer(instanceManager.get(), communicationManager.get(), memoryManager.get(), topologyManagers);
 
   // Registering tasks for the coordinator and the workers
-  runtime.registerEntryPoint("Coordinator", [&]() { coordinatorEntryPointFc(runtime); });
-  runtime.registerEntryPoint("Worker A", [&]() { workerEntryPointFc(runtime, "A"); });
-  runtime.registerEntryPoint("Worker B", [&]() { workerEntryPointFc(runtime, "B"); });
-  runtime.registerEntryPoint("Worker C", [&]() { workerEntryPointFc(runtime, "C"); });
+  deployer.registerEntryPoint("Coordinator", [&]() { coordinatorEntryPointFc(deployer); });
+  deployer.registerEntryPoint("Worker A", [&]() { workerEntryPointFc(deployer, "A"); });
+  deployer.registerEntryPoint("Worker B", [&]() { workerEntryPointFc(deployer, "B"); });
+  deployer.registerEntryPoint("Worker C", [&]() { workerEntryPointFc(deployer, "C"); });
 
-  // Initializing the HiCR runtime
-  runtime.initialize();
-
-  auto coordinator = runtime.getCurrentInstance();
-  printf("Cooridnator id: %lu\n", coordinator->getHiCRInstance()->getId());
+  // Initializing the HiCR deployer
+  deployer.initialize();
 
   // If the number of arguments passed is incorrect, abort execution and exit
   if (argc != 2)
   {
     fprintf(stderr, "Launch error. No machine model file provided\n");
-    runtime.abort(-1);
+    deployer.abort(-1);
   }
 
   // Parsing number of instances requested
@@ -155,14 +147,14 @@ int main(int argc, char *argv[])
   if (machineModel.empty())
   {
     fprintf(stderr, "Launch error. Machine model is erroneous or empty\n");
-    runtime.abort(-1);
+    deployer.abort(-1);
   }
 
   // Finally, deploying machine model
-  runtime.deploy(machineModel, &isTopologyAcceptable);
+  deployer.deploy(machineModel, &isTopologyAcceptable);
 
-  // Finalizing runtime
-  runtime.finalize();
+  // Finalizing deployer
+  deployer.finalize();
 
   printf("Coordinator Reached End Main\n");
 

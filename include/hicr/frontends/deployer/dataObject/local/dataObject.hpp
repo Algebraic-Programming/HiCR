@@ -6,11 +6,11 @@
 namespace HiCR
 {
 
-namespace runtime
+namespace deployer
 {
 
 /**
- * Prototype implementation of the data object class for the host (single instance) runtime mode
+ * Prototype implementation of the data object class for the host (single instance) deployer mode
  */
 class DataObject final
 {
@@ -42,7 +42,7 @@ class DataObject final
   __INLINE__ void publish()
   {
     // Here an exception is must be produced since the application is exposing this data object to other non-existent instances, leading to a potential deadlock
-    // HICR_THROW_LOGIC("Attempting to publish a data object when using the host (single instace) runtime mode.");
+    // HICR_THROW_LOGIC("Attempting to publish a data object when using the host (single instace) deployer mode.");
   }
 
   /**
@@ -53,7 +53,7 @@ class DataObject final
   __INLINE__ bool tryRelease()
   {
     // Here an exception is must be produced since the application is releasing this data object to other non-existent instances, leading to a potential deadlock
-    // HICR_THROW_LOGIC("Attempting to release a data object when using the host (single instace) runtime mode.");
+    // HICR_THROW_LOGIC("Attempting to release a data object when using the host (single instace) deployer mode.");
 
     return false;
   }
@@ -75,12 +75,12 @@ class DataObject final
    * @param[in] seed unique random seed 
    * @return A shared pointer to the data object obtained from the remote instance
    */
-  __INLINE__ static std::shared_ptr<DataObject> getDataObject(HiCR::runtime::DataObject       &dataObject,
+  __INLINE__ static std::shared_ptr<DataObject> getDataObject(HiCR::deployer::DataObject      &dataObject,
                                                               HiCR::L0::Instance::instanceId_t currentInstanceId,
                                                               HiCR::L0::Instance::instanceId_t seed)
   {
     // An exception is produced here, since as there is no other instance active, this object will never be retrieved
-    HICR_THROW_LOGIC("Attempting to get a data object when using the host (single instance) runtime mode.");
+    HICR_THROW_LOGIC("Attempting to get a data object when using the host (single instance) deployer mode.");
 
     // Creating data object
     return std::make_shared<DataObject>(nullptr, 0, 0, 0, seed);
@@ -130,6 +130,6 @@ class DataObject final
   const dataObjectId_t _id;
 };
 
-} // namespace runtime
+} // namespace deployer
 
 } // namespace HiCR
