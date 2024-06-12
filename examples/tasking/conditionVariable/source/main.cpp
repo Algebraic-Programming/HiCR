@@ -3,8 +3,6 @@
 #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "conditionVariable.hpp"
 
-CREATE_HICR_TASKING_HOOK;
-
 int main(int argc, char **argv)
 {
   // Creating HWloc topology object

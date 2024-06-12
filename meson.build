@@ -5,36 +5,32 @@ project('HiCR', [ 'cpp', 'c'],
   ]
 )
 
-# Getting selected built-in backends
-enabledBackends = get_option('backends')
+####### Getting selected built-in backends
 
 # Including selected built-in backends
+enabledBackends = get_option('backends')
 HiCRBackendDependencies = [ ]
 
-if 'hwloc' in enabledBackends
-  subdir('include/hicr/backends/host/hwloc')
-endif
+foreach backend : enabledBackends
+  subdir('include/hicr/backends/' + backend)
+endforeach
 
-if 'pthreads' in enabledBackends
-  subdir('include/hicr/backends/host/pthreads')
-endif
+####### Getting selected built-in frontends
 
-if 'mpi' in enabledBackends
-  subdir('include/hicr/backends/mpi')
-endif
+# Including selected built-in frontends
+enabledFrontends = get_option('frontends')
+HiCRFrontendDependencies = [ ]
 
-if 'lpf' in enabledBackends
-  subdir('include/hicr/backends/lpf')
-endif
+foreach frontend : enabledFrontends
+  subdir('include/hicr/frontends/' + frontend)
+endforeach
 
-if 'ascend' in enabledBackends    
-  subdir('include/hicr/backends/ascend')
-endif    
+####### Creating HiCR Core Configuration and Dependency
 
-# Creating HiCR Core Configuration and Dependency
 subdir('include/hicr/core')
 
-# Build targets are only relevant if HiCR is being loaded as a subproject
+####### Build test / example targets only if HiCR is being loaded as a subproject
+
 if meson.is_subproject() == false
 
   # Build example targets

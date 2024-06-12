@@ -4,8 +4,6 @@
 #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "fibonacci.hpp"
 
-CREATE_HICR_TASKING_HOOK;
-
 int main(int argc, char **argv)
 {
   // Checking arguments

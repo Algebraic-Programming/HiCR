@@ -1,7 +1,7 @@
 testSuite = [ 'examples', 'hicr', 'memcpy' ]
 test_timeout = 60
 
-if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
+if 'host/hwloc' in enabledBackends and 'host/pthreads' in enabledBackends
 	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp'], dependencies: hicrBuildDep )
 
 	if get_option('buildTests')
@@ -9,14 +9,14 @@ if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
 	endif
 endif
 
-if 'mpi' in enabledBackends and 'hwloc' in enabledBackends 
+if 'mpi' in enabledBackends and 'host/hwloc' in enabledBackends 
 	mpi = executable('mpi', [ 'source/mpi.cpp'], dependencies: hicrBuildDep)
 	if get_option('buildTests')
 	  test('mpi', mpirunExecutable, args : [ '-np', '2', mpi.full_path() ], timeout: test_timeout, suite: testSuite )
 	endif
 endif
 
-if 'lpf' in enabledBackends and 'hwloc' in enabledBackends 
+if 'lpf' in enabledBackends and 'host/hwloc' in enabledBackends 
 	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: hicrBuildDep)
 	lpf2 = executable('lpfMemcpyAndCountingFence', [ 'source/lpfMemcpyAndCountingFence.cpp'], dependencies: hicrBuildDep)
 
@@ -25,7 +25,7 @@ if 'lpf' in enabledBackends and 'hwloc' in enabledBackends
 	endif
 endif
 
-if 'ascend' in enabledBackends and 'hwloc' in enabledBackends
+if 'ascend' in enabledBackends and 'host/hwloc' in enabledBackends
 	ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: hicrBuildDep)
 
 	if get_option('buildTests')

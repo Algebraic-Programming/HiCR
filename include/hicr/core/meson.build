@@ -20,7 +20,8 @@ hicrBuildLinkArgs = [
 ]
 
 hicrBuildDeps = [
-    HiCRBackendDependencies
+    HiCRBackendDependencies,
+    HiCRFrontendDependencies
    ]
 
 hicrBuildCppArgs = [

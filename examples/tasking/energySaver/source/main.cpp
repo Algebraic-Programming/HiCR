@@ -4,8 +4,6 @@
 #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
 #include "../runtime.hpp"
 
-CREATE_HICR_TASKING_HOOK;
-
 void workFc(const size_t iterations)
 {
   __volatile__ double value = 2.0;
