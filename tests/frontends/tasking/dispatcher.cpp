@@ -15,8 +15,6 @@
 #include <hicr/frontends/tasking/tasking.hpp>
 #include <hicr/frontends/tasking/task.hpp>
 
-CREATE_HICR_TASKING_HOOK;
-
 TEST(Dispatcher, Construction)
 {
   // Creating by context

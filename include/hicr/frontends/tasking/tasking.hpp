@@ -18,20 +18,6 @@
 #include "mutex.hpp"
 #include "conditionVariable.hpp"
 
-/**
-* Defines a hook required to be added and compiled by all applications using the tasking frontend. It defines some necessary state objects that cannot be placed as include-only.
-*/
-#define CREATE_HICR_TASKING_HOOK                                                                                                                                                   \
-  namespace HiCR                                                                                                                                                                   \
-  {                                                                                                                                                                                \
-  namespace tasking                                                                                                                                                                \
-  {                                                                                                                                                                                \
-  pthread_key_t _workerPointerKey;                                                                                                                                                 \
-  pthread_key_t _taskPointerKey;                                                                                                                                                   \
-  bool          _isInitialized = false;                                                                                                                                            \
-  }                                                                                                                                                                                \
-  }
-
 namespace HiCR
 {
 

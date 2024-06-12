@@ -1,6 +1,6 @@
 testSuite = [ 'examples', 'hicr', 'kernel' ]
 
-if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
+if 'host/hwloc' in enabledBackends and 'host/pthreads' in enabledBackends
 	sharedMemory = executable('sharedMemory', [ 'source/sharedMemory.cpp' ], dependencies: hicrBuildDep)
 
 	if get_option('buildTests')
@@ -8,7 +8,7 @@ if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
 	endif
 endif
 
-if 'ascend' in enabledBackends and 'hwloc' in enabledBackends
+if 'ascend' in enabledBackends and 'host/hwloc' in enabledBackends
 	ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: hicrBuildDep)
 
 	if get_option('buildTests')

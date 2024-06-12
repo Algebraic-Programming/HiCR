@@ -1,8 +1,8 @@
-if 'hwloc' in enabledBackends
+if 'host/hwloc' in enabledBackends
   subdir('hwloc')
 endif
 
-if 'pthreads' in enabledBackends
+if 'host/pthreads' in enabledBackends
   subdir('pthreads')
 endif
 

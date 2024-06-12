@@ -1,6 +1,6 @@
 testSuite = [ 'examples', 'tasking' ]
 
-if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
+if 'host/hwloc' in enabledBackends and 'host/pthreads' in enabledBackends
 	energySaver = executable('energySaver', [ 'source/main.cpp'], dependencies: hicrBuildDep)
 
 	if get_option('buildTests')

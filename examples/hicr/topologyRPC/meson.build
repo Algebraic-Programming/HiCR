@@ -1,7 +1,7 @@
 testSuite = [ 'examples', 'hicr', 'toplogyRPC' ]
 test_timeout = 60
 
-if 'mpi' in enabledBackends and 'pthreads' in enabledBackends and 'hwloc' in enabledBackends
+if 'mpi' in enabledBackends and 'host/pthreads' in enabledBackends and 'host/hwloc' in enabledBackends
 	mpi = executable('mpi', [ 'source/mpi.cpp'], dependencies: hicrBuildDep, include_directories: ['source'] )
 
 	if get_option('buildTests')

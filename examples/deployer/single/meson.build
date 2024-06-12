@@ -1,7 +1,7 @@
 testSuite = [ 'examples', 'deployer', 'single' ]
 test_timeout = 60
 
-if 'pthreads' in enabledBackends and 'hwloc' in enabledBackends
+if 'host/pthreads' in enabledBackends and 'host/hwloc' in enabledBackends
 	host = executable('host', [ 'source/main.cpp'], dependencies: hicrBuildDep, include_directories: ['source'], cpp_args: [ '-D_HICR_DEPLOYER_DISABLE_AUTODETECT' ] )
 
 	if get_option('buildTests')
@@ -9,7 +9,7 @@ if 'pthreads' in enabledBackends and 'hwloc' in enabledBackends
 	endif
 endif
 
-if 'mpi' in enabledBackends and 'pthreads' in enabledBackends and 'hwloc' in enabledBackends
+if 'mpi' in enabledBackends and 'host/pthreads' in enabledBackends and 'host/hwloc' in enabledBackends
 	mpi = executable('mpi', [ 'source/main.cpp'], dependencies: hicrBuildDep, include_directories: ['source'] )
 
 	if get_option('buildTests')

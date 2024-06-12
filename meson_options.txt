@@ -1,7 +1,13 @@
-option('backends', type : 'array', choices : ['hwloc', 'pthreads', 'mpi', 'lpf',  'ascend'], 
-       description : 'Specifies which backends to enable for compilation with HiCR',
-       value: [ 'hwloc', 'pthreads' ]
+option('backends', type : 'array', choices : ['host/hwloc', 'host/pthreads', 'mpi', 'lpf',  'ascend'], 
+       description : 'Specifies which builtin backends to enable for compilation with HiCR',
+       value: [ 'host/hwloc', 'host/pthreads' ]
        )
+
+option('frontends', type : 'array', choices : [ 'channel', 'deployer', 'machineModel', 'tasking' ], 
+       description : 'Specifies which builtin frontends to enable for compilation with HiCR',
+       value: [ 'channel', 'deployer', 'machineModel', 'tasking' ]
+       )
+             
       
 option('buildTests', type : 'boolean', value : false,
        description: 'Indicates whether to build tests'
