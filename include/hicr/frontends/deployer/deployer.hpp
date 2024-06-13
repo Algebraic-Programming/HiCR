@@ -68,7 +68,7 @@ class Deployer final
   __INLINE__ void initialize()
   {
     // Executing delayed entry point registration
-    for (const auto &entryPoint : _runtimeEntryPointVector) _instanceManager->addRPCTarget(entryPoint.first, entryPoint.second);
+    for (const auto &entryPoint : _deployerEntryPointVector) _instanceManager->addRPCTarget(entryPoint.first, entryPoint.second);
 
     // If this is not the root instance, then start listening for RPC requests
     if (_currentInstance->getHiCRInstance()->getId() != _instanceManager->getRootInstanceId()) _currentInstance->listen();
@@ -163,7 +163,7 @@ class Deployer final
    */
   __INLINE__ void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc)
   {
-    _runtimeEntryPointVector.push_back(entryPoint_t(entryPointName, fc));
+    _deployerEntryPointVector.push_back(entryPoint_t(entryPointName, fc));
   }
 
   /**
@@ -220,7 +220,7 @@ class Deployer final
   /**
    * A temporary storage place for entry points so that workers can register them before initializing (and therefore losing control over their execution)
    */
-  std::vector<entryPoint_t> _runtimeEntryPointVector;
+  std::vector<entryPoint_t> _deployerEntryPointVector;
 
   /**
    * Machine model object for deployment
