@@ -50,7 +50,7 @@ void coordinatorEntryPointFc(HiCR::Deployer &deployer)
   // Sending a message to myself just to test self-comunication
   size_t workerCount = instanceManager->getInstances().size() - 1;
   coordinator->sendMessage(coordinator->getHiCRInstance()->getId(), &workerCount, sizeof(workerCount));
-  auto message = coordinator->recvMessage(coordinator->getHiCRInstance()->getId());
+  auto message = coordinator->recvMessage();
   printf("[Coordinator] Received worker count: %lu from myself\n", *(size_t *)message.data);
 
   // Testing release completion for all data objects
