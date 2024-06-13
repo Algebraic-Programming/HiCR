@@ -44,29 +44,31 @@ hicrBuildDep = declare_dependency(
 
 # Define HiCR standard test configuration and create a new dependency
 
-gtest_dep = dependency('gtest', main: true, required: true)
-
-hicrTestCppFlags = [
-]
-
-cpp = meson.get_compiler('cpp')
-if get_option('b_coverage')
-  gcov_args = [
-    '-fno-inline',
-    '-Wno-error=cpp',
-    '-DENABLE_COVERAGE',
-  ]
-  if cpp.get_id().to_lower() == 'gcc'
-    gcov_args += [
-      '-fno-default-inline',
-      '-fno-inline-small-functions',
-    ]
-  endif
+if meson.is_subproject() or get_option('buildTests')
+  gtest_dep = dependency('gtest', main: true, required: true)
   
-  hicrTestCppFlags += gcov_args
-endif  
-
-hicrTestDep = declare_dependency(
-    compile_args: hicrTestCppFlags,
-    dependencies:  gtest_dep
-    )
+  hicrTestCppFlags = [
+  ]
+  
+  cpp = meson.get_compiler('cpp')
+  if get_option('b_coverage')
+    gcov_args = [
+      '-fno-inline',
+      '-Wno-error=cpp',
+      '-DENABLE_COVERAGE',
+    ]
+    if cpp.get_id().to_lower() == 'gcc'
+      gcov_args += [
+        '-fno-default-inline',
+        '-fno-inline-small-functions',
+      ]
+    endif
+    
+    hicrTestCppFlags += gcov_args
+  endif  
+  
+  hicrTestDep = declare_dependency(
+      compile_args: hicrTestCppFlags,
+      dependencies:  gtest_dep
+      )
+endif
