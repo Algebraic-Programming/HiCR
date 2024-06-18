@@ -6,7 +6,7 @@
 
 /**
  * @file variableSize/mpsc/locking/consumer.hpp
- * @brief Provides functionality for a var-size MPSC consumer channel
+ * @brief Provides variable-sized MPSC consumer channel, locking version 
  * @author O. Korakitis & K. Dichev
  * @date 11/03/2024
  */
@@ -298,14 +298,7 @@ class Consumer final : public variableSize::Base
    *
    * This function when called on a valid channel instance will never fail.
    */
-  size_t getDepth()
-  {
-    // Because the current implementation first receives the message size in the token buffer, followed
-    // by the message payload, it is possible for the token buffer to have a larger depth (by 1) than the payload buffer.
-    // Therefore, we need to return the minimum of the two depths
-
-    return std::min(_circularBufferForCounts->getDepth(), _circularBufferForPayloads->getDepth() / _payloadSize);
-  }
+  size_t getDepth() { return _circularBufferForCounts->getDepth(); }
 
   /**
    * This function can be used to quickly check whether the channel is empty.

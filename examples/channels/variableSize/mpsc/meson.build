@@ -1,2 +1,2 @@
 subdir('locking')
-# subdir('nonlocking')
+subdir('nonlocking')
