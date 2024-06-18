@@ -1,0 +1,142 @@
+#pragma once
+
+#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/frontends/channel/variableSize/mpsc/nonlocking/consumer.hpp>
+#include "common.hpp"
+
+void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
+                HiCR::L1::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
+                const size_t                           channelCapacity,
+                const size_t                           producerCount)
+{
+  const size_t payloadSize       = sizeof(ELEMENT_TYPE);
+  const size_t tokenSize         = sizeof(size_t);
+  auto         sizesBufferSize   = HiCR::channel::variableSize::Base::getTokenBufferSize(tokenSize, channelCapacity);
+  auto         payloadBufferSize = HiCR::channel::variableSize::Base::getTokenBufferSize(payloadSize, channelCapacity);
+  // list of all consumer coordination buffers (= #producers); needed to construct consumer
+  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> coordinationBuffersForPayloadsAsSlots;
+  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> coordinationBuffersForCountsAsSlots;
+  // list of all consumer coordination buffers (= #producers); needed to construct consumer
+  std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> internalCoordinationBuffersForCounts;
+  std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> internalCoordinationBuffersForPayloads;
+
+  // Helper lists of coordination buffers and counts/payload slots
+  // These are useful when constructing arguments for the exchange call
+  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffersForCounts;
+  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffersForPayloads;
+  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> localBuffersForCounts;
+  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> localBuffersForPayloads;
+  // list of producer coordination buffers (= #producers); needed to construct consumer
+  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> producerCoordinationBuffersForCounts;
+  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> producerCoordinationBuffersForPayloads;
+  // list of consumer buffers for counts (= #producers) and payloads (= #producers); needed to construct consumer
+  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalBuffersForPayloads;
+  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalBuffersForCounts;
+  const size_t                                             coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
+
+  // consumer needs to allocate #producers {size, payload} coord. buffers for #producers SPSCs
+  for (size_t i = 0; i < producerCount; i++)
+  {
+    auto coordinationBufferForCounts   = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+    auto coordinationBufferForPayloads = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+    // very important to initialize coordination buffers, or undefined behaviour possible!
+    HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferForCounts);
+    HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferForPayloads);
+    consumerCoordinationBuffersForCounts.push_back(std::make_pair(i, coordinationBufferForCounts));
+    consumerCoordinationBuffersForPayloads.push_back(std::make_pair(i, coordinationBufferForPayloads));
+    internalCoordinationBuffersForCounts.push_back(coordinationBufferForCounts);
+    internalCoordinationBuffersForPayloads.push_back(coordinationBufferForPayloads);
+    auto consumerSizesBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, sizesBufferSize);
+    localBuffersForCounts.push_back(std::make_pair(i, consumerSizesBuffer));
+    auto consumerPayloadBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, payloadBufferSize);
+    localBuffersForPayloads.push_back(std::make_pair(i, consumerPayloadBuffer));
+  }
+
+  // communicate to producers the token buffer references
+  communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY, consumerCoordinationBuffersForCounts);
+  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, consumerCoordinationBuffersForPayloads);
+  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  communicationManager.exchangeGlobalMemorySlots(CONSUMER_TOKEN_KEY, localBuffersForCounts);
+  communicationManager.fence(CONSUMER_TOKEN_KEY);
+  communicationManager.exchangeGlobalMemorySlots(CONSUMER_PAYLOAD_KEY, localBuffersForPayloads);
+  communicationManager.fence(CONSUMER_PAYLOAD_KEY);
+
+  // get from producers their coordination buffer references
+  communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, {});
+  communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, {});
+  communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+
+  // get all global slot information required (local operations)
+  for (size_t i = 0; i < producerCount; i++)
+  {
+    auto producerCoordinationBufferForCounts = communicationManager.getGlobalMemorySlot(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, i);
+    producerCoordinationBuffersForCounts.push_back(producerCoordinationBufferForCounts);
+    auto producerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, i);
+    producerCoordinationBuffersForPayloads.push_back(producerCoordinationBufferForPayloads);
+    auto consumerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, i);
+    coordinationBuffersForPayloadsAsSlots.push_back(consumerCoordinationBufferForPayloads);
+    auto consumerCoordinationBufferForCounts = communicationManager.getGlobalMemorySlot(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY, i);
+    coordinationBuffersForCountsAsSlots.push_back(consumerCoordinationBufferForCounts);
+    auto consumerBufferForPayloads = communicationManager.getGlobalMemorySlot(CONSUMER_PAYLOAD_KEY, i);
+    globalBuffersForPayloads.push_back(consumerBufferForPayloads);
+    auto consumerBufferForSizes = communicationManager.getGlobalMemorySlot(CONSUMER_TOKEN_KEY, i);
+    globalBuffersForCounts.push_back(consumerBufferForSizes);
+  }
+
+  // Creating consumer channels
+  auto consumer = new HiCR::channel::variableSize::MPSC::nonlocking::Consumer(communicationManager,
+                                                                              globalBuffersForPayloads,
+                                                                              globalBuffersForCounts,
+                                                                              internalCoordinationBuffersForCounts,
+                                                                              internalCoordinationBuffersForPayloads,
+                                                                              producerCoordinationBuffersForCounts,
+                                                                              producerCoordinationBuffersForPayloads,
+                                                                              /* E.g. if channel capacity is 10, and a payload datatype is 8 bytes,
+                                                                        allocate a buffer of 80 bytes. This is just an estimate which may or may not
+                                                                        be relevant in real applications   
+                                                                       */
+                                                                              payloadSize * channelCapacity,
+                                                                              payloadSize,
+                                                                              channelCapacity);
+
+  size_t poppedElems = 0;
+  // Expect MESSAGES_PER_PRODUCER from each producer
+  while (poppedElems < MESSAGES_PER_PRODUCER * producerCount)
+  {
+    // even if each SPSC's updateDepth is a NOP
+    // it is essential to call updateDepth() on the MPSC
+    // in order for it to update the depths of its SPSCs
+    while (consumer->isEmpty()) { consumer->updateDepth(); }
+
+    auto res       = consumer->peek();
+    auto channelId = res[0];
+    char prefix[64];
+    sprintf(prefix, "CONSUMER @ channel %lu ", channelId);
+    auto startIndex      = res[1];
+    auto byteLen         = res[2];
+    auto localMemorySlot = localBuffersForPayloads[channelId].second;
+
+    Printer<ELEMENT_TYPE>::printBytes(prefix, localMemorySlot->getPointer(), channelCapacity * payloadSize, startIndex, byteLen);
+    consumer->pop();
+    poppedElems++;
+  }
+
+  // deregister global slots -- needs to be in synch at consumer and ALL producers
+  for (size_t i = 0; i < producerCount; i++)
+  {
+    communicationManager.deregisterGlobalMemorySlot(globalBuffersForCounts[i]);
+    communicationManager.deregisterGlobalMemorySlot(globalBuffersForPayloads[i]);
+    communicationManager.deregisterGlobalMemorySlot(coordinationBuffersForCountsAsSlots[i]);
+    communicationManager.deregisterGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
+    communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
+    communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForPayloads[i]);
+    memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForCounts[i]);
+    memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForPayloads[i]);
+    memoryManager.freeLocalMemorySlot(localBuffersForCounts[i].second);
+    memoryManager.freeLocalMemorySlot(localBuffersForPayloads[i].second);
+  }
+}

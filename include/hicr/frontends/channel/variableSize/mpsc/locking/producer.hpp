@@ -6,7 +6,7 @@
 
 /**
  * @file variableSize/mpsc/locking/producer.hpp
- * @brief Provides functionality for a var-size MPSC producer channel
+ * @brief Provides variable-sized MPSC producer channel, locking version
  * @author O. Korakitis & K. Dichev
  * @date 04/06/2024
  */

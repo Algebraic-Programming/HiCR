@@ -97,6 +97,8 @@ class CommunicationManager
       if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false)
       {
         this->unlock();
+        for (auto elem : _globalMemorySlotTagKeyMap.at(tag)) { printf("For Tag %lu: Key %lu\n", tag, elem.first); }
+        printf("But tag %lu does not contain globalKey = %lu\n", tag, globalKey);
         HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
       }
 

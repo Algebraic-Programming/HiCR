@@ -116,7 +116,8 @@ class CircularBuffer
     const auto curDepth = getDepth();
 
     // Sanity check
-    if (n > curDepth) HICR_THROW_FATAL("Circular buffer depth (%lu) smaller than number of elements to decrease on advance tail. This is probably a bug in HiCR.\n", curDepth, n);
+    if (n > curDepth)
+      HICR_THROW_FATAL("Circular buffer depth (%lu) smaller than number of elements (%lu) to decrease on advance tail. This is probably a bug in HiCR.\n", curDepth, n);
 
     // Advance tail
     *_tailAdvanceCounter = *_tailAdvanceCounter + n;
