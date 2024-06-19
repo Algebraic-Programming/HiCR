@@ -268,11 +268,12 @@ class Worker
    */
   __INLINE__ void mainLoop()
   {
+    // Map worker pointer to the running thread it into static storage for global access.
+    pthread_setspecific(_workerPointerKey, this);
+
+    // Start main worker loop (run until terminated)
     while (_state == state_t::running)
     {
-      // Also map worker pointer to the running thread it into static storage for global access.
-      pthread_setspecific(_workerPointerKey, this);
-
       for (auto dispatcher : _dispatchers)
       {
         // Attempt to both pop and pull from dispatcher
