@@ -75,9 +75,22 @@ class ConcurrentQueue
   /**
    * Function to determine whether the queue is currently empty or not
    *
-   * \return True, if it is empty; false if its not
+   * The past tense in "was" is deliverate, since it can be proven the return value had that
+   * value but it cannot be guaranteed that it still has it
+   * 
+   * \return True, if it is empty; false if its not. Possibly changed now.
    */
-  __INLINE__ bool isEmpty() { return _queue->was_empty(); }
+  __INLINE__ bool wasEmpty() { return _queue->was_empty(); }
+
+  /**
+   * Function to determine the current possible size of the queue
+   *
+   * The past tense in "was" is deliverate, since it can be proven the return value had that
+   * value but it cannot be guaranteed that it still has it
+   * 
+   * \return The size of the queue, as last read by this thread. Possibly changed now.
+   */
+  __INLINE__ size_t wasSize() { return _queue->was_size(); }
 
   private:
 

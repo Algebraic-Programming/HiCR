@@ -158,7 +158,7 @@ class Runtime
 
       // If the new maximum is higher than the number of active workers, we need
       // to re-awaken some of them
-      while ((_maximumActiveWorkers == 0 || (ssize_t)_maximumActiveWorkers > _activeWorkerCount) && _suspendedWorkerQueue->isEmpty() == false)
+      while ((_maximumActiveWorkers == 0 || (ssize_t)_maximumActiveWorkers > _activeWorkerCount) && _suspendedWorkerQueue->wasEmpty() == false)
       {
         // Getting the worker from the queue of suspended workers
         auto w = _suspendedWorkerQueue->pop();
