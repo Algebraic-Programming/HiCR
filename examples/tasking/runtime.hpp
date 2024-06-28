@@ -16,8 +16,8 @@
 #include <map>
 #include <mutex>
 #include <hicr/frontends/tasking/tasking.hpp>
-#include <hicr/core/common/concurrentQueue.hpp>
-#include <hicr/core/common/parallelHashSet.hpp>
+#include <hicr/core/concurrent/queue.hpp>
+#include <hicr/core/concurrent/hashSet.hpp>
 
 #define __TASKR_DEFAULT_MAX_TASKS 65536
 #define __TASKR_DEFAULT_MAX_WORKERS 1024
@@ -58,7 +58,7 @@ class Runtime
   /**
    * Hash map for quick location of tasks based on their hashed names
    */
-  HiCR::common::parallelHashSet_t<HiCR::tasking::Task::label_t> _finishedTaskHashSet;
+  HiCR::concurrent::HashSet<HiCR::tasking::Task::label_t> _finishedTaskHashSet;
 
   /**
    * Mutex for the active worker queue, required for the max active workers mechanism
@@ -79,12 +79,12 @@ class Runtime
   /**
    * Lock-free queue for waiting tasks.
    */
-  HiCR::common::ConcurrentQueue<HiCR::tasking::Task> *_waitingTaskQueue;
+  HiCR::concurrent::Queue<HiCR::tasking::Task> *_waitingTaskQueue;
 
   /**
    * Lock-free queue storing workers that remain in suspension. Required for the max active workers mechanism
    */
-  HiCR::common::ConcurrentQueue<HiCR::tasking::Worker> *_suspendedWorkerQueue;
+  HiCR::concurrent::Queue<HiCR::tasking::Worker> *_suspendedWorkerQueue;
 
   /**
    * The processing units assigned to taskr to run workers from
@@ -190,8 +190,8 @@ class Runtime
   {
     _dispatcher           = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); });
     _eventMap             = new HiCR::tasking::Task::taskEventMap_t();
-    _waitingTaskQueue     = new HiCR::common::ConcurrentQueue<HiCR::tasking::Task>(maxTasks);
-    _suspendedWorkerQueue = new HiCR::common::ConcurrentQueue<HiCR::tasking::Worker>(maxWorkers);
+    _waitingTaskQueue     = new HiCR::concurrent::Queue<HiCR::tasking::Task>(maxTasks);
+    _suspendedWorkerQueue = new HiCR::concurrent::Queue<HiCR::tasking::Worker>(maxWorkers);
   }
 
   // Destructor (frees previous allocations)
