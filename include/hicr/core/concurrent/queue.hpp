@@ -4,7 +4,7 @@
  */
 
 /**
- * @file concurrentQueue.hpp
+ * @file concurrent/queue.hpp
  * @brief Provides generic support for concurrent queues.
  * @author S. M. Martin
  * @date 14/8/2023
@@ -18,7 +18,7 @@
 namespace HiCR
 {
 
-namespace common
+namespace concurrent
 {
 
 /**
@@ -36,7 +36,7 @@ using lockFreeQueue_t = atomic_queue::AtomicQueueB<T>;
  * @tparam T Represents a item type to be stored in the queue
  */
 template <class P>
-class ConcurrentQueue
+class Queue
 {
   public:
 
@@ -45,9 +45,9 @@ class ConcurrentQueue
    * 
    * \param[in] maxEntries Indicates the maximum amount of entries
   */
-  ConcurrentQueue(const size_t maxEntries) { _queue = new lockFreeQueue_t<P *>(maxEntries); }
+  Queue(const size_t maxEntries) { _queue = new lockFreeQueue_t<P *>(maxEntries); }
 
-  ~ConcurrentQueue() { delete _queue; }
+  ~Queue() { delete _queue; }
 
   /**
    * Function to push new objects in the queue. This is a thread-safe lock-free operation
@@ -80,7 +80,7 @@ class ConcurrentQueue
    * 
    * \return True, if it is empty; false if its not. Possibly changed now.
    */
-  __INLINE__ bool wasEmpty() { return _queue->was_empty(); }
+  __INLINE__ bool wasEmpty() const { return _queue->was_empty(); }
 
   /**
    * Function to determine the current possible size of the queue
@@ -90,7 +90,7 @@ class ConcurrentQueue
    * 
    * \return The size of the queue, as last read by this thread. Possibly changed now.
    */
-  __INLINE__ size_t wasSize() { return _queue->was_size(); }
+  __INLINE__ size_t wasSize() const { return _queue->was_size(); }
 
   private:
 
@@ -100,6 +100,6 @@ class ConcurrentQueue
   lockFreeQueue_t<P *> *_queue;
 };
 
-} // namespace common
+} // namespace concurrent
 
 } // namespace HiCR
