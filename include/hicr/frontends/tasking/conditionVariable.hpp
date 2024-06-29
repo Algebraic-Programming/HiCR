@@ -12,7 +12,8 @@
 
 #pragma once
 
-#include <unordered_set>
+#include <chrono>
+#include <hicr/core/concurrent/queue.hpp>
 #include "mutex.hpp"
 #include "task.hpp"
 
@@ -24,20 +25,24 @@ namespace tasking
 
 /**
  * Implementation of a task-aware Condition Variable in HiCR.
+ * 
+ * \tparam MAX_TASK_COUNT The maximum amount of tasks that can be waiting on this conditional variable. This size must be provided due to 
+ *         use of lock-free queues
 */
+template <size_t MAX_TASK_COUNT = 4096>
 class ConditionVariable
 {
   public:
 
-  ConditionVariable()  = default;
-  ~ConditionVariable() = default;
+  ConditionVariable() { _waitingTasks = new HiCR::concurrent::Queue<HiCR::tasking::Task>(MAX_TASK_COUNT); };
+
+  ~ConditionVariable() { delete _waitingTasks; }
 
   /**
-   * Checks whether the given condition predicate evaluates to true.
+   * (1) Checks whether the given condition predicate evaluates to true.
    *  - If it does, then returns immediately.
-   *  - If it does not, adds the task to the notification list and suspends it. The task will not be issued for execution again until
-   *   * (a) The task is notified, and
-   *   * (b) the condition is satisfied.
+   *  - If it does not, adds the task to the notification list and suspends it.
+   *    - When resumed, the task will repeat step (1)
    * 
    * \note The suspension of the task will not block the running thread.
    * \param[in] conditionMutex The mutual exclusion mechanism to use to prevent two tasks from evaluating the condition predicate simultaneously
@@ -56,9 +61,7 @@ class ConditionVariable
     while (keepWaiting == true)
     {
       // Insert oneself in the waiting task list
-      _mutex.lock();
-      _waitingTasks.push(currentTask);
-      _mutex.unlock();
+      _waitingTasks->push(currentTask);
 
       // Suspending task now
       currentTask->suspend();
@@ -71,6 +74,89 @@ class ConditionVariable
   }
 
   /**
+   * Checks whether the given condition predicate evaluates to true.
+   *  - If it does, then returns immediately.
+   *  - If it does not, adds the task to the notification list and suspends it.
+   *    - When resumed, the task will check total wait time
+   *       - If wait time is smaller than timeout, repeat step (1)
+   *       - If wat time exceeds timeout, return immediately
+   * 
+   * \note The suspension of the task will not block the running thread.
+   * \param[in] conditionMutex The mutual exclusion mechanism to use to prevent two tasks from evaluating the condition predicate simultaneously
+   * \param[in] conditionPredicate The function that returns a boolean true if the condition is satisfied; false, if not.
+   * \param[in] timeout The amount of microseconds provided as timeout 
+   * 
+   * \return True, if the task is returning before timeout; false, if otherwise.
+  */
+  bool wait_for(tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate, size_t timeout)
+  {
+    auto currentTask = HiCR::tasking::Task::getCurrentTask();
+
+    // Checking on the condition
+    conditionMutex.lock();
+    bool keepWaiting = conditionPredicate() == false;
+    conditionMutex.unlock();
+
+    // If predicate is satisfied, return immediately
+    if (keepWaiting == false) return true;
+
+    // Taking current time
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    // If the condition is not satisfied, suspend until we're notified and the condition is satisfied
+    while (keepWaiting == true)
+    {
+      // Insert oneself in the waiting task list
+      _waitingTasks->push(currentTask);
+
+      // Suspending task now
+      currentTask->suspend();
+
+      // After being notified, check on timeout
+      auto currentTime = std::chrono::high_resolution_clock::now();
+      auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - startTime);
+      if (elapsedTime > std::chrono::duration<size_t, std::micro>(timeout)) return false;
+
+      // After being notified, check on the condition again
+      conditionMutex.lock();
+      keepWaiting = conditionPredicate() == false;
+      conditionMutex.unlock();
+    }
+
+    // Return true if the exit was due to satisfied condition predicate
+    return true;
+  }
+
+  /**
+   * Suspends the tasks unconditionally, and resumes after notification
+   *
+   * \note The suspension of the task will not block the running thread.
+   * 
+   * \param[in] timeout The amount of microseconds provided as timeout 
+   * \return True, if the task is returning before timeout; false, if otherwise.
+  */
+  bool wait(size_t timeout)
+  {
+    auto currentTask = HiCR::tasking::Task::getCurrentTask();
+
+    // Insert oneself in the waiting task list
+    _waitingTasks->push(currentTask);
+
+    // Taking current time
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    // Suspending task now
+    currentTask->suspend();
+
+    // After being notified, check on timeout
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - startTime);
+    if (elapsedTime > std::chrono::duration<size_t, std::micro>(timeout)) return false;
+
+    return true;
+  }
+
+  /**
    * Suspends the tasks unconditionally, and resumes after notification
    * 
    * \note The suspension of the task will not block the running thread.
@@ -80,9 +166,7 @@ class ConditionVariable
     auto currentTask = HiCR::tasking::Task::getCurrentTask();
 
     // Insert oneself in the waiting task list
-    _mutex.lock();
-    _waitingTasks.push(currentTask);
-    _mutex.unlock();
+    _waitingTasks->push(currentTask);
 
     // Suspending task now
     currentTask->suspend();
@@ -95,18 +179,9 @@ class ConditionVariable
   */
   void notifyOne()
   {
-    // Grabbing queue lock
-    _mutex.lock();
-
     // If there is a task waiting to be notified, do that now and take it out of the queue
-    if (_waitingTasks.empty() == false)
-    {
-      _waitingTasks.front()->sendSyncSignal();
-      _waitingTasks.pop();
-    };
-
-    // Releasing queue lock
-    _mutex.unlock();
+    auto task = _waitingTasks->pop();
+    if (task != nullptr) task->sendSyncSignal();
   }
 
   /**
@@ -114,31 +189,21 @@ class ConditionVariable
   */
   void notifyAll()
   {
-    // Grabbing queue lock
-    _mutex.lock();
-
     // If there are tasks waiting to be notified, do that now and take them out of the queue
-    while (_waitingTasks.empty() == false)
+    auto task = _waitingTasks->pop();
+    while (task != nullptr)
     {
-      _waitingTasks.front()->sendSyncSignal();
-      _waitingTasks.pop();
+      task->sendSyncSignal();
+      task = _waitingTasks->pop();
     };
-
-    // Releasing queue lock
-    _mutex.unlock();
   }
 
   private:
 
   /**
-   * Internal mutex for accessing the waiting task set
-  */
-  tasking::Mutex _mutex;
-
-  /**
    * A set of waiting tasks. No ordering is enforced here.
   */
-  std::queue<HiCR::tasking::Task *> _waitingTasks;
+  HiCR::concurrent::Queue<HiCR::tasking::Task> *_waitingTasks;
 };
 
 } // namespace tasking
