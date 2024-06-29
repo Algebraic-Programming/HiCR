@@ -30,15 +30,15 @@ namespace concurrent
  * @tparam V Represents a value type
  */
 template <class K, class V, class C = std::greater<K>>
-class Map
+class SortedMap
 {
   public:
 
   /**
    * Default constructor
   */
-  Map()  = default;
-  ~Map() = default;
+  SortedMap()  = default;
+  ~SortedMap() = default;
 
   /**
    * Inserts a single element in the map
