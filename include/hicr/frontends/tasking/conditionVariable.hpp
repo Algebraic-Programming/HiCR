@@ -13,6 +13,7 @@
 #pragma once
 
 #include <chrono>
+#include <queue>
 #include <hicr/core/concurrent/queue.hpp>
 #include "mutex.hpp"
 #include "task.hpp"
@@ -25,18 +26,13 @@ namespace tasking
 
 /**
  * Implementation of a task-aware Condition Variable in HiCR.
- * 
- * \tparam MAX_TASK_COUNT The maximum amount of tasks that can be waiting on this conditional variable. This size must be provided due to 
- *         use of lock-free queues
 */
-template <size_t MAX_TASK_COUNT = 4096>
 class ConditionVariable
 {
   public:
 
-  ConditionVariable() { _waitingTasks = new HiCR::concurrent::Queue<HiCR::tasking::Task>(MAX_TASK_COUNT); };
-
-  ~ConditionVariable() { delete _waitingTasks; }
+  ConditionVariable()  = default;
+  ~ConditionVariable() = default;
 
   /**
    * (1) Checks whether the given condition predicate evaluates to true.
@@ -61,7 +57,9 @@ class ConditionVariable
     while (keepWaiting == true)
     {
       // Insert oneself in the waiting task list
-      _waitingTasks->push(currentTask);
+      _mutex.lock();
+      _waitingTasks.push(currentTask);
+      _mutex.unlock();
 
       // Suspending task now
       currentTask->suspend();
@@ -88,7 +86,7 @@ class ConditionVariable
    * 
    * \return True, if the task is returning before timeout; false, if otherwise.
   */
-  bool wait_for(tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate, size_t timeout)
+  bool waitFor(tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate, size_t timeout)
   {
     auto currentTask = HiCR::tasking::Task::getCurrentTask();
 
@@ -107,7 +105,9 @@ class ConditionVariable
     while (keepWaiting == true)
     {
       // Insert oneself in the waiting task list
-      _waitingTasks->push(currentTask);
+      _mutex.lock();
+      _waitingTasks.push(currentTask);
+      _mutex.unlock();
 
       // Suspending task now
       currentTask->suspend();
@@ -135,12 +135,14 @@ class ConditionVariable
    * \param[in] timeout The amount of microseconds provided as timeout 
    * \return True, if the task is returning before timeout; false, if otherwise.
   */
-  bool wait(size_t timeout)
+  bool waitFor(size_t timeout)
   {
     auto currentTask = HiCR::tasking::Task::getCurrentTask();
 
     // Insert oneself in the waiting task list
-    _waitingTasks->push(currentTask);
+    _mutex.lock();
+    _waitingTasks.push(currentTask);
+    _mutex.unlock();
 
     // Taking current time
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -166,7 +168,9 @@ class ConditionVariable
     auto currentTask = HiCR::tasking::Task::getCurrentTask();
 
     // Insert oneself in the waiting task list
-    _waitingTasks->push(currentTask);
+    _mutex.lock();
+    _waitingTasks.push(currentTask);
+    _mutex.unlock();
 
     // Suspending task now
     currentTask->suspend();
@@ -179,9 +183,17 @@ class ConditionVariable
   */
   void notifyOne()
   {
+    _mutex.lock();
+
     // If there is a task waiting to be notified, do that now and take it out of the queue
-    auto task = _waitingTasks->pop();
-    if (task != nullptr) task->sendSyncSignal();
+    if (_waitingTasks.empty() == false)
+    {
+      _waitingTasks.front()->sendSyncSignal();
+      _waitingTasks.pop();
+    };
+
+    // Releasing queue lock
+    _mutex.unlock();
   }
 
   /**
@@ -189,21 +201,36 @@ class ConditionVariable
   */
   void notifyAll()
   {
+    _mutex.lock();
+
     // If there are tasks waiting to be notified, do that now and take them out of the queue
-    auto task = _waitingTasks->pop();
-    while (task != nullptr)
+    while (_waitingTasks.empty() == false)
     {
-      task->sendSyncSignal();
-      task = _waitingTasks->pop();
+      _waitingTasks.front()->sendSyncSignal();
+      _waitingTasks.pop();
     };
+
+    _mutex.unlock();
   }
+
+  /**
+   * Gets the number of tasks already waiting for a notification
+   * 
+   * @return The number of tasks already waiting for a notification
+  */
+  size_t getWaitingTaskCount() const { return _waitingTasks.size(); }
 
   private:
 
   /**
+   * Internal mutex for accessing the waiting task set
+  */
+  tasking::Mutex _mutex;
+
+  /**
    * A set of waiting tasks. No ordering is enforced here.
   */
-  HiCR::concurrent::Queue<HiCR::tasking::Task> *_waitingTasks;
+  std::queue<HiCR::tasking::Task *> _waitingTasks;
 };
 
 } // namespace tasking
