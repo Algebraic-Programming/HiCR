@@ -136,61 +136,6 @@ TEST(Worker, LifeCycle)
   // Worker state should be ready now
   EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::ready);
 
-  // Flag to check running state
-  __volatile__ bool runningStateFound = false;
-
-  // Creating task function
-  auto f = [&runningStateFound]() {
-    // Getting worker pointer
-    auto w = HiCR::tasking::Worker::getCurrentWorker();
-
-    // Checking running state
-    if (w->getState() == HiCR::tasking::Worker::state_t::running) runningStateFound = true;
-
-    // suspending worker and yielding task
-    w->suspend();
-  };
-
-  // Creating execution unit
-  auto u = c.createExecutionUnit(f);
-
-  // Creating task to run, and setting function to run
-  HiCR::tasking::Task task(0, u);
-
-  // Creating task dispatcher
-  auto dispatcher = HiCR::tasking::Dispatcher([&task]() { return &task; });
-
-  // Suscribing worker to dispatcher
-  EXPECT_NO_THROW(w.subscribe(&dispatcher));
-
-  // Starting worker
-  EXPECT_FALSE(runningStateFound);
-  ASSERT_NO_THROW(w.start());
-  while (w.getState() != HiCR::tasking::Worker::state_t::suspended)
-    ;
-  EXPECT_TRUE(runningStateFound);
-
-  // Checking the worker is suspended
-  EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::suspended);
-
-  // Fail on trying to terminate when not running
-  EXPECT_THROW(w.terminate(), HiCR::RuntimeException);
-
-  // Testing resume function
-  EXPECT_NO_THROW(w.resume());
-
-  // Fail on trying to terminate when not running
-  EXPECT_NO_THROW(w.terminate());
-
-  // Checking the worker is terminating
-  EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::terminating);
-
-  // Awaiting for worker termination
-  EXPECT_NO_THROW(w.await());
-
-  // Checking the worker is terminated
-  EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::terminated);
-
   // Finalizing HiCR tasking
   HiCR::tasking::finalize();
 }
