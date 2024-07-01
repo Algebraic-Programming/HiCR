@@ -192,10 +192,17 @@ class Worker
   __INLINE__ void terminate()
   {
     // Checking state
-    if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to stop worker that is not in the 'running' state");
+    if (_state != state_t::running && _state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to stop worker that is not in a terminate-able state");
+
+    // Getting current state
+    const auto prevState = _state;
 
     // Transitioning state
     _state = state_t::terminating;
+
+    // If suspended, resume its resources so it can finish
+    if (prevState == state_t::suspended)
+      for (auto &p : _processingUnits) p->resume();
   }
 
   /**
