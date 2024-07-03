@@ -194,10 +194,10 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Initialized(&initialized);
     if (initialized == 0)
     {
-      int requested = MPI_THREAD_SERIALIZED;
+      int requested = MPI_THREAD_MULTIPLE;
       int provided;
       MPI_Init_thread(argc, argv, requested, &provided);
-      if (provided < requested) fprintf(stderr, "Warning, your application may not work properly if MPI does not support (serialized) threaded access\n");
+      if (provided < requested) fprintf(stderr, "Warning, your application may not work properly if MPI does not support (multiple) threaded access\n");
     }
 
     // Creating instance manager
