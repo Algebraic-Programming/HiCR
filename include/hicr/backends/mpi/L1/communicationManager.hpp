@@ -94,19 +94,15 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __INLINE__ void lockMPIWindow(const int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
     // Locking MPI window to ensure the messages arrives before returning
-    auto status = MPI_Win_lock(MPILockType, rank, MPIAssert, *window);
-
-    // Checking correct locking
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run lock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
+    while (MPI_Win_lock(MPILockType, rank, MPIAssert, *window) != MPI_SUCCESS)
+      ;
   }
 
   __INLINE__ void unlockMPIWindow(const int rank, MPI_Win *window)
   {
     // Unlocking window after copy is completed
-    auto status = MPI_Win_unlock(rank, *window);
-
-    // Checking correct unlocking
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run unlock MPI data window for rank %d, MPI Window pointer 0x%lX", rank, (uint64_t)window);
+    while (MPI_Win_unlock(rank, *window) != MPI_SUCCESS)
+      ;
   }
 
   __INLINE__ void increaseWindowCounter(const int rank, MPI_Win *window)
@@ -374,6 +370,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
       // Creating MPI window for data transferring
       auto status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? globalSlotSizes[i] : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getDataWindow().get());
+      MPI_Win_set_errhandler(*memorySlot->getDataWindow(), MPI_ERRORS_RETURN);
 
       // Unfortunately, we need to do an effective duplucation of the original local memory slot storage
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
@@ -393,6 +390,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
       // Creating MPI window for message received count transferring
       status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getRecvMessageCountWindow().get());
+      MPI_Win_set_errhandler(*memorySlot->getRecvMessageCountWindow(), MPI_ERRORS_RETURN);
 
       // Unfortunately, we need to do an effective realloc of the messages recv counter
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
@@ -409,6 +407,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
       // Creating MPI window for message sent count transferring
       status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getSentMessageCountWindow().get());
+      MPI_Win_set_errhandler(*memorySlot->getSentMessageCountWindow(), MPI_ERRORS_RETURN);
 
       // Unfortunately, we need to do an effective realloc of the messages sent counter
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
