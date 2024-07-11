@@ -146,11 +146,19 @@ __INLINE__ void Instance::sendMessage(const HiCR::L0::Instance::instanceId_t ins
 
   // Sending initial message to all workers
   auto messageSendSlot = _memoryManager->registerLocalMemorySlot(bufferMemorySpace, messagePtr, messageSize);
+
+  // Single-threaded access to channel
+  std::lock_guard guard(_channelMutex);
+
+  // Pushing message to channel
   channel->push(messageSendSlot);
 }
 
 __INLINE__ Instance::message_t Instance::recvMessage(const bool isAsync)
 {
+  // Single-threaded access to channel
+  std::lock_guard guard(_channelMutex);
+
   // If asynchronous and consumerChannel is empty, return immediately
   if (isAsync == true && _consumerChannel->getDepth() == 0) return {NULL, 0};
 

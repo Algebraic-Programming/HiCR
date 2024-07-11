@@ -371,6 +371,11 @@ class Instance
   std::mutex _pendingDataObjectsMutex;
 
   /**
+   * Mutex to enforce single-threaded access to channel push/pop/getDepth()
+   */
+  std::mutex _channelMutex;
+
+  /**
    * List of data objects pending release
   */
   std::list<DataObject *> _pendingDataObjects;
