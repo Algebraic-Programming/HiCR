@@ -200,6 +200,9 @@ class InstanceManager final : public HiCR::L1::InstanceManager
       if (provided < requested) fprintf(stderr, "Warning, your application may not work properly if MPI does not support  threaded access\n");
     }
 
+    // Setting MPI_COMM_WORLD error handler
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
     // Creating instance manager
     return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
   }
