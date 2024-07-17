@@ -1,4 +1,7 @@
-subdir('hicr')
 subdir('tasking')
 subdir('channels')
 subdir('deployer')
+subdir('memcpy')
+subdir('kernel')
+subdir('topology')
+subdir('topologyRPC')
