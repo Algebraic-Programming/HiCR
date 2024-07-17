@@ -1,4 +1,5 @@
 build
 *.patch
+~*
 .vscode
 atlas_*.sh

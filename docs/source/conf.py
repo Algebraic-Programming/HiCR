@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('.'))
 import subprocess as sp
 
 # -- Project information -----------------------------------------------------
-project = 'HiCR'
+project = 'HiSilicon Common Runtime (HiCR)'
 copyright = 'Huawei Technologies Switzerland AG'
 author = 'Sergio Martin'
 
@@ -40,6 +40,7 @@ extensions = [
 	"sphinx.ext.napoleon",
 	"sphinx.ext.graphviz",
 	"sphinx.ext.todo",
+    "sphinx.ext.extlinks",
 	"sphinx_copybutton",
 	"sphinxcontrib.doxylink",
 	"sphinx.ext.inheritance_diagram",
@@ -49,6 +50,9 @@ extensions = [
 # Plantuml
 plantuml = "java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar"
 plantuml_output_format = "svg"
+
+# extlinks
+extlinks = {'gitLabRepository': ('https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/%s', '%s')}
 
 # Myst
 myst_enable_extensions = ["colon_fence"]
@@ -74,6 +78,7 @@ primary_domain = 'cpp'
 
 # Tell sphinx what the pygments highlight language should be
 highlight_language = 'cpp'
+numfig = True
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -89,7 +94,7 @@ html_options = {             "show_nav_level": 1,
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = [ ]
+html_static_path = [  ]
 
 # If false, no module index is generated.
 html_domain_indices = True
@@ -118,3 +123,9 @@ doxylink = {
         f"{doxygen_root}/html",
     ),
 }
+
+# These paths are either relative to html_static_path
+# or fully qualified paths (eg. https://...)
+html_css_files = [
+    'custom.css',
+]
