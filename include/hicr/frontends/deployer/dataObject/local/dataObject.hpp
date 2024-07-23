@@ -110,11 +110,6 @@ class DataObject final
   private:
 
   /**
-   * Stores whether the data object has been already released to another instance and no longer owned by this one
-   */
-  bool _isReleased = false;
-
-  /**
    * The data object's internal data buffer
    */
   void *const _buffer;
