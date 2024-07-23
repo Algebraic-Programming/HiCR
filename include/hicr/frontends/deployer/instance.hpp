@@ -190,8 +190,8 @@ class Instance
       // If the current data object is released
       if ((*it)->tryRelease() == true)
       {
-        // Remove it from the list
-        it = _pendingDataObjects.erase(it);
+        // Publish again to allow other instances to get the data object
+        (*it)->publish();
 
         // Continue without advancing the pointer
         continue;

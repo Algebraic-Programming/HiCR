@@ -59,6 +59,8 @@ class DataObject final
     // Pick the first 15 bits of the id and use it as MPI Tag
     const int dataObjectIdTag = _id & mpiTagMask;
 
+    publishRequest = NULL;
+
     // Publishing an asynchronous recieve for whoever needs this data
     MPI_Irecv(nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, dataObjectIdTag, MPI_COMM_WORLD, &publishRequest);
   }
@@ -70,9 +72,6 @@ class DataObject final
    */
   __INLINE__ bool tryRelease()
   {
-    // If transfered already, return true
-    if (_isReleased == true) return true;
-
     // We need to preserve the status to receive more information about the RPC
     MPI_Status status;
 
@@ -93,9 +92,6 @@ class DataObject final
 
     // Getting RPC execution unit index
     MPI_Ssend(_buffer, _size, MPI_BYTE, requester, _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD);
-
-    // Changing state to transfered
-    _isReleased = true;
 
     // Notifying that the data object has been transferred
     return true;
@@ -176,11 +172,6 @@ class DataObject final
   __INLINE__ void destroyBuffer() { free(_buffer); }
 
   private:
-
-  /**
-   * Stores whether the data object has been already released to another instance and no longer owned by this one
-   */
-  bool _isReleased = false;
 
   /**
    * The data object's internal data buffer
