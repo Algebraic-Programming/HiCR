@@ -34,6 +34,7 @@
     #include "dataObject/mpi/dataObject.hpp"
     #include "channel/hicr/producerChannel.hpp"
     #include "channel/hicr/consumerChannel.hpp"
+    #include "hicr/backends/mpi/L1/communicationManager.hpp"
   #else
     #include "dataObject/local/dataObject.hpp"
     #include "channel/hicr/producerChannel.hpp"
@@ -113,7 +114,7 @@ class Instance
    *
    * @return The HiCR deployer's communication manager
    */
-  HiCR::L1::InstanceManager *getCommunicationManager() const { return _instanceManager; }
+  HiCR::L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
 
   /**
    * Function to obtain the memory manager from the instance
@@ -168,7 +169,15 @@ class Instance
   __INLINE__ void publishDataObject(DataObject &dataObject)
   {
     // Publishing data object
+
+#ifdef _HICR_USE_MPI_BACKEND_
+    backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
+    cm->lockMPICalls();
+#endif
     dataObject.publish();
+#ifdef _HICR_USE_MPI_BACKEND_
+    cm->unlockMPICalls();
+#endif
 
     // Adding data object to list of data object pending release
     _pendingDataObjectsMutex.lock();
@@ -185,6 +194,10 @@ class Instance
 
     // Iterate over the entire pending data object list to see if we can  release them (they were taken)
     auto it = _pendingDataObjects.begin();
+#ifdef _HICR_USE_MPI_BACKEND_
+    backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
+    cm->lockMPICalls();
+#endif
     while (it != _pendingDataObjects.end())
     {
       // If the current data object is released
@@ -200,6 +213,9 @@ class Instance
       // Advancing to the next data object in the list
       it++;
     }
+#ifdef _HICR_USE_MPI_BACKEND_
+    cm->unlockMPICalls();
+#endif
 
     _pendingDataObjectsMutex.unlock();
   }
@@ -247,8 +263,16 @@ class Instance
     // Getting instance id of coordinator instance
     const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
 
+#ifdef _HICR_USE_MPI_BACKEND_
+    backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
+    cm->lockMPICalls();
+#endif
     // Creating data object from id and remote instance id
-    return DataObject::getDataObject(dataObject, currentInstanceId, _instanceManager->getSeed());
+    auto object = DataObject::getDataObject(dataObject, currentInstanceId, _instanceManager->getSeed());
+#ifdef _HICR_USE_MPI_BACKEND_
+    cm->unlockMPICalls();
+#endif
+    return object;
   }
 
   /**
