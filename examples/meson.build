@@ -1,4 +1,3 @@
-subdir('tasking')
 subdir('channels')
 subdir('deployer')
 subdir('memcpy')

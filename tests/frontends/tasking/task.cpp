@@ -21,7 +21,7 @@ TEST(Task, Construction)
   HiCR::tasking::Task                     *t = NULL;
   std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
 
-  EXPECT_NO_THROW(t = new HiCR::tasking::Task(0, u, NULL));
+  EXPECT_NO_THROW(t = new HiCR::tasking::Task(u, NULL));
   EXPECT_FALSE(t == nullptr);
   delete t;
 }
@@ -29,11 +29,11 @@ TEST(Task, Construction)
 TEST(Task, SetterAndGetters)
 {
   std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
-  HiCR::tasking::Task                      t(0, u, NULL);
+  HiCR::tasking::Task                      t(u, NULL);
 
-  HiCR::tasking::Task::taskEventMap_t e;
-  EXPECT_NO_THROW(t.setEventMap(&e));
-  EXPECT_EQ(t.getEventMap(), &e);
+  HiCR::tasking::Task::taskCallbackMap_t e;
+  EXPECT_NO_THROW(t.setCallbackMap(&e));
+  EXPECT_EQ(t.getCallbackMap(), &e);
 
   HiCR::L0::ExecutionState::state_t state;
   EXPECT_NO_THROW(state = t.getState());
@@ -77,7 +77,7 @@ TEST(Task, Run)
   auto u = c.createExecutionUnit(f);
 
   // Creating task
-  t = new HiCR::tasking::Task(0, u);
+  t = new HiCR::tasking::Task(u);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
@@ -126,7 +126,7 @@ TEST(Task, Run)
   HiCR::tasking::finalize();
 }
 
-TEST(Task, Events)
+TEST(Task, Callbacks)
 {
   // Initializing HiCR tasking
   HiCR::tasking::initialize();
@@ -151,13 +151,13 @@ TEST(Task, Events)
     delete t;
   };
 
-  // Creating event map
-  HiCR::tasking::Task::taskEventMap_t eventMap;
+  // Creating callback map
+  HiCR::tasking::Task::taskCallbackMap_t callbackMap;
 
-  // Associating events to the map
-  eventMap.setEvent(HiCR::tasking::Task::event_t::onTaskExecute, onExecuteCallback);
-  eventMap.setEvent(HiCR::tasking::Task::event_t::onTaskSuspend, onSuspendCallback);
-  eventMap.setEvent(HiCR::tasking::Task::event_t::onTaskFinish, onFinishCallback);
+  // Associating callbacks to the map
+  callbackMap.setCallback(HiCR::tasking::Task::callback_t::onTaskExecute, onExecuteCallback);
+  callbackMap.setCallback(HiCR::tasking::Task::callback_t::onTaskSuspend, onSuspendCallback);
+  callbackMap.setCallback(HiCR::tasking::Task::callback_t::onTaskFinish, onFinishCallback);
 
   // Declaring task pointer
   HiCR::tasking::Task *t = NULL;
@@ -178,7 +178,7 @@ TEST(Task, Events)
   auto u = c.createExecutionUnit(f);
 
   // Creating task
-  t = new HiCR::tasking::Task(0, u);
+  t = new HiCR::tasking::Task(u);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
@@ -228,8 +228,8 @@ TEST(Task, Events)
     ::testing::ExitedWithCode(0),
     "Delete worked");
 
-  // Creating a task with an event map to make sure the functions are ran
-  t = new HiCR::tasking::Task(1, u);
+  // Creating a task with an callback map to make sure the functions are ran
+  t = new HiCR::tasking::Task(u);
 
   // Creating execution state
   executionState = c.createExecutionState(t->getExecutionUnit());
@@ -237,8 +237,8 @@ TEST(Task, Events)
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
 
-  // Setting event map
-  t->setEventMap(&eventMap);
+  // Setting callback map
+  t->setCallbackMap(&callbackMap);
 
   // Launching task initially
   EXPECT_NO_THROW(t->run());

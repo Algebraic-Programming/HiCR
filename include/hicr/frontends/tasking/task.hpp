@@ -12,16 +12,16 @@
 
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <queue>
 #include <vector>
-#include <mutex>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/executionState.hpp>
 #include <hicr/core/L0/executionUnit.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
-#include "eventMap.hpp"
+#include "callbackMap.hpp"
 #include "common.hpp"
 
 namespace HiCR
@@ -38,7 +38,7 @@ extern pthread_key_t _taskPointerKey;
 /**
  * This class defines the basic execution unit managed by TaskR.
  *
- * It includes a function to execute, an internal state, and an event map that triggers callbacks (if defined) whenever a state transition occurs.
+ * It includes a function to execute, an internal state, and an callback map that triggers callbacks (if defined) whenever a state transition occurs.
  *
  * The function represents the entire lifetime of the task. That is, a task executes a single function, the one provided by the user, and will reach a terminated state after the function is fully executed.
  *
@@ -49,14 +49,9 @@ class Task
   public:
 
   /**
-   * Task label type
+   * Enumeration of possible task-related callbacks that can trigger a user-defined function callback
    */
-  typedef uint64_t label_t;
-
-  /**
-   * Enumeration of possible task-related events that can trigger a user-defined function callback
-   */
-  enum event_t
+  enum callback_t
   {
     /**
      * Triggered as the task starts or resumes execution
@@ -64,7 +59,7 @@ class Task
     onTaskExecute,
 
     /**
-     * Triggered as the task is preempted into suspension by an asynchronous event
+     * Triggered as the task is preempted into suspension by an asynchronous callback
      */
     onTaskSuspend,
 
@@ -80,25 +75,23 @@ class Task
   };
 
   /**
-   * Type definition for the task's event map
+   * Type definition for the task's callback map
    */
-  typedef HiCR::tasking::EventMap<Task, event_t> taskEventMap_t;
+  typedef HiCR::tasking::CallbackMap<Task *, callback_t> taskCallbackMap_t;
 
   Task()  = delete;
   ~Task() = default;
 
   /**
-   * Constructor for the TaskR task class. It requires a user-defined function to execute and a label.
+   * Constructor for the TaskR task class. It requires a user-defined function to execute
    * The task is considered finished when the function runs to completion.
    *
-   * @param[in] label A user-defined unique identifier for the task. It is required for dependency management
    * @param[in] executionUnit Specifies the function/kernel to execute.
-   * @param[in] eventMap Pointer to the event map callbacks to be called by the task
+   * @param[in] callbackMap Pointer to the callback map callbacks to be called by the task
    */
-  __INLINE__ Task(const label_t label, std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskEventMap_t *eventMap = NULL)
-    : _label(label),
-      _executionUnit(executionUnit),
-      _eventMap(eventMap){};
+  __INLINE__ Task(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskCallbackMap_t *callbackMap = NULL)
+    : _executionUnit(executionUnit),
+      _callbackMap(callbackMap){};
 
   /**
    * Function to return a pointer to the currently executing task from a global context
@@ -108,23 +101,23 @@ class Task
   __INLINE__ static Task *getCurrentTask() { return (Task *)pthread_getspecific(_taskPointerKey); }
 
   /**
-   * Sets the task's event map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
+   * Sets the task's callback map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
    *
-   * @param[in] eventMap A pointer to an event map
+   * @param[in] callbackMap A pointer to an callback map
    */
-  __INLINE__ void setEventMap(taskEventMap_t *eventMap) { _eventMap = eventMap; }
+  __INLINE__ void setCallbackMap(taskCallbackMap_t *callbackMap) { _callbackMap = callbackMap; }
 
   /**
-   * Gets the task's event map.
+   * Gets the task's callback map.
    *
-   * @return A pointer to the task's an event map. NULL, if not defined.
+   * @return A pointer to the task's an callback map. NULL, if not defined.
    */
-  __INLINE__ taskEventMap_t *getEventMap() { return _eventMap; }
+  __INLINE__ taskCallbackMap_t *getCallbackMap() { return _callbackMap; }
 
   /**
-   * Sends a sync signal, triggering the associated event
+   * Sends a sync signal, triggering the associated callback
    */
-  __INLINE__ void sendSyncSignal() { _eventMap->trigger(this, HiCR::tasking::Task::event_t::onTaskSync); }
+  __INLINE__ void sendSyncSignal() { _callbackMap->trigger(this, HiCR::tasking::Task::callback_t::onTaskSync); }
 
   /**
    * Queries the task's internal state.
@@ -166,7 +159,7 @@ class Task
     if (getState() != HiCR::L0::ExecutionState::state_t::uninitialized)
       HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", getState());
 
-    // Getting execution state as a unique pointer (to prevent sharing the same state among different tasks)
+    // Getting execution state as a unique pointer (to prcallback sharing the same state among different tasks)
     _executionState = std::move(executionState);
   }
 
@@ -177,9 +170,6 @@ class Task
    */
   __INLINE__ void run()
   {
-    // Preventing this function from being accessed simultaneously (that would be a bug in the callers code)
-    _mutex.lock();
-
     if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
 
     if (getState() != HiCR::L0::ExecutionState::state_t::initialized && getState() != HiCR::L0::ExecutionState::state_t::suspended)
@@ -188,8 +178,8 @@ class Task
     // Also map task pointer to the running thread it into static storage for global access.
     pthread_setspecific(_taskPointerKey, this);
 
-    // Triggering execution event, if defined
-    if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskExecute);
+    // Triggering execution callback, if defined
+    if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onTaskExecute);
 
     // Now resuming the task's execution
     _executionState->resume();
@@ -200,21 +190,18 @@ class Task
     // Getting state after execution
     const auto state = getState();
 
-    // If the task is suspended and event map is defined, trigger the corresponding event.
+    // If the task is suspended and callback map is defined, trigger the corresponding callback.
     if (state == HiCR::L0::ExecutionState::state_t::suspended)
-      if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskSuspend);
+      if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onTaskSuspend);
 
     // If the task is still running (no suspension), then the task has fully finished executing. If so,
-    // trigger the corresponding event, if the event map is defined. It is important that this function
+    // trigger the corresponding callback, if the callback map is defined. It is important that this function
     // is called from outside the context of a task to allow the upper layer to free its memory upon finishing
     if (state == HiCR::L0::ExecutionState::state_t::finished)
-      if (_eventMap != NULL) _eventMap->trigger(this, event_t::onTaskFinish);
+      if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onTaskFinish);
 
     // Relenting current task pointer
     pthread_setspecific(_taskPointerKey, NULL);
-
-    // Releasing lock
-    _mutex.unlock();
   }
 
   /**
@@ -232,38 +219,35 @@ class Task
   }
 
   /**
-   * Returns the task's label
-   *
-   * \return The task's label
-   */
-  __INLINE__ label_t getLabel() const { return _label; }
-
-  /**
    * Adds an execution depedency to this task. This means that this task will not be ready to execute until and unless
-   * the task referenced by this label has finished executing.
+   * the referenced task has finished executing.
    *
-   * \param[in] task The label of the task upon whose completion this task should depend
+   * \param[in] task A pointer to the task whose completion this task should depend
    */
-  __INLINE__ void addTaskDependency(const label_t task) { _taskDependencies.push_back(task); };
+  __INLINE__ void addOutputTaskDependency(Task *task) { _outputTaskDependencies.push_back(task); };
 
   /**
-   * Returns Returns this task's dependency list.
-   *
-   * \return A constant reference to this task's dependencies vector.
+   * Atomically increases task dependency count by one, representing the addition of a dependency (task or otherwise)
+   * 
+   * @return Returns the previous value
    */
-  __INLINE__ const std::vector<label_t> &getDependencies() { return _taskDependencies; }
+  __INLINE__ size_t increaseInputDependencyCounter() { return _inputDependencyCounter.fetch_add(1); }
+
+  /**
+   * Atomically decreases task dependency count by one, representing the fulfilling of a dependency (task or otherwise)
+   * 
+   * @return Returns the previous value
+   */
+  __INLINE__ size_t decreaseInputDependencyCounter() { return _inputDependencyCounter.fetch_sub(1); }
+
+  /**
+   * Gets the current (not atomic) value of the input dependency counter
+   * 
+   * @return The current value of the input dependency counter
+   */
+  __INLINE__ size_t getInputDependencyCounter() { return _inputDependencyCounter.load(); }
 
   private:
-
-  /**
-   * Tasks's label, chosen by the user
-   */
-  const label_t _label;
-
-  /**
-   * Task execution dependency list. The task will be ready only if this container is empty.
-   */
-  std::vector<label_t> _taskDependencies;
 
   /**
    * Execution unit that will be instantiated and executed by this task
@@ -271,19 +255,24 @@ class Task
   std::shared_ptr<HiCR::L0::ExecutionUnit> _executionUnit;
 
   /**
-   *  Map of events to trigger
+   *  Map of callbacks to trigger
    */
-  taskEventMap_t *_eventMap = NULL;
+  taskCallbackMap_t *_callbackMap = NULL;
 
   /**
-   * Internal execution state of the task. Will change based on runtime scheduling events
+   * Internal execution state of the task. Will change based on runtime scheduling callbacks
    */
   std::unique_ptr<HiCR::L0::ExecutionState> _executionState = NULL;
 
   /**
-   * Mutex to prevent task from being executed concurrently
-  */
-  std::mutex _mutex;
+   * Counter for task dependencies. The task is ready only if this counter is zero
+   */
+  std::atomic<size_t> _inputDependencyCounter = 0;
+
+  /**
+   * Task output task dependency list. These tasks will be notified when this task finishes.
+   */
+  std::vector<Task *> _outputTaskDependencies;
 
 }; // class Task
 
