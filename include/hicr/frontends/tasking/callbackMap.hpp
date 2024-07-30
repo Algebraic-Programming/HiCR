@@ -38,14 +38,14 @@ class CallbackMap
   __INLINE__ void clear() { _callbackMap.clear(); }
 
   /**
-   * Remove a particular callback's callback from the map
+   * Remove a particular event's callback from the map
    *
    * \param[in] callback The callback to remove from the map
    */
   __INLINE__ void removeCallback(const E callback) { _callbackMap.erase(callback); }
 
   /**
-   * Adds a callback for a particular callback
+   * Adds a callback for a particular event
    *
    * \param[in] callback The callback to add
    * \param[in] fc The callback function to call when the callback is triggered
@@ -53,7 +53,7 @@ class CallbackMap
   __INLINE__ void setCallback(const E callback, callbackFc_t<T> fc) { _callbackMap[callback] = fc; }
 
   /**
-   * Triggers the execution of the callback function for a given callback
+   * Triggers the execution of the callback function for a given event
    *
    * \param[in] arg The argument to the trigger function.
    * \param[in] callback The triggered callback.
