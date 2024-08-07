@@ -69,7 +69,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     pthread_mutex_destroy(&_mutex);
   }
 
-  __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey)
+  __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::backend::host::L0::GlobalMemorySlot::tag_t       tag,
+                                                                                 const HiCR::backend::host::L0::GlobalMemorySlot::globalKey_t globalKey)
   {
     if (_shadowMap.find(tag) != _shadowMap.end())
     {
@@ -113,7 +114,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       auto memorySlot = entry.second;
 
       // Creating new memory slot
-      auto globalMemorySlot = std::make_shared<L0::GlobalMemorySlot>(tag, globalKey, memorySlot);
+      auto globalMemorySlot = std::make_shared<HiCR::backend::host::L0::GlobalMemorySlot>(tag, globalKey, memorySlot);
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
