@@ -72,11 +72,20 @@ void remoteMemcpy(HiCR::L1::InstanceManager      *instanceManager,
     // Writing message
     sprintf((char *)bufferSlot->getPointer(), "Hello, receiver! This is sender.");
 
-    // Sending message to the receiver
+    // Sending message to the receiver (put)
     communicationManager->memcpy(receiverSlot, DST_OFFSET, bufferSlot, SRC_OFFSET, BUFFER_SIZE);
 
-    // Fencing (waiting) on the operation to complete
+    // Fencing (waiting) on the first operation to complete
     communicationManager->fence(COMM_TAG);
+
+    // Retrieving message to the receiver (get)
+    communicationManager->memcpy(bufferSlot, DST_OFFSET, receiverSlot, SRC_OFFSET, BUFFER_SIZE);
+
+    // Fencing (waiting) on the second operation to complete
+    communicationManager->fence(COMM_TAG);
+
+    // Printing buffer
+    printf("[Sender] Received buffer: %s\n", (const char *)bufferSlot->getPointer());
   }
 
   // If I am the receiver, wait for the message to arrive and then print it
@@ -86,7 +95,7 @@ void remoteMemcpy(HiCR::L1::InstanceManager      *instanceManager,
     communicationManager->fence(COMM_TAG);
 
     // Querying number of messages received
-    communicationManager->queryMemorySlotUpdates(receiverSlot);
+    communicationManager->queryMemorySlotUpdates(receiverSlot->getSourceLocalMemorySlot());
     auto recvMsgs = receiverSlot->getSourceLocalMemorySlot()->getMessagesRecv();
 
     // Printinf number of messages received
@@ -94,6 +103,12 @@ void remoteMemcpy(HiCR::L1::InstanceManager      *instanceManager,
 
     // Printing buffer
     printf("[Receiver] Received buffer: %s\n", (const char *)bufferSlot->getPointer());
+
+    // Writing second message message
+    sprintf((char *)bufferSlot->getPointer(), "Hello, sender! This is receiver.");
+
+    // Fencing (waiting) on the second operation to complete
+    communicationManager->fence(COMM_TAG);
   }
 
   // De-registering global slots (collective call)

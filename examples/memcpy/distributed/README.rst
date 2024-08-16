@@ -3,7 +3,7 @@
 Memcpy (Distributed)
 =======================
 
-In this example, we test HiCR's :code:`memcpy` operation to communicate a simple message between two HiCR instances as detected by the :code:`HiCR::L1::InstanceManager` (See: :numref:`remoteMemcpyFig`).
+In this example, we test HiCR's :code:`memcpy` operation to communicate a simple message back and forth (ping / pong) between two HiCR instances as detected by the :code:`HiCR::L1::InstanceManager` (See: :numref:`remoteMemcpyFig`).
 
 .. _remoteMemcpyFig:
 .. figure:: remoteMemcpy.png

@@ -62,7 +62,10 @@ TEST(MemoryManager, Memory)
   ASSERT_GT(mList.size(), (unsigned int)0);
 
   // Getting memory resource
-  auto r = *mList.begin();
+  auto           r = *mList.begin();
+  nlohmann::json serializedMemSlot;
+  EXPECT_NO_THROW(serializedMemSlot = r->serialize());
+  EXPECT_NO_THROW(r->deserialize(serializedMemSlot));
 
   // Getting total memory size
   size_t testMemAllocSize = 1024;
