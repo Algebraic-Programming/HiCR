@@ -51,7 +51,7 @@ namespace HiCR
  * immediately be able to refer to any remotely published block. For remote
  * workers to be able to refer to a block, two things should happen first:
  *  -# the worker owner and the workers who refer to that block, should
- *     issue a collective call to #fetch; and
+ *     issue a collective call to #update; and
  *  -# the block returned by #publish should be copied to the remote workers
  *     that want to make use of it (e.g., by using channels or raw memory
  *     copies).
@@ -61,7 +61,7 @@ namespace HiCR
  * communication. Copying allows for remote workers to refer to blocks it did
  * not (initially) own.
  *
- * If a block has been copied between workers but no #fetch has occurred yet,
+ * If a block has been copied between workers but no #update has occurred yet,
  * it will be illegal for non-owner workers to call #get or #tryGetOwnership.
  * Any other call on the block will be legal if their individual conditions are
  * met (e.g., calls to #destroyOrRelease will be legal but fail for non-owners,
@@ -87,18 +87,18 @@ namespace HiCR
  *
  * Ownership of a block can be changed via a call to #tryGetOwnership. This may
  * or may not fail. If successful, the change in ownership will be effected at
- * the end of a subsequent call to #fetch-- i.e., the #fetch, in addition to
+ * the end of a subsequent call to #update-- i.e., the #update, in addition to
  * synchronising published block index data, also dubs as the point of
  * consistency in any ownership change.
  *
- * For ownership of a block to change during a call to #fetch, the following
+ * For ownership of a block to change during a call to #update, the following
  * conditions must be met:
  *  -# the owner has issued a call to #destroyOrRelease before this call to
- *     #fetch. Earlier calls to #destroyOrRelease (meaning, before a
- *     \em previous call to #fetch) shall \em not satisfy this condition;
+ *     #update. Earlier calls to #destroyOrRelease (meaning, before a
+ *     \em previous call to #update) shall \em not satisfy this condition;
  *  -# at least one non-owner worker has issued a call to #tryGetOwnership
- *     before this call to #fetch. Earlier calls to #tryGetOwnership (meaning,
- *     before a previous call to #fetch) shall \em not satisfy this condition.
+ *     before this call to #update. Earlier calls to #tryGetOwnership (meaning,
+ *     before a previous call to #update) shall \em not satisfy this condition.
  * If there are multiple non-owners attempting to attain ownership of a block,
  * at most one of them will be succesful. If any one of the conditions is not
  * satisfied, ownership shall not change.
@@ -107,7 +107,7 @@ namespace HiCR
  * thus allows an owner to check if it has lost ownership of a given block and
  * allows a non-owner to check if it has won ownership of a given block.
  *
- * A call to #fetch is a blocking and collective function. It does not have an
+ * A call to #update is a blocking and collective function. It does not have an
  * asynchronous counterpart.
  *
  * A call to #fence is a blocking function. A non-blocking variant is provided
@@ -136,14 +136,14 @@ class Block
    *
    * If other workers are to refer to returned block, then 1) those
    * workers and the caller worker to this function must be included with
-   * a call to #fetch, \em and 2) the block should be copied to such remote
+   * a call to #update, \em and 2) the block should be copied to such remote
    * workers. Use, for example, the channel or the raw datamover
    * (#memcpy) for this purpose.
    *
    * A call to this function entails \f$ \Theta(1) \f$ work. It is (thus) a
    * non-blocking, asynchronous call: registration with remote workers may
    * occur at any time between this call and the end of a subsequent call to
-   * #fetch that includes this worker.
+   * #update that includes this worker.
    *
    * A call to this function is \em not thread-safe.
    */
@@ -165,12 +165,12 @@ class Block
    * instances in \a start to \a end.
    *
    * The collection of instances must match across all instances participating
-   * in this collective call to #fetch. If there are multiple calls to #fetch
-   * at any of the involved workers, then for those calls to #fetch that have
+   * in this collective call to #update. If there are multiple calls to #update
+   * at any of the involved workers, then for those calls to #update that have
    * a non-empty intersection of workers, the order of calls should match.
    *
    * A call to this function is expensive even if #publish is implemented in
-   * an eager fashion, as the fetch even in the optimistic case where the
+   * an eager fashion, as the update even in the optimistic case where the
    * registration has completed across the entire system, still requires a
    * subset barrier (the system needs to know everyone has a consistent
    * index).
@@ -180,7 +180,7 @@ class Block
    * A call to this function shall \em not be thread-safe.
    */
   template <typename FwdIt>
-  static void fetch(FwdIt start, const FwdIt &end);
+  static void update(FwdIt start, const FwdIt &end);
 
   /**
    * Fences all block activity attached to a given \a tag.
@@ -215,7 +215,7 @@ class Block
    * the unified layer is as though the call were never made).
    *
    * If the call returns <tt>true</tt>, the semantics and effects match that
-   * of #fetch.
+   * of #update.
    *
    * A call to this function is \em not thread-safe.
    */
@@ -264,7 +264,7 @@ class Block
    *
    * @returns Whether this worker has ownership of this block.
    *
-   * Ownership is guaranteed immutable until the next call to #fetch.
+   * Ownership is guaranteed immutable until the next call to #update.
    *
    * A call to this function shall incur \f$ \mathcal{O}(1) \f$ work, is
    * thread-safe, and shall never fail.
@@ -286,17 +286,17 @@ class Block
    * if no other worker takes over ownership, will destroy the block.
    *
    * The destruction of the block or the change of ownership will only take
-   * effect after a subsequent call to #fetch.
+   * effect after a subsequent call to #update.
    *
    * \warning If the block is destroyed, any local associated memory will
    *          \em not be freed by the unified layer.
    *
    * Ownership would be transferred to another worker if:
-   *  -# the subsequent #fetch had at least one other worker who called
+   *  -# the subsequent #update had at least one other worker who called
    *     #tryGetOwnership on this block.
    *
    * The block would instead be destroyed if:
-   *  -# the subsequent #fetch had no other worker who called
+   *  -# the subsequent #update had no other worker who called
    *     #tryGetOwnership on this block.
    *
    * @throws An logic exception if called by a worker that is not the owner
@@ -314,21 +314,21 @@ class Block
 
   /**
    * This worker attempts, between now and the end of a subsequent call to
-   * #fetch, to obtain ownership of this block.
+   * #update, to obtain ownership of this block.
    *
    * If successful, the contents of the memory block returned by #get will
    * correspond to the true value of this block; future calls to #get made by
    * other workers will then refer to this worker.
    *
-   * If before the next call to #fetch there was no call to #get, then any
+   * If before the next call to #update there was no call to #get, then any
    * changes in the block by the previous owner shall be lost.
    *
    * If both this function as well as #get are called before the next call to
-   * #fetch \em and the attempt to retrieve ownership is successful, then the
+   * #update \em and the attempt to retrieve ownership is successful, then the
    * contents of the block are guaranteed to be consistent between all of 1)
    * the previous owner, 2) the new owner, i.e., this worker, and 3) any
    * potential third-worker calls to #get that follow the corresponding call
-   * to #fetch.
+   * to #update.
    *
    * @throws An logic exception if called by a worker that is already the
    *         owner of this block.
