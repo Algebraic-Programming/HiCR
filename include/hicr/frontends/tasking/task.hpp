@@ -218,35 +218,6 @@ class Task
     _executionState->suspend();
   }
 
-  /**
-   * Adds an execution depedency to this task. This means that this task will not be ready to execute until and unless
-   * the referenced task has finished executing.
-   *
-   * \param[in] task A pointer to the task whose completion this task should depend
-   */
-  __INLINE__ void addOutputTaskDependency(Task *task) { _outputTaskDependencies.push_back(task); };
-
-  /**
-   * Atomically increases task dependency count by one, representing the addition of a dependency (task or otherwise)
-   * 
-   * @return Returns the previous value
-   */
-  __INLINE__ size_t increaseInputDependencyCounter() { return _inputDependencyCounter.fetch_add(1); }
-
-  /**
-   * Atomically decreases task dependency count by one, representing the fulfilling of a dependency (task or otherwise)
-   * 
-   * @return Returns the previous value
-   */
-  __INLINE__ size_t decreaseInputDependencyCounter() { return _inputDependencyCounter.fetch_sub(1); }
-
-  /**
-   * Gets the current (not atomic) value of the input dependency counter
-   * 
-   * @return The current value of the input dependency counter
-   */
-  __INLINE__ size_t getInputDependencyCounter() { return _inputDependencyCounter.load(); }
-
   private:
 
   /**
@@ -263,17 +234,6 @@ class Task
    * Internal execution state of the task. Will change based on runtime scheduling callbacks
    */
   std::unique_ptr<HiCR::L0::ExecutionState> _executionState = NULL;
-
-  /**
-   * Counter for task dependencies. The task is ready only if this counter is zero
-   */
-  std::atomic<size_t> _inputDependencyCounter = 0;
-
-  /**
-   * Task output task dependency list. These tasks will be notified when this task finishes.
-   */
-  std::vector<Task *> _outputTaskDependencies;
-
 }; // class Task
 
 } // namespace tasking
