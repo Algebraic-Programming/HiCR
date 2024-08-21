@@ -11,7 +11,7 @@ build:
   - export HOME=/home/hicr
   - source /home/hicr/.hicr-env.sh
   - echo "Compiling LPF..."
-  - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false -DCMAKE_INSTALL_PREFIX=/home/hicr/lpf; make -j24; make install; popd
+  - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false -DLPFLIB_CONFIG_NAME=Release -DCMAKE_INSTALL_PREFIX=/home/hicr/lpf; make -j24; make install; popd
   - echo "Building..."
   - mkdir build
   - meson setup build -Dbuildtype=debug -Db_coverage=true -Dbackends=host/hwloc,host/pthreads,mpi,lpf -Dfrontends=tasking,machineModel,deployer,channel -DbuildTests=true -DbuildExamples=true  -DcompileWarningsAsErrors=true
@@ -97,3 +97,23 @@ pages:
   only:
   - master
   
+build-slurm:
+  tags:
+  - ssh
+  - slurm
+  script:
+  - source .build-tools/slurm/initialize_env.sh
+  - srun --job-name=hicr_CI_build_arm --output=hicr_CI_build_arm_output.txt --error=hicr_CI_build_arm_error.txt --ntasks=1 -c 16 --time=00:02:00 --partition=TaiShanV110 bash .build-tools/slurm/build-job-arm.sh
+  - spack env activate hicr-x86-login
+  - spack load reframe
+  - export HICR_HOME=`pwd`
+  - rm -rf ../tmp.rf
+  - mkdir -p ../tmp.rf
+  - echo "Running Reframe..."
+  - reframe -J nodes=2 -J exclude=srv01,srv02 -c .build-tools/reframe/multinode_tests.py -C .build-tools/reframe/settings.py -r --stage=../tmp.rf
+  - spack env deactivate
+  only:
+  - master
+  - merge_requests
+  - tags
+

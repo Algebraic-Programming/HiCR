@@ -1,27 +1,36 @@
 # HiCR LPF Backend Configuration
 
 # Try to get MPICH, which is a special case
-mpiDep = dependency('mpi', language: 'cpp', required: true)
+mpiDep = dependency('mpi', language: 'cpp', required: false)
     
 # If also not found, then trigger a failure
 if mpiDep.found() == false
-  mpiDep = dependency('mpich', required: false)
+  mpiDep = dependency('mpich', required: true)
 endif
 
-# Now looking for LPF-specific libraries
-lpfrunExecutable = find_program('lpfrun', '/usr/bin/lpfrun', '/usr/local/bin/lpfrun', required : true)
-cc = meson.get_compiler('cpp')
-lib_lpfcore = cc.find_library('lpf_core_univ_ibverbs_generic')
-lib_lpfimp = cc.find_library('lpf_core_univ_imp_generic')
-lib_lpfhl = cc.find_library('lpf_hl')
+lpfDep = dependency('lpf-hicr', required:false)
+# If LPF is not found in the system through e.g. pkg-config, look if libs are present in the environment
+if lpfDep.found() == false
+  # Now looking for LPF-specific libraries
+  cc = meson.get_compiler('cpp')
+  lib_lpfcore = cc.find_library('lpf_core_univ_ibverbs_Release')
+  lib_lpfimp = cc.find_library('lpf_core_univ_imp_Release')
+  lib_lpfhl = cc.find_library('lpf_hl')
 
-backendIncludes = include_directories([
-])
+  # Update the LPF dependency accordingly
+  lpfDep = declare_dependency(
+    dependencies: [
+      lib_lpfcore,
+      lib_lpfhl,
+      lib_lpfimp
+      ]
+    )
+endif
+
+lpfrunExecutable = find_program('lpfrun', '/usr/bin/lpfrun', '/usr/local/bin/lpfrun', required : true)
 
 backendDependencies = [
-    lib_lpfcore,
-    lib_lpfhl,
-    lib_lpfimp,
+    lpfDep,
     mpiDep
 ]
     
