@@ -105,7 +105,9 @@ class Deployer final
    * @param[in] requests A vector of instance requests, expressing the requested system's machine model and the tasks that each instance needs to run
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
    */
-  __INLINE__ void deploy(std::vector<HiCR::MachineModel::request_t> &requests, HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
+  __INLINE__ void deploy(
+    std::vector<HiCR::MachineModel::request_t>        &requests,
+    HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc = [](const HiCR::L0::Topology &t0, const HiCR::L0::Topology &t1) { return true; })
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling deploy before HiCR has been initialized.\n");
 
