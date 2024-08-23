@@ -109,7 +109,10 @@ class InstanceManager
   */
   __INLINE__ void addInstance(HiCR::L0::Instance::instanceId_t instanceId)
   {
+    // Adding a new instance
     auto instance = addInstanceImpl(instanceId);
+
+    // Adding the instance to the internal list
     _instances.push_back(instance);
   }
 
