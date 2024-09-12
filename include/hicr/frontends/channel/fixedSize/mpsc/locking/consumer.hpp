@@ -42,6 +42,12 @@ class Consumer final : public channel::fixedSize::Base
 {
   private:
 
+  /**
+   * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
+   * for updates (received messages) from the remote producer.
+   */
+  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _tokenBuffer;
+
   /*
    * Global Memory slot pointing to the consumer's coordination buffer for acquiring a lock and updating
    */
@@ -70,6 +76,7 @@ class Consumer final : public channel::fixedSize::Base
            const size_t                          tokenSize,
            const size_t                          capacity)
     : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+      _tokenBuffer(tokenBuffer),
       _consumerCoordinationBuffer(consumerCoordinationBuffer)
   {}
   ~Consumer() = default;
@@ -166,6 +173,14 @@ class Consumer final : public channel::fixedSize::Base
     // Operation was successful
     return successFlag;
   }
+
+  /**
+   * Function to recover the token buffer
+   * This is useful to recover access to the data after the reference to the original memory slot is lost
+   * 
+   * @return The reference to the internal token buffer
+   */
+  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getTokenBuffer() const { return _tokenBuffer; }
 };
 
 } // namespace locking

@@ -66,7 +66,8 @@ class Consumer
            std::vector<std::shared_ptr<L0::GlobalMemorySlot>> producerCoordinationBuffers,
            const size_t                                       tokenSize,
            const size_t                                       capacity)
-    : _communicationManager(&communicationManager)
+    : _tokenBuffers(tokenBuffers),
+      _communicationManager(&communicationManager)
   {
     // make sure producer and consumer sides provide p elements, equalling
     // the number of producers
@@ -198,7 +199,21 @@ class Consumer
     if (getDepth() != _channelPushes.size()) { HICR_THROW_LOGIC("getDepth (%lu) != _channelPushes.size() (%lu)", getDepth(), _channelPushes.size()); }
   }
 
+  /**
+   * Function to recover the internal token buffer
+   * This is useful to recover access to the data after the reference to the original memory slots is lost
+   * 
+   * @return The reference to the internal token buffers
+   */
+  __INLINE__ std::vector<std::shared_ptr<L0::GlobalMemorySlot>> getTokenBuffers() const { return _tokenBuffers; }
+
   private:
+
+  /**
+   * The memory slot pertaining to the local token buffers. It needs to be a global slot to enable the check
+   * for updates (received messages) from the remote producer.
+   */
+  const std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> _tokenBuffers;
 
   /**
    * List of SPSC channels this MPSC consists of
