@@ -179,6 +179,14 @@ class Consumer final : public channel::fixedSize::Base
    * in a one-sided manner. This implementation has some advantages for MPSC using SPSC.
    */
   __INLINE__ void updateDepth() {}
+
+  /**
+   * Function to recover the token buffer
+   * This is useful to recover access to the data after the reference to the original memory slot is lost
+   * 
+   * @return The reference to the internal token buffer
+   */
+  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getTokenBuffer() const { return _tokenBuffer; }
 };
 
 } // namespace SPSC
