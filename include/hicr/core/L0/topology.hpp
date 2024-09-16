@@ -35,7 +35,7 @@ class Topology
   /**
    * Common type for a collection of devices
    */
-  typedef std::unordered_set<std::shared_ptr<L0::Device>> deviceList_t;
+  typedef std::vector<std::shared_ptr<L0::Device>> deviceList_t;
 
   Topology()  = default;
   ~Topology() = default;
@@ -51,7 +51,7 @@ class Topology
    *
    * @param[in] device The device to add
    */
-  __INLINE__ void addDevice(const std::shared_ptr<HiCR::L0::Device> device) { _deviceList.insert(device); }
+  __INLINE__ void addDevice(const std::shared_ptr<HiCR::L0::Device> device) { _deviceList.push_back(device); }
 
   /**
    * This function allows manually merging one topology information into another
