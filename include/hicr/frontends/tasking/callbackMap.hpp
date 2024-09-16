@@ -63,6 +63,14 @@ class CallbackMap
     if (_callbackMap.contains(callback)) _callbackMap.at(callback)(arg);
   }
 
+  /**
+   * Checks whether the specified callback is set
+   *
+   * \param[in] callback The callback to check for
+   * \return True, if the callback has been set; false, otherwise
+   */
+  __INLINE__ bool isCallbackSet(const E callback) const { return _callbackMap.contains(callback); }
+
   private:
 
   /**
