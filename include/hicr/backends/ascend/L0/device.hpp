@@ -153,7 +153,7 @@ class Device final : public HiCR::L0::Device
       auto computeResourceObj = std::make_shared<ascend::L0::ComputeResource>(computeResource);
 
       // Inserting device into the list
-      _computeResources.insert(computeResourceObj);
+      addComputeResource(computeResourceObj);
     }
 
     // Iterating over the memory space list
@@ -169,7 +169,7 @@ class Device final : public HiCR::L0::Device
       auto memorySpaceObj = std::make_shared<ascend::L0::MemorySpace>(memorySpace);
 
       // Inserting device into the list
-      _memorySpaces.insert(memorySpaceObj);
+      addMemorySpace(memorySpaceObj);
     }
   }
 

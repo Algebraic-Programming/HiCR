@@ -39,11 +39,6 @@ class Runtime
   HiCR::tasking::Task::taskCallbackMap_t *_callbackMap;
 
   /**
-   * Single dispatcher that distributes pending tasks to idle workers as they become idle
-   */
-  HiCR::tasking::Dispatcher *_dispatcher;
-
-  /**
    * Set of workers assigned to execute tasks
    */
   std::vector<HiCR::tasking::Worker *> _workers;
@@ -187,18 +182,13 @@ class Runtime
     : _maxTasks(maxTasks),
       _maxWorkers(maxWorkers)
   {
-    _dispatcher           = new HiCR::tasking::Dispatcher([this]() { return checkWaitingTasks(); });
     _callbackMap          = new HiCR::tasking::Task::taskCallbackMap_t();
     _waitingTaskQueue     = new HiCR::concurrent::Queue<HiCR::tasking::Task>(maxTasks);
     _suspendedWorkerQueue = new HiCR::concurrent::Queue<HiCR::tasking::Worker>(maxWorkers);
   }
 
   // Destructor (frees previous allocations)
-  ~Runtime()
-  {
-    delete _dispatcher;
-    delete _callbackMap;
-  }
+  ~Runtime() { delete _callbackMap; }
 
   /**
    * A callback function for HiCR to awaken a task after it had been suspended. Here simply we put it back into the task queue
@@ -340,13 +330,10 @@ class Runtime
     for (auto &pu : _processingUnits)
     {
       // Creating new worker
-      auto worker = new HiCR::tasking::Worker(computeManager);
+      auto worker = new HiCR::tasking::Worker(computeManager, [this]() { return checkWaitingTasks(); });
 
       // Assigning resource to the thread
       worker->addProcessingUnit(std::move(pu));
-
-      // Assigning worker to the common dispatcher
-      worker->subscribe(_dispatcher);
 
       // Finally adding worker to the worker set
       _workers.push_back(worker);

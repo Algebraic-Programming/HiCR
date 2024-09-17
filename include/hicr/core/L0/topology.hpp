@@ -118,12 +118,14 @@ class Topology
   */
   const nlohmann::json &getMetadata() const { return _metadata; }
 
-  protected:
-
   /**
-   * Map of devices queried by this topology manager
-   */
-  deviceList_t _deviceList;
+   * A function to set internal topology metadata
+   * 
+   * @param[in] metadata The JSON-based metadata to store
+  */
+  void setMetadata(const nlohmann::json &metadata) { _metadata = metadata; }
+
+  private:
 
   /**
    * Optional metadata storage for specifying anything about the topology that does not fit within the device class.
@@ -131,6 +133,11 @@ class Topology
    * Note: This must be use sparingly as its misuse can break the implementation abstraction guarantee in HiCR
   */
   nlohmann::json _metadata;
+
+  /**
+   * Map of devices queried by this topology manager
+   */
+  deviceList_t _deviceList;
 };
 
 } // namespace L0

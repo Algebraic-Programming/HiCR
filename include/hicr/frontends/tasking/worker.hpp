@@ -20,7 +20,6 @@
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
 #include <hicr/backends/host/L1/computeManager.hpp>
-#include "dispatcher.hpp"
 #include "task.hpp"
 
 namespace HiCR
@@ -35,14 +34,14 @@ namespace tasking
 extern pthread_key_t _workerPointerKey;
 
 /**
- * Type definition for the set of dispatchers a worker is subscribed to
+ * Defines a standard type for a pull function.
  */
-typedef std::set<HiCR::tasking::Dispatcher *> dispatcherSet_t;
+typedef std::function<HiCR::tasking::Task *()> pullFunction_t;
 
 /**
  * Defines the worker class, which is in charge of executing tasks.
  *
- * To receive pending tasks for execution, the worker needs to subscribe to task dispatchers. Upon execution, the worker will constantly check the dispatchers in search for new tasks for execution.
+ * To receive pending tasks for execution, the worker needs a pull function. Upon execution, the worker will constantly check the pull function in search for new tasks for execution.
  *
  * To execute a task, the worker needs to be assigned at least a computational resource capable to executing the type of task submitted.
  */
@@ -90,9 +89,11 @@ class Worker
    * Constructor for the worker class.
    *
    * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
+   * \param[in] pullFunction A callback for the worker to get a new task to execute
    */
-  Worker(HiCR::L1::ComputeManager *computeManager)
-    : _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
+  Worker(HiCR::L1::ComputeManager *computeManager, pullFunction_t pullFunction)
+    : _pullFunction(pullFunction),
+      _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
   {
     // Checking the passed compute manager is of a supported type
     if (_computeManager == NULL) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");
@@ -221,13 +222,6 @@ class Worker
   }
 
   /**
-   * Subscribes the worker to a task dispatcher. During execution, the worker will constantly query the dispatcher for new tasks to execute.
-   *
-   * @param[in] dispatcher The dispatcher to subscribe the worker to
-   */
-  __INLINE__ void subscribe(HiCR::tasking::Dispatcher *dispatcher) { _dispatchers.insert(dispatcher); }
-
-  /**
    * Adds a processing unit to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
    *
    * @param[in] pu Processing unit to assign to the worker
@@ -241,24 +235,17 @@ class Worker
    */
   __INLINE__ std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> &getProcessingUnits() { return _processingUnits; }
 
-  /**
-   * Gets a reference to the dispatchers the worker has been subscribed to
-   *
-   * @return A container with the worker's subscribed dispatchers
-   */
-  __INLINE__ dispatcherSet_t &getDispatchers() { return _dispatchers; }
-
   private:
+
+  /**
+   * Function by which the worker can obtain new tasks to execute
+   */
+  const pullFunction_t _pullFunction;
 
   /**
    * Represents the internal state of the worker. Uninitialized upon construction.
    */
   __volatile__ state_t _state = state_t::uninitialized;
-
-  /**
-   * Dispatchers that this resource is subscribed to
-   */
-  dispatcherSet_t _dispatchers;
 
   /**
    * Group of resources the worker can freely use
@@ -281,50 +268,47 @@ class Worker
     // Start main worker loop (run until terminated)
     while (_state == state_t::running)
     {
-      for (auto dispatcher : _dispatchers)
+      // Attempt to get a task by executing the pull function
+      auto task = _pullFunction();
+
+      // If a task was returned, then start or execute it
+      if (task != NULL) [[likely]]
       {
-        // Attempt to both pop and pull from dispatcher
-        auto task = dispatcher->pull();
-
-        // If a task was returned, then start or execute it
-        if (task != NULL) [[likely]]
+        // If the task hasn't been initialized yet, we need to do it now
+        if (task->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
         {
-          // If the task hasn't been initialized yet, we need to do it now
-          if (task->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
-          {
-            // First, create new execution state for the processing unit
-            auto executionState = _computeManager->createExecutionState(task->getExecutionUnit());
+          // First, create new execution state for the processing unit
+          auto executionState = _computeManager->createExecutionState(task->getExecutionUnit());
 
-            // Then initialize the task with the new execution state
-            task->initialize(std::move(executionState));
-          }
-
-          // Now actually run the task
-          task->run();
+          // Then initialize the task with the new execution state
+          task->initialize(std::move(executionState));
         }
 
-        // If worker has been suspended, handle it now
-        if (_state == state_t::suspended) [[unlikely]]
-        {
-          // Suspend secondary processing units first
-          for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
+        // Now actually run the task
+        task->run();
+      }
 
-          // Then suspend current processing unit
-          _processingUnits[0]->suspend();
-        }
+      // If worker has been suspended, handle it now
+      if (_state == state_t::suspended) [[unlikely]]
+      {
+        // Suspend secondary processing units first
+        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
 
-        // Requesting processing units to terminate as soon as possible
-        if (_state == state_t::terminating) [[unlikely]]
-        {
-          // Terminate secondary processing units first
-          for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
+        // Then suspend current processing unit
+        _processingUnits[0]->suspend();
+      }
 
-          // Then terminate current processing unit
-          _processingUnits[0]->terminate();
+      // Requesting processing units to terminate as soon as possible
+      if (_state == state_t::terminating) [[unlikely]]
+      {
+        // Terminate secondary processing units first
+        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
 
-          // Return immediately
-          return;
-        }
+        // Then terminate current processing unit
+        _processingUnits[0]->terminate();
+
+        // Return immediately
+        return;
       }
     }
   }

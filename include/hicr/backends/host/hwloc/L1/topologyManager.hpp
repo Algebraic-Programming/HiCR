@@ -150,7 +150,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
         auto processor = std::make_shared<L0::ComputeResource>(*_topology, id);
 
         // Adding new resource to the list
-        computeResourceList.insert(processor);
+        computeResourceList.push_back(processor);
       }
 
     // Returning new compute resource list
@@ -188,7 +188,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     auto memorySpace = std::make_shared<host::hwloc::L0::MemorySpace>(memSpaceSize, hwlocObj, bindingSupport);
 
     // Storing new memory space
-    memorySpaceList.insert(memorySpace);
+    memorySpaceList.push_back(memorySpace);
 
     // Returning new memory space list
     return memorySpaceList;

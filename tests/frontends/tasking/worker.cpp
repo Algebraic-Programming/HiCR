@@ -23,8 +23,8 @@ TEST(Worker, Construction)
   HiCR::L1::ComputeManager                         *m1 = NULL;
   HiCR::backend::host::pthreads::L1::ComputeManager m2;
 
-  EXPECT_THROW(w = new HiCR::tasking::Worker(m1), HiCR::LogicException);
-  EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m2));
+  EXPECT_THROW(w = new HiCR::tasking::Worker(m1, []() { return (HiCR::tasking::Task *)NULL; }), HiCR::LogicException);
+  EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m2, []() { return (HiCR::tasking::Task *)NULL; }));
   EXPECT_FALSE(w == nullptr);
   delete w;
 }
@@ -35,17 +35,10 @@ TEST(Task, SetterAndGetters)
   HiCR::backend::host::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
-  HiCR::tasking::Worker w(&c);
+  HiCR::tasking::Worker w(&c, []() { return (HiCR::tasking::Task *)NULL; });
 
   // Getting empty lists
   EXPECT_TRUE(w.getProcessingUnits().empty());
-  EXPECT_TRUE(w.getDispatchers().empty());
-
-  // Now adding something to the lists/sets
-  auto dispatcher = HiCR::tasking::Dispatcher([]() { return (HiCR::tasking::Task *)NULL; });
-
-  // Subscribing worker to dispatcher
-  w.subscribe(&dispatcher);
 
   // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
@@ -72,7 +65,6 @@ TEST(Task, SetterAndGetters)
 
   // Getting filled lists
   EXPECT_FALSE(w.getProcessingUnits().empty());
-  EXPECT_FALSE(w.getDispatchers().empty());
 }
 
 TEST(Worker, LifeCycle)
@@ -84,7 +76,7 @@ TEST(Worker, LifeCycle)
   HiCR::backend::host::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
-  HiCR::tasking::Worker w(&c);
+  HiCR::tasking::Worker w(&c, []() { return (HiCR::tasking::Task *)NULL; });
 
   // Worker state should in an uninitialized state first
   EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::uninitialized);

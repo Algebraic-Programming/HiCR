@@ -41,7 +41,7 @@ TEST(MemoryManager, Lifetime)
   EXPECT_NO_THROW(im->launchRPC(*currentInstance, "Test"));
   EXPECT_TRUE(RPCExecuted);
 
-  int *returnBuffer;
+  int *returnBuffer = nullptr;
   EXPECT_NO_THROW(returnBuffer = (int *)im->getReturnValue(*currentInstance));
   EXPECT_EQ(*returnBuffer, TEST_VALUE);
 
