@@ -1,11 +1,16 @@
-if 'tasking' in enabledFrontends
-
-subdir('channels')
-subdir('deployer')
 subdir('memcpy')
 subdir('kernel')
 subdir('topology')
 subdir('topologyRPC')
-subdir('tasking')
 
+if 'channel' in enabledFrontends
+ subdir('channels')
+endif 
+
+if 'deployer' in enabledFrontends and 'machineModel' in enabledFrontends
+  subdir('deployer')
+endif
+
+if 'tasking' in enabledFrontends
+  subdir('tasking')
 endif
