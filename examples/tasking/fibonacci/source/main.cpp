@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     auto cr = d->getComputeResourceList();
 
     // Adding it to the list
-    computeResources.insert(cr.begin(), cr.end());
+    computeResources.insert(computeResources.end(), cr.begin(), cr.end());
   }
 
   // Initializing Pthreads-based compute manager to run tasks in parallel

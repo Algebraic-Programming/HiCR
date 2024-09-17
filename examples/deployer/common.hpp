@@ -46,7 +46,7 @@ HiCR::L0::Topology parseTopology(const nlohmann::json &topologyJson)
 
   // Creating list of compute resources (CPU cores / processing units)
   HiCR::L0::Device::computeResourceList_t computeResources;
-  for (size_t i = 0; i < numCores; i++) computeResources.insert(std::make_shared<HiCR::backend::host::L0::ComputeResource>());
+  for (size_t i = 0; i < numCores; i++) computeResources.push_back(std::make_shared<HiCR::backend::host::L0::ComputeResource>());
 
   // Parsing host RAM size entry
   if (topologyJson.contains("Host RAM Size (Gb)") == false) throw std::runtime_error("the requested instance topoogy does not contain a 'Host RAM Size (Gb)' entry\n");

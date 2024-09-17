@@ -47,12 +47,12 @@ class Device
   /**
    * Common type for a collection of compute resources
    */
-  typedef std::unordered_set<std::shared_ptr<L0::ComputeResource>> computeResourceList_t;
+  typedef std::vector<std::shared_ptr<L0::ComputeResource>> computeResourceList_t;
 
   /**
    * Common definition of a collection of memory spaces
    */
-  typedef std::unordered_set<std::shared_ptr<L0::MemorySpace>> memorySpaceList_t;
+  typedef std::vector<std::shared_ptr<L0::MemorySpace>> memorySpaceList_t;
 
   /**
    * Indicates what type of device is represented in this instance
@@ -80,14 +80,14 @@ class Device
    *
    * \param[in] computeResource The compute resource to add
    */
-  __INLINE__ void addComputeResource(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) { _computeResources.insert(computeResource); }
+  __INLINE__ void addComputeResource(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) { _computeResources.push_back(computeResource); }
 
   /**
    * This function allows the deferred addition (post construction) of memory spaces
    *
    * \param[in] memorySpace The compute resource to add
    */
-  __INLINE__ void addMemorySpace(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace) { _memorySpaces.insert(memorySpace); }
+  __INLINE__ void addMemorySpace(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace) { _memorySpaces.push_back(memorySpace); }
 
   /**
    * Default destructor
@@ -201,6 +201,8 @@ class Device
    * @param[in] input Serialized device information
    */
   virtual void deserializeImpl(const nlohmann::json &input) = 0;
+
+  private:
 
   /**
    * Set of compute resources contained in this device.

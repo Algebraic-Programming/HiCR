@@ -99,7 +99,7 @@ class Device final : public HiCR::backend::host::L0::Device
       auto computeResourceObj = std::make_shared<host::hwloc::L0::ComputeResource>(computeResource);
 
       // Inserting device into the list
-      _computeResources.insert(computeResourceObj);
+      this->addComputeResource(computeResourceObj);
     }
 
     // Iterating over the memory space list
@@ -115,7 +115,7 @@ class Device final : public HiCR::backend::host::L0::Device
       auto memorySpaceObj = std::make_shared<host::hwloc::L0::MemorySpace>(memorySpace);
 
       // Inserting device into the list
-      _memorySpaces.insert(memorySpaceObj);
+      this->addMemorySpace(memorySpaceObj);
     }
   }
 };

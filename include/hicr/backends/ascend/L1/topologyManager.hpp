@@ -55,9 +55,6 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     // Storage for the topology to return
     HiCR::L0::Topology t;
 
-    // Storage for device list
-    std::unordered_set<std::shared_ptr<ascend::L0::Device>> ascendDeviceList;
-
     // Storage for getting the ascend device count
     uint32_t deviceCount = 0;
 
@@ -98,12 +95,11 @@ class TopologyManager final : public HiCR::L1::TopologyManager
       ascendDevice->addMemorySpace(ascendDeviceMemorySpace);
 
       // Adding new device
-      ascendDeviceList.insert(ascendDevice);
       t.addDevice(ascendDevice);
     }
 
     // Setting up communication between the local ascend devices
-    setupInterDeviceCommunication(ascendDeviceList);
+    setupInterDeviceCommunication(t);
 
     // Returning topology
     return t;
@@ -158,14 +154,17 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * Setup inter device communication in the ACL runtime.
    */
-  __INLINE__ void setupInterDeviceCommunication(std::unordered_set<std::shared_ptr<ascend::L0::Device>> &ascendDeviceList)
+  __INLINE__ void setupInterDeviceCommunication(HiCR::L0::Topology &topology)
   {
     int32_t  canAccessPeer = 0;
     aclError err;
 
     // enable communication among each pair of ascend cards
-    for (const auto &src : ascendDeviceList)
-      for (const auto &dst : ascendDeviceList)
+    for (const auto &srcDevice : topology.getDevices())
+      for (const auto &dstDevice : topology.getDevices())
+      {
+        auto src = (ascend::L0::Device *)srcDevice.get();
+        auto dst = (ascend::L0::Device *)dstDevice.get();
         if (src->getId() != dst->getId())
         {
           // verify that the two cards can see each other
@@ -181,6 +180,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
           err = aclrtDeviceEnablePeerAccess(src->getId(), 0);
           if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not enable peer access from device %ld to device %ld. Error %d", dst->getId(), src->getId(), err);
         }
+      }
   }
 
   /**
