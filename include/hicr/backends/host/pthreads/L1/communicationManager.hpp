@@ -70,7 +70,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   }
 
   __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::backend::host::L0::GlobalMemorySlot::tag_t       tag,
-                                                                                 const HiCR::backend::host::L0::GlobalMemorySlot::globalKey_t globalKey)
+                                                                                 const HiCR::backend::host::L0::GlobalMemorySlot::globalKey_t globalKey) override
   {
     if (_shadowMap.find(tag) != _shadowMap.end())
     {
