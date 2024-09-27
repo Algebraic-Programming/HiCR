@@ -48,7 +48,12 @@ namespace L0
 /**
  * Signal to use to suspend thread (might need to be adapted to each system)
  */
-#define HICR_SUSPEND_RESUME_SIGNAL SIGUSR1
+#define HICR_SUSPEND_SIGNAL SIGUSR1
+
+/**
+ * Signal to use to resume thread (might need to be adapted to each system)
+ */
+#define HICR_RESUME_SIGNAL SIGUSR2
 
 class ProcessingUnit;
 
@@ -114,7 +119,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
     : HiCR::L0::ProcessingUnit(computeResource)
   {
-    // Getting up-casted pointer for the MPI instance
+    // Getting up-casted pointer for the processing unit
     auto c = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
@@ -152,7 +157,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     auto computeResource = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(thread->getComputeResource());
 
     // Setting signal to hear for suspend/resume
-    signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
+    signal(HICR_SUSPEND_SIGNAL, ProcessingUnit::catchSuspendSignal);
+    signal(HICR_RESUME_SIGNAL, ProcessingUnit::catchResumeSignal);
 
     // Setting initial thread affinity
     thread->updateAffinity(std::set<int>({computeResource->getProcessorId()}));
@@ -171,38 +177,42 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   }
 
   /**
-   * Handler for the suspend/resume signal, used by HiCR to suspend/resume worker threads
+   * Handler for the suspend signal, used by HiCR to suspend worker threads
    *
    * \param[in] sig Signal detected, set by the operating system upon detecting the signal
    */
-  __INLINE__ static void catchSuspendResumeSignal(int sig)
+  __INLINE__ static void catchSuspendSignal(int sig)
   {
     int      status = 0;
     int      signalSet;
     sigset_t suspendSet;
 
     // Waiting for that signal to arrive
-    status = sigaddset(&suspendSet, HICR_SUSPEND_RESUME_SIGNAL);
-    if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
+    status = sigaddset(&suspendSet, HICR_RESUME_SIGNAL);
+    if (status != 0) HICR_THROW_RUNTIME("Could not set resume signal thread\n");
 
     status = sigwait(&suspendSet, &signalSet);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread\n");
-
-    // Re-set next signal listening before exiting
-    signal(HICR_SUSPEND_RESUME_SIGNAL, ProcessingUnit::catchSuspendResumeSignal);
   }
+
+  /**
+   * Handler for the resume signal, used by HiCR to resume worker threads
+   *
+   * \param[in] sig Signal detected, set by the operating system upon detecting the signal
+   */
+  __INLINE__ static void catchResumeSignal(int sig) {}
 
   __INLINE__ void initializeImpl() override {}
 
   __INLINE__ void suspendImpl() override
   {
-    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
+    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
   }
 
   __INLINE__ void resumeImpl() override
   {
-    auto status = pthread_kill(_pthreadId, HICR_SUSPEND_RESUME_SIGNAL);
+    auto status = pthread_kill(_pthreadId, HICR_RESUME_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 

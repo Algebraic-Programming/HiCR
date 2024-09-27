@@ -117,10 +117,10 @@ TEST(Worker, LifeCycle)
   EXPECT_THROW(w.await(), HiCR::RuntimeException);
 
   // Fail on trying to resume without starting
-  EXPECT_THROW(w.suspend(), HiCR::RuntimeException);
+  EXPECT_FALSE(w.suspend());
 
   // Fail on trying to resume without starting
-  EXPECT_THROW(w.resume(), HiCR::RuntimeException);
+  EXPECT_FALSE(w.resume());
 
   // Fail on trying to re-initialize
   EXPECT_THROW(w.initialize(), HiCR::RuntimeException);

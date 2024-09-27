@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <thread>
 #include <memory>
 #include <vector>
 #include <set>
@@ -70,9 +71,19 @@ class Worker
     running,
 
     /**
-     * The worker has started executing
+     * The worker is in the process of being suspended
+     */
+    suspending,
+
+    /**
+     * The worker has suspended
      */
     suspended,
+
+    /**
+     * The worker is in the process of being resumed
+     */
+    resuming,
 
     /**
      * The worker has been issued for termination (but still running)
@@ -99,7 +110,7 @@ class Worker
     if (_computeManager == NULL) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");
   }
 
-  ~Worker() = default;
+  virtual ~Worker() = default;
 
   /**
    * Function to return a pointer to the currently executing worker from a global context
@@ -120,11 +131,14 @@ class Worker
    */
   __INLINE__ void initialize()
   {
+    // Grabbing state value
+    auto prevState = _state.load();
+
     // Checking we have at least one assigned resource
     if (_processingUnits.empty()) HICR_THROW_LOGIC("Attempting to initialize worker without any assigned resources");
 
     // Checking state
-    if (_state != state_t::uninitialized && _state != state_t::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
+    if (prevState != state_t::uninitialized && prevState != state_t::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
 
     // Initializing all resources
     for (auto &r : _processingUnits) r->initialize();
@@ -140,10 +154,13 @@ class Worker
   {
     if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
 
-    // Checking state
-    if (_state != state_t::ready) HICR_THROW_RUNTIME("Attempting to start worker that is not in the 'initialized' state");
+    // Grabbing state value
+    auto prevState = _state.load();
 
-    // Transitioning state
+    // Checking state
+    if (prevState != state_t::ready) HICR_THROW_RUNTIME("Attempting to start worker that is not in the 'initialized' state");
+
+    // Setting state
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
@@ -158,33 +175,33 @@ class Worker
 
   /**
    * Suspends the execution of the underlying resource(s). The resources are guaranteed to be suspended after this function is called
+   * 
+   * @return True, if the worker has been put to suspended; False, otherwise. The latter is returned if the thread wasn't running in the first place
+   * 
    */
-  __INLINE__ void suspend()
+  __INLINE__ bool suspend()
   {
-    // Checking state
-    if (_state != state_t::running) HICR_THROW_RUNTIME("Attempting to suspend worker that is not in the 'running' state");
+    // Doing an atomic exchange
+    state_t expected  = state_t::running;
+    bool    succeeded = _state.compare_exchange_weak(expected, state_t::suspending);
 
-    // Transitioning state
-    _state = state_t::suspended;
-
-    // Suspending processing units
-    for (auto &p : _processingUnits) p->suspend();
+    // Checking exchange
+    return succeeded;
   }
 
   /**
    * Resumes the execution of the underlying resource(s) after suspension
+   * 
+   * @return True, if the worker has been put to resume; False, otherwise. The latter is returned if the thread wasn't suspended in the first place
    */
-  __INLINE__ void resume()
+  __INLINE__ bool resume()
   {
-    // Checking state
-    if (_state != state_t::suspended)
-      HICR_THROW_RUNTIME("Attempting to resume worker that is not in the 'suspended' state (Expected state: %u, found: %u)", state_t::suspended, _state);
+    // Doing an atomic exchange
+    state_t expected  = state_t::suspended;
+    bool    succeeded = _state.compare_exchange_weak(expected, state_t::resuming);
 
-    // Transitioning state
-    _state = state_t::running;
-
-    // Suspending resources
-    for (auto &p : _processingUnits) p->resume();
+    // Checking exchange
+    return succeeded;
   }
 
   /**
@@ -192,18 +209,11 @@ class Worker
    */
   __INLINE__ void terminate()
   {
-    // Checking state
-    if (_state != state_t::running && _state != state_t::suspended) HICR_THROW_RUNTIME("Attempting to stop worker that is not in a terminate-able state");
-
-    // Getting current state
-    const auto prevState = _state;
-
     // Transitioning state
-    _state = state_t::terminating;
+    auto prevState = _state.exchange(state_t::terminating);
 
-    // If suspended, resume its resources so it can finish
-    if (prevState == state_t::suspended)
-      for (auto &p : _processingUnits) p->resume();
+    // Checking state
+    if (prevState != state_t::running && prevState != state_t::suspending) HICR_THROW_RUNTIME("Attempting to stop worker that is not in a terminate-able state");
   }
 
   /**
@@ -211,7 +221,10 @@ class Worker
    */
   __INLINE__ void await()
   {
-    if (_state != state_t::terminating && _state != state_t::running && _state != state_t::suspended)
+    // Getting state
+    auto prevState = _state.load();
+
+    if (prevState != state_t::terminating && prevState != state_t::running && prevState != state_t::suspended && prevState != state_t::suspending && prevState != state_t::resuming)
       HICR_THROW_RUNTIME("Attempting to wait for a worker that has not yet started or has already terminated");
 
     // Wait for the resources to free up
@@ -235,6 +248,22 @@ class Worker
    */
   __INLINE__ std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> &getProcessingUnits() { return _processingUnits; }
 
+  /**
+   * This function sets the sleep intervals for a worker after it has been suspended, and in between checks for resuming
+   * 
+   * @param[in] suspendIntervalMs The interval (milliseconds) a worker sleeps for before checking for suspension conditions again
+   */
+  __INLINE__ void setSuspendInterval(size_t suspendIntervalMs) { _suspendIntervalMs = suspendIntervalMs; }
+
+  protected:
+
+  /**
+  *  This function runs in in intervals defined by _suspendIntervalMs to check whether the suspension conditions remain true
+  *  
+  *  @return True, if the worker must now resume; False, otherwise.
+  */
+  __INLINE__ virtual bool checkResumeConditions() { return _state == state_t::resuming; }
+
   private:
 
   /**
@@ -243,9 +272,14 @@ class Worker
   const pullFunction_t _pullFunction;
 
   /**
+   * The time to suspend a worker for, before checking suspend conditions again
+   */
+  size_t _suspendIntervalMs = 1000;
+
+  /**
    * Represents the internal state of the worker. Uninitialized upon construction.
    */
-  __volatile__ state_t _state = state_t::uninitialized;
+  std::atomic<state_t> _state = state_t::uninitialized;
 
   /**
    * Group of resources the worker can freely use
@@ -266,7 +300,7 @@ class Worker
     pthread_setspecific(_workerPointerKey, this);
 
     // Start main worker loop (run until terminated)
-    while (_state == state_t::running)
+    while (true)
     {
       // Attempt to get a task by executing the pull function
       auto task = _pullFunction();
@@ -288,14 +322,23 @@ class Worker
         task->run();
       }
 
-      // If worker has been suspended, handle it now
-      if (_state == state_t::suspended) [[unlikely]]
+      // Requesting processing units to terminate as soon as possible
+      if (_state == state_t::suspending) [[unlikely]]
       {
-        // Suspend secondary processing units first
+        // Setting state as suspended
+        _state = state_t::suspended;
+
+        // Suspending other processing units
         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
 
-        // Then suspend current processing unit
-        _processingUnits[0]->suspend();
+        // Putting current processing unit to check every so often
+        while (checkResumeConditions() == false) usleep(_suspendIntervalMs * 1000);
+
+        // Resuming other processing units
+        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->resume();
+
+        // Setting worker as running
+        _state = state_t::running;
       }
 
       // Requesting processing units to terminate as soon as possible
