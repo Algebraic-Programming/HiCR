@@ -155,10 +155,13 @@ class Worker
     if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
 
     // Grabbing state value
-    auto prevState = _state.exchange(state_t::running);
+    auto prevState = _state.load();
 
     // Checking state
     if (prevState != state_t::ready) HICR_THROW_RUNTIME("Attempting to start worker that is not in the 'initialized' state");
+
+    // Setting state
+    _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
     auto executionUnit = _computeManager->createExecutionUnit([this]() { this->mainLoop(); });
