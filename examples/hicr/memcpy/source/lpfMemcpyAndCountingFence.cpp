@@ -110,9 +110,13 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
   }
 
-  // De-registering global slots (collective call)
+  // De-registering global slots
   c.deregisterGlobalMemorySlot(srcSlotGlobal);
   c.deregisterGlobalMemorySlot(dstSlotGlobal);
+
+  // Destroying global slots (collective call)
+  c.destroyGlobalMemorySlot(srcSlotGlobal);
+  c.destroyGlobalMemorySlot(dstSlotGlobal);
 
   // Freeing up local memory
   free(srcBuffer);

@@ -113,6 +113,7 @@ void remoteMemcpy(HiCR::L1::InstanceManager      *instanceManager,
 
   // De-registering global slots (collective call)
   communicationManager->deregisterGlobalMemorySlot(receiverSlot);
+  communicationManager->destroyGlobalMemorySlot(receiverSlot);
 
   // Freeing up local buffer
   memoryManager->freeLocalMemorySlot(bufferSlot);

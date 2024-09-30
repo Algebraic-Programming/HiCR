@@ -79,8 +79,11 @@ int main(int argc, char **argv)
     std::cout << "Received messages (after fence) = " << recvMsgs << std::endl;
   }
 
-  // De-registering global slots (collective call)
+  // De-registering global slots
   c.deregisterGlobalMemorySlot(receiverSlot);
+
+  // Destroying global slots (collective call)
+  c.destroyGlobalMemorySlot(receiverSlot);
 
   m.freeLocalMemorySlot(localSlot);
 
