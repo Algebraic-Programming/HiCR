@@ -68,7 +68,11 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.fence(PRODUCER_COORDINATION_TAG);
   communicationManager.fence(CONSUMER_COORDINATION_TAG);
 
-  for (size_t i = 0; i < producerCount; i++) { communicationManager.deregisterGlobalMemorySlot(globalTokenBuffers[i]); }
+  for (size_t i = 0; i < producerCount; i++)
+  {
+    communicationManager.deregisterGlobalMemorySlot(globalTokenBuffers[i]);
+    communicationManager.destroyGlobalMemorySlot(globalTokenBuffers[i]);
+  }
 
   memoryManager.freeLocalMemorySlot(coordinationBuffer);
 }

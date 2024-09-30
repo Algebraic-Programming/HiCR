@@ -68,6 +68,10 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffer);
   communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
 
+  communicationManager.destroyGlobalMemorySlot(tokenBuffer);
+  communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffer);
+  communicationManager.destroyGlobalMemorySlot(consumerCoordinationBuffer);
+
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(coordinationBuffer);
 }

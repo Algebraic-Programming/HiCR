@@ -123,6 +123,13 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
     communicationManager.deregisterGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
     communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
     communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForPayloads[i]);
+
+    communicationManager.destroyGlobalMemorySlot(globalBuffersForCounts[i]);
+    communicationManager.destroyGlobalMemorySlot(globalBuffersForPayloads[i]);
+    communicationManager.destroyGlobalMemorySlot(coordinationBuffersForCountsAsSlots[i]);
+    communicationManager.destroyGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
+    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
+    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForPayloads[i]);
   }
 
   memoryManager.freeLocalMemorySlot(coordinationBufferForCounts);

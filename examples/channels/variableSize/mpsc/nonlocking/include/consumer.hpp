@@ -97,7 +97,7 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
                                                                               producerCoordinationBuffersForPayloads,
                                                                               /* E.g. if channel capacity is 10, and a payload datatype is 8 bytes,
                                                                         allocate a buffer of 80 bytes. This is just an estimate which may or may not
-                                                                        be relevant in real applications   
+                                                                        be relevant in real applications
                                                                        */
                                                                               payloadSize * channelCapacity,
                                                                               payloadSize,
@@ -134,6 +134,14 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
     communicationManager.deregisterGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
     communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
     communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForPayloads[i]);
+
+    communicationManager.destroyGlobalMemorySlot(globalBuffersForCounts[i]);
+    communicationManager.destroyGlobalMemorySlot(globalBuffersForPayloads[i]);
+    communicationManager.destroyGlobalMemorySlot(coordinationBuffersForCountsAsSlots[i]);
+    communicationManager.destroyGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
+    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
+    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForPayloads[i]);
+
     memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForCounts[i]);
     memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForPayloads[i]);
     memoryManager.freeLocalMemorySlot(localBuffersForCounts[i].second);

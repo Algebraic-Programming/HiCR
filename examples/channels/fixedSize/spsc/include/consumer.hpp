@@ -58,10 +58,15 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager.fence(CHANNEL_TAG);
 
-  // De-registering global slots (collective calls)
+  // De-registering global slots
   communicationManager.deregisterGlobalMemorySlot(globalTokenBufferSlot);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffer);
   communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
+
+  // Destroying global slots (collective calls)
+  communicationManager.destroyGlobalMemorySlot(globalTokenBufferSlot);
+  communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffer);
+  communicationManager.destroyGlobalMemorySlot(consumerCoordinationBuffer);
 
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(tokenBufferSlot);

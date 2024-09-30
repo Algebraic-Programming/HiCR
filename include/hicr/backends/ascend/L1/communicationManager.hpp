@@ -88,12 +88,15 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     memcpyInternal(destination, dst_offset, source, src_offset, size, stream);
   }
 
-  private:
+  /**
+   * Deletes a global memory slot from the backend.
+   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   *
+   * \param[in] memorySlot Memory slot to destroy.
+   */
+  __INLINE__ void destroyGlobalMemorySlot(const std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 
-  __INLINE__ void deregisterGlobalMemorySlotImpl(const std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
-  {
-    HICR_THROW_RUNTIME("Not yet implemented for this backend");
-  }
+  private:
 
   __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {

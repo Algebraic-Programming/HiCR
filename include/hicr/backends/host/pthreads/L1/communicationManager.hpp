@@ -82,6 +82,17 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     else { return nullptr; }
   }
 
+  /**
+   * Deletes a global memory slot from the backend.
+   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   *
+   * \param[in] memorySlot Memory slot to destroy.
+   */
+  __INLINE__ void destroyGlobalMemorySlot(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  {
+    // Nothing to do here
+  }
+
   private:
 
   /**
@@ -93,11 +104,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * A mutex to make sure threads do not bother each other during certain operations
    */
   pthread_mutex_t _mutex;
-
-  __INLINE__ void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
-  {
-    // Nothing to do here
-  }
 
   __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {

@@ -114,7 +114,9 @@ class CommunicationManager
   }
 
   /**
-   * De-registers a previously registered global memory slot
+   * De-registers a previously registered global memory slot. This can be a local operation,
+   * and is a CommunicationManager internal operation. The slot is not destroyed, it can be used,
+   * but can no longer be accessed via #getGlobalMemorySlot.
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
@@ -139,10 +141,15 @@ class CommunicationManager
 
     // Releasing lock
     this->unlock();
-
-    // Calling internal deregistration implementation
-    deregisterGlobalMemorySlotImpl(memorySlot);
   }
+
+  /**
+   * Deletes a global memory slot from the backend. This operation is collective.
+   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   *
+   * \param[in] memorySlot Memory slot to destroy.
+   */
+  virtual void destroyGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
 
   /**
    * Queries the backend to update the internal state of the memory slot.
@@ -439,13 +446,6 @@ class CommunicationManager
     // Releasing lock
     this->unlock();
   }
-
-  /**
-   * Backend-internal implementation of the deregisterGlobalMemorySlotImpl function
-   *
-   * \param[in] memorySlot Memory slot to deregister.
-   */
-  virtual void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the getGlobalMemorySlot function

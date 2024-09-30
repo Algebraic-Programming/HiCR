@@ -234,6 +234,24 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
   }
 
+  /**
+   * Deletes a global memory slot from the backend. This operation is collective.
+   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   *
+   * \param[in] memorySlotPtr Memory slot to destroy.
+   */
+  __INLINE__ void destroyGlobalMemorySlot(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
+  {
+    // Getting up-casted pointer for the execution unit
+    auto memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlotPtr);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
+
+    // Deregistering from LPF
+    lpf_deregister(_lpf, memorySlot->getLPFSlot());
+  }
+
   __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
                              const size_t                                dst_offset,
                              std::shared_ptr<HiCR::L0::GlobalMemorySlot> source,
@@ -341,18 +359,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     CHECK(lpf_counting_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, lpfSlot, expectedSent, expectedRcvd));
     memSlot->setMessagesRecv(memSlot->getMessagesRecv() + expectedRcvd);
     memSlot->setMessagesSent(memSlot->getMessagesSent() + expectedSent);
-  }
-
-  __INLINE__ void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
-  {
-    // Getting up-casted pointer for the execution unit
-    auto memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlotPtr);
-
-    // Checking whether the execution unit passed is compatible with this backend
-    if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
-
-    // Deregistering from LPF
-    lpf_deregister(_lpf, memorySlot->getLPFSlot());
   }
 
   /**
