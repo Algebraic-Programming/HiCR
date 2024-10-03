@@ -46,7 +46,8 @@ hicrBuildDep = declare_dependency(
 
 if meson.is_subproject() or get_option('buildTests')
   gtest_dep = dependency('gtest', main: true, required: true)
-  
+  gmock_dep = dependency('gmock', main: true, required: true)
+
   hicrTestCppFlags = [
   ]
   
@@ -69,6 +70,6 @@ if meson.is_subproject() or get_option('buildTests')
   
   hicrTestDep = declare_dependency(
       compile_args: hicrTestCppFlags,
-      dependencies:  gtest_dep
+      dependencies: [gtest_dep, gmock_dep]
       )
 endif
