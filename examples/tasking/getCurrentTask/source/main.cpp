@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&runtime]() {
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&runtime](void *arg) {
     // Printing associated task label
     const auto taskrLabel = runtime.getCurrentTask()->getLabel();
     printf("Current Task   label:    %lu\n", taskrLabel);

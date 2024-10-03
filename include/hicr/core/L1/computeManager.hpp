@@ -55,9 +55,10 @@ class ComputeManager
    * The instantiation of its internal memory structures is delayed until explicit initialization to reduce memory usage when, for example, scheduling many tasks that do not need to execute at the same time.
    *
    * \param[in] executionUnit The replicable state-less execution unit to instantiate into an execution state
+   * \param[in] argument Argument (closure) to pass to the execution unit to make this execution state unique
    * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
    */
-  virtual std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) const = 0;
+  virtual std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr) const = 0;
 };
 
 } // namespace L1

@@ -23,8 +23,8 @@ uint64_t fibonacci(const uint64_t x)
 
   uint64_t result1 = 0;
   uint64_t result2 = 0;
-  auto     fibFc1  = _computeManager->createExecutionUnit([&]() { result1 = fibonacci(x - 1); });
-  auto     fibFc2  = _computeManager->createExecutionUnit([&]() { result2 = fibonacci(x - 2); });
+  auto     fibFc1  = _computeManager->createExecutionUnit([&](void *arg) { result1 = fibonacci(x - 1); });
+  auto     fibFc2  = _computeManager->createExecutionUnit([&](void *arg) { result2 = fibonacci(x - 2); });
 
   uint64_t taskId1 = _taskCounter.fetch_add(1);
   uint64_t taskId2 = _taskCounter.fetch_add(1);
@@ -63,7 +63,7 @@ uint64_t fibonacciDriver(const uint64_t initialValue, HiCR::backend::host::L1::C
   uint64_t result = 0;
 
   // Creating task functions
-  auto initialFc = computeManager->createExecutionUnit([&]() { result = fibonacci(initialValue); });
+  auto initialFc = computeManager->createExecutionUnit([&](void *arg) { result = fibonacci(initialValue); });
 
   // Now creating tasks and their dependency graph
   auto initialTask = new Task(_taskCounter.fetch_add(1), initialFc);

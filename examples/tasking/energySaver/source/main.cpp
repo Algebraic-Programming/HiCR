@@ -67,10 +67,10 @@ int main(int argc, char **argv)
   Runtime runtime;
 
   // Creating task work execution unit
-  auto workExecutionUnit = computeManager.createExecutionUnit([&iterations]() { workFc(iterations); });
+  auto workExecutionUnit = computeManager.createExecutionUnit([&iterations](void *arg) { workFc(iterations); });
 
   // Creating task wait execution unit
-  auto waitExecutionUnit = computeManager.createExecutionUnit([&runtime, &secondsDelay]() { waitFc(&runtime, secondsDelay); });
+  auto waitExecutionUnit = computeManager.createExecutionUnit([&runtime, &secondsDelay](void *arg) { waitFc(&runtime, secondsDelay); });
 
   // Create processing units from the detected compute resource list and giving them to runtime
   for (auto &resource : computeResources)

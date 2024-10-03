@@ -24,7 +24,7 @@ void mutex(HiCR::backend::host::L1::ComputeManager *computeManager, const HiCR::
   HiCR::tasking::Mutex m;
 
   // Creating task function
-  auto taskfc = computeManager->createExecutionUnit([&]() {
+  auto taskfc = computeManager->createExecutionUnit([&](void *arg) {
     m.lock();
     value++;
     m.unlock();
