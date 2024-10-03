@@ -164,10 +164,10 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = _computeManager->createExecutionUnit([this]() { this->mainLoop(); });
+    auto executionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([](void *worker) { ((HiCR::tasking::Worker *)worker)->mainLoop(); });
 
     // Creating worker's execution state
-    auto executionState = _computeManager->createExecutionState(executionUnit);
+    auto executionState = _computeManager->createExecutionState(executionUnit, this);
 
     // Launching worker in the lead resource (first one to be added)
     _processingUnits[0]->start(std::move(executionState));
@@ -312,7 +312,7 @@ class Worker
         if (task->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
         {
           // First, create new execution state for the processing unit
-          auto executionState = _computeManager->createExecutionState(task->getExecutionUnit());
+          auto executionState = _computeManager->createExecutionState(task->getExecutionUnit(), task);
 
           // Then initialize the task with the new execution state
           task->initialize(std::move(executionState));

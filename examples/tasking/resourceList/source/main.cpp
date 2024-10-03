@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations]() { work(iterations); });
+  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations](void *arg) { work(iterations); });
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());

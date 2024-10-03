@@ -61,10 +61,10 @@ class ComputeManager : public HiCR::L1::ComputeManager
     return std::make_shared<host::L0::ExecutionUnit>(executionUnit);
   }
 
-  __INLINE__ std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) const override
+  __INLINE__ std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr) const override
   {
     // Creating and returning new execution state
-    return std::make_unique<host::L0::ExecutionState>(executionUnit);
+    return std::make_unique<host::L0::ExecutionState>(executionUnit, argument);
   }
 };
 

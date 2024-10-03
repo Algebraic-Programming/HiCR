@@ -29,7 +29,7 @@ int main(int argc, char **argv)
   HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
 
   // Creating execution unit
-  auto executionUnit = computeManager.createExecutionUnit([]() { printf("Hello, World!\n"); });
+  auto executionUnit = computeManager.createExecutionUnit([](void *arg) { printf("Hello, World!\n"); });
 
   // Asking the processing unit to create a new execution state from the given execution unit (stateless)
   auto executionState = computeManager.createExecutionState(executionUnit);

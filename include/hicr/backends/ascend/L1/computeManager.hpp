@@ -62,11 +62,12 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   /**
    * Creates an execution state using the device context information and the exection unit to run on the ascend
    *
-   * \param executionUnit execution Unit to launch on the ascend
+   * \param[in] executionUnit execution Unit to launch on the ascend
+   * \param[in] argument argument (not required by ascend)
    *
    * \return return a unique pointer to the newly created Execution State
    */
-  __INLINE__ std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) const override
+  __INLINE__ std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr) const override
   {
     return std::make_unique<ascend::L0::ExecutionState>(executionUnit);
   }

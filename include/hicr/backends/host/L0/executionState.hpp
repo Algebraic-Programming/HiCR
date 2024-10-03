@@ -41,8 +41,9 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   /**
    * Creates a new suspendable execution state (coroutine) for execution based on a sequential execution unit
    * \param[in] executionUnit The replicable stateless execution unit to instantiate
+   * \param[in] argument Argument (closure) to pass to the function to be ran
    */
-  __INLINE__ ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit)
+  __INLINE__ ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr)
     : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
@@ -55,7 +56,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     const auto &fc = e->getFunction();
 
     // Starting coroutine containing the function
-    _coroutine.start(fc);
+    _coroutine.start(fc, argument);
   }
 
   protected:

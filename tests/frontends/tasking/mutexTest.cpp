@@ -53,7 +53,7 @@ TEST(Mutex, LifeTime)
   callbackMap.setCallback(HiCR::tasking::Task::callback_t::onTaskSync, [&](HiCR::tasking::Task *task) { syncedTasks.insert(task); });
 
   // Creating task function
-  auto taskBFc = [&m]() { m.lock(); };
+  auto taskBFc = [&m](void *arg) { m.lock(); };
 
   // Instantiating Pthread-based host (CPU) compute manager
   HiCR::backend::host::pthreads::L1::ComputeManager c;

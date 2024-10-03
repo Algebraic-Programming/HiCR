@@ -30,7 +30,7 @@ void conditionVariable(HiCR::backend::host::L1::ComputeManager *computeManager, 
   HiCR::tasking::ConditionVariable cv;
 
   // Creating task functions
-  auto thread1Fc = computeManager->createExecutionUnit([&]() {
+  auto thread1Fc = computeManager->createExecutionUnit([&](void *arg) {
     // Using lock to update the value
     mutex.lock();
     printf("Thread 1: I go first and set value to 1\n");
@@ -47,7 +47,7 @@ void conditionVariable(HiCR::backend::host::L1::ComputeManager *computeManager, 
     printf("Thread 1: The condition (value == 2) is satisfied now\n");
   });
 
-  auto thread2Fc = computeManager->createExecutionUnit([&]() {
+  auto thread2Fc = computeManager->createExecutionUnit([&](void *arg) {
     // Waiting for the other thread to set the first value
     printf("Thread 2: First, I'll wait for the value to become 1\n");
     cv.wait(mutex, [&]() { return value == 1; });
