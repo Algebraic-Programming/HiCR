@@ -30,10 +30,7 @@ namespace HiCR
 namespace tasking
 {
 
-/**
- * Key identifier for thread-local identification of currently running task
- */
-extern pthread_key_t _taskPointerKey;
+class Worker;
 
 /**
  * This class defines the basic execution unit managed by TaskR.
@@ -92,13 +89,6 @@ class Task
   __INLINE__ Task(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskCallbackMap_t *callbackMap = NULL)
     : _executionUnit(executionUnit),
       _callbackMap(callbackMap){};
-
-  /**
-   * Function to return a pointer to the currently executing task from a global context
-   *
-   * @return A pointer to the current HiCR task, NULL if this function is called outside the context of a task run() function
-   */
-  __INLINE__ static Task *getCurrentTask() { return (Task *)pthread_getspecific(_taskPointerKey); }
 
   /**
    * Sets the task's callback map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
@@ -170,13 +160,8 @@ class Task
    */
   __INLINE__ void run()
   {
-    if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
-
     if (getState() != HiCR::L0::ExecutionState::state_t::initialized && getState() != HiCR::L0::ExecutionState::state_t::suspended)
       HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", getState());
-
-    // Also map task pointer to the running thread it into static storage for global access.
-    pthread_setspecific(_taskPointerKey, this);
 
     // Triggering execution callback, if defined
     if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onTaskExecute);
@@ -199,9 +184,6 @@ class Task
     // is called from outside the context of a task to allow the upper layer to free its memory upon finishing
     if (state == HiCR::L0::ExecutionState::state_t::finished)
       if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onTaskFinish);
-
-    // Relenting current task pointer
-    pthread_setspecific(_taskPointerKey, NULL);
   }
 
   /**
@@ -210,9 +192,6 @@ class Task
   __INLINE__ void suspend()
   {
     if (getState() != HiCR::L0::ExecutionState::state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", getState());
-
-    // Since this function is public, it can be called from anywhere in the code. However, we need to make sure on rutime that the context belongs to the task itself.
-    if (getCurrentTask() != this) HICR_THROW_RUNTIME("Attempting to yield a task from a context that is not its own.\n");
 
     // Yielding execution back to worker
     _executionState->suspend();
@@ -234,6 +213,7 @@ class Task
    * Internal execution state of the task. Will change based on runtime scheduling callbacks
    */
   std::unique_ptr<HiCR::L0::ExecutionState> _executionState = NULL;
+
 }; // class Task
 
 } // namespace tasking

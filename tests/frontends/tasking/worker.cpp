@@ -69,9 +69,6 @@ TEST(Task, SetterAndGetters)
 
 TEST(Worker, LifeCycle)
 {
-  // Initializing HiCR tasking
-  HiCR::tasking::initialize();
-
   // Instantiating Pthread-based host (CPU) compute manager
   HiCR::backend::host::pthreads::L1::ComputeManager c;
 
@@ -127,7 +124,4 @@ TEST(Worker, LifeCycle)
 
   // Worker state should be ready now
   EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::ready);
-
-  // Finalizing HiCR tasking
-  HiCR::tasking::finalize();
 }

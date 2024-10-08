@@ -22,11 +22,6 @@ namespace tasking
 {
 
 /**
- * Flag to indicate whether the tasking subsystem was initialized
- */
-extern bool _isInitialized;
-
-/**
 * Type definition for a number that can be used as universally unique identifier
 */
 typedef uint64_t uniqueId_t;

@@ -39,7 +39,7 @@ class Mutex
    * \param[in] task The task to check ownership for
    * @return True, if the task owns the lock; false, otherwise.
   */
-  __INLINE__ bool ownsLock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask()) { return _ownerTask == task; }
+  __INLINE__ bool ownsLock(HiCR::tasking::Task *task) { return _ownerTask == task; }
 
   /**
    * Tries to obtain the lock and returns immediately if it fails.
@@ -47,7 +47,7 @@ class Mutex
    * \param[in] task The task acquiring the lock
    * @return True, if it succeeded in obtaining the lock; false, otherwise.
   */
-  __INLINE__ bool trylock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask())
+  __INLINE__ bool trylock(HiCR::tasking::Task *task)
   {
     _mutex.lock();
     bool success = lockNotBlockingImpl(task);
@@ -63,7 +63,7 @@ class Mutex
    * 
    * \param[in] task The task acquiring the lock
   */
-  __INLINE__ void lock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask()) { lockBlockingImpl(task); }
+  __INLINE__ void lock(HiCR::tasking::Task *task) { lockBlockingImpl(task); }
 
   /**
    * Releases a lock currently owned by the currently running task.
@@ -71,7 +71,7 @@ class Mutex
    * \param[in] task The task releasing the lock
    * \note This function will produce an exception if trying to unlock a mutex not owned by the calling task. 
   */
-  __INLINE__ void unlock(HiCR::tasking::Task *task = HiCR::tasking::Task::getCurrentTask())
+  __INLINE__ void unlock(HiCR::tasking::Task *task)
   {
     if (ownsLock(task) == false) HICR_THROW_LOGIC("Trying to unlock a mutex that doesn't belong to this task");
 

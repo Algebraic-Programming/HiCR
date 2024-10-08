@@ -16,15 +16,15 @@ uint64_t fibonacciTaskCount[] = {1,    1,    3,    5,     9,     15,    25,    4
                                  3193, 5167, 8361, 13529, 21891, 35421, 57313, 92735, 150049, 242785, 392835, 635621, 1028457, 1664079, 2692537};
 
 // Fibonacci without memoization to stress the tasking runtime
-uint64_t fibonacci(const uint64_t x)
+uint64_t fibonacci(Task *currentTask, const uint64_t x)
 {
   if (x == 0) return 0;
   if (x == 1) return 1;
 
   uint64_t result1 = 0;
   uint64_t result2 = 0;
-  auto     fibFc1  = _computeManager->createExecutionUnit([&](void *arg) { result1 = fibonacci(x - 1); });
-  auto     fibFc2  = _computeManager->createExecutionUnit([&](void *arg) { result2 = fibonacci(x - 2); });
+  auto     fibFc1  = _computeManager->createExecutionUnit([&](void *arg) { result1 = fibonacci((Task *)arg, x - 1); });
+  auto     fibFc2  = _computeManager->createExecutionUnit([&](void *arg) { result2 = fibonacci((Task *)arg, x - 2); });
 
   uint64_t taskId1 = _taskCounter.fetch_add(1);
   uint64_t taskId2 = _taskCounter.fetch_add(1);
@@ -35,10 +35,10 @@ uint64_t fibonacci(const uint64_t x)
   _runtime->addTask(task1);
   _runtime->addTask(task2);
 
-  _runtime->getCurrentTask()->addTaskDependency(taskId1);
-  _runtime->getCurrentTask()->addTaskDependency(taskId2);
+  currentTask->addTaskDependency(taskId1);
+  currentTask->addTaskDependency(taskId2);
 
-  _runtime->getCurrentTask()->suspend();
+  currentTask->suspend();
 
   return result1 + result2;
 }
@@ -63,7 +63,7 @@ uint64_t fibonacciDriver(const uint64_t initialValue, HiCR::backend::host::L1::C
   uint64_t result = 0;
 
   // Creating task functions
-  auto initialFc = computeManager->createExecutionUnit([&](void *arg) { result = fibonacci(initialValue); });
+  auto initialFc = computeManager->createExecutionUnit([&](void *arg) { result = fibonacci((Task *)arg, initialValue); });
 
   // Now creating tasks and their dependency graph
   auto initialTask = new Task(_taskCounter.fetch_add(1), initialFc);

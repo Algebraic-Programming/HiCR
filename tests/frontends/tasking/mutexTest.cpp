@@ -32,9 +32,6 @@ TEST(Mutex, LifeTime)
   // Creating mutex
   HiCR::tasking::Mutex m;
 
-  // Initializing HiCR tasking
-  HiCR::tasking::initialize();
-
   // Creating HWloc topology object
   hwloc_topology_t topology;
 
@@ -53,7 +50,7 @@ TEST(Mutex, LifeTime)
   callbackMap.setCallback(HiCR::tasking::Task::callback_t::onTaskSync, [&](HiCR::tasking::Task *task) { syncedTasks.insert(task); });
 
   // Creating task function
-  auto taskBFc = [&m](void *arg) { m.lock(); };
+  auto taskBFc = [&m](void *arg) { m.lock((HiCR::tasking::Task *)arg); };
 
   // Instantiating Pthread-based host (CPU) compute manager
   HiCR::backend::host::pthreads::L1::ComputeManager c;
@@ -87,7 +84,7 @@ TEST(Mutex, LifeTime)
   processingUnit->initialize();
 
   // Creating execution state
-  auto executionState = c.createExecutionState(u);
+  auto executionState = c.createExecutionState(u, &taskB);
 
   // Then initialize the task with the new execution state
   taskB.initialize(std::move(executionState));

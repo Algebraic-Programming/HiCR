@@ -14,9 +14,9 @@ void abcTasks(HiCR::backend::host::L1::ComputeManager *computeManager, const HiC
   for (const auto &computeResource : computeResources) runtime.addProcessingUnit(computeManager->createProcessingUnit(computeResource));
 
   // Creating task functions
-  auto taskAfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task A %lu\n", runtime.getCurrentTask()->getLabel()); });
-  auto taskBfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task B %lu\n", runtime.getCurrentTask()->getLabel()); });
-  auto taskCfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task C %lu\n", runtime.getCurrentTask()->getLabel()); });
+  auto taskAfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task A %lu\n", ((Task *)arg)->getLabel()); });
+  auto taskBfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task B %lu\n", ((Task *)arg)->getLabel()); });
+  auto taskCfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task C %lu\n", ((Task *)arg)->getLabel()); });
 
   // Now creating tasks and their dependency graph
   for (size_t i = 0; i < ITERATIONS; i++)

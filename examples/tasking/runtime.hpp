@@ -60,12 +60,6 @@ class Runtime
   std::mutex _activeWorkerQueueLock;
 
   /**
-   * User-defined maximum active worker count. Required for the max active workers mechanism
-   * A zero value indicates that there is no limitation to the maximum active worker count.
-   */
-  size_t _maximumActiveWorkers = 0;
-
-  /**
    * Keeps track of the currently active worker count. Required for the max active workers mechanism
    */
   ssize_t _activeWorkerCount;
@@ -114,65 +108,6 @@ class Runtime
     return true;
   }
 
-  /**
-   * This function implements the auto-sleep mechanism that limits the number of active workers based on a user configuration
-   * It will put any calling worker to sleep if the number of active workers exceed the maximum.
-   * If the number of active workers is smaller than the maximum, it will try to 'wake up' other suspended workers, if any,
-   * until the maximum is reached again.
-   */
-  __INLINE__ void checkMaximumActiveWorkerCount()
-  {
-    // Getting a pointer to the currently executing worker
-    auto worker = HiCR::tasking::Worker::getCurrentWorker();
-
-    // Try to get the active worker queue lock, otherwise keep going
-    if (_activeWorkerQueueLock.try_lock())
-    {
-      // If the number of workers exceeds that of maximum active workers,
-      // suspend current worker
-      if (_maximumActiveWorkers > 0 && _activeWorkerCount > (ssize_t)_maximumActiveWorkers)
-      {
-        // Adding worker to the queue
-        _suspendedWorkerQueue->push(worker);
-
-        // Reducing active worker count
-        _activeWorkerCount--;
-
-        // Releasing lock, this is necessary here because the worker is going
-        // into sleep
-        _activeWorkerQueueLock.unlock();
-
-        // Suspending worker
-        worker->suspend();
-
-        // Returning now, because we've already released the lock and shouldn't
-        // do anything else without it
-        return;
-      }
-
-      // If the new maximum is higher than the number of active workers, we need
-      // to re-awaken some of them
-      while ((_maximumActiveWorkers == 0 || (ssize_t)_maximumActiveWorkers > _activeWorkerCount) && _suspendedWorkerQueue->wasEmpty() == false)
-      {
-        // Getting the worker from the queue of suspended workers
-        auto w = _suspendedWorkerQueue->pop();
-
-        // Do the following if a worker was obtained
-        if (w != NULL)
-        {
-          // Increase the active worker count
-          _activeWorkerCount++;
-
-          // Resuming worker
-          if (w != NULL) w->resume();
-        }
-      }
-
-      // Releasing lock
-      _activeWorkerQueueLock.unlock();
-    }
-  }
-
   public:
 
   /**
@@ -210,19 +145,6 @@ class Runtime
    * \param[in] pu The processing unit to add
    */
   __INLINE__ void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
-
-  /**
-   * Sets the maximum active worker count. If the current number of active workers exceeds this maximu, TaskR will put as many
-   * workers to sleep as necessary to get the active count as close as this value as possible. If this maximum is later increased,
-   * then any suspended workers will be awaken by active workers.
-   *
-   * \param[in] max The desired number of maximum workers. A non-positive value means that there is no limit.
-   */
-  __INLINE__ void setMaximumActiveWorkers(const size_t max)
-  {
-    // Storing new maximum active worker count
-    _maximumActiveWorkers = max;
-  }
 
   /**
    * Adds a task to the TaskR runtime for execution. This can be called at any point, before or during the execution of TaskR.
@@ -266,13 +188,13 @@ class Runtime
    *
    * \return A pointer to a HiCR task to execute. NULL if there are no pending tasks.
    */
-  __INLINE__ HiCR::tasking::Task *checkWaitingTasks()
+  __INLINE__ HiCR::tasking::Task *checkWaitingTasks(size_t workerId)
   {
     // If all tasks finished, then terminate execution immediately
     if (_taskCount == 0)
     {
       // Getting a pointer to the currently executing worker
-      auto worker = HiCR::tasking::Worker::getCurrentWorker();
+      auto worker = _workers[workerId];
 
       // Terminating worker.
       worker->terminate();
@@ -280,9 +202,6 @@ class Runtime
       // Returning a NULL function
       return NULL;
     }
-
-    // If maximum active workers is defined, then check if the threshold is exceeded
-    checkMaximumActiveWorkerCount();
 
     // Poping next task from the lock-free queue
     auto task = _waitingTaskQueue->pop();
@@ -320,17 +239,15 @@ class Runtime
    */
   __INLINE__ void run(HiCR::L1::ComputeManager *computeManager)
   {
-    // Initializing HiCR tasking
-    HiCR::tasking::initialize();
-
     // Creating event map ands events
     _callbackMap->setCallback(HiCR::tasking::Task::callback_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish((Task *)task); });
 
     // Creating one worker per processung unit in the list
+    size_t workerId = 0;
     for (auto &pu : _processingUnits)
     {
       // Creating new worker
-      auto worker = new HiCR::tasking::Worker(computeManager, [this]() { return checkWaitingTasks(); });
+      auto worker = new HiCR::tasking::Worker(computeManager, [this, workerId]() { return checkWaitingTasks(workerId); });
 
       // Assigning resource to the thread
       worker->addProcessingUnit(std::move(pu));
@@ -340,6 +257,9 @@ class Runtime
 
       // Initializing worker
       worker->initialize();
+
+      // Increasing worker Id
+      workerId++;
     }
 
     // Initializing active worker count
@@ -354,16 +274,6 @@ class Runtime
     // Clearing created objects
     for (auto &w : _workers) delete w;
     _workers.clear();
-
-    // Finalizing HiCR tasking
-    HiCR::tasking::finalize();
   }
-
-  /**
-   * Returns the currently executing TaskR task
-   *
-   * \return A pointer to the currently executing TaskR task
-   */
-  __INLINE__ Task *getCurrentTask() { return (Task *)HiCR::tasking::Task::getCurrentTask(); }
 
 }; // class Runtime

@@ -31,37 +31,43 @@ void conditionVariable(HiCR::backend::host::L1::ComputeManager *computeManager, 
 
   // Creating task functions
   auto thread1Fc = computeManager->createExecutionUnit([&](void *arg) {
+    // Getting pointer to current task
+    auto task = (HiCR::tasking::Task *)arg;
+
     // Using lock to update the value
-    mutex.lock();
+    mutex.lock(task);
     printf("Thread 1: I go first and set value to 1\n");
     value += 1;
-    mutex.unlock();
+    mutex.unlock(task);
 
     // Notifiying the other thread
     printf("Thread 1: Now I notify anybody waiting\n");
-    cv.notifyOne();
+    cv.notifyOne(task);
 
     // Waiting for the other thread's update now
     printf("Thread 1: I wait for the value to turn 2\n");
-    cv.wait(mutex, [&]() { return value == 2; });
+    cv.wait(task, mutex, [&]() { return value == 2; });
     printf("Thread 1: The condition (value == 2) is satisfied now\n");
   });
 
   auto thread2Fc = computeManager->createExecutionUnit([&](void *arg) {
+    // Getting pointer to current task
+    auto task = (HiCR::tasking::Task *)arg;
+
     // Waiting for the other thread to set the first value
     printf("Thread 2: First, I'll wait for the value to become 1\n");
-    cv.wait(mutex, [&]() { return value == 1; });
+    cv.wait(task, mutex, [&]() { return value == 1; });
     printf("Thread 2: The condition (value == 1) is satisfied now\n");
 
     // Now updating the value ourselves
     printf("Thread 2: Now I update the value to 2\n");
-    mutex.lock();
+    mutex.lock(task);
     value += 1;
-    mutex.unlock();
+    mutex.unlock(task);
 
     // Notifying the other thread
     printf("Thread 2: Notifying anybody interested\n");
-    cv.notifyOne();
+    cv.notifyOne(task);
   });
 
   runtime.addTask(new Task(0, thread1Fc));

@@ -15,13 +15,11 @@ frontendLinkArgs = [
 ]
 
 frontendSrcFiles = [
-    'tasking.cpp'
 ]
 
 HiCRFrontendDependencies += declare_dependency(
     dependencies: frontendDependencies,
     compile_args : frontendCppArgs,
     link_args : frontendLinkArgs,
-    include_directories : frontendIncludes,
-    sources: frontendSrcFiles
+    include_directories : frontendIncludes
 )    

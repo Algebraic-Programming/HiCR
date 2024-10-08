@@ -41,33 +41,32 @@ class ConditionVariable
    *    - When resumed, the task will repeat step (1)
    * 
    * \note The suspension of the task will not block the running thread.
+   * \param[in] currentTask A pointer to the currently running task
    * \param[in] conditionMutex The mutual exclusion mechanism to use to prevent two tasks from evaluating the condition predicate simultaneously
    * \param[in] conditionPredicate The function that returns a boolean true if the condition is satisfied; false, if not.
   */
-  void wait(tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate)
+  void wait(HiCR::tasking::Task *currentTask, tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate)
   {
-    auto currentTask = HiCR::tasking::Task::getCurrentTask();
-
     // Checking on the condition
-    conditionMutex.lock();
+    conditionMutex.lock(currentTask);
     bool keepWaiting = conditionPredicate() == false;
-    conditionMutex.unlock();
+    conditionMutex.unlock(currentTask);
 
     // If the condition is not satisfied, suspend until we're notified and the condition is satisfied
     while (keepWaiting == true)
     {
       // Insert oneself in the waiting task list
-      _mutex.lock();
+      _mutex.lock(currentTask);
       _waitingTasks.push(currentTask);
-      _mutex.unlock();
+      _mutex.unlock(currentTask);
 
       // Suspending task now
       currentTask->suspend();
 
       // After being notified, check on the condition again
-      conditionMutex.lock();
+      conditionMutex.lock(currentTask);
       keepWaiting = conditionPredicate() == false;
-      conditionMutex.unlock();
+      conditionMutex.unlock(currentTask);
     }
   }
 
@@ -80,20 +79,19 @@ class ConditionVariable
    *       - If wat time exceeds timeout, return immediately
    * 
    * \note The suspension of the task will not block the running thread.
+   * \param[in] currentTask A pointer to the currently running task
    * \param[in] conditionMutex The mutual exclusion mechanism to use to prevent two tasks from evaluating the condition predicate simultaneously
    * \param[in] conditionPredicate The function that returns a boolean true if the condition is satisfied; false, if not.
    * \param[in] timeout The amount of microseconds provided as timeout 
    * 
    * \return True, if the task is returning before timeout; false, if otherwise.
   */
-  bool waitFor(tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate, size_t timeout)
+  bool waitFor(HiCR::tasking::Task *currentTask, tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate, size_t timeout)
   {
-    auto currentTask = HiCR::tasking::Task::getCurrentTask();
-
     // Checking on the condition
-    conditionMutex.lock();
+    conditionMutex.lock(currentTask);
     bool keepWaiting = conditionPredicate() == false;
-    conditionMutex.unlock();
+    conditionMutex.unlock(currentTask);
 
     // If predicate is satisfied, return immediately
     if (keepWaiting == false) return true;
@@ -105,9 +103,9 @@ class ConditionVariable
     while (keepWaiting == true)
     {
       // Insert oneself in the waiting task list
-      _mutex.lock();
+      _mutex.lock(currentTask);
       _waitingTasks.push(currentTask);
-      _mutex.unlock();
+      _mutex.unlock(currentTask);
 
       // Suspending task now
       currentTask->suspend();
@@ -118,9 +116,9 @@ class ConditionVariable
       if (elapsedTime > std::chrono::duration<size_t, std::micro>(timeout)) return false;
 
       // After being notified, check on the condition again
-      conditionMutex.lock();
+      conditionMutex.lock(currentTask);
       keepWaiting = conditionPredicate() == false;
-      conditionMutex.unlock();
+      conditionMutex.unlock(currentTask);
     }
 
     // Return true if the exit was due to satisfied condition predicate
@@ -132,17 +130,16 @@ class ConditionVariable
    *
    * \note The suspension of the task will not block the running thread.
    * 
+   * \param[in] currentTask A pointer to the currently running task
    * \param[in] timeout The amount of microseconds provided as timeout 
    * \return True, if the task is returning before timeout; false, if otherwise.
   */
-  bool waitFor(size_t timeout)
+  bool waitFor(HiCR::tasking::Task *currentTask, size_t timeout)
   {
-    auto currentTask = HiCR::tasking::Task::getCurrentTask();
-
     // Insert oneself in the waiting task list
-    _mutex.lock();
+    _mutex.lock(currentTask);
     _waitingTasks.push(currentTask);
-    _mutex.unlock();
+    _mutex.unlock(currentTask);
 
     // Taking current time
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -162,15 +159,15 @@ class ConditionVariable
    * Suspends the tasks unconditionally, and resumes after notification
    * 
    * \note The suspension of the task will not block the running thread.
+   * 
+   * \param[in] currentTask A pointer to the currently running task
   */
-  void wait()
+  void wait(HiCR::tasking::Task *currentTask)
   {
-    auto currentTask = HiCR::tasking::Task::getCurrentTask();
-
     // Insert oneself in the waiting task list
-    _mutex.lock();
+    _mutex.lock(currentTask);
     _waitingTasks.push(currentTask);
-    _mutex.unlock();
+    _mutex.unlock(currentTask);
 
     // Suspending task now
     currentTask->suspend();
@@ -179,11 +176,11 @@ class ConditionVariable
   /**
    * Enables (notifies) one of the waiting tasks to check for the condition again.
    * 
-   * \note No ordering is enforced. Any of the waiting tasks can potentially be notified regardless or arrival time.
+   * \param[in] currentTask A pointer to the currently running task
   */
-  void notifyOne()
+  void notifyOne(HiCR::tasking::Task *currentTask)
   {
-    _mutex.lock();
+    _mutex.lock(currentTask);
 
     // If there is a task waiting to be notified, do that now and take it out of the queue
     if (_waitingTasks.empty() == false)
@@ -193,15 +190,17 @@ class ConditionVariable
     };
 
     // Releasing queue lock
-    _mutex.unlock();
+    _mutex.unlock(currentTask);
   }
 
   /**
    * Enables (notifies) all of the waiting tasks to check for the condition again.
+   * 
+   * \param[in] currentTask A pointer to the currently running task
   */
-  void notifyAll()
+  void notifyAll(HiCR::tasking::Task *currentTask)
   {
-    _mutex.lock();
+    _mutex.lock(currentTask);
 
     // If there are tasks waiting to be notified, do that now and take them out of the queue
     while (_waitingTasks.empty() == false)
@@ -210,7 +209,7 @@ class ConditionVariable
       _waitingTasks.pop();
     };
 
-    _mutex.unlock();
+    _mutex.unlock(currentTask);
   }
 
   /**

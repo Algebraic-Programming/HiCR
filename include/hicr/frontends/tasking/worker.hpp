@@ -30,11 +30,6 @@ namespace tasking
 {
 
 /**
- * Key identifier for thread-local identification of currently running worker
- */
-extern pthread_key_t _workerPointerKey;
-
-/**
  * Defines a standard type for a pull function.
  */
 typedef std::function<HiCR::tasking::Task *()> pullFunction_t;
@@ -113,13 +108,6 @@ class Worker
   virtual ~Worker() = default;
 
   /**
-   * Function to return a pointer to the currently executing worker from a global context
-   *
-   * @return A pointer to the current HiCR worker, NULL if this function is called outside the context of a task run() function
-   */
-  __INLINE__ static HiCR::tasking::Worker *getCurrentWorker() { return (Worker *)pthread_getspecific(_workerPointerKey); }
-
-  /**
    * Queries the worker's internal state.
    *
    * @return The worker's internal state
@@ -152,8 +140,6 @@ class Worker
    */
   __INLINE__ void start()
   {
-    if (_isInitialized == false) HICR_THROW_RUNTIME("HiCR Tasking functionality was not yet initialized");
-
     // Grabbing state value
     auto prevState = _state.load();
 
@@ -296,9 +282,6 @@ class Worker
    */
   __INLINE__ void mainLoop()
   {
-    // Map worker pointer to the running thread it into static storage for global access.
-    pthread_setspecific(_workerPointerKey, this);
-
     // Start main worker loop (run until terminated)
     while (true)
     {
@@ -306,7 +289,7 @@ class Worker
       auto task = _pullFunction();
 
       // If a task was returned, then start or execute it
-      if (task != NULL) [[likely]]
+      if (task != nullptr) [[likely]]
       {
         // If the task hasn't been initialized yet, we need to do it now
         if (task->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
