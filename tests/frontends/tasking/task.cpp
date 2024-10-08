@@ -21,8 +21,8 @@ TEST(Task, Construction)
   HiCR::tasking::Task                     *t = NULL;
   std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
 
-  EXPECT_NO_THROW(t = new HiCR::tasking::Task(u, NULL));
-  EXPECT_FALSE(t == nullptr);
+  ASSERT_NO_THROW(t = new HiCR::tasking::Task(u, NULL));
+  ASSERT_FALSE(t == nullptr);
   delete t;
 }
 
@@ -32,19 +32,16 @@ TEST(Task, SetterAndGetters)
   HiCR::tasking::Task                      t(u, NULL);
 
   HiCR::tasking::Task::taskCallbackMap_t e;
-  EXPECT_NO_THROW(t.setCallbackMap(&e));
-  EXPECT_EQ(t.getCallbackMap(), &e);
+  ASSERT_NO_THROW(t.setCallbackMap(&e));
+  ASSERT_EQ(t.getCallbackMap(), &e);
 
   HiCR::L0::ExecutionState::state_t state;
-  EXPECT_NO_THROW(state = t.getState());
-  EXPECT_EQ(state, HiCR::L0::ExecutionState::state_t::uninitialized);
+  ASSERT_NO_THROW(state = t.getState());
+  ASSERT_EQ(state, HiCR::L0::ExecutionState::state_t::uninitialized);
 }
 
 TEST(Task, Run)
 {
-  // Initializing HiCR tasking
-  HiCR::tasking::initialize();
-
   // Creating HWloc topology object
   hwloc_topology_t topology;
 
@@ -64,7 +61,7 @@ TEST(Task, Run)
     if (t->getState() == HiCR::L0::ExecutionState::state_t::running) hasRunningState = true;
 
     // Checking whether the current task pointer is the correct one
-    if (HiCR::tasking::Task::getCurrentTask() == t) hasCorrectTaskPointer = true;
+    if ((HiCR::tasking::Task *)arg == t) hasCorrectTaskPointer = true;
 
     // Yielding as many times as necessary
     t->suspend();
@@ -101,36 +98,28 @@ TEST(Task, Run)
   processingUnit->initialize();
 
   // Creating execution state
-  auto executionState = c.createExecutionState(u);
+  auto executionState = c.createExecutionState(u, t);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
 
   // A first run should start the task
-  EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::initialized);
-  EXPECT_NO_THROW(t->run());
-  EXPECT_TRUE(hasRunningState);
-  EXPECT_TRUE(hasCorrectTaskPointer);
-  EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::suspended);
-  EXPECT_EQ(HiCR::tasking::Task::getCurrentTask(), (HiCR::tasking::Task *)NULL);
+  ASSERT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::initialized);
+  ASSERT_NO_THROW(t->run());
+  ASSERT_TRUE(hasRunningState);
+  ASSERT_TRUE(hasCorrectTaskPointer);
+  ASSERT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::suspended);
 
   // A second run should resume the task
-  EXPECT_NO_THROW(t->run());
-  EXPECT_EQ(HiCR::tasking::Task::getCurrentTask(), (HiCR::tasking::Task *)NULL);
-  EXPECT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::finished);
+  ASSERT_NO_THROW(t->run());
+  ASSERT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::finished);
 
   // The task has now finished, so a third run should fail
-  EXPECT_THROW(t->run(), HiCR::RuntimeException);
-
-  // Finalizing HiCR tasking
-  HiCR::tasking::finalize();
+  ASSERT_THROW(t->run(), HiCR::RuntimeException);
 }
 
 TEST(Task, Callbacks)
 {
-  // Initializing HiCR tasking
-  HiCR::tasking::initialize();
-
   // Creating HWloc topology object
   hwloc_topology_t topology;
 
@@ -208,18 +197,18 @@ TEST(Task, Callbacks)
   t->initialize(std::move(executionState));
 
   // Launching task initially
-  EXPECT_NO_THROW(t->run());
-  EXPECT_FALSE(onExecuteHasRun);
-  EXPECT_FALSE(onExecuteUpdated);
-  EXPECT_FALSE(onSuspendHasRun);
-  EXPECT_FALSE(onFinishHasRun);
+  ASSERT_NO_THROW(t->run());
+  ASSERT_FALSE(onExecuteHasRun);
+  ASSERT_FALSE(onExecuteUpdated);
+  ASSERT_FALSE(onSuspendHasRun);
+  ASSERT_FALSE(onFinishHasRun);
 
   // Resuming task
-  EXPECT_NO_THROW(t->run());
-  EXPECT_FALSE(onFinishHasRun);
+  ASSERT_NO_THROW(t->run());
+  ASSERT_FALSE(onFinishHasRun);
 
   // Freeing memory
-  EXPECT_EXIT(
+  ASSERT_EXIT(
     {
       delete t;
       fprintf(stderr, "Delete worked");
@@ -241,19 +230,16 @@ TEST(Task, Callbacks)
   t->setCallbackMap(&callbackMap);
 
   // Launching task initially
-  EXPECT_NO_THROW(t->run());
-  EXPECT_TRUE(onExecuteHasRun);
-  EXPECT_TRUE(onExecuteUpdated);
-  EXPECT_TRUE(onSuspendHasRun);
-  EXPECT_FALSE(onFinishHasRun);
+  ASSERT_NO_THROW(t->run());
+  ASSERT_TRUE(onExecuteHasRun);
+  ASSERT_TRUE(onExecuteUpdated);
+  ASSERT_TRUE(onSuspendHasRun);
+  ASSERT_FALSE(onFinishHasRun);
 
   // Resuming task
-  EXPECT_NO_THROW(t->run());
-  EXPECT_TRUE(onFinishHasRun);
+  ASSERT_NO_THROW(t->run());
+  ASSERT_TRUE(onFinishHasRun);
 
   // Attempting to re-free memory (should fail catastrophically)
-  EXPECT_DEATH_IF_SUPPORTED(delete t, "");
-
-  // Finalizing HiCR tasking
-  HiCR::tasking::finalize();
+  ASSERT_DEATH_IF_SUPPORTED(delete t, "");
 }
