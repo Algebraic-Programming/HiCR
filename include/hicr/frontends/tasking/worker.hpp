@@ -46,6 +46,37 @@ class Worker
   public:
 
   /**
+   * Enumeration of possible task-related callbacks that can trigger a user-defined function callback
+   */
+  enum callback_t
+  {
+    /**
+     * Triggered as the task starts or resumes execution
+     */
+    onWorkerStart,
+
+    /**
+     * Triggered as the worker is preempted into suspension by an asynchronous callback
+     */
+    onWorkerSuspend,
+
+    /**
+     * Triggered as the worker is resumed from suspension
+     */
+    onWorkerResume,
+
+    /**
+     * Triggered as the worker terminates
+     */
+    onWorkerTerminate,
+  };
+
+  /**
+   * Type definition for the worker's callback map
+   */
+  typedef HiCR::tasking::CallbackMap<Worker *, callback_t> workerCallbackMap_t;
+
+  /**
    * Complete state set that a worker can be in
    */
   enum state_t
@@ -96,10 +127,12 @@ class Worker
    *
    * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
    * \param[in] pullFunction A callback for the worker to get a new task to execute
+   * @param[in] callbackMap Pointer to the callback map to be called by the worker
    */
-  Worker(HiCR::L1::ComputeManager *computeManager, pullFunction_t pullFunction)
+  Worker(HiCR::L1::ComputeManager *computeManager, pullFunction_t pullFunction, workerCallbackMap_t *callbackMap = NULL)
     : _pullFunction(pullFunction),
-      _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager))
+      _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager)),
+      _callbackMap(callbackMap)
   {
     // Checking the passed compute manager is of a supported type
     if (_computeManager == NULL) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");
@@ -113,6 +146,20 @@ class Worker
    * @return The worker's internal state
    */
   __INLINE__ const state_t getState() { return _state; }
+
+  /**
+   * Sets the worker's callback map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
+   *
+   * @param[in] callbackMap A pointer to an callback map
+   */
+  __INLINE__ void setCallbackMap(workerCallbackMap_t *callbackMap) { _callbackMap = callbackMap; }
+
+  /**
+   * Gets the task's callback map.
+   *
+   * @return A pointer to the worker's an callback map. nullptr, if not defined.
+   */
+  __INLINE__ workerCallbackMap_t *getCallbackMap() { return _callbackMap; }
 
   /**
    * Initializes the worker and its resources
@@ -278,10 +325,18 @@ class Worker
   HiCR::backend::host::L1::ComputeManager *const _computeManager;
 
   /**
+   *  Map of callbacks to trigger
+   */
+  workerCallbackMap_t *_callbackMap = NULL;
+
+  /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
    */
   __INLINE__ void mainLoop()
   {
+    // Calling appropriate callback
+    if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onWorkerStart);
+
     // Start main worker loop (run until terminated)
     while (true)
     {
@@ -311,11 +366,17 @@ class Worker
         // Setting state as suspended
         _state = state_t::suspended;
 
+        // Calling appropriate callback
+        if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onWorkerSuspend);
+
         // Suspending other processing units
         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
 
         // Putting current processing unit to check every so often
         while (checkResumeConditions() == false) usleep(_suspendIntervalMs * 1000);
+
+        // Calling appropriate callback
+        if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onWorkerResume);
 
         // Resuming other processing units
         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->resume();
@@ -327,6 +388,9 @@ class Worker
       // Requesting processing units to terminate as soon as possible
       if (_state == state_t::terminating) [[unlikely]]
       {
+        // Calling appropriate callback
+        if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onWorkerTerminate);
+
         // Terminate secondary processing units first
         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
 
