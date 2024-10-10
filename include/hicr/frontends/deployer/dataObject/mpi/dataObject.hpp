@@ -59,7 +59,7 @@ class DataObject final
     // Pick the first 15 bits of the id and use it as MPI Tag
     const int dataObjectIdTag = _id & mpiTagMask;
 
-    publishRequest = NULL;
+    publishRequest = MPI_REQUEST_NULL;
 
     // Publishing an asynchronous recieve for whoever needs this data
     MPI_Irecv(nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, dataObjectIdTag, MPI_COMM_WORLD, &publishRequest);
