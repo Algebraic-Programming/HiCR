@@ -144,6 +144,21 @@ class CommunicationManager
   }
 
   /**
+   * Destroys a global memory slot. This operation is non-blocking and non-collective.
+   * Its effects will be visible after the next call to #fence(L0::GlobalMemorySlot::tag_t)
+   * where the tag is the tag of the memory slot to destroy. That means that multiple slots
+   * under the same tag can be destroyed in a single fence operation.
+   *
+   * \param[in] memorySlot Memory slot to destroy.
+   */
+  __INLINE__ void destroyGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
+  {
+    auto tag = memorySlot->getGlobalTag();
+    // Implicit creation of the tag entry if it doesn't exist is desired here
+    _globalMemorySlotsToDestroyPerTag[tag].push_back(memorySlot);
+  }
+
+  /**
    * Queries the backend to update the internal state of the memory slot.
    * One main use case of this function is to update the number of messages received and sent to/from this slot.
    * This is a non-blocking, non-collective function.
@@ -264,7 +279,7 @@ class CommunicationManager
    * to arrive at the remote memory space, modulo any fatal exception).
    *
    * This function also finishes all pending local to global memory slot promotions,
-   * only for the specified tag.
+   * as well as destructions, only for the specified tag.
    *
    * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    * Exceptions are thrown in the following cases:
@@ -287,6 +302,12 @@ class CommunicationManager
 
     // Now call the proper fence, as implemented by the backend
     fenceImpl(tag);
+
+    // Clear the memory slots to destroy; contrary to other operations this needs thread safety, hence the locking
+    lock();
+    _globalMemorySlotsToDestroyPerTag[tag].clear();
+    _globalMemorySlotsToDestroyPerTag.erase(tag);
+    unlock();
   }
 
   /**
@@ -536,6 +557,11 @@ class CommunicationManager
    * Storage for global tag/key associated global memory slot exchange
    */
   globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
+
+  /**
+   * Storage for global memory slots to be destroyed during the next fence operation
+   */
+  std::map<L0::GlobalMemorySlot::tag_t, std::vector<std::shared_ptr<L0::GlobalMemorySlot>>> _globalMemorySlotsToDestroyPerTag;
 };
 
 } // namespace L1
