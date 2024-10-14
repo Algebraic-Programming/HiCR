@@ -74,16 +74,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   const int getRank() const { return _rank; }
 
-  /**
-   * Blocking mutex lock on the communication manager mutex
-   */
-  void lockMPICalls() { _mutex.lock(); }
-
-  /**
-   * Mutex unlock on the communication manager mutex
-   */
-  void unlockMPICalls() { _mutex.unlock(); }
-
   private:
 
   /**
@@ -106,9 +96,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Locking MPI window to ensure the messages arrives before returning
     int mpiStatus;
     do {
-      this->lockMPICalls();
+      lock();
       mpiStatus = MPI_Win_lock(MPILockType, rank, MPIAssert, *window) != MPI_SUCCESS;
-      this->unlockMPICalls();
+      unlock();
     }
     while (mpiStatus != MPI_SUCCESS);
   }
@@ -118,9 +108,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Unlocking window after copy is completed
     int mpiStatus;
     do {
-      this->lockMPICalls();
+      lock();
       mpiStatus = MPI_Win_unlock(rank, *window) != MPI_SUCCESS;
-      this->unlockMPICalls();
+      unlock();
     }
     while (mpiStatus != MPI_SUCCESS);
   }
@@ -139,9 +129,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // There is no datatype in MPI for size_t (the counters), but
     // MPI_AINT is supposed to be large enough and portable
-    this->lockMPICalls();
+    lock();
     auto status = MPI_Fetch_and_op(&one, &value, MPI_AINT, rank, 0, MPI_SUM, *window);
-    this->unlockMPICalls();
+    unlock();
 
     // Checking execution status
     if (status != MPI_SUCCESS)
@@ -183,17 +173,17 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Executing the get operation
     {
-      this->lockMPICalls();
+      lock();
       auto status = MPI_Get(destinationPointer, size, MPI_BYTE, sourceRank, sourceOffset, size, MPI_BYTE, *sourceDataWindow);
-      this->unlockMPICalls();
+      unlock();
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get");
     }
 
     // Making sure the operation finished
     {
-      this->lockMPICalls();
+      lock();
       auto status = MPI_Win_flush(sourceRank, *sourceDataWindow);
-      this->unlockMPICalls();
+      unlock();
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Win_flush");
     }
 
@@ -237,17 +227,17 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Executing the put operation
     {
-      this->lockMPICalls();
+      lock();
       auto status = MPI_Put(sourcePointer, size, MPI_BYTE, destinationRank, dst_offset, size, MPI_BYTE, *destinationDataWindow);
-      this->unlockMPICalls();
+      unlock();
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put");
     }
 
     // Making sure the operation finished
     {
-      this->lockMPICalls();
+      lock();
       auto status = MPI_Win_flush(destinationRank, *destinationDataWindow);
-      this->unlockMPICalls();
+      unlock();
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Win_flush");
     }
 
@@ -282,9 +272,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Obtaining the local slots to exchange per process in the communicator
     std::vector<int> perProcessSlotCount(_size);
-    this->lockMPICalls();
+    lock();
     MPI_Allgather(&localSlotCount, 1, MPI_INT, perProcessSlotCount.data(), 1, MPI_INT, _comm);
-    this->unlockMPICalls();
+    unlock();
 
     // Calculating respective offsets
     std::vector<int> perProcessSlotOffsets(_size);
@@ -319,13 +309,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
 
     // Exchanging global sizes, keys and process ids
-    this->lockMPICalls();
+    lock();
     MPI_Allgatherv(
       localSlotSizes.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotSizes.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
     MPI_Allgatherv(
       localSlotKeys.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotKeys.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
     MPI_Allgatherv(localSlotProcessId.data(), localSlotCount, MPI_INT, globalSlotProcessId.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_INT, _comm);
-    this->unlockMPICalls();
+    unlock();
 
     // Now also creating pointer vector to remember local pointers, when required for memcpys
     std::vector<void **>                                    globalSlotPointers(globalSlotCount);
@@ -362,10 +352,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       void *ptr = nullptr;
 
       // Creating MPI window for data transferring
-      this->lockMPICalls();
+      lock();
       auto status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? globalSlotSizes[i] : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getDataWindow().get());
       MPI_Win_set_errhandler(*memorySlot->getDataWindow(), MPI_ERRORS_RETURN);
-      this->unlockMPICalls();
+      unlock();
 
       // Unfortunately, we need to do an effective duplucation of the original local memory slot storage
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
@@ -375,9 +365,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
         std::memcpy(ptr, *(globalSlotPointers[i]), globalSlotSizes[i]);
 
         // Freeing up memory
-        this->lockMPICalls();
+        lock();
         MPI_Free_mem(*(globalSlotPointers[i]));
-        this->unlockMPICalls();
+        unlock();
 
         // Swapping pointers
         *(globalSlotPointers[i]) = ptr;
@@ -386,10 +376,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
 
       // Creating MPI window for message received count transferring
-      this->lockMPICalls();
+      lock();
       status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getRecvMessageCountWindow().get());
       MPI_Win_set_errhandler(*memorySlot->getRecvMessageCountWindow(), MPI_ERRORS_RETURN);
-      this->unlockMPICalls();
+      unlock();
 
       // Unfortunately, we need to do an effective realloc of the messages recv counter
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
@@ -405,10 +395,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
 
       // Creating MPI window for message sent count transferring
-      this->lockMPICalls();
+      lock();
       status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getSentMessageCountWindow().get());
       MPI_Win_set_errhandler(*memorySlot->getSentMessageCountWindow(), MPI_ERRORS_RETURN);
-      this->unlockMPICalls();
+      unlock();
 
       // Unfortunately, we need to do an effective realloc of the messages sent counter
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
@@ -442,8 +432,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Checking whether the execution unit passed is compatible with this backend
     if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
 
-    this->lockMPICalls();
-
     auto status = MPI_Win_free(memorySlot->getDataWindow().get());
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI data window");
 
@@ -452,8 +440,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     status = MPI_Win_free(memorySlot->getSentMessageCountWindow().get());
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI sent message count window");
-
-    this->unlockMPICalls();
   }
 
   __INLINE__ bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
