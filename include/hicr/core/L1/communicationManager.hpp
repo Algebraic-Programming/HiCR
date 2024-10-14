@@ -95,6 +95,8 @@ class CommunicationManager
    * \param[in] tag Tag that identifies a subset of all global memory slots
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
+   *
+   * \note This method is not thread-safe. It is up to the application developer to ensure that
    */
   __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlot(L0::GlobalMemorySlot::tag_t tag, L0::GlobalMemorySlot::globalKey_t globalKey)
   {
@@ -126,6 +128,8 @@ class CommunicationManager
    * but can no longer be accessed via #getGlobalMemorySlot.
    *
    * \param[in] memorySlot Memory slot to deregister.
+   *
+   * \note This method is not thread-safe. It is up to the application developer to ensure that it is called with proper locking.
    */
   __INLINE__ void deregisterGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
@@ -150,6 +154,8 @@ class CommunicationManager
    * under the same tag can be destroyed in a single fence operation.
    *
    * \param[in] memorySlot Memory slot to destroy.
+   *
+   * \note This method is not thread-safe. It is up to the application developer to ensure that
    */
   __INLINE__ void destroyGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {

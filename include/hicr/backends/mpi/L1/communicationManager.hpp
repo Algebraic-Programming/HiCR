@@ -422,6 +422,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * Deletes a global memory slot from the backend. This operation is collective.
    * Attempting to access the global memory slot after this operation will result in undefined behavior.
    *
+   * This is not a thread-safe operation, and it is assumed that the caller has locked the mutex before calling this function.
+   *
    * \param[in] memorySlotPtr Memory slot to destroy.
    */
   __INLINE__ void destroyGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
