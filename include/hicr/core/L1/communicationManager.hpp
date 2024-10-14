@@ -14,6 +14,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <hicr/core/L0/globalMemorySlot.hpp>
@@ -60,6 +61,23 @@ class CommunicationManager
   virtual ~CommunicationManager() = default;
 
   /**
+   * Backend-internal implementation of the locking of a mutual exclusion mechanism.
+   * By default, a single mutex can protect access to internal fields.
+   * It is up to the application developer to ensure that the mutex is used correctly
+   * and efficiently, e.g., grouping multiple operations under a single lock.
+   *
+   * \todo: Implement a more fine-grained locking mechanism, e.g., per map mutex or parallel maps,
+   *        and expose thread-safe operations to the user.
+   */
+  virtual void lock() { _mutex.lock(); };
+
+  /**
+   * Backend-internal implementation of the unlocking of a mutual exclusion mechanism.
+   * Same considerations as for lock() apply.
+   */
+  virtual void unlock() { _mutex.unlock(); };
+
+  /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
    * \param[in] tag Identifies a particular subset of global memory slots
@@ -85,18 +103,10 @@ class CommunicationManager
     if (globalSlotImpl != nullptr) { return globalSlotImpl; }
     else
     {
-      // Locking access to prevent concurrency issues
-      this->lock();
-
       // If the requested tag and key are not found, return empty storage
-      if (_globalMemorySlotTagKeyMap.contains(tag) == false)
-      {
-        this->unlock();
-        HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
-      }
+      if (_globalMemorySlotTagKeyMap.contains(tag) == false) { HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag); }
       if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false)
       {
-        this->unlock();
         for (auto elem : _globalMemorySlotTagKeyMap.at(tag)) { printf("For Tag %lu: Key %lu\n", tag, elem.first); }
         printf("But tag %lu does not contain globalKey = %lu\n", tag, globalKey);
         HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
@@ -104,9 +114,6 @@ class CommunicationManager
 
       // Getting requested memory slot
       auto value = _globalMemorySlotTagKeyMap.at(tag).at(globalKey);
-
-      // Releasing lock
-      this->unlock();
 
       // Returning value
       return value;
@@ -126,21 +133,14 @@ class CommunicationManager
     const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
-    // Locking access to prevent concurrency issues
-    this->lock();
-
     // Checking whether the memory slot is correctly registered as global
     if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
     {
-      this->unlock();
       HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag/key pair is not registered in this backend");
     }
 
     // Removing memory slot from the global memory slot map
     _globalMemorySlotTagKeyMap.at(memorySlotTag).erase(memorySlotGlobalKey);
-
-    // Releasing lock
-    this->unlock();
   }
 
   /**
@@ -368,25 +368,17 @@ class CommunicationManager
     const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
-    // Locking access to prevent concurrency issues
-    this->lock();
-
     // Checking whether the memory slot is correctly registered as global
     if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
     {
-      this->unlock();
       HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
     }
 
     // Checking whether the memory slot is correctly registered as global
     if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false)
     {
-      this->unlock();
       HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
     }
-
-    // Releasing lock
-    this->unlock();
 
     // Calling internal implementation
     releaseGlobalLockImpl(memorySlot);
@@ -417,14 +409,8 @@ class CommunicationManager
     const auto tag       = memorySlot->getGlobalTag();
     const auto globalKey = memorySlot->getGlobalKey();
 
-    // Locking access to prevent concurrency issues
-    this->lock();
-
     // Adding memory slot to the global map (based on tag and key)
     _globalMemorySlotTagKeyMap[tag][globalKey] = memorySlot;
-
-    // Releasing lock
-    this->unlock();
   }
 
   /**
@@ -460,16 +446,6 @@ class CommunicationManager
    * \param[in] memorySlot Memory slot to destroy.
    */
   virtual void destroyGlobalMemorySlotImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
-
-  /**
-   * Backend-internal implementation of the locking of a mutual exclusion mechanism. By default, no concurrency is assumed
-   */
-  virtual void lock(){};
-
-  /**
-   * Backend-internal implementation of the unlocking of a mutual exclusion mechanism
-   */
-  virtual void unlock(){};
 
   /**
    * Backend-internal implementation of the memcpy function
@@ -549,6 +525,12 @@ class CommunicationManager
    * @param[in] memorySlot See the releaseGlobalLock function
    */
   virtual void releaseGlobalLockImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
+
+  /**
+   * Allow programmers to use a mutex to protect the communication manager's state when doing opeartions like
+   * deregistering and marking memory slots for destruction, internally protect backend (e.g., MPI) calls, etc.
+   */
+  std::mutex _mutex;
 
   /**
    * Storage for global tag/key associated global memory slot exchange

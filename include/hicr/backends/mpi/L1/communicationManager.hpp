@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <mutex>
 #include <mpi.h>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/L0/localMemorySlot.hpp>
@@ -101,11 +100,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * MPI rank corresponding to this process
    */
   int _rank;
-
-  /*
-  * To enforce single threaded access to the MPI library, use a mutex
-  */
-  std::mutex _mutex;
 
   __INLINE__ void lockMPIWindow(int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
