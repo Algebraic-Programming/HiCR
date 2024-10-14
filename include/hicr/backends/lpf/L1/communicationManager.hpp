@@ -240,7 +240,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * \param[in] memorySlotPtr Memory slot to destroy.
    */
-  __INLINE__ void destroyGlobalMemorySlot(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
+  __INLINE__ void destroyGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
   {
     // Getting up-casted pointer for the execution unit
     auto memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlotPtr);

@@ -144,14 +144,6 @@ class CommunicationManager
   }
 
   /**
-   * Deletes a global memory slot from the backend. This operation is collective.
-   * Attempting to access the global memory slot after this operation will result in undefined behavior.
-   *
-   * \param[in] memorySlot Memory slot to destroy.
-   */
-  virtual void destroyGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
-
-  /**
    * Queries the backend to update the internal state of the memory slot.
    * One main use case of this function is to update the number of messages received and sent to/from this slot.
    * This is a non-blocking, non-collective function.
@@ -460,6 +452,14 @@ class CommunicationManager
    * \param[in] memorySlot Memory slot to query updates for.
    */
   virtual void queryMemorySlotUpdatesImpl(std::shared_ptr<L0::LocalMemorySlot> memorySlot) = 0;
+
+  /**
+   * Deletes a global memory slot from the backend. This operation is collective.
+   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   *
+   * \param[in] memorySlot Memory slot to destroy.
+   */
+  virtual void destroyGlobalMemorySlotImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the locking of a mutual exclusion mechanism. By default, no concurrency is assumed

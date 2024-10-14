@@ -82,17 +82,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     else { return nullptr; }
   }
 
-  /**
-   * Deletes a global memory slot from the backend.
-   * Attempting to access the global memory slot after this operation will result in undefined behavior.
-   *
-   * \param[in] memorySlot Memory slot to destroy.
-   */
-  __INLINE__ void destroyGlobalMemorySlot(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
-  {
-    // Nothing to do here
-  }
-
   private:
 
   /**
@@ -164,6 +153,17 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Running memcpy now
     std::memcpy(actualDstPtr, actualSrcPtr, size);
+  }
+
+  /**
+   * Deletes a global memory slot from the backend.
+   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   *
+   * \param[in] memorySlot Memory slot to destroy.
+   */
+  __INLINE__ void destroyGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  {
+    // Nothing to do here
   }
 
   __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,

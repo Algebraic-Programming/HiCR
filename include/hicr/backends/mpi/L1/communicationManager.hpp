@@ -85,34 +85,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   void unlockMPICalls() { _mutex.unlock(); }
 
-  /**
-   * Deletes a global memory slot from the backend. This operation is collective.
-   * Attempting to access the global memory slot after this operation will result in undefined behavior.
-   *
-   * \param[in] memorySlotPtr Memory slot to destroy.
-   */
-  __INLINE__ void destroyGlobalMemorySlot(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
-  {
-    // Getting up-casted pointer for the execution unit
-    auto memorySlot = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlotPtr);
-
-    // Checking whether the execution unit passed is compatible with this backend
-    if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
-
-    this->lockMPICalls();
-
-    auto status = MPI_Win_free(memorySlot->getDataWindow().get());
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI data window");
-
-    status = MPI_Win_free(memorySlot->getRecvMessageCountWindow().get());
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI recv message count window");
-
-    status = MPI_Win_free(memorySlot->getSentMessageCountWindow().get());
-    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI sent message count window");
-
-    this->unlockMPICalls();
-  }
-
   private:
 
   /**
@@ -460,6 +432,34 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       // Registering global slot
       registerGlobalMemorySlot(memorySlot);
     }
+  }
+
+  /**
+   * Deletes a global memory slot from the backend. This operation is collective.
+   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   *
+   * \param[in] memorySlotPtr Memory slot to destroy.
+   */
+  __INLINE__ void destroyGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
+  {
+    // Getting up-casted pointer for the execution unit
+    auto memorySlot = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlotPtr);
+
+    // Checking whether the execution unit passed is compatible with this backend
+    if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
+
+    this->lockMPICalls();
+
+    auto status = MPI_Win_free(memorySlot->getDataWindow().get());
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI data window");
+
+    status = MPI_Win_free(memorySlot->getRecvMessageCountWindow().get());
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI recv message count window");
+
+    status = MPI_Win_free(memorySlot->getSentMessageCountWindow().get());
+    if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("On deregister global memory slot, could not free MPI sent message count window");
+
+    this->unlockMPICalls();
   }
 
   __INLINE__ bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
