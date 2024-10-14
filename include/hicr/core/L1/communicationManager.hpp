@@ -287,6 +287,8 @@ class CommunicationManager
    * This function also finishes all pending local to global memory slot promotions,
    * as well as destructions, only for the specified tag.
    *
+   * This call is thread-safe.
+   *
    * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    * Exceptions are thrown in the following cases:
    *  -# One of the remote address spaces no longer has an active communication
@@ -297,20 +299,14 @@ class CommunicationManager
    * \todo How does this interact with malleability of resources of which HiCR is
    *       aware? One possible answer is a special event that if left unhandled,
    *       is promoted to a fatal exception.
-   *
-   * \todo This all should be threading safe.
    */
   __INLINE__ void fence(L0::GlobalMemorySlot::tag_t tag)
   {
-    // To enable concurrent fence operations, the implementation is executed outside the mutex zone
-    // This means that the developer needs to make sure that the implementation is concurrency-safe,
-    // and try not to access any of the internal Backend class fields without proper mutex locking
-
+    lock();
     // Now call the proper fence, as implemented by the backend
     fenceImpl(tag);
 
-    // Clear the memory slots to destroy; contrary to other operations this needs thread safety, hence the locking
-    lock();
+    // Clear the memory slots to destroy
     _globalMemorySlotsToDestroyPerTag[tag].clear();
     _globalMemorySlotsToDestroyPerTag.erase(tag);
     unlock();

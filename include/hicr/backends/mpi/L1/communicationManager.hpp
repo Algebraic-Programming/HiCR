@@ -262,6 +262,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * Implementation of the fence operation for the mpi backend.
    * A barrier is sufficient, as MPI_Win_lock/MPI_Win_unlock passive
    * synchronization is used to transfer data
+   *
+   * It is assumed that the base class has already locked the mutex before calling this function.
    */
   __INLINE__ void fenceImpl(HiCR::L0::GlobalMemorySlot::tag_t tag) override { MPI_Barrier(_comm); }
 
