@@ -65,7 +65,7 @@ class CommunicationManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __INLINE__ void exchangeGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
+  __INLINE__ void exchangeGlobalMemorySlots(L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
   {
     // Calling internal implementation of this function
     exchangeGlobalMemorySlotsImpl(tag, memorySlots);
@@ -78,7 +78,7 @@ class CommunicationManager
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlot(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey)
+  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlot(L0::GlobalMemorySlot::tag_t tag, L0::GlobalMemorySlot::globalKey_t globalKey)
   {
     auto globalSlotImpl = getGlobalMemorySlotImpl(tag, globalKey);
 
@@ -177,11 +177,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination,
-                         const size_t                         dst_offset,
-                         std::shared_ptr<L0::LocalMemorySlot> source,
-                         const size_t                         src_offset,
-                         const size_t                         size)
+  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -221,11 +217,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination,
-                         const size_t                          dst_offset,
-                         std::shared_ptr<L0::LocalMemorySlot>  source,
-                         const size_t                          src_offset,
-                         const size_t                          size)
+  __INLINE__ void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -254,11 +246,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot>  destination,
-                         const size_t                          dst_offset,
-                         std::shared_ptr<L0::GlobalMemorySlot> source,
-                         const size_t                          src_offset,
-                         const size_t                          size)
+  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::GlobalMemorySlot> source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto dstSize = destination->getSize();
@@ -299,7 +287,7 @@ class CommunicationManager
    *
    * \todo This all should be threading safe.
    */
-  __INLINE__ void fence(const L0::GlobalMemorySlot::tag_t tag)
+  __INLINE__ void fence(L0::GlobalMemorySlot::tag_t tag)
   {
     // To enable concurrent fence operations, the implementation is executed outside the mutex zone
     // This means that the developer needs to make sure that the implementation is concurrency-safe,
@@ -456,7 +444,7 @@ class CommunicationManager
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  virtual std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey) = 0;
+  virtual std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlotImpl(L0::GlobalMemorySlot::tag_t tag, L0::GlobalMemorySlot::globalKey_t globalKey) = 0;
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
@@ -464,14 +452,14 @@ class CommunicationManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  virtual void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
+  virtual void exchangeGlobalMemorySlotsImpl(L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
    *
    * \param[in] memorySlot Memory slot to query updates for.
    */
-  virtual void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) = 0;
+  virtual void queryMemorySlotUpdatesImpl(std::shared_ptr<L0::LocalMemorySlot> memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the locking of a mutual exclusion mechanism. By default, no concurrency is assumed
@@ -492,11 +480,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-                          const size_t                               dst_offset,
-                          std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-                          const size_t                               src_offset,
-                          const size_t                               size)
+  virtual void memcpyImpl(std::shared_ptr<L0::LocalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Local->Local memcpy operations are unsupported by the given backend");
   };
@@ -510,11 +494,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
-                          const size_t                                dst_offset,
-                          std::shared_ptr<HiCR::L0::LocalMemorySlot>  source,
-                          const size_t                                src_offset,
-                          const size_t                                size)
+  virtual void memcpyImpl(std::shared_ptr<L0::GlobalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Local->Global memcpy operations are unsupported by the given backend");
   };
@@ -528,11 +508,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
-                          const size_t                                dst_offset,
-                          std::shared_ptr<HiCR::L0::GlobalMemorySlot> source,
-                          const size_t                                src_offset,
-                          const size_t                                size)
+  virtual void memcpyImpl(std::shared_ptr<L0::LocalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::GlobalMemorySlot> source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Global->Local memcpy operations are unsupported by the given backend");
   };
@@ -559,20 +535,20 @@ class CommunicationManager
    * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    *
    */
-  virtual void fenceImpl(const L0::GlobalMemorySlot::tag_t tag) = 0;
+  virtual void fenceImpl(L0::GlobalMemorySlot::tag_t tag) = 0;
 
   /**
    * Backend-specific implementation of the acquireGlobalLock function
    * @param[in] memorySlot See the acquireGlobalLock function
    * @return See the acquireGlobalLock function
    */
-  virtual bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) = 0;
+  virtual bool acquireGlobalLockImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
 
   /**
    * Backend-specific implementation of the releaseGlobalLock function
    * @param[in] memorySlot See the releaseGlobalLock function
    */
-  virtual void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) = 0;
+  virtual void releaseGlobalLockImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
 
   /**
    * Storage for global tag/key associated global memory slot exchange

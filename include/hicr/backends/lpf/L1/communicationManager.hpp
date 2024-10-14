@@ -91,12 +91,12 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       _localSwapSlot(LPF_INVALID_MEMSLOT)
   {}
 
-  std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override
+  std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot::tag_t tag, HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override
   {
     return nullptr;
   }
 
-  __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
+  __INLINE__ void exchangeGlobalMemorySlotsImpl(HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
     // Obtaining local slots to exchange
     size_t localSlotCount = memorySlots.size();
@@ -253,10 +253,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
-                             const size_t                                dst_offset,
+                             size_t                                      dst_offset,
                              std::shared_ptr<HiCR::L0::GlobalMemorySlot> source,
-                             const size_t                                src_offset,
-                             const size_t                                size) override
+                             size_t                                      src_offset,
+                             size_t                                      size) override
   {
     // Getting up-casted pointer
     auto src = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(source);
@@ -282,10 +282,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
-                             const size_t                                dst_offset,
+                             size_t                                      dst_offset,
                              std::shared_ptr<HiCR::L0::LocalMemorySlot>  source,
-                             const size_t                                src_offset,
-                             const size_t                                size) override
+                             size_t                                      src_offset,
+                             size_t                                      size) override
   {
     // Getting up-casted pointer
     auto src = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(source);
@@ -316,14 +316,14 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * @param[in] tag Tags used as filter to decide which slots to fence against
    * \todo: Implement tags in LPF !!!
    */
-  __INLINE__ void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override { CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT)); }
+  __INLINE__ void fenceImpl(HiCR::L0::GlobalMemorySlot::tag_t tag) override { CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT)); }
 
   /**
    * gets global memory slots associated with a tag
    * \param[in] tag Tag associated with a set of memory slots
    * \return The global memory slots associated with this tag
    */
-  __INLINE__ globalKeyToMemorySlotMap_t getGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag)
+  __INLINE__ globalKeyToMemorySlotMap_t getGlobalMemorySlots(L0::GlobalMemorySlot::tag_t tag)
   {
     // If the requested tag and key are not found, return empty storage
     if (_globalMemorySlotTagKeyMap.contains(tag) == false)
