@@ -41,6 +41,28 @@ namespace L1
  */
 class CommunicationManager final : public HiCR::L1::CommunicationManager
 {
+  public:
+
+  /**
+   * Constructor of the LPF memory manager
+   * @param[in] size Communicator size
+   * @param[in] rank Process rank
+   * @param[in] lpf LPF context
+   * \note The decision to resize memory register in the constructor
+   * is because this call requires lpf_sync to become effective.
+   * This makes it almost impossible to do local memory registrations with LPF.
+   * On the other hand, the resize message queue could also be locally
+   * made, and placed elsewhere.
+   */
+  CommunicationManager(size_t size, size_t rank, lpf_t lpf)
+    : HiCR::L1::CommunicationManager(),
+      _size(size),
+      _rank(rank),
+      _lpf(lpf),
+      _localSwap(0ULL),
+      _localSwapSlot(LPF_INVALID_MEMSLOT)
+  {}
+
   private:
 
   const size_t _size;
@@ -68,28 +90,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   /**
    * Map of global slot id and MPI windows
    */
-
-  public:
-
-  /**
-   * Constructor of the LPF memory manager
-   * @param[in] size Communicator size
-   * @param[in] rank Process rank
-   * @param[in] lpf LPF context
-   * \note The decision to resize memory register in the constructor
-   * is because this call requires lpf_sync to become effective.
-   * This makes it almost impossible to do local memory registrations with LPF.
-   * On the other hand, the resize message queue could also be locally
-   * made, and placed elsewhere.
-   */
-  CommunicationManager(size_t size, size_t rank, lpf_t lpf)
-    : HiCR::L1::CommunicationManager(),
-      _size(size),
-      _rank(rank),
-      _lpf(lpf),
-      _localSwap(0ULL),
-      _localSwapSlot(LPF_INVALID_MEMSLOT)
-  {}
 
   std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot::tag_t tag, HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override
   {
