@@ -13,6 +13,7 @@
 #pragma once
 
 #include <mpi.h>
+#include <set>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <hicr/core/L1/communicationManager.hpp>
@@ -301,7 +302,87 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    *
    * It is assumed that the base class has already locked the mutex before calling this function.
    */
-  __INLINE__ void fenceImpl(HiCR::L0::GlobalMemorySlot::tag_t tag) override { MPI_Barrier(_comm); }
+  __INLINE__ void fenceImpl(HiCR::L0::GlobalMemorySlot::tag_t tag) override
+  {
+    MPI_Barrier(_comm);
+
+    // Call the slot destruction collective routine
+    destroyGlobalMemorySlotsCollectiveImpl(tag);
+  }
+
+  __INLINE__ void destroyGlobalMemorySlotsCollectiveImpl(HiCR::L0::GlobalMemorySlot::tag_t tag)
+  {
+    // Destruction of global memory slots marked for destruction
+    // note: MPI expects int, not size_t as the parameter for allgather which we use here, so we have to work with int
+    int              localDestroySlotsCount = (int)_globalMemorySlotsToDestroyPerTag[tag].size();
+    std::vector<int> perProcessDestroySlotCount(_size);
+
+    // Obtaining the number of slots to destroy per process in the communicator
+    MPI_Allgather(&localDestroySlotsCount, 1, MPI_INT, perProcessDestroySlotCount.data(), 1, MPI_INT, _comm);
+
+    // Calculating respective offsets; TODO fix offset types for both this method and exchangeGlobalMemorySlotsImpl
+    std::vector<int> perProcessSlotOffsets(_size);
+    int              currentOffset = 0;
+    for (int i = 0; i < _size; i++)
+    {
+      perProcessSlotOffsets[i] += currentOffset;
+      currentOffset += perProcessDestroySlotCount[i];
+    }
+
+    // Calculating number of global slots to destroy
+    int globalDestroySlotsCount = 0;
+    for (const auto count : perProcessDestroySlotCount) globalDestroySlotsCount += count;
+
+    // Allocating storage for global memory slot keys
+    std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t> localDestroySlotKeys(localDestroySlotsCount);
+    std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t> globalDestroySlotKeys(globalDestroySlotsCount);
+
+    // Filling in the local keys storage
+    for (auto i = 0; i < localDestroySlotsCount; i++)
+    {
+      const auto memorySlot   = _globalMemorySlotsToDestroyPerTag[tag][i];
+      const auto key          = memorySlot->getGlobalKey();
+      localDestroySlotKeys[i] = key;
+    }
+
+    // Exchanging global keys
+    MPI_Allgatherv(localDestroySlotKeys.data(),
+                   localDestroySlotsCount,
+                   MPI_UNSIGNED_LONG,
+                   globalDestroySlotKeys.data(),
+                   perProcessDestroySlotCount.data(),
+                   perProcessSlotOffsets.data(),
+                   MPI_UNSIGNED_LONG,
+                   _comm);
+
+    // Deduplicating the global keys, as more than one process might want to destroy the same key
+    std::set<HiCR::L0::GlobalMemorySlot::globalKey_t> globalDestroySlotKeysSet(globalDestroySlotKeys.begin(), globalDestroySlotKeys.end());
+
+    // Now we can iterate over the global slots to destroy one by one
+    for (auto key : globalDestroySlotKeysSet)
+    {
+      std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot = nullptr;
+      // Getting the memory slot to destroy
+      // First check the standard map
+      if (_globalMemorySlotTagKeyMap[tag].contains(key))
+      {
+        memorySlot = _globalMemorySlotTagKeyMap[tag].at(key);
+        // Deregister because a later destroy will try and fail to destroy
+        _globalMemorySlotTagKeyMap[tag].erase(key);
+      }
+      // If not found, check the deregistered map
+      else if (_deregisteredGlobalMemorySlotsTagKeyMap[tag].contains(key))
+      {
+        memorySlot = _deregisteredGlobalMemorySlotsTagKeyMap[tag].at(key);
+        _deregisteredGlobalMemorySlotsTagKeyMap[tag].erase(key);
+      }
+      else
+        HICR_THROW_FATAL("Could not find memory slot to destroy in this backend. Tag: %d, Key: %lu", tag, key);
+
+      // Destroying the memory slot collectively; there might be a case where the slot is not found, due to double calls to destroy
+      destroyGlobalMemorySlotImpl(memorySlot);
+    }
+  }
 
   __INLINE__ void exchangeGlobalMemorySlotsImpl(HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
