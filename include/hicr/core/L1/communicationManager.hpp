@@ -145,6 +145,7 @@ class CommunicationManager
 
     // Removing memory slot from the global memory slot map
     _globalMemorySlotTagKeyMap.at(memorySlotTag).erase(memorySlotGlobalKey);
+    deregisterGlobalMemorySlotImpl(memorySlot);
   }
 
   /**
@@ -461,6 +462,13 @@ class CommunicationManager
    * \param[in] memorySlot Memory slot to query updates for.
    */
   virtual void queryMemorySlotUpdatesImpl(std::shared_ptr<L0::LocalMemorySlot> memorySlot) = 0;
+
+  /**
+   * Optional backend-internal implementation of the deregisterGlobalMemorySlot function
+   *
+   * \param[in] memorySlot Memory slot to deregister.
+   */
+  virtual void deregisterGlobalMemorySlotImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot){};
 
   /**
    * Deletes a global memory slot from the backend. This operation is collective.

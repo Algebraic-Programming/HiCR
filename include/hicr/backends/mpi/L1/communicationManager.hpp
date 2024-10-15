@@ -91,6 +91,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   int _rank;
 
+  /**
+   * Unfortunately in MPI, we need to be able to access the Window in order to (collectively) free it.
+   * Therefore, we need to keep track of all the windows we created, even if they have been deregistered
+   * by the user. If even one instance loses track of the window, it cannot be freed.
+   */
+  HiCR::L1::CommunicationManager::globalMemorySlotTagKeyMap_t _deregisteredGlobalMemorySlotsTagKeyMap;
+
   __INLINE__ void lockMPIWindow(int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
     // Locking MPI window to ensure the messages arrives before returning
@@ -257,6 +264,35 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] memorySlot Memory slot to query for updates.
    */
   __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override {}
+
+  /**
+   * MPI-specific operations associated with the de-registration of a global memory slot
+   * This operation is non-collective.
+   *
+   * In MPI we can not afford to lose track of the MPI windows, as they need to be freed collectively.
+   * Therefore, if a particular instance requests the destruction of a memory slot but other instances
+   * have lost track of the window, by deregistering the slot, the window cannot be freed.
+   *
+   * This should not be a problem in e.g., LPF, as the slots are just IDs and can be exchanged in order to
+   * be collectively freed.
+   *
+   * \param[in] memorySlot The memory slot to deregister
+   */
+  __INLINE__ void deregisterGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
+  {
+    // Getting up-casted pointer for the slot
+    auto slot = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlot);
+
+    // Checking whether the slot passed is compatible with this backend
+    if (slot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
+
+    // Getting the slot information
+    const auto tag = slot->getGlobalTag();
+    const auto key = slot->getGlobalKey();
+
+    // Storing the deregistered slot, and it is guaranteed that the (MPI) type is correct
+    _deregisteredGlobalMemorySlotsTagKeyMap[tag][key] = slot;
+  }
 
   /**
    * Implementation of the fence operation for the mpi backend.
