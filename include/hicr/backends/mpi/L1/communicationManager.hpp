@@ -303,46 +303,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override {}
 
   /**
-   * Implementation of the fence operation for the mpi backend. For every single window corresponding
-   * to a memory slot associated with the tag, a fence needs to be executed
+   * Implementation of the fence operation for the mpi backend. 
+   * A barrier is sufficient, as MPI_Win_lock/MPI_Win_unlock passive
+   * synchronization is used to transfer data
    */
-  __INLINE__ void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override
-  {
-    // For every key-valued subset, and its elements, execute a fence
-    for (const auto &entry : _globalMemorySlotTagKeyMap[tag])
-    {
-      // Getting memory slot id
-      auto memorySlotPtr = entry.second;
-
-      // Getting up-casted pointer for the execution unit
-      auto memorySlot = dynamic_pointer_cast<mpi::L0::GlobalMemorySlot>(memorySlotPtr);
-
-      // Checking whether the execution unit passed is compatible with this backend
-      if (memorySlot == NULL) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
-
-      this->lockMPICalls();
-
-      // Attempting fence
-      auto status = MPI_Win_fence(0, *memorySlot->getDataWindow());
-
-      // Check for possible errors
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu.", tag);
-
-      // Attempting fence
-      status = MPI_Win_fence(0, *memorySlot->getRecvMessageCountWindow());
-
-      // Check for possible errors
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu.", tag);
-
-      // Attempting fence
-      status = MPI_Win_fence(0, *memorySlot->getSentMessageCountWindow());
-
-      // Check for possible errors
-      if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to fence on MPI window on fence operation for tag %lu.", tag);
-
-      this->unlockMPICalls();
-    }
-  }
+  __INLINE__ void fenceImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag) override { MPI_Barrier(_comm); }
 
   __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
