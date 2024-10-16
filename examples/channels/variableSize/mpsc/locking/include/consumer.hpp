@@ -95,13 +95,18 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
 
   // De-registering global slots
   communicationManager.deregisterGlobalMemorySlot(globalSizesBufferSlot);
+  communicationManager.deregisterGlobalMemorySlot(globalPayloadBuffer);
   communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBufferForCounts);
   communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBufferForPayloads);
 
   // Destroying global slots (collective calls)
   communicationManager.destroyGlobalMemorySlot(globalSizesBufferSlot);
+  communicationManager.destroyGlobalMemorySlot(globalPayloadBuffer);
   communicationManager.destroyGlobalMemorySlot(consumerCoordinationBufferForCounts);
   communicationManager.destroyGlobalMemorySlot(consumerCoordinationBufferForPayloads);
+
+  // Fence for Global Slot destruction/cleanup
+  communicationManager.fence(CHANNEL_TAG);
 
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(payloadBufferSlot);

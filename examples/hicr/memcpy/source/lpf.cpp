@@ -106,6 +106,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Destroying global slots (collective call)
   c.destroyGlobalMemorySlot(receiverSlot);
 
+  c.fence(CHANNEL_TAG);
+
   m.freeLocalMemorySlot(localSlot);
 }
 

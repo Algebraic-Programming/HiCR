@@ -63,14 +63,16 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager.fence(CHANNEL_TAG);
 
-  // De-registering global slots (collective calls)
+  // De-registering global slots
   communicationManager.deregisterGlobalMemorySlot(tokenBuffer);
   communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffer);
   communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
 
-  communicationManager.destroyGlobalMemorySlot(tokenBuffer);
-  communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffer);
+  // Destroying global slots
   communicationManager.destroyGlobalMemorySlot(consumerCoordinationBuffer);
+
+  // Fence for the destroys to occur
+  communicationManager.fence(CHANNEL_TAG);
 
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(coordinationBuffer);

@@ -139,12 +139,18 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
     communicationManager.destroyGlobalMemorySlot(globalBuffersForPayloads[i]);
     communicationManager.destroyGlobalMemorySlot(coordinationBuffersForCountsAsSlots[i]);
     communicationManager.destroyGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
-    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
-    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForPayloads[i]);
 
     memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForCounts[i]);
     memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForPayloads[i]);
     memoryManager.freeLocalMemorySlot(localBuffersForCounts[i].second);
     memoryManager.freeLocalMemorySlot(localBuffersForPayloads[i].second);
   }
+
+  // Fences for global slots destructions/cleanup
+  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  communicationManager.fence(CONSUMER_TOKEN_KEY);
+  communicationManager.fence(CONSUMER_PAYLOAD_KEY);
+  communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
 }

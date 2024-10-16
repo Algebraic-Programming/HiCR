@@ -95,8 +95,12 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
     communicationManager.deregisterGlobalMemorySlot(globalTokenBuffers[i]);
     communicationManager.destroyGlobalMemorySlot(globalTokenBuffers[i]);
     memoryManager.freeLocalMemorySlot(globalTokenBuffers[i]->getSourceLocalMemorySlot());
-    //communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffers[i]);
-    //communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffers[i]);
+    communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffers[i]);
+    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffers[i]);
     memoryManager.freeLocalMemorySlot(localCoordinationBuffers[i]);
   }
+
+  communicationManager.fence(TOKEN_TAG);
+  communicationManager.fence(PRODUCER_COORDINATION_TAG);
+  communicationManager.fence(CONSUMER_COORDINATION_TAG);
 }
