@@ -250,6 +250,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Deregistering from LPF
     lpf_deregister(_lpf, memorySlot->getLPFSlot());
+    lpf_deregister(_lpf, memorySlot->getLPFSwapSlot());
   }
 
   __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
