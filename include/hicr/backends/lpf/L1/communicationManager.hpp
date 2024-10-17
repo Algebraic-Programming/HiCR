@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstring>
+#include <set>
 #include <lpf/collectives.h>
 #include <lpf/core.h>
 #include <hicr/core/L0/localMemorySlot.hpp>
@@ -234,6 +235,79 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     }
   }
 
+  __INLINE__ void destroyGlobalMemorySlotsCollectiveImpl(HiCR::L0::GlobalMemorySlot::tag_t tag)
+  {
+    size_t localDestroySlotsCount = _globalMemorySlotsToDestroyPerTag[tag].size();
+
+    // Allgather the global slot to destroy counts
+    std::vector<size_t> globalDestroySlotCounts(_size);
+    for (size_t i = 0; i < _size; i++) globalDestroySlotCounts[i] = 0;
+    lpf_coll_t    coll;
+    lpf_memslot_t src_slot = LPF_INVALID_MEMSLOT;
+    lpf_memslot_t dst_slot = LPF_INVALID_MEMSLOT;
+
+    CHECK(lpf_register_global(_lpf, &localDestroySlotsCount, sizeof(size_t), &src_slot));
+    CHECK(lpf_register_global(_lpf, globalDestroySlotCounts.data(), sizeof(size_t) * _size, &dst_slot));
+    CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+
+    CHECK(lpf_collectives_init(_lpf, _rank, _size, 1, 0, sizeof(size_t) * _size, &coll));
+    CHECK(lpf_allgather(coll, src_slot, dst_slot, sizeof(size_t), false /* exclude myself */));
+    CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+    CHECK(lpf_collectives_destroy(coll));
+    CHECK(lpf_deregister(_lpf, src_slot));
+    CHECK(lpf_deregister(_lpf, dst_slot));
+    // End allgather slots to destroy counts block
+
+    size_t globalDestroySlotTotalCount = 0;
+    for (size_t i = 0; i < _size; i++) globalDestroySlotTotalCount += globalDestroySlotCounts[i];
+
+    // We need to destroy both the slot and the swap slot
+    localDestroySlotsCount *= 2lu;
+    globalDestroySlotTotalCount *= 2lu;
+
+    std::vector<size_t> globalDestroySlotCountsInBytes(_size);
+    for (size_t i = 0; i < _size; i++) globalDestroySlotCountsInBytes[i] = globalDestroySlotCounts[i] * 2 * sizeof(size_t);
+
+    // Allgather the global slot keys: Here we use the actual slot_t as the key! (contrary to MPI)
+    // We need both the slot and the swap slot IDs
+    std::vector<lpf_memslot_t> localDestroySlotIds(localDestroySlotsCount);
+    std::vector<lpf_memslot_t> globalDestroySlotIds(globalDestroySlotTotalCount);
+
+    // Filling in the local IDs storage
+    size_t i = 0;
+    for (auto slot : _globalMemorySlotsToDestroyPerTag[tag])
+    {
+      const auto memorySlot = std::dynamic_pointer_cast<HiCR::backend::lpf::L0::GlobalMemorySlot>(slot);
+      if (memorySlot.get() == nullptr) HICR_THROW_FATAL("Trying to use LPF to destroy a non-LPF global slot");
+      localDestroySlotIds[i++] = memorySlot->getLPFSlot();
+      localDestroySlotIds[i++] = memorySlot->getLPFSwapSlot();
+    }
+
+    lpf_memslot_t slot_local_ids  = LPF_INVALID_MEMSLOT;
+    lpf_memslot_t slot_global_ids = LPF_INVALID_MEMSLOT;
+
+    // Prepare the relevant slots
+    CHECK(lpf_register_local(_lpf, localDestroySlotIds.data(), localDestroySlotsCount * sizeof(lpf_memslot_t), &slot_local_ids));
+    CHECK(lpf_register_global(_lpf, globalDestroySlotIds.data(), globalDestroySlotTotalCount * sizeof(lpf_memslot_t), &slot_global_ids));
+    CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+
+    // Execute the allgatherv
+    CHECK(lpf_collectives_init(_lpf, _rank, _size, 1, 0, sizeof(lpf_memslot_t) * globalDestroySlotTotalCount, &coll));
+    CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+    CHECK(lpf_allgatherv(coll, slot_local_ids, slot_global_ids, globalDestroySlotCountsInBytes.data(), false /* exclude myself */));
+    CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+    CHECK(lpf_collectives_destroy(coll));
+    CHECK(lpf_deregister(_lpf, slot_local_ids));
+    CHECK(lpf_deregister(_lpf, slot_global_ids));
+    // End allgather global slot IDs block
+
+    // Deduplicate the global slot keys
+    std::set<lpf_memslot_t> globalDestroySlotIdsSet(globalDestroySlotIds.begin(), globalDestroySlotIds.end());
+
+    // Now we can iterate over the global slots to destroy one by one
+    for (auto id : globalDestroySlotIdsSet) lpf_deregister(_lpf, id);
+  }
+
   /**
    * Deletes a global memory slot from the backend. This operation is collective.
    * Attempting to access the global memory slot after this operation will result in undefined behavior.
@@ -317,7 +391,13 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * @param[in] tag Tags used as filter to decide which slots to fence against
    * \todo: Implement tags in LPF !!!
    */
-  __INLINE__ void fenceImpl(HiCR::L0::GlobalMemorySlot::tag_t tag) override { CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT)); }
+  __INLINE__ void fenceImpl(HiCR::L0::GlobalMemorySlot::tag_t tag) override
+  {
+    CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
+
+    // Call the slot destrction collective routine
+    destroyGlobalMemorySlotsCollectiveImpl(tag);
+  }
 
   /**
    * gets global memory slots associated with a tag
