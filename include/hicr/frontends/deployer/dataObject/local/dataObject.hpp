@@ -46,6 +46,11 @@ class DataObject final
   }
 
   /**
+   * Mark the data object available for publication
+   */
+  __INLINE__ void unpublish() {}
+
+  /**
    * Tries to release a previously published data object any instance that wants to take it
    *
    * @return True, if the data object was successfully release (copied to another instance), or was already released; false, if nobody claimed the data object
@@ -57,13 +62,6 @@ class DataObject final
 
     return false;
   }
-
-  /**
-   * Gets the data object id
-   *
-   * @return The data object id
-   */
-  dataObjectId_t getId() const { return _id; }
 
   /**
    * Obtains a data object from a remote instance, based on its id
@@ -84,6 +82,31 @@ class DataObject final
 
     // Creating data object
     return std::make_shared<DataObject>(nullptr, 0, 0, 0, seed);
+  }
+
+  /**
+   * Gets the data object id
+   *
+   * @return The data object id
+   */
+  dataObjectId_t getId() const { return _id; }
+
+  /**
+   * Set the data object id
+   *
+   * @param[in] id The data object id
+   */
+  void setId(const dataObjectId_t id) { _id = id; }
+
+  /**
+   * Gets the instance id
+   *
+   * @return The data object instance id
+   */
+  HiCR::L0::Instance::instanceId_t getInstanceId()
+  {
+    // Default to 0 since its local
+    return 0;
   }
 
   /**
@@ -122,7 +145,7 @@ class DataObject final
   /**
    * The data object's identifier
    */
-  const dataObjectId_t _id;
+  dataObjectId_t _id;
 };
 
 } // namespace deployer

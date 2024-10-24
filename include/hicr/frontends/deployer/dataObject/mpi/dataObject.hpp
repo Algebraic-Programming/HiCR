@@ -56,6 +56,8 @@ class DataObject final
    */
   __INLINE__ void publish()
   {
+    // Do nothing if the data object has already been published
+    if (_isPublished == true) { return; }
     // Pick the first 15 bits of the id and use it as MPI Tag
     const int dataObjectIdTag = _id & mpiTagMask;
 
@@ -63,7 +65,13 @@ class DataObject final
 
     // Publishing an asynchronous recieve for whoever needs this data
     MPI_Irecv(nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, dataObjectIdTag, MPI_COMM_WORLD, &publishRequest);
+    _isPublished = true;
   }
+
+  /**
+   * Mark the object available for publication again
+   */
+  __INLINE__ void unpublish() { _isPublished = false; }
 
   /**
    * Tries to release a previously published data object any instance that wants to take it
@@ -92,6 +100,9 @@ class DataObject final
 
     // Getting RPC execution unit index
     MPI_Ssend(_buffer, _size, MPI_BYTE, requester, _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD);
+
+    // Mark the object as not published
+    _isPublished = false;
 
     // Notifying that the data object has been transferred
     return true;
@@ -144,11 +155,23 @@ class DataObject final
   dataObjectId_t getId() const { return _id; }
 
   /**
+   * Set the data object id
+   * @param[in] id
+   */
+  void setId(const dataObjectId_t id) { _id = id; }
+
+  /**
    * Get data object instance id that owns it
    *
    * @return The instance id
    */
   HiCR::L0::Instance::instanceId_t getInstanceId() const { return _instanceId; }
+
+  /**
+   * Set the data object instance id
+   * @param[in] instanceId
+   */
+  void setInstanceId(const HiCR::L0::Instance::instanceId_t instanceId) { _instanceId = instanceId; }
 
   /**
    * Gets access to the internal data object buffer
@@ -181,7 +204,7 @@ class DataObject final
   /**
    * The data object's source isntance id
    */
-  const HiCR::L0::Instance::instanceId_t _instanceId;
+  HiCR::L0::Instance::instanceId_t _instanceId;
 
   /**
    * The data object's internal data size
@@ -191,12 +214,17 @@ class DataObject final
   /**
    * The data object's identifier
    */
-  const dataObjectId_t _id;
+  dataObjectId_t _id;
 
   /**
    * MPI-specific implementation Request object.
    */
-  MPI_Request publishRequest;
+  MPI_Request publishRequest = NULL;
+
+  /**
+   * Indicates whether the object has been published or not
+   */
+  bool _isPublished = false;
 };
 
 } // namespace deployer
