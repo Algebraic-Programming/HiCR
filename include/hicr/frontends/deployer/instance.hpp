@@ -180,7 +180,26 @@ class Instance
 #endif
 
     // Adding data object to list of data object pending release
+    // Avoid adding duplicats
     _pendingDataObjectsMutex.lock();
+
+    auto it    = _pendingDataObjects.begin();
+    auto found = false;
+
+    while (it != _pendingDataObjects.end() && found == false)
+    {
+      if ((*it)->getId() == dataObject.getId() && (*it)->getInstanceId() == dataObject.getInstanceId())
+      {
+        found = true;
+        continue;
+      }
+      it++;
+    }
+
+    // Remove old version, if found
+    if (found == true) { _pendingDataObjects.erase(it); }
+
+    // Add new version
     _pendingDataObjects.push_back(&dataObject);
     _pendingDataObjectsMutex.unlock();
   }
@@ -190,14 +209,14 @@ class Instance
    */
   __INLINE__ void releasePendingDataObjects()
   {
+#ifdef _HICR_USE_MPI_BACKEND_
     _pendingDataObjectsMutex.lock();
 
     // Iterate over the entire pending data object list to see if we can  release them (they were taken)
-    auto it = _pendingDataObjects.begin();
-#ifdef _HICR_USE_MPI_BACKEND_
+    auto                                    it = _pendingDataObjects.begin();
     backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
     cm->lockMPICalls();
-#endif
+
     while (it != _pendingDataObjects.end())
     {
       // If the current data object is released
@@ -213,11 +232,10 @@ class Instance
       // Advancing to the next data object in the list
       it++;
     }
-#ifdef _HICR_USE_MPI_BACKEND_
     cm->unlockMPICalls();
-#endif
 
     _pendingDataObjectsMutex.unlock();
+#endif
   }
 
   /**
@@ -272,6 +290,10 @@ class Instance
 #ifdef _HICR_USE_MPI_BACKEND_
     cm->unlockMPICalls();
 #endif
+
+    // Make the object available for publication again on the new instance
+    object->unpublish();
+
     return object;
   }
 
