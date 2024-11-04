@@ -30,7 +30,7 @@ class MockCommunicationManager : public HiCR::L1::CommunicationManager
   public:
 
   MOCK_METHOD(void, exchangeGlobalMemorySlotsImpl, (const HiCR::L0::GlobalMemorySlot::tag_t, const std::vector<globalKeyMemorySlotPair_t> &), (override));
-  MOCK_METHOD(void, destroyGlobalMemorySlot, (std::shared_ptr<HiCR::L0::GlobalMemorySlot>), (override));
+  MOCK_METHOD(void, destroyGlobalMemorySlotImpl, (std::shared_ptr<HiCR::L0::GlobalMemorySlot>), (override));
   MOCK_METHOD(std::shared_ptr<HiCR::L0::GlobalMemorySlot>,
               getGlobalMemorySlotImpl,
               (const HiCR::L0::GlobalMemorySlot::tag_t, const HiCR::L0::GlobalMemorySlot::globalKey_t),
