@@ -84,6 +84,8 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.destroyGlobalMemorySlot(globalTokenBufferSlot);
   communicationManager.destroyGlobalMemorySlot(consumerCoordinationBuffer);
 
+  communicationManager.fence(CHANNEL_TAG);
+
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(tokenBufferSlot);
   memoryManager.freeLocalMemorySlot(coordinationBuffer);

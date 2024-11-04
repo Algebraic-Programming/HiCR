@@ -85,6 +85,8 @@ int main(int argc, char **argv)
   // Destroying global slots (collective call)
   c.destroyGlobalMemorySlot(receiverSlot);
 
+  c.fence(CHANNEL_TAG);
+
   m.freeLocalMemorySlot(localSlot);
 
   MPI_Finalize();

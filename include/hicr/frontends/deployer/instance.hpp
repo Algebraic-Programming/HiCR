@@ -163,7 +163,7 @@ class Instance
    * Publishes a data object to enable it to be obtained by another instance
    *
    * This method stores the published data objects internally to later check for releasing
-   * 
+   *
    * @param[in] dataObject A reference to the data object to publish
    */
   __INLINE__ void publishDataObject(DataObject &dataObject)
@@ -172,11 +172,11 @@ class Instance
 
 #ifdef _HICR_USE_MPI_BACKEND_
     backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
-    cm->lockMPICalls();
+    cm->lock();
 #endif
     dataObject.publish();
 #ifdef _HICR_USE_MPI_BACKEND_
-    cm->unlockMPICalls();
+    cm->unlock();
 #endif
 
     // Adding data object to list of data object pending release
@@ -215,7 +215,7 @@ class Instance
     // Iterate over the entire pending data object list to see if we can  release them (they were taken)
     auto                                    it = _pendingDataObjects.begin();
     backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
-    cm->lockMPICalls();
+    cm->lock();
 
     while (it != _pendingDataObjects.end())
     {
@@ -232,7 +232,7 @@ class Instance
       // Advancing to the next data object in the list
       it++;
     }
-    cm->unlockMPICalls();
+    cm->unlock();
 
     _pendingDataObjectsMutex.unlock();
 #endif
@@ -283,12 +283,12 @@ class Instance
 
 #ifdef _HICR_USE_MPI_BACKEND_
     backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
-    cm->lockMPICalls();
+    cm->lock();
 #endif
     // Creating data object from id and remote instance id
     auto object = DataObject::getDataObject(dataObject, currentInstanceId, _instanceManager->getSeed());
 #ifdef _HICR_USE_MPI_BACKEND_
-    cm->unlockMPICalls();
+    cm->unlock();
 #endif
 
     // Make the object available for publication again on the new instance

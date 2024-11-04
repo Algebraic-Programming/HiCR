@@ -45,11 +45,12 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
 
   // Obtaining the globally exchanged memory slots
   std::shared_ptr<HiCR::L0::GlobalMemorySlot> globalSizesBufferSlot = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
-  auto producerCoordinationBufferForCounts                          = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
-  auto producerCoordinationBufferForPayloads                        = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
-  auto consumerCoordinationBufferForCounts                          = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
-  auto consumerCoordinationBufferForPayloads                        = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
-  auto payloadBuffer                                                = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
+
+  auto producerCoordinationBufferForCounts   = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  auto producerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  auto consumerCoordinationBufferForCounts   = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  auto consumerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  auto payloadBuffer                         = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
 
   // Creating producer and consumer channels
   auto consumer = HiCR::channel::variableSize::SPSC::Consumer(communicationManager,
@@ -91,11 +92,11 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBufferForPayloads);
 
   // Destroying global slots (collective calls)
-  communicationManager.destroyGlobalMemorySlot(globalSizesBufferSlot);
-  communicationManager.destroyGlobalMemorySlot(producerCoordinationBufferForCounts);
-  communicationManager.destroyGlobalMemorySlot(producerCoordinationBufferForPayloads);
   communicationManager.destroyGlobalMemorySlot(consumerCoordinationBufferForCounts);
   communicationManager.destroyGlobalMemorySlot(consumerCoordinationBufferForPayloads);
+  communicationManager.destroyGlobalMemorySlot(payloadBuffer);
+
+  communicationManager.fence(CHANNEL_TAG);
 
   // Freeing up local memory
   memoryManager.freeLocalMemorySlot(payloadBufferSlot);

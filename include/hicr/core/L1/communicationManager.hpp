@@ -14,6 +14,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <hicr/core/L0/globalMemorySlot.hpp>
@@ -60,12 +61,29 @@ class CommunicationManager
   virtual ~CommunicationManager() = default;
 
   /**
+   * Backend-internal implementation of the locking of a mutual exclusion mechanism.
+   * By default, a single mutex can protect access to internal fields.
+   * It is up to the application developer to ensure that the mutex is used correctly
+   * and efficiently, e.g., grouping multiple operations under a single lock.
+   *
+   * \todo: Implement a more fine-grained locking mechanism, e.g., per map mutex or parallel maps,
+   *        and expose thread-safe operations to the user.
+   */
+  virtual void lock() { _mutex.lock(); };
+
+  /**
+   * Backend-internal implementation of the unlocking of a mutual exclusion mechanism.
+   * Same considerations as for lock() apply.
+   */
+  virtual void unlock() { _mutex.unlock(); };
+
+  /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  __INLINE__ void exchangeGlobalMemorySlots(const L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
+  __INLINE__ void exchangeGlobalMemorySlots(L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots)
   {
     // Calling internal implementation of this function
     exchangeGlobalMemorySlotsImpl(tag, memorySlots);
@@ -77,26 +95,20 @@ class CommunicationManager
    * \param[in] tag Tag that identifies a subset of all global memory slots
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
+   *
+   * \note This method is not thread-safe. It is up to the application developer to ensure that
    */
-  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlot(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey)
+  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlot(L0::GlobalMemorySlot::tag_t tag, L0::GlobalMemorySlot::globalKey_t globalKey)
   {
     auto globalSlotImpl = getGlobalMemorySlotImpl(tag, globalKey);
 
     if (globalSlotImpl != nullptr) { return globalSlotImpl; }
     else
     {
-      // Locking access to prevent concurrency issues
-      this->lock();
-
       // If the requested tag and key are not found, return empty storage
-      if (_globalMemorySlotTagKeyMap.contains(tag) == false)
-      {
-        this->unlock();
-        HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag);
-      }
+      if (_globalMemorySlotTagKeyMap.contains(tag) == false) { HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag); }
       if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false)
       {
-        this->unlock();
         for (auto elem : _globalMemorySlotTagKeyMap.at(tag)) { printf("For Tag %lu: Key %lu\n", tag, elem.first); }
         printf("But tag %lu does not contain globalKey = %lu\n", tag, globalKey);
         HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
@@ -104,9 +116,6 @@ class CommunicationManager
 
       // Getting requested memory slot
       auto value = _globalMemorySlotTagKeyMap.at(tag).at(globalKey);
-
-      // Releasing lock
-      this->unlock();
 
       // Returning value
       return value;
@@ -119,6 +128,8 @@ class CommunicationManager
    * but can no longer be accessed via #getGlobalMemorySlot.
    *
    * \param[in] memorySlot Memory slot to deregister.
+   *
+   * \note This method is not thread-safe. It is up to the application developer to ensure that it is called with proper locking.
    */
   __INLINE__ void deregisterGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
   {
@@ -126,30 +137,33 @@ class CommunicationManager
     const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
-    // Locking access to prevent concurrency issues
-    this->lock();
-
     // Checking whether the memory slot is correctly registered as global
     if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
     {
-      this->unlock();
       HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag/key pair is not registered in this backend");
     }
 
     // Removing memory slot from the global memory slot map
     _globalMemorySlotTagKeyMap.at(memorySlotTag).erase(memorySlotGlobalKey);
-
-    // Releasing lock
-    this->unlock();
+    deregisterGlobalMemorySlotImpl(memorySlot);
   }
 
   /**
-   * Deletes a global memory slot from the backend. This operation is collective.
-   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   * Destroys a global memory slot. This operation is non-blocking and non-collective.
+   * Its effects will be visible after the next call to #fence(L0::GlobalMemorySlot::tag_t)
+   * where the tag is the tag of the memory slot to destroy. That means that multiple slots
+   * under the same tag can be destroyed in a single fence operation.
    *
    * \param[in] memorySlot Memory slot to destroy.
+   *
+   * \note This method is not thread-safe. It is up to the application developer to ensure that
    */
-  virtual void destroyGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
+  __INLINE__ void destroyGlobalMemorySlot(std::shared_ptr<L0::GlobalMemorySlot> memorySlot)
+  {
+    auto tag = memorySlot->getGlobalTag();
+    // Implicit creation of the tag entry if it doesn't exist is desired here
+    _globalMemorySlotsToDestroyPerTag[tag].push_back(memorySlot);
+  }
 
   /**
    * Queries the backend to update the internal state of the memory slot.
@@ -177,11 +191,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination,
-                         const size_t                         dst_offset,
-                         std::shared_ptr<L0::LocalMemorySlot> source,
-                         const size_t                         src_offset,
-                         const size_t                         size)
+  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -221,11 +231,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination,
-                         const size_t                          dst_offset,
-                         std::shared_ptr<L0::LocalMemorySlot>  source,
-                         const size_t                          src_offset,
-                         const size_t                          size)
+  __INLINE__ void memcpy(std::shared_ptr<L0::GlobalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -254,11 +260,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot>  destination,
-                         const size_t                          dst_offset,
-                         std::shared_ptr<L0::GlobalMemorySlot> source,
-                         const size_t                          src_offset,
-                         const size_t                          size)
+  __INLINE__ void memcpy(std::shared_ptr<L0::LocalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::GlobalMemorySlot> source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto dstSize = destination->getSize();
@@ -284,7 +286,9 @@ class CommunicationManager
    * to arrive at the remote memory space, modulo any fatal exception).
    *
    * This function also finishes all pending local to global memory slot promotions,
-   * only for the specified tag.
+   * as well as destructions, only for the specified tag.
+   *
+   * This call is thread-safe.
    *
    * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    * Exceptions are thrown in the following cases:
@@ -296,17 +300,17 @@ class CommunicationManager
    * \todo How does this interact with malleability of resources of which HiCR is
    *       aware? One possible answer is a special event that if left unhandled,
    *       is promoted to a fatal exception.
-   *
-   * \todo This all should be threading safe.
    */
-  __INLINE__ void fence(const L0::GlobalMemorySlot::tag_t tag)
+  __INLINE__ void fence(L0::GlobalMemorySlot::tag_t tag)
   {
-    // To enable concurrent fence operations, the implementation is executed outside the mutex zone
-    // This means that the developer needs to make sure that the implementation is concurrency-safe,
-    // and try not to access any of the internal Backend class fields without proper mutex locking
-
+    lock();
     // Now call the proper fence, as implemented by the backend
     fenceImpl(tag);
+
+    // Clear the memory slots to destroy
+    _globalMemorySlotsToDestroyPerTag[tag].clear();
+    _globalMemorySlotsToDestroyPerTag.erase(tag);
+    unlock();
   }
 
   /**
@@ -388,25 +392,17 @@ class CommunicationManager
     const auto memorySlotTag       = memorySlot->getGlobalTag();
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
-    // Locking access to prevent concurrency issues
-    this->lock();
-
     // Checking whether the memory slot is correctly registered as global
     if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
     {
-      this->unlock();
       HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
     }
 
     // Checking whether the memory slot is correctly registered as global
     if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false)
     {
-      this->unlock();
       HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
     }
-
-    // Releasing lock
-    this->unlock();
 
     // Calling internal implementation
     releaseGlobalLockImpl(memorySlot);
@@ -437,14 +433,8 @@ class CommunicationManager
     const auto tag       = memorySlot->getGlobalTag();
     const auto globalKey = memorySlot->getGlobalKey();
 
-    // Locking access to prevent concurrency issues
-    this->lock();
-
     // Adding memory slot to the global map (based on tag and key)
     _globalMemorySlotTagKeyMap[tag][globalKey] = memorySlot;
-
-    // Releasing lock
-    this->unlock();
   }
 
   /**
@@ -456,7 +446,7 @@ class CommunicationManager
    * \param[in] globalKey The sorting key inside the tag subset that distinguished between registered slots
    * \return The map of registered global memory slots, filtered by tag and mapped by key
    */
-  virtual std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlotImpl(const L0::GlobalMemorySlot::tag_t tag, const L0::GlobalMemorySlot::globalKey_t globalKey) = 0;
+  virtual std::shared_ptr<L0::GlobalMemorySlot> getGlobalMemorySlotImpl(L0::GlobalMemorySlot::tag_t tag, L0::GlobalMemorySlot::globalKey_t globalKey) = 0;
 
   /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
@@ -464,24 +454,29 @@ class CommunicationManager
    * \param[in] tag Identifies a particular subset of global memory slots
    * \param[in] memorySlots Array of local memory slots to make globally accessible
    */
-  virtual void exchangeGlobalMemorySlotsImpl(const HiCR::L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
+  virtual void exchangeGlobalMemorySlotsImpl(L0::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) = 0;
 
   /**
    * Backend-internal implementation of the queryMemorySlotUpdates function
    *
    * \param[in] memorySlot Memory slot to query updates for.
    */
-  virtual void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) = 0;
+  virtual void queryMemorySlotUpdatesImpl(std::shared_ptr<L0::LocalMemorySlot> memorySlot) = 0;
 
   /**
-   * Backend-internal implementation of the locking of a mutual exclusion mechanism. By default, no concurrency is assumed
+   * Optional backend-internal implementation of the deregisterGlobalMemorySlot function
+   *
+   * \param[in] memorySlot Memory slot to deregister.
    */
-  virtual void lock(){};
+  virtual void deregisterGlobalMemorySlotImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot){};
 
   /**
-   * Backend-internal implementation of the unlocking of a mutual exclusion mechanism
+   * Deletes a global memory slot from the backend. This operation is collective.
+   * Attempting to access the global memory slot after this operation will result in undefined behavior.
+   *
+   * \param[in] memorySlot Memory slot to destroy.
    */
-  virtual void unlock(){};
+  virtual void destroyGlobalMemorySlotImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
 
   /**
    * Backend-internal implementation of the memcpy function
@@ -492,11 +487,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-                          const size_t                               dst_offset,
-                          std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-                          const size_t                               src_offset,
-                          const size_t                               size)
+  virtual void memcpyImpl(std::shared_ptr<L0::LocalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Local->Local memcpy operations are unsupported by the given backend");
   };
@@ -510,11 +501,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> destination,
-                          const size_t                                dst_offset,
-                          std::shared_ptr<HiCR::L0::LocalMemorySlot>  source,
-                          const size_t                                src_offset,
-                          const size_t                                size)
+  virtual void memcpyImpl(std::shared_ptr<L0::GlobalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::LocalMemorySlot> source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Local->Global memcpy operations are unsupported by the given backend");
   };
@@ -528,11 +515,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot>  destination,
-                          const size_t                                dst_offset,
-                          std::shared_ptr<HiCR::L0::GlobalMemorySlot> source,
-                          const size_t                                src_offset,
-                          const size_t                                size)
+  virtual void memcpyImpl(std::shared_ptr<L0::LocalMemorySlot> destination, size_t dst_offset, std::shared_ptr<L0::GlobalMemorySlot> source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Global->Local memcpy operations are unsupported by the given backend");
   };
@@ -559,25 +542,36 @@ class CommunicationManager
    * \param[in] tag A tag that releases all processes that share the same value once they have arrived at it
    *
    */
-  virtual void fenceImpl(const L0::GlobalMemorySlot::tag_t tag) = 0;
+  virtual void fenceImpl(L0::GlobalMemorySlot::tag_t tag) = 0;
 
   /**
    * Backend-specific implementation of the acquireGlobalLock function
    * @param[in] memorySlot See the acquireGlobalLock function
    * @return See the acquireGlobalLock function
    */
-  virtual bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) = 0;
+  virtual bool acquireGlobalLockImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
 
   /**
    * Backend-specific implementation of the releaseGlobalLock function
    * @param[in] memorySlot See the releaseGlobalLock function
    */
-  virtual void releaseGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) = 0;
+  virtual void releaseGlobalLockImpl(std::shared_ptr<L0::GlobalMemorySlot> memorySlot) = 0;
+
+  /**
+   * Allow programmers to use a mutex to protect the communication manager's state when doing opeartions like
+   * deregistering and marking memory slots for destruction, internally protect backend (e.g., MPI) calls, etc.
+   */
+  std::mutex _mutex;
 
   /**
    * Storage for global tag/key associated global memory slot exchange
    */
   globalMemorySlotTagKeyMap_t _globalMemorySlotTagKeyMap;
+
+  /**
+   * Storage for global memory slots to be destroyed during the next fence operation
+   */
+  std::map<L0::GlobalMemorySlot::tag_t, std::vector<std::shared_ptr<L0::GlobalMemorySlot>>> _globalMemorySlotsToDestroyPerTag;
 };
 
 } // namespace L1
