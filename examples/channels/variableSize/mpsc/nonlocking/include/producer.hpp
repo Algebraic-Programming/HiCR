@@ -38,18 +38,19 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
 
   // get from consumer global count/payload slots
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY, {});
-  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, {});
-  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_TOKEN_KEY, {});
-  communicationManager.fence(CONSUMER_TOKEN_KEY);
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_PAYLOAD_KEY, {});
+
+  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  communicationManager.fence(CONSUMER_TOKEN_KEY);
   communicationManager.fence(CONSUMER_PAYLOAD_KEY);
 
   // send to consumers my coordination buffers
   communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, {{producerId, coordinationBufferForCounts}});
-  communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, {{producerId, coordinationBufferForPayloads}});
+  communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
 
   // get all global slot information required (local operations)
@@ -123,10 +124,10 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
     communicationManager.deregisterGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
     communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
     communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForPayloads[i]);
-
-    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
-    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForPayloads[i]);
   }
+
+  communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForCounts[producerId]);
+  communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForPayloads[producerId]);
 
   // Fences for global slots destructions/cleanup
   communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
