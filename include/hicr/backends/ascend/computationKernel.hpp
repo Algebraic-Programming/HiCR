@@ -193,7 +193,7 @@ class ComputationKernel final : public Kernel
    *
    * \param[in] kernelPath path to the compiled kernel file
    */
-  __INLINE__ void loadKernel(const std::string kernelPath)
+  __INLINE__ void loadKernel(const std::string &kernelPath)
   {
     // get size of file to know how much memory to allocate
     std::uintmax_t filesize = std::filesystem::file_size(kernelPath);

@@ -78,12 +78,12 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] size the number of bytes to copy
    * \param[in] stream Ascend stream containing the state of the operation for later check
    */
-  __INLINE__ void memcpyAsync(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-                              const size_t                               dst_offset,
-                              std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-                              const size_t                               src_offset,
-                              const size_t                               size,
-                              const aclrtStream                          stream)
+  __INLINE__ void memcpyAsync(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &destination,
+                              const size_t                                      dst_offset,
+                              const std::shared_ptr<HiCR::L0::LocalMemorySlot> &source,
+                              const size_t                                      src_offset,
+                              const size_t                                      size,
+                              const aclrtStream                                 stream)
   {
     memcpyInternal(destination, dst_offset, source, src_offset, size, stream);
   }
@@ -124,21 +124,21 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * \param[in] src_offset source offset
    * \param[in] size the number of bytes to copy
    */
-  __INLINE__ void memcpyImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-                             const size_t                               dst_offset,
-                             std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-                             const size_t                               src_offset,
-                             const size_t                               size) override
+  __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &destination,
+                             const size_t                                      dst_offset,
+                             const std::shared_ptr<HiCR::L0::LocalMemorySlot> &source,
+                             const size_t                                      src_offset,
+                             const size_t                                      size) override
   {
     memcpyInternal(destination, dst_offset, source, src_offset, size, NULL);
   }
 
-  __INLINE__ void memcpyInternal(std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-                                 const size_t                               dst_offset,
-                                 std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-                                 const size_t                               src_offset,
-                                 const size_t                               size,
-                                 const aclrtStream                          stream)
+  __INLINE__ void memcpyInternal(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &destination,
+                                 const size_t                                      dst_offset,
+                                 const std::shared_ptr<HiCR::L0::LocalMemorySlot> &source,
+                                 const size_t                                      src_offset,
+                                 const size_t                                      size,
+                                 const aclrtStream                                 stream)
   {
     // Storage for device type
     deviceType_t srcType = deviceType_t::none;

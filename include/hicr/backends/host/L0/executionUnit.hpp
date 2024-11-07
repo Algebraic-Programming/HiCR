@@ -14,18 +14,10 @@
 
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/L0/executionUnit.hpp>
+#include <utility>
 #include "../coroutine.hpp"
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L0
+namespace HiCR::backend::host::L0
 {
 
 /**
@@ -42,22 +34,22 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    */
   ExecutionUnit(Coroutine::coroutineFc_t fc)
     : HiCR::L0::ExecutionUnit(),
-      _fc(fc){};
+      _fc(std::move(fc)){};
   ExecutionUnit() = delete;
 
   /**
    * Default destructor
    */
-  ~ExecutionUnit() = default;
+  ~ExecutionUnit() override = default;
 
-  __INLINE__ std::string getType() const override { return "C++ Function"; }
+  [[nodiscard]] __INLINE__ std::string getType() const override { return "C++ Function"; }
 
   /**
    * Returns the internal function stored inside this execution unit
    *
    * \return The internal function stored inside this execution unit
    */
-  __INLINE__ const Coroutine::coroutineFc_t &getFunction() const { return _fc; }
+  [[nodiscard]] __INLINE__ const Coroutine::coroutineFc_t &getFunction() const { return _fc; }
 
   private:
 
@@ -67,10 +59,4 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
   const Coroutine::coroutineFc_t _fc;
 };
 
-} // namespace L0
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L0

@@ -14,20 +14,9 @@
 #pragma once
 
 #include <hicr/frontends/channel/variableSize/spsc/producer.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace channel
-{
-
-namespace variableSize
-{
-
-namespace MPSC
-{
-
-namespace nonlocking
+namespace HiCR::channel::variableSize::MPSC::nonlocking
 {
 
 /**
@@ -60,25 +49,25 @@ class Producer final : public variableSize::SPSC::Producer
    * \param[in] payloadSize size in bytes of the datatype used for variable-sized messages
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager             &communicationManager,
-           std::shared_ptr<L0::LocalMemorySlot>  sizeInfoBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot> payloadBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForCounts,
-           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForPayloads,
-           std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBufferForCounts,
-           std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBufferForPayloads,
-           const size_t                          payloadCapacity,
-           const size_t                          payloadSize,
-           const size_t                          capacity)
+  Producer(L1::CommunicationManager                   &communicationManager,
+           std::shared_ptr<L0::LocalMemorySlot>        sizeInfoBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot>       payloadBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot>       tokenBuffer,
+           const std::shared_ptr<L0::LocalMemorySlot> &internalCoordinationBufferForCounts,
+           const std::shared_ptr<L0::LocalMemorySlot> &internalCoordinationBufferForPayloads,
+           std::shared_ptr<L0::GlobalMemorySlot>       consumerCoordinationBufferForCounts,
+           std::shared_ptr<L0::GlobalMemorySlot>       consumerCoordinationBufferForPayloads,
+           const size_t                                payloadCapacity,
+           const size_t                                payloadSize,
+           const size_t                                capacity)
     : variableSize::SPSC::Producer(communicationManager,
-                                   sizeInfoBuffer,
-                                   payloadBuffer,
-                                   tokenBuffer,
+                                   std::move(sizeInfoBuffer),
+                                   std::move(payloadBuffer),
+                                   std::move(tokenBuffer),
                                    internalCoordinationBufferForCounts,
                                    internalCoordinationBufferForPayloads,
-                                   consumerCoordinationBufferForCounts,
-                                   consumerCoordinationBufferForPayloads,
+                                   std::move(consumerCoordinationBufferForCounts),
+                                   std::move(consumerCoordinationBufferForPayloads),
                                    payloadCapacity,
                                    payloadSize,
                                    capacity)
@@ -86,12 +75,4 @@ class Producer final : public variableSize::SPSC::Producer
   ~Producer() = default;
 };
 
-} // namespace nonlocking
-
-} // namespace MPSC
-
-} // namespace variableSize
-
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel::variableSize::MPSC::nonlocking

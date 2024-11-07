@@ -19,20 +19,13 @@
 #include <hicr/core/L0/topology.hpp>
 #include <hicr/core/L1/topologyManager.hpp>
 
-namespace HiCR
+namespace HiCR::backend::host::hwloc::L1
 {
 
-namespace backend
-{
-
-namespace host
-{
-
-namespace hwloc
-{
-
-namespace L1
-{
+/**
+ * Max storage for memspace information
+ */
+constexpr size_t _HWLOC_MAX_MEMSPACE_SIZE = 1024;
 
 /**
  * Implementation of the HWLoc-based topology manager for host (CPU) resource detection
@@ -54,7 +47,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   /**
    * The constructor is employed to free memory required for hwloc
    */
-  ~TopologyManager() = default;
+  ~TopologyManager() override = default;
 
   __INLINE__ HiCR::L0::Topology queryTopology() override
   {
@@ -109,7 +102,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     return t;
   }
 
-  __INLINE__ HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override { return deserializeTopology(topology); }
+  [[nodiscard]] __INLINE__ HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const override { return deserializeTopology(topology); }
 
   /**
    * This function represents the default intializer for this backend
@@ -139,7 +132,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     HiCR::L0::Device::computeResourceList_t computeResourceList;
 
     // Creating compute resource list, based on the  processing units (hyperthreads) observed by HWLoc
-    std::vector<int> logicalProcessorIds;
+    std::vector<L0::ComputeResource::logicalProcessorId_t> logicalProcessorIds;
     L0::ComputeResource::detectThreadPUs(*_topology, hwloc_get_root_obj(*_topology), 0, logicalProcessorIds);
 
     // Adding detected PUs as long they belong to this numa domain
@@ -170,9 +163,9 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
     // Checking whther bound memory allocation and freeing is supported
     auto   bindingSupport = L0::LocalMemorySlot::binding_type::strict_non_binding;
-    size_t size           = 1024;
+    size_t size           = _HWLOC_MAX_MEMSPACE_SIZE;
     auto   ptr            = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
-    if (ptr != NULL)
+    if (ptr != nullptr)
     {
       // Attempting to free with hwloc
       auto status = hwloc_free(*_topology, ptr, size);
@@ -200,12 +193,4 @@ class TopologyManager final : public HiCR::L1::TopologyManager
   hwloc_topology_t *const _topology;
 };
 
-} // namespace L1
-
-} // namespace hwloc
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::hwloc::L1

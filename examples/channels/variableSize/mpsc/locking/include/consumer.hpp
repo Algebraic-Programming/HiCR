@@ -61,7 +61,6 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
                                                                        consumerCoordinationBufferForCounts,
                                                                        consumerCoordinationBufferForPayloads,
                                                                        payloadCapacity,
-                                                                       sizeof(ELEMENT_TYPE), /* payloadSize */
                                                                        channelCapacity);
 
   // Getting internal pointer of the token buffer slot

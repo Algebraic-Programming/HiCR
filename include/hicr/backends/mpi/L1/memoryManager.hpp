@@ -18,16 +18,7 @@
 #include <hicr/backends/host/L0/memorySpace.hpp>
 #include "../L0/localMemorySlot.hpp"
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace mpi
-{
-
-namespace L1
+namespace HiCR::backend::mpi::L1
 {
 
 /**
@@ -45,7 +36,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   MemoryManager()
     : HiCR::L1::MemoryManager()
   {}
-  ~MemoryManager() = default;
+  ~MemoryManager() override = default;
 
   /**
    * Allocates memory in the current memory space (whole system) using MPI_Alloc_mem
@@ -61,16 +52,16 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
+    if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     // Storage for the new pointer
-    void *ptr = NULL;
+    void *ptr = nullptr;
 
     // Attempting to allocate the new memory slot
-    auto status = MPI_Alloc_mem(size, MPI_INFO_NULL, &ptr);
+    auto status = MPI_Alloc_mem((MPI_Aint)size, MPI_INFO_NULL, &ptr);
 
     // Check whether it was successful
-    if (status != MPI_SUCCESS || ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
+    if (status != MPI_SUCCESS || ptr == nullptr) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", size);
 
     // Creating and returning new memory slot
     return registerLocalMemorySlotImpl(memorySpace, ptr, size);
@@ -97,10 +88,4 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   }
 };
 
-} // namespace L1
-
-} // namespace mpi
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::mpi::L1

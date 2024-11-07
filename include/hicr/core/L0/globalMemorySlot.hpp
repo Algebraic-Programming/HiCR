@@ -13,11 +13,9 @@
 
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/L0/localMemorySlot.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -32,12 +30,12 @@ class GlobalMemorySlot
   /**
    * Type definition for a global key (for exchanging global memory slots)
    */
-  typedef uint64_t globalKey_t;
+  using globalKey_t = uint64_t;
 
   /**
    * Type definition for a communication tag
    */
-  typedef uint64_t tag_t;
+  using tag_t = uint64_t;
 
   /**
    * Default constructor for a MemorySlot class
@@ -50,7 +48,7 @@ class GlobalMemorySlot
   GlobalMemorySlot(const tag_t globalTag = 0, const globalKey_t globalKey = 0, std::shared_ptr<HiCR::L0::LocalMemorySlot> sourceLocalMemorySlot = nullptr)
     : _globalTag(globalTag),
       _globalKey(globalKey),
-      _sourceLocalMemorySlot(sourceLocalMemorySlot)
+      _sourceLocalMemorySlot(std::move(sourceLocalMemorySlot))
   {}
 
   /**
@@ -62,13 +60,13 @@ class GlobalMemorySlot
    * Getter function for the memory slot's global tag
    * \returns The memory slot's global tag
    */
-  __INLINE__ tag_t getGlobalTag() const noexcept { return _globalTag; }
+  [[nodiscard]] __INLINE__ tag_t getGlobalTag() const noexcept { return _globalTag; }
 
   /**
    * Getter function for the memory slot's global key
    * \returns The memory slot's global key
    */
-  __INLINE__ globalKey_t getGlobalKey() const noexcept { return _globalKey; }
+  [[nodiscard]] __INLINE__ globalKey_t getGlobalKey() const noexcept { return _globalKey; }
 
   /**
    * Function to return the source local memory slot from which this global slot was created, if one exists (if not, it's a remote memory slot)
@@ -92,9 +90,7 @@ class GlobalMemorySlot
   /**
    * Pointer to the associated local memory slot (if one exists)
    */
-  std::shared_ptr<HiCR::L0::LocalMemorySlot> const _sourceLocalMemorySlot = 0;
+  std::shared_ptr<HiCR::L0::LocalMemorySlot> const _sourceLocalMemorySlot = nullptr;
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

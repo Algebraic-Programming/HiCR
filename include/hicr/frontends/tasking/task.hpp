@@ -15,6 +15,7 @@
 #include <atomic>
 #include <memory>
 #include <queue>
+#include <utility>
 #include <vector>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
@@ -24,10 +25,7 @@
 #include "callbackMap.hpp"
 #include "common.hpp"
 
-namespace HiCR
-{
-
-namespace tasking
+namespace HiCR::tasking
 {
 
 class Worker;
@@ -74,7 +72,7 @@ class Task
   /**
    * Type definition for the task's callback map
    */
-  typedef HiCR::tasking::CallbackMap<Task *, callback_t> taskCallbackMap_t;
+  using taskCallbackMap_t = HiCR::tasking::CallbackMap<Task *, callback_t>;
 
   Task()  = delete;
   ~Task() = default;
@@ -86,8 +84,8 @@ class Task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] callbackMap Pointer to the callback map callbacks to be called by the task
    */
-  __INLINE__ Task(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskCallbackMap_t *callbackMap = NULL)
-    : _executionUnit(executionUnit),
+  __INLINE__ Task(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskCallbackMap_t *callbackMap = nullptr)
+    : _executionUnit(std::move(executionUnit)),
       _callbackMap(callbackMap){};
 
   /**
@@ -119,7 +117,7 @@ class Task
   __INLINE__ const HiCR::L0::ExecutionState::state_t getState()
   {
     // If the execution state has not been initialized then return the value expliclitly
-    if (_executionState == NULL) return HiCR::L0::ExecutionState::state_t::uninitialized;
+    if (_executionState == nullptr) return HiCR::L0::ExecutionState::state_t::uninitialized;
 
     // Otherwise just query the initial execution state
     return _executionState->getState();
@@ -130,14 +128,14 @@ class Task
    *
    * \param[in] executionUnit The execution unit to assign to this task
    */
-  __INLINE__ void setExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnit = executionUnit; }
+  __INLINE__ void setExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnit = std::move(executionUnit); }
 
   /**
    * Returns the execution unit assigned to this task
    *
    * \return The execution unit assigned to this task
    */
-  __INLINE__ std::shared_ptr<HiCR::L0::ExecutionUnit> getExecutionUnit() const { return _executionUnit; }
+  [[nodiscard]] __INLINE__ std::shared_ptr<HiCR::L0::ExecutionUnit> getExecutionUnit() const { return _executionUnit; }
 
   /**
    * Implements the initialization routine of a task, that stores and initializes the execution state to run to completion
@@ -164,7 +162,7 @@ class Task
       HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", getState());
 
     // Triggering execution callback, if defined
-    if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onTaskExecute);
+    if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onTaskExecute);
 
     // Now resuming the task's execution
     _executionState->resume();
@@ -177,13 +175,13 @@ class Task
 
     // If the task is suspended and callback map is defined, trigger the corresponding callback.
     if (state == HiCR::L0::ExecutionState::state_t::suspended)
-      if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onTaskSuspend);
+      if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onTaskSuspend);
 
     // If the task is still running (no suspension), then the task has fully finished executing. If so,
     // trigger the corresponding callback, if the callback map is defined. It is important that this function
     // is called from outside the context of a task to allow the upper layer to free its memory upon finishing
     if (state == HiCR::L0::ExecutionState::state_t::finished)
-      if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onTaskFinish);
+      if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onTaskFinish);
   }
 
   /**
@@ -207,15 +205,13 @@ class Task
   /**
    *  Map of callbacks to trigger
    */
-  taskCallbackMap_t *_callbackMap = NULL;
+  taskCallbackMap_t *_callbackMap = nullptr;
 
   /**
    * Internal execution state of the task. Will change based on runtime scheduling callbacks
    */
-  std::unique_ptr<HiCR::L0::ExecutionState> _executionState = NULL;
+  std::unique_ptr<HiCR::L0::ExecutionState> _executionState = nullptr;
 
 }; // class Task
 
-} // namespace tasking
-
-} // namespace HiCR
+} // namespace HiCR::tasking

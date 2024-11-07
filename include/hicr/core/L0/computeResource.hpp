@@ -15,10 +15,7 @@
 #include <nlohmann_json/json.hpp>
 #include <hicr/core/definitions.hpp>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -36,7 +33,7 @@ class ComputeResource
    *
    * \return A string containing a human-readable description of the compute resource type
    */
-  virtual std::string getType() const = 0;
+  [[nodiscard]] virtual std::string getType() const = 0;
 
   /**
    * Default destructor
@@ -48,7 +45,7 @@ class ComputeResource
    *
    * @return JSON-formatted serialized compute resource information
    */
-  __INLINE__ nlohmann::json serialize() const
+  [[nodiscard]] __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -94,6 +91,4 @@ class ComputeResource
   virtual void deserializeImpl(const nlohmann::json &input) = 0;
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

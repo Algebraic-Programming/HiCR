@@ -18,19 +18,7 @@
 #include <hicr/backends/host/hwloc/L0/localMemorySlot.hpp>
 #include <hicr/core/L1/memoryManager.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace hwloc
-{
-
-namespace L1
+namespace HiCR::backend::host::hwloc::L1
 {
 
 /**
@@ -49,7 +37,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     : HiCR::L1::MemoryManager(),
       _topology{topology}
   {}
-  ~MemoryManager() = default;
+  ~MemoryManager() override = default;
 
   /**
    * Sets the desired memory binding type before running an allocation attempt
@@ -63,7 +51,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * @return The currently requested binding type
    */
-  L0::LocalMemorySlot::binding_type getRequestedBindingType() const { return _hwlocBindingRequested; }
+  [[nodiscard]] L0::LocalMemorySlot::binding_type getRequestedBindingType() const { return _hwlocBindingRequested; }
 
   /**
    * This function represents the default intializer for this backend
@@ -101,13 +89,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     auto m = dynamic_pointer_cast<L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
+    if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     // Getting binding type supported by the memory space
     const auto supportedBindingType = m->getSupportedBindingType();
 
     // Determining binding type to use
-    L0::LocalMemorySlot::binding_type bindingTypeToUse;
+    L0::LocalMemorySlot::binding_type bindingTypeToUse = L0::LocalMemorySlot::binding_type::strict_binding;
 
     // Checking whether the operation requested is supported by the HWLoc on this memory space
     if (_hwlocBindingRequested == L0::LocalMemorySlot::binding_type::strict_binding) bindingTypeToUse = L0::LocalMemorySlot::binding_type::strict_binding;
@@ -126,13 +114,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     const auto hwlocObj = m->getHWLocObject();
 
     // Allocating memory in the reqested memory space
-    void *ptr = NULL;
+    void *ptr = nullptr;
     if (bindingTypeToUse == L0::LocalMemorySlot::binding_type::strict_binding)
       ptr = hwloc_alloc_membind(*_topology, size, hwlocObj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_BYNODESET | HWLOC_MEMBIND_STRICT);
     if (bindingTypeToUse == L0::LocalMemorySlot::binding_type::strict_non_binding) ptr = malloc(size);
 
     // Error checking
-    if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory (size %lu) in the requested memory space", size);
+    if (ptr == nullptr) HICR_THROW_RUNTIME("Could not allocate memory (size %lu) in the requested memory space", size);
 
     // Creating new memory slot object
     auto memorySlot = std::make_shared<L0::LocalMemorySlot>(supportedBindingType, ptr, size, memorySpace);
@@ -161,7 +149,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     auto m = dynamic_pointer_cast<L0::LocalMemorySlot>(memorySlot);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (m == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+    if (m == nullptr) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
     // Getting memory slot info
     const auto memorySlotBindingType = m->getBindingType();
@@ -183,12 +171,4 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   }
 };
 
-} // namespace L1
-
-} // namespace hwloc
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::hwloc::L1

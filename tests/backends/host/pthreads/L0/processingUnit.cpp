@@ -31,11 +31,11 @@ TEST(ProcessingUnit, Construction)
 TEST(ProcessingUnit, AffinityFunctions)
 {
   // Storing current affinity set
-  std::set<int> originalAffinitySet;
+  std::set<HiCR::backend::host::L0::ComputeResource::logicalProcessorId_t> originalAffinitySet;
   ASSERT_NO_THROW(originalAffinitySet = HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity());
 
   // Attempting to set and check new affinity set
-  std::set<int> newAffinitySet({0, 1});
+  std::set<HiCR::backend::host::L0::ComputeResource::logicalProcessorId_t> newAffinitySet({0, 1});
   ASSERT_NO_THROW(HiCR::backend::host::pthreads::L0::ProcessingUnit::updateAffinity(newAffinitySet));
   ASSERT_EQ(newAffinitySet, HiCR::backend::host::pthreads::L0::ProcessingUnit::getAffinity());
 
@@ -66,7 +66,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   auto threadAffinity = cPtr->getProcessorId();
 
   // Putting affinity into a set
-  std::set<int> threadAffinitySet({threadAffinity});
+  std::set<HiCR::backend::host::L0::ComputeResource::logicalProcessorId_t> threadAffinitySet({threadAffinity});
 
   // Initializing processing unit
   ASSERT_NO_THROW(processingUnit->initialize());

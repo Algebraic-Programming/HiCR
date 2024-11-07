@@ -17,10 +17,7 @@
 #include <hicr/core/exceptions.hpp>
 #include "task.hpp"
 
-namespace HiCR
-{
-
-namespace tasking
+namespace HiCR::tasking
 {
 
 /**
@@ -149,6 +146,4 @@ class Mutex
   std::queue<HiCR::tasking::Task *> _queue;
 };
 
-} // namespace tasking
-
-} // namespace HiCR
+} // namespace HiCR::tasking

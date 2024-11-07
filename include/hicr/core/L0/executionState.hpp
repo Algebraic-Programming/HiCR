@@ -11,14 +11,12 @@
  */
 #pragma once
 
+#include <memory>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/executionUnit.hpp>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -130,7 +128,7 @@ class ExecutionState
    *
    * \param[in] executionUnit Represents a replicable executable unit (e.g., function, kernel) to execute
    */
-  ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit){};
+  ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> &executionUnit){};
 
   /**
    * Backend-specific implementation of the resume function
@@ -157,6 +155,4 @@ class ExecutionState
   state_t _state = state_t::initialized;
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

@@ -12,20 +12,9 @@
 #pragma once
 
 #include <hicr/core/L0/localMemorySlot.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace hwloc
-{
-
-namespace L0
+namespace HiCR::backend::host::hwloc::L0
 {
 
 /**
@@ -67,18 +56,18 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * \param[in] memorySpace The memory space from whence this memory slot was created
    */
   LocalMemorySlot(binding_type bindingType, void *const pointer, const size_t size, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
-    : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
+    : HiCR::L0::LocalMemorySlot(pointer, size, std::move(memorySpace)),
       _bindingType(bindingType)
   {}
 
-  ~LocalMemorySlot() = default;
+  ~LocalMemorySlot() override = default;
 
   /**
    * Returns the binding type used to allocate/register this memory slot
    *
    * \return The binding type used to allocate/register this memory slot
    */
-  __INLINE__ binding_type getBindingType() const { return _bindingType; }
+  [[nodiscard]] __INLINE__ binding_type getBindingType() const { return _bindingType; }
 
   private:
 
@@ -88,12 +77,4 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
   const binding_type _bindingType;
 };
 
-} // namespace L0
-
-} // namespace hwloc
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::hwloc::L0

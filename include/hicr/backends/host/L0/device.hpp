@@ -17,16 +17,7 @@
 #include <hicr/core/L0/computeResource.hpp>
 #include <hicr/core/L0/memorySpace.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L0
+namespace HiCR::backend::host::L0
 {
 
 /**
@@ -39,7 +30,7 @@ class Device : public HiCR::L0::Device
   /**
    * Type definition for a NUMA Domain identifier
    */
-  typedef int NUMADomainID_t;
+  using NUMADomainID_t = unsigned int;
 
   /**
    * Constructor for the device class of the sequential backend
@@ -61,16 +52,11 @@ class Device : public HiCR::L0::Device
   /**
    * Default destructor
    */
-  ~Device() = default;
+  ~Device() override = default;
 
   protected:
 
-  __INLINE__ std::string getType() const override { return "NUMA Domain"; }
-
-  /**
-   * Identifier for the NUMA domain represented by this class
-   */
-  NUMADomainID_t _NUMADomainId;
+  [[nodiscard]] __INLINE__ std::string getType() const override { return "NUMA Domain"; }
 
   __INLINE__ void serializeImpl(nlohmann::json &output) const override
   {
@@ -86,12 +72,13 @@ class Device : public HiCR::L0::Device
     if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
     _NUMADomainId = input[key].get<NUMADomainID_t>();
   }
+
+  private:
+
+  /**
+   * Identifier for the NUMA domain represented by this class
+   */
+  NUMADomainID_t _NUMADomainId{};
 };
 
-} // namespace L0
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L0

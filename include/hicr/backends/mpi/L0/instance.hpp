@@ -14,22 +14,13 @@
 #include <mpi.h>
 #include <hicr/core/L0/instance.hpp>
 
+namespace HiCR::backend::mpi::L0
+{
+
 /**
  * Definition for the root rank for an MPI deployment (zero because rank zero is always present)
  */
-#define _HICR_MPI_INSTANCE_ROOT_ID 0
-
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace mpi
-{
-
-namespace L0
-{
+constexpr int _HICR_MPI_INSTANCE_ROOT_ID = 0;
 
 /**
  * This class represents an abstract definition for a HICR instance as represented by the MPI backend:
@@ -50,9 +41,9 @@ class Instance final : public HiCR::L0::Instance
   /**
    * Default destructor
    */
-  ~Instance() = default;
+  ~Instance() override = default;
 
-  virtual bool isRootInstance() const
+  [[nodiscard]] bool isRootInstance() const override
   {
     // Criterion for root rank in MPI: Rank 0 will always be the root.
     return _rank == _HICR_MPI_INSTANCE_ROOT_ID;
@@ -62,7 +53,7 @@ class Instance final : public HiCR::L0::Instance
    * Retrieves this HiCR Instance's MPI rank
    * \return The MPI rank corresponding to this instance
    */
-  __INLINE__ int getRank() const { return _rank; }
+  [[nodiscard]] __INLINE__ int getRank() const { return _rank; }
 
   /**
    * Remembers the MPI rank this instance belongs to
@@ -70,10 +61,4 @@ class Instance final : public HiCR::L0::Instance
   const int _rank;
 };
 
-} // namespace L0
-
-} // namespace mpi
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::mpi::L0

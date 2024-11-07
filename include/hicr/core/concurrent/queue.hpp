@@ -15,10 +15,7 @@
 #include <atomic_queue/atomic_queue.h>
 #include <hicr/core/definitions.hpp>
 
-namespace HiCR
-{
-
-namespace concurrent
+namespace HiCR::concurrent
 {
 
 /**
@@ -45,7 +42,9 @@ class Queue
    * 
    * \param[in] maxEntries Indicates the maximum amount of entries
   */
-  Queue(const size_t maxEntries) { _queue = new lockFreeQueue_t<P *>(maxEntries); }
+  Queue(const size_t maxEntries)
+    : _queue(new lockFreeQueue_t<P *>(maxEntries))
+  {}
 
   ~Queue() { delete _queue; }
 
@@ -80,7 +79,7 @@ class Queue
    * 
    * \return True, if it is empty; false if its not. Possibly changed now.
    */
-  __INLINE__ bool wasEmpty() const { return _queue->was_empty(); }
+  [[nodiscard]] __INLINE__ bool wasEmpty() const { return _queue->was_empty(); }
 
   /**
    * Function to determine the current possible size of the queue
@@ -90,7 +89,7 @@ class Queue
    * 
    * \return The size of the queue, as last read by this thread. Possibly changed now.
    */
-  __INLINE__ size_t wasSize() const { return _queue->was_size(); }
+  [[nodiscard]] __INLINE__ size_t wasSize() const { return _queue->was_size(); }
 
   private:
 
@@ -100,6 +99,4 @@ class Queue
   lockFreeQueue_t<P *> *_queue;
 };
 
-} // namespace concurrent
-
-} // namespace HiCR
+} // namespace HiCR::concurrent

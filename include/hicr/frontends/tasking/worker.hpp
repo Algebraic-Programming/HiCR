@@ -14,6 +14,7 @@
 
 #include <thread>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <set>
 #include <unistd.h>
@@ -23,16 +24,23 @@
 #include <hicr/backends/host/L1/computeManager.hpp>
 #include "task.hpp"
 
-namespace HiCR
+namespace HiCR::tasking
 {
 
-namespace tasking
-{
+/**
+ * Default interval (milliseconds) of idle time to trigger a worker to suspend
+ */
+constexpr size_t _DEFAULT_SUSPEND_INTERVAL_MS = 1000;
+
+/**
+ * Constant: Number of milliseconds in one second
+ */
+constexpr size_t _MILISECONDS_PER_SECOND = 1000;
 
 /**
  * Defines a standard type for a pull function.
  */
-typedef std::function<HiCR::tasking::Task *()> pullFunction_t;
+using pullFunction_t = std::function<HiCR::tasking::Task *()>;
 
 /**
  * Defines the worker class, which is in charge of executing tasks.
@@ -74,7 +82,7 @@ class Worker
   /**
    * Type definition for the worker's callback map
    */
-  typedef HiCR::tasking::CallbackMap<Worker *, callback_t> workerCallbackMap_t;
+  using workerCallbackMap_t = HiCR::tasking::CallbackMap<Worker *, callback_t>;
 
   /**
    * Complete state set that a worker can be in
@@ -129,13 +137,13 @@ class Worker
    * \param[in] pullFunction A callback for the worker to get a new task to execute
    * @param[in] callbackMap Pointer to the callback map to be called by the worker
    */
-  Worker(HiCR::L1::ComputeManager *computeManager, pullFunction_t pullFunction, workerCallbackMap_t *callbackMap = NULL)
-    : _pullFunction(pullFunction),
+  Worker(HiCR::L1::ComputeManager *computeManager, pullFunction_t pullFunction, workerCallbackMap_t *callbackMap = nullptr)
+    : _pullFunction(std::move(pullFunction)),
       _computeManager(dynamic_cast<HiCR::backend::host::L1::ComputeManager *>(computeManager)),
       _callbackMap(callbackMap)
   {
     // Checking the passed compute manager is of a supported type
-    if (_computeManager == NULL) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");
+    if (_computeManager == nullptr) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");
   }
 
   virtual ~Worker() = default;
@@ -197,7 +205,7 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([](void *worker) { ((HiCR::tasking::Worker *)worker)->mainLoop(); });
+    auto executionUnit = HiCR::backend::host::L1::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
 
     // Creating worker's execution state
     auto executionState = _computeManager->createExecutionState(executionUnit, this);
@@ -307,7 +315,7 @@ class Worker
   /**
    * The time to suspend a worker for, before checking suspend conditions again
    */
-  size_t _suspendIntervalMs = 1000;
+  size_t _suspendIntervalMs = _DEFAULT_SUSPEND_INTERVAL_MS;
 
   /**
    * Represents the internal state of the worker. Uninitialized upon construction.
@@ -327,7 +335,7 @@ class Worker
   /**
    *  Map of callbacks to trigger
    */
-  workerCallbackMap_t *_callbackMap = NULL;
+  workerCallbackMap_t *_callbackMap = nullptr;
 
   /**
    * Internal loop of the worker in which it searchers constantly for tasks to run
@@ -335,7 +343,7 @@ class Worker
   __INLINE__ void mainLoop()
   {
     // Calling appropriate callback
-    if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onWorkerStart);
+    if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerStart);
 
     // Start main worker loop (run until terminated)
     while (true)
@@ -367,16 +375,16 @@ class Worker
         _state = state_t::suspended;
 
         // Calling appropriate callback
-        if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onWorkerSuspend);
+        if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerSuspend);
 
         // Suspending other processing units
         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
 
         // Putting current processing unit to check every so often
-        while (checkResumeConditions() == false) usleep(_suspendIntervalMs * 1000);
+        while (checkResumeConditions() == false) usleep(_suspendIntervalMs * _MILISECONDS_PER_SECOND);
 
         // Calling appropriate callback
-        if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onWorkerResume);
+        if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerResume);
 
         // Resuming other processing units
         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->resume();
@@ -389,7 +397,7 @@ class Worker
       if (_state == state_t::terminating) [[unlikely]]
       {
         // Calling appropriate callback
-        if (_callbackMap != NULL) _callbackMap->trigger(this, callback_t::onWorkerTerminate);
+        if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerTerminate);
 
         // Terminate secondary processing units first
         for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
@@ -404,6 +412,4 @@ class Worker
   }
 }; // class Worker
 
-} // namespace tasking
-
-} // namespace HiCR
+} // namespace HiCR::tasking

@@ -8,7 +8,7 @@
 #define _HICR_DEPLOYER_CHANNEL_PRODUCER_COORDINATION_BUFFER_SIZES_TAG _HICR_DEPLOYER_CHANNEL_BASE_TAG + 5
 #define _HICR_DEPLOYER_CHANNEL_PRODUCER_COORDINATION_BUFFER_PAYLOADS_TAG _HICR_DEPLOYER_CHANNEL_BASE_TAG + 6
 
-__INLINE__ void Instance::initializeChannels()
+__INLINE__ void HiCR::deployer::Instance::initializeChannels()
 {
   // Getting my current instance
   const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
@@ -80,7 +80,6 @@ __INLINE__ void Instance::initializeChannels()
                                                                                             consumerCoordinationSizesBuffer,
                                                                                             consumerCoodinationPayloadsBuffer,
                                                                                             _HICR_DEPLOYER_CHANNEL_PAYLOAD_CAPACITY,
-                                                                                            sizeof(uint8_t),
                                                                                             _HICR_DEPLOYER_CHANNEL_COUNT_CAPACITY);
 
   // Creating producer channels
@@ -119,9 +118,9 @@ __INLINE__ void Instance::initializeChannels()
   }
 }
 
-__INLINE__ void Instance::finalizeChannels() {}
+__INLINE__ void HiCR::deployer::Instance::finalizeChannels() {}
 
-__INLINE__ void Instance::sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize)
+__INLINE__ void HiCR::deployer::Instance::sendMessage(const HiCR::L0::Instance::instanceId_t instanceId, void *messagePtr, size_t messageSize)
 {
   // Sanity check
   if (_producerChannels.contains(instanceId) == false) HICR_THROW_RUNTIME("Instance Id %lu not found in the producer channel map");
@@ -151,7 +150,7 @@ __INLINE__ void Instance::sendMessage(const HiCR::L0::Instance::instanceId_t ins
   channel->push(messageSendSlot);
 }
 
-__INLINE__ Instance::message_t Instance::recvMessage(const bool isAsync)
+__INLINE__ Instance::message_t HiCR::deployer::Instance::recvMessage(const bool isAsync)
 {
   // If asynchronous and consumerChannel is empty, return immediately
   if (isAsync == true && _consumerChannel->getDepth() == 0) return {NULL, 0};

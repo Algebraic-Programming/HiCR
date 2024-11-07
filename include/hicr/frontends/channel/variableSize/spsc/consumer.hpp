@@ -17,17 +17,9 @@
 #include <numeric>
 #include <cassert>
 #include <hicr/frontends/channel/variableSize/base.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace channel
-{
-
-namespace variableSize
-{
-
-namespace SPSC
+namespace HiCR::channel::variableSize::SPSC
 {
 
 /**
@@ -38,48 +30,6 @@ namespace SPSC
  */
 class Consumer final : public variableSize::Base
 {
-  protected:
-
-  /**
-   * pushed tokens is an incremental counter, used to find newly arrived message size metadata
-   */
-  size_t _pushedTokens;
-  /**
-   * pushed payloads is an incremental counter, used to find newly arrived messages
-   */
-  size_t _pushedPayloads;
-  /**
-   * pushed payload bytes is an incremental counter, used to set the head position
-   */
-  size_t _pushedPayloadBytes;
-  /**
-   * The global slot holding all payload data
-   */
-  std::shared_ptr<L0::GlobalMemorySlot> _payloadBuffer;
-  /**
-   * The total payload size (in bytes) of all elements currently in the buffer
-   */
-  size_t _payloadSize;
-
-  /**
-   * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
-   * for updates from the remote producer. The token buffer is only used for metadata (payload message sizes) for
-   * variable-sized consumer/producers
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _tokenSizeBuffer;
-
-  /**
-   * The memory slot pertaining to the producer's message size information. This is a global slot to enable remote
-   * update of the producer's internal circular buffer when doing a pop() operation
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForCounts;
-
-  /**
-   * The memory slot pertaining to the producer's payload information. This is a global slot to enable remote
-   * update of the producer's internal circular buffer when doing a pop() operation
-   */
-  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForPayloads;
-
   public:
 
   /**
@@ -102,29 +52,24 @@ class Consumer final : public variableSize::Base
    * \param[in] producerCoordinationBufferForPayloads A global reference to the producer channel's internal coordination
    *            buffer for payload sizes (in bytes), used for remote updates on pop()
    * \param[in] payloadCapacity The capacity (in bytes) of the buffer for variable-sized messages
-   * \param[in] payloadSize The size of the payload datatype used to hold variable-sized messages of this datatype in the channel
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
-  Consumer(L1::CommunicationManager             &communicationManager,
-           std::shared_ptr<L0::GlobalMemorySlot> payloadBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForCounts,
-           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBufferForPayloads,
-           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForCounts,
-           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBufferForPayloads,
-           const size_t                          payloadCapacity,
-           const size_t                          payloadSize,
-           const size_t                          capacity)
+  Consumer(L1::CommunicationManager                    &communicationManager,
+           std::shared_ptr<L0::GlobalMemorySlot>        payloadBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot>        tokenBuffer,
+           const std::shared_ptr<L0::LocalMemorySlot>  &internalCoordinationBufferForCounts,
+           const std::shared_ptr<L0::LocalMemorySlot>  &internalCoordinationBufferForPayloads,
+           const std::shared_ptr<L0::GlobalMemorySlot> &producerCoordinationBufferForCounts,
+           std::shared_ptr<L0::GlobalMemorySlot>        producerCoordinationBufferForPayloads,
+           const size_t                                 payloadCapacity,
+           const size_t                                 capacity)
     : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
-      _pushedTokens(0),
-      _pushedPayloads(0),
-      _pushedPayloadBytes(0),
-      _payloadBuffer(payloadBuffer),
-      _payloadSize(payloadSize),
-      _tokenSizeBuffer(tokenBuffer),
+
+      _payloadBuffer(std::move(payloadBuffer)),
+      _tokenSizeBuffer(std::move(tokenBuffer)),
       _producerCoordinationBufferForCounts(producerCoordinationBufferForCounts),
-      _producerCoordinationBufferForPayloads(producerCoordinationBufferForPayloads)
+      _producerCoordinationBufferForPayloads(std::move(producerCoordinationBufferForPayloads))
   {
     assert(internalCoordinationBufferForCounts != nullptr);
     assert(internalCoordinationBufferForPayloads != nullptr);
@@ -155,18 +100,18 @@ class Consumer final : public variableSize::Base
   __INLINE__ size_t basePeek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= _circularBufferForCounts->getCapacity())
-      HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBufferForCounts->getCapacity());
+    if (pos >= getCircularBufferForCounts()->getCapacity())
+      HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, getCircularBufferForCounts()->getCapacity());
 
     // Updating channel depth
     updateDepth();
 
     // Check if there are enough tokens in the buffer to satisfy the request
-    if (pos >= _circularBufferForCounts->getDepth())
-      HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, _circularBufferForCounts->getDepth());
+    if (pos >= getCircularBufferForCounts()->getDepth())
+      HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, getCircularBufferForCounts()->getDepth());
 
     // Calculating buffer position
-    const size_t bufferPos = (_circularBufferForCounts->getTailPosition() + pos) % _circularBufferForCounts->getCapacity();
+    const size_t bufferPos = (getCircularBufferForCounts()->getTailPosition() + pos) % getCircularBufferForCounts()->getCapacity();
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -187,13 +132,13 @@ class Consumer final : public variableSize::Base
     if (pos != 0) { HICR_THROW_FATAL("peek only implemented for n = 0 at the moment!"); }
     updateDepth();
 
-    if (pos >= _circularBufferForCounts->getDepth())
+    if (pos >= getCircularBufferForCounts()->getDepth())
     {
-      HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, _circularBufferForCounts->getDepth());
+      HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, getCircularBufferForCounts()->getDepth());
     }
 
-    std::array<size_t, 2> result;
-    result[0]              = _circularBufferForPayloads->getTailPosition() % _circularBufferForPayloads->getCapacity();
+    std::array<size_t, 2> result{};
+    result[0]              = getCircularBufferForPayloads()->getTailPosition() % getCircularBufferForPayloads()->getCapacity();
     size_t *tokenBufferPtr = static_cast<size_t *>(_tokenSizeBuffer->getSourceLocalMemorySlot()->getPointer());
     auto    tokenPos       = basePeek(pos);
     result[1]              = tokenBufferPtr[tokenPos];
@@ -233,7 +178,7 @@ class Consumer final : public variableSize::Base
     size_t  payloadBytes   = 0;
     for (size_t i = 0; i < n; i++)
     {
-      size_t ind = _circularBufferForCounts->getDepth() - 1 - i;
+      size_t ind = getCircularBufferForCounts()->getDepth() - 1 - i;
       assert(ind >= 0);
       size_t pos         = basePeek(ind);
       auto   payloadSize = tokenBufferPtr[pos];
@@ -255,35 +200,35 @@ class Consumer final : public variableSize::Base
    */
   __INLINE__ void pop(const size_t n = 1)
   {
-    if (n > _circularBufferForCounts->getCapacity())
-      HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, _circularBufferForCounts->getCapacity());
+    if (n > getCircularBufferForCounts()->getCapacity())
+      HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCircularBufferForCounts()->getCapacity());
 
     // Updating channel depth
     updateDepth();
 
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (n > _circularBufferForCounts->getDepth())
-      HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _circularBufferForCounts->getDepth());
+    if (n > getCircularBufferForCounts()->getDepth())
+      HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, getCircularBufferForCounts()->getDepth());
     auto payloadBytes = getOldPayloadBytes(n);
-    _circularBufferForCounts->advanceTail(n);
-    _circularBufferForPayloads->advanceTail(payloadBytes);
+    getCircularBufferForCounts()->advanceTail(n);
+    getCircularBufferForPayloads()->advanceTail(payloadBytes);
 
     const auto coordBuffElemSize = sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
     // Notifying producer(s) of buffer liberation
-    _communicationManager->memcpy(_producerCoordinationBufferForCounts, /* destination */
-                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                  _coordinationBufferForCounts,
-                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                  coordBuffElemSize);
+    getCommunicationManager()->memcpy(_producerCoordinationBufferForCounts, /* destination */
+                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                      getCoordinationBufferForCounts(),
+                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                      coordBuffElemSize);
 
-    _communicationManager->memcpy(_producerCoordinationBufferForPayloads, /* destination */
-                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                  _coordinationBufferForPayloads, /* source */
-                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                  coordBuffElemSize);
+    getCommunicationManager()->memcpy(_producerCoordinationBufferForPayloads, /* destination */
+                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                      getCoordinationBufferForPayloads(), /* source */
+                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                      coordBuffElemSize);
 
-    _communicationManager->fence(_coordinationBufferForCounts, 1, 0);
-    _communicationManager->fence(_coordinationBufferForPayloads, 1, 0);
+    getCommunicationManager()->fence(getCoordinationBufferForCounts(), 1, 0);
+    getCommunicationManager()->fence(getCoordinationBufferForPayloads(), 1, 0);
   }
 
   /**
@@ -307,7 +252,7 @@ class Consumer final : public variableSize::Base
    *
    * @return The number of elements in variable-size consumer channel
    */
-  size_t getDepth() { return _circularBufferForCounts->getDepth(); }
+  size_t getDepth() { return getCircularBufferForCounts()->getDepth(); }
 
   /**
    * Returns the current depth of the channel holding the payloads
@@ -319,7 +264,7 @@ class Consumer final : public variableSize::Base
    * @returns The number of total bytes in the payloads channel
    *
    */
-  size_t getPayloadDepth() { return _circularBufferForPayloads->getDepth(); }
+  size_t getPayloadDepth() { return getCircularBufferForPayloads()->getDepth(); }
 
   /**
    * This function can be used to quickly check whether the channel is empty.
@@ -336,13 +281,33 @@ class Consumer final : public variableSize::Base
    *
    * @return The pointer to the payload buffer
    */
-  std::shared_ptr<L0::GlobalMemorySlot> getPayloadBufferMemorySlot() const { return _payloadBuffer; }
+  [[nodiscard]] std::shared_ptr<L0::GlobalMemorySlot> getPayloadBufferMemorySlot() const { return _payloadBuffer; }
+
+  private:
+
+  /**
+   * The global slot holding all payload data
+   */
+  std::shared_ptr<L0::GlobalMemorySlot> _payloadBuffer;
+
+  /**
+   * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
+   * for updates from the remote producer. The token buffer is only used for metadata (payload message sizes) for
+   * variable-sized consumer/producers
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _tokenSizeBuffer;
+
+  /**
+   * The memory slot pertaining to the producer's message size information. This is a global slot to enable remote
+   * update of the producer's internal circular buffer when doing a pop() operation
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForCounts;
+
+  /**
+   * The memory slot pertaining to the producer's payload information. This is a global slot to enable remote
+   * update of the producer's internal circular buffer when doing a pop() operation
+   */
+  const std::shared_ptr<L0::GlobalMemorySlot> _producerCoordinationBufferForPayloads;
 };
 
-} // namespace SPSC
-
-} // namespace variableSize
-
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel::variableSize::SPSC

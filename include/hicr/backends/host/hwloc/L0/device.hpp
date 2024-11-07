@@ -17,19 +17,7 @@
 #include "computeResource.hpp"
 #include "memorySpace.hpp"
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace hwloc
-{
-
-namespace L0
+namespace HiCR::backend::host::hwloc::L0
 {
 
 /**
@@ -42,7 +30,7 @@ class Device final : public HiCR::backend::host::L0::Device
   /**
    * Type definition for a NUMA Domain identifier
    */
-  typedef int NUMADomainID_t;
+  using NUMADomainID_t = int;
 
   /**
    * Constructor for the device class of the sequential backend
@@ -71,7 +59,7 @@ class Device final : public HiCR::backend::host::L0::Device
   /**
    * Default destructor
    */
-  ~Device() = default;
+  ~Device() override = default;
 
   private:
 
@@ -120,12 +108,4 @@ class Device final : public HiCR::backend::host::L0::Device
   }
 };
 
-} // namespace L0
-
-} // namespace hwloc
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::hwloc::L0

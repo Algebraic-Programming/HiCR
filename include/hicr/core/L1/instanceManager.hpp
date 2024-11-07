@@ -30,12 +30,9 @@
 /**
  * This value is assigned to the default processing unit if no id is provided
  */
-#define _HICR_DEFAULT_PROCESSING_UNIT_ID_ 0xF0F0F0F0ul
+constexpr size_t _HICR_DEFAULT_PROCESSING_UNIT_ID_ = 0xF0F0F0F0ul;
 
-namespace HiCR
-{
-
-namespace L1
+namespace HiCR::L1
 {
 
 /**
@@ -51,17 +48,17 @@ class InstanceManager
   /**
    * Type definition for an index for a listenable unit.
    */
-  typedef uint64_t RPCTargetIndex_t;
+  using RPCTargetIndex_t = uint64_t;
 
   /**
    * Type definition for a function that can be executed as RPC
    */
-  typedef std::function<void()> RPCFunction_t;
+  using RPCFunction_t = std::function<void()>;
 
   /**
    * Type definition for an unsorted set of unique pointers to the detected instances
    */
-  typedef std::vector<std::shared_ptr<HiCR::L0::Instance>> instanceList_t;
+  using instanceList_t = std::vector<std::shared_ptr<HiCR::L0::Instance>>;
 
   /**
    * Default constructor is deleted, this class requires the passing of a memory manager
@@ -77,13 +74,13 @@ class InstanceManager
    * This function prompts the backend to perform the necessary steps to discover and list the currently created (active or not)
    * \return A set of pointers to HiCR instances that refer to both local and remote instances
    */
-  __INLINE__ const instanceList_t &getInstances() const { return _instances; }
+  [[nodiscard]] __INLINE__ const instanceList_t &getInstances() const { return _instances; }
 
   /**
    * Function to retrieve the currently executing instance
    * \return A pointer to the local HiCR instance (in other words, the one running this function)
    */
-  __INLINE__ std::shared_ptr<HiCR::L0::Instance> getCurrentInstance() const { return _currentInstance; }
+  [[nodiscard]] __INLINE__ std::shared_ptr<HiCR::L0::Instance> getCurrentInstance() const { return _currentInstance; }
 
   /**
    * Function to create a new HiCR instance
@@ -121,7 +118,7 @@ class InstanceManager
    * \param[in] RPCName Name of the RPC to add
    * \param[in] fc Indicates function to run when this RPC is triggered
    */
-  __INLINE__ void addRPCTarget(const std::string &RPCName, const RPCFunction_t fc)
+  __INLINE__ void addRPCTarget(const std::string &RPCName, const RPCFunction_t &fc)
   {
     // Obtaining hash from the RPC name
     const auto idx = getRPCTargetIndexFromString(RPCName);
@@ -184,13 +181,13 @@ class InstanceManager
    * Returns the id of the backend's root instance id
    * @return The id of the root instance id
    */
-  virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
+  [[nodiscard]] virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
 
   /**
    * Returns the random seed generated at the startup
    * @return the random seed
    */
-  virtual HiCR::L0::Instance::instanceId_t getSeed() const = 0;
+  [[nodiscard]] virtual HiCR::L0::Instance::instanceId_t getSeed() const = 0;
 
   /**
    * Generates a 64-bit hash value from a given string. Useful for compressing the name of RPCs
@@ -249,6 +246,22 @@ class InstanceManager
    */
   virtual void listenImpl() = 0;
 
+  protected:
+
+  /**
+   * Set the current instance
+   * @param[in] instance The instance to set as current instance
+   */
+  __INLINE__ void setCurrentInstance(const std::shared_ptr<HiCR::L0::Instance> &instance) { _currentInstance = instance; }
+
+  /**
+   * Add a new instance to the manager scope
+   * @param[in] instance The instance to add
+   */
+  __INLINE__ void addInstance(const std::shared_ptr<HiCR::L0::Instance> &instance) { _instances.push_back(instance); }
+
+  private:
+
   /**
    * Collection of instances
    */
@@ -259,14 +272,10 @@ class InstanceManager
    */
   std::shared_ptr<HiCR::L0::Instance> _currentInstance;
 
-  private:
-
   /**
    * Map of executable functions, representing potential RPC requests
    */
   std::map<RPCTargetIndex_t, RPCFunction_t> _RPCTargetMap;
 };
 
-} // namespace L1
-
-} // namespace HiCR
+} // namespace HiCR::L1

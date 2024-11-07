@@ -18,16 +18,7 @@
 #include <hicr/core/L1/instanceManager.hpp>
 #include <hicr/backends/mpi/L0/instance.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace mpi
-{
-
-namespace L1
+namespace HiCR::backend::mpi::L1
 {
 
 #ifndef _HICR_MPI_INSTANCE_BASE_TAG
@@ -81,14 +72,14 @@ class InstanceManager final : public HiCR::L1::InstanceManager
       auto instance = std::make_shared<HiCR::backend::mpi::L0::Instance>(i);
 
       // If this is the current rank, set it as current instance
-      if (i == _rank) _currentInstance = instance;
+      if (i == _rank) setCurrentInstance(instance);
 
       // Adding instance to the collection
-      _instances.push_back(std::move(instance));
+      addInstance(instance);
     }
   }
 
-  ~InstanceManager() = default;
+  ~InstanceManager() override = default;
 
   /**
    * Triggers the execution of the specified RPC (by name) in the specified instance
@@ -106,7 +97,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *>(&instance);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (MPIInstance == NULL) HICR_THROW_LOGIC("The passed instance is not supported by this instance manager\n");
+    if (MPIInstance == nullptr) HICR_THROW_LOGIC("The passed instance is not supported by this instance manager\n");
 
     // Getting rank Id for the passed instance
     const auto dest = MPIInstance->getRank();
@@ -121,7 +112,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     auto MPIInstance = dynamic_cast<mpi::L0::Instance *const>(&instance);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (MPIInstance == NULL) HICR_THROW_LOGIC("The passed instance is not supported by this instance manager\n");
+    if (MPIInstance == nullptr) HICR_THROW_LOGIC("The passed instance is not supported by this instance manager\n");
 
     // Buffer to store the size
     size_t size = 0;
@@ -133,7 +124,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     auto buffer = malloc(size);
 
     // Getting data directly
-    MPI_Recv(buffer, size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm, MPI_STATUS_IGNORE);
+    MPI_Recv(buffer, (int)size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm, MPI_STATUS_IGNORE);
 
     // Returning memory slot containing the return value
     return buffer;
@@ -145,7 +136,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     MPI_Ssend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);
 
     // Getting RPC execution unit index
-    MPI_Ssend(pointer, size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm);
+    MPI_Ssend(pointer, (int)size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm);
   }
 
   __INLINE__ void listenImpl() override
@@ -195,7 +186,7 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     if (initialized == 0)
     {
       int requested = MPI_THREAD_SINGLE;
-      int provided;
+      int provided  = 0;
       MPI_Init_thread(argc, argv, requested, &provided);
       if (provided < requested) fprintf(stderr, "Warning, your application may not work properly if MPI does not support  threaded access\n");
     }
@@ -207,9 +198,9 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return std::make_unique<HiCR::backend::mpi::L1::InstanceManager>(MPI_COMM_WORLD);
   }
 
-  __INLINE__ HiCR::L0::Instance::instanceId_t getRootInstanceId() const override { return _HICR_MPI_INSTANCE_ROOT_ID; }
+  [[nodiscard]] __INLINE__ HiCR::L0::Instance::instanceId_t getRootInstanceId() const override { return HiCR::backend::mpi::L0::_HICR_MPI_INSTANCE_ROOT_ID; }
 
-  __INLINE__ HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
+  [[nodiscard]] __INLINE__ HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
 
   private:
 
@@ -226,18 +217,12 @@ class InstanceManager final : public HiCR::L1::InstanceManager
   /**
    * Number of MPI processes in the communicator
    */
-  int _size;
+  int _size{};
 
   /**
    * MPI rank corresponding to this process
    */
-  int _rank;
+  int _rank{};
 };
 
-} // namespace L1
-
-} // namespace mpi
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::mpi::L1

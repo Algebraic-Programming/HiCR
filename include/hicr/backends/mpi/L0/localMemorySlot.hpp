@@ -12,17 +12,9 @@
 #pragma once
 
 #include <hicr/core/L0/localMemorySlot.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace mpi
-{
-
-namespace L0
+namespace HiCR::backend::mpi::L0
 {
 
 /**
@@ -42,16 +34,10 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * \param[in] memorySpace The memory space from whence this memory slot was created
    */
   LocalMemorySlot(void *const pointer, const size_t size, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
-    : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace)
+    : HiCR::L0::LocalMemorySlot(pointer, size, std::move(memorySpace))
   {}
 
-  ~LocalMemorySlot() = default;
+  ~LocalMemorySlot() override = default;
 };
 
-} // namespace L0
-
-} // namespace mpi
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::mpi::L0

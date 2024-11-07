@@ -22,17 +22,17 @@
 #include <hicr/core/L1/topologyManager.hpp>
 
 /**
- * Execution unit id for the predetermined topology-exchange RPC
- */
-#define _HICR_TOPOLOGY_RPC_EXECUTION_UNIT_ID 0xF0F0F0F0
-
-/**
  * Internal name of the predetermined topology-exchange RPC
  */
 #define _HICR_TOPOLOGY_RPC_NAME "HICR_TOPOLOGY_RPC_"
 
 namespace HiCR
 {
+
+/**
+ * Execution unit id for the predetermined topology-exchange RPC
+ */
+constexpr size_t _HICR_TOPOLOGY_RPC_EXECUTION_UNIT_ID = 0xF0F0F0F0;
 
 /**
  * The MachineModel frontend enables the deployment of multi-instance applications, specifying required the topology for each instance.
@@ -44,7 +44,7 @@ class MachineModel
   /**
    * Function type for the evaluation topology acceptance criteria (whether an instance topology satisfies a given request)
    */
-  typedef std::function<bool(const HiCR::L0::Topology &, const HiCR::L0::Topology &)> topologyAcceptanceCriteriaFc_t;
+  using topologyAcceptanceCriteriaFc_t = std::function<bool(const HiCR::L0::Topology &, const HiCR::L0::Topology &)>;
 
   /**
    *  This struct hold the information of a detected instance including its topology
@@ -112,14 +112,14 @@ class MachineModel
    * @param[in] requests A vector of machine requests. The requests will be resolved in the order provided.
    * @param[in] acceptanceCriteriaFc A function that determines, given the detect topology and the requested topology, if the former satisfies the latter
    */
-  void deploy(std::vector<request_t> &requests, topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc)
+  void deploy(std::vector<request_t> &requests, const topologyAcceptanceCriteriaFc_t &acceptanceCriteriaFc)
   {
     // Getting information about the currently deployed instances and their topology
     auto detectedInstances = detectInstances(*_instanceManager);
 
     // Now matching requested instances to actual instances, creating new ones if the detected ones do not satisfy their topology requirements
-    for (size_t i = 0; i < requests.size(); i++)
-      for (size_t j = 0; j < requests[i].replicaCount; j++)
+    for (auto &request : requests)
+      for (size_t j = 0; j < request.replicaCount; j++)
       {
         // Flag to store whether the request has been assigned an instances
         bool requestAssigned = false;
@@ -128,10 +128,10 @@ class MachineModel
         for (auto dItr = detectedInstances.begin(); dItr != detectedInstances.end() && requestAssigned == false; dItr++)
         {
           // Check if the detected instance topology satisfied the request do the following
-          if (acceptanceCriteriaFc(requests[i].topology, dItr->topology) == true)
+          if (acceptanceCriteriaFc(request.topology, dItr->topology) == true)
           {
             // Assign the instance to the request
-            requests[i].instances.push_back(dItr->instance);
+            request.instances.push_back(dItr->instance);
 
             // Mark request as assigned to continue break the loops
             requestAssigned = true;
@@ -148,7 +148,7 @@ class MachineModel
         std::shared_ptr<HiCR::L0::Instance> newInstance;
         try
         {
-          newInstance = _instanceManager->createInstance(requests[i].topology);
+          newInstance = _instanceManager->createInstance(request.topology);
         }
         catch (std::exception &e)
         {
@@ -156,8 +156,7 @@ class MachineModel
         }
 
         // Adding new instance to the detected instance set
-        requests[i].instances.push_back(newInstance);
-        requestAssigned = true;
+        request.instances.push_back(newInstance);
       }
 
     // Checking no excess of instances were created/detected
@@ -194,7 +193,7 @@ class MachineModel
         auto returnValue = instanceManager.getReturnValue(*instance);
 
         // Receiving raw serialized topology information from the worker
-        std::string serializedTopology = (char *)returnValue;
+        std::string serializedTopology = static_cast<char *>(returnValue);
 
         // Parsing serialized raw topology into a json object
         auto topologyJson = nlohmann::json::parse(serializedTopology);

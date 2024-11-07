@@ -13,16 +13,7 @@
 
 #include <hicr/core/L0/instance.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L0
+namespace HiCR::backend::host::L0
 {
 
 /**
@@ -42,19 +33,13 @@ class Instance final : public HiCR::L0::Instance
   /**
    * Default destructor
    */
-  ~Instance() = default;
+  ~Instance() override = default;
 
-  virtual bool isRootInstance() const
+  [[nodiscard]] bool isRootInstance() const override
   {
     // Only a single instance exists (the currently running one), hence always true
     return true;
   };
 };
 
-} // namespace L0
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L0

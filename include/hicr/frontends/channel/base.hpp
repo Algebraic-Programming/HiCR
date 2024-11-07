@@ -24,7 +24,10 @@
 /**
  * Establishes how many elements are required in the base coordination buffer
  */
-#define _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT 2
+enum
+{
+  _HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_COUNT = 2
+};
 
 /**
  * Establishes how the type of elements required in the base coordination buffer
@@ -34,17 +37,20 @@
 /**
  * Establishes the value index for the head advance count
  */
-#define _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX 0
+enum
+{
+  _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX = 0
+};
 
 /**
  * Establishes the value index for the tail advance count
  */
-#define _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX 1
-
-namespace HiCR
+enum
 {
+  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX = 1
+};
 
-namespace channel
+namespace HiCR::channel
 {
 
 /**
@@ -65,7 +71,7 @@ class Base
    *
    * This function when called on a valid channel instance will never fail.
    */
-  __INLINE__ size_t getTokenSize() const noexcept { return _tokenSize; }
+  [[nodiscard]] __INLINE__ size_t getTokenSize() const noexcept { return _tokenSize; }
 
   /**
    * This function can be used to check the size of the coordination buffer that needs to be provided
@@ -81,7 +87,7 @@ class Base
    *
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __INLINE__ static void initializeCoordinationBuffer(std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer)
+  __INLINE__ static void initializeCoordinationBuffer(const std::shared_ptr<L0::LocalMemorySlot> &coordinationBuffer)
   {
     // Checking for correct size
     auto requiredSize = getCoordinationBufferSize();
@@ -122,7 +128,7 @@ class Base
    *
    * This function when called on a valid channel instance will never fail.
    */
-  __INLINE__ size_t getDepth() const noexcept { return _circularBuffer->getDepth(); }
+  [[nodiscard]] __INLINE__ size_t getDepth() const noexcept { return _circularBuffer->getDepth(); }
 
   /**
    * This function can be used to quickly check whether the channel is full.
@@ -132,7 +138,7 @@ class Base
    * \returns true, if the buffer is full
    * \returns false, if the buffer is not full
    */
-  __INLINE__ bool isFull() const noexcept { return _circularBuffer->isFull(); }
+  [[nodiscard]] __INLINE__ bool isFull() const noexcept { return _circularBuffer->isFull(); }
 
   /**
    * This function can be used to quickly check whether the channel is empty.
@@ -142,7 +148,13 @@ class Base
    * \returns true, if the buffer is empty
    * \returns false, if the buffer is not empty
    */
-  __INLINE__ bool isEmpty() const noexcept { return _circularBuffer->isEmpty(); }
+  [[nodiscard]] __INLINE__ bool isEmpty() const noexcept { return _circularBuffer->isEmpty(); }
+
+  /**
+   * A function to obtain the low-level circular buffer where tokens are stored
+   * @return The internal circular buffer
+   */
+  [[nodiscard]] __INLINE__ auto getCircularBuffer() const noexcept { return _circularBuffer.get(); }
 
   protected:
 
@@ -163,7 +175,7 @@ class Base
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(L1::CommunicationManager &communicationManager, std::shared_ptr<L0::LocalMemorySlot> coordinationBuffer, const size_t tokenSize, const size_t capacity)
+  Base(L1::CommunicationManager &communicationManager, const std::shared_ptr<L0::LocalMemorySlot> &coordinationBuffer, const size_t tokenSize, const size_t capacity)
     : _communicationManager(&communicationManager),
       _coordinationBuffer(coordinationBuffer),
       _tokenSize(tokenSize)
@@ -180,15 +192,27 @@ class Base
                        requiredCoordinationBufferSize);
 
     // Creating internal circular buffer
-    _circularBuffer =
-      std::make_unique<channel::CircularBuffer>(capacity,
-                                                (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX),
-                                                (((_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *)coordinationBuffer->getPointer()) + _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX));
+    _circularBuffer = std::make_unique<channel::CircularBuffer>(
+      capacity,
+      &static_cast<_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *>(coordinationBuffer->getPointer())[_HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX],
+      &static_cast<_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE *>(coordinationBuffer->getPointer())[_HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX]);
   }
 
-  virtual ~Base() = default;
+  ~Base() = default;
 
-  protected:
+  /**
+   * Get the internal communication buffer assigned to this channel
+   * @return The internal communication buffer assigned to this channel
+   */
+  [[nodiscard]] __INLINE__ L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
+
+  /**
+   * Get the internal coordination buffer assigned to this channel
+   * @return The internal coordination buffer assigned to this channel
+   */
+  [[nodiscard]] __INLINE__ auto getCoordinationBuffer() const { return _coordinationBuffer; }
+
+  private:
 
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
@@ -199,7 +223,6 @@ class Base
    * Local storage of coordination metadata
    */
   const std::shared_ptr<L0::LocalMemorySlot> _coordinationBuffer;
-
   /**
    * Token size
    */
@@ -211,6 +234,4 @@ class Base
   std::unique_ptr<channel::CircularBuffer> _circularBuffer;
 };
 
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel

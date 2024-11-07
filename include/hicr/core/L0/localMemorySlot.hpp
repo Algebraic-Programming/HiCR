@@ -14,11 +14,9 @@
 #include <memory>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/L0/memorySpace.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -37,15 +35,13 @@ class LocalMemorySlot
    * \param[in] size The size (in bytes) of the memory slot, assumed to be contiguous
    * \param[in] memorySpace Pointer to the memory space that this memory slot belongs to. NULL, if the memory slot is global (remote)
    */
-  LocalMemorySlot(void *const pointer, const size_t size, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace = NULL)
+  LocalMemorySlot(void *const pointer, const size_t size, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace = nullptr)
     : _pointer(pointer),
       _size(size),
-      _memorySpace(memorySpace)
+      _memorySpace(std::move(memorySpace))
   {
-    _messagesRecvStorage = 0;
-    _messagesSentStorage = 0;
-    _messagesRecv        = &_messagesRecvStorage;
-    _messagesSent        = &_messagesSentStorage;
+    _messagesRecv = &_messagesRecvStorage;
+    _messagesSent = &_messagesSentStorage;
   }
 
   /**
@@ -63,25 +59,25 @@ class LocalMemorySlot
    * Getter function for the memory slot's size
    * \returns The memory slot's size
    */
-  __INLINE__ size_t getSize() const noexcept { return _size; }
+  [[nodiscard]] __INLINE__ size_t getSize() const noexcept { return _size; }
 
   /**
    * Getter function for the memory slot's associated memory space
    * \returns The memory slot's associated memory space
    */
-  __INLINE__ std::shared_ptr<HiCR::L0::MemorySpace> getMemorySpace() const noexcept { return _memorySpace; }
+  [[nodiscard]] __INLINE__ std::shared_ptr<HiCR::L0::MemorySpace> getMemorySpace() const noexcept { return _memorySpace; }
 
   /**
    * Getter function for the memory slot's received message counter
    * \returns The memory slot's received message counter
    */
-  __INLINE__ size_t getMessagesRecv() const noexcept { return *_messagesRecv; }
+  [[nodiscard]] __INLINE__ size_t getMessagesRecv() const noexcept { return *_messagesRecv; }
 
   /**
    * Getter function for the memory slot's sent message counter
    * \returns The memory slot's sent message counter
    */
-  __INLINE__ size_t getMessagesSent() const noexcept { return *_messagesSent; }
+  [[nodiscard]] __INLINE__ size_t getMessagesSent() const noexcept { return *_messagesSent; }
 
   /**
    * Setter function for the memory slot's received message counter
@@ -144,10 +140,15 @@ class LocalMemorySlot
    */
   __volatile__ size_t *_messagesSent;
 
-  __volatile__ size_t _messagesRecvStorage;
-  __volatile__ size_t _messagesSentStorage;
+  /**
+   * Internal storage for messages received
+   */
+  __volatile__ size_t _messagesRecvStorage{0};
+
+  /**
+   * Internal storage for messages sent
+   */
+  __volatile__ size_t _messagesSentStorage{0};
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

@@ -17,16 +17,7 @@
 #include <hicr/backends/host/L0/instance.hpp>
 #include <hicr/core/L1/instanceManager.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L1
+namespace HiCR::backend::host::L1
 {
 
 /**
@@ -43,11 +34,12 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     : HiCR::L1::InstanceManager()
   {
     // A single instance (the currently running) is created and is deemed as the root
-    _currentInstance = std::make_shared<HiCR::backend::host::L0::Instance>();
-    _instances.push_back(_currentInstance);
+    auto currentInstance = std::make_shared<HiCR::backend::host::L0::Instance>();
+    setCurrentInstance(currentInstance);
+    addInstance(currentInstance);
   }
 
-  ~InstanceManager() = default;
+  ~InstanceManager() override = default;
 
   /**
    * Triggers the execution of the specified RPC (by name) in the specified instance
@@ -109,22 +101,16 @@ class InstanceManager final : public HiCR::L1::InstanceManager
     return std::make_unique<HiCR::backend::host::L1::InstanceManager>();
   }
 
-  __INLINE__ HiCR::L0::Instance::instanceId_t getRootInstanceId() const override { return 0; }
+  [[nodiscard]] __INLINE__ HiCR::L0::Instance::instanceId_t getRootInstanceId() const override { return 0; }
 
-  __INLINE__ HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
+  [[nodiscard]] __INLINE__ HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
 
   private:
 
   /**
    * The return value buffer is stored locally 
   */
-  void *_returnValueBuffer;
+  void *_returnValueBuffer{};
 };
 
-} // namespace L1
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L1

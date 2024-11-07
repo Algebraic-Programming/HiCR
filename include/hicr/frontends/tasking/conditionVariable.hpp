@@ -18,10 +18,7 @@
 #include "mutex.hpp"
 #include "task.hpp"
 
-namespace HiCR
-{
-
-namespace tasking
+namespace HiCR::tasking
 {
 
 /**
@@ -45,7 +42,7 @@ class ConditionVariable
    * \param[in] conditionMutex The mutual exclusion mechanism to use to prevent two tasks from evaluating the condition predicate simultaneously
    * \param[in] conditionPredicate The function that returns a boolean true if the condition is satisfied; false, if not.
   */
-  void wait(HiCR::tasking::Task *currentTask, tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate)
+  void wait(HiCR::tasking::Task *currentTask, tasking::Mutex &conditionMutex, const std::function<bool(void)> &conditionPredicate)
   {
     // Checking on the condition
     conditionMutex.lock(currentTask);
@@ -86,7 +83,7 @@ class ConditionVariable
    * 
    * \return True, if the task is returning before timeout; false, if otherwise.
   */
-  bool waitFor(HiCR::tasking::Task *currentTask, tasking::Mutex &conditionMutex, std::function<bool(void)> conditionPredicate, size_t timeout)
+  bool waitFor(HiCR::tasking::Task *currentTask, tasking::Mutex &conditionMutex, const std::function<bool(void)> &conditionPredicate, size_t timeout)
   {
     // Checking on the condition
     conditionMutex.lock(currentTask);
@@ -217,7 +214,7 @@ class ConditionVariable
    * 
    * @return The number of tasks already waiting for a notification
   */
-  size_t getWaitingTaskCount() const { return _waitingTasks.size(); }
+  [[nodiscard]] size_t getWaitingTaskCount() const { return _waitingTasks.size(); }
 
   private:
 
@@ -232,6 +229,4 @@ class ConditionVariable
   std::queue<HiCR::tasking::Task *> _waitingTasks;
 };
 
-} // namespace tasking
-
-} // namespace HiCR
+} // namespace HiCR::tasking

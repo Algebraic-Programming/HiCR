@@ -21,16 +21,7 @@
 #include <hicr/backends/host/L0/memorySpace.hpp>
 #include "../L0/localMemorySlot.hpp"
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace lpf
-{
-
-namespace L1
+namespace HiCR::backend::lpf::L1
 {
 
 /**
@@ -78,7 +69,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
+    if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     lpf_memslot_t lpfSlot = LPF_INVALID_MEMSLOT;
     auto          rc      = lpf_register_local(_lpf, ptr, size, &lpfSlot);
@@ -101,7 +92,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     auto slot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot is compatible with this backend
-    if (slot == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+    if (slot == nullptr) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
     // Deregistering memory slot from the LPF backend
     lpf_deregister(_lpf, slot->getLPFSlot());
@@ -120,13 +111,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (m == NULL) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
+    if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     // Storage for the new pointer
     const size_t MIN_BYTES = 32;
     const auto   newSize   = std::max(size, MIN_BYTES);
     void        *ptr       = malloc(newSize);
-    if (ptr == NULL) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", newSize);
+    if (ptr == nullptr) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", newSize);
 
     // Update the memory usage for the memory space
     memorySpace->increaseUsage(newSize - size);
@@ -145,13 +136,13 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     auto slot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot is compatible with this backend
-    if (slot == NULL) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
+    if (slot == nullptr) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
     // Getting memory slot pointer
     const auto pointer = slot->getPointer();
 
     // Checking whether the pointer is valid
-    if (slot == NULL) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
+    if (slot == nullptr) HICR_THROW_RUNTIME("Invalid memory slot(s) provided. It either does not exist or represents a NULL pointer.");
 
     // First, deregistering LPF memory slot
     deregisterLocalMemorySlotImpl(memorySlot);
@@ -161,10 +152,4 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   }
 };
 
-} // namespace L1
-
-} // namespace lpf
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::lpf::L1

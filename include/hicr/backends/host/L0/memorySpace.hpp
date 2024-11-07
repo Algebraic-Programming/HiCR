@@ -15,16 +15,7 @@
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/L0/memorySpace.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L0
+namespace HiCR::backend::host::L0
 {
 
 /**
@@ -46,9 +37,9 @@ class MemorySpace : public HiCR::L0::MemorySpace
   /**
    * Default destructor
    */
-  ~MemorySpace() = default;
+  ~MemorySpace() override = default;
 
-  __INLINE__ std::string getType() const override { return "RAM"; }
+  [[nodiscard]] __INLINE__ std::string getType() const override { return "RAM"; }
 
   protected:
 
@@ -70,10 +61,4 @@ class MemorySpace : public HiCR::L0::MemorySpace
   }
 };
 
-} // namespace L0
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L0

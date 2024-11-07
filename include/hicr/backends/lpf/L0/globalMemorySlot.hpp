@@ -14,17 +14,9 @@
 #include <lpf/core.h>
 #include <hicr/core/L0/globalMemorySlot.hpp>
 #include <hicr/core/L0/localMemorySlot.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace lpf
-{
-
-namespace L0
+namespace HiCR::backend::lpf::L0
 {
 
 /**
@@ -49,8 +41,8 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
                    const HiCR::L0::GlobalMemorySlot::tag_t       globalTag             = 0,
                    const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey             = 0,
                    std::shared_ptr<HiCR::L0::LocalMemorySlot>    sourceLocalMemorySlot = nullptr)
-    : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
-      _rank(rank),
+    : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, std::move(sourceLocalMemorySlot)),
+      _rank((int)rank),
       _lpfMemSlot(lpfMemSlot),
       _lpfSwapSlot(lpfSwapSlot)
   {}
@@ -58,7 +50,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   /**
    * Default destructor
    */
-  ~GlobalMemorySlot() = default;
+  ~GlobalMemorySlot() override = default;
 
   /**
    * Returns the rank to which this memory slot belongs
@@ -71,14 +63,14 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * Get LPF slot associated with this HiCR slot
    * @return LPF slot
    */
-  lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
+  [[nodiscard]] lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
 
   /**
    * Get LPF swap slot associated with this HiCR slot. This slot is only used for
    * acquire/release operations on the HiCR slot.
    * @return LPF slot
    */
-  lpf_memslot_t getLPFSwapSlot() const { return _lpfSwapSlot; }
+  [[nodiscard]] lpf_memslot_t getLPFSwapSlot() const { return _lpfSwapSlot; }
 
   private:
 
@@ -99,10 +91,4 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   const lpf_memslot_t _lpfSwapSlot;
 };
 
-} // namespace L0
-
-} // namespace lpf
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::lpf::L0

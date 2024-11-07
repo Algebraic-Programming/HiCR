@@ -17,18 +17,10 @@
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/computeResource.hpp>
+#include <utility>
 #include "../cache.hpp"
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L0
+namespace HiCR::backend::host::L0
 {
 
 /**
@@ -42,17 +34,17 @@ class ComputeResource : public HiCR::L0::ComputeResource
   /**
    * System-given logical processor (core or hyperthread) identifier that this class instance represents
    */
-  typedef int logicalProcessorId_t;
+  using logicalProcessorId_t = unsigned int;
 
   /**
    * System-given physical processor identifier that this class instance represents
    */
-  typedef int physicalProcessorId_t;
+  using physicalProcessorId_t = unsigned int;
 
   /**
    * System-given NUMA affinity identifier
    */
-  typedef int numaAffinity_t;
+  using numaAffinity_t = unsigned int;
 
   /**
    * Constructor for the compute resource class of the sequential backend
@@ -61,16 +53,16 @@ class ComputeResource : public HiCR::L0::ComputeResource
    * \param[in] caches The set of caches contained to or accessible by this core
    * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
-  ComputeResource(const logicalProcessorId_t                                       logicalProcessorId,
-                  const physicalProcessorId_t                                      physicalProcessorId,
-                  const numaAffinity_t                                             numaAffinity,
-                  const std::unordered_set<std::shared_ptr<backend::host::Cache>> &caches)
+  ComputeResource(const logicalProcessorId_t                                logicalProcessorId,
+                  const physicalProcessorId_t                               physicalProcessorId,
+                  const numaAffinity_t                                      numaAffinity,
+                  std::unordered_set<std::shared_ptr<backend::host::Cache>> caches)
     : HiCR::L0::ComputeResource(),
       _logicalProcessorId(logicalProcessorId),
       _physicalProcessorId(physicalProcessorId),
       _numaAffinity(numaAffinity),
-      _caches(caches){};
-  ~ComputeResource() = default;
+      _caches(std::move(caches)){};
+  ~ComputeResource() override = default;
 
   /**
    * Default constructor for serialization/deserialization purposes
@@ -84,7 +76,7 @@ class ComputeResource : public HiCR::L0::ComputeResource
    *
    * @returns The processor id
    */
-  __INLINE__ int getProcessorId() const { return _logicalProcessorId; }
+  __INLINE__ logicalProcessorId_t getProcessorId() const { return _logicalProcessorId; }
 
   /**
    * Obtains the Core ID of the CPU; in non SMT systems that will be the actual id;
@@ -146,19 +138,19 @@ class ComputeResource : public HiCR::L0::ComputeResource
   /**
    * The logical ID of the hardware core / processing unit
    */
-  logicalProcessorId_t _logicalProcessorId;
+  logicalProcessorId_t _logicalProcessorId{};
 
   /**
    * The ID of the hardware core; in SMT systems that will mean the core ID,
    * which may also have other HW threads. In non SMT systems it is expected
    * for logical and system IDs to be 1-to-1.
    */
-  physicalProcessorId_t _physicalProcessorId;
+  physicalProcessorId_t _physicalProcessorId{};
 
   /**
    * The ID of the hardware NUMA domain that this core is associated to
    */
-  numaAffinity_t _numaAffinity;
+  numaAffinity_t _numaAffinity{};
 
   /**
    * List of Cache objects associated with the CPU. There is the assumption
@@ -167,10 +159,4 @@ class ComputeResource : public HiCR::L0::ComputeResource
   std::unordered_set<std::shared_ptr<backend::host::Cache>> _caches;
 };
 
-} // namespace L0
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L0

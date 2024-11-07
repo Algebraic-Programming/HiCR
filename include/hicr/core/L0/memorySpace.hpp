@@ -15,10 +15,7 @@
 #include <nlohmann_json/json.hpp>
 #include <hicr/core/exceptions.hpp>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -41,14 +38,14 @@ class MemorySpace
    *
    * \return A string containing a human-readable description of the memory space type
    */
-  virtual std::string getType() const = 0;
+  [[nodiscard]] virtual std::string getType() const = 0;
 
   /**
    * Returns the memory space's size
    *
    * \return The memory space's size
    */
-  __INLINE__ virtual const size_t getSize() const { return _size; }
+  [[nodiscard]] __INLINE__ virtual const size_t getSize() const { return _size; }
 
   /**
    *  If supported, obtain the amount of memory currently in use.
@@ -58,7 +55,7 @@ class MemorySpace
    *
    * \return The current memory usage for this memory space
    */
-  __INLINE__ virtual size_t getUsage() const { return _usage; };
+  [[nodiscard]] __INLINE__ virtual size_t getUsage() const { return _usage; };
 
   /**
    * Registers an increase in the used memory size of the current memory space, either by allocation or manual registering
@@ -95,7 +92,7 @@ class MemorySpace
    *
    * @return JSON-formatted serialized memory space information
    */
-  __INLINE__ nlohmann::json serialize() const
+  [[nodiscard]] __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -169,10 +166,12 @@ class MemorySpace
    */
   virtual void deserializeImpl(const nlohmann::json &input) = 0;
 
+  private:
+
   /**
    * The memory space size, defined at construction time
    */
-  size_t _size;
+  size_t _size{};
 
   /**
    * This variable keeps track of the memory space usage (through allocation and frees)
@@ -180,6 +179,4 @@ class MemorySpace
   size_t _usage = 0;
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

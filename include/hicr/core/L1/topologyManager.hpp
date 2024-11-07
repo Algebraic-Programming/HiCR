@@ -18,10 +18,7 @@
 #include "../L0/topology.hpp"
 #include "memoryManager.hpp"
 
-namespace HiCR
-{
-
-namespace L1
+namespace HiCR::L1
 {
 
 /**
@@ -59,7 +56,7 @@ class TopologyManager
    * @param[in] topology The JSON-encoded topology to deserialize
    * @return The deserialized topology containing only devices recognized by the backend
    */
-  virtual HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const = 0;
+  [[nodiscard]] virtual HiCR::L0::Topology _deserializeTopology(const nlohmann::json &topology) const = 0;
 
   protected:
 
@@ -71,6 +68,4 @@ class TopologyManager
   TopologyManager() = default;
 };
 
-} // namespace L1
-
-} // namespace HiCR
+} // namespace HiCR::L1

@@ -42,10 +42,7 @@
   #endif // _HICR_USE_MPI_BACKEND_
 #endif   // _HICR_USE_YUANRONG_BACKEND_
 
-namespace HiCR
-{
-
-namespace deployer
+namespace HiCR::deployer
 {
 
 /**
@@ -100,42 +97,42 @@ class Instance
    *
    * @return The pointer to the internal HiCR instance
    */
-  HiCR::L0::Instance *getHiCRInstance() const { return _HiCRInstance.get(); }
+  [[nodiscard]] HiCR::L0::Instance *getHiCRInstance() const { return _HiCRInstance.get(); }
 
   /**
    * Function to obtain the instance manager from the instance
    *
    * @return The HiCR deployer's instance manager
    */
-  HiCR::L1::InstanceManager *getInstanceManager() const { return _instanceManager; }
+  [[nodiscard]] HiCR::L1::InstanceManager *getInstanceManager() const { return _instanceManager; }
 
   /**
    * Function to obtain the communication manager from the instance
    *
    * @return The HiCR deployer's communication manager
    */
-  HiCR::L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
+  [[nodiscard]] HiCR::L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
 
   /**
    * Function to obtain the memory manager from the instance
    *
    * @return The HiCR deployer's memory manager
    */
-  HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
+  [[nodiscard]] HiCR::L1::MemoryManager *getMemoryManager() const { return _memoryManager; }
 
   /**
    * Function to obtain the topology managers from the instance
    *
    * @return The HiCR deployer's topology managers
    */
-  std::vector<HiCR::L1::TopologyManager *> getTopologyManagers() const { return _topologyManagers; }
+  [[nodiscard]] std::vector<HiCR::L1::TopologyManager *> getTopologyManagers() const { return _topologyManagers; }
 
   /**
    * Function to get machine model object from the instance
    *
    * @return The HiCR machine model
    */
-  HiCR::MachineModel *getMachineModel() const { return _machineModel; }
+  [[nodiscard]] HiCR::MachineModel *getMachineModel() const { return _machineModel; }
 
   /**
    * Requests the creation of a new data object.
@@ -148,7 +145,7 @@ class Instance
    */
   __INLINE__ std::shared_ptr<DataObject> createDataObject(void *buffer, const size_t size)
   {
-    DataObject::dataObjectId_t dataObjectId;
+    DataObject::dataObjectId_t dataObjectId = 0;
 
     // Generate a new UUID
     auto uuid = boost::uuids::random_generator()();
@@ -171,7 +168,7 @@ class Instance
     // Publishing data object
 
 #ifdef _HICR_USE_MPI_BACKEND_
-    backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
+    auto *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
     cm->lock();
 #endif
     dataObject.publish();
@@ -213,8 +210,8 @@ class Instance
     _pendingDataObjectsMutex.lock();
 
     // Iterate over the entire pending data object list to see if we can  release them (they were taken)
-    auto                                    it = _pendingDataObjects.begin();
-    backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
+    auto  it = _pendingDataObjects.begin();
+    auto *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
     cm->lock();
 
     while (it != _pendingDataObjects.end())
@@ -273,28 +270,25 @@ class Instance
    * This is a blocking function.
    * The data object must be published (either before or after this call) by the source instance for this function to succeed.
    *
-   * @param[in] dataObject The data object to get from a remote instance
-   * @return A shared pointer to the obtained data object
+   * @param[inout] dataObject The data object to get from a remote instance
    */
-  __INLINE__ std::shared_ptr<DataObject> getDataObject(HiCR::deployer::DataObject &dataObject)
+  __INLINE__ void getDataObject(HiCR::deployer::DataObject &dataObject)
   {
     // Getting instance id of coordinator instance
     const auto currentInstanceId = _instanceManager->getCurrentInstance()->getId();
 
 #ifdef _HICR_USE_MPI_BACKEND_
-    backend::mpi::L1::CommunicationManager *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
+    auto *cm = dynamic_cast<backend::mpi::L1::CommunicationManager *>(getCommunicationManager());
     cm->lock();
 #endif
     // Creating data object from id and remote instance id
-    auto object = DataObject::getDataObject(dataObject, currentInstanceId, _instanceManager->getSeed());
+    DataObject::getDataObject(dataObject, currentInstanceId, _instanceManager->getSeed());
 #ifdef _HICR_USE_MPI_BACKEND_
     cm->unlock();
 #endif
 
     // Make the object available for publication again on the new instance
-    object->unpublish();
-
-    return object;
+    dataObject.unpublish();
   }
 
   /**
@@ -364,7 +358,7 @@ class Instance
     exit(0);
   }
 
-  protected:
+  private:
 
   /**
    * Internal HiCR instance represented by this deployer instance
@@ -397,11 +391,6 @@ class Instance
   HiCR::MachineModel *const _machineModel;
 
   /**
-   * Global counter for the current data object pertaining to this instance
-   */
-  DataObject::dataObjectId_t _currentDataObjectId = 0;
-
-  /**
    * Producer channels for sending messages to all other instances
    */
   std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<deployer::ProducerChannel>> _producerChannels;
@@ -429,6 +418,4 @@ class Instance
   #include "channel/hicr/channelsImpl.hpp"
 #endif
 
-} // namespace deployer
-
-} // namespace HiCR
+} // namespace HiCR::deployer

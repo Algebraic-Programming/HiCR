@@ -14,17 +14,9 @@
 #include <mutex>
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <hicr/core/L0/globalMemorySlot.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L0
+namespace HiCR::backend::host::L0
 {
 
 /**
@@ -45,11 +37,11 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    */
   GlobalMemorySlot(const HiCR::L0::GlobalMemorySlot::tag_t       globalTag             = 0,
                    const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey             = 0,
-                   std::shared_ptr<HiCR::L0::LocalMemorySlot>    sourceLocalMemorySlot = NULL)
-    : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot)
+                   std::shared_ptr<HiCR::L0::LocalMemorySlot>    sourceLocalMemorySlot = nullptr)
+    : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, std::move(sourceLocalMemorySlot))
   {}
 
-  ~GlobalMemorySlot() = default;
+  ~GlobalMemorySlot() override = default;
 
   /**
    * Attempts to lock memory lock using its mutex object
@@ -80,10 +72,4 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   std::mutex _mutex;
 };
 
-} // namespace L0
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L0

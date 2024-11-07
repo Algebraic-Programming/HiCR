@@ -13,10 +13,7 @@
 
 #include <string>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -34,7 +31,7 @@ class ExecutionUnit
    *
    * \return A string containing a human-readable description of the execution unit type
    */
-  virtual std::string getType() const = 0;
+  [[nodiscard]] virtual std::string getType() const = 0;
 
   /**
    * Default destructor
@@ -46,6 +43,4 @@ class ExecutionUnit
   ExecutionUnit() = default;
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

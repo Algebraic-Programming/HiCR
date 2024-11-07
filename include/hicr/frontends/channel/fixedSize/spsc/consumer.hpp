@@ -16,17 +16,9 @@
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/frontends/channel/fixedSize/base.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace channel
-{
-
-namespace fixedSize
-{
-
-namespace SPSC
+namespace HiCR::channel::fixedSize::SPSC
 {
 
 /**
@@ -67,15 +59,15 @@ class Consumer final : public channel::fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::CommunicationManager             &communicationManager,
-           std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot> producerCoordinationBuffer,
-           const size_t                          tokenSize,
-           const size_t                          capacity)
+  Consumer(L1::CommunicationManager                    &communicationManager,
+           const std::shared_ptr<L0::GlobalMemorySlot> &tokenBuffer,
+           const std::shared_ptr<L0::LocalMemorySlot>  &internalCoordinationBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot>        producerCoordinationBuffer,
+           const size_t                                 tokenSize,
+           const size_t                                 capacity)
     : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(tokenBuffer),
-      _producerCoordinationBuffer(producerCoordinationBuffer)
+      _producerCoordinationBuffer(std::move(producerCoordinationBuffer))
 
   {
     // Checking whether the memory slot is local. This backend only supports local data transfers
@@ -83,7 +75,7 @@ class Consumer final : public channel::fixedSize::Base
       HICR_THROW_LOGIC("The passed coordination slot was not created locally (it must be to be used internally by the channel implementation)\n");
 
     // Checking that the provided token exchange  buffer has the right size
-    auto requiredTokenBufferSize = getTokenBufferSize(_tokenSize, capacity);
+    auto requiredTokenBufferSize = getTokenBufferSize(getTokenSize(), capacity);
     auto providedTokenBufferSize = tokenBuffer->getSourceLocalMemorySlot()->getSize();
     if (providedTokenBufferSize < requiredTokenBufferSize)
       HICR_THROW_LOGIC(
@@ -117,20 +109,21 @@ class Consumer final : public channel::fixedSize::Base
   __INLINE__ size_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= _circularBuffer->getCapacity())
-      HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, _circularBuffer->getCapacity());
+    if (pos >= getCircularBuffer()->getCapacity())
+      HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, getCircularBuffer()->getCapacity());
 
     // Make sure receiver queues are occasionally processed
-    _communicationManager->flushReceived();
+    getCommunicationManager()->flushReceived();
 
     // Updating channel depth
     updateDepth();
 
     // Check if there are enough tokens in the buffer to satisfy the request
-    if (pos >= _circularBuffer->getDepth()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, _circularBuffer->getDepth());
+    if (pos >= getCircularBuffer()->getDepth())
+      HICR_THROW_RUNTIME("Attempting to peek position (%lu) but not enough tokens (%lu) are in the buffer", pos, getCircularBuffer()->getDepth());
 
     // Calculating buffer position
-    const size_t bufferPos = (_circularBuffer->getTailPosition() + pos) % _circularBuffer->getCapacity();
+    const size_t bufferPos = (getCircularBuffer()->getTailPosition() + pos) % getCircularBuffer()->getCapacity();
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -151,26 +144,27 @@ class Consumer final : public channel::fixedSize::Base
    */
   __INLINE__ void pop(const size_t n = 1)
   {
-    if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
+    if (n > getCircularBuffer()->getCapacity())
+      HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCircularBuffer()->getCapacity());
 
     // Updating channel depth
     updateDepth();
 
     // If the exchange buffer does not have n tokens pushed, reject operation
-    if (n > _circularBuffer->getDepth())
-      HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, _circularBuffer->getDepth());
+    if (n > getCircularBuffer()->getDepth())
+      HICR_THROW_RUNTIME("Attempting to pop (%lu) tokens, which is more than the number of current tokens in the channel (%lu)", n, getCircularBuffer()->getDepth());
 
     // Advancing tail (removes elements from the circular buffer)
-    _circularBuffer->advanceTail(n);
+    getCircularBuffer()->advanceTail(n);
 
     const auto coordBuffElemSize = sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
     // Notifying producer(s) of buffer liberation
-    _communicationManager->memcpy(_producerCoordinationBuffer,
-                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                  _coordinationBuffer,
-                                  _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                  coordBuffElemSize);
-    _communicationManager->fence(_coordinationBuffer, 1, 0);
+    getCommunicationManager()->memcpy(_producerCoordinationBuffer,
+                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                      getCoordinationBuffer(),
+                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                      coordBuffElemSize);
+    getCommunicationManager()->fence(getCoordinationBuffer(), 1, 0);
   }
 
   /**
@@ -186,13 +180,7 @@ class Consumer final : public channel::fixedSize::Base
    * 
    * @return The reference to the internal token buffer
    */
-  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getTokenBuffer() const { return _tokenBuffer; }
+  [[nodiscard]] __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getTokenBuffer() const { return _tokenBuffer; }
 };
 
-} // namespace SPSC
-
-} // namespace fixedSize
-
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel::fixedSize::SPSC
