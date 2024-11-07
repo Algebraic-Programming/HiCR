@@ -16,10 +16,7 @@
 #include <nlohmann_json/json.hpp>
 #include <hicr/core/L0/device.hpp>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -35,7 +32,7 @@ class Topology
   /**
    * Common type for a collection of devices
    */
-  typedef std::vector<std::shared_ptr<L0::Device>> deviceList_t;
+  using deviceList_t = std::vector<std::shared_ptr<L0::Device>>;
 
   Topology()  = default;
   ~Topology() = default;
@@ -44,14 +41,14 @@ class Topology
    * This function prompts the backend to perform the necessary steps to return  existing devices
    * \return A set of pointers to HiCR instances that refer to both local and remote instances
    */
-  __INLINE__ const deviceList_t &getDevices() const { return _deviceList; }
+  [[nodiscard]] __INLINE__ const deviceList_t &getDevices() const { return _deviceList; }
 
   /**
    * This function allows manually adding a new device into an existing topology
    *
    * @param[in] device The device to add
    */
-  __INLINE__ void addDevice(const std::shared_ptr<HiCR::L0::Device> device) { _deviceList.push_back(device); }
+  __INLINE__ void addDevice(const std::shared_ptr<HiCR::L0::Device> &device) { _deviceList.push_back(device); }
 
   /**
    * This function allows manually merging one topology information into another
@@ -69,7 +66,7 @@ class Topology
    *
    * @return JSON-formatted serialized topology, as detected by this topology manager
    */
-  __INLINE__ nlohmann::json serialize() const
+  [[nodiscard]] __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -116,7 +113,7 @@ class Topology
    * 
    * @return The internal topology metadata
   */
-  const nlohmann::json &getMetadata() const { return _metadata; }
+  [[nodiscard]] const nlohmann::json &getMetadata() const { return _metadata; }
 
   /**
    * A function to set internal topology metadata
@@ -140,6 +137,4 @@ class Topology
   deviceList_t _deviceList;
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

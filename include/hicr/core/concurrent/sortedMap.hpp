@@ -13,11 +13,10 @@
 #pragma once
 
 #include <map>
+#include <mutex>
+#include <hicr/core/definitions.hpp>
 
-namespace HiCR
-{
-
-namespace concurrent
+namespace HiCR::concurrent
 {
 
 /**
@@ -147,6 +146,4 @@ class SortedMap
   std::mutex _mutex;
 };
 
-} // namespace concurrent
-
-} // namespace HiCR
+} // namespace HiCR::concurrent

@@ -19,19 +19,7 @@
 #include <hicr/frontends/channel/fixedSize/base.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 
-namespace HiCR
-{
-
-namespace channel
-{
-
-namespace fixedSize
-{
-
-namespace MPSC
-{
-
-namespace nonlocking
+namespace HiCR::channel::fixedSize::MPSC::nonlocking
 {
 
 /**
@@ -205,7 +193,7 @@ class Consumer
    * 
    * @return The reference to the internal token buffers
    */
-  __INLINE__ std::vector<std::shared_ptr<L0::GlobalMemorySlot>> getTokenBuffers() const { return _tokenBuffers; }
+  [[nodiscard]] __INLINE__ std::vector<std::shared_ptr<L0::GlobalMemorySlot>> getTokenBuffers() const { return _tokenBuffers; }
 
   private:
 
@@ -234,12 +222,4 @@ class Consumer
   L1::CommunicationManager *const _communicationManager;
 };
 
-} // namespace nonlocking
-
-} // namespace MPSC
-
-} // namespace fixedSize
-
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel::fixedSize::MPSC::nonlocking

@@ -31,11 +31,13 @@ void coordinatorEntryPointFc(HiCR::Deployer &deployer)
     if (instance->getId() != coordinator->getHiCRInstance()->getId())
     {
       printf("Coordinator (%lu) sending message to instance %lu\n", coordinator->getHiCRInstance()->getId(), instance->getId());
+
       // Creating data object with welcome message
       auto dataObject = coordinator->createDataObject(welcomeMsg.data(), welcomeMsg.size() + 1);
 
       // Getting data object identifier
-      auto dataObjectId = dataObject->getId();
+      auto dataObjectId   = dataObject->getId();
+      auto dataObjectSize = dataObject->getSize();
 
       // Publishing data object
       dataObject->publish();
@@ -43,8 +45,9 @@ void coordinatorEntryPointFc(HiCR::Deployer &deployer)
       // Adding data object to the vector
       dataObjects.push_back(dataObject);
 
-      // Sending message with only the data object identifier
+      // Sending messages with the data object identifier and size
       coordinator->sendMessage(instance->getId(), &dataObjectId, sizeof(HiCR::deployer::DataObject::dataObjectId_t));
+      coordinator->sendMessage(instance->getId(), &dataObjectSize, sizeof(size_t));
     }
 
   // Sending a message to myself just to test self-comunication
@@ -75,27 +78,37 @@ void workerEntryPointFc(HiCR::Deployer &deployer, const std::string &entryPointN
   // Getting root (coordinator) instance id
   auto coordinatorInstanceId = deployer.getInstanceManager()->getRootInstanceId();
 
-  // Get a message from the coordinator
-  HiCR::deployer::Instance::message_t message;
-  while (message.size == 0) message = currentInstance->recvMessageAsync();
+  // Get a message from the coordinator with the data object id
+  HiCR::deployer::Instance::message_t datObjectIdMessage;
+  while (datObjectIdMessage.size == 0) datObjectIdMessage = currentInstance->recvMessageAsync();
 
   // Getting data object id from message
-  const auto dataObjectId = *((HiCR::deployer::DataObject::dataObjectId_t *)message.data);
+  const auto dataObjectId = *((HiCR::deployer::DataObject::dataObjectId_t *)datObjectIdMessage.data);
+
+  // Get a message from the coordinator with the data object size
+  HiCR::deployer::Instance::message_t datObjectSizeMessage;
+  while (datObjectSizeMessage.size == 0) datObjectSizeMessage = currentInstance->recvMessageAsync();
+
+  // Getting data object id from message
+  const size_t dataObjectSize = *((size_t *)datObjectSizeMessage.data);
 
   // Printing data object id
   printf("[Worker %lu] Requesting data object id %u from coordinator.\n", deployer.getInstanceId(), dataObjectId);
 
+  // Creating message buffer
+  auto dataObjectBuffer = malloc(dataObjectSize);
+
   // Creating data object reference
-  HiCR::deployer::DataObject srcDataObject(nullptr, 0, dataObjectId, coordinatorInstanceId, 0);
+  HiCR::deployer::DataObject dataObject(dataObjectBuffer, dataObjectSize, dataObjectId, coordinatorInstanceId, 0);
 
   // Getting data object from coordinator
-  auto dataObject = currentInstance->getDataObject(srcDataObject);
+  currentInstance->getDataObject(dataObject);
 
   // Printing data object contents
-  printf("[Worker %lu] Received message from coordinator: '%s'\n", deployer.getInstanceId(), (const char *)dataObject->getData());
+  printf("[Worker %lu] Received message from coordinator: '%s'\n", deployer.getInstanceId(), (const char *)dataObject.getData());
 
   // Freeing up internal buffer
-  dataObject->destroyBuffer();
+  free(dataObjectBuffer);
 };
 
 int main(int argc, char *argv[])

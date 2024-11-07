@@ -18,16 +18,7 @@
 #include <hicr/backends/host/hwloc/L0/computeResource.hpp>
 #include <hicr/backends/host/pthreads/L0/processingUnit.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L1
+namespace HiCR::backend::host::L1
 {
 
 /**
@@ -47,7 +38,7 @@ class ComputeManager : public HiCR::L1::ComputeManager
   /**
    * The constructor is employed to free memory required for hwloc
    */
-  ~ComputeManager() = default;
+  ~ComputeManager() override = default;
 
   /** This function enables the creation of an execution unit.
    *
@@ -56,7 +47,7 @@ class ComputeManager : public HiCR::L1::ComputeManager
    * \param[in] executionUnit The replicable function to execute
    * @return The newly created execution unit
    */
-  __INLINE__ static std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(Coroutine::coroutineFc_t executionUnit)
+  __INLINE__ static std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(const Coroutine::coroutineFc_t &executionUnit)
   {
     return std::make_shared<host::L0::ExecutionUnit>(executionUnit);
   }
@@ -68,10 +59,4 @@ class ComputeManager : public HiCR::L1::ComputeManager
   }
 };
 
-} // namespace L1
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L1

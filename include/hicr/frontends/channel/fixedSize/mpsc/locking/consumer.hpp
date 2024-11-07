@@ -16,20 +16,9 @@
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/frontends/channel/fixedSize/base.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace channel
-{
-
-namespace fixedSize
-{
-
-namespace MPSC
-{
-
-namespace locking
+namespace HiCR::channel::fixedSize::MPSC::locking
 {
 
 /**
@@ -69,15 +58,15 @@ class Consumer final : public channel::fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::CommunicationManager             &communicationManager,
-           std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBuffer,
-           const size_t                          tokenSize,
-           const size_t                          capacity)
+  Consumer(L1::CommunicationManager                   &communicationManager,
+           std::shared_ptr<L0::GlobalMemorySlot>       tokenBuffer,
+           const std::shared_ptr<L0::LocalMemorySlot> &internalCoordinationBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot>       consumerCoordinationBuffer,
+           const size_t                                tokenSize,
+           const size_t                                capacity)
     : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-      _tokenBuffer(tokenBuffer),
-      _consumerCoordinationBuffer(consumerCoordinationBuffer)
+      _tokenBuffer(std::move(tokenBuffer)),
+      _consumerCoordinationBuffer(std::move(consumerCoordinationBuffer))
   {}
   ~Consumer() = default;
 
@@ -107,27 +96,27 @@ class Consumer final : public channel::fixedSize::Base
   __INLINE__ ssize_t peek(const size_t pos = 0)
   {
     // Check if the requested position exceeds the capacity of the channel
-    if (pos >= _circularBuffer->getCapacity())
+    if (pos >= getCircularBuffer()->getCapacity())
       HICR_THROW_LOGIC("Attempting to peek for a token with position %lu (token number %lu when starting from zero), which is beyond than the channel capacity (%lu)",
                        pos,
                        pos + 1,
-                       _circularBuffer->getCapacity());
+                       getCircularBuffer()->getCapacity());
 
     // Value to return, initially set as -1 as default (not able to find the requested value)
     ssize_t bufferPos = -1;
 
     // Obtaining coordination buffer slot lock
-    if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return bufferPos;
+    if (getCommunicationManager()->acquireGlobalLock(_consumerCoordinationBuffer) == false) return bufferPos;
 
-    _communicationManager->flushReceived();
+    getCommunicationManager()->flushReceived();
     // Calculating current channel depth
     const auto curDepth = getDepth();
 
     // Calculating buffer position, if there are enough tokens in the buffer to satisfy the request
-    if (pos < curDepth) bufferPos = (_circularBuffer->getTailPosition() + pos) % _circularBuffer->getCapacity();
+    if (pos < curDepth) bufferPos = (ssize_t)((getCircularBuffer()->getTailPosition() + pos) % getCircularBuffer()->getCapacity());
 
     // Releasing coordination buffer slot lock
-    _communicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
+    getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -149,26 +138,27 @@ class Consumer final : public channel::fixedSize::Base
    */
   __INLINE__ bool pop(const size_t n = 1)
   {
-    if (n > _circularBuffer->getCapacity()) HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, _circularBuffer->getCapacity());
+    if (n > getCircularBuffer()->getCapacity())
+      HICR_THROW_LOGIC("Attempting to pop %lu tokens, which is larger than the channel capacity (%lu)", n, getCircularBuffer()->getCapacity());
 
     // Flag to indicate whether the operaton was successful
     bool successFlag = false;
 
     // Obtaining coordination buffer slot lock
-    if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
+    if (getCommunicationManager()->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
 
     // If the exchange buffer does not have n tokens pushed, reject operation, otherwise succeed
     if (n <= getDepth())
     {
       // Advancing tail (removes elements from the circular buffer)
-      _circularBuffer->advanceTail(n);
+      getCircularBuffer()->advanceTail(n);
 
       // Setting success flag
       successFlag = true;
     }
 
     // Releasing coordination buffer slot lock
-    _communicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
+    getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Operation was successful
     return successFlag;
@@ -180,15 +170,7 @@ class Consumer final : public channel::fixedSize::Base
    * 
    * @return The reference to the internal token buffer
    */
-  __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getTokenBuffer() const { return _tokenBuffer; }
+  [[nodiscard]] __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getTokenBuffer() const { return _tokenBuffer; }
 };
 
-} // namespace locking
-
-} // namespace MPSC
-
-} // namespace fixedSize
-
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel::fixedSize::MPSC::locking

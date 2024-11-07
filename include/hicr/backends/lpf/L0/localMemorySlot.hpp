@@ -15,6 +15,7 @@
 #include <lpf/core.h>
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <hicr/core/L0/memorySpace.hpp>
+#include <utility>
 
 /**
  * #CHECK(f...) Checks if an LPF function returns LPF_SUCCESS, else
@@ -23,16 +24,7 @@
 #define CHECK(f...)                                                                                                                                                                \
   if (f != LPF_SUCCESS) { HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f); }
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace lpf
-{
-
-namespace L0
+namespace HiCR::backend::lpf::L0
 {
 
 /**
@@ -50,21 +42,21 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * @param[in] memorySpace The memory space from whence this memory slot was created
    */
   LocalMemorySlot(lpf_memslot_t lpfMemSlot, void *const pointer, const size_t size, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
-    : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
-      _lpfMemSlot(lpfMemSlot),
-      _swapValue(0ULL)
+    : HiCR::L0::LocalMemorySlot(pointer, size, std::move(memorySpace)),
+      _lpfMemSlot(lpfMemSlot)
+
   {}
 
   /**
    * Default destructor
    */
-  ~LocalMemorySlot() = default;
+  ~LocalMemorySlot() override = default;
 
   /**
    * Get internal LPF slot (lpf_memslot_t) associated with this HiCR slot
    * @return LPF slot
    */
-  lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
+  [[nodiscard]] lpf_memslot_t getLPFSlot() const { return _lpfMemSlot; }
 
   /**
    * @param[in] lpfMemSlot The LPF memory slot
@@ -91,13 +83,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    * Internal LPF swap value for acquire/release of global slots.
    * Currently 0ULL = released/available; 1Ull = acquired
    */
-  uint64_t _swapValue;
+  uint64_t _swapValue{0ULL};
 };
 
-} // namespace L0
-
-} // namespace lpf
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::lpf::L0

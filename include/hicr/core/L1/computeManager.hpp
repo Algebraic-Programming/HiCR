@@ -20,10 +20,7 @@
 #include <hicr/core/L0/executionState.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
 
-namespace HiCR
-{
-
-namespace L1
+namespace HiCR::L1
 {
 
 /**
@@ -47,7 +44,7 @@ class ComputeManager
    *
    * @return A unique pointer to the newly created processing unit. It is important to preserve the uniqueness of this object, since it represents a physical resource (e.g., core) and we do not want to assign it to multiple workers.
    */
-  virtual std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> resource) const = 0;
+  [[nodiscard]] virtual std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> resource) const = 0;
 
   /**
    * This function enables the creation of an empty execution state object.
@@ -61,6 +58,4 @@ class ComputeManager
   virtual std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr) const = 0;
 };
 
-} // namespace L1
-
-} // namespace HiCR
+} // namespace HiCR::L1

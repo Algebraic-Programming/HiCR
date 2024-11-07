@@ -16,11 +16,9 @@
 #include <hicr/core/L0/computeResource.hpp>
 #include <hicr/core/L0/executionUnit.hpp>
 #include <hicr/core/L0/executionState.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -82,7 +80,7 @@ class ProcessingUnit
    * \param computeResource The instance of the compute resource to instantiate, as indicated by the backend
    */
   __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
-    : _computeResource(computeResource){};
+    : _computeResource(std::move(computeResource)){};
 
   virtual ~ProcessingUnit() = default;
 
@@ -91,7 +89,7 @@ class ProcessingUnit
    *
    * \return Retruns the current state
    */
-  __INLINE__ ProcessingUnit::state_t getState() const { return _state; }
+  [[nodiscard]] __INLINE__ ProcessingUnit::state_t getState() const { return _state; }
 
   /**
    * Initializes the resource and leaves it ready to execute work
@@ -236,6 +234,4 @@ class ProcessingUnit
   const std::shared_ptr<HiCR::L0::ComputeResource> _computeResource;
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

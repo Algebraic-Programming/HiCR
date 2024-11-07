@@ -12,12 +12,10 @@
 
 #pragma once
 
+#include <cstdint>
 #include <hicr/core/definitions.hpp>
 
-namespace HiCR
-{
-
-namespace L0
+namespace HiCR::L0
 {
 
 /**
@@ -32,7 +30,7 @@ class Instance
   /**
    * Type definition for a unique instance identifier
    */
-  typedef uint64_t instanceId_t;
+  using instanceId_t = uint64_t;
 
   /**
    * Default destructor
@@ -43,7 +41,7 @@ class Instance
    * This function returns the (hopefully) unique identifier of the current instance
    * @return The instance identifier
    */
-  __INLINE__ instanceId_t getId() const { return _id; }
+  [[nodiscard]] __INLINE__ instanceId_t getId() const { return _id; }
 
   /**
    * This function reports whether the caller is the root instance
@@ -59,7 +57,7 @@ class Instance
    *
    * @return True, if the current instance is root; false, otherwise.
    */
-  virtual bool isRootInstance() const = 0;
+  [[nodiscard]] virtual bool isRootInstance() const = 0;
 
   protected:
 
@@ -82,6 +80,4 @@ class Instance
   const instanceId_t _id;
 };
 
-} // namespace L0
-
-} // namespace HiCR
+} // namespace HiCR::L0

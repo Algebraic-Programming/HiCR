@@ -61,7 +61,6 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
                                                               producerCoordinationBufferForCounts,
                                                               producerCoordinationBufferForPayloads,
                                                               PAYLOAD_CAPACITY,
-                                                              sizeof(ELEMENT_TYPE),
                                                               channelCapacity);
 
   // Getting a single value from the channel

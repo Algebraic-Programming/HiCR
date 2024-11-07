@@ -14,10 +14,7 @@
 
 #include <hicr/core/exceptions.hpp>
 
-namespace HiCR
-{
-
-namespace channel
+namespace HiCR::channel
 {
 
 /**
@@ -44,8 +41,8 @@ class CircularBuffer
   CircularBuffer(size_t capacity, __volatile__ size_t *headAdvanceCounter, __volatile__ size_t *tailAdvanceCounter)
     : _capacity(capacity),
       _headAdvanceCounter(headAdvanceCounter),
-      _tailAdvanceCounter(tailAdvanceCounter),
-      _cachedDepth(0)
+      _tailAdvanceCounter(tailAdvanceCounter)
+
   {}
 
   virtual ~CircularBuffer() = default;
@@ -61,7 +58,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __INLINE__ size_t getHeadPosition() const noexcept { return *_headAdvanceCounter % _capacity; }
+  [[nodiscard]] __INLINE__ size_t getHeadPosition() const noexcept { return *_headAdvanceCounter % _capacity; }
 
   /**
    * @returns The current position of the buffer head
@@ -74,7 +71,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __INLINE__ size_t getTailPosition() const noexcept { return *_tailAdvanceCounter % _capacity; }
+  [[nodiscard]] __INLINE__ size_t getTailPosition() const noexcept { return *_tailAdvanceCounter % _capacity; }
 
   /**
    * This function increases the circular buffer depth (e.g., when an element is pushed) by advancing a virtual head.
@@ -130,7 +127,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __INLINE__ size_t getCapacity() const noexcept { return _capacity; }
+  [[nodiscard]] __INLINE__ size_t getCapacity() const noexcept { return _capacity; }
 
   /**
    * Returns the current circular buffer depth.
@@ -143,7 +140,7 @@ class CircularBuffer
    *
    * This function when called on a valid circular buffer instance will never fail.
    */
-  __INLINE__ size_t getDepth() const noexcept { return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter); }
+  [[nodiscard]] __INLINE__ size_t getDepth() const noexcept { return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter); }
 
   /**
    * A setter function for the attribute
@@ -157,7 +154,7 @@ class CircularBuffer
    * _cachedDepth
    * @returns cached depth of channel
    */
-  __INLINE__ size_t getCachedDepth() const noexcept { return _cachedDepth; }
+  [[nodiscard]] __INLINE__ size_t getCachedDepth() const noexcept { return _cachedDepth; }
 
   /**
    * This function can be used to quickly check whether the circular buffer is full.
@@ -167,7 +164,7 @@ class CircularBuffer
    * \returns true, if the buffer is full
    * \returns false, if the buffer is not full
    */
-  __INLINE__ bool isFull() const noexcept { return getDepth() == _capacity; }
+  [[nodiscard]] __INLINE__ bool isFull() const noexcept { return getDepth() == _capacity; }
 
   /**
    * This function can be used to quickly check whether the circular buffer is empty.
@@ -177,7 +174,7 @@ class CircularBuffer
    * \returns true, if the buffer is empty
    * \returns false, if the buffer is not empty
    */
-  __INLINE__ bool isEmpty() const noexcept { return *_headAdvanceCounter == *_tailAdvanceCounter; }
+  [[nodiscard]] __INLINE__ bool isEmpty() const noexcept { return *_headAdvanceCounter == *_tailAdvanceCounter; }
 
   /**
    * Forces the head advance counter into a specific absolute value
@@ -224,12 +221,12 @@ class CircularBuffer
   /**
    * @returns The absolute counter for the number of times the head was advanced
    */
-  __INLINE__ size_t getHeadAdvanceCounter() const noexcept { return *_headAdvanceCounter; }
+  [[nodiscard]] __INLINE__ size_t getHeadAdvanceCounter() const noexcept { return *_headAdvanceCounter; }
 
   /**
    * @returns The absolute counter for the number of times the tail was advanced
    */
-  __INLINE__ size_t getTailAdvanceCounter() const noexcept { return *_tailAdvanceCounter; }
+  [[nodiscard]] __INLINE__ size_t getTailAdvanceCounter() const noexcept { return *_tailAdvanceCounter; }
 
   private:
 
@@ -251,7 +248,7 @@ class CircularBuffer
   /**
    * A cached depth value only set via setCachedDepth
    */
-  size_t _cachedDepth;
+  size_t _cachedDepth{0};
 
   protected:
 
@@ -271,6 +268,4 @@ class CircularBuffer
   }
 };
 
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel

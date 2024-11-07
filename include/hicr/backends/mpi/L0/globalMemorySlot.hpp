@@ -15,17 +15,9 @@
 #include <mpi.h>
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <hicr/core/L0/globalMemorySlot.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace mpi
-{
-
-namespace L0
+namespace HiCR::backend::mpi::L0
 {
 
 /**
@@ -47,14 +39,14 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
                    const HiCR::L0::GlobalMemorySlot::tag_t       globalTag             = 0,
                    const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey             = 0,
                    std::shared_ptr<HiCR::L0::LocalMemorySlot>    sourceLocalMemorySlot = nullptr)
-    : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, sourceLocalMemorySlot),
+    : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, std::move(sourceLocalMemorySlot)),
       _rank(rank)
   {}
 
   /**
    * Default destructor
    */
-  ~GlobalMemorySlot() = default;
+  ~GlobalMemorySlot() override = default;
 
   /**
    * Returns the rank to which this memory slot belongs
@@ -89,7 +81,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    *
    * @return The internal state of _lockAcquired
    */
-  __INLINE__ bool getLockAcquiredValue() const { return _lockAcquired; }
+  [[nodiscard]] __INLINE__ bool getLockAcquiredValue() const { return _lockAcquired; }
 
   /**
    * Sets memory slot lock state (whether it has been acquired by the current MPI instance or not)
@@ -113,23 +105,17 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   /**
    * Stores the MPI window to use with this slot to move the actual data
    */
-  std::unique_ptr<MPI_Win> _dataWindow = NULL;
+  std::unique_ptr<MPI_Win> _dataWindow = nullptr;
 
   /**
    * Stores the MPI window to use with this slot to update received message count
    */
-  std::unique_ptr<MPI_Win> _recvMessageCountWindow = NULL;
+  std::unique_ptr<MPI_Win> _recvMessageCountWindow = nullptr;
 
   /**
    * Stores the MPI window to use with this slot to update sent message count
    */
-  std::unique_ptr<MPI_Win> _sentMessageCountWindow = NULL;
+  std::unique_ptr<MPI_Win> _sentMessageCountWindow = nullptr;
 };
 
-} // namespace L0
-
-} // namespace mpi
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::mpi::L0

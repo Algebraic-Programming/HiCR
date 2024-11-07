@@ -152,7 +152,7 @@ class FatalException : public std::runtime_error
  */
 __INLINE__ static void throwException [[noreturn]] (const exceptions::exception_t type, const char *fileName, const int lineNumber, const char *format, ...)
 {
-  char   *outstr = 0;
+  char   *outstr = nullptr;
   va_list ap;
   va_start(ap, format);
   auto res = vasprintf(&outstr, format, ap);
@@ -183,7 +183,8 @@ __INLINE__ static void throwException [[noreturn]] (const exceptions::exception_
   std::string outString = std::string("[HiCR] ") + typeString + std::string(" Exception: ") + std::string(outstr);
   free(outstr);
 
-  char info[1024];
+  const size_t bufferSize = 1024;
+  char         info[bufferSize];
   snprintf(info, sizeof(info) - 1, " + From %s:%d\n", fileName, lineNumber);
   outString += info;
 

@@ -16,19 +16,7 @@
 #include <queue>
 #include <hicr/frontends/channel/variableSize/spsc/consumer.hpp>
 
-namespace HiCR
-{
-
-namespace channel
-{
-
-namespace variableSize
-{
-
-namespace MPSC
-{
-
-namespace nonlocking
+namespace HiCR::channel::variableSize::MPSC::nonlocking
 {
 
 /**
@@ -63,16 +51,16 @@ class Consumer
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
-  Consumer(L1::CommunicationManager                          &communicationManager,
-           std::vector<std::shared_ptr<L0::GlobalMemorySlot>> payloadBuffers,
-           std::vector<std::shared_ptr<L0::GlobalMemorySlot>> tokenBuffers,
-           std::vector<std::shared_ptr<L0::LocalMemorySlot>>  internalCoordinationBufferForCounts,
-           std::vector<std::shared_ptr<L0::LocalMemorySlot>>  internalCoordinationBufferForPayloads,
-           std::vector<std::shared_ptr<L0::GlobalMemorySlot>> producerCoordinationBufferForCounts,
-           std::vector<std::shared_ptr<L0::GlobalMemorySlot>> producerCoordinationBufferForPayloads,
-           const size_t                                       payloadCapacity,
-           const size_t                                       payloadSize,
-           const size_t                                       capacity)
+  Consumer(L1::CommunicationManager                                 &communicationManager,
+           const std::vector<std::shared_ptr<L0::GlobalMemorySlot>> &payloadBuffers,
+           const std::vector<std::shared_ptr<L0::GlobalMemorySlot>> &tokenBuffers,
+           const std::vector<std::shared_ptr<L0::LocalMemorySlot>>  &internalCoordinationBufferForCounts,
+           const std::vector<std::shared_ptr<L0::LocalMemorySlot>>  &internalCoordinationBufferForPayloads,
+           const std::vector<std::shared_ptr<L0::GlobalMemorySlot>> &producerCoordinationBufferForCounts,
+           const std::vector<std::shared_ptr<L0::GlobalMemorySlot>> &producerCoordinationBufferForPayloads,
+           const size_t                                              payloadCapacity,
+           const size_t                                              payloadSize,
+           const size_t                                              capacity)
     : _communicationManager(&communicationManager)
   {
     // make sure producer and consumer sides have the same element size
@@ -94,7 +82,6 @@ class Consumer
                                                                                                  producerCoordinationBufferForCounts[i],
                                                                                                  producerCoordinationBufferForPayloads[i],
                                                                                                  payloadCapacity,
-                                                                                                 payloadSize,
                                                                                                  capacity));
       _spscList.push_back(consumerPtr);
 
@@ -253,12 +240,4 @@ class Consumer
   L1::CommunicationManager *const _communicationManager;
 };
 
-} // namespace nonlocking
-
-} // namespace MPSC
-
-} // namespace variableSize
-
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel::variableSize::MPSC::nonlocking

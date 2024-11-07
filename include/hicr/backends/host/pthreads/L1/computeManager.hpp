@@ -18,19 +18,7 @@
 #include <hicr/backends/host/L1/computeManager.hpp>
 #include "../L0/processingUnit.hpp"
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace pthreads
-{
-
-namespace L1
+namespace HiCR::backend::host::pthreads::L1
 {
 
 /**
@@ -47,20 +35,12 @@ class ComputeManager : public HiCR::backend::host::L1::ComputeManager
   /**
    * The constructor is employed to free memory required for hwloc
    */
-  ~ComputeManager() = default;
+  ~ComputeManager() override = default;
 
-  __INLINE__ std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
+  [[nodiscard]] __INLINE__ std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
   {
     return std::make_unique<host::pthreads::L0::ProcessingUnit>(computeResource);
   }
 };
 
-} // namespace L1
-
-} // namespace pthreads
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::pthreads::L1

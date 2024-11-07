@@ -14,10 +14,7 @@
 
 #include <parallel_hashmap/phmap.h>
 
-namespace HiCR
-{
-
-namespace concurrent
+namespace HiCR::concurrent
 {
 
 /**
@@ -26,6 +23,4 @@ namespace concurrent
 template <class K, class V>
 using HashMap = phmap::parallel_flat_hash_map<K, V, phmap::priv::hash_default_hash<K>, phmap::priv::hash_default_eq<K>, std::allocator<std::pair<const K, V>>, 4, std::mutex>;
 
-} // namespace concurrent
-
-} // namespace HiCR
+} // namespace HiCR::concurrent

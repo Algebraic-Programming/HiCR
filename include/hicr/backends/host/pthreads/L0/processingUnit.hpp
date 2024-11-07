@@ -19,6 +19,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
 #include <hicr/backends/host/L0/executionState.hpp>
@@ -30,19 +31,7 @@
   #define _GNU_SOURCE
 #endif
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace pthreads
-{
-
-namespace L0
+namespace HiCR::backend::host::pthreads::L0
 {
 
 /**
@@ -71,7 +60,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param[in] affinity New affinity to use
    */
-  __INLINE__ static void updateAffinity(const std::set<int> &affinity)
+  __INLINE__ static void updateAffinity(const std::set<host::L0::ComputeResource::logicalProcessorId_t> &affinity)
   {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
@@ -92,10 +81,10 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \return The set of cores/processing units that this thread is bound to
    */
-  __INLINE__ static std::set<int> getAffinity()
+  __INLINE__ static std::set<HiCR::backend::host::L0::ComputeResource::logicalProcessorId_t> getAffinity()
   {
-    std::set<int> affinity;
-    cpu_set_t     cpuset;
+    auto      affinity = std::set<HiCR::backend::host::L0::ComputeResource::logicalProcessorId_t>();
+    cpu_set_t cpuset;
 
     // Attempting to use the pthread interface first
     int status = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
@@ -116,14 +105,17 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource Represents the compute resource (core) affinity to associate this processing unit to
    */
-  __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+  __INLINE__ ProcessingUnit(const std::shared_ptr<HiCR::L0::ComputeResource> &computeResource)
     : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the processing unit
     auto c = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+    if (c == nullptr) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+
+    // Creating initialization barrier
+    _initializationBarrier = std::make_unique<pthread_barrier_t>();
   };
 
   private:
@@ -131,7 +123,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Stores the thread id as returned by the Pthreads library upon creation
    */
-  pthread_t _pthreadId;
+  pthread_t _pthreadId = 0;
 
   /**
    * Internal state of execution
@@ -141,7 +133,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Barrier to synchronize thread initialization
    */
-  pthread_barrier_t initializationBarrier;
+  std::unique_ptr<pthread_barrier_t> _initializationBarrier;
 
   /**
    * Static wrapper function to setup affinity and run the thread's function
@@ -151,7 +143,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __INLINE__ static void *launchWrapper(void *p)
   {
     // Gathering thread object
-    auto thread = (host::pthreads::L0::ProcessingUnit *)p;
+    auto thread = static_cast<host::pthreads::L0::ProcessingUnit *>(p);
 
     // Getting associated compute unit reference
     auto computeResource = dynamic_pointer_cast<HiCR::backend::host::L0::ComputeResource>(thread->getComputeResource());
@@ -161,19 +153,19 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     signal(HICR_RESUME_SIGNAL, ProcessingUnit::catchResumeSignal);
 
     // Setting initial thread affinity
-    thread->updateAffinity(std::set<int>({computeResource->getProcessorId()}));
+    thread->updateAffinity(std::set<host::L0::ComputeResource::logicalProcessorId_t>({computeResource->getProcessorId()}));
 
     // Yielding execution to allow affinity to refresh
     sched_yield();
 
     // The thread has now been properly initialized
-    pthread_barrier_wait(&thread->initializationBarrier);
+    pthread_barrier_wait(thread->_initializationBarrier.get());
 
     // Calling main loop
     thread->_executionState->resume();
 
     // No returns
-    return NULL;
+    return nullptr;
   }
 
   /**
@@ -183,8 +175,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __INLINE__ static void catchSuspendSignal(int sig)
   {
-    int      status = 0;
-    int      signalSet;
+    int      status    = 0;
+    int      signalSet = 0;
     sigset_t suspendSet;
 
     // Waiting for that signal to arrive
@@ -219,20 +211,20 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
   {
     // Initializing barrier
-    pthread_barrier_init(&initializationBarrier, NULL, 2);
+    pthread_barrier_init(_initializationBarrier.get(), nullptr, 2);
 
     // Obtaining execution state
     _executionState = std::move(executionState);
 
     // Launching thread function wrapper
-    auto status = pthread_create(&_pthreadId, NULL, launchWrapper, this);
+    auto status = pthread_create(&_pthreadId, nullptr, launchWrapper, this);
     if (status != 0) HICR_THROW_RUNTIME("Could not create thread %lu\n", _pthreadId);
 
     // Waiting for proper initialization of the thread
-    pthread_barrier_wait(&initializationBarrier);
+    pthread_barrier_wait(_initializationBarrier.get());
 
     // Destroying barrier
-    pthread_barrier_destroy(&initializationBarrier);
+    pthread_barrier_destroy(_initializationBarrier.get());
   }
 
   __INLINE__ void terminateImpl() override {}
@@ -240,16 +232,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __INLINE__ void awaitImpl() override
   {
     // Waiting for thread after execution
-    pthread_join(_pthreadId, NULL);
+    pthread_join(_pthreadId, nullptr);
   }
 };
 
-} // namespace L0
-
-} // namespace pthreads
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::pthreads::L0

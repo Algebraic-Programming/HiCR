@@ -15,16 +15,13 @@
 #include <cstdint>
 #include <functional>
 
-namespace HiCR
-{
-
-namespace tasking
+namespace HiCR::tasking
 {
 
 /**
 * Type definition for a number that can be used as universally unique identifier
 */
-typedef uint64_t uniqueId_t;
+using uniqueId_t = uint64_t;
 
 /**
  * Definition for an generic callback
@@ -32,6 +29,4 @@ typedef uint64_t uniqueId_t;
 template <class T>
 using callbackFc_t = std::function<void(T)>;
 
-} // namespace tasking
-
-} // namespace HiCR
+} // namespace HiCR::tasking

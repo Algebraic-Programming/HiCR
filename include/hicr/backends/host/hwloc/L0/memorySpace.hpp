@@ -17,19 +17,7 @@
 #include "../../L0/memorySpace.hpp"
 #include "localMemorySlot.hpp"
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace hwloc
-{
-
-namespace L0
+namespace HiCR::backend::host::hwloc::L0
 {
 
 /**
@@ -68,21 +56,21 @@ class MemorySpace final : public HiCR::backend::host::L0::MemorySpace
   /**
    * Default destructor
    */
-  ~MemorySpace() = default;
+  ~MemorySpace() override = default;
 
   /**
    * Function to determine whether the memory space supports strictly bound memory allocations
    *
    * @return The supported memory binding type by the memory space
    */
-  __INLINE__ host::hwloc::L0::LocalMemorySlot::binding_type getSupportedBindingType() const { return _bindingSupport; }
+  [[nodiscard]] __INLINE__ host::hwloc::L0::LocalMemorySlot::binding_type getSupportedBindingType() const { return _bindingSupport; }
 
   /**
    * Function to get the internal HWLoc object represented by this memory space
    *
    * @return The internal HWLoc object
    */
-  __INLINE__ const hwloc_obj_t getHWLocObject() const { return _hwlocObject; }
+  [[nodiscard]] __INLINE__ const hwloc_obj_t getHWLocObject() const { return _hwlocObject; }
 
   private:
 
@@ -103,20 +91,12 @@ class MemorySpace final : public HiCR::backend::host::L0::MemorySpace
   /**
    * HWloc object representing this memory space
    */
-  hwloc_obj_t _hwlocObject;
+  hwloc_obj_t _hwlocObject{};
 
   /**
    * Stores whether it is possible to allocate bound memory in this memory space
    */
-  host::hwloc::L0::LocalMemorySlot::binding_type _bindingSupport;
+  host::hwloc::L0::LocalMemorySlot::binding_type _bindingSupport{host::hwloc::L0::LocalMemorySlot::binding_type::strict_binding};
 };
 
-} // namespace L0
-
-} // namespace hwloc
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::hwloc::L0

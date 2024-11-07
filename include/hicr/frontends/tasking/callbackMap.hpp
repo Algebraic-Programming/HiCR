@@ -16,10 +16,7 @@
 #include <hicr/core/definitions.hpp>
 #include "./common.hpp"
 
-namespace HiCR
-{
-
-namespace tasking
+namespace HiCR::tasking
 {
 
 /**
@@ -79,6 +76,4 @@ class CallbackMap
   std::map<E, callbackFc_t<T>> _callbackMap;
 };
 
-} // namespace tasking
-
-} // namespace HiCR
+} // namespace HiCR::tasking

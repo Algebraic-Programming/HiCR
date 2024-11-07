@@ -43,7 +43,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    *
    * \param computeResource The compute resource from which this processing unit is instantiated
    */
-  __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
+  __INLINE__ ProcessingUnit(const std::shared_ptr<HiCR::L0::ComputeResource> &computeResource)
     : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the instance

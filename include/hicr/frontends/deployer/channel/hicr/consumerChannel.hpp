@@ -2,13 +2,9 @@
 
 #include <hicr/frontends/channel/variableSize/mpsc/locking/consumer.hpp>
 
-namespace HiCR
-{
-namespace deployer
+namespace HiCR::deployer
 {
 
-typedef HiCR::channel::variableSize::MPSC::locking::Consumer ConsumerChannel;
+using ConsumerChannel = HiCR::channel::variableSize::MPSC::locking::Consumer;
 
-} // namespace deployer
-
-} // namespace HiCR
+} // namespace HiCR::deployer

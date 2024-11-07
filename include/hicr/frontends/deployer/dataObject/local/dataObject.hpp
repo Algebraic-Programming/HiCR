@@ -1,12 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <hicr/core/L0/instance.hpp>
+#include <hicr/core/definitions.hpp>
+#include <hicr/core/exceptions.hpp>
 
-namespace HiCR
-{
-
-namespace deployer
+namespace HiCR::deployer
 {
 
 /**
@@ -19,7 +19,7 @@ class DataObject final
   /**
    * Type definition for a data object id
    */
-  typedef uint32_t dataObjectId_t;
+  using dataObjectId_t = uint32_t;
 
   /**
    * Standard data object constructor
@@ -30,7 +30,7 @@ class DataObject final
    * @param[in] instanceId Identifier of the instance owning the data object
    * @param[in] seed random application seed  
    */
-  DataObject(void *buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId, const HiCR::L0::Instance::instanceId_t seed)
+  DataObject(void *const buffer, const std::size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId, const HiCR::L0::Instance::instanceId_t seed)
     : _buffer(buffer),
       _size(size),
       _id(id){};
@@ -68,20 +68,14 @@ class DataObject final
    *
    * This function will stall until and unless the specified remote instance published the given data object
    *
-   * @param[in] dataObject The data object to take from a remote instance
+   * @param[inout] dataObject The data object to take from a remote instance
    * @param[in] currentInstanceId Id of the instance that will own the data object
    * @param[in] seed unique random seed 
-   * @return A shared pointer to the data object obtained from the remote instance
    */
-  __INLINE__ static std::shared_ptr<DataObject> getDataObject(HiCR::deployer::DataObject      &dataObject,
-                                                              HiCR::L0::Instance::instanceId_t currentInstanceId,
-                                                              HiCR::L0::Instance::instanceId_t seed)
+  __INLINE__ static void getDataObject(HiCR::deployer::DataObject &dataObject, HiCR::L0::Instance::instanceId_t currentInstanceId, HiCR::L0::Instance::instanceId_t seed)
   {
     // An exception is produced here, since as there is no other instance active, this object will never be retrieved
     HICR_THROW_LOGIC("Attempting to get a data object when using the host (single instance) deployer mode.");
-
-    // Creating data object
-    return std::make_shared<DataObject>(nullptr, 0, 0, 0, seed);
   }
 
   /**
@@ -89,7 +83,7 @@ class DataObject final
    *
    * @return The data object id
    */
-  dataObjectId_t getId() const { return _id; }
+  [[nodiscard]] dataObjectId_t getId() const { return _id; }
 
   /**
    * Set the data object id
@@ -114,21 +108,14 @@ class DataObject final
    *
    * @return A pointer to the internal data object buffer
    */
-  __INLINE__ void *getData() const { return _buffer; }
+  [[nodiscard]] __INLINE__ void *getData() const { return _buffer; }
 
   /**
    * Gets the size of the data object's internal data buffer
    *
    * @return The size of the data object's internal data buffer
    */
-  __INLINE__ size_t getSize() const { return _size; }
-
-  /**
-   * Frees up the internal buffer of the data object.
-   *
-   * The same semantics of a normal free() function applies. Double frees must be avoided.
-   */
-  __INLINE__ void destroyBuffer() { free(_buffer); }
+  [[nodiscard]] __INLINE__ size_t getSize() const { return _size; }
 
   private:
 
@@ -148,6 +135,4 @@ class DataObject final
   dataObjectId_t _id;
 };
 
-} // namespace deployer
-
-} // namespace HiCR
+} // namespace HiCR::deployer

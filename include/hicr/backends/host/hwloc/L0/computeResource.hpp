@@ -18,19 +18,7 @@
 #include <hicr/core/exceptions.hpp>
 #include "../../L0/computeResource.hpp"
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace hwloc
-{
-
-namespace L0
+namespace HiCR::backend::host::hwloc::L0
 {
 
 /**
@@ -65,7 +53,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
   /**
    * Default destructor
    */
-  ~ComputeResource() = default;
+  ~ComputeResource() override = default;
 
   /**
    * Uses HWloc to recursively (tree-like) identify the host's basic processing units (PUs)
@@ -75,7 +63,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    * \param[in] depth Stores the current exploration depth level, necessary to return only the processing units at the leaf level
    * \param[out] threadPUs Storage for the found procesing units
    */
-  __INLINE__ static void detectThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<int> &threadPUs)
+  __INLINE__ static void detectThreadPUs(hwloc_topology_t topology, hwloc_obj_t obj, int depth, std::vector<logicalProcessorId_t> &threadPUs)
   {
     if (obj->arity == 0) threadPUs.push_back(obj->logical_index);
     for (unsigned int i = 0; i < obj->arity; i++) detectThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
@@ -174,7 +162,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
     hwloc_obj_t cache = obj->parent;
     while (cache)
     {
-      Cache::cacheLevel_t level;
+      Cache::cacheLevel_t level = Cache::cacheLevel_t::L1;
       std::string         type;
 
       // Check if the current object is a cache-type object
@@ -185,15 +173,15 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
         switch (cache->type)
         {
         case HWLOC_OBJ_L1CACHE:
-        case HWLOC_OBJ_L1ICACHE: level = 1; break;
+        case HWLOC_OBJ_L1ICACHE: level = Cache::cacheLevel_t::L1; break;
         case HWLOC_OBJ_L2CACHE:
-        case HWLOC_OBJ_L2ICACHE: level = 2; break;
+        case HWLOC_OBJ_L2ICACHE: level = Cache::cacheLevel_t::L2; break;
         case HWLOC_OBJ_L3CACHE:
-        case HWLOC_OBJ_L3ICACHE: level = 3; break;
-        case HWLOC_OBJ_L4CACHE: level = 4; break;
-        case HWLOC_OBJ_L5CACHE: level = 5; break;
+        case HWLOC_OBJ_L3ICACHE: level = Cache::cacheLevel_t::L3; break;
+        case HWLOC_OBJ_L4CACHE: level = Cache::cacheLevel_t::L4; break;
+        case HWLOC_OBJ_L5CACHE: level = Cache::cacheLevel_t::L5; break;
         // We never expect to get here; this is for compiler warning suppresion
-        default: level = 0;
+        default: HICR_THROW_RUNTIME("Unsupported Cache level detected (%lu)", cache->type);
         }
 
         // Storage for cache type
@@ -242,14 +230,14 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
    * \param[in] logicalProcessorId The ID of the processor we are doing the search for
    * \returns The ID of the associated memory space
    */
-  __INLINE__ static int getCpuNumaAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __INLINE__ static numaAffinity_t getCpuNumaAffinity(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
   {
     // Sanitize input? So far we only call it internally so assume ID given is safe?
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
 
     if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
 
-    int ret = -1;
+    numaAffinity_t ret = 0;
 
     // obj is a leaf/PU; get to its parents to discover the hwloc memory space it belongs to
     hwloc_obj_t ancestor = obj->parent;
@@ -270,7 +258,7 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
       if (hwloc_obj_type_is_memory(nodeNUMA->type) && hwloc_bitmap_isset(obj->nodeset, nodeNUMA->os_index))
       {
         found = true;
-        ret   = nodeNUMA->logical_index;
+        ret   = (numaAffinity_t)nodeNUMA->logical_index;
         break;
       }
     }
@@ -281,12 +269,4 @@ class ComputeResource final : public HiCR::backend::host::L0::ComputeResource
   }
 };
 
-} // namespace L0
-
-} // namespace hwloc
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::hwloc::L0

@@ -20,10 +20,7 @@
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 
-namespace HiCR
-{
-
-namespace L1
+namespace HiCR::L1
 {
 
 /**
@@ -50,7 +47,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly allocated memory slot
    */
-  __INLINE__ std::shared_ptr<L0::LocalMemorySlot> allocateLocalMemorySlot(std::shared_ptr<L0::MemorySpace> memorySpace, const size_t size)
+  __INLINE__ std::shared_ptr<L0::LocalMemorySlot> allocateLocalMemorySlot(const std::shared_ptr<L0::MemorySpace> &memorySpace, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -70,7 +67,7 @@ class MemoryManager
    * \param[in] size Size of the memory slot to create
    * \returns The pointer of the newly registered memory slot
    */
-  virtual std::shared_ptr<L0::LocalMemorySlot> registerLocalMemorySlot(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size)
+  virtual std::shared_ptr<L0::LocalMemorySlot> registerLocalMemorySlot(const std::shared_ptr<HiCR::L0::MemorySpace> &memorySpace, void *const ptr, const size_t size)
   {
     // Increasing memory space usage
     memorySpace->increaseUsage(size);
@@ -87,7 +84,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  __INLINE__ void deregisterLocalMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
+  __INLINE__ void deregisterLocalMemorySlot(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memorySlot)
   {
     // Decreasing memory space usage
     memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
@@ -101,7 +98,7 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to free up. It becomes unusable after freeing.
    */
-  __INLINE__ void freeLocalMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot)
+  __INLINE__ void freeLocalMemorySlot(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memorySlot)
   {
     // Decreasing memory space usage
     memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
@@ -146,6 +143,4 @@ class MemoryManager
   virtual void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) = 0;
 };
 
-} // namespace L1
-
-} // namespace HiCR
+} // namespace HiCR::L1

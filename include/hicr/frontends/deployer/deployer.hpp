@@ -49,13 +49,13 @@ class Deployer final
            HiCR::L1::CommunicationManager           *communicationManager,
            HiCR::L1::MemoryManager                  *memoryManager,
            std::vector<HiCR::L1::TopologyManager *> &topologyManagers)
-    : _instanceManager(instanceManager)
+    : _currentInstance(new HiCR::deployer::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, _machineModel.get())),
+      _instanceManager(instanceManager)
   {
     // Creating machine model object
     _machineModel = std::make_unique<HiCR::MachineModel>(*_instanceManager, topologyManagers);
 
     // Creating local HiCR Deployer instance
-    _currentInstance = new HiCR::deployer::Instance(instanceManager, communicationManager, memoryManager, topologyManagers, _machineModel.get());
   }
 
   ~Deployer() = default;
@@ -79,7 +79,7 @@ class Deployer final
    *
    * @return A pointer to the current instance
    */
-  HiCR::deployer::Instance *getCurrentInstance() const
+  [[nodiscard]] HiCR::deployer::Instance *getCurrentInstance() const
   {
     // Sanity check
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling getCoordinatorInstance before HiCR has been initialized.\n");
@@ -106,8 +106,8 @@ class Deployer final
    * @param[in] acceptanceCriteriaFc A user-given function that compares the requested topology for a given instance and the one obtained to decide whether it meets the user requirements
    */
   __INLINE__ void deploy(
-    std::vector<HiCR::MachineModel::request_t>        &requests,
-    HiCR::MachineModel::topologyAcceptanceCriteriaFc_t acceptanceCriteriaFc = [](const HiCR::L0::Topology &t0, const HiCR::L0::Topology &t1) { return true; })
+    std::vector<HiCR::MachineModel::request_t>               &requests,
+    const HiCR::MachineModel::topologyAcceptanceCriteriaFc_t &acceptanceCriteriaFc = [](const HiCR::L0::Topology &t0, const HiCR::L0::Topology &t1) { return true; })
   {
     if (_currentInstance == nullptr) HICR_THROW_LOGIC("Calling deploy before HiCR has been initialized.\n");
 
@@ -163,9 +163,9 @@ class Deployer final
    * @param[in] entryPointName A human-readable string that defines the name of the task. To be executed, this should coincide with the name of a task specified in the machine model requests.
    * @param[in] fc Actual function to be executed upon instantiation
    */
-  __INLINE__ void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t fc)
+  __INLINE__ void registerEntryPoint(const std::string &entryPointName, const HiCR::L1::InstanceManager::RPCFunction_t &fc)
   {
-    _deployerEntryPointVector.push_back(entryPoint_t(entryPointName, fc));
+    _deployerEntryPointVector.emplace_back(entryPointName, fc);
   }
 
   /**
@@ -217,7 +217,7 @@ class Deployer final
   /**
    * The entry point type is the combination of its name (a string) and the associated function to execute
    */
-  typedef std::pair<const std::string, const HiCR::L1::InstanceManager::RPCFunction_t> entryPoint_t;
+  using entryPoint_t = std::pair<const std::string, const HiCR::L1::InstanceManager::RPCFunction_t>;
 
   /**
    * A temporary storage place for entry points so that workers can register them before initializing (and therefore losing control over their execution)

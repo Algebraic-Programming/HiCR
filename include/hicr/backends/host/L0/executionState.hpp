@@ -18,16 +18,7 @@
 #include <hicr/backends/host/coroutine.hpp>
 #include <hicr/backends/host/L0/executionUnit.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
-{
-
-namespace L0
+namespace HiCR::backend::host::L0
 {
 
 /**
@@ -43,14 +34,14 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    * \param[in] executionUnit The replicable stateless execution unit to instantiate
    * \param[in] argument Argument (closure) to pass to the function to be ran
    */
-  __INLINE__ ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr)
+  __INLINE__ ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> &executionUnit, void *const argument = nullptr)
     : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_pointer_cast<host::L0::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (e == NULL) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType().c_str());
+    if (e == nullptr) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType().c_str());
 
     // Getting function to execution from the execution unit
     const auto &fc = e->getFunction();
@@ -75,10 +66,4 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   host::Coroutine _coroutine;
 };
 
-} // namespace L0
-
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host::L0

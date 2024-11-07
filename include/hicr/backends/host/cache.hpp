@@ -11,17 +11,14 @@
  */
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <string>
+#include <hicr/core/definitions.hpp>
+#include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/computeResource.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace host
+namespace HiCR::backend::host
 {
 
 /**
@@ -34,7 +31,23 @@ class Cache
   /**
    * Type definition for a cache level (L1, L2, L3...)
    */
-  typedef unsigned int cacheLevel_t;
+  enum cacheLevel_t
+  {
+    /// Cache Level L1
+    L1 = 1,
+
+    /// Cache Level L2
+    L2 = 2,
+
+    /// Cache Level L3
+    L3 = 3,
+
+    /// Cache Level L4
+    L4 = 4,
+
+    /// Cache Level L5
+    L5 = 5
+  };
 
   /**
    * Constructor for the cache class
@@ -45,9 +58,9 @@ class Cache
    * @param[in] shared Indicates whether this cache is shared among others
    * @param[in] size The size of the detected cache
    */
-  Cache(const cacheLevel_t level, const std::string &type, const size_t size, const size_t lineSize, const bool shared)
+  Cache(const cacheLevel_t level, std::string type, const size_t size, const size_t lineSize, const bool shared)
     : _level(level),
-      _type(type),
+      _type(std::move(type)),
       _cacheSize(size),
       _lineSize(lineSize),
       _shared(shared)
@@ -68,42 +81,42 @@ class Cache
    *
    * \return The cache size in Bytes
    */
-  __INLINE__ size_t getSize() const { return _cacheSize; }
+  [[nodiscard]] __INLINE__ size_t getSize() const { return _cacheSize; }
 
   /**
    * Obtain the line size of the cache object
    *
    * \return The cache line size in Bytes
    */
-  __INLINE__ size_t getLineSize() const { return _lineSize; }
+  [[nodiscard]] __INLINE__ size_t getLineSize() const { return _lineSize; }
 
   /**
    * Obtain the type of the cache object
    *
    * \return The cache type in as a cacheType_t enum value
    */
-  __INLINE__ cacheLevel_t getLevel() const { return _level; }
+  [[nodiscard]] __INLINE__ cacheLevel_t getLevel() const { return _level; }
 
   /**
    * Indicates whether the cache is shared among other procesing units
    *
    * \return True, if the cache is shared; false, otherwise
    */
-  __INLINE__ bool getShared() const { return _shared; }
+  [[nodiscard]] __INLINE__ bool getShared() const { return _shared; }
 
   /**
    * Returns the cache type
    *
    * \return The cache type (instruction, data, unified)
    */
-  __INLINE__ const std::string &getType() const { return _type; }
+  [[nodiscard]] __INLINE__ const std::string &getType() const { return _type; }
 
   /**
    * Serialization function to enable sharing cache information
    *
    * @return JSON-formatted serialized cache information
    */
-  __INLINE__ nlohmann::json serialize() const
+  [[nodiscard]] __INLINE__ nlohmann::json serialize() const
   {
     // Storage for newly created serialized output
     nlohmann::json output;
@@ -138,7 +151,7 @@ class Cache
 
     key = "Level";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
-    if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
+    if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number. Value: '%s'", key.c_str(), input[key].dump().c_str());
     _level = input[key].get<cacheLevel_t>();
 
     key = "Type";
@@ -152,12 +165,12 @@ class Cache
     _shared = input[key].get<bool>();
   }
 
-  protected:
+  private:
 
   /**
    * Cache level
    */
-  cacheLevel_t _level;
+  cacheLevel_t _level{};
 
   /**
    * Type of cache (Instruction, Data, Unified)
@@ -167,22 +180,18 @@ class Cache
   /**
    * Size of the Cache, in Bytes
    */
-  size_t _cacheSize;
+  size_t _cacheSize{};
 
   /**
    * Size of the Cache Line, in Bytes
    */
-  size_t _lineSize;
+  size_t _lineSize{};
 
   /**
    * Flag to indicate whether the flag is of exclusive core use or shared among others
    */
-  bool _shared;
+  bool _shared{};
 
 }; // class Cache
 
-} // namespace host
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::host

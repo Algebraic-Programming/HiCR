@@ -16,20 +16,9 @@
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/frontends/channel/fixedSize/base.hpp>
+#include <utility>
 
-namespace HiCR
-{
-
-namespace channel
-{
-
-namespace fixedSize
-{
-
-namespace MPSC
-{
-
-namespace locking
+namespace HiCR::channel::fixedSize::MPSC::locking
 {
 
 /**
@@ -67,15 +56,15 @@ class Producer final : public fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager             &communicationManager,
-           std::shared_ptr<L0::GlobalMemorySlot> tokenBuffer,
-           std::shared_ptr<L0::LocalMemorySlot>  internalCoordinationBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot> consumerCoordinationBuffer,
-           const size_t                          tokenSize,
-           const size_t                          capacity)
+  Producer(L1::CommunicationManager                   &communicationManager,
+           std::shared_ptr<L0::GlobalMemorySlot>       tokenBuffer,
+           const std::shared_ptr<L0::LocalMemorySlot> &internalCoordinationBuffer,
+           std::shared_ptr<L0::GlobalMemorySlot>       consumerCoordinationBuffer,
+           const size_t                                tokenSize,
+           const size_t                                capacity)
     : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
-      _tokenBuffer(tokenBuffer),
-      _consumerCoordinationBuffer(consumerCoordinationBuffer)
+      _tokenBuffer(std::move(tokenBuffer)),
+      _consumerCoordinationBuffer(std::move(consumerCoordinationBuffer))
   {}
   ~Producer() = default;
 
@@ -97,7 +86,7 @@ class Producer final : public fixedSize::Base
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __INLINE__ bool push(std::shared_ptr<L0::LocalMemorySlot> sourceSlot, const size_t n = 1)
+  __INLINE__ bool push(const std::shared_ptr<L0::LocalMemorySlot> &sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is big enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;
@@ -113,63 +102,55 @@ class Producer final : public fixedSize::Base
     bool successFlag = false;
 
     // Locking remote token and coordination buffer slots
-    if (_communicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
+    if (getCommunicationManager()->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
 
     // Updating local coordination buffer
-    _communicationManager->memcpy(_coordinationBuffer, 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
+    getCommunicationManager()->memcpy(getCoordinationBuffer(), 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
 
     // Adding fence operation to ensure buffers are ready for re-use
-    _communicationManager->fence(_coordinationBuffer, 0, 1);
+    getCommunicationManager()->fence(getCoordinationBuffer(), 0, 1);
 
     // Calculating current channel depth
     const auto depth = getDepth();
 
     // If the exchange buffer does not have n free slots, reject the operation
-    if (depth + n <= _circularBuffer->getCapacity())
+    if (depth + n <= getCircularBuffer()->getCapacity())
     {
       // setting the cached depth is done to avoid the situation
       // when the effect of a consumer popping an element is pushed to the producer
       // after the consumer releases the lock and after the producer acquires it
       // for a push, resulting in temporary illegal depth of the circular buffer
-      _circularBuffer->setCachedDepth(depth);
+      getCircularBuffer()->setCachedDepth(depth);
 
       // Copying with source increasing offset per token
       for (size_t i = 0; i < n; i++)
       {
-        _communicationManager->memcpy(_tokenBuffer,                                        /* destination */
-                                      getTokenSize() * _circularBuffer->getHeadPosition(), /* dst_offset */
-                                      sourceSlot,                                          /* source */
-                                      i * getTokenSize(),                                  /* src_offset */
-                                      getTokenSize());                                     /* size*/
+        getCommunicationManager()->memcpy(_tokenBuffer,                                            /* destination */
+                                          getTokenSize() * getCircularBuffer()->getHeadPosition(), /* dst_offset */
+                                          sourceSlot,                                              /* source */
+                                          i * getTokenSize(),                                      /* src_offset */
+                                          getTokenSize());                                         /* size*/
       }
-      _communicationManager->fence(sourceSlot, n, 0);
+      getCommunicationManager()->fence(sourceSlot, n, 0);
 
       // Advance head, as we have added n new elements
-      _circularBuffer->advanceHead(n, true);
+      getCircularBuffer()->advanceHead(n, true);
 
       // Updating global coordination buffer
-      _communicationManager->memcpy(_consumerCoordinationBuffer, 0, _coordinationBuffer, 0, getCoordinationBufferSize());
+      getCommunicationManager()->memcpy(_consumerCoordinationBuffer, 0, getCoordinationBuffer(), 0, getCoordinationBufferSize());
       // Adding fence operation to ensure buffers are ready for re-use
-      _communicationManager->fence(_coordinationBuffer, 1, 0);
+      getCommunicationManager()->fence(getCoordinationBuffer(), 1, 0);
 
       // Mark operation as successful
       successFlag = true;
     }
 
     // Releasing remote token and coordination buffer slots
-    _communicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
+    getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Succeeded
     return successFlag;
   }
 };
 
-} // namespace locking
-
-} // namespace MPSC
-
-} // namespace fixedSize
-
-} // namespace channel
-
-} // namespace HiCR
+} // namespace HiCR::channel::fixedSize::MPSC::locking
