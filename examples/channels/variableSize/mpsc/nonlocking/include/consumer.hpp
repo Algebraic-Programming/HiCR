@@ -56,18 +56,20 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
 
   // communicate to producers the token buffer references
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY, consumerCoordinationBuffersForCounts);
-  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, consumerCoordinationBuffersForPayloads);
-  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_TOKEN_KEY, localBuffersForCounts);
-  communicationManager.fence(CONSUMER_TOKEN_KEY);
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_PAYLOAD_KEY, localBuffersForPayloads);
+
+  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
+  communicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+  communicationManager.fence(CONSUMER_TOKEN_KEY);
   communicationManager.fence(CONSUMER_PAYLOAD_KEY);
 
   // get from producers their coordination buffer references
   communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, {});
-  communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, {});
+
+  communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
 
   // get all global slot information required (local operations)
@@ -139,11 +141,6 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
     communicationManager.destroyGlobalMemorySlot(globalBuffersForPayloads[i]);
     communicationManager.destroyGlobalMemorySlot(coordinationBuffersForCountsAsSlots[i]);
     communicationManager.destroyGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
-
-    memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForCounts[i]);
-    memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForPayloads[i]);
-    memoryManager.freeLocalMemorySlot(localBuffersForCounts[i].second);
-    memoryManager.freeLocalMemorySlot(localBuffersForPayloads[i].second);
   }
 
   // Fences for global slots destructions/cleanup
@@ -153,4 +150,12 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   communicationManager.fence(CONSUMER_PAYLOAD_KEY);
   communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   communicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
+
+  for (size_t i = 0; i < producerCount; i++)
+  {
+    memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForCounts[i]);
+    memoryManager.freeLocalMemorySlot(internalCoordinationBuffersForPayloads[i]);
+    memoryManager.freeLocalMemorySlot(localBuffersForCounts[i].second);
+    memoryManager.freeLocalMemorySlot(localBuffersForPayloads[i].second);
+  }
 }

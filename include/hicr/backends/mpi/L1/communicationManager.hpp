@@ -88,7 +88,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * Therefore, we need to keep track of all the windows we created, even if they have been deregistered
    * by the user. If even one instance loses track of the window, it cannot be freed.
    */
-  HiCR::L1::CommunicationManager::globalMemorySlotTagKeyMap_t _deregisteredGlobalMemorySlotsTagKeyMap;
+  HiCR::L1::CommunicationManager::globalMemorySlotTagKeyMap_t _deregisteredGlobalMemorySlotsTagKeyMap{};
 
   __INLINE__ void lockMPIWindow(int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
@@ -322,6 +322,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     // Calculating number of global slots to destroy
     int globalDestroySlotsCount = 0;
     for (const auto count : perProcessDestroySlotCount) globalDestroySlotsCount += count;
+
+    // If there are no slots to destroy from any instance, return to avoid a second round of collectives
+    if (globalDestroySlotsCount == 0) return;
 
     // Allocating storage for global memory slot keys
     std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t> localDestroySlotKeys(localDestroySlotsCount);

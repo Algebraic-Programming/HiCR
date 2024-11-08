@@ -79,10 +79,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   // lpf_memslot_t globalSwapSlot = LPF_INVALID_MEMSLOT;
 
-  /**
-   * Map of global slot id and MPI windows
-   */
-
   std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot::tag_t tag, HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override
   {
     return nullptr;
@@ -251,6 +247,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     size_t globalDestroySlotTotalCount = 0;
     for (size_t i = 0; i < _size; i++) globalDestroySlotTotalCount += globalDestroySlotCounts[i];
 
+    // If there are no slots to destroy from any instance, return to avoid a second round of collectives
+    if (globalDestroySlotTotalCount == 0) return;
+
     // We need to destroy both the slot and the swap slot
     localDestroySlotsCount *= 2lu;
     globalDestroySlotTotalCount *= 2lu;
@@ -283,7 +282,6 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Execute the allgatherv
     CHECK(lpf_collectives_init(_lpf, _rank, _size, 1, 0, sizeof(lpf_memslot_t) * globalDestroySlotTotalCount, &coll));
-    CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
     CHECK(lpf_allgatherv(coll, slot_local_ids, slot_global_ids, globalDestroySlotCountsInBytes.data(), false /* exclude myself */));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
     CHECK(lpf_collectives_destroy(coll));
