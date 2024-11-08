@@ -109,8 +109,9 @@ class MockInstanceManager : public HiCR::L1::InstanceManager
   MockInstanceManager()
   {
     ON_CALL(*this, getRootInstanceId()).WillByDefault(Return(0));
-    _currentInstance = std::make_shared<HiCR::backend::host::L0::Instance>();
-    _instances.push_back(_currentInstance);
+    auto instance = std::make_shared<HiCR::backend::host::L0::Instance>();
+    setCurrentInstance(instance);
+    addInstance(instance);
   }
 };
 
