@@ -62,11 +62,6 @@ class Task
      * Triggered as the task finishes execution
      */
     onTaskFinish,
-
-    /**
-     * Triggered as the task receives a sync signal (used for mutual exclusion mechanisms)
-    */
-    onTaskSync,
   };
 
   /**
@@ -101,11 +96,6 @@ class Task
    * @return A pointer to the task's an callback map. NULL, if not defined.
    */
   __INLINE__ taskCallbackMap_t *getCallbackMap() { return _callbackMap; }
-
-  /**
-   * Sends a sync signal, triggering the associated callback
-   */
-  __INLINE__ void sendSyncSignal() { _callbackMap->trigger(this, HiCR::tasking::Task::callback_t::onTaskSync); }
 
   /**
    * Queries the task's internal state.
