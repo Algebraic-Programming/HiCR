@@ -47,7 +47,7 @@ build-ascend:
   - echo "$PATH"
   - echo "Building..."
   - mkdir build
-  - meson setup build -Dbackends=ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+  - meson setup build -Dbackends=host/hwloc,host/pthreads,ascend -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
   - meson compile -C build
   - echo "Running tests..."
   - meson test -C build
