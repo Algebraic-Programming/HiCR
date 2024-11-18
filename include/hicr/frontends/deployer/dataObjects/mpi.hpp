@@ -4,6 +4,7 @@
 #include <memory>
 #include <mpi.h>
 #include <hicr/core/L0/instance.hpp>
+#include "../dataObject.hpp"
 
 enum
 {
@@ -12,13 +13,13 @@ enum
 #define _HICR_DEPLOYER_DATA_OBJECT_RETURN_SIZE_TAG _HICR_DEPLOYER_DATA_OBJECT_BASE_TAG + 1
 #define _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG _HICR_DEPLOYER_DATA_OBJECT_BASE_TAG + 2
 
-namespace HiCR::deployer
+namespace HiCR::deployer::dataObject
 {
 
 /**
  * Prototype implementation of the data object class for MPI
  */
-class DataObject final
+class MPI final : public HiCR::deployer::DataObject
 {
   public:
 
@@ -45,12 +46,11 @@ class DataObject final
    * @param[in] instanceId Identifier of the instance owning the data object
    * @param[in] seed random application seed  
    */
-  DataObject(void *const buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId, const HiCR::L0::Instance::instanceId_t seed)
-    : _buffer(buffer),
-      _instanceId(instanceId),
-      _size(size),
-      _id(id){};
-  ~DataObject() = default;
+  MPI(void *const buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId, const HiCR::L0::Instance::instanceId_t seed)
+    : DataObject(buffer, size, id, instanceId, seed)
+  {}
+
+  ~MPI() = default;
 
   /**
    * Exposes a data object to be obtained (stealed) by another instance
@@ -60,7 +60,7 @@ class DataObject final
     // Do nothing if the data object has already been published
     if (_isPublished == true) { return; }
     // Pick the first 15 bits of the id and use it as MPI Tag
-    const int dataObjectIdTag = (int)_id & (int)mpiTagMask;
+    const int dataObjectIdTag = (int)getId() & (int)mpiTagMask;
 
     publishRequest = MPI_REQUEST_NULL;
 
@@ -97,7 +97,7 @@ class DataObject final
     auto requester = status.MPI_SOURCE;
 
     // Getting RPC execution unit index
-    MPI_Ssend(_buffer, (int)_size, MPI_BYTE, requester, _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD);
+    MPI_Ssend(getData(), (int)getSize(), MPI_BYTE, requester, _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD);
 
     // Mark the object as not published
     _isPublished = false;
@@ -111,86 +111,25 @@ class DataObject final
    *
    * This function will stall until and unless the specified remote instance published the given data object
    *
-   * @param[inout] dataObject The data object to take from a remote instance
    * @param[in] currentInstanceId Id of the instance that will own the data object
    * @param[in] seed unique random seed 
    */
-  __INLINE__ static void getDataObject(HiCR::deployer::DataObject &dataObject, HiCR::L0::Instance::instanceId_t currentInstanceId, HiCR::L0::Instance::instanceId_t seed)
+  __INLINE__ void get(HiCR::L0::Instance::instanceId_t currentInstanceId, HiCR::L0::Instance::instanceId_t seed) override
   {
     // Pick the first 15 bits of the id and use it as MPI Tag
-    const int dataObjectIdTag = (int)dataObject.getId() & (int)mpiTagMask;
+    const int dataObjectIdTag = (int)getId() & (int)mpiTagMask;
 
     // Get the corresponding MPI rank where this data object is located
-    int sourceRank = (int)dataObject.getInstanceId();
+    int sourceRank = (int)getInstanceId();
 
     // Sending request
     MPI_Send(nullptr, 0, MPI_BYTE, sourceRank, dataObjectIdTag, MPI_COMM_WORLD);
 
     // Getting data directly
-    MPI_Recv(dataObject.getData(), (int)dataObject.getSize(), MPI_BYTE, sourceRank, _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(getData(), (int)getSize(), MPI_BYTE, sourceRank, _HICR_DEPLOYER_DATA_OBJECT_RETURN_DATA_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
-  /**
-   * Gets the data object id
-   *
-   * @return The data object id
-   */
-  [[nodiscard]] dataObjectId_t getId() const { return _id; }
-
-  /**
-   * Set the data object id
-   * @param[in] id
-   */
-  void setId(const dataObjectId_t id) { _id = id; }
-
-  /**
-   * Get data object instance id that owns it
-   *
-   * @return The instance id
-   */
-  [[nodiscard]] HiCR::L0::Instance::instanceId_t getInstanceId() const { return _instanceId; }
-
-  /**
-   * Set the data object instance id
-   * @param[in] instanceId
-   */
-  void setInstanceId(const HiCR::L0::Instance::instanceId_t instanceId) { _instanceId = instanceId; }
-
-  /**
-   * Gets access to the internal data object buffer
-   *
-   * @return A pointer to the internal data object buffer
-   */
-  [[nodiscard]] __INLINE__ void *getData() const { return _buffer; }
-
-  /**
-   * Gets the size of the data object's internal data buffer
-   *
-   * @return The size of the data object's internal data buffer
-   */
-  [[nodiscard]] __INLINE__ size_t getSize() const { return _size; }
-
   private:
-
-  /**
-   * The data object's internal data buffer
-   */
-  void *const _buffer;
-
-  /**
-   * The data object's source isntance id
-   */
-  HiCR::L0::Instance::instanceId_t _instanceId;
-
-  /**
-   * The data object's internal data size
-   */
-  const size_t _size;
-
-  /**
-   * The data object's identifier
-   */
-  dataObjectId_t _id;
 
   /**
    * MPI-specific implementation Request object.
@@ -203,4 +142,4 @@ class DataObject final
   bool _isPublished = false;
 };
 
-} // namespace HiCR::deployer
+} // namespace HiCR::deployer::dataObject

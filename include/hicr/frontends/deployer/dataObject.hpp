@@ -2,17 +2,16 @@
 
 #include <cstdint>
 #include <memory>
+#include <mpi.h>
 #include <hicr/core/L0/instance.hpp>
-#include <hicr/core/definitions.hpp>
-#include <hicr/core/exceptions.hpp>
 
 namespace HiCR::deployer
 {
 
 /**
- * Prototype implementation of the data object class for the host (single instance) deployer mode
+ * Prototype implementation of the data object class
  */
-class DataObject final
+class DataObject
 {
   public:
 
@@ -30,8 +29,9 @@ class DataObject final
    * @param[in] instanceId Identifier of the instance owning the data object
    * @param[in] seed random application seed  
    */
-  DataObject(void *const buffer, const std::size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId, const HiCR::L0::Instance::instanceId_t seed)
+  DataObject(void *const buffer, const size_t size, const dataObjectId_t id, const HiCR::L0::Instance::instanceId_t instanceId, const HiCR::L0::Instance::instanceId_t seed)
     : _buffer(buffer),
+      _instanceId(instanceId),
       _size(size),
       _id(id){};
   ~DataObject() = default;
@@ -39,44 +39,28 @@ class DataObject final
   /**
    * Exposes a data object to be obtained (stealed) by another instance
    */
-  __INLINE__ void publish()
-  {
-    // Here an exception is must be produced since the application is exposing this data object to other non-existent instances, leading to a potential deadlock
-    // HICR_THROW_LOGIC("Attempting to publish a data object when using the host (single instace) deployer mode.");
-  }
-
+  virtual void publish() = 0;
   /**
-   * Mark the data object available for publication
+   * Mark the object available for publication again
    */
-  __INLINE__ void unpublish() {}
+  virtual void unpublish() = 0;
 
   /**
    * Tries to release a previously published data object any instance that wants to take it
    *
    * @return True, if the data object was successfully release (copied to another instance), or was already released; false, if nobody claimed the data object
    */
-  __INLINE__ bool tryRelease()
-  {
-    // Here an exception is must be produced since the application is releasing this data object to other non-existent instances, leading to a potential deadlock
-    // HICR_THROW_LOGIC("Attempting to release a data object when using the host (single instace) deployer mode.");
-
-    return false;
-  }
+  virtual bool tryRelease() = 0;
 
   /**
    * Obtains a data object from a remote instance, based on its id
    *
    * This function will stall until and unless the specified remote instance published the given data object
    *
-   * @param[inout] dataObject The data object to take from a remote instance
    * @param[in] currentInstanceId Id of the instance that will own the data object
    * @param[in] seed unique random seed 
    */
-  __INLINE__ static void getDataObject(HiCR::deployer::DataObject &dataObject, HiCR::L0::Instance::instanceId_t currentInstanceId, HiCR::L0::Instance::instanceId_t seed)
-  {
-    // An exception is produced here, since as there is no other instance active, this object will never be retrieved
-    HICR_THROW_LOGIC("Attempting to get a data object when using the host (single instance) deployer mode.");
-  }
+  virtual void get(HiCR::L0::Instance::instanceId_t currentInstanceId, HiCR::L0::Instance::instanceId_t seed) = 0;
 
   /**
    * Gets the data object id
@@ -87,21 +71,22 @@ class DataObject final
 
   /**
    * Set the data object id
-   *
-   * @param[in] id The data object id
+   * @param[in] id
    */
   void setId(const dataObjectId_t id) { _id = id; }
 
   /**
-   * Gets the instance id
+   * Get data object instance id that owns it
    *
-   * @return The data object instance id
+   * @return The instance id
    */
-  HiCR::L0::Instance::instanceId_t getInstanceId()
-  {
-    // Default to 0 since its local
-    return 0;
-  }
+  [[nodiscard]] HiCR::L0::Instance::instanceId_t getInstanceId() const { return _instanceId; }
+
+  /**
+   * Set the data object instance id
+   * @param[in] instanceId
+   */
+  void setInstanceId(const HiCR::L0::Instance::instanceId_t instanceId) { _instanceId = instanceId; }
 
   /**
    * Gets access to the internal data object buffer
@@ -123,6 +108,11 @@ class DataObject final
    * The data object's internal data buffer
    */
   void *const _buffer;
+
+  /**
+   * The data object's source isntance id
+   */
+  HiCR::L0::Instance::instanceId_t _instanceId;
 
   /**
    * The data object's internal data size

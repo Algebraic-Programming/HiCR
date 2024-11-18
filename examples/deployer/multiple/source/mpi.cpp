@@ -99,7 +99,7 @@ void workerEntryPointFc(HiCR::Deployer &deployer, const std::string &entryPointN
   auto dataObjectBuffer = malloc(dataObjectSize);
 
   // Creating data object reference
-  HiCR::deployer::DataObject dataObject(dataObjectBuffer, dataObjectSize, dataObjectId, coordinatorInstanceId, 0);
+  HiCR::deployer::dataObject::MPI dataObject(dataObjectBuffer, dataObjectSize, dataObjectId, coordinatorInstanceId, 0);
 
   // Getting data object from coordinator
   currentInstance->getDataObject(dataObject);
