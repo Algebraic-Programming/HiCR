@@ -31,12 +31,12 @@
   #include <hicr/frontends/deployer/channel/yuanrong/consumerChannel.hpp>
 #else
   #ifdef _HICR_USE_MPI_BACKEND_
-    #include "dataObject/mpi/dataObject.hpp"
+    #include "dataObjects/mpi.hpp"
     #include "channel/hicr/producerChannel.hpp"
     #include "channel/hicr/consumerChannel.hpp"
     #include "hicr/backends/mpi/L1/communicationManager.hpp"
   #else
-    #include "dataObject/local/dataObject.hpp"
+    #include "dataObjects/local.hpp"
     #include "channel/hicr/producerChannel.hpp"
     #include "channel/hicr/consumerChannel.hpp"
   #endif // _HICR_USE_MPI_BACKEND_
@@ -153,7 +153,17 @@ class Instance
     // Truncate it to fit into the data object id
     std::memcpy(&dataObjectId, &uuid.data, sizeof(DataObject::dataObjectId_t));
 
-    return std::make_shared<DataObject>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId(), _instanceManager->getSeed());
+#ifdef _HICR_USE_MPI_BACKEND_
+    return std::make_shared<dataObject::MPI>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId(), _instanceManager->getSeed());
+#endif
+
+#ifdef _HICR_USE_LOCAL_BACKEND_
+    return std::make_shared<dataObject::Local>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId(), _instanceManager->getSeed());
+#endif
+
+#ifdef _HICR_USE_YUANRONG_BACKEND_
+    return std::make_shared<dataObject::YR>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId(), _instanceManager->getSeed());
+#endif
   }
 
   /**
@@ -282,7 +292,7 @@ class Instance
     cm->lock();
 #endif
     // Creating data object from id and remote instance id
-    DataObject::getDataObject(dataObject, currentInstanceId, _instanceManager->getSeed());
+    dataObject.get(currentInstanceId, _instanceManager->getSeed());
 #ifdef _HICR_USE_MPI_BACKEND_
     cm->unlock();
 #endif

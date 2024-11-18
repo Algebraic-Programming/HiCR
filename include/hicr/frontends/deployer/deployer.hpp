@@ -23,7 +23,7 @@
 #include "instance.hpp"
 
 #ifdef _HICR_USE_MPI_BACKEND_
-  #include "dataObject/mpi/dataObject.hpp"
+  #include "dataObjects/mpi.hpp"
 #endif
 
 namespace HiCR
