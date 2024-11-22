@@ -102,12 +102,21 @@ class DataObject
    */
   [[nodiscard]] __INLINE__ size_t getSize() const { return _size; }
 
+  protected:
+
+  /**
+   * Set the data object internal buffer
+   *
+   * @param[in] buffer
+   */
+  __INLINE__ void setData(void *const buffer) { _buffer = buffer; }
+
   private:
 
   /**
    * The data object's internal data buffer
    */
-  void *const _buffer;
+  void *_buffer;
 
   /**
    * The data object's source isntance id
