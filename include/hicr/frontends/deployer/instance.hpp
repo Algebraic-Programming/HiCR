@@ -26,7 +26,7 @@
 
 // For interoperability with YuanRong, we bifurcate implementations using different includes
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-  #include <hicr/frontends/deployer/dataObject/yuanrong/dataObject.hpp>
+  #include <hicr/frontends/deployer/dataObjects/yuanrong.hpp>
   #include <hicr/frontends/deployer/channel/yuanrong/producerChannel.hpp>
   #include <hicr/frontends/deployer/channel/yuanrong/consumerChannel.hpp>
 #else
@@ -162,7 +162,9 @@ class Instance
 #endif
 
 #ifdef _HICR_USE_YUANRONG_BACKEND_
-    return std::make_shared<dataObject::YR>(buffer, size, dataObjectId, _instanceManager->getCurrentInstance()->getId(), _instanceManager->getSeed());
+    auto yrObjectBuffer = YR::CreateBuffer(size);
+    memcpy(yrObjectBuffer->MutableData(), buffer, size);
+    return std::make_shared<dataObject::YR>(yrObjectBuffer, dataObjectId, _instanceManager->getCurrentInstance()->getId(), _instanceManager->getSeed());
 #endif
   }
 

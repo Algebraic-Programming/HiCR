@@ -22,10 +22,6 @@
 #include <hicr/backends/host/L1/instanceManager.hpp>
 #include "instance.hpp"
 
-#ifdef _HICR_USE_MPI_BACKEND_
-  #include "dataObjects/mpi.hpp"
-#endif
-
 namespace HiCR
 {
 
