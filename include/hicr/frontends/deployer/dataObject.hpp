@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <mpi.h>
 #include <hicr/core/L0/instance.hpp>
 
 namespace HiCR::deployer
