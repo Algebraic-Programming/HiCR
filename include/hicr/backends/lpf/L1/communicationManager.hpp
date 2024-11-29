@@ -65,19 +65,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    * compare against the global value at globalSwap
    */
   uint64_t _localSwap{0ULL};
+
   /**
    * localSwapSlot is the LPF slot representing localSwap var
    */
   lpf_memslot_t _localSwapSlot;
-  /**
-   * globalSwap is a variable stored everywhere,
-   * but at one of the ranks (a root) it gets globally advertised
-   */
-  // uint64_t globalSwap = 0ULL;
-  /**
-   * globalSwapSlot is the global LPF slot representing globalSlot var
-   */
-  // lpf_memslot_t globalSwapSlot = LPF_INVALID_MEMSLOT;
 
   std::shared_ptr<HiCR::L0::GlobalMemorySlot> getGlobalMemorySlotImpl(HiCR::L0::GlobalMemorySlot::tag_t tag, HiCR::L0::GlobalMemorySlot::globalKey_t globalKey) override
   {
