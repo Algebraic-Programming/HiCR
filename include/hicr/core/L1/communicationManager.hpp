@@ -419,6 +419,19 @@ class CommunicationManager
   }
 
   /**
+   * Deserializes a global memory slot from a given buffer. The buffer is produced by the L0::GlobalMemorySlot::serialize() function,
+   * as implemented by the corresponding backend.
+   *
+   * @param[in] buffer The buffer to deserialize the global memory slot from
+   * @return The deserialized global memory slot
+   */
+  virtual std::shared_ptr<L0::GlobalMemorySlot> deserializeGlobalMemorySlot(uint8_t *buffer)
+  {
+    HICR_THROW_LOGIC("This backend does not support deserialization of global memory slots");
+    return nullptr;
+  }
+
+  /**
    * This function flushes pending send operations
    */
   __INLINE__ virtual void flushSent() {}
