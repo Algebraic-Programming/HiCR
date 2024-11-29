@@ -35,14 +35,14 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    * @param[in] globalKey The global key associated to this global memory slot (for exchange purposes
    * @param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
    */
-  GlobalMemorySlot(size_t                                        rank,
+  GlobalMemorySlot(lpf_pid_t                                     rank,
                    lpf_memslot_t                                 lpfMemSlot,
                    lpf_memslot_t                                 lpfSwapSlot,
                    const HiCR::L0::GlobalMemorySlot::tag_t       globalTag             = 0,
                    const HiCR::L0::GlobalMemorySlot::globalKey_t globalKey             = 0,
                    std::shared_ptr<HiCR::L0::LocalMemorySlot>    sourceLocalMemorySlot = nullptr)
     : HiCR::L0::GlobalMemorySlot(globalTag, globalKey, std::move(sourceLocalMemorySlot)),
-      _rank((int)rank),
+      _rank(rank),
       _lpfMemSlot(lpfMemSlot),
       _lpfSwapSlot(lpfSwapSlot)
   {}
@@ -57,7 +57,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
    *
    * \return The rank to which this memory slot belongs
    */
-  const size_t getRank() { return _rank; }
+  const lpf_pid_t getRank() { return _rank; }
 
   /**
    * Get LPF slot associated with this HiCR slot
@@ -77,7 +77,7 @@ class GlobalMemorySlot final : public HiCR::L0::GlobalMemorySlot
   /**
    * Remembers the MPI rank this memory slot belongs to
    */
-  int _rank;
+  lpf_pid_t _rank;
 
   /**
    * Internal LPF slot represented by this HiCR memory slot
