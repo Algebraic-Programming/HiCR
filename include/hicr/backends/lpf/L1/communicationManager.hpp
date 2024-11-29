@@ -49,17 +49,17 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   CommunicationManager(size_t size, size_t rank, lpf_t lpf)
     : HiCR::L1::CommunicationManager(),
       _size(size),
-      _rank(rank),
+      _rank((lpf_pid_t)rank),
       _lpf(lpf),
-
       _localSwapSlot(LPF_INVALID_MEMSLOT)
   {}
 
   private:
 
-  const size_t _size;
-  const size_t _rank;
-  const lpf_t  _lpf;
+  const size_t    _size;
+  const lpf_pid_t _rank;
+  const lpf_t     _lpf;
+
   /**
    * localSwap is the varable holding the value we
    * compare against the global value at globalSwap
@@ -113,16 +113,19 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto globalSlotCountsInBytes = std::vector<size_t>(_size);
     for (size_t i = 0; i < _size; i++) globalSlotCountsInBytes[i] = globalSlotCounts[i] * sizeof(size_t);
 
+    auto globalSlotPidCountsInBytes = std::vector<size_t>(_size);
+    for (size_t i = 0; i < _size; i++) globalSlotPidCountsInBytes[i] = globalSlotCounts[i] * sizeof(lpf_pid_t);
+
     // globalSlotSizes will hold exactly the union of all slot sizes at
     // each process (zero or more) to become global.
 
     auto localSlotSizes      = std::vector<size_t>(localSlotCount);
     auto localSlotKeys       = std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t>(localSlotCount);
-    auto localSlotProcessId  = std::vector<size_t>(localSlotCount);
+    auto localSlotProcessId  = std::vector<lpf_pid_t>(localSlotCount);
     auto globalSlotSizes     = std::vector<size_t>(globalSlotCount);
     auto globalSwapSlotSizes = std::vector<size_t>(globalSlotCount);
     auto globalSlotKeys      = std::vector<HiCR::L0::GlobalMemorySlot::globalKey_t>(globalSlotCount);
-    auto globalSlotProcessId = std::vector<size_t>(globalSlotCount);
+    auto globalSlotProcessId = std::vector<lpf_pid_t>(globalSlotCount);
 
     for (size_t i = 0; i < localSlotCount; i++)
     {
@@ -141,11 +144,11 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     CHECK(lpf_collectives_init(_lpf, _rank, _size, 2 /* will call gatherv 2 times */, 0, sizeof(size_t) * globalSlotCount, &coll));
     CHECK(lpf_allgatherv(coll, slot_local_sizes, slot_global_sizes, globalSlotCountsInBytes.data(), false /*exclude myself*/));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
-    CHECK(lpf_register_local(_lpf, localSlotProcessId.data(), localSlotCount * sizeof(size_t), &slot_local_process_ids));
-    CHECK(lpf_register_global(_lpf, globalSlotProcessId.data(), globalSlotCount * sizeof(size_t), &slot_global_process_ids));
+    CHECK(lpf_register_local(_lpf, localSlotProcessId.data(), localSlotCount * sizeof(lpf_pid_t), &slot_local_process_ids));
+    CHECK(lpf_register_global(_lpf, globalSlotProcessId.data(), globalSlotCount * sizeof(lpf_pid_t), &slot_global_process_ids));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
     // start allgatherv for process IDs assigned to each global slot
-    CHECK(lpf_allgatherv(coll, slot_local_process_ids, slot_global_process_ids, globalSlotCountsInBytes.data(), false /*exclude myself*/));
+    CHECK(lpf_allgatherv(coll, slot_local_process_ids, slot_global_process_ids, globalSlotPidCountsInBytes.data(), false /*exclude myself*/));
     CHECK(lpf_sync(_lpf, LPF_SYNC_DEFAULT));
     CHECK(lpf_collectives_destroy(coll));
     CHECK(lpf_deregister(_lpf, slot_local_sizes));
