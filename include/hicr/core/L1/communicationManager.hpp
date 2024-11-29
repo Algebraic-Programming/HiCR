@@ -432,6 +432,21 @@ class CommunicationManager
   }
 
   /**
+   * Promotes a local memory slot to a global memory slot without collective exchange across all instances.
+   * This is an alternative to the exchangeGlobalMemorySlots function, which is a collective operation, and
+   * remains the primary way to promote local memory slots to global memory slots, since using a slot produced
+   * by this promote operation requires communicating it via a pre-established communication channel.
+   *
+   * @param[in] localMemorySlot The local memory slot to promote
+   * @return The promoted global memory slot
+   */
+  virtual std::shared_ptr<L0::GlobalMemorySlot> promoteLocalMemorySlot(std::shared_ptr<L0::LocalMemorySlot> localMemorySlot)
+  {
+    HICR_THROW_LOGIC("This backend does not support one-sided promotion of local memory slots to global");
+    return nullptr;
+  }
+
+  /**
    * This function flushes pending send operations
    */
   __INLINE__ virtual void flushSent() {}
