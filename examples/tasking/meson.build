@@ -1,5 +1,3 @@
 subdir('abcTasks')
-subdir('conditionVariable')
-subdir('mutex')
 subdir('resourceList')
 subdir('fibonacci')
