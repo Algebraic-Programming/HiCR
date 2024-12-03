@@ -147,10 +147,12 @@ class CommunicationManager
   }
 
   /**
-   * Destroys a global memory slot. This operation is non-blocking and non-collective.
+   * Destroys a (collectively exchanged) global memory slot. This operation is non-blocking and non-collective.
    * Its effects will be visible after the next call to #fence(L0::GlobalMemorySlot::tag_t)
    * where the tag is the tag of the memory slot to destroy. That means that multiple slots
    * under the same tag can be destroyed in a single fence operation.
+   *
+   * If the memory slot has not been created through #exchangeGlobalMemorySlots, the behavior is undefined.
    *
    * \param[in] memorySlot Memory slot to destroy.
    *
@@ -161,6 +163,19 @@ class CommunicationManager
     auto tag = memorySlot->getGlobalTag();
     // Implicit creation of the tag entry if it doesn't exist is desired here
     _globalMemorySlotsToDestroyPerTag[tag].push_back(memorySlot);
+  }
+
+  /**
+   * Destroys a (locally promoted) global memory slot. This operation is blocking and non-collective.
+   * The effects will be visible immediately after the call to this function.
+   *
+   * If the memory slot has not been created through #promoteLocalMemorySlot, the behavior is undefined.
+   *
+   * @param[in] memorySlot Memory slot to destroy.
+   */
+  virtual void destroyPromotedGlobalMemorySlot(const std::shared_ptr<L0::GlobalMemorySlot> &memorySlot)
+  {
+    HICR_THROW_LOGIC("This backend does not support promoted global memory slots.");
   }
 
   /**
