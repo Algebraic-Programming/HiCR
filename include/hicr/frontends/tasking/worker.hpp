@@ -64,6 +64,11 @@ class Worker
     onWorkerStart,
 
     /**
+     * Triggered as the workers received a task pointer
+     */
+    onWorkerTaskPulled,
+
+    /**
      * Triggered as the worker is preempted into suspension by an asynchronous callback
      */
     onWorkerSuspend,
@@ -168,6 +173,13 @@ class Worker
    * @return A pointer to the worker's an callback map. nullptr, if not defined.
    */
   __INLINE__ workerCallbackMap_t *getCallbackMap() { return _callbackMap; }
+
+  /**
+   * Gets the current task being handled by the worker
+   *
+   * @return A pointer to the task being handled by the worker. nullptr if none
+   */
+  __INLINE__ HiCR::tasking::Task *getCurrentTask() { return _currentTask; }
 
   /**
    * Initializes the worker and its resources
@@ -308,6 +320,11 @@ class Worker
   private:
 
   /**
+   * Defines the current task being handled by this worker
+  */
+  HiCR::tasking::Task *_currentTask = nullptr;
+
+  /**
    * Function by which the worker can obtain new tasks to execute
    */
   const pullFunction_t _pullFunction;
@@ -349,23 +366,26 @@ class Worker
     while (true)
     {
       // Attempt to get a task by executing the pull function
-      auto task = _pullFunction();
+      _currentTask = _pullFunction();
+
+      // Calling appropriate callback
+      if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerTaskPulled);
 
       // If a task was returned, then start or execute it
-      if (task != nullptr) [[likely]]
+      if (_currentTask != nullptr) [[likely]]
       {
         // If the task hasn't been initialized yet, we need to do it now
-        if (task->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
+        if (_currentTask->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
         {
           // First, create new execution state for the processing unit
-          auto executionState = _computeManager->createExecutionState(task->getExecutionUnit(), task);
+          auto executionState = _computeManager->createExecutionState(_currentTask->getExecutionUnit(), _currentTask);
 
           // Then initialize the task with the new execution state
-          task->initialize(std::move(executionState));
+          _currentTask->initialize(std::move(executionState));
         }
 
         // Now actually run the task
-        task->run();
+        _currentTask->run();
       }
 
       // Requesting processing units to terminate as soon as possible
