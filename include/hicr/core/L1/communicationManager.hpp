@@ -121,6 +121,36 @@ class CommunicationManager
   }
 
   /**
+   * Deserializes a global memory slot from a given buffer. The buffer is produced by the L0::GlobalMemorySlot::serialize() function,
+   * as implemented by the corresponding backend.
+   *
+   * @param[in] buffer The buffer to deserialize the global memory slot from
+   * @param[in] tag The tag to associate with the deserialized global memory slot
+   * @return The deserialized global memory slot
+   */
+  virtual std::shared_ptr<L0::GlobalMemorySlot> deserializeGlobalMemorySlot(uint8_t *buffer, L0::GlobalMemorySlot::tag_t tag)
+  {
+    HICR_THROW_LOGIC("This backend does not support deserialization of global memory slots");
+    return nullptr;
+  }
+
+  /**
+   * Promotes a local memory slot to a global memory slot without collective exchange across all instances.
+   * This is an alternative to the exchangeGlobalMemorySlots function, which is a collective operation, and
+   * remains the primary way to promote local memory slots to global memory slots, since using a slot produced
+   * by this promote operation requires communicating it via a pre-established communication channel.
+   *
+   * @param[in] localMemorySlot The local memory slot to promote
+   * @param[in] tag The tag to associate with the promoted global memory slot
+   * @return The promoted global memory slot
+   */
+  virtual std::shared_ptr<L0::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<L0::LocalMemorySlot> &localMemorySlot, L0::GlobalMemorySlot::tag_t tag)
+  {
+    HICR_THROW_LOGIC("This backend does not support one-sided promotion of local memory slots to global");
+    return nullptr;
+  }
+
+  /**
    * De-registers a previously registered global memory slot. This can be a local operation,
    * and is a CommunicationManager internal operation. The slot is not destroyed, it can be used,
    * but can no longer be accessed via #getGlobalMemorySlot.
@@ -431,34 +461,6 @@ class CommunicationManager
 
     // Calling internal implementation
     releaseGlobalLockImpl(memorySlot);
-  }
-
-  /**
-   * Deserializes a global memory slot from a given buffer. The buffer is produced by the L0::GlobalMemorySlot::serialize() function,
-   * as implemented by the corresponding backend.
-   *
-   * @param[in] buffer The buffer to deserialize the global memory slot from
-   * @return The deserialized global memory slot
-   */
-  virtual std::shared_ptr<L0::GlobalMemorySlot> deserializeGlobalMemorySlot(uint8_t *buffer)
-  {
-    HICR_THROW_LOGIC("This backend does not support deserialization of global memory slots");
-    return nullptr;
-  }
-
-  /**
-   * Promotes a local memory slot to a global memory slot without collective exchange across all instances.
-   * This is an alternative to the exchangeGlobalMemorySlots function, which is a collective operation, and
-   * remains the primary way to promote local memory slots to global memory slots, since using a slot produced
-   * by this promote operation requires communicating it via a pre-established communication channel.
-   *
-   * @param[in] localMemorySlot The local memory slot to promote
-   * @return The promoted global memory slot
-   */
-  virtual std::shared_ptr<L0::GlobalMemorySlot> promoteLocalMemorySlot(std::shared_ptr<L0::LocalMemorySlot> localMemorySlot)
-  {
-    HICR_THROW_LOGIC("This backend does not support one-sided promotion of local memory slots to global");
-    return nullptr;
   }
 
   /**
