@@ -17,12 +17,7 @@
 #include <hicr/core/L0/memorySpace.hpp>
 #include <utility>
 
-/**
- * #CHECK(f...) Checks if an LPF function returns LPF_SUCCESS, else
- * it prints an error message
- */
-#define CHECK(f...)                                                                                                                                                                \
-  if (f != LPF_SUCCESS) { HICR_THROW_RUNTIME("LPF Backend Error: '%s'", #f); }
+#include <hicr/backends/lpf/common.hpp>
 
 namespace HiCR::backend::lpf::L0
 {
