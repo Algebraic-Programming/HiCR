@@ -121,16 +121,30 @@ class CommunicationManager
   }
 
   /**
-   * Deserializes a global memory slot from a given buffer. The buffer is produced by the L0::GlobalMemorySlot::serialize() function,
-   * as implemented by the corresponding backend.
+   * Serializes a global memory slot, belonging to the current instance, into a buffer that can be sent over the network
+   * to other instances, without the need to engage in a collective operation.
+   *
+   * \param[in] globalSlot The global memory slot to serialize
+   * \return A pointer to the serialized representation of the global memory slot in a newly allocated buffer.
+   *         An exception is thrown if the backend does not support the operation
+   * \note The user is responsible for freeing the buffer, using delete[]
+   */
+  virtual uint8_t *serializeGlobalMemorySlot(const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &globalSlot) const
+  {
+    HICR_THROW_LOGIC("Trying to serialize a global memory slot; this is not supported in this backend\n");
+    return nullptr;
+  }
+
+  /**
+   * Deserializes a global memory slot from a given buffer.
    *
    * @param[in] buffer The buffer to deserialize the global memory slot from
    * @param[in] tag The tag to associate with the deserialized global memory slot
-   * @return The deserialized global memory slot
+   * @return A pointer to the deserialized global memory slot
    */
   virtual std::shared_ptr<L0::GlobalMemorySlot> deserializeGlobalMemorySlot(uint8_t *buffer, L0::GlobalMemorySlot::tag_t tag)
   {
-    HICR_THROW_LOGIC("This backend does not support deserialization of global memory slots");
+    HICR_THROW_LOGIC("Trying to deserialize a global memory slot; this is not supported in this backend\n");
     return nullptr;
   }
 
@@ -142,7 +156,7 @@ class CommunicationManager
    *
    * @param[in] localMemorySlot The local memory slot to promote
    * @param[in] tag The tag to associate with the promoted global memory slot
-   * @return The promoted global memory slot
+   * @return A pointer to the promoted global memory slot
    */
   virtual std::shared_ptr<L0::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<L0::LocalMemorySlot> &localMemorySlot, L0::GlobalMemorySlot::tag_t tag)
   {

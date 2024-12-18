@@ -75,17 +75,6 @@ class GlobalMemorySlot
    */
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
 
-  /**
-   * Function to serialize the global memory slot
-   *
-   * \return A pointer to the serialized representation of the global memory slot
-   */
-  virtual uint8_t *serialize() const
-  {
-    HICR_THROW_LOGIC("Trying to serialize a global memory slot; this is not supported in this backend\n");
-    return nullptr;
-  }
-
   private:
 
   /**
