@@ -166,6 +166,8 @@ class Instance
     memcpy(yrObjectBuffer->MutableData(), buffer, size);
     return std::make_shared<dataObject::YR>(yrObjectBuffer, dataObjectId, _instanceManager->getCurrentInstance()->getId(), _instanceManager->getSeed());
 #endif
+    HICR_THROW_RUNTIME("No backend initialized. Illegal operation.");
+    return nullptr;
   }
 
   /**
