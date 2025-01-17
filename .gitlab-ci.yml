@@ -11,7 +11,7 @@ build:
   - export HOME=/home/hicr
   - source /home/hicr/.hicr-env.sh
   - echo "Compiling LPF..."
-  - mkdir extern/lpf/build; pushd extern/lpf/build; cmake .. -DLPFLIB_MAKE_DOC=false -DLPFLIB_CONFIG_NAME=Release -DCMAKE_INSTALL_PREFIX=/home/hicr/lpf; make -j24; make install || true; popd
+  - mkdir extern/lpf/build; pushd extern/lpf/build; ../bootstrap.sh --prefix=/home/hicr/lpf; make -j24; make install || true; popd
   - echo "Building..."
   - mkdir build
   - meson setup build -Dbuildtype=debug -Db_coverage=true -Dbackends=host/hwloc,host/pthreads,mpi,lpf -Dfrontends=tasking,machineModel,deployer,channel -DbuildTests=true -DbuildExamples=true  -DcompileWarningsAsErrors=true
