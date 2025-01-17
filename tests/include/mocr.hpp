@@ -19,6 +19,8 @@
 #include <hicr/core/L1/memoryManager.hpp>
 #include <hicr/core/L1/topologyManager.hpp>
 
+#include <hicr/backends/host/L1/instanceManager.hpp>
+
 using namespace testing;
 
 /* MoCR mocks HiCR :) */
@@ -39,6 +41,13 @@ class MockCommunicationManager : public HiCR::L1::CommunicationManager
   MOCK_METHOD(void, fenceImpl, (HiCR::L0::GlobalMemorySlot::tag_t), (override));
   MOCK_METHOD(bool, acquireGlobalLockImpl, (std::shared_ptr<HiCR::L0::GlobalMemorySlot>), (override));
   MOCK_METHOD(void, releaseGlobalLockImpl, (std::shared_ptr<HiCR::L0::GlobalMemorySlot>), (override));
+  MOCK_METHOD(uint8_t *, serializeGlobalMemorySlot, (const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &), (const, override));
+  MOCK_METHOD(std::shared_ptr<HiCR::L0::GlobalMemorySlot>, deserializeGlobalMemorySlot, (uint8_t *, HiCR::L0::GlobalMemorySlot::tag_t), (override));
+  MOCK_METHOD(std::shared_ptr<HiCR::L0::GlobalMemorySlot>,
+              promoteLocalMemorySlot,
+              (const std::shared_ptr<HiCR::L0::LocalMemorySlot> &, HiCR::L0::GlobalMemorySlot::tag_t),
+              (override));
+  MOCK_METHOD(void, destroyPromotedGlobalMemorySlot, (const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &), (override));
 
   /* Helper functions to expose protected methods */
   void registerGlobalMemorySlotPub(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) { registerGlobalMemorySlot(memorySlot); }
