@@ -12,7 +12,7 @@ if 'lpf' in enabledBackends and 'host/hwloc' in enabledBackends
 	lpf = executable('lpf', [ 'source/lpf.cpp'], dependencies: hicrBuildDep)
 
 	if get_option('buildTests')
-	  test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'ibverbs', lpf.full_path() ], timeout: test_timeout, suite: testSuite ) 
+	  test('lpf', lpfrunExecutable, args : [ '-np', '2', '-engine', 'zero', lpf.full_path() ], timeout: test_timeout, suite: testSuite )
 	endif
 endif
 
