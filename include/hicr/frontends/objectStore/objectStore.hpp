@@ -1,4 +1,3 @@
-
 /*
  * Copyright Huawei Technologies Switzerland AG
  * All rights reserved.
@@ -7,87 +6,327 @@
 /**
  * @file objectStore.hpp
  * @brief Provides functionality for a block object store over HiCR
- * @author A. N. Yzelman
- * @date 29/11/2023
+ * @author A. N. Yzelman, O. Korakitis
+ * @date 29/11/2024
  */
 
 #pragma once
 
-namespace HiCR
+#include <atomic>
+
+#include <hicr/core/L0/globalMemorySlot.hpp>
+#include <hicr/core/L0/instance.hpp>
+#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/frontends/objectStore/dataObject.hpp>
+
+enum
+{
+  /**
+   * The number of bits used to store the instance ID in the compound ID.
+   */
+  OBJECT_STORE_KEY_INSTANCE_ID_BITS = 32
+};
+
+namespace HiCR::objectStore
 {
 
-class Block
+/**
+ * The type of a compound ID, used to uniquely identify a block in the object store.
+ * The 64bit compound ID is formed by combining the instance ID (32bits) and the block ID (the other 32 bits).
+ */
+using compoundId_t = uint64_t;
+
+/**
+ * This is the front-end, managing entity for the object store.
+ * Multiple instances of this class can be created, one for each tag.
+ *
+ * It has a role similar to core HiCR's L1 Manager classes, hence it
+ * uses these managers as dependencies. The ObjectStore is responsible
+ * for the management of data-objects/blocks.
+ *
+ * A block is a globally unique reference to a memory region that exists
+ * somewhere on the system. It is created via a call to #createObject, and
+ * published (i.e. made available for access) via a call to #publish.
+ *
+ * A block has an owner, which initially is the worker that created the block
+ * via a call to #publish. An owner of a block is not necessarily an active
+ * participant on all activities on said block-- in fact, most operations on
+ * blocks are asynchronous while the core functionality, i.e., reading a block
+ * and benefit of one-sided fencing. Staying passive while subject to remote
+ * reads, however, does require the underlying system to natively support it.
+ *
+ * A block at a worker which is not the owner of the block will, after the
+ * first call to #get, return a pointer to the block contents for read-only
+ * access. At non-owner locations, the returned memory pointer need not point
+ * to a copy of the owner's memory -- consider, e.g., a shared-memory object
+ * store impementation, or a sophisticated network fabric with GAS-like
+ * functionalities.
+ *
+ * The memory area returned by #get will not necessarily be kept up to date
+ * with the contents at the owner side. Successive calls to #get may be used to
+ * re-synchronise with the owner.
+ *
+ * A call to #publish is not collective, meaning that remote workers will not
+ * immediately be able to refer to any remotely published block. For remote
+ * workers to be able to refer to a block, a serialized handle to the block
+ * should be copied to the remote workers that want to make use of it
+ * (e.g., by using channels or raw memory copies).
+ *
+ * Therefore, such handles of the #HiCR::objectStore::DataObject shall be copyable, in the exact sense
+ * of the corresponding C++ type trait. This informally means it can both be the
+ * target for raw memcpy calls as well as the target for inter-worker
+ * communication. Copying allows for remote workers to refer to blocks it did
+ * not (initially) own.
+ *
+ * Multiple instances of the same block on the same worker will always refer to
+ * the same memory (i.e., the pointer returned by #get will equal when called on
+ * the same blocks on the same worker).
+ *
+ * On non-owner workers, a call to #get \em asynchronously initiates the data
+ * movement from the owner to the non-owner, so that the non-owner local block
+ * memory reflects the contents of the owner of the block. This copy is only
+ * guaranteed to have completed at the end of a subsequent call to #fence.
+ * Before this call to #fence, the contents of the pointer returned by #get are
+ * undefined.
+ *
+ * Accordingly, the block data at the owner worker should be immutable while
+ * other non-owner workers have issued calls to #get-- otherwise, partially
+ * updated and partially non-updated contents may be received, leading to
+ * inconsistent states. To indicate to the owner that any pending reads have
+ * completed (and thus that it may safely modify its data), again a call to
+ * #fence should be made.
+ *
+ * A call to #fence is a blocking function. A non-blocking variant may in the
+ * future be provided by test_fence().
+ */
+class ObjectStore
 {
   public:
 
   /**
-   * Creates a new, globally unique data block from an existing pointer and
-   * byte size pair.
+   * Constructor
    *
-   * @param[in] ptr  The pointer to the memory region to be published.
-   * @param[in] size The size (in bytes) of the memory region \a ptr points
-   *                 to.
+   * @param[in] communicationManager The communication manager of the HiCR instance.
+   * @param[in] tag The tag to associate with the object store.
+   * @param[in] memoryManager The memory manager of the HiCR instance.
+   * @param[in] memorySpace The memory space the object store operates in.
+   * @param[in] instanceId The ID of the instance running the object store. (Created objects will have this instance ID)
+   */
+  ObjectStore(L1::CommunicationManager        &communicationManager,
+              L0::GlobalMemorySlot::tag_t      tag,
+              L1::MemoryManager               &memoryManager,
+              std::shared_ptr<L0::MemorySpace> memorySpace,
+              L0::Instance::instanceId_t       instanceId)
+    : _memoryManager(memoryManager),
+      _communicationManager(communicationManager),
+      _tag(tag),
+      _memorySpace(memorySpace),
+      _instanceId(instanceId)
+  {}
+
+  /**
+   * Default Destructor
+   */
+  ~ObjectStore() = default;
+
+  /**
+   * Get the memory space the object store operates in.
    *
-   * @returns A block reference to (\a ptr, \a size).
+   * @returns The memory space the object store operates in.
+   */
+  [[nodiscard]] std::shared_ptr<L0::MemorySpace> getMemorySpace() const { return _memorySpace; }
+
+  /**
+   * Creates a new data object from a given memory allocation.
+   * The calling worker will be the owner of the returned Data Object.
    *
-   * The calling worker will be the owner of the returned block.
+   * @param[in] ptr The pointer to the memory region.
+   * @param[in] size The size of the memory region.
+   * @param[in] id The ID of the block to be created.
    *
-   * If other workers are to refer to returned block, then 1) those
-   * workers and the caller worker to this function must be included with
-   * a call to #update, \em and 2) the block should be copied to such remote
-   * workers. Use, for example, the channel or the raw datamover
-   * (#memcpy) for this purpose.
+   * @returns A DataObject referring to the memory region.
+   */
+  [[nodiscard]] __INLINE__ DataObject createObject(void *ptr, size_t size, blockId id)
+  {
+    // Register the given allocation as a memory slot
+    auto slot = _memoryManager.registerLocalMemorySlot(_memorySpace, ptr, size);
+
+    return DataObject(_instanceId, id, slot);
+  }
+
+  /**
+   * Creates a new data object from an existing LocalMemorySlot.
+   * The calling worker will be the owner of the returned Data Object.
    *
-   * A call to this function entails \f$ \Theta(1) \f$ work. It is (thus) a
-   * non-blocking, asynchronous call: registration with remote workers may
-   * occur at any time between this call and the end of a subsequent call to
-   * #update that includes this worker.
+   * @param[in] slot The local memory slot to create the block from.
+   * @param[in] id The ID of the block to be created.
+   *
+   * @returns A DataObject referring to the memory slot.
+   */
+  [[nodiscard]] __INLINE__ DataObject createObject(std::shared_ptr<L0::LocalMemorySlot> slot, blockId id) { return DataObject(_instanceId, id, slot); }
+
+  /**
+   * Publishes a block to the object store.
    *
    * A call to this function is \em not thread-safe.
+   *
+   * @param[in] dataObject The data object to publish.
    */
-  static Block publish(void *const ptr, size_t size);
+  __INLINE__ void publish(std::shared_ptr<DataObject> dataObject)
+  {
+    blockId objectId = dataObject->_id;
+
+    if (dataObject->_globalSlot)
+    {
+      _communicationManager.destroyPromotedGlobalMemorySlot(dataObject->_globalSlot);
+      HICR_THROW_LOGIC("Trying to publish a block that has already been published."); // FIXME: What do we do with republishing?
+    }
+    // One-sided publish of the global slot
+    auto globalSlot = _communicationManager.promoteLocalMemorySlot(dataObject->_localSlot, _tag);
+
+    dataObject->_globalSlot = globalSlot;
+    _globalObjects.insert({dataObject->_instanceId << OBJECT_STORE_KEY_INSTANCE_ID_BITS | objectId, dataObject});
+  }
 
   /**
-   * Fetches all block meta-data published by all workers within a set of
-   * instances.
+   * Retrieve a pointer to the block contents.
    *
-   * @tparam FwdIt A forward iterator over a collection of instances.
+   * Multiple instances of the same block on the same worker will always refer to
+   * the same memory (i.e., the pointer returned by #get will equal when called on
+   * the same blocks on the same worker). If the block is not found in the object store,
+   * ie. it has not been published, or the relevant update has not finished, a nullptr
+   * will be returned.
    *
-   * @param[in] start The start iterator over the collection.
-   * @param[in] end   Iterator over the collection that is in end-position.
+   * On non-owner workers, a call to #get \em asynchronously initiates the data
+   * movement from the owner to the non-owner, so that the non-owner local block
+   * memory reflects the contents of the owner of the block. This copy is only
+   * guaranteed to have completed at the end of a subsequent call to #fence.
+   * Before this call to #fence, the contents of the pointer returned by #get are
+   * undefined.
    *
-   * This is a blocking and collective call across all workers in the given
-   * collection. A call to this function implies a #fence-- that is, after a
-   * call to this function, any pending calls to #get will have been completed
-   * for all instances with owning and retrieving workers in the collection of
-   * instances in \a start to \a end.
+   * @param[in] dataObject The data object to get.
    *
-   * The collection of instances must match across all instances participating
-   * in this collective call to #update. If there are multiple calls to #update
-   * at any of the involved workers, then for those calls to #update that have
-   * a non-empty intersection of workers, the order of calls should match.
+   * @returns A pointer to the memory slot that contains the block contents, or a nullptr if the block is not found.
    *
-   * A call to this function is expensive even if #publish is implemented in
-   * an eager fashion, as the update even in the optimistic case where the
-   * registration has completed across the entire system, still requires a
-   * subset barrier (the system needs to know everyone has a consistent
-   * index).
+   * The contents are guaranteed to match with the owner's after the next call
+   * to #fence over the given \a ID.
    *
-   * \warning Hence, use this function as sparingly as possible.
+   * A call to this function implies \f$ \mathcal{O}(n) \f$ runtime, where
+   * \f$ n \f$ is the byte size of this block.
    *
-   * A call to this function shall \em not be thread-safe.
+   * \note The intent is that this upper bound on work occurs at most once
+   *       per block, and only in the case that retrieval first requires the
+   *       allocation of a local buffer.
+   *
+   * A call to this function is non-blocking, since the contents of the memory
+   * the return value points to are undefined until the next call to #fence.
+   * This function is one-sided and (thus) \em not collective.
+   *
+   * Repeated calls to this function with the same \a ID but without any
+   * intermediate calls to #fence with that \a ID will behave as though only
+   * a single call was made.
+   *
+   * A call to this function shall be thread-safe.
+   *
+   * \note The thread-safety plus re-entrant-safety means the implementation
+   *       of this function must include an atomic guard that is unlocked at
+   *       a call to #fence.
    */
-  template <typename FwdIt>
-  static void update(FwdIt start, const FwdIt &end);
+  __INLINE__ std::shared_ptr<L0::LocalMemorySlot> get(DataObject &dataObject)
+  {
+    // Deduce globally unique block ID for the GlobalMemorySlot key, by combining the given instance and block IDs
+    compoundId_t compoundId = dataObject._instanceId << OBJECT_STORE_KEY_INSTANCE_ID_BITS | dataObject._id;
+
+    _globalObjects[compoundId] = std::make_shared<DataObject>(dataObject);
+
+    // If the data object has never been fetched before, allocate a local memory slot for it
+    if (dataObject._localSlot == nullptr)
+    {
+      // Allocate a local memory slot for the block, associate it with the global slot and add it to the blocks of the given instance
+      auto newSlot          = _memoryManager.allocateLocalMemorySlot(_memorySpace, dataObject._size);
+      dataObject._localSlot = newSlot;
+    }
+
+    if (dataObject._globalSlot == nullptr) HICR_THROW_LOGIC("Trying to get a block that has not been properly transferred.");
+
+    // Initiate the data movement from the owner to the current worker
+    _communicationManager.memcpy(dataObject._localSlot, 0, dataObject._globalSlot, 0, dataObject._size);
+    return dataObject._localSlot;
+
+    // Notes: Consider a variant (maybe hidden under another layer/wrapper) that allows to get portion
+    // of the block, using offset and size
+  }
 
   /**
-   * Fences all block activity attached to a given \a tag.
+   * Destroy a data object. This is a local operation, does not affect other copies of the data object.
+   * The data object is removed from the object store and the associated memory slots are freed.
    *
-   * @param[in] tag Guarantees resolving all calls to #get with the given
-   *                \a tag.
+   * The local slot is only freed if the data object is a fetched object, originating from a call to #get.
+   * On the owner instance, the user is responsible for freeing the local memory slot.
+   * The global slot is always destroyed, if present.
+   *
+   * @param[in] dataObject The data object to destroy.
+   */
+  __INLINE__ void destroy(DataObject &dataObject)
+  {
+    // Only free the local memory slot if it is a fetched object, which means the local slot allocation
+    // was done by the object store during a call to #get
+    if (dataObject._instanceId != _instanceId)
+    {
+      if (dataObject._localSlot) _memoryManager.freeLocalMemorySlot(dataObject._localSlot);
+    }
+
+    if (dataObject._globalSlot) _communicationManager.destroyPromotedGlobalMemorySlot(dataObject._globalSlot);
+
+    compoundId_t compoundId = dataObject._instanceId << OBJECT_STORE_KEY_INSTANCE_ID_BITS | dataObject._id;
+    auto         it         = _globalObjects.find(compoundId);
+
+    if (it != _globalObjects.end()) { _globalObjects.erase(it); }
+  }
+
+  /**
+   * Produce a serialized representation (handle) of a data object.
+   * This representation is trivially copyable and can be sent over the network.
+   *
+   * @param[in] dataObject The data object to serialize.
+   * @returns A handle to the data object.
+   */
+  __INLINE__ handle serialize(DataObject &dataObject)
+  {
+    auto ret                      = handle{};
+    ret.instanceId                = dataObject._instanceId;
+    ret.id                        = dataObject._id;
+    ret.size                      = dataObject._size;
+    uint8_t *serializedGlobalSlot = _communicationManager.serializeGlobalMemorySlot(dataObject._globalSlot); // implicitly produces allocation
+    std::memcpy(ret.serializedGlobalSlot, serializedGlobalSlot, sizeof(ret.serializedGlobalSlot));
+
+    // free the allocation produced by serialize() TODO: dangerous, remove
+    delete[] serializedGlobalSlot;
+    return ret;
+  }
+
+  /**
+   * Deserialize a handle to a data object.
+   * The handle is a trivially copiable, serialized representation of a data object.
+   *
+   * @param[in] handle The handle to deserialize.
+   * @returns A shared pointer to the deserialized data object.
+   */
+  __INLINE__ std::shared_ptr<DataObject> deserialize(const handle &handle)
+  {
+    auto dataObject   = std::make_shared<DataObject>(handle.instanceId, handle.id, nullptr);
+    dataObject->_size = handle.size;
+    dataObject->_globalSlot =
+      _communicationManager.deserializeGlobalMemorySlot(reinterpret_cast<uint8_t *>(const_cast<uint8_t(*)[28 + sizeof(size_t)]>(&handle.serializedGlobalSlot)), _tag);
+    return dataObject;
+  }
+
+  /**
+   * Fences all block activity of the object store instance.
    *
    * This is a blocking call. All workers that have communications in the
-   * given \a tag must make the same number of calls to #fence. This
+   * object store must make the same number of calls to #fence. This
    * (paradoxically) allows for fully asynchronous fencing.
    *
    * \warning I.e., a call to fence on one party may exit before a matching
@@ -95,9 +334,17 @@ class Block
    *          \em not imply a barrier.
    *
    * A call to this function is \em not thread-safe.
+   * TODO: 0-cost variant with (sent,recv)
+   *
+   * @returns <tt>true</tt> if the fence has completed; <tt>false</tt> otherwise.
    */
-  static void fence(const Tag &tag);
+  __INLINE__ bool fence()
+  {
+    _communicationManager.fence(_tag);
+    return true;
+  }
 
+#ifdef HICR_ENABLE_NONBLOCKING_FENCE // Dummy flag for when we implement non-blocking fence
   /**
    * The non-blocking variant of #fence.
    *
@@ -118,136 +365,44 @@ class Block
    * A call to this function is \em not thread-safe.
    */
   static bool test_fence(const Tag &tag);
-
-  /**
-   * Retrieve a pointer to the block contents.
-   *
-   * @param[in] tag The tag associated with this request.
-   *
-   * @returns Pointer to the local memory that mirrors the block owner's
-   *          content.
-   *
-   * The contents are guaranteed to match with the owner's after the next call
-   * to #fence over the given \a tag.
-   *
-   * \note For the owner of the block, this corresponds to a pointer to the
-   *       memory area corresponding to the true block data.
-   *
-   * A call to this function implies \f$ \mathcal{O}(n) \f$ runtime, where
-   * \f$ n \f$ is the byte size of this block.
-   *
-   * \note The intent is that this upper bound on work occurs at most once
-   *       per block, and only in the case that retrieval first requires the
-   *       allocation of a local buffer.
-   *
-   * A call to this function is non-blocking, since the contents of the memory
-   * the return value points to are undefined until the next call to #fence
-   * with the given \a tag. This function is one-sided and (thus) \em not
-   * collective.
-   *
-   * Repeated calls to this function with the same \a tag but without any
-   * intermediate calls to #fence with that \a tag will behave as though only
-   * a single call was made.
-   *
-   * A call to this function shall be thread-safe.
-   *
-   * \note The thread-safety plus re-entrant-safety means the implementation
-   *       of this function must include an atomic guard that is unlucked at
-   *       a call to #fence.
-   */
-  const void *get(const Tag &tag);
-
-  /**
-   * Queries whether the calling worker is the owner of this block.
-   *
-   * @returns Whether this worker has ownership of this block.
-   *
-   * Ownership is guaranteed immutable until the next call to #update.
-   *
-   * A call to this function shall incur \f$ \mathcal{O}(1) \f$ work, is
-   * thread-safe, and shall never fail.
-   */
-  bool isOwner() const noexcept;
-
-  /**
-   * Queries the byte size of this block.
-   *
-   * @returns The size of this block, in bytes.
-   *
-   * A call to this function shall incur \f$ \mathcal{O}(1) \f$ work, is
-   * thread-safe, and shall never fail.
-   */
-  const size_t getByteSize() const noexcept;
-
-  /**
-   * The owner allows electing another worker as the owner of the block, and
-   * if no other worker takes over ownership, will destroy the block.
-   *
-   * The destruction of the block or the change of ownership will only take
-   * effect after a subsequent call to #update.
-   *
-   * \warning If the block is destroyed, any local associated memory will
-   *          \em not be freed by the unified layer.
-   *
-   * Ownership would be transferred to another worker if:
-   *  -# the subsequent #update had at least one other worker who called
-   *     #tryGetOwnership on this block.
-   *
-   * The block would instead be destroyed if:
-   *  -# the subsequent #update had no other worker who called
-   *     #tryGetOwnership on this block.
-   *
-   * @throws An logic exception if called by a worker that is not the owner
-   *         of this block.
-   *
-   * This is a non-blocking asynchronous function that incurs
-   * \f$ \mathcal{O}(1) \f$ work.
-   *
-   * Repeated calls to this function without any intermediate calls to #fence
-   * will behave as though only a single call was made.
-   *
-   * A call to this function shall be thread-safe.
-   */
-  void destroyOrRelease();
-
-  /**
-   * This worker attempts, between now and the end of a subsequent call to
-   * #update, to obtain ownership of this block.
-   *
-   * If successful, the contents of the memory block returned by #get will
-   * correspond to the true value of this block; future calls to #get made by
-   * other workers will then refer to this worker.
-   *
-   * If before the next call to #update there was no call to #get, then any
-   * changes in the block by the previous owner shall be lost.
-   *
-   * If both this function as well as #get are called before the next call to
-   * #update \em and the attempt to retrieve ownership is successful, then the
-   * contents of the block are guaranteed to be consistent between all of 1)
-   * the previous owner, 2) the new owner, i.e., this worker, and 3) any
-   * potential third-worker calls to #get that follow the corresponding call
-   * to #update.
-   *
-   * @throws An logic exception if called by a worker that is already the
-   *         owner of this block.
-   *
-   * This is a non-blocking and asynchronous operation that entails
-   * \f$ \mathcal{O}(1) \f$ work.
-   *
-   * Repeated calls to this function without any intermediate calls to #fence
-   * will behave as though only a single call was made.
-   *
-   * A call to this function shall be thread-safe.
-   */
-  void tryGetOwnership();
+#endif
 
   private:
 
-  void *_objectPointer;
+  /**
+   * The associated memory manager.
+   */
+  L1::MemoryManager &_memoryManager;
 
-  size_t _objectSize;
+  /**
+   * The associated communication manager.
+   */
+  L1::CommunicationManager &_communicationManager;
 
-  // worker_id_t  _ownerId;
+  /**
+   * The tag to associate with the objectStore instance.
+   *
+   * \note If we remove collectives, we can probably remove the tag.
+   */
+  const L0::GlobalMemorySlot::tag_t _tag;
+
+  /**
+   * The associated memory space the object store operates in.
+   */
+  const std::shared_ptr<L0::MemorySpace> _memorySpace;
+
+  /**
+   * Directory of blocks. TODO: Might remove, or keep as the responsibility of the object store to track the blocks.
+   *
+   * \note If we have guarantees about instance ids, we can use a vector instead of a map.
+   *       Same for blockIds.
+   */
+  std::map<compoundId_t, std::shared_ptr<DataObject>> _globalObjects{};
+
+  /**
+   * The instance ID of the current instance owning the object store.
+   */
+  const L0::Instance::instanceId_t _instanceId;
 };
 
-} // end namespace HiCR
+} // namespace HiCR::objectStore
