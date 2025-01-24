@@ -31,7 +31,7 @@ rm -rf build
 
 # Could not reliably provide LFP via Spack, so we use this little snippet as we do on the other CI jobs
 echo "Pulling LPF"
-git submodules update --init
+git submodule update --init
 echo "Compiling LPF..."
 mkdir extern/lpf/build; pushd extern/lpf/build; ../bootstrap.sh ; make -j24; make install; popd
 
