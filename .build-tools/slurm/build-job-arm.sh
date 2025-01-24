@@ -44,7 +44,7 @@ export LIBRARY_PATH=$PWD/extern/lpf/build/lib:$LIBRARY_PATH
 echo "Setting up..."
 mkdir build
 
-meson setup build -Dbackends=$HICR_BUILD_BACKENDS -Dfrontends=$HICR_BUILD_FRONTENDS -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=false
+meson setup build -Dbackends=$HICR_BUILD_BACKENDS -Dfrontends=$HICR_BUILD_FRONTENDS -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=false -Dbuildtype=release
 
 if [ $? -ne 0 ]; then
 	echo "Setup process failed. Please consult relevant logs."
