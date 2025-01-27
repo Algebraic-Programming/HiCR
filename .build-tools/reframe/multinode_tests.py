@@ -74,3 +74,17 @@ class Deployer(MPIHiCRClass):
     @sanity_function
     def validate(self):
         return sn.assert_found(r'Reached End', self.stdout)
+
+@rfm.simple_test
+class ObjectStore(MPIHiCRClass):
+    backend = parameter(["lpf"])
+    num_tasks = 2
+    @run_before('run')
+    def prepare_run(self):
+        self.descr = ('Object Store - Publish-Read')
+        self.executable = self.stagedir + '/build/examples/objectStore/publishRead/' + self.backend
+        self.job.launcher = getlauncher('bzlpfrun')()
+
+    @sanity_function
+    def validate(self):
+        return sn.assert_found(r'Received block 2: This is another block', self.stdout)

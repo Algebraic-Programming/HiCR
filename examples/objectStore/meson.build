@@ -1,0 +1,2 @@
+subdir('singleInstance')
+subdir('publishRead')

@@ -121,6 +121,50 @@ class CommunicationManager
   }
 
   /**
+   * Serializes a global memory slot, belonging to the current instance, into a buffer that can be sent over the network
+   * to other instances, without the need to engage in a collective operation.
+   *
+   * \param[in] globalSlot The global memory slot to serialize
+   * \return A pointer to the serialized representation of the global memory slot in a newly allocated buffer.
+   *         An exception is thrown if the backend does not support the operation
+   * \note The user is responsible for freeing the buffer, using delete[]
+   */
+  virtual uint8_t *serializeGlobalMemorySlot(const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &globalSlot) const
+  {
+    HICR_THROW_LOGIC("Trying to serialize a global memory slot; this is not supported in this backend\n");
+    return nullptr;
+  }
+
+  /**
+   * Deserializes a global memory slot from a given buffer.
+   *
+   * @param[in] buffer The buffer to deserialize the global memory slot from
+   * @param[in] tag The tag to associate with the deserialized global memory slot
+   * @return A pointer to the deserialized global memory slot
+   */
+  virtual std::shared_ptr<L0::GlobalMemorySlot> deserializeGlobalMemorySlot(uint8_t *buffer, L0::GlobalMemorySlot::tag_t tag)
+  {
+    HICR_THROW_LOGIC("Trying to deserialize a global memory slot; this is not supported in this backend\n");
+    return nullptr;
+  }
+
+  /**
+   * Promotes a local memory slot to a global memory slot without collective exchange across all instances.
+   * This is an alternative to the exchangeGlobalMemorySlots function, which is a collective operation, and
+   * remains the primary way to promote local memory slots to global memory slots, since using a slot produced
+   * by this promote operation requires communicating it via a pre-established communication channel.
+   *
+   * @param[in] localMemorySlot The local memory slot to promote
+   * @param[in] tag The tag to associate with the promoted global memory slot
+   * @return A pointer to the promoted global memory slot
+   */
+  virtual std::shared_ptr<L0::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<L0::LocalMemorySlot> &localMemorySlot, L0::GlobalMemorySlot::tag_t tag)
+  {
+    HICR_THROW_LOGIC("This backend does not support one-sided promotion of local memory slots to global");
+    return nullptr;
+  }
+
+  /**
    * De-registers a previously registered global memory slot. This can be a local operation,
    * and is a CommunicationManager internal operation. The slot is not destroyed, it can be used,
    * but can no longer be accessed via #getGlobalMemorySlot.
@@ -147,10 +191,12 @@ class CommunicationManager
   }
 
   /**
-   * Destroys a global memory slot. This operation is non-blocking and non-collective.
+   * Destroys a (collectively exchanged) global memory slot. This operation is non-blocking and non-collective.
    * Its effects will be visible after the next call to #fence(L0::GlobalMemorySlot::tag_t)
    * where the tag is the tag of the memory slot to destroy. That means that multiple slots
    * under the same tag can be destroyed in a single fence operation.
+   *
+   * If the memory slot has not been created through #exchangeGlobalMemorySlots, the behavior is undefined.
    *
    * \param[in] memorySlot Memory slot to destroy.
    *
@@ -161,6 +207,19 @@ class CommunicationManager
     auto tag = memorySlot->getGlobalTag();
     // Implicit creation of the tag entry if it doesn't exist is desired here
     _globalMemorySlotsToDestroyPerTag[tag].push_back(memorySlot);
+  }
+
+  /**
+   * Destroys a (locally promoted) global memory slot. This operation is blocking and non-collective.
+   * The effects will be visible immediately after the call to this function.
+   *
+   * If the memory slot has not been created through #promoteLocalMemorySlot, the behavior is undefined.
+   *
+   * @param[in] memorySlot Memory slot to destroy.
+   */
+  virtual void destroyPromotedGlobalMemorySlot(const std::shared_ptr<L0::GlobalMemorySlot> &memorySlot)
+  {
+    HICR_THROW_LOGIC("This backend does not support promoted global memory slots.");
   }
 
   /**

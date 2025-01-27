@@ -8,7 +8,7 @@
 #SBATCH --partition=TaiShanV110
 
 HICR_BUILD_BACKENDS='host/hwloc,host/pthreads,mpi,lpf'
-HICR_BUILD_FRONTENDS='tasking,machineModel,deployer,channel'
+HICR_BUILD_FRONTENDS='tasking,machineModel,deployer,channel,objectStore'
 
 HICR_BUILD_OMPI_VERSION='4.1.7a1'
 
@@ -33,7 +33,7 @@ rm -rf build
 echo "Pulling LPF"
 git submodule update --init
 echo "Compiling LPF..."
-mkdir extern/lpf/build; pushd extern/lpf/build; ../bootstrap.sh ; make -j24; make install; popd
+mkdir extern/lpf/build; pushd extern/lpf/build; ../bootstrap.sh ; make -j24; make install || true; popd
 
 export LD_LIBRARY_PATH=$PWD/extern/lpf/build/lib:$LD_LIBRARY_PATH
 export CPATH=$PWD/extern/lpf/build/include:$CPATH

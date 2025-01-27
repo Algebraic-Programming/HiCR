@@ -18,6 +18,7 @@
 #include <set>
 #include <lpf/collectives.h>
 #include <lpf/core.h>
+#include <lpf/noc.h>
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <hicr/core/L1/communicationManager.hpp>
 #include "../L0/globalMemorySlot.hpp"
@@ -53,6 +54,112 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       _lpf(lpf),
       _localSwapSlot(LPF_INVALID_MEMSLOT)
   {}
+
+  /**
+   * Serializes a global memory slot, registered on the current instance, into a buffer that can be sent over the network
+   * to other instances, without the need to engage in a collective operation.
+   * LPF is responsible for the serialization of the slot, which contains registration information etc.
+   *
+   * @param[in] globalSlot The global memory slot to serialize
+   * @return A pointer to the serialized representation of the global memory slot in a newly allocated buffer.
+   * \note The user is responsible for freeing the buffer, using delete[]
+   */
+  __INLINE__ uint8_t *serializeGlobalMemorySlot(const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &globalSlot) const override
+  {
+    char  *serialized;
+    size_t size    = 0;
+    auto   lpfSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(globalSlot);
+    if (lpfSlot == nullptr) HICR_THROW_LOGIC("The memory slot is not compatible with this backend\n");
+
+    lpf_memslot_t lpfMemSlot = lpfSlot->getLPFSlot();
+
+    // This produces an allocated buffer that needs to be freed
+    CHECK(lpf_noc_serialize_slot(_lpf, lpfMemSlot, &serialized, &size));
+
+    uint8_t *ret = new uint8_t[sizeof(lpf_pid_t) + size + sizeof(size_t)];
+    std::memcpy(ret, &_rank, sizeof(lpf_pid_t));
+    std::memcpy(ret + sizeof(lpf_pid_t), &size, sizeof(size_t));
+    std::memcpy(ret + sizeof(lpf_pid_t) + sizeof(size_t), serialized, size);
+
+    // TODO: this is a temporary fix, the LPF API should be fixed to free the buffer
+    free(serialized);
+
+    return ret;
+  }
+
+  /**
+   * Deserializes a global memory slot from a buffer.
+   *
+   * \note The returned slot will not have a swap slot associated with it.
+   *
+   * @param[in] buffer The buffer to deserialize the global memory slot from
+   * @param[in] tag The tag to associate with the deserialized global memory slot
+   * @return A pointer to the deserialized global memory slot
+   */
+  __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> deserializeGlobalMemorySlot(uint8_t *buffer, L0::GlobalMemorySlot::tag_t tag) override
+  {
+    // first <sizeof(lpf_pid_t)> bytes are the rank, followed by the size of the lpf slot buffer, the rest is the lpf slot buffer
+    size_t        size;
+    lpf_pid_t     rank;
+    lpf_memslot_t slot = LPF_INVALID_MEMSLOT;
+
+    std::memcpy(&rank, buffer, sizeof(lpf_pid_t));
+    std::memcpy(&size, buffer + sizeof(lpf_pid_t), sizeof(size_t));
+    uint8_t *serialized = buffer + sizeof(lpf_pid_t) + sizeof(size_t);
+
+    CHECK(lpf_noc_register(_lpf, nullptr, 0, &slot));
+
+    CHECK(lpf_noc_deserialize_slot(_lpf, (char *)serialized, slot));
+
+    return std::make_shared<HiCR::backend::lpf::L0::GlobalMemorySlot>(rank, slot, LPF_INVALID_MEMSLOT, tag);
+  }
+
+  /**
+   * Promotes a local memory slot to a global memory slot (see abstract class for more details)
+   *
+   * @param[in] memorySlot The local memory slot to promote
+   * @param[in] tag The tag to associate with the promoted global memory slot
+   * @return A pointer to the promoted global memory slot
+   */
+  __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memorySlot,
+                                                                                HiCR::L0::GlobalMemorySlot::tag_t                 tag) override
+  {
+    auto lpfSlot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(memorySlot);
+    if (lpfSlot == nullptr) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
+
+    lpf_memslot_t promotedSlot = LPF_INVALID_MEMSLOT;
+    lpf_memslot_t lpfSwapSlot  = LPF_INVALID_MEMSLOT;
+
+    void  *ptr            = lpfSlot->getPointer();
+    size_t size           = lpfSlot->getSize();
+    void  *lpfSwapSlotPtr = lpfSlot->getLPFSwapPointer();
+
+    CHECK(lpf_noc_register(_lpf, ptr, size, &promotedSlot));
+    CHECK(lpf_noc_register(_lpf, lpfSwapSlotPtr, sizeof(uint64_t), &lpfSwapSlot)); // TODO: check if sizeof(uint64_t) is correct
+
+    return std::make_shared<HiCR::backend::lpf::L0::GlobalMemorySlot>(_rank, promotedSlot, lpfSwapSlot, tag, 0 /* global key */, memorySlot);
+  }
+
+  /**
+   * Destroys a (locally promoted) global memory slot. This operation is local.
+   *
+   * If the memory slot has not been created through #promoteLocalMemorySlot, the behavior is undefined.
+   *
+   * @param[in] memorySlot Memory slot to destroy.
+   */
+  __INLINE__ void destroyPromotedGlobalMemorySlot(const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &memorySlot) override
+  {
+    // Getting up-casted pointer for the global memory slot
+    auto lpfSlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlot);
+
+    // Checking whether the memory slot passed is compatible with this backend
+    if (lpfSlot == nullptr) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
+
+    CHECK(lpf_noc_deregister(_lpf, lpfSlot->getLPFSlot()));
+
+    // If the swap slot is not LPF_INVALID_MEMSLOT, deregister it
+    if (lpfSlot->getLPFSwapSlot() != LPF_INVALID_MEMSLOT) CHECK(lpf_noc_deregister(_lpf, lpfSlot->getLPFSwapSlot()));
+  }
 
   private:
 
@@ -299,15 +406,15 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
    */
   __INLINE__ void destroyGlobalMemorySlotImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlotPtr) override
   {
-    // Getting up-casted pointer for the execution unit
+    // Getting up-casted pointer for the global memory slot
     auto memorySlot = dynamic_pointer_cast<lpf::L0::GlobalMemorySlot>(memorySlotPtr);
 
-    // Checking whether the execution unit passed is compatible with this backend
+    // Checking whether the memory slot passed is compatible with this backend
     if (memorySlot == nullptr) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
 
     // Deregistering from LPF
-    lpf_deregister(_lpf, memorySlot->getLPFSlot());
-    lpf_deregister(_lpf, memorySlot->getLPFSwapSlot());
+    CHECK(lpf_deregister(_lpf, memorySlot->getLPFSlot()));
+    CHECK(lpf_deregister(_lpf, memorySlot->getLPFSwapSlot()));
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot>  &destination,

@@ -70,6 +70,34 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     else { return nullptr; }
   }
 
+  /**
+   * Promotes a local memory slot to a global memory slot.
+   * Not really needed for this backend, provided for PoC development
+   *
+   * \param[in] memorySlot Local memory slot to promote
+   * \param[in] tag Tag to associate with the promoted global memory slot
+   * \return The promoted global memory slot
+   */
+  __INLINE__ std::shared_ptr<HiCR::L0::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memorySlot,
+                                                                                HiCR::L0::GlobalMemorySlot::tag_t                 tag) override
+  {
+    // Creating new (generic) global memory slot
+    auto globalMemorySlot = std::make_shared<HiCR::backend::host::L0::GlobalMemorySlot>(tag, 0 /* key */, memorySlot);
+
+    // Returning the global memory slot
+    return globalMemorySlot;
+  }
+
+  /**
+   * Dummy override for the deregisterGlobalMemorySlot function, for PoC development
+   *
+   * \param[in] memorySlot Memory slot to deregister.
+   */
+  __INLINE__ void destroyPromotedGlobalMemorySlot(const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &memorySlot) override
+  {
+    // Nothing to do here
+  }
+
   private:
 
   /**
