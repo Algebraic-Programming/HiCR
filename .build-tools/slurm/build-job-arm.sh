@@ -31,7 +31,7 @@ rm -rf build
 
 # Could not reliably provide LFP via Spack, so we use this little snippet as we do on the other CI jobs
 echo "Pulling LPF"
-git submodules update --init
+git submodule update --init
 echo "Compiling LPF..."
 mkdir extern/lpf/build; pushd extern/lpf/build; ../bootstrap.sh ; make -j24; make install; popd
 
@@ -44,7 +44,7 @@ export LIBRARY_PATH=$PWD/extern/lpf/build/lib:$LIBRARY_PATH
 echo "Setting up..."
 mkdir build
 
-meson setup build -Dbackends=$HICR_BUILD_BACKENDS -Dfrontends=$HICR_BUILD_FRONTENDS -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=false
+meson setup build -Dbackends=$HICR_BUILD_BACKENDS -Dfrontends=$HICR_BUILD_FRONTENDS -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=false -Dbuildtype=release
 
 if [ $? -ne 0 ]; then
 	echo "Setup process failed. Please consult relevant logs."

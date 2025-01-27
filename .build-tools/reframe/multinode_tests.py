@@ -1,5 +1,6 @@
 import reframe as rfm
 import reframe.utility.sanity as sn
+from reframe.core.backends import getlauncher
 import os
 
 class MPIHiCRClass(rfm.RunOnlyRegressionTest):
@@ -19,6 +20,10 @@ class ChannelsSPSC(MPIHiCRClass):
     def prepare_run(self):
         self.descr = ('Channels - ' + self.sizing + ' - SPSC -' + self.backend)
         self.executable = self.stagedir + '/build/examples/channels/' + self.sizing + '/spsc/' + self.backend
+        if self.backend == "lpf":
+            self.job.launcher = getlauncher('bzlpfrun')()
+        if self.backend == "mpi":
+            self.job.launcher = getlauncher('bzmpirun')()
 
     @sanity_function
     def validate(self):
@@ -29,13 +34,17 @@ class ChannelsMPSC(MPIHiCRClass):
     backend = parameter(["lpf", "mpi"])
     sizing = parameter(["fixedSize", "variableSize"])
     policy = parameter(["locking", "nonlocking"])
-    num_tasks = 8 
+    num_tasks = 8
     executable_opts = ['256']
 
     @run_before('run')
     def prepare_run(self):
         self.descr = ('Channels - ' + self.sizing + ' - MPSC - Policy: ' + self.policy + ' - Backend: ' + self.backend)
         self.executable = self.stagedir + '/build/examples/channels/' + self.sizing + '/mpsc/' + self.policy + '/' + self.backend
+        if self.backend == "lpf":
+            self.job.launcher = getlauncher('bzlpfrun')()
+        if self.backend == "mpi":
+            self.job.launcher = getlauncher('bzmpirun')()
 
     @sanity_function
     def validate(self):

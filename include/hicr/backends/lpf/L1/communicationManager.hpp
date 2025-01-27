@@ -407,9 +407,9 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto          memSlot = dynamic_pointer_cast<lpf::L0::LocalMemorySlot>(slot);
     lpf_memslot_t lpfSlot = memSlot->getLPFSlot();
     if (lpfSlot == LPF_INVALID_MEMSLOT) { HICR_THROW_LOGIC("This slot is not registered with LPF!"); }
-    CHECK(lpf_counting_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, lpfSlot, expectedSent, expectedRcvd));
-    memSlot->setMessagesRecv(memSlot->getMessagesRecv() + expectedRcvd);
+    CHECK(lpf_counting_sync_per_slot(_lpf, LPF_SYNC_DEFAULT, lpfSlot, memSlot->getMessagesSent() + expectedSent, memSlot->getMessagesRecv() + expectedRcvd));
     memSlot->setMessagesSent(memSlot->getMessagesSent() + expectedSent);
+    memSlot->setMessagesRecv(memSlot->getMessagesRecv() + expectedRcvd);
   }
 
   /**

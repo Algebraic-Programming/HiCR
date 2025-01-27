@@ -7,10 +7,15 @@ class YZLauncher(JobLauncher):
     def command(self, job):
         return ['mpirun', '--map-by','node', '-n', str(job.num_tasks), '-H', 'yzserver01:22,yzserver02:22']
 
-@register_launcher('bzrun')
-class BZLauncher(JobLauncher):
+@register_launcher('bzmpirun')
+class BZMPILauncher(JobLauncher):
     def command(self, job):
         return ['mpirun', '-x', 'LD_LIBRARY_PATH', '--map-by','node', '-n', str(job.num_tasks), '--mca', 'plm', 'rsh']
+
+@register_launcher('bzlpfrun')
+class BZLPFLauncher(JobLauncher):
+    def command(self, job):
+        return ['lpfrun', '-engine', 'zero', '-n', str(job.num_tasks), '-mpirun,--map-by', '-mpirun,node', '-mpirun,--mca', '-mpirun,plm', '-mpirun,rsh']
 
 site_configuration = {
     'systems': [
@@ -24,7 +29,7 @@ site_configuration = {
                     'name': 'arm',
                     'descr': 'TaiShanV110 nodes in BZ cluster',
                     'scheduler': 'slurm',
-                    'launcher': 'bzrun',
+                    'launcher': 'bzmpirun',
                     'access':  ['-p TaiShanV110'],
                     'environs': [
                         'PrgEnv-bz',
@@ -87,7 +92,8 @@ site_configuration = {
             'name': 'PrgEnv-bz',
             'modules': ['openmpi@4.1.7a1'],
             'env_vars': [
-                          ['LD_LIBRARY_PATH', '$HICR_HOME/extern/lpf/build/lib:$LD_LIBRARY_PATH']
+                          ['LD_LIBRARY_PATH', '$HICR_HOME/extern/lpf/build/lib:$LD_LIBRARY_PATH'],
+                          ['PATH', '$HICR_HOME/extern/lpf/build/bin:$PATH']
                         ]
         },
     ],

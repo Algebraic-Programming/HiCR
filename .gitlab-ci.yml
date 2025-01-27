@@ -110,7 +110,7 @@ build-slurm:
   - rm -rf ../tmp.rf
   - mkdir -p ../tmp.rf
   - echo "Running Reframe..."
-  - reframe -J nodes=2 -J exclude=srv01,srv02 -c .build-tools/reframe/multinode_tests.py -C .build-tools/reframe/settings.py -r --stage=../tmp.rf
+  - reframe -J nodes=4 -J exclude=srv01 -c .build-tools/reframe/multinode_tests.py -C .build-tools/reframe/settings.py -r --stage=../tmp.rf
   - spack env deactivate
   only:
   - master
