@@ -104,10 +104,10 @@ TEST(ProcessingUnit, ThreadAffinity)
   ASSERT_TRUE(hasCorrectAffinity);
 
   // Re-terminating
-  ASSERT_NO_THROW(processingUnit->terminate());
+  ASSERT_NO_THROW(m.terminate(processingUnit));
 
   // Re-awaiting
-  ASSERT_NO_THROW(processingUnit->await());
+  ASSERT_NO_THROW(m.await(processingUnit));
 }
 
 TEST(ProcessingUnit, LifeCycle)
@@ -236,7 +236,7 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Re-Resume
   ASSERT_NO_THROW(m.resume(processingUnit));
-  ASSERT_NO_THROW(processingUnit->terminate());
+  ASSERT_NO_THROW(m.terminate(processingUnit));
 
   // Waiting for execution times to update
   pthread_barrier_wait(&barrier);
@@ -250,7 +250,7 @@ TEST(ProcessingUnit, LifeCycle)
 
   // Awaiting termination
   executionState1 = m.createExecutionState(executionUnit1);
-  ASSERT_NO_THROW(processingUnit->await());
+  ASSERT_NO_THROW(m.await(processingUnit));
   ASSERT_THROW(m.start(processingUnit, executionState1), HiCR::RuntimeException);
   ASSERT_THROW(m.resume(processingUnit), HiCR::RuntimeException);
   ASSERT_THROW(m.suspend(processingUnit), HiCR::RuntimeException);
@@ -281,10 +281,10 @@ TEST(ProcessingUnit, LifeCycle)
   ASSERT_EQ(resumeCounter, 4);
 
   // Re-terminating
-  ASSERT_NO_THROW(processingUnit->terminate());
+  ASSERT_NO_THROW(m.terminate(processingUnit));
 
   // Re-awaiting
-  ASSERT_NO_THROW(processingUnit->await());
+  ASSERT_NO_THROW(m.await(processingUnit));
 
   ///////////////// Creating case where the thread runs a function that finishes
   auto fc3 = [](void *arg) {};
@@ -302,8 +302,8 @@ TEST(ProcessingUnit, LifeCycle)
   ASSERT_NO_THROW(m.start(processingUnit, executionState3));
 
   // Re-terminating
-  ASSERT_NO_THROW(processingUnit->terminate());
+  ASSERT_NO_THROW(m.terminate(processingUnit));
 
   // Re-awaiting
-  ASSERT_NO_THROW(processingUnit->await());
+  ASSERT_NO_THROW(m.await(processingUnit));
 }

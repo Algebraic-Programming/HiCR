@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   computeManager.start(processingUnit, executionState);
 
   // Waiting for thread to finish
-  processingUnit->await();
+  computeManager.await(processingUnit);
 
   return 0;
 }

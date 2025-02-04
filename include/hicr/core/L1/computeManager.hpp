@@ -135,20 +135,42 @@ class ComputeManager
     // Calling internal implementation of the resume function
     resumeImpl(processingUnit);
   }
-  
+
   /**
    * Requests the processing unit to finalize as soon as possible. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
    * 
    * @param[in] processingUnit The processing unit to terminate
    */
-  virtual void terminate(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) = 0;
+  __INLINE__ void terminate(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  {
+    // Transitioning state
+    processingUnit->setState(HiCR::L0::ProcessingUnit::terminating);
+
+    // Calling internal implementation of the terminate function
+    terminateImpl(processingUnit);
+  }
 
   /**
    * Suspends the execution of the caller until the given processing unit has finalized
    * 
    * @param[in] processingUnit The processing unit to wait for
    */
-  virtual void await(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) = 0;
+  __INLINE__ void await(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  {
+    // Getting processing unit's internal state
+    auto state = processingUnit->getState();
+
+    // Checking state
+    if (state != HiCR::L0::ProcessingUnit::terminating &&
+        state != HiCR::L0::ProcessingUnit::running &&
+        state != HiCR::L0::ProcessingUnit::suspended) return;
+
+    // Calling internal implementation of the await function
+    awaitImpl(processingUnit);
+
+    // Transitioning state
+    processingUnit->setState(HiCR::L0::ProcessingUnit::terminated);
+  }
 
   protected:
 
@@ -178,6 +200,20 @@ class ComputeManager
    * @param[in] processingUnit The processing unit to resume
    */
   virtual void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
-};
+  
+   /**
+   * Internal implementation of the terminate function
+   * 
+   * @param[in] processingUnit The processing unit to terminate
+   */
+  virtual void terminateImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
 
+     /**
+   * Internal implementation of the await function
+   * 
+   * @param[in] processingUnit The processing to wait for
+   */
+  virtual void awaitImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
+
+ };
 } // namespace HiCR::L1

@@ -18,6 +18,8 @@
 #include <hicr/core/L0/executionState.hpp>
 #include <utility>
 
+namespace HiCR::L1 { class ComputeManager; }
+
 namespace HiCR::L0
 {
 
@@ -31,6 +33,8 @@ namespace HiCR::L0
  */
 class ProcessingUnit
 {
+  friend class HiCR::L1::ComputeManager;
+  
   public:
 
   /**
@@ -91,40 +95,6 @@ class ProcessingUnit
    */
   [[nodiscard]] __INLINE__ ProcessingUnit::state_t getState() const { return _state; }
 
-   /**
-   * Function to set the processing unit's state
-   *
-   * @param state new state to set
-   */
-  __INLINE__ void setState(const ProcessingUnit::state_t state) { _state = state; }
-
-  /**
-   * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
-   */
-  __INLINE__ void terminate()
-  {
-    // Transitioning state
-    _state = ProcessingUnit::terminating;
-
-    // Calling internal implementation of the terminate function
-    terminateImpl();
-  }
-
-  /**
-   * Suspends the execution of the caller until the finalization is ultimately completed
-   */
-  __INLINE__ void await()
-  {
-    // Checking state
-    if (_state != ProcessingUnit::terminating && _state != ProcessingUnit::running && _state != ProcessingUnit::suspended) return;
-
-    // Calling internal implementation of the await function
-    awaitImpl();
-
-    // Transitioning state
-    _state = ProcessingUnit::terminated;
-  }
-
   /**
    * Returns the processing unit's associated compute resource
    *
@@ -139,19 +109,14 @@ class ProcessingUnit
    */
   virtual std::string getType() = 0;
 
-  protected:
-
-  /**
-   * Internal implementation of the terminate function
-   */
-  virtual void terminateImpl() = 0;
-
-  /**
-   * Internal implementation of the await function
-   */
-  virtual void awaitImpl() = 0;
-
   private:
+
+   /**
+   * Function to set the processing unit's state
+   *
+   * @param state new state to set
+   */
+  __INLINE__ void setState(const ProcessingUnit::state_t state) { _state = state; }
 
   /**
    * Represents the internal state of the processing unit. Uninitialized upon construction.

@@ -200,6 +200,11 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __INLINE__ static void catchResumeSignal(int sig) {}
 
+  __INLINE__ void initialize()
+  {
+    // Nothing to do for the initialization
+  }
+
   __INLINE__ void suspend()
   {
     auto status = pthread_kill(_pthreadId, HICR_SUSPEND_SIGNAL);
@@ -231,9 +236,12 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     pthread_barrier_destroy(_initializationBarrier.get());
   }
 
-  __INLINE__ void terminateImpl() override {}
+  __INLINE__ void terminate() 
+  {
+    // Nothing to do actiely, just wait for the thread to finalize in its own accord
+  }
 
-  __INLINE__ void awaitImpl() override
+  __INLINE__ void await()
   {
     // Waiting for thread after execution
     pthread_join(_pthreadId, nullptr);

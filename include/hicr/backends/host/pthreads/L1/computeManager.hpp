@@ -49,7 +49,8 @@ class ComputeManager : public HiCR::backend::host::L1::ComputeManager
   {
     auto p = getPosixThreadPointer(processingUnit);
 
-    // Nothing to do for initialization
+    // The logic for starting the posix thread is in the class itself
+    p->initialize();
   }
 
   __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit, std::unique_ptr<HiCR::L0::ExecutionState>& executionState) override
@@ -76,16 +77,21 @@ class ComputeManager : public HiCR::backend::host::L1::ComputeManager
     p->resume();
   }
 
-  __INLINE__ void terminate(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) override
+  __INLINE__ void terminateImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) override
   {
     auto p = getPosixThreadPointer(processingUnit);
+
+    // The logic for resuming the posix thread is in the class itself
+    p->terminate();
   }
 
-  __INLINE__ void await(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) override
+  __INLINE__ void awaitImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) override
   {
     auto p = getPosixThreadPointer(processingUnit);
-  }
 
+    // The logic for awaiting the posix thread is in the class itself
+    p->await();
+  }
 
   [[nodiscard]] __INLINE__ host::pthreads::L0::ProcessingUnit* getPosixThreadPointer(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
   {

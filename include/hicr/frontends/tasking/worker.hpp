@@ -281,7 +281,7 @@ class Worker
       HICR_THROW_RUNTIME("Attempting to wait for a worker that has not yet started or has already terminated");
 
     // Wait for the resources to free up
-    for (auto &p : _processingUnits) p->await();
+    for (auto &p : _processingUnits) _computeManager->await(p);
 
     // Transitioning state
     _state = state_t::terminated;
@@ -420,10 +420,10 @@ class Worker
         if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerTerminate);
 
         // Terminate secondary processing units first
-        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->terminate();
+        for (size_t i = 1; i < _processingUnits.size(); i++) _computeManager->terminate(_processingUnits[i]);
 
         // Then terminate current processing unit
-        _processingUnits[0]->terminate();
+        _computeManager->terminate(_processingUnits[0]);
 
         // Return immediately
         return;
