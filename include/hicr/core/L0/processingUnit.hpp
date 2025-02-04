@@ -99,21 +99,6 @@ class ProcessingUnit
   __INLINE__ void setState(const ProcessingUnit::state_t state) { _state = state; }
 
   /**
-   * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
-   */
-  __INLINE__ void suspend()
-  {
-    // Checking state
-    if (_state != ProcessingUnit::running) HICR_THROW_RUNTIME("Attempting to suspend processing unit that is not in the 'running' state");
-
-    // Transitioning state
-    _state = ProcessingUnit::suspended;
-
-    // Calling internal implementation of the suspend function
-    suspendImpl();
-  }
-
-  /**
    * Resumes the execution of the resource.
    */
   __INLINE__ void resume()
@@ -170,11 +155,6 @@ class ProcessingUnit
   virtual std::string getType() = 0;
 
   protected:
-
-  /**
-   * Internal implementation of the suspend function
-   */
-  virtual void suspendImpl() = 0;
 
   /**
    * Internal implementation of the resume function

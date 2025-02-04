@@ -398,7 +398,7 @@ class Worker
         if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerSuspend);
 
         // Suspending other processing units
-        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->suspend();
+        for (size_t i = 1; i < _processingUnits.size(); i++) _computeManager->suspend(_processingUnits[i]);
 
         // Putting current processing unit to check every so often
         while (checkResumeConditions() == false) usleep(_suspendIntervalMs * _MILISECONDS_PER_SECOND);

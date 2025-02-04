@@ -167,7 +167,7 @@ TEST(ProcessingUnit, LifeCycle)
   // Testing forbidden transitions
   ASSERT_THROW(m.start(processingUnit, executionState1), HiCR::RuntimeException);
   ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
-  ASSERT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
+  ASSERT_THROW(m.suspend(processingUnit), HiCR::RuntimeException);
 
   // Initializing
   ASSERT_NO_THROW(m.initialize(processingUnit));
@@ -175,7 +175,7 @@ TEST(ProcessingUnit, LifeCycle)
   // Testing forbidden transitions
   ASSERT_THROW(m.initialize(processingUnit), HiCR::RuntimeException);
   ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
-  ASSERT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
+  ASSERT_THROW(m.suspend(processingUnit), HiCR::RuntimeException);
 
   // Running
   executionState1 = m.createExecutionState(executionUnit1);
@@ -192,7 +192,7 @@ TEST(ProcessingUnit, LifeCycle)
   ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
 
   // Requesting the thread to suspend
-  ASSERT_NO_THROW(processingUnit->suspend());
+  ASSERT_NO_THROW(m.suspend(processingUnit));
 
   // Updating suspend flag
   suspendCounter = suspendCounter + 1;
@@ -201,7 +201,7 @@ TEST(ProcessingUnit, LifeCycle)
   executionState1 = m.createExecutionState(executionUnit1);
   ASSERT_THROW(m.initialize(processingUnit), HiCR::RuntimeException);
   ASSERT_THROW(m.start(processingUnit, executionState1), HiCR::RuntimeException);
-  ASSERT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
+  ASSERT_THROW(m.suspend(processingUnit), HiCR::RuntimeException);
 
   // Checking resume counter value has not updated (this is probabilistic only)
   sched_yield();
@@ -223,7 +223,7 @@ TEST(ProcessingUnit, LifeCycle)
   ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
 
   // Re-suspend
-  ASSERT_NO_THROW(processingUnit->suspend());
+  ASSERT_NO_THROW(m.suspend(processingUnit));
 
   // Updating suspend flag and waiting a bit
   suspendCounter = suspendCounter + 1;
@@ -253,7 +253,7 @@ TEST(ProcessingUnit, LifeCycle)
   ASSERT_NO_THROW(processingUnit->await());
   ASSERT_THROW(m.start(processingUnit, executionState1), HiCR::RuntimeException);
   ASSERT_THROW(processingUnit->resume(), HiCR::RuntimeException);
-  ASSERT_THROW(processingUnit->suspend(), HiCR::RuntimeException);
+  ASSERT_THROW(m.suspend(processingUnit), HiCR::RuntimeException);
 
   ///////// Checking re-run same thread
 

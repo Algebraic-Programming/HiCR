@@ -200,7 +200,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __INLINE__ static void catchResumeSignal(int sig) {}
 
-  __INLINE__ void suspendImpl() override
+  __INLINE__ void suspend()
   {
     auto status = pthread_kill(_pthreadId, HICR_SUSPEND_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);

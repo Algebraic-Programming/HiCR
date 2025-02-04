@@ -96,13 +96,25 @@ class ComputeManager
     startImpl(processingUnit, executionState);
   }
 
-
   /**
    * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
    * 
    * @param[in] processingUnit The processing unit to suspend
    */
-  virtual void suspend(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) = 0;
+  virtual void suspend(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  {
+    // Getting processing unit's internal state
+    auto state = processingUnit->getState();
+
+    // Checking state
+    if (state != HiCR::L0::ProcessingUnit::running) HICR_THROW_RUNTIME("Attempting to suspend processing unit that is not in the 'running' state");
+
+    // Transitioning state
+    processingUnit->setState(HiCR::L0::ProcessingUnit::suspended);
+
+    // Calling internal implementation of the suspend function
+    suspendImpl(processingUnit);
+  }
 
   /**
    * Resumes the execution of the processing unit.
@@ -139,6 +151,13 @@ class ComputeManager
   * @param[in] executionState The execution state to start running with the given processing unit
   */
   virtual void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit, std::unique_ptr<HiCR::L0::ExecutionState>& executionState) = 0;
+
+  /**
+   * Internal implementation of the suspend function
+   * 
+   * @param[in] processingUnit The processing unit to suspend
+   */
+  virtual void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
 };
 
 } // namespace HiCR::L1
