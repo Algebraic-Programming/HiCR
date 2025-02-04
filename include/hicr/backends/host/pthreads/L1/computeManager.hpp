@@ -68,9 +68,12 @@ class ComputeManager : public HiCR::backend::host::L1::ComputeManager
     p->suspend();
   }
 
-  __INLINE__ void resume(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) override
+  __INLINE__ void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) override
   {
     auto p = getPosixThreadPointer(processingUnit);
+
+    // The logic for resuming the posix thread is in the class itself
+    p->resume();
   }
 
   __INLINE__ void terminate(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) override

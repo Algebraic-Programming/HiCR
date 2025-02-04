@@ -99,21 +99,6 @@ class ProcessingUnit
   __INLINE__ void setState(const ProcessingUnit::state_t state) { _state = state; }
 
   /**
-   * Resumes the execution of the resource.
-   */
-  __INLINE__ void resume()
-  {
-    // Checking state
-    if (_state != ProcessingUnit::suspended) HICR_THROW_RUNTIME("Attempting to resume processing unit that is not in the 'suspended' state");
-
-    // Transitioning state
-    _state = ProcessingUnit::running;
-
-    // Calling internal implementation of the resume function
-    resumeImpl();
-  }
-
-  /**
    * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
    */
   __INLINE__ void terminate()
@@ -155,11 +140,6 @@ class ProcessingUnit
   virtual std::string getType() = 0;
 
   protected:
-
-  /**
-   * Internal implementation of the resume function
-   */
-  virtual void resumeImpl() = 0;
 
   /**
    * Internal implementation of the terminate function

@@ -101,7 +101,7 @@ class ComputeManager
    * 
    * @param[in] processingUnit The processing unit to suspend
    */
-  virtual void suspend(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  __INLINE__ void suspend(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
   {
     // Getting processing unit's internal state
     auto state = processingUnit->getState();
@@ -121,8 +121,21 @@ class ComputeManager
    * 
    * @param[in] processingUnit The processing unit to resume
    */
-  virtual void resume(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) = 0;
+  __INLINE__ void resume(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  {
+    // Getting processing unit's internal state
+    auto state = processingUnit->getState();
 
+    // Checking state
+    if (state != HiCR::L0::ProcessingUnit::suspended) HICR_THROW_RUNTIME("Attempting to resume processing unit that is not in the 'suspended' state");
+
+    // Transitioning state
+    processingUnit->setState(HiCR::L0::ProcessingUnit::running);
+
+    // Calling internal implementation of the resume function
+    resumeImpl(processingUnit);
+  }
+  
   /**
    * Requests the processing unit to finalize as soon as possible. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
    * 
@@ -158,6 +171,13 @@ class ComputeManager
    * @param[in] processingUnit The processing unit to suspend
    */
   virtual void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
+
+   /**
+   * Internal implementation of the resume function
+   * 
+   * @param[in] processingUnit The processing unit to resume
+   */
+  virtual void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
 };
 
 } // namespace HiCR::L1

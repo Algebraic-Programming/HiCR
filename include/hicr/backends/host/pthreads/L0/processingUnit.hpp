@@ -206,7 +206,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not suspend thread %lu\n", _pthreadId);
   }
 
-  __INLINE__ void resumeImpl() override
+  __INLINE__ void resume()
   {
     auto status = pthread_kill(_pthreadId, HICR_RESUME_SIGNAL);
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);

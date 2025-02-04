@@ -407,7 +407,7 @@ class Worker
         if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerResume);
 
         // Resuming other processing units
-        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnits[i]->resume();
+        for (size_t i = 1; i < _processingUnits.size(); i++) _computeManager->resume(_processingUnits[i]);
 
         // Setting worker as running
         _state = state_t::running;
