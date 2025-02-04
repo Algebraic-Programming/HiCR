@@ -31,6 +31,8 @@
   #define _GNU_SOURCE
 #endif
 
+namespace HiCR::backend::host::pthreads::L1 { class ComputeManager; }
+
 namespace HiCR::backend::host::pthreads::L0
 {
 
@@ -53,7 +55,11 @@ class ProcessingUnit;
  */
 class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 {
+  friend class HiCR::backend::host::pthreads::L1::ComputeManager;
+
   public:
+
+  [[nodiscard]] __INLINE__ std::string getType() override { return "POSIX Thread"; }
 
   /**
    * Sets up new affinity for the thread. The thread needs to yield or be preempted for the new affinity to work.
@@ -194,8 +200,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __INLINE__ static void catchResumeSignal(int sig) {}
 
-  __INLINE__ void initializeImpl() override {}
-
   __INLINE__ void suspendImpl() override
   {
     auto status = pthread_kill(_pthreadId, HICR_SUSPEND_SIGNAL);
@@ -208,7 +212,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
-  __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
+  __INLINE__ void start(std::unique_ptr<HiCR::L0::ExecutionState>& executionState)
   {
     // Initializing barrier
     pthread_barrier_init(_initializationBarrier.get(), nullptr, 2);

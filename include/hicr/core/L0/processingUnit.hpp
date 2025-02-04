@@ -91,37 +91,12 @@ class ProcessingUnit
    */
   [[nodiscard]] __INLINE__ ProcessingUnit::state_t getState() const { return _state; }
 
-  /**
-   * Initializes the resource and leaves it ready to execute work
-   */
-  __INLINE__ void initialize()
-  {
-    // Checking internal state
-    if (_state != ProcessingUnit::uninitialized && _state != ProcessingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
-
-    // Calling PU-specific initialization
-    initializeImpl();
-
-    // Transitioning state
-    _state = ProcessingUnit::ready;
-  }
-
-  /**
-   * Starts running the resource and execute a previously initialized executionState object
+   /**
+   * Function to set the processing unit's state
    *
-   * @param[in] executionState The execution state to start running with this processing  unit
+   * @param state new state to set
    */
-  __INLINE__ void start(std::unique_ptr<HiCR::L0::ExecutionState> executionState)
-  {
-    // Checking internal state
-    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'ready' state");
-
-    // Transitioning state
-    _state = ProcessingUnit::running;
-
-    // Running internal implementation of the start function
-    startImpl(std::move(executionState));
-  }
+  __INLINE__ void setState(const ProcessingUnit::state_t state) { _state = state; }
 
   /**
    * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
@@ -187,19 +162,14 @@ class ProcessingUnit
    */
   __INLINE__ std::shared_ptr<ComputeResource> getComputeResource() { return _computeResource; }
 
-  protected:
-
-  /**
-   * Internal implementation of the initialize routine
-   */
-  virtual void initializeImpl() = 0;
-
-  /**
-   * Internal implmentation of the start function
+   /**
+   * Gets the processing unit's type
    *
-   * @param[in] executionState The execution state to start running with this processing unit
+   * \return A string, containing the processing unit's type
    */
-  virtual void startImpl(std::unique_ptr<ExecutionState> executionState) = 0;
+  virtual std::string getType() = 0;
+
+  protected:
 
   /**
    * Internal implementation of the suspend function

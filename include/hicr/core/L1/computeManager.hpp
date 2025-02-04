@@ -56,6 +56,89 @@ class ComputeManager
    * \return A unique pointer to the newly create execution state. It needs to be unique because the state cannot be simultaneously executed my multiple processing units
    */
   virtual std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr) const = 0;
+
+   /**
+   * Initializes the a processing unit and leaves it ready to execute work
+   */
+  __INLINE__ void initialize(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  {
+    // Getting processing unit's internal state
+    auto state = processingUnit->getState();
+
+    // Checking internal state
+    if (state != HiCR::L0::ProcessingUnit::uninitialized && state != HiCR::L0::ProcessingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
+
+    // Calling PU-specific initialization
+    initializeImpl(processingUnit);
+
+    // Transitioning state
+    processingUnit->setState(HiCR::L0::ProcessingUnit::ready);
+  }
+
+  /**
+   * Starts running an executing state on a processing unit 
+   *
+   * @param[in] processingUnit The processing unit to initiate computation with
+   * @param[in] executionState The execution state to start running with the given processing unit
+   */
+  __INLINE__ void start(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit, std::unique_ptr<HiCR::L0::ExecutionState>& executionState)
+  {
+    // Getting processing unit's internal state
+    auto state = processingUnit->getState();
+
+    // Checking internal state
+    if (state != HiCR::L0::ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'ready' state");
+
+    // Transitioning state
+    processingUnit->setState(HiCR::L0::ProcessingUnit::running);
+
+    // Running internal implementation of the start function
+    startImpl(processingUnit, executionState);
+  }
+
+
+  /**
+   * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
+   * 
+   * @param[in] processingUnit The processing unit to suspend
+   */
+  virtual void suspend(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) = 0;
+
+  /**
+   * Resumes the execution of the processing unit.
+   * 
+   * @param[in] processingUnit The processing unit to resume
+   */
+  virtual void resume(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) = 0;
+
+  /**
+   * Requests the processing unit to finalize as soon as possible. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
+   * 
+   * @param[in] processingUnit The processing unit to terminate
+   */
+  virtual void terminate(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) = 0;
+
+  /**
+   * Suspends the execution of the caller until the given processing unit has finalized
+   * 
+   * @param[in] processingUnit The processing unit to wait for
+   */
+  virtual void await(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) = 0;
+
+  protected:
+
+   /**
+   * Backend-specific implementation of the initialize function
+   */
+  virtual void initializeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
+
+  /**
+  * Internal implmentation of the start function
+  *
+  * @param[in] processingUnit The processing unit to initiate computation with
+  * @param[in] executionState The execution state to start running with the given processing unit
+  */
+  virtual void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit, std::unique_ptr<HiCR::L0::ExecutionState>& executionState) = 0;
 };
 
 } // namespace HiCR::L1

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <hicr/core/exceptions.hpp>
 #include <hicr/backends/host/L0/executionUnit.hpp>
 #include <hicr/backends/host/L0/computeResource.hpp>
 #include <hicr/backends/host/L1/computeManager.hpp>
@@ -40,6 +41,57 @@ class ComputeManager : public HiCR::backend::host::L1::ComputeManager
   [[nodiscard]] __INLINE__ std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
   {
     return std::make_unique<host::pthreads::L0::ProcessingUnit>(computeResource);
+  }
+
+  private:
+
+  __INLINE__ void initializeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) override
+  {
+    auto p = getPosixThreadPointer(processingUnit);
+
+    // Nothing to do for initialization
+  }
+
+  __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit, std::unique_ptr<HiCR::L0::ExecutionState>& executionState) override
+  {
+    auto p = getPosixThreadPointer(processingUnit);
+
+    // The logic for starting the posix thread is in the class itself
+    p->start(executionState);
+  }
+
+  __INLINE__ void suspend(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) override
+  {
+    auto p = getPosixThreadPointer(processingUnit);
+  }
+
+  __INLINE__ void resume(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) override
+  {
+    auto p = getPosixThreadPointer(processingUnit);
+  }
+
+  __INLINE__ void terminate(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) override
+  {
+    auto p = getPosixThreadPointer(processingUnit);
+  }
+
+  __INLINE__ void await(std::unique_ptr<HiCR::L0::ProcessingUnit> processingUnit) override
+  {
+    auto p = getPosixThreadPointer(processingUnit);
+  }
+
+
+  [[nodiscard]] __INLINE__ host::pthreads::L0::ProcessingUnit* getPosixThreadPointer(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  {
+     // We can only handle processing units of Posix Thread type. Make sure we got the correct one
+    // To make it fast and avoid string comparisons, we use the dynamic cast method
+    auto p = dynamic_cast<host::pthreads::L0::ProcessingUnit*>(processingUnit.get()); 
+
+    // If the processing unit is not recognized, throw error. We can use the processing unit's type (string) now.
+    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType());
+
+    // Returning converted pointer
+    return p;
   }
 };
 

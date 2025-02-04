@@ -196,7 +196,7 @@ class Worker
     if (prevState != state_t::uninitialized && prevState != state_t::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
 
     // Initializing all resources
-    for (auto &r : _processingUnits) r->initialize();
+    for (auto &r : _processingUnits) _computeManager->initialize(r);
 
     // Transitioning state
     _state = state_t::ready;
@@ -223,7 +223,7 @@ class Worker
     auto executionState = _computeManager->createExecutionState(executionUnit, this);
 
     // Launching worker in the lead resource (first one to be added)
-    _processingUnits[0]->start(std::move(executionState));
+    _computeManager->start(_processingUnits[0], executionState);
   }
 
   /**

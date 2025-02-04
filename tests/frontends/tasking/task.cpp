@@ -95,7 +95,7 @@ TEST(Task, Run)
   auto processingUnit = c.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
-  processingUnit->initialize();
+  c.initialize(processingUnit);
 
   // Creating execution state
   auto executionState = c.createExecutionState(u, t);
@@ -191,7 +191,7 @@ TEST(Task, Callbacks)
   auto executionState = c.createExecutionState(u);
 
   // Initializing processing unit
-  processingUnit->initialize();
+  c.initialize(processingUnit);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));

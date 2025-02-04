@@ -38,10 +38,10 @@ int main(int argc, char **argv)
   auto processingUnit = computeManager.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
-  processingUnit->initialize();
+  computeManager.initialize(processingUnit);
 
   // Running compute unit with the newly created execution state
-  processingUnit->start(std::move(executionState));
+  computeManager.start(processingUnit, executionState);
 
   // Waiting for thread to finish
   processingUnit->await();
