@@ -16,6 +16,8 @@
 #include <hicr/core/L0/memorySpace.hpp>
 #include <utility>
 
+namespace HiCR::L1 { class CommunicationManager; }
+
 namespace HiCR::L0
 {
 
@@ -26,6 +28,8 @@ namespace HiCR::L0
  */
 class LocalMemorySlot
 {
+  friend class HiCR::L1::CommunicationManager; 
+  
   public:
 
   /**
@@ -79,17 +83,7 @@ class LocalMemorySlot
    */
   [[nodiscard]] __INLINE__ size_t getMessagesSent() const noexcept { return *_messagesSent; }
 
-  /**
-   * Setter function for the memory slot's received message counter
-   * @param[in] count The memory slot's recv message counter to set
-   */
-  __INLINE__ void setMessagesRecv(const size_t count) noexcept { *_messagesRecv = count; }
-
-  /**
-   * Setter function for the memory slot's sent message counter
-   * @param[in] count The memory slot's sent message counter to set
-   */
-  __INLINE__ void setMessagesSent(const size_t count) noexcept { *_messagesSent = count; }
+  private:
 
   /**
    * Increase counter function for the memory slot's received message counter
@@ -113,7 +107,18 @@ class LocalMemorySlot
    */
   __INLINE__ __volatile__ size_t *&getMessagesSentPointer() noexcept { return _messagesSent; }
 
-  private:
+   /**
+   * Setter function for the memory slot's received message counter
+   * @param[in] count The memory slot's recv message counter to set
+   */
+  __INLINE__ void setMessagesRecv(const size_t count) noexcept { *_messagesRecv = count; }
+
+  /**
+   * Setter function for the memory slot's sent message counter
+   * @param[in] count The memory slot's sent message counter to set
+   */
+  __INLINE__ void setMessagesSent(const size_t count) noexcept { *_messagesSent = count; }
+
 
   /**
    * Pointer to the local memory address containing this slot

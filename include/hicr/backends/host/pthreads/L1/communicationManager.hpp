@@ -201,8 +201,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     memcpy(dst->getSourceLocalMemorySlot(), dst_offset, source, src_offset, size);
 
     // Increasing message received/sent counters for both memory slots
-    destination->getSourceLocalMemorySlot()->increaseMessagesRecv();
-    source->increaseMessagesSent();
+    increaseMessageRecvCounter(*destination->getSourceLocalMemorySlot());
+    increaseMessageSentCounter(*source);
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot>  &destination,
@@ -224,8 +224,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     memcpy(destination, dst_offset, src->getSourceLocalMemorySlot(), src_offset, size);
 
     // Increasing message received/sent counters for both memory slots
-    destination->increaseMessagesRecv();
-    source->getSourceLocalMemorySlot()->increaseMessagesSent();
+    increaseMessageRecvCounter(*destination);
+    increaseMessageSentCounter(*source->getSourceLocalMemorySlot());
   }
 
   __INLINE__ bool acquireGlobalLockImpl(std::shared_ptr<HiCR::L0::GlobalMemorySlot> memorySlot) override
