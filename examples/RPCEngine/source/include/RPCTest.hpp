@@ -17,6 +17,13 @@ void RPCTestFc(HiCR::L1::CommunicationManager &cm, HiCR::L1::MemoryManager &mm, 
   // Querying the devices that this topology manager can detect
   auto topology = tm.queryTopology();
 
+  // Getting current instance
+  auto currentInstance = im.getCurrentInstance();
+
+  // If I'm instance zero, I request an RPC. Otherwise I listen
+  if (currentInstance->getId() == 0) rpcEngine.requestRPC(*im.getInstances()[1], "Test RPC");
+  else rpcEngine.listen();
+
   // Now summarizing the devices seen by this topology manager
   for (const auto &d : topology.getDevices())
   {
