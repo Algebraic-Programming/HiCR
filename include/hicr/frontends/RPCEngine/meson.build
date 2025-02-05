@@ -1,13 +1,13 @@
-# HiCR Machine Model frontend Configuration
+# HiCR RPC Engine Frontend Configuration
 
 backendIncludes = include_directories([
 ])
 
 frontendDependencies = [
 ]
-    
+
 frontendCppArgs = [
-   '-D_HICR_USE_MACHINE_MODEL_FRONTEND_'
+   '-D_HICR_USE_RPCENGINE_FRONTEND_'
  ]
 
 frontendLinkArgs = [

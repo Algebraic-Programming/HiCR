@@ -3,9 +3,9 @@ option('backends', type : 'array', choices : ['host/hwloc', 'host/pthreads', 'mp
        value: [ 'host/hwloc', 'host/pthreads' ]
        )
 
-option('frontends', type : 'array', choices : [ 'channel', 'deployer', 'machineModel', 'tasking', 'objectStore' ],
+option('frontends', type : 'array', choices : [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ],
        description : 'Specifies which builtin frontends to enable for compilation with HiCR',
-       value: [ 'channel', 'deployer', 'machineModel', 'tasking', 'objectStore' ]
+       value: [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ]
        )
              
       
