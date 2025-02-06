@@ -139,6 +139,28 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     unlockMPIWindow(rank, window);
   }
 
+  __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &destination,
+                             const size_t                                      dst_offset,
+                             const std::shared_ptr<HiCR::L0::LocalMemorySlot> &source,
+                             const size_t                                      src_offset,
+                             const size_t                                      size) override
+  {
+    // Getting slot pointers
+    const auto srcPtr = source->getPointer();
+    const auto dstPtr = destination->getPointer();
+
+    // Calculating actual offsets
+    const auto actualSrcPtr = (void *)(static_cast<uint8_t *>(srcPtr) + src_offset);
+    const auto actualDstPtr = (void *)(static_cast<uint8_t *>(dstPtr) + dst_offset);
+
+    // Running memcpy now
+    std::memcpy(actualDstPtr, actualSrcPtr, size);
+
+    // Increasing recv/send counters
+    increaseMessageRecvCounter(*destination);
+    increaseMessageSentCounter(*source);
+  }
+  
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot>  &destinationSlot,
                              size_t                                             dst_offset,
                              const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &sourceSlotPtr,

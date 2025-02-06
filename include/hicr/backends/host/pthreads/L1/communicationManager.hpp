@@ -169,6 +169,10 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
     // Running memcpy now
     std::memcpy(actualDstPtr, actualSrcPtr, size);
+
+    // Increasing recv/send counters
+    increaseMessageRecvCounter(*destination);
+    increaseMessageSentCounter(*source);
   }
 
   /**

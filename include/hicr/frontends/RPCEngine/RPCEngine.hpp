@@ -120,10 +120,11 @@ class RPCEngine
     const auto targetInstanceId = instance.getId();
     const auto targetRPCIdx = getRPCTargetIndexFromString(RPCName);
 
-    auto tempBufferSlot = _memoryManager.allocateLocalMemorySlot(_bufferMemorySpace, sizeof(RPCTargetIndex_t));
-    memcpy(tempBufferSlot->getPointer(), &targetRPCIdx, sizeof(RPCTargetIndex_t));
+    // Registering source buffer
+    auto tempBufferSlot = _memoryManager.registerLocalMemorySlot(_bufferMemorySpace, (void*)&targetRPCIdx, sizeof(RPCTargetIndex_t));
+
+    // Sending source buffer
     _RPCProducerChannels.at(targetInstanceId)->push(tempBufferSlot);
-    _memoryManager.freeLocalMemorySlot(tempBufferSlot);
   }
 
   /**
@@ -133,9 +134,20 @@ class RPCEngine
    */
   __INLINE__ void submitReturnValue(void *pointer, const size_t size)
   {
+    // Getting source buffers
     auto tempBufferSlot = _memoryManager.allocateLocalMemorySlot(_bufferMemorySpace, size);
-    memcpy(tempBufferSlot->getPointer(), pointer, size);
+    auto sourceBufferSlot = _memoryManager.registerLocalMemorySlot(_bufferMemorySpace, pointer, size);
+
+    // Copying data
+    _communicationManager.memcpy(tempBufferSlot, 0, sourceBufferSlot, 0, size);
+   
+    // Waiting for communication to end
+    _communicationManager.fence(tempBufferSlot, 1, 0);
+
+    // Sending return value data
     _returnValueProducerChannels.at(_requesterInstanceIdx)->push(tempBufferSlot);
+
+    // Freeing up local memory slot
     _memoryManager.freeLocalMemorySlot(tempBufferSlot);
   }
 
