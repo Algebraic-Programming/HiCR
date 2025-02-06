@@ -38,11 +38,6 @@ class RPCEngine
   using RPCTargetIndex_t = uint64_t;
 
   /**
-   * Type definition for a function that can be executed as RPC
-   */
-  using RPCFunction_t = std::function<void()>;
-
-  /**
    * Constructor
    *
    * @param[in] _communicationManager The communication manager to use to communicate with other instances
@@ -53,30 +48,22 @@ class RPCEngine
   RPCEngine(L1::CommunicationManager        &_communicationManager,
             L1::InstanceManager             &instanceManager,
             L1::MemoryManager               &memoryManager,
-            L1::TopologyManager             &topologyManager,
+            L1::ComputeManager              &computeManager,
+            std::shared_ptr<L0::MemorySpace> bufferMemorySpace,
+            std::shared_ptr<L0::ComputeResource> computeResource,
             const uint64_t baseTag = _HICR_RPC_ENGINE_CHANNEL_BASE_TAG
             )
     : _communicationManager(_communicationManager),
       _instanceManager(instanceManager),
       _memoryManager(memoryManager),
-      _topologyManager(topologyManager),
+      _computeManager(computeManager),
+      _bufferMemorySpace(bufferMemorySpace),
+      _computeResource(computeResource),
       _baseTag(baseTag)
   {}
 
   __INLINE__ void initialize()
   {
-    // Gathering topology from the topology manager
-    const auto t = _topologyManager.queryTopology();
-
-    // Selecting first device
-    auto d = *t.getDevices().begin();
-
-    // Getting memory space list from device
-    auto memSpaces = d->getMemorySpaceList();
-
-    // Grabbing first memory space for buffering
-    _bufferMemorySpace = *memSpaces.begin();
-
     // Creating MPSC channels to receive RPC requests
     initializeRPCChannels();
     initializeReturnValueChannels();
@@ -92,13 +79,13 @@ class RPCEngine
    * \param[in] RPCName Name of the RPC to add
    * \param[in] fc Indicates function to run when this RPC is triggered
    */
-  __INLINE__ void addRPCTarget(const std::string &RPCName, const RPCFunction_t &fc)
+  __INLINE__ void addRPCTarget(const std::string &RPCName, const std::shared_ptr<HiCR::L0::ExecutionUnit> e)
   {
     // Obtaining hash from the RPC name
     const auto idx = getRPCTargetIndexFromString(RPCName);
 
     // Inserting the new entry
-    _RPCTargetMap[idx] = fc;
+    _RPCTargetMap[idx] = e;
   }
 
   /**
@@ -106,25 +93,18 @@ class RPCEngine
    */
   __INLINE__ void listen()
   {
-    // Getting my current instance
-    const auto currentInstanceId = _instanceManager.getCurrentInstance()->getId();
-    printf("Instance %lu listening\n", currentInstanceId);
-
     // Calling the backend-specific implementation of the listen function
     while(_RPCConsumerChannel->getDepth() == 0) _RPCConsumerChannel->updateDepth();
     
-    // Once a request has arrived, execute it
+    // Once a request has arrived, gather its value from the channel
     auto request = _RPCConsumerChannel->peek();
     auto requester = request[0];
-    auto buffer = (RPCTargetIndex_t*)_RPCConsumerChannel->getTokenBuffers()[requester].get();
+    RPCTargetIndex_t* buffer = (RPCTargetIndex_t*)(_RPCConsumerChannel->getTokenBuffers()[requester]->getSourceLocalMemorySlot()->getPointer());
     auto rpcIdx = buffer[request[1]];
     _RPCConsumerChannel->pop();
-    printf("Instance %lu - Received request %lu from %lu\n", currentInstanceId, rpcIdx, requester);
 
-    //rpcIdx = listenImpl();
-
-    // Trying to execute RPC
-    //executeRPC(rpcIdx);
+    // Execute RPC
+    executeRPC(rpcIdx);
   }
 
   /**
@@ -134,15 +114,13 @@ class RPCEngine
    */
   virtual void requestRPC(HiCR::L0::Instance &instance, const std::string &RPCName)
   {
-    const auto currentInstanceId = _instanceManager.getCurrentInstance()->getId();
     const auto targetInstanceId = instance.getId();
     const auto targetRPCIdx = getRPCTargetIndexFromString(RPCName);
-
-    printf("Instance %lu requesting RPC %lu to Instance %lu\n", currentInstanceId, targetRPCIdx, targetInstanceId);
 
     auto tempBufferSlot = _memoryManager.allocateLocalMemorySlot(_bufferMemorySpace, sizeof(RPCTargetIndex_t));
     memcpy(tempBufferSlot->getPointer(), &targetRPCIdx, sizeof(RPCTargetIndex_t));
     _RPCProducerChannels.at(targetInstanceId)->push(tempBufferSlot);
+    _memoryManager.freeLocalMemorySlot(tempBufferSlot);
   }
 
   /**
@@ -187,12 +165,21 @@ class RPCEngine
   {
     // Getting RPC target from the index
     if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
-    auto &fc = _RPCTargetMap.at(rpcIdx);
+    auto e = _RPCTargetMap.at(rpcIdx);
 
-    // Running RPC function
-    fc();
+    // Creating new processing unit to execute the RPC
+    auto p = _computeManager.createProcessingUnit(_computeResource);
+    _computeManager.initialize(p);
+
+    // Creating execution state
+    auto s = _computeManager.createExecutionState(e);
+
+    // Executing RPC
+    _computeManager.start(p, s);
+
+    // Waiting for execution to finish
+    _computeManager.await(p);
   }
-
 
 __INLINE__ void initializeRPCChannels()
   {
@@ -262,7 +249,6 @@ __INLINE__ void initializeRPCChannels()
     ////////// Creating consumer channel to receive fixed sized RPC requests from other instances
     {
       std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalConsumerTokenBuffers;
-      std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalProducerTokenBuffers;
       std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalConsumerCoordinationBuffers;
       std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalProducerCoordinationBuffers;
 
@@ -271,9 +257,6 @@ __INLINE__ void initializeRPCChannels()
         // Calculating these particular slots' key
         const HiCR::L0::GlobalMemorySlot::globalKey_t localSlotKey = currentInstanceId * instanceCount + i;
         const HiCR::L0::GlobalMemorySlot::globalKey_t remoteSlotKey = i * instanceCount + currentInstanceId;
-
-        auto globalProducerTokenBufferSlot = _communicationManager.getGlobalMemorySlot(_HICR_RPC_ENGINE_CHANNEL_CONSUMER_TOKEN_BUFFER_TAG, remoteSlotKey);
-        globalProducerTokenBuffers.push_back(globalProducerTokenBufferSlot);
 
         auto globalConsumerTokenBufferSlot = _communicationManager.getGlobalMemorySlot(_HICR_RPC_ENGINE_CHANNEL_CONSUMER_TOKEN_BUFFER_TAG, localSlotKey);
         globalConsumerTokenBuffers.push_back(globalConsumerTokenBufferSlot);
@@ -293,7 +276,6 @@ __INLINE__ void initializeRPCChannels()
 
     {
       std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalConsumerTokenBuffers;
-      std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalProducerTokenBuffers;
       std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalConsumerCoordinationBuffers;
       std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalProducerCoordinationBuffers;
 
@@ -302,9 +284,6 @@ __INLINE__ void initializeRPCChannels()
         // Calculating these particular slots' key
         const HiCR::L0::GlobalMemorySlot::globalKey_t localSlotKey = currentInstanceId * instanceCount + i;
         const HiCR::L0::GlobalMemorySlot::globalKey_t remoteSlotKey = i * instanceCount + currentInstanceId;
-
-        auto globalProducerTokenBufferSlot = _communicationManager.getGlobalMemorySlot(_HICR_RPC_ENGINE_CHANNEL_CONSUMER_TOKEN_BUFFER_TAG, localSlotKey);
-        globalProducerTokenBuffers.push_back(globalProducerTokenBufferSlot);
 
         auto globalConsumerTokenBufferSlot = _communicationManager.getGlobalMemorySlot(_HICR_RPC_ENGINE_CHANNEL_CONSUMER_TOKEN_BUFFER_TAG, remoteSlotKey);
         globalConsumerTokenBuffers.push_back(globalConsumerTokenBufferSlot);
@@ -325,7 +304,7 @@ __INLINE__ void initializeRPCChannels()
         // This call does the same as the SPSC Producer constructor, as
         // the producer of MPSC::nonlocking has the same view
         _RPCProducerChannels[consumerInstanceId] = std::make_shared<HiCR::channel::fixedSize::MPSC::nonlocking::Producer>(
-          _communicationManager, globalProducerTokenBuffers[i], globalProducerCoordinationBuffers[i]->getSourceLocalMemorySlot(), globalConsumerCoordinationBuffers[i], tokenSize, _HICR_RPC_ENGINE_CHANNEL_COUNT_CAPACITY);
+          _communicationManager, globalConsumerTokenBuffers[i], globalProducerCoordinationBuffers[i]->getSourceLocalMemorySlot(), globalConsumerCoordinationBuffers[i], tokenSize, _HICR_RPC_ENGINE_CHANNEL_COUNT_CAPACITY);
       }
     }
   }
@@ -447,9 +426,19 @@ __INLINE__ void initializeRPCChannels()
   L1::MemoryManager& _memoryManager;
 
   /**
-   * The associated topology manager.
+   * The associated compute manager.
    */
-  L1::TopologyManager& _topologyManager;
+  L1::ComputeManager& _computeManager;
+
+  /**
+   * Memory space to use for all buffering
+   */
+  const std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
+
+   /**
+   * The compute resource to use for executing RPCs
+   */
+  const std::shared_ptr<HiCR::L0::ComputeResource> _computeResource;
 
   const uint64_t _baseTag;
 
@@ -474,15 +463,9 @@ __INLINE__ void initializeRPCChannels()
   std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<HiCR::channel::fixedSize::MPSC::nonlocking::Producer>> _RPCProducerChannels;
 
   /**
-   * Map of executable functions, representing potential RPC requests
+   * Map of execute units, representing potential RPC requests
    */
-  std::map<RPCTargetIndex_t, RPCFunction_t> _RPCTargetMap;
-
-  /**
-   * Memory space to use for all buffering
-   */
-  std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
-
+  std::map<RPCTargetIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _RPCTargetMap;
 };
 
 } // namespace HiCR::objectStore
