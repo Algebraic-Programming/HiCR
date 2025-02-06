@@ -156,14 +156,14 @@ class RPCEngine
     auto msgOffset = returnValue[0];
     auto msgSize = returnValue[1];
 
-    // Getting buffer
-    uint8_t* buffer = (uint8_t*)(_returnValueConsumerChannel->getPayloadBufferMemorySlot()->getSourceLocalMemorySlot()->getPointer());
-
     // Creating local buffer
     auto tempBufferSlot = _memoryManager.allocateLocalMemorySlot(_bufferMemorySpace, msgSize);
 
     // Copying data
-    memcpy(tempBufferSlot->getPointer(), &buffer[msgOffset], msgSize);
+    _communicationManager.memcpy(tempBufferSlot, 0, _returnValueConsumerChannel->getPayloadBufferMemorySlot(), msgOffset, msgSize);
+   
+    // Waiting for communication to end
+    _communicationManager.fence(tempBufferSlot, 1, 0);
 
     // Freeing up channel
     _returnValueConsumerChannel->pop();
