@@ -103,6 +103,9 @@ class RPCEngine
     auto rpcIdx = buffer[request[1]];
     _RPCConsumerChannel->pop();
 
+    // Setting requester instance index
+    _requesterInstanceIdx = requester;
+
     // Execute RPC
     executeRPC(rpcIdx);
   }
@@ -130,8 +133,10 @@ class RPCEngine
    */
   __INLINE__ void submitReturnValue(void *pointer, const size_t size)
   {
-    // Calling backend-specific implementation of this function
-    //submitReturnValueImpl(pointer, size);
+    auto tempBufferSlot = _memoryManager.allocateLocalMemorySlot(_bufferMemorySpace, size);
+    memcpy(tempBufferSlot->getPointer(), pointer, size);
+    _returnValueProducerChannels.at(_requesterInstanceIdx)->push(tempBufferSlot);
+    _memoryManager.freeLocalMemorySlot(tempBufferSlot);
   }
 
   /**
@@ -139,12 +144,38 @@ class RPCEngine
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  __INLINE__ void *getReturnValue(HiCR::L0::Instance &instance) const
+  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValue(HiCR::L0::Instance &instance) const
   {
+    // Calling the backend-specific implementation of the listen function
+    while(_returnValueConsumerChannel->isEmpty());
+
     // Calling backend-specific implementation of this function
-    // return getReturnValueImpl(instance);
-    return nullptr;
+    auto returnValue = _returnValueConsumerChannel->peek();
+
+    // Getting message info
+    auto msgOffset = returnValue[0];
+    auto msgSize = returnValue[1];
+
+    // Getting buffer
+    uint8_t* buffer = (uint8_t*)(_returnValueConsumerChannel->getPayloadBufferMemorySlot()->getSourceLocalMemorySlot()->getPointer());
+
+    // Creating local buffer
+    auto tempBufferSlot = _memoryManager.allocateLocalMemorySlot(_bufferMemorySpace, msgSize);
+
+    // Copying data
+    memcpy(tempBufferSlot->getPointer(), &buffer[msgOffset], msgSize);
+
+    // Freeing up channel
+    _returnValueConsumerChannel->pop();
+
+    // Returning internal buffer
+    return tempBufferSlot;
   }
+
+  [[nodiscard]] __INLINE__ HiCR::L1::CommunicationManager* getCommunicationManager() const { return &_communicationManager; }
+  [[nodiscard]] __INLINE__ HiCR::L1::InstanceManager* getInstanceManager() const { return &_instanceManager; }
+  [[nodiscard]] __INLINE__ HiCR::L1::MemoryManager* getMemoryManager() const { return &_memoryManager; }
+  [[nodiscard]] __INLINE__ HiCR::L1::ComputeManager* getComputeManager() const { return &_computeManager; }
 
 
   private:
@@ -441,6 +472,8 @@ __INLINE__ void initializeRPCChannels()
   const std::shared_ptr<HiCR::L0::ComputeResource> _computeResource;
 
   const uint64_t _baseTag;
+
+  size_t _requesterInstanceIdx;
 
   /**
    * Consumer channels for receiving return value messages from all other instances

@@ -2,35 +2,39 @@
 
 #include <hicr/core/L0/topology.hpp>
 #include <hicr/core/L1/instanceManager.hpp>
+#include <hicr/frontends/RPCEngine/RPCEngine.hpp>
 #include "common.hpp"
 
-void coordinatorFc(HiCR::L1::InstanceManager &instanceManager)
+void coordinatorFc(HiCR::frontend::RPCEngine& rpcEngine)
 {
+  // Getting instance manager from the rpc engine
+  auto im = rpcEngine.getInstanceManager();
+
   // Querying instance list
-  auto &instances = instanceManager.getInstances();
+  auto &instances = im->getInstances();
 
   // Getting the pointer to our own (coordinator) instance
-  auto coordinator = instanceManager.getCurrentInstance();
+  auto coordinator = im->getCurrentInstance();
 
   // Printing instance information and invoking a simple RPC if its not ourselves
   for (const auto &instance : instances)
-    if (instance->getId() != coordinator->getId()) instanceManager.launchRPC(*instance, TOPOLOGY_RPC_NAME);
+    if (instance->getId() != coordinator->getId()) rpcEngine.requestRPC(*instance, TOPOLOGY_RPC_NAME);
 
   // Getting return values from the RPCs containing each of the worker's topology
   for (const auto &instance : instances)
     if (instance != coordinator)
     {
       // Getting return value as a memory slot
-      auto returnValue = instanceManager.getReturnValue(*instance);
+      auto returnValue = rpcEngine.getReturnValue(*instance);
 
       // Receiving raw serialized topology information from the worker
-      std::string serializedTopology = (char *)returnValue;
+      std::string serializedTopology = (char *)returnValue->getPointer();
 
       // Parsing serialized raw topology into a json object
       auto topologyJson = nlohmann::json::parse(serializedTopology);
 
       // Freeing return value
-      free(returnValue);
+      rpcEngine.getMemoryManager()->freeLocalMemorySlot(returnValue);
 
       // HiCR topology object to obtain
       HiCR::L0::Topology topology;

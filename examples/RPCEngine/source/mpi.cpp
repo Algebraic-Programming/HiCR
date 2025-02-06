@@ -43,7 +43,7 @@ int main(int argc, char **argv)
   // Now getting compute resource list from device
   auto computeResources = d->getComputeResourceList();
 
-  // Grabbing first memory space for buffering
+  // Grabbing first compute resource for computing incoming RPCs
   auto executeResource = *computeResources.begin();
 
   // Creating execution unit to run as RPC 
