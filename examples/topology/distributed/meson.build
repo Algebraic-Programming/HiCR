@@ -1,4 +1,4 @@
-testSuite = [ 'examples', 'hicr', 'toplogyRPC' ]
+testSuite = [ 'examples', 'hicr', 'toplogy', 'distributed' ]
 test_timeout = 60
 
 if 'mpi' in enabledBackends and 'host/pthreads' in enabledBackends and 'host/hwloc' in enabledBackends
