@@ -5,7 +5,7 @@
 #include <hicr/core/L1/topologyManager.hpp>
 #include <hicr/core/L1/instanceManager.hpp>
 #include <hicr/core/L0/topology.hpp>
-#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/pthreads/L1/computeManager.hpp>
 #include "common.hpp"
 
 void sendTopology(HiCR::frontend::RPCEngine& rpcEngine)
@@ -26,7 +26,7 @@ void sendTopology(HiCR::frontend::RPCEngine& rpcEngine)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  auto hwlocTopologyManager = std::make_shared<HiCR::backend::host::hwloc::L1::TopologyManager>(&topology);
+  auto hwlocTopologyManager = std::make_shared<HiCR::backend::hwloc::L1::TopologyManager>(&topology);
 
   // Adding topology manager to the list
   topologyManagerList.push_back(hwlocTopologyManager);
@@ -67,10 +67,10 @@ void sendTopology(HiCR::frontend::RPCEngine& rpcEngine)
 void workerFc(HiCR::frontend::RPCEngine& rpcEngine)
 {
   // Creating compute manager (responsible for executing the RPC)
-  HiCR::backend::host::pthreads::L1::ComputeManager cpm;
+  HiCR::backend::pthreads::L1::ComputeManager cpm;
 
   // Creating execution unit to run as RPC 
-  auto executionUnit = std::make_shared<HiCR::backend::host::L0::ExecutionUnit>([&](void* closure) { sendTopology(rpcEngine); });
+  auto executionUnit = std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&](void* closure) { sendTopology(rpcEngine); });
 
   // Adding RPC target by name and the execution unit id to run
   rpcEngine.addRPCTarget(TOPOLOGY_RPC_NAME, executionUnit );

@@ -1,10 +1,10 @@
 #include <cstdio>
 #include <chrono>
 #include <hicr/core/L0/device.hpp>
-#include <hicr/backends/host/L1/computeManager.hpp>
+#include <hicr/backends/pthreads/L1/computeManager.hpp>
 #include "../runtime.hpp"
 
-static HiCR::backend::host::L1::ComputeManager *_computeManager;
+static HiCR::backend::pthreads::L1::ComputeManager *_computeManager;
 static Runtime                                 *_runtime;
 static std::atomic<uint64_t>                    _taskCounter;
 
@@ -43,7 +43,7 @@ uint64_t fibonacci(Task *currentTask, const uint64_t x)
   return result1 + result2;
 }
 
-uint64_t fibonacciDriver(const uint64_t initialValue, HiCR::backend::host::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t &computeResources)
+uint64_t fibonacciDriver(const uint64_t initialValue, HiCR::backend::pthreads::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t &computeResources)
 {
   // Initializing runtime with the appropriate amount of max tasks
   Runtime runtime(fibonacciTaskCount[initialValue]);

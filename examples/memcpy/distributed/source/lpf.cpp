@@ -6,7 +6,7 @@
 #include <hicr/backends/mpi/L1/instanceManager.hpp>
 #include <hicr/backends/lpf/L1/memoryManager.hpp>
 #include <hicr/backends/lpf/L1/communicationManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
 #include "include/remoteMemcpy.hpp"
 
 // flag needed when using MPI to launch
@@ -43,7 +43,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
 
   // Creating memory and communication managers
   HiCR::backend::lpf::L1::MemoryManager        mm(lpf);

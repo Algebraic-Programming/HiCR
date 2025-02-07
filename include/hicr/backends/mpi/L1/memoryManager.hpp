@@ -15,7 +15,7 @@
 #include <mpi.h>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/backends/host/L0/memorySpace.hpp>
+#include <hicr/backends/hwloc/L0/memorySpace.hpp>
 #include "../L0/localMemorySlot.hpp"
 
 namespace HiCR::backend::mpi::L1
@@ -49,7 +49,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
-    auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
+    auto m = dynamic_pointer_cast<hwloc::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");

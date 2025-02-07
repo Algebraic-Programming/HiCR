@@ -1,11 +1,11 @@
 #include <cstdio>
 #include <hicr/core/L0/device.hpp>
-#include <hicr/backends/host/L1/computeManager.hpp>
+#include <hicr/backends/pthreads/L1/computeManager.hpp>
 #include "../runtime.hpp"
 
 #define ITERATIONS 10
 
-void abcTasks(HiCR::backend::host::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t &computeResources)
+void abcTasks(HiCR::backend::pthreads::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t &computeResources)
 {
   // Initializing runtime
   Runtime runtime;

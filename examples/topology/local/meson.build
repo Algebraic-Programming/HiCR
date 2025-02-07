@@ -1,7 +1,7 @@
 testSuite = [ 'examples', 'hicr', 'toplogy', 'local' ]
 test_timeout = 60
 
-if 'host/hwloc' in enabledBackends
+if 'hwloc' in enabledBackends
 	hwloc = executable('hwloc', [ 'source/hwloc.cpp'], dependencies: hicrBuildDep, include_directories: ['source'] )
 
 	if get_option('buildTests')

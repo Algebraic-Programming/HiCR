@@ -2,9 +2,9 @@
 #include <hicr/backends/mpi/L1/instanceManager.hpp>
 #include <hicr/backends/mpi/L1/memoryManager.hpp>
 #include <hicr/backends/mpi/L1/communicationManager.hpp>
-#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/host/L0/executionUnit.hpp>
+#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/pthreads/L0/executionUnit.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
 #include "include/RPCTest.hpp"
 
 int main(int argc, char **argv)
@@ -19,10 +19,10 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
 
   // Creating compute manager (responsible for executing the RPC)
-  HiCR::backend::host::pthreads::L1::ComputeManager cpm;
+  HiCR::backend::pthreads::L1::ComputeManager cpm;
 
   // Creating memory and communication managers (buffering and communication)
   HiCR::backend::mpi::L1::MemoryManager        mm;
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   auto executeResource = *computeResources.begin();
 
   // Creating execution unit to run as RPC 
-  auto executionUnit = std::make_shared<HiCR::backend::host::L0::ExecutionUnit>([&im](void* closure)
+  auto executionUnit = std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&im](void* closure)
    { printf("Instance %lu: running Test RPC\n", im->getCurrentInstance()->getId()); });
 
   // Calling common function for printing the topology

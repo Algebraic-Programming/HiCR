@@ -1,7 +1,7 @@
 #include <mpi.h>
 #include <hicr/backends/mpi/L1/memoryManager.hpp>
 #include <hicr/backends/mpi/L1/communicationManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::hwloc::L1::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
   const auto t = dm.queryTopology();

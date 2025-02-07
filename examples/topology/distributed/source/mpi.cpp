@@ -2,9 +2,9 @@
 #include <hicr/backends/mpi/L1/instanceManager.hpp>
 #include <hicr/backends/mpi/L1/memoryManager.hpp>
 #include <hicr/backends/mpi/L1/communicationManager.hpp>
-#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/host/L0/executionUnit.hpp>
+#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/pthreads/L0/executionUnit.hpp>
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
 
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   HiCR::backend::mpi::L1::InstanceManager im(MPI_COMM_WORLD);
 
   // Creating compute manager (responsible for executing the RPC)
-  HiCR::backend::host::pthreads::L1::ComputeManager cpm;
+  HiCR::backend::pthreads::L1::ComputeManager cpm;
 
   // Creating memory and communication managers (buffering and communication)
   HiCR::backend::mpi::L1::MemoryManager        mm;
@@ -32,8 +32,8 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  // Initializing hwloc (CPU) topology manager
+  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
 
   // Gathering topology from the topology manager
   const auto t = tm.queryTopology();

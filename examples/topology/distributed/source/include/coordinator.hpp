@@ -41,7 +41,7 @@ void coordinatorFc(HiCR::frontend::RPCEngine& rpcEngine)
 
 // Obtaining the topology from the serialized object
 #ifdef _HICR_USE_HWLOC_BACKEND_
-      topology.merge(HiCR::backend::host::hwloc::L1::TopologyManager::deserializeTopology(topologyJson));
+      topology.merge(HiCR::backend::hwloc::L1::TopologyManager::deserializeTopology(topologyJson));
 #endif // _HICR_USE_HWLOC_BACKEND_
 
 #ifdef _HICR_USE_ASCEND_BACKEND_

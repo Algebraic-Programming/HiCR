@@ -13,5 +13,5 @@
 
 #ifdef _HICR_USE_HWLOC_BACKEND_
   #include <hwloc.h>
-  #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+  #include <hicr/backends/hwloc/L1/topologyManager.hpp>
 #endif // _HICR_USE_HWLOC_BACKEND_
