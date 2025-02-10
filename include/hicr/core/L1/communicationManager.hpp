@@ -652,12 +652,35 @@ class CommunicationManager
 
   protected:
 
-  __INLINE__ void                  increaseMessageRecvCounter(HiCR::L0::LocalMemorySlot &memorySlot) noexcept { memorySlot.increaseMessagesRecv(); }
-  __INLINE__ void                  increaseMessageSentCounter(HiCR::L0::LocalMemorySlot &memorySlot) noexcept { memorySlot.increaseMessagesSent(); }
-  __INLINE__ __volatile__ size_t *&getMessagesRecvPointer(HiCR::L0::LocalMemorySlot &memorySlot) const noexcept { return memorySlot.getMessagesRecvPointer(); }
-  __INLINE__ __volatile__ size_t *&getMessagesSentPointer(HiCR::L0::LocalMemorySlot &memorySlot) const noexcept { return memorySlot.getMessagesSentPointer(); }
-  __INLINE__ void                  setMessagesRecv(HiCR::L0::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesRecv(count); }
-  __INLINE__ void                  setMessagesSent(HiCR::L0::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesSent(count); }
+  /**
+   *  Increases the message receive counter for a given memory slot
+   * 
+   * @param[in] memorySlot The provided memory slot
+   */
+  __INLINE__ void increaseMessageRecvCounter(HiCR::L0::LocalMemorySlot &memorySlot) noexcept { memorySlot.increaseMessagesRecv(); }
+
+  /**
+   *  Increases the message sent counter for a given memory slot
+   * 
+   * @param[in] memorySlot The provided memory slot
+   */
+  __INLINE__ void increaseMessageSentCounter(HiCR::L0::LocalMemorySlot &memorySlot) noexcept { memorySlot.increaseMessagesSent(); }
+
+  /**
+   * Sets the message receive counter for a given memory slot
+   * 
+   * @param[in] memorySlot The provided memory slot
+   * @param[in] count The new value to set for the counter
+   */
+  __INLINE__ void setMessagesRecv(HiCR::L0::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesRecv(count); }
+
+  /**
+   * Sets the message sent counter for a given memory slot
+   * 
+   * @param[in] memorySlot The provided memory slot
+   * @param[in] count The new value to set for the counter
+   */
+  __INLINE__ void setMessagesSent(HiCR::L0::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesSent(count); }
 
   private:
 

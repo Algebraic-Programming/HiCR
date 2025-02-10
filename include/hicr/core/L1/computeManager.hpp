@@ -59,6 +59,8 @@ class ComputeManager
 
   /**
    * Initializes the a processing unit and leaves it ready to execute work
+   * 
+   * @param[in] processingUnit The procesing unit to initialize
    */
   __INLINE__ void initialize(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit)
   {
@@ -175,6 +177,8 @@ class ComputeManager
 
   /**
    * Backend-specific implementation of the initialize function
+   * 
+   * @param[in] processingUnit The processing unit to initialize
    */
   virtual void initializeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) = 0;
 

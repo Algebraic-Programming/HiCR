@@ -21,13 +21,31 @@
 #include <hicr/frontends/channel/fixedSize/mpsc/nonlocking/consumer.hpp>
 #include <hicr/frontends/channel/fixedSize/mpsc/nonlocking/producer.hpp>
 
+/**
+ * Maximum bytes to hold in capacity for return value channels
+ */
 #define _HICR_RPC_ENGINE_CHANNEL_PAYLOAD_CAPACITY 1048576
+
+/**
+ * Maximum number of messages to hold in capacity for RPC and return value channels
+ */
 #define _HICR_RPC_ENGINE_CHANNEL_COUNT_CAPACITY 1024
+
+/**
+ * Internal tag for RPC channels. Make sure you don't create other channels with the same tag
+ */
 #define _HICR_RPC_ENGINE_CHANNEL_BASE_TAG 0xF0000000
 
 namespace HiCR::frontend
 {
 
+/**
+ * This class encapsulates the HICR-based logic for sending, listening to, and executing remote procedure calls among HiCR distances.
+ * An RPC request is represented by a single 64-bit identifier. The requester simply sends this identifier to the receiver instance.
+ * Incoming requests are stored in a channel, ready to be picked up by the receiver. To pick up a request, the receiver must enter
+ * the listening state. For an RPC to execute, the listener must have registered the corresponding index, together with an associated
+ * listenable unit to run. The listenable unit is described as a HiCR execution unit object.
+ */
 class RPCEngine
 {
   public:
@@ -40,19 +58,22 @@ class RPCEngine
   /**
    * Constructor
    *
-   * @param[in] _communicationManager The communication manager to use to communicate with other instances
+   * @param[in] communicationManager The communication manager to use to communicate with other instances
    * @param[in] instanceManager The instance manager to use to get information about other instances
    * @param[in] memoryManager The memory manager to use to allocate buffer memory
-   * @param[in] topologyManager The topology manager to use to discover memory spaces on which to allocate buffers
+   * @param[in] computeManager The compute manager to use to execute incoming RPCs
+   * @param[in] bufferMemorySpace The memory space where the RPC engine will allocate all of its internal buffer from
+   * @param[in] computeResource The compute resource to use to execute RPCs
+   * @param[in] baseTag The tag to use for the creation of channels. Provide different values if you plan to create multiple RPC engines otherwise collisions might occur
    */
-  RPCEngine(L1::CommunicationManager            &_communicationManager,
+  RPCEngine(L1::CommunicationManager            &communicationManager,
             L1::InstanceManager                 &instanceManager,
             L1::MemoryManager                   &memoryManager,
             L1::ComputeManager                  &computeManager,
             std::shared_ptr<L0::MemorySpace>     bufferMemorySpace,
             std::shared_ptr<L0::ComputeResource> computeResource,
             const uint64_t                       baseTag = _HICR_RPC_ENGINE_CHANNEL_BASE_TAG)
-    : _communicationManager(_communicationManager),
+    : _communicationManager(communicationManager),
       _instanceManager(instanceManager),
       _memoryManager(memoryManager),
       _computeManager(computeManager),
@@ -61,6 +82,11 @@ class RPCEngine
       _baseTag(baseTag)
   {}
 
+  /**
+   * Initializes the RPC engine:
+   *   - Creates RPC channels
+   *   - Creates Return value channels
+   */
   __INLINE__ void initialize()
   {
     // Creating MPSC channels to receive RPC requests
@@ -76,7 +102,7 @@ class RPCEngine
   /**
    * Function to add an RPC target with a name, and the combination of a execution unit and the processing unit that is in charge of executing it
    * \param[in] RPCName Name of the RPC to add
-   * \param[in] fc Indicates function to run when this RPC is triggered
+   * \param[in] e Indicates the execution unit to run when this RPC is triggered
    */
   __INLINE__ void addRPCTarget(const std::string &RPCName, const std::shared_ptr<HiCR::L0::ExecutionUnit> e)
   {
@@ -184,9 +210,32 @@ class RPCEngine
     return tempBufferSlot;
   }
 
+  /**
+   * Gets the internal communication manager this module was initialized with
+   * 
+   * @return A pointer to the internal communication manager
+   */
   [[nodiscard]] __INLINE__ HiCR::L1::CommunicationManager *getCommunicationManager() const { return &_communicationManager; }
+
+  /**
+   * Gets the internal instance manager this module was initialized with
+   * 
+   * @return A pointer to the internal instance manager
+   */
   [[nodiscard]] __INLINE__ HiCR::L1::InstanceManager *getInstanceManager() const { return &_instanceManager; }
+
+  /**
+   * Gets the internal memory manager this module was initialized with
+   * 
+   * @return A pointer to the internal memory manager
+   */
   [[nodiscard]] __INLINE__ HiCR::L1::MemoryManager *getMemoryManager() const { return &_memoryManager; }
+
+  /**
+   * Gets the internal compute manager this module was initialized with
+   * 
+   * @return A pointer to the internal computey manager
+   */
   [[nodiscard]] __INLINE__ HiCR::L1::ComputeManager *getComputeManager() const { return &_computeManager; }
 
   private:

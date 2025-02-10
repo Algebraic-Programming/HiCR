@@ -4,7 +4,7 @@
  */
 
 /**
- * @file host/L0/globalMemorySlot.hpp
+ * @file hwloc/L0/globalMemorySlot.hpp
  * @brief Provides a definition for the global memory slot class for the  HWLoc-based backend
  * @author S. M. Martin
  * @date 19/10/2023
