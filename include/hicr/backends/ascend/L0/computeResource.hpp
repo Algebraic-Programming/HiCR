@@ -17,16 +17,7 @@
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/computeResource.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace ascend
-{
-
-namespace L0
+namespace HiCR::backend::ascend::L0
 {
 
 /**
@@ -35,14 +26,14 @@ namespace L0
 class Device;
 
 /**
- * This class represents a compute resource, visible by the sequential backend. That is, a CPU processing unit (core or hyperthread) with information about caches and locality.
+ * This class represents a compute resource, visible by the ascend backend. That is, a processing unit (ascend device) with information about the ascend context.
  */
 class ComputeResource final : public HiCR::L0::ComputeResource
 {
   public:
 
   /**
-   * Constructor for the compute resource class of the sequential backend
+   * Constructor for the compute resource class of the ascend backend
    *
    * \param device The Ascend device that contains this compute resource
    */
@@ -97,10 +88,4 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   std::weak_ptr<ascend::L0::Device> _device;
 };
 
-} // namespace L0
-
-} // namespace ascend
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::ascend::L0

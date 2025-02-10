@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <memory>
 #include <iomanip>
 #include <stdio.h>
 #include <acl/acl.h>
@@ -11,7 +12,7 @@
 #include <hicr/backends/ascend/L1/topologyManager.hpp>
 #include <hicr/backends/ascend/L1/communicationManager.hpp>
 #include <hicr/backends/ascend/L1/computeManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
 
 #define BUFF_SIZE 192
 
@@ -47,10 +48,10 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager hostTopologyManager(&topology);
-  auto                                            hostTopology = hostTopologyManager.queryTopology();
-  auto                                            hostDevice   = *hostTopology.getDevices().begin();
-  auto                                            hostMemSpace = *hostDevice->getMemorySpaceList().begin();
+  HiCR::backend::hwloc::L1::TopologyManager hostTopologyManager(&topology);
+  auto                                      hostTopology = hostTopologyManager.queryTopology();
+  auto                                      hostDevice   = *hostTopology.getDevices().begin();
+  auto                                      hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing ascend topology manager
   HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
@@ -194,17 +195,17 @@ void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice, std::vector<a
   // Create a processing unit and initialize it with the desired device correct context
   auto ascendComputeResource = *ascendDevice->getComputeResourceList().begin();
   auto processingUnit        = ascendComputeManager.createProcessingUnit(ascendComputeResource);
-  processingUnit->initialize();
+  ascendComputeManager.initialize(processingUnit);
 
   // Create an execution state and initialize it
   auto executionState = ascendComputeManager.createExecutionState(executionUnit);
 
   // Execute the kernel stream
-  processingUnit->start(std::move(executionState));
+  ascendComputeManager.start(processingUnit, executionState);
 
   // start teminating the processing unit
-  processingUnit->terminate();
+  ascendComputeManager.terminate(processingUnit);
 
   // wait for termination
-  processingUnit->await();
+  ascendComputeManager.await(processingUnit);
 }
