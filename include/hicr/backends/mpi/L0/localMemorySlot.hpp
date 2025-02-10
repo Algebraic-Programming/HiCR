@@ -14,7 +14,10 @@
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <utility>
 
-namespace HiCR::backend::mpi::L1 { class CommunicationManager; }
+namespace HiCR::backend::mpi::L1
+{
+class CommunicationManager;
+}
 
 namespace HiCR::backend::mpi::L0
 {
@@ -26,8 +29,8 @@ namespace HiCR::backend::mpi::L0
  */
 class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
 {
-  friend class HiCR::backend::mpi::L1::CommunicationManager; 
-  
+  friend class HiCR::backend::mpi::L1::CommunicationManager;
+
   public:
 
   /**

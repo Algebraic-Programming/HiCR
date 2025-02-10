@@ -160,7 +160,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     increaseMessageRecvCounter(*destination);
     increaseMessageSentCounter(*source);
   }
-  
+
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot>  &destinationSlot,
                              size_t                                             dst_offset,
                              const std::shared_ptr<HiCR::L0::GlobalMemorySlot> &sourceSlotPtr,

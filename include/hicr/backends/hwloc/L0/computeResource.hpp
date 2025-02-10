@@ -64,9 +64,9 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * \param[in] caches The set of caches contained to or accessible by this core
    * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
-  ComputeResource(const logicalProcessorId_t                                logicalProcessorId,
-                  const physicalProcessorId_t                               physicalProcessorId,
-                  const numaAffinity_t                                      numaAffinity,
+  ComputeResource(const logicalProcessorId_t                                 logicalProcessorId,
+                  const physicalProcessorId_t                                physicalProcessorId,
+                  const numaAffinity_t                                       numaAffinity,
                   std::unordered_set<std::shared_ptr<backend::hwloc::Cache>> caches)
     : HiCR::L0::ComputeResource(),
       _logicalProcessorId(logicalProcessorId),
@@ -97,7 +97,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    */
   __INLINE__ physicalProcessorId_t getPhysicalProcessorId() const { return _physicalProcessorId; }
 
-/**
+  /**
    * Deserializing constructor
    *
    * The instance created will contain all information, if successful in deserializing it, corresponding to the passed processing unit
@@ -106,7 +106,6 @@ class ComputeResource final : public HiCR::L0::ComputeResource
    * @param[in] input A JSON-encoded serialized  processing unit information
    */
   ComputeResource(const nlohmann::json &input) { deserialize(input); }
-
 
   /**
    * Uses HWloc to recursively (tree-like) identify the host's basic processing units (PUs)
@@ -382,4 +381,4 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   std::unordered_set<std::shared_ptr<backend::hwloc::Cache>> _caches;
 };
 
-} // namespace HiCR::backend::host::hwloc::L0
+} // namespace HiCR::backend::hwloc::L0

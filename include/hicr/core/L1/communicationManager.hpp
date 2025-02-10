@@ -649,15 +649,15 @@ class CommunicationManager
    * @return A reference to the Global slots/tag key map
    */
   [[nodiscard]] __INLINE__ auto &getGlobalMemorySlotTagKeyMap() { return _globalMemorySlotTagKeyMap; }
-  
+
   protected:
 
-  __INLINE__ void increaseMessageRecvCounter(HiCR::L0::LocalMemorySlot& memorySlot) noexcept { memorySlot.increaseMessagesRecv(); }
-  __INLINE__ void increaseMessageSentCounter(HiCR::L0::LocalMemorySlot& memorySlot) noexcept { memorySlot.increaseMessagesSent(); }
-  __INLINE__ __volatile__ size_t *&getMessagesRecvPointer(HiCR::L0::LocalMemorySlot& memorySlot) const noexcept { return memorySlot.getMessagesRecvPointer(); }
-  __INLINE__ __volatile__ size_t *&getMessagesSentPointer(HiCR::L0::LocalMemorySlot& memorySlot) const noexcept { return memorySlot.getMessagesSentPointer(); }
-  __INLINE__ void setMessagesRecv(HiCR::L0::LocalMemorySlot& memorySlot, const size_t count) noexcept { memorySlot.setMessagesRecv(count); }
-  __INLINE__ void setMessagesSent(HiCR::L0::LocalMemorySlot& memorySlot, const size_t count) noexcept { memorySlot.setMessagesSent(count); }
+  __INLINE__ void                  increaseMessageRecvCounter(HiCR::L0::LocalMemorySlot &memorySlot) noexcept { memorySlot.increaseMessagesRecv(); }
+  __INLINE__ void                  increaseMessageSentCounter(HiCR::L0::LocalMemorySlot &memorySlot) noexcept { memorySlot.increaseMessagesSent(); }
+  __INLINE__ __volatile__ size_t *&getMessagesRecvPointer(HiCR::L0::LocalMemorySlot &memorySlot) const noexcept { return memorySlot.getMessagesRecvPointer(); }
+  __INLINE__ __volatile__ size_t *&getMessagesSentPointer(HiCR::L0::LocalMemorySlot &memorySlot) const noexcept { return memorySlot.getMessagesSentPointer(); }
+  __INLINE__ void                  setMessagesRecv(HiCR::L0::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesRecv(count); }
+  __INLINE__ void                  setMessagesSent(HiCR::L0::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesSent(count); }
 
   private:
 

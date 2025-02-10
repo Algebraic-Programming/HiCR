@@ -31,7 +31,10 @@
   #define _GNU_SOURCE
 #endif
 
-namespace HiCR::backend::pthreads::L1 { class ComputeManager; }
+namespace HiCR::backend::pthreads::L1
+{
+class ComputeManager;
+}
 
 namespace HiCR::backend::pthreads::L0
 {
@@ -217,7 +220,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     if (status != 0) HICR_THROW_RUNTIME("Could not resume thread %lu\n", _pthreadId);
   }
 
-  __INLINE__ void start(std::unique_ptr<HiCR::L0::ExecutionState>& executionState)
+  __INLINE__ void start(std::unique_ptr<HiCR::L0::ExecutionState> &executionState)
   {
     // Initializing barrier
     pthread_barrier_init(_initializationBarrier.get(), nullptr, 2);
@@ -236,7 +239,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     pthread_barrier_destroy(_initializationBarrier.get());
   }
 
-  __INLINE__ void terminate() 
+  __INLINE__ void terminate()
   {
     // Nothing to do actiely, just wait for the thread to finalize in its own accord
   }

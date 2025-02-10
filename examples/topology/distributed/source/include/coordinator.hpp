@@ -5,7 +5,7 @@
 #include <hicr/frontends/RPCEngine/RPCEngine.hpp>
 #include "common.hpp"
 
-void coordinatorFc(HiCR::frontend::RPCEngine& rpcEngine)
+void coordinatorFc(HiCR::frontend::RPCEngine &rpcEngine)
 {
   // Getting instance manager from the rpc engine
   auto im = rpcEngine.getInstanceManager();

@@ -18,7 +18,10 @@
 #include <hicr/core/L0/executionState.hpp>
 #include <utility>
 
-namespace HiCR::L1 { class ComputeManager; }
+namespace HiCR::L1
+{
+class ComputeManager;
+}
 
 namespace HiCR::L0
 {
@@ -34,7 +37,7 @@ namespace HiCR::L0
 class ProcessingUnit
 {
   friend class HiCR::L1::ComputeManager;
-  
+
   public:
 
   /**
@@ -102,7 +105,7 @@ class ProcessingUnit
    */
   __INLINE__ std::shared_ptr<ComputeResource> getComputeResource() { return _computeResource; }
 
-   /**
+  /**
    * Gets the processing unit's type
    *
    * \return A string, containing the processing unit's type
@@ -111,7 +114,7 @@ class ProcessingUnit
 
   private:
 
-   /**
+  /**
    * Function to set the processing unit's state
    *
    * @param state new state to set

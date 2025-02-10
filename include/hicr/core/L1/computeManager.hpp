@@ -57,16 +57,17 @@ class ComputeManager
    */
   virtual std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr) const = 0;
 
-   /**
+  /**
    * Initializes the a processing unit and leaves it ready to execute work
    */
-  __INLINE__ void initialize(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  __INLINE__ void initialize(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit)
   {
     // Getting processing unit's internal state
     auto state = processingUnit->getState();
 
     // Checking internal state
-    if (state != HiCR::L0::ProcessingUnit::uninitialized && state != HiCR::L0::ProcessingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
+    if (state != HiCR::L0::ProcessingUnit::uninitialized && state != HiCR::L0::ProcessingUnit::terminated)
+      HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
 
     // Calling PU-specific initialization
     initializeImpl(processingUnit);
@@ -81,7 +82,7 @@ class ComputeManager
    * @param[in] processingUnit The processing unit to initiate computation with
    * @param[in] executionState The execution state to start running with the given processing unit
    */
-  __INLINE__ void start(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit, std::unique_ptr<HiCR::L0::ExecutionState>& executionState)
+  __INLINE__ void start(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit, std::unique_ptr<HiCR::L0::ExecutionState> &executionState)
   {
     // Getting processing unit's internal state
     auto state = processingUnit->getState();
@@ -101,7 +102,7 @@ class ComputeManager
    * 
    * @param[in] processingUnit The processing unit to suspend
    */
-  __INLINE__ void suspend(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  __INLINE__ void suspend(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit)
   {
     // Getting processing unit's internal state
     auto state = processingUnit->getState();
@@ -121,7 +122,7 @@ class ComputeManager
    * 
    * @param[in] processingUnit The processing unit to resume
    */
-  __INLINE__ void resume(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  __INLINE__ void resume(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit)
   {
     // Getting processing unit's internal state
     auto state = processingUnit->getState();
@@ -141,7 +142,7 @@ class ComputeManager
    * 
    * @param[in] processingUnit The processing unit to terminate
    */
-  __INLINE__ void terminate(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  __INLINE__ void terminate(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit)
   {
     // Transitioning state
     processingUnit->setState(HiCR::L0::ProcessingUnit::terminating);
@@ -155,15 +156,13 @@ class ComputeManager
    * 
    * @param[in] processingUnit The processing unit to wait for
    */
-  __INLINE__ void await(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit)
+  __INLINE__ void await(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit)
   {
     // Getting processing unit's internal state
     auto state = processingUnit->getState();
 
     // Checking state
-    if (state != HiCR::L0::ProcessingUnit::terminating &&
-        state != HiCR::L0::ProcessingUnit::running &&
-        state != HiCR::L0::ProcessingUnit::suspended) return;
+    if (state != HiCR::L0::ProcessingUnit::terminating && state != HiCR::L0::ProcessingUnit::running && state != HiCR::L0::ProcessingUnit::suspended) return;
 
     // Calling internal implementation of the await function
     awaitImpl(processingUnit);
@@ -174,10 +173,10 @@ class ComputeManager
 
   protected:
 
-   /**
+  /**
    * Backend-specific implementation of the initialize function
    */
-  virtual void initializeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
+  virtual void initializeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) = 0;
 
   /**
   * Internal implmentation of the start function
@@ -185,35 +184,34 @@ class ComputeManager
   * @param[in] processingUnit The processing unit to initiate computation with
   * @param[in] executionState The execution state to start running with the given processing unit
   */
-  virtual void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit, std::unique_ptr<HiCR::L0::ExecutionState>& executionState) = 0;
+  virtual void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit, std::unique_ptr<HiCR::L0::ExecutionState> &executionState) = 0;
 
   /**
    * Internal implementation of the suspend function
    * 
    * @param[in] processingUnit The processing unit to suspend
    */
-  virtual void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
+  virtual void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) = 0;
 
-   /**
+  /**
    * Internal implementation of the resume function
    * 
    * @param[in] processingUnit The processing unit to resume
    */
-  virtual void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
-  
-   /**
+  virtual void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) = 0;
+
+  /**
    * Internal implementation of the terminate function
    * 
    * @param[in] processingUnit The processing unit to terminate
    */
-  virtual void terminateImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
+  virtual void terminateImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) = 0;
 
-     /**
+  /**
    * Internal implementation of the await function
    * 
    * @param[in] processingUnit The processing to wait for
    */
-  virtual void awaitImpl(std::unique_ptr<HiCR::L0::ProcessingUnit>& processingUnit) = 0;
-
- };
+  virtual void awaitImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) = 0;
+};
 } // namespace HiCR::L1

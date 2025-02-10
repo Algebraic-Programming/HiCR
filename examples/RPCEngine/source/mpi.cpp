@@ -46,9 +46,9 @@ int main(int argc, char **argv)
   // Grabbing first compute resource for computing incoming RPCs
   auto executeResource = *computeResources.begin();
 
-  // Creating execution unit to run as RPC 
-  auto executionUnit = std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&im](void* closure)
-   { printf("Instance %lu: running Test RPC\n", im->getCurrentInstance()->getId()); });
+  // Creating execution unit to run as RPC
+  auto executionUnit =
+    std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&im](void *closure) { printf("Instance %lu: running Test RPC\n", im->getCurrentInstance()->getId()); });
 
   // Calling common function for printing the topology
   RPCTestFc(cc, mm, cpm, *im, bufferMemorySpace, executeResource, executionUnit);

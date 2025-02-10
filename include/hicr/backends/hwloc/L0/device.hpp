@@ -57,7 +57,8 @@ class Device final : public HiCR::L0::Device
    *
    * @param[in] input A JSON-encoded serialized NUMA domain information
    */
-  Device(const nlohmann::json &input) : HiCR::L0::Device()
+  Device(const nlohmann::json &input)
+    : HiCR::L0::Device()
   {
     deserialize(input);
   }

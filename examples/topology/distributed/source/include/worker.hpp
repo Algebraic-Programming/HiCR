@@ -8,7 +8,7 @@
 #include <hicr/backends/pthreads/L1/computeManager.hpp>
 #include "common.hpp"
 
-void sendTopology(HiCR::frontend::RPCEngine& rpcEngine)
+void sendTopology(HiCR::frontend::RPCEngine &rpcEngine)
 {
   // Storage for the topology to send
   HiCR::L0::Topology workerTopology;
@@ -64,16 +64,16 @@ void sendTopology(HiCR::frontend::RPCEngine& rpcEngine)
   rpcEngine.submitReturnValue(message.data(), message.size() + 1);
 }
 
-void workerFc(HiCR::frontend::RPCEngine& rpcEngine)
+void workerFc(HiCR::frontend::RPCEngine &rpcEngine)
 {
   // Creating compute manager (responsible for executing the RPC)
   HiCR::backend::pthreads::L1::ComputeManager cpm;
 
-  // Creating execution unit to run as RPC 
-  auto executionUnit = std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&](void* closure) { sendTopology(rpcEngine); });
+  // Creating execution unit to run as RPC
+  auto executionUnit = std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&](void *closure) { sendTopology(rpcEngine); });
 
   // Adding RPC target by name and the execution unit id to run
-  rpcEngine.addRPCTarget(TOPOLOGY_RPC_NAME, executionUnit );
+  rpcEngine.addRPCTarget(TOPOLOGY_RPC_NAME, executionUnit);
 
   // Listening for RPC requests
   rpcEngine.listen();

@@ -5,8 +5,8 @@
 #include "../runtime.hpp"
 
 static HiCR::backend::pthreads::L1::ComputeManager *_computeManager;
-static Runtime                                 *_runtime;
-static std::atomic<uint64_t>                    _taskCounter;
+static Runtime                                     *_runtime;
+static std::atomic<uint64_t>                        _taskCounter;
 
 // This function serves to encode a fibonacci task label
 inline const uint64_t getFibonacciLabel(const uint64_t x, const uint64_t _initialValue) { return _initialValue; }

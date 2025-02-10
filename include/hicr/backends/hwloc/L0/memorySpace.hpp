@@ -72,7 +72,6 @@ class MemorySpace final : public HiCR::L0::MemorySpace
    */
   [[nodiscard]] __INLINE__ const hwloc_obj_t getHWLocObject() const { return _hwlocObject; }
 
-
   [[nodiscard]] __INLINE__ std::string getType() const override { return "RAM"; }
 
   private:
