@@ -8,7 +8,7 @@ if mpiDep.found() == false
   mpiDep = dependency('mpich', required: true)
 endif
 
-lpfDep = dependency('lpf-hicr', required:false)
+lpfDep = dependency('lpf-noc', required:false)
 # If LPF is not found in the system through e.g. pkg-config, look if libs are present in the environment
 if lpfDep.found() == false
   # Now looking for LPF-specific libraries
