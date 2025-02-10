@@ -29,17 +29,6 @@ fi
 echo "Cleaning up..."
 rm -rf build
 
-# Could not reliably provide LFP via Spack, so we use this little snippet as we do on the other CI jobs
-echo "Pulling LPF"
-git submodule update --init
-echo "Compiling LPF..."
-mkdir extern/lpf/build; pushd extern/lpf/build; ../bootstrap.sh ; make -j24; make install || true; popd
-
-export LD_LIBRARY_PATH=$PWD/extern/lpf/build/lib:$LD_LIBRARY_PATH
-export CPATH=$PWD/extern/lpf/build/include:$CPATH
-export PATH=$PWD/extern/lpf/build/bin:$PATH
-export LIBRARY_PATH=$PWD/extern/lpf/build/lib:$LIBRARY_PATH
-
 # Actual HiCR set up and build, now that the dependencies are all set
 echo "Setting up..."
 mkdir build
@@ -66,4 +55,3 @@ fi
 spack env deactivate
 
 exit 0
-
