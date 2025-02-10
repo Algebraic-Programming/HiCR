@@ -7,8 +7,8 @@
 #SBATCH --time=00:02:00
 #SBATCH --partition=TaiShanV110
 
-HICR_BUILD_BACKENDS='host/hwloc,host/pthreads,mpi,lpf'
-HICR_BUILD_FRONTENDS='tasking,machineModel,deployer,channel,objectStore'
+HICR_BUILD_BACKENDS='hwloc,pthreads,mpi,lpf'
+HICR_BUILD_FRONTENDS='tasking,RPCEngine,channel,objectStore'
 
 HICR_BUILD_OMPI_VERSION='4.1.7a1'
 
