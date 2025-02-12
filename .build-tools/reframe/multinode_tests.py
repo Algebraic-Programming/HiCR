@@ -52,28 +52,15 @@ class ChannelsMPSC(MPIHiCRClass):
 
 
 @rfm.simple_test
-class TopologyRPC(MPIHiCRClass):
+class TopologyDistributed(MPIHiCRClass):
     num_tasks = 4
     @run_before('run')
     def prepare_run(self):
-        self.descr = ('TopologyRPC')
-        self.executable = self.stagedir + '/build/examples/topologyRPC/mpi'
+        self.descr = ('TopologyDistributed')
+        self.executable = self.stagedir + '/build/examples/topology/distributed/mpi'
     @sanity_function
     def validate(self):
         return sn.assert_found(r'Worker', self.stdout)
-
-@rfm.simple_test
-class Deployer(MPIHiCRClass):
-    num_tasks = 7
-    @run_before('run')
-    def prepare_run(self):
-        self.descr = ('Deployer (multiple)')
-        self.executable = self.stagedir + '/build/examples/deployer/multiple/mpi'
-        self.executable_opts = [self.stagedir + '/examples/deployer/multiple/machineModel.json']
-
-    @sanity_function
-    def validate(self):
-        return sn.assert_found(r'Reached End', self.stdout)
 
 @rfm.simple_test
 class ObjectStore(MPIHiCRClass):
