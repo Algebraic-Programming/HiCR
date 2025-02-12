@@ -19,16 +19,15 @@
 #include <hicr/backends/ascend/L0/executionState.hpp>
 #include <hicr/backends/ascend/L0/executionUnit.hpp>
 
-namespace HiCR
+namespace HiCR::backend::ascend::L1
 {
+/**
+ * Forward declaration of the ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ */
+class ComputeManager;
+} // namespace HiCR::backend::ascend::L1
 
-namespace backend
-{
-
-namespace ascend
-{
-
-namespace L0
+namespace HiCR::backend::ascend::L0
 {
 
 /**
@@ -36,7 +35,11 @@ namespace L0
  */
 class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 {
+  friend class HiCR::backend::ascend::L1::ComputeManager;
+
   public:
+
+  [[nodiscard]] __INLINE__ std::string getType() override { return "Ascend Device"; }
 
   /**
    * Constructor for the Processing Unit (kernel) class
@@ -55,12 +58,22 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     _context = c->getDevice().lock()->getContext();
   };
 
-  protected:
+  private:
 
   /**
-   * Internal implementation of initailizeImpl
+   * ACL context of the device
    */
-  __INLINE__ void initializeImpl() override
+  aclrtContext _context;
+
+  /**
+   * Variable to hold the execution state to run
+   */
+  std::unique_ptr<ExecutionState> _executionState;
+
+  /**
+   * Initialize the processing unit
+   */
+  __INLINE__ void initialize()
   {
     // Getting device id associated to the underlying compute resource (ascend)
     auto deviceId = dynamic_pointer_cast<ascend::L0::ComputeResource>(getComputeResource())->getDevice().lock()->getId();
@@ -70,21 +83,11 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   }
 
   /**
-   * Internal implementation of suspendImpl
-   */
-  __INLINE__ void suspendImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
-
-  /**
-   * Internal implementation of resumeImpl
-   */
-  __INLINE__ void resumeImpl() override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
-
-  /**
    * Ascend backend implementation that starts the execution state in the processing unit.
    *
    * \param executionState the execution state to start
    */
-  __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ExecutionState> executionState) override
+  __INLINE__ void start(std::unique_ptr<HiCR::L0::ExecutionState> &executionState)
   {
     // Getting up-casted pointer for the execution unit
     auto e = std::unique_ptr<ExecutionState>(dynamic_cast<ExecutionState *>(executionState.release()));
@@ -106,14 +109,9 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   }
 
   /**
-   * Internal implementation of terminateImpl
-   */
-  __INLINE__ void terminateImpl() override {}
-
-  /**
    * Ascend backend implementation that wait for execution state completion
    */
-  __INLINE__ void awaitImpl() override
+  __INLINE__ void await()
   {
     // Getting up-casted pointer for the instance
     auto c = static_cast<ascend::L0::ComputeResource *>(getComputeResource().get());
@@ -125,23 +123,18 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     _executionState.get()->finalizeStream();
   }
 
-  private:
+  [[nodiscard]] __INLINE__ ascend::L0::ExecutionState *getAscendExecutionStatePointer(std::unique_ptr<HiCR::L0::ExecutionState> &executionState)
+  {
+    // We can only handle execution state of Ascend type. Make sure we got the correct one
+    // To make it fast and avoid string comparisons, we use the dynamic cast method
+    auto p = dynamic_cast<ascend::L0::ExecutionState *>(executionState.get());
 
-  /**
-   * ACL context of the device
-   */
-  aclrtContext _context;
+    // If the execution state is not recognized, throw error
+    if (p == nullptr) HICR_THROW_LOGIC("Execution state is not of type Ascend");
 
-  /**
-   * Variable to hold the execution state to run
-   */
-  std::unique_ptr<ExecutionState> _executionState;
+    // Returning converted pointer
+    return p;
+  }
 };
 
-} // namespace L0
-
-} // namespace ascend
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::ascend::L0
