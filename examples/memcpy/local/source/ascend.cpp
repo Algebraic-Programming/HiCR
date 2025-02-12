@@ -3,8 +3,8 @@
 #include <hicr/backends/ascend/L1/memoryManager.hpp>
 #include <hicr/backends/ascend/L1/topologyManager.hpp>
 #include <hicr/backends/ascend/L1/communicationManager.hpp>
-#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
 #include "include/telephoneGame.hpp"
 
 int main(int argc, char **argv)
@@ -16,9 +16,9 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager hostDeviceManager(&topology);
-  const auto                                      hostTopology = hostDeviceManager.queryTopology();
-  auto                                            hostDevice   = *hostTopology.getDevices().begin();
+  HiCR::backend::hwloc::L1::TopologyManager hostDeviceManager(&topology);
+  const auto                                hostTopology = hostDeviceManager.queryTopology();
+  auto                                      hostDevice   = *hostTopology.getDevices().begin();
 
   // Getting access to the host memory space
   auto hostMemorySpace = *hostDevice->getMemorySpaceList().begin();
@@ -44,8 +44,8 @@ int main(int argc, char **argv)
   memSpaceOrder.emplace_back(hostMemorySpace);
 
   // Allocate and populate input memory slot
-  HiCR::backend::host::hwloc::L1::MemoryManager hostMemoryManager(&topology);
-  auto                                          input = hostMemoryManager.allocateLocalMemorySlot(hostMemorySpace, BUFFER_SIZE);
+  HiCR::backend::hwloc::L1::MemoryManager hostMemoryManager(&topology);
+  auto                                    input = hostMemoryManager.allocateLocalMemorySlot(hostMemorySpace, BUFFER_SIZE);
   sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 
   // Instantiating Ascend memory and communication managers

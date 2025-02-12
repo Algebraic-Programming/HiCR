@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <hicr/frontends/objectStore/objectStore.hpp>
-#include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/pthreads/L1/communicationManager.hpp>
 
 #include <mocr.hpp>
 
@@ -67,7 +67,7 @@ TEST_F(ObjectStoreTest, PublishTest)
 TEST_F(ObjectStoreTest, GetTest)
 {
   // We need a real communication manager for this test
-  HiCR::backend::host::pthreads::L1::CommunicationManager communicationManager;
+  HiCR::backend::pthreads::L1::CommunicationManager communicationManager;
 
   ObjectStore store(communicationManager, tag, memoryManager, memorySpace, instanceId);
   char        data[8] = "test 12";

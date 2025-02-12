@@ -1,6 +1,6 @@
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
-#include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/pthreads/L1/communicationManager.hpp>
 
 #include <hicr/frontends/objectStore/objectStore.hpp>
 
@@ -17,12 +17,12 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Using default instance, communication and memory manager for single instance
-  auto communicationManager = std::make_unique<HiCR::backend::host::pthreads::L1::CommunicationManager>();
-  auto memoryManager        = std::make_unique<HiCR::backend::host::hwloc::L1::MemoryManager>(&topology);
+  auto communicationManager = std::make_unique<HiCR::backend::pthreads::L1::CommunicationManager>();
+  auto memoryManager        = std::make_unique<HiCR::backend::hwloc::L1::MemoryManager>(&topology);
 
   // Using HWLoc as topology managers
   std::vector<HiCR::L1::TopologyManager *> topologyManagers;
-  auto                                     hwlocTopologyManager = std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(&topology);
+  auto                                     hwlocTopologyManager = std::make_unique<HiCR::backend::hwloc::L1::TopologyManager>(&topology);
   topologyManagers.push_back(hwlocTopologyManager.get());
 
   auto t = hwlocTopologyManager->queryTopology();

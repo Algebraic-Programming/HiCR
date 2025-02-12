@@ -13,22 +13,14 @@
 #pragma once
 
 #include <acl/acl.h>
+#include <memory>
 #include <unordered_map>
 #include <hicr/backends/ascend/L0/executionUnit.hpp>
 #include <hicr/backends/ascend/L0/processingUnit.hpp>
 #include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/core/L1/computeManager.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace ascend
-{
-
-namespace L1
+namespace HiCR::backend::ascend::L1
 {
 
 /**
@@ -45,7 +37,8 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    */
   ComputeManager()
     : HiCR::L1::ComputeManager(){};
-  ~ComputeManager() = default;
+
+  ~ComputeManager() override = default;
 
   /**
    * Creates an execution unit given a stream/vector of \p kernelOperations to be executed on the device
@@ -83,12 +76,78 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   {
     return std::make_unique<L0::ProcessingUnit>(resource);
   }
+
+  protected:
+
+  /**
+   * Internal implementation of initailizeImpl
+   * 
+   * @param processingUnit the processing unit to operate on
+   */
+  __INLINE__ void initializeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
+  {
+    auto p = getAscendPointer(processingUnit);
+    p->initialize();
+  }
+
+  /**
+   * Internal implementation of initailizeImpl
+   * 
+   * @param processingUnit the processing unit to operate on
+   * @param executionState the execution state to operate on
+   */
+  __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit, std::unique_ptr<HiCR::L0::ExecutionState> &executionState) override
+  {
+    auto p = getAscendPointer(processingUnit);
+    p->start(executionState);
+  }
+
+  /**
+   * Internal implementation of suspendImpl
+   * 
+   * @param processingUnit the processing unit to operate on
+   */
+  __INLINE__ void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend"); }
+
+  /**
+   * Internal implementation of resumeImpl
+   * 
+   * @param processingUnit the processing unit to operate on
+   */
+  __INLINE__ void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
+
+  /**
+   * Internal implementation of terminateImpl
+   * 
+   * @param processingUnit the processing unit to operate on
+   */
+  __INLINE__ void terminateImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override {}
+
+  /**
+   * Internal implementation of awaitImpl
+   * 
+   * @param processingUnit the processing unit to operate on
+   */
+  __INLINE__ void awaitImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
+  {
+    auto p = getAscendPointer(processingUnit);
+    p->await();
+  }
+
+  private:
+
+  [[nodiscard]] __INLINE__ ascend::L0::ProcessingUnit *getAscendPointer(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit)
+  {
+    // We can only handle processing units of Ascend type. Make sure we got the correct one
+    // To make it fast and avoid string comparisons, we use the dynamic cast method
+    auto p = dynamic_cast<ascend::L0::ProcessingUnit *>(processingUnit.get());
+
+    // If the processing unit is not recognized, throw error. We can use the processing unit's type (string) now.
+    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType());
+
+    // Returning converted pointer
+    return p;
+  }
 };
 
-} // namespace L1
-
-} // namespace ascend
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::ascend::L1

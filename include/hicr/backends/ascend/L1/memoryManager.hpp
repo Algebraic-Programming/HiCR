@@ -16,7 +16,7 @@
 #include <hicr/backends/ascend/L0/device.hpp>
 #include <hicr/backends/ascend/L0/memorySpace.hpp>
 #include <hicr/backends/ascend/L0/localMemorySlot.hpp>
-#include <hicr/backends/host/L0/memorySpace.hpp>
+#include <hicr/backends/hwloc/L0/memorySpace.hpp>
 #include <hicr/core/L1/memoryManager.hpp>
 
 namespace HiCR
@@ -52,14 +52,14 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
-    // Getting up-casted pointer for the MPI instance
+    // Getting up-casted pointer for the ascend instance
     auto ascendMemSpace = dynamic_pointer_cast<const ascend::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (ascendMemSpace != NULL) return allocateLocalDeviceMemorySlot(memorySpace, size);
 
-    // Getting up-casted pointer for the MPI instance
-    auto hostMemSpace = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
+    // Getting up-casted pointer for the hwloc instance
+    auto hostMemSpace = dynamic_pointer_cast<hwloc::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (hostMemSpace != NULL) return allocateLocalHostMemorySlot(memorySpace, size);

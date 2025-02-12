@@ -3,7 +3,7 @@
 #include <hicr/backends/lpf/L1/memoryManager.hpp>
 #include <hicr/backends/lpf/L1/communicationManager.hpp>
 #include <hicr/backends/mpi/L1/instanceManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
 
 #include <hicr/frontends/objectStore/objectStore.hpp>
 
@@ -51,7 +51,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Using HWLoc as topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  auto hwlocTopologyManager = std::make_unique<HiCR::backend::host::hwloc::L1::TopologyManager>(&topology);
+  auto hwlocTopologyManager = std::make_unique<HiCR::backend::hwloc::L1::TopologyManager>(&topology);
 
   // Asking backend to check the available devices
   const auto t = hwlocTopologyManager->queryTopology();

@@ -19,7 +19,7 @@
 #include <hicr/core/L1/memoryManager.hpp>
 #include <hicr/core/L1/topologyManager.hpp>
 
-#include <hicr/backends/host/L1/instanceManager.hpp>
+#include <hicr/backends/hwloc/L1/instanceManager.hpp>
 
 using namespace testing;
 
@@ -118,7 +118,7 @@ class MockInstanceManager : public HiCR::L1::InstanceManager
   MockInstanceManager()
   {
     ON_CALL(*this, getRootInstanceId()).WillByDefault(Return(0));
-    auto instance = std::make_shared<HiCR::backend::host::L0::Instance>();
+    auto instance = std::make_shared<HiCR::backend::hwloc::L0::Instance>();
     setCurrentInstance(instance);
     addInstance(instance);
   }

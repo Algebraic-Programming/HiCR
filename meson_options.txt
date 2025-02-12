@@ -1,11 +1,11 @@
-option('backends', type : 'array', choices : ['host/hwloc', 'host/pthreads', 'mpi', 'lpf',  'ascend'], 
+option('backends', type : 'array', choices : ['hwloc', 'pthreads', 'mpi', 'lpf', 'ascend'], 
        description : 'Specifies which builtin backends to enable for compilation with HiCR',
-       value: [ 'host/hwloc', 'host/pthreads' ]
+       value: [ 'hwloc', 'pthreads' ]
        )
 
-option('frontends', type : 'array', choices : [ 'channel', 'deployer', 'machineModel', 'tasking', 'objectStore' ],
+option('frontends', type : 'array', choices : [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ],
        description : 'Specifies which builtin frontends to enable for compilation with HiCR',
-       value: [ 'channel', 'deployer', 'machineModel', 'tasking', 'objectStore' ]
+       value: [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ]
        )
              
       

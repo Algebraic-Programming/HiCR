@@ -650,6 +650,38 @@ class CommunicationManager
    */
   [[nodiscard]] __INLINE__ auto &getGlobalMemorySlotTagKeyMap() { return _globalMemorySlotTagKeyMap; }
 
+  protected:
+
+  /**
+   *  Increases the message receive counter for a given memory slot
+   * 
+   * @param[in] memorySlot The provided memory slot
+   */
+  __INLINE__ void increaseMessageRecvCounter(HiCR::L0::LocalMemorySlot &memorySlot) noexcept { memorySlot.increaseMessagesRecv(); }
+
+  /**
+   *  Increases the message sent counter for a given memory slot
+   * 
+   * @param[in] memorySlot The provided memory slot
+   */
+  __INLINE__ void increaseMessageSentCounter(HiCR::L0::LocalMemorySlot &memorySlot) noexcept { memorySlot.increaseMessagesSent(); }
+
+  /**
+   * Sets the message receive counter for a given memory slot
+   * 
+   * @param[in] memorySlot The provided memory slot
+   * @param[in] count The new value to set for the counter
+   */
+  __INLINE__ void setMessagesRecv(HiCR::L0::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesRecv(count); }
+
+  /**
+   * Sets the message sent counter for a given memory slot
+   * 
+   * @param[in] memorySlot The provided memory slot
+   * @param[in] count The new value to set for the counter
+   */
+  __INLINE__ void setMessagesSent(HiCR::L0::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesSent(count); }
+
   private:
 
   /**

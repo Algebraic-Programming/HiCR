@@ -18,6 +18,11 @@
 #include <hicr/core/L0/executionState.hpp>
 #include <utility>
 
+namespace HiCR::L1
+{
+class ComputeManager;
+}
+
 namespace HiCR::L0
 {
 
@@ -31,6 +36,8 @@ namespace HiCR::L0
  */
 class ProcessingUnit
 {
+  friend class HiCR::L1::ComputeManager;
+
   public:
 
   /**
@@ -92,136 +99,27 @@ class ProcessingUnit
   [[nodiscard]] __INLINE__ ProcessingUnit::state_t getState() const { return _state; }
 
   /**
-   * Initializes the resource and leaves it ready to execute work
-   */
-  __INLINE__ void initialize()
-  {
-    // Checking internal state
-    if (_state != ProcessingUnit::uninitialized && _state != ProcessingUnit::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized processing unit");
-
-    // Calling PU-specific initialization
-    initializeImpl();
-
-    // Transitioning state
-    _state = ProcessingUnit::ready;
-  }
-
-  /**
-   * Starts running the resource and execute a previously initialized executionState object
-   *
-   * @param[in] executionState The execution state to start running with this processing  unit
-   */
-  __INLINE__ void start(std::unique_ptr<HiCR::L0::ExecutionState> executionState)
-  {
-    // Checking internal state
-    if (_state != ProcessingUnit::ready) HICR_THROW_RUNTIME("Attempting to start processing unit that is not in the 'ready' state");
-
-    // Transitioning state
-    _state = ProcessingUnit::running;
-
-    // Running internal implementation of the start function
-    startImpl(std::move(executionState));
-  }
-
-  /**
-   * Triggers the suspension of the resource. All the elements that make the resource remain active in memory, but will not execute.
-   */
-  __INLINE__ void suspend()
-  {
-    // Checking state
-    if (_state != ProcessingUnit::running) HICR_THROW_RUNTIME("Attempting to suspend processing unit that is not in the 'running' state");
-
-    // Transitioning state
-    _state = ProcessingUnit::suspended;
-
-    // Calling internal implementation of the suspend function
-    suspendImpl();
-  }
-
-  /**
-   * Resumes the execution of the resource.
-   */
-  __INLINE__ void resume()
-  {
-    // Checking state
-    if (_state != ProcessingUnit::suspended) HICR_THROW_RUNTIME("Attempting to resume processing unit that is not in the 'suspended' state");
-
-    // Transitioning state
-    _state = ProcessingUnit::running;
-
-    // Calling internal implementation of the resume function
-    resumeImpl();
-  }
-
-  /**
-   * Triggers the finalization the execution of the resource. This is an asynchronous operation, so returning from this function does not guarantee that the resource has terminated.
-   */
-  __INLINE__ void terminate()
-  {
-    // Transitioning state
-    _state = ProcessingUnit::terminating;
-
-    // Calling internal implementation of the terminate function
-    terminateImpl();
-  }
-
-  /**
-   * Suspends the execution of the caller until the finalization is ultimately completed
-   */
-  __INLINE__ void await()
-  {
-    // Checking state
-    if (_state != ProcessingUnit::terminating && _state != ProcessingUnit::running && _state != ProcessingUnit::suspended) return;
-
-    // Calling internal implementation of the await function
-    awaitImpl();
-
-    // Transitioning state
-    _state = ProcessingUnit::terminated;
-  }
-
-  /**
    * Returns the processing unit's associated compute resource
    *
    * \return The identifier of the compute resource associated to this processing unit.
    */
   __INLINE__ std::shared_ptr<ComputeResource> getComputeResource() { return _computeResource; }
 
-  protected:
-
   /**
-   * Internal implementation of the initialize routine
-   */
-  virtual void initializeImpl() = 0;
-
-  /**
-   * Internal implmentation of the start function
+   * Gets the processing unit's type
    *
-   * @param[in] executionState The execution state to start running with this processing unit
+   * \return A string, containing the processing unit's type
    */
-  virtual void startImpl(std::unique_ptr<ExecutionState> executionState) = 0;
-
-  /**
-   * Internal implementation of the suspend function
-   */
-  virtual void suspendImpl() = 0;
-
-  /**
-   * Internal implementation of the resume function
-   */
-  virtual void resumeImpl() = 0;
-
-  /**
-   * Internal implementation of the terminate function
-   */
-  virtual void terminateImpl() = 0;
-
-  /**
-   * Internal implementation of the await function
-   */
-  virtual void awaitImpl() = 0;
+  virtual std::string getType() = 0;
 
   private:
+
+  /**
+   * Function to set the processing unit's state
+   *
+   * @param state new state to set
+   */
+  __INLINE__ void setState(const ProcessingUnit::state_t state) { _state = state; }
 
   /**
    * Represents the internal state of the processing unit. Uninitialized upon construction.

@@ -1,7 +1,7 @@
 testSuite = ['examples', 'objectStore', 'publishRead']
 test_timeout = 60
 
-if 'lpf' in enabledBackends and 'host/hwloc' in enabledBackends
+if 'lpf' in enabledBackends and 'hwloc' in enabledBackends
 	lpf = executable('lpf', [ 'source/lpf.cpp' ], dependencies: hicrBuildDep, include_directories: [exampleBuildIncludes] )
 
 	if get_option('buildTests')

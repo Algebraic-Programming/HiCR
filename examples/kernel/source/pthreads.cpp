@@ -1,6 +1,6 @@
 #include <cstdio>
-#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
 
 int main(int argc, char **argv)
 {
@@ -11,7 +11,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&hwlocTopology);
 
   // Instantiating HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager topologyManager(&hwlocTopology);
+  HiCR::backend::hwloc::L1::TopologyManager topologyManager(&hwlocTopology);
 
   // Asking backend to check the available devices
   auto topology = topologyManager.queryTopology();
@@ -25,8 +25,8 @@ int main(int argc, char **argv)
   // Selecting the first compute resource found
   auto firstComputeResource = *computeResources.begin();
 
-  // Initializing Pthread-based host (CPU) compute manager
-  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
+  // Initializing Pthread-based (CPU) compute manager
+  HiCR::backend::pthreads::L1::ComputeManager computeManager;
 
   // Creating execution unit
   auto executionUnit = computeManager.createExecutionUnit([](void *arg) { printf("Hello, World!\n"); });
@@ -38,13 +38,13 @@ int main(int argc, char **argv)
   auto processingUnit = computeManager.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
-  processingUnit->initialize();
+  computeManager.initialize(processingUnit);
 
   // Running compute unit with the newly created execution state
-  processingUnit->start(std::move(executionState));
+  computeManager.start(processingUnit, executionState);
 
   // Waiting for thread to finish
-  processingUnit->await();
+  computeManager.await(processingUnit);
 
   return 0;
 }

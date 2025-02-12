@@ -18,7 +18,7 @@
 #include <lpf/collectives.h>
 #include <lpf/core.h>
 #include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/backends/host/L0/memorySpace.hpp>
+#include <hicr/backends/hwloc/L0/memorySpace.hpp>
 #include "../L0/localMemorySlot.hpp"
 
 namespace HiCR::backend::lpf::L1
@@ -66,7 +66,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
-    auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
+    auto m = dynamic_pointer_cast<hwloc::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
@@ -108,7 +108,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the LPF instance
-    auto m = dynamic_pointer_cast<host::L0::MemorySpace>(memorySpace);
+    auto m = dynamic_pointer_cast<hwloc::L0::MemorySpace>(memorySpace);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");

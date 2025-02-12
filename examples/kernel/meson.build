@@ -1,6 +1,6 @@
 testSuite = [ 'examples', 'hicr', 'kernel' ]
 
-if 'host/hwloc' in enabledBackends and 'host/pthreads' in enabledBackends
+if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
 	pthreads = executable('pthreads', [ 'source/pthreads.cpp' ], dependencies: hicrBuildDep)
 
 	if get_option('buildTests')
@@ -8,7 +8,7 @@ if 'host/hwloc' in enabledBackends and 'host/pthreads' in enabledBackends
 	endif
 endif
 
-if 'ascend' in enabledBackends and 'host/hwloc' in enabledBackends
+if 'ascend' in enabledBackends and 'hwloc' in enabledBackends
 	ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: hicrBuildDep)
 
 	if get_option('buildTests')
