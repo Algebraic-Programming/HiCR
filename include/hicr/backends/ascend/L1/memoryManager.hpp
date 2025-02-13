@@ -142,6 +142,14 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     HICR_THROW_RUNTIME("Not yet implemented for this backend");
   }
 
+  __INLINE__ void memsetImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, int value, size_t size) override
+  {
+    // Filling the memory slot with the provided value
+    // Ascend aclrtMemset() automatically understands if the memory resides on the device or the host, so we can use it directly
+    aclError err = aclrtMemset(memorySlot->getPointer(), memorySlot->getSize(), value, size);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while performing memset. Error %d", err);
+  }
+
   __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the memory slot
