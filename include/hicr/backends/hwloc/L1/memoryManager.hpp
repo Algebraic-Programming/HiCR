@@ -22,7 +22,7 @@ namespace HiCR::backend::hwloc::L1
 {
 
 /**
- * Implementation of the HWloc-based memory manager for allocation of memory in the host 
+ * Implementation of the HWloc-based memory manager for allocation of memory in the host
  */
 class MemoryManager final : public HiCR::L1::MemoryManager
 {
@@ -88,7 +88,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // Getting up-casted pointer for the MPI instance
     auto m = dynamic_pointer_cast<L0::MemorySpace>(memorySpace);
 
-    // Checking whether the execution unit passed is compatible with this backend
+    // Checking whether the memory space passed is compatible with this backend
     if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
 
     // Getting binding type supported by the memory space
@@ -145,10 +145,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
-    // Getting up-casted pointer for the execution unit
+    // Getting up-casted pointer for the memory slot
     auto m = dynamic_pointer_cast<L0::LocalMemorySlot>(memorySlot);
 
-    // Checking whether the execution unit passed is compatible with this backend
+    // Checking whether the memory slot passed is compatible with this backend
     if (m == nullptr) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");
 
     // Getting memory slot info

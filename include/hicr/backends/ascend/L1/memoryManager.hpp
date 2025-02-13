@@ -52,16 +52,16 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
-    // Getting up-casted pointer for the ascend instance
+    // Getting up-casted pointer for the ascend instance, first try with the device memory space
     auto ascendMemSpace = dynamic_pointer_cast<const ascend::L0::MemorySpace>(memorySpace);
 
-    // Checking whether the execution unit passed is compatible with this backend
+    // Checking whether the memory space passed belongs to the device
     if (ascendMemSpace != NULL) return allocateLocalDeviceMemorySlot(memorySpace, size);
 
-    // Getting up-casted pointer for the hwloc instance
+    // Retry with the host memory space
     auto hostMemSpace = dynamic_pointer_cast<hwloc::L0::MemorySpace>(memorySpace);
 
-    // Checking whether the execution unit passed is compatible with this backend
+    // Checking whether the memory space passed belongs to the host
     if (hostMemSpace != NULL) return allocateLocalHostMemorySlot(memorySpace, size);
 
     HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
@@ -144,10 +144,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
-    // Getting up-casted pointer for the execution unit
+    // Getting up-casted pointer for the memory slot
     auto m = dynamic_pointer_cast<ascend::L0::LocalMemorySlot>(memorySlot);
 
-    // Checking whether the execution unit passed is compatible with this backend
+    // Checking whether the memory slot passed is compatible with this backend
     if (m == NULL) freeLocalHostMemorySlot(memorySlot);
     if (m != NULL) freeLocalDeviceMemorySlot(m);
   }
