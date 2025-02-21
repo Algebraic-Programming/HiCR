@@ -113,12 +113,12 @@ class DataObject
   /**
    * The ID of the instance owning the data object.
    */
-  L0::Instance::instanceId_t _instanceId;
+  const L0::Instance::instanceId_t _instanceId;
 
   /**
    * The ID of the data object.
    */
-  blockId _id;
+  const blockId _id;
 
   /**
    * The size of the data object.
