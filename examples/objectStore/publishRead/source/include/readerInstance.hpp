@@ -89,6 +89,11 @@ void reader(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManag
 
   auto objSlot1 = objectStore.get(*dataObject1);
 
+  // One-sided fence to ensure this block is received
+  objectStore.fence(dataObject1);
+
+  printf("Reader: Received block 1: %s\n", (char *)objSlot1->getPointer());
+
   // Wait until you receive a message
   while (consumer.isEmpty()) consumer.updateDepth();
   res = consumer.peek();
@@ -114,7 +119,6 @@ void reader(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManag
   // Fence to ensure all blocks are received
   objectStore.fence();
 
-  printf("Reader: Received block 1: %s\n", (char *)objSlot1->getPointer());
   printf("Reader: Received block 2: %s\n", (char *)objSlot2->getPointer());
 
   objectStore.destroy(*dataObject1);
