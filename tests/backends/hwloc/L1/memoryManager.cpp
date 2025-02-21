@@ -168,7 +168,7 @@ TEST(MemoryManager, Memset)
   EXPECT_NO_THROW(s1LocalPtr = (uint8_t *)s1->getPointer());
 
   // Filling memory slot with value 0
-  EXPECT_NO_THROW(m.memset(s1, 0));
+  EXPECT_NO_THROW(m.memset(s1, 0, testMemAllocSize));
   EXPECT_EQ(s1LocalPtr[0], 0);
   EXPECT_EQ(s1LocalPtr[testMemAllocSize - 1], 0);
 

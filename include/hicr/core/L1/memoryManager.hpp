@@ -103,18 +103,13 @@ class MemoryManager
    *
    * \param[in] memorySlot Memory slot to fill
    * \param[in] value Value to fill the memory slot with
-   * \param[in] size Optional: Number of bytes to fill, from the start of the memory slot. If not provided, the whole memory slot is filled.
+   * \param[in] size Number of bytes to fill, from the start of the memory slot. If not provided, the whole memory slot is filled.
+   *            \note: The size parameter is not checked against the memory slot's size, so the caller must ensure that the size is valid.
    */
-  __INLINE__ void memset(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memorySlot, int value, size_t size = (size_t)-1)
+  __INLINE__ void memset(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memorySlot, int value, size_t size)
   {
     // Checking whether the pointer is valid
     if (memorySlot->getPointer() == nullptr) HICR_THROW_RUNTIME("Invalid memory slot provided. It either does not exist or represents a NULL pointer.");
-
-    // Getting memory slot info
-    const auto memorySlotSize = memorySlot->getSize();
-
-    // Checking whether the size is provided. If not, using the memory slot's full size
-    if (size == (size_t)-1) size = memorySlotSize;
 
     memsetImpl(memorySlot, value, size);
   }
