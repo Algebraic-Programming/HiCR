@@ -325,8 +325,8 @@ class ObjectStore
   /**
    * Fences all block activity of the object store instance.
    *
-   * This is a blocking call. All workers that have communications in the
-   * object store must make the same number of calls to #fence. This
+   * This is a collective, blocking call. All workers that have communications
+   * in the object store must make the same number of calls to #fence. This
    * (paradoxically) allows for fully asynchronous fencing.
    *
    * \warning I.e., a call to fence on one party may exit before a matching
@@ -334,13 +334,29 @@ class ObjectStore
    *          \em not imply a barrier.
    *
    * A call to this function is \em not thread-safe.
-   * TODO: 0-cost variant with (sent,recv)
    *
    * @returns <tt>true</tt> if the fence has completed; <tt>false</tt> otherwise.
    */
   __INLINE__ bool fence()
   {
     _communicationManager.fence(_tag);
+    return true;
+  }
+
+  /**
+   * Fences locally on a specific data object.
+   *
+   * This is a one-sided, blocking call; returning from this function
+   * indicates that, specific to this data object, incoming memory movement (ie. a get())
+   * has completed.
+   *
+   * @param[in] dataObject The data object to fence.
+   * @returns <tt>true</tt> if the fence has completed; <tt>false</tt> otherwise.
+   */
+  __INLINE__ bool fence(const std::shared_ptr<DataObject> &dataObject)
+  {
+    // Use the zero-cost variant of fence with (sent,recv) = (0,1)
+    _communicationManager.fence(dataObject->_globalSlot, 0, 1);
     return true;
   }
 
