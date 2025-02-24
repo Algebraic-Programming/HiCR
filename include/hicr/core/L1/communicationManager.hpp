@@ -537,7 +537,7 @@ class CommunicationManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  virtual void deregisterGlobalMemorySlotImpl(const std::shared_ptr<L0::GlobalMemorySlot> &memorySlot){};
+  virtual void deregisterGlobalMemorySlotImpl(const std::shared_ptr<L0::GlobalMemorySlot> &memorySlot) {};
 
   /**
    * Deletes a global memory slot from the backend. This operation is collective.

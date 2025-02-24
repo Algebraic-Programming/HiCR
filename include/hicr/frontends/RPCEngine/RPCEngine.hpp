@@ -184,8 +184,7 @@ class RPCEngine
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValue(HiCR::L0::Instance &instance) const
   {
     // Calling the backend-specific implementation of the listen function
-    while (_returnValueConsumerChannel->isEmpty())
-      ;
+    while (_returnValueConsumerChannel->isEmpty());
 
     // Calling backend-specific implementation of this function
     auto returnValue = _returnValueConsumerChannel->peek();

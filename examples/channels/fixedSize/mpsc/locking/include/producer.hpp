@@ -51,8 +51,7 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
     sendBuffer = 42 + i;
 
     // Trying to push (if the consumer buffer is busy or full, it will fail and try again)
-    while (producer.push(sendSlot) == false)
-      ;
+    while (producer.push(sendSlot) == false);
 
     // Printing value sent
     printf("[Producer %03lu] Sent Value: %u\n", producerId, *sendBufferPtr);
