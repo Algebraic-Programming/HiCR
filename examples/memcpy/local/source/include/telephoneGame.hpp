@@ -31,6 +31,9 @@ void telephoneGame(HiCR::L1::MemoryManager                            &m,
   // For each of the detected memory slots...
   for (auto dstMemSlot : memSlots)
   {
+    // Initialize the memory slot; smoke test for memset
+    m.memset(dstMemSlot, 0, BUFFER_SIZE);
+
     // Perform the memcpy operations
     c.memcpy(dstMemSlot, DST_OFFSET, srcMemSlot, SRC_OFFSET, BUFFER_SIZE);
 
