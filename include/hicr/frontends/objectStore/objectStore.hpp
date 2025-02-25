@@ -356,7 +356,7 @@ class ObjectStore
   __INLINE__ bool fence(const std::shared_ptr<DataObject> &dataObject)
   {
     // Use the zero-cost variant of fence with (sent,recv) = (0,1)
-    _communicationManager.fence(dataObject->_globalSlot, 0, 1);
+    _communicationManager.fence(dataObject->_localSlot, 0, 1);
     return true;
   }
 

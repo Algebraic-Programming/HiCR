@@ -33,7 +33,7 @@ class Kernel
 {
   public:
 
-  __INLINE__ Kernel(){};
+  __INLINE__ Kernel() {};
 
   /**
    * Default destructor
