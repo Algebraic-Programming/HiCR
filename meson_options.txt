@@ -1,4 +1,4 @@
-option('backends', type : 'array', choices : ['hwloc', 'pthreads', 'mpi', 'lpf', 'ascend'], 
+option('backends', type : 'array', choices : ['hwloc', 'pthreads', 'mpi', 'lpf', 'ascend', 'nosv' ],
        description : 'Specifies which builtin backends to enable for compilation with HiCR',
        value: [ 'hwloc', 'pthreads' ]
        )

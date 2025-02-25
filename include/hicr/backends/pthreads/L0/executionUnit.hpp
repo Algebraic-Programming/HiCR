@@ -23,7 +23,7 @@ namespace HiCR::backend::pthreads::L0
 /**
  * This class represents a replicable C++ executable function for the CPU-based backends
  */
-class ExecutionUnit final : public HiCR::L0::ExecutionUnit
+class ExecutionUnit : public HiCR::L0::ExecutionUnit
 {
   public:
 
