@@ -28,8 +28,6 @@
 namespace HiCR::tasking
 {
 
-class Worker;
-
 /**
  * This class defines the basic execution unit managed by TaskR.
  *
