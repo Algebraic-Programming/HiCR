@@ -217,14 +217,11 @@ class Worker
     // Setting state
     _state = state_t::running;
 
-    // Using a coroutine-based compute manager to create execution unit and state
-    HiCR::backend::boost::L1::ComputeManager cb;
-
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = cb.createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
+    auto executionUnit = HiCR::backend::boost::L1::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
 
     // Creating worker's execution state
-    auto executionState = cb.createExecutionState(executionUnit, this);
+    auto executionState = _computeManager->createExecutionState(executionUnit, this);
 
     // Launching worker in the lead resource (first one to be added)
     _computeManager->start(_processingUnits[0], executionState);
