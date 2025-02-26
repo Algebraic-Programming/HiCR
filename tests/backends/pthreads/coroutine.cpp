@@ -14,11 +14,11 @@
 #include <unistd.h>
 #include <mutex>
 #include "gtest/gtest.h"
-#include <hicr/backends/pthreads/coroutine.hpp>
+#include <hicr/backends/boost/coroutine.hpp>
 
 TEST(Coroutine, Construction)
 {
-  auto c = new HiCR::backend::pthreads::Coroutine();
+  auto c = new HiCR::backend::boost::Coroutine();
   EXPECT_FALSE(c == nullptr);
 }
 
@@ -45,7 +45,7 @@ std::vector<std::mutex *> _mutexes;
 bool falseRead = false;
 
 // Storage for the coroutine array
-HiCR::backend::pthreads::Coroutine *coroutines[COROUTINE_COUNT];
+HiCR::backend::boost::Coroutine *coroutines[COROUTINE_COUNT];
 
 static void make_key() { (void)pthread_key_create(&key, NULL); }
 
@@ -80,13 +80,13 @@ void *threadFc(void *arg)
 }
 
 /*
- *  This is a stress test that combines coroutines, thread-level storage and pthreads to make sure TLS does never get corrupted when
- *  a coroutine is started and resumed by multiple different pthreads.
+ *  This is a stress test that combines coroutines, thread-level storage and boost to make sure TLS does never get corrupted when
+ *  a coroutine is started and resumed by multiple different boost.
  */
 TEST(Coroutine, TLS)
 {
   // Creating new HiCR coroutine
-  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::backend::pthreads::Coroutine();
+  for (size_t i = 0; i < COROUTINE_COUNT; i++) coroutines[i] = new HiCR::backend::boost::Coroutine();
 
   // Creating per-coroutine mutexes
   _mutexes.resize(COROUTINE_COUNT);
@@ -95,7 +95,7 @@ TEST(Coroutine, TLS)
   // Creating coroutine function
   auto fc = [](void *arg) {
     // Recovering a pointer to the coroutine
-    auto coroutine = (HiCR::backend::pthreads::Coroutine *)arg;
+    auto coroutine = (HiCR::backend::boost::Coroutine *)arg;
 
     // Executing coroutine yield cycle as many times as necessary
     while (true)

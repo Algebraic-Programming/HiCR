@@ -16,6 +16,48 @@
 namespace HiCR::backend::nosv::L0
 {
 
-using ExecutionUnit = HiCR::backend::pthreads::L0::ExecutionUnit;
+/**
+ * This class represents a replicable C++ executable function for the CPU-based backends
+ */
+class ExecutionUnit : public HiCR::L0::ExecutionUnit
+{
+  public:
+
+  /**
+  * Accepting a replicable C++ function type with closure parameter
+  */
+  using pthreadFc_t = std::function<void(void *)>;
+
+  /**
+   * Constructor for the execution unit class of the sequential backend
+   *
+   * \param fc A replicable C++ function to run in this execution unit
+   */
+  ExecutionUnit(pthreadFc_t fc)
+    : HiCR::L0::ExecutionUnit(),
+      _fc(std::move(fc)){};
+  ExecutionUnit() = delete;
+
+  /**
+   * Default destructor
+   */
+  ~ExecutionUnit() override = default;
+
+  [[nodiscard]] __INLINE__ std::string getType() const override { return "C++ Function"; }
+
+  /**
+   * Returns the internal function stored inside this execution unit
+   *
+   * \return The internal function stored inside this execution unit
+   */
+  [[nodiscard]] __INLINE__ pthreadFc_t &getFunction() { return _fc; }
+
+  private:
+
+  /**
+   * Replicable internal C++ function to run in this execution unit
+   */
+  pthreadFc_t _fc;
+};
 
 } // namespace HiCR::backend::nosv::L0

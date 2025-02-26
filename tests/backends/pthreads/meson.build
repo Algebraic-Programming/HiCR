@@ -1,5 +1,8 @@
-subdir('L0')
+if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends and 'boost' in enabledBackends
 
-test('coroutine', executable('coroutine', 'coroutine.cpp', dependencies: HiCRTestBuildDependencies), protocol: 'gtest', suite: [ 'tests', 'backends', 'pthreads', 'coroutine' ] )
+subdir('L0')
+test('coroutine', executable('coroutine', 'coroutine.cpp', dependencies: HiCRTestBuildDependencies), protocol: 'gtest', suite: [ 'tests', 'backends', 'boost', 'coroutine' ] )
+
+endif
 
 

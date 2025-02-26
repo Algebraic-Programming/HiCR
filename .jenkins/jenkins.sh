@@ -16,7 +16,7 @@ fi
 echo '###############################################################################'
 echo '                                 Meson setup'
 echo '###############################################################################'
-docker exec -u hicr hicr-ci bash -c "mkdir -p /home/hicr/$JOB_BASE_NAME/build && cd /home/hicr/$JOB_BASE_NAME/build && meson setup .. --reconfigure -DbuildExamples=true -DbuildTests=true -Dbackends=host/hwloc,host/pthreads,mpi -Dfrontends=tasking,machineModel,deployer,channel -DHiCR:compileWarningsAsErrors=true" 
+docker exec -u hicr hicr-ci bash -c "mkdir -p /home/hicr/$JOB_BASE_NAME/build && cd /home/hicr/$JOB_BASE_NAME/build && meson setup .. --reconfigure -DbuildExamples=true -DbuildTests=true -Dbackends=hwloc,pthreads,mpi,boost -Dfrontends=tasking,machineModel,deployer,channel -DHiCR:compileWarningsAsErrors=true" 
 if [[ $? -ne "0" ]]; then
     docker stop hicr-ci
     exit -1;
