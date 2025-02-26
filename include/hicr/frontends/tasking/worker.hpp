@@ -22,6 +22,7 @@
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
 #include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/boost/L1/computeManager.hpp>
 #include "task.hpp"
 
 namespace HiCR::tasking
@@ -144,7 +145,7 @@ class Worker
    */
   Worker(HiCR::L1::ComputeManager *computeManager, pullFunction_t pullFunction, workerCallbackMap_t *callbackMap = nullptr)
     : _pullFunction(std::move(pullFunction)),
-      _computeManager(dynamic_cast<HiCR::backend::pthreads::L1::ComputeManager *>(computeManager)),
+      _computeManager(computeManager),
       _callbackMap(callbackMap)
   {
     // Checking the passed compute manager is of a supported type
@@ -216,11 +217,14 @@ class Worker
     // Setting state
     _state = state_t::running;
 
+    // Using a coroutine-based compute manager to create execution unit and state
+    HiCR::backend::boost::L1::ComputeManager cb;
+
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = HiCR::backend::pthreads::L1::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
+    auto executionUnit = cb.createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
 
     // Creating worker's execution state
-    auto executionState = _computeManager->createExecutionState(executionUnit, this);
+    auto executionState = cb.createExecutionState(executionUnit, this);
 
     // Launching worker in the lead resource (first one to be added)
     _computeManager->start(_processingUnits[0], executionState);
@@ -345,9 +349,9 @@ class Worker
   std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnits;
 
   /**
-   * Compute manager to use to instantiate and manage the worker's and task execution states
+   * Compute manager to use to instantiate and manage the workers
    */
-  HiCR::backend::pthreads::L1::ComputeManager *const _computeManager;
+  HiCR::L1::ComputeManager *const _computeManager;
 
   /**
    *  Map of callbacks to trigger

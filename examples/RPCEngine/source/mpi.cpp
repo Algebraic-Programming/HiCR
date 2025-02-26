@@ -3,7 +3,6 @@
 #include <hicr/backends/mpi/L1/memoryManager.hpp>
 #include <hicr/backends/mpi/L1/communicationManager.hpp>
 #include <hicr/backends/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/pthreads/L0/executionUnit.hpp>
 #include <hicr/backends/hwloc/L1/topologyManager.hpp>
 #include "include/RPCTest.hpp"
 

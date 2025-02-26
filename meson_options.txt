@@ -1,6 +1,6 @@
-option('backends', type : 'array', choices : ['hwloc', 'pthreads', 'mpi', 'lpf', 'ascend'], 
+option('backends', type : 'array', choices : ['hwloc', 'boost', 'pthreads', 'mpi', 'lpf', 'ascend'], 
        description : 'Specifies which builtin backends to enable for compilation with HiCR',
-       value: [ 'hwloc', 'pthreads' ]
+       value: [ 'hwloc', 'pthreads', 'boost' ]
        )
 
 option('frontends', type : 'array', choices : [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ],

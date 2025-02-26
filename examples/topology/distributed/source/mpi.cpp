@@ -4,7 +4,6 @@
 #include <hicr/backends/mpi/L1/communicationManager.hpp>
 #include <hicr/backends/pthreads/L1/computeManager.hpp>
 #include <hicr/backends/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/pthreads/L0/executionUnit.hpp>
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
 

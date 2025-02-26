@@ -5,7 +5,7 @@
 
 /**
  * @file coroutine.hpp
- * @brief Provides a definition for the HiCR Coroutine class.
+ * @brief Provides a definition for the Coroutine class, implemented with Boost context objects.
  * @author S. M. Martin
  * @date 7/7/2023
  */
@@ -16,7 +16,7 @@
 #include <boost/context/continuation.hpp>
 #include <hicr/core/exceptions.hpp>
 
-namespace HiCR::backend::pthreads
+namespace HiCR::backend::boost
 {
 
 /**
@@ -30,7 +30,7 @@ class Coroutine
   public:
 
   /**
-   * Defines the type accepted by the coroutine function as execution unit.
+   * Defines the type accepted by the coroutine function
    *
    * \internal The question as to whether std::function entails too much overhead needs to evaluated, and perhaps deprecate it in favor of static function references. For the time being, this seems adequate enough.
    *
@@ -77,7 +77,7 @@ class Coroutine
    */
   __INLINE__ void start(const coroutineFc_t &fc, void *const arg)
   {
-    const auto coroutineFc = [this, fc, arg](boost::context::continuation &&sink) {
+    const auto coroutineFc = [this, fc, arg](::boost::context::continuation &&sink) {
       // Storing caller context
       _context = std::move(sink);
 
@@ -101,7 +101,7 @@ class Coroutine
     _runningContext = true;
 
     // Creating new context
-    _context = boost::context::callcc(coroutineFc);
+    _context = ::boost::context::callcc(coroutineFc);
   }
 
   /**
@@ -126,7 +126,7 @@ class Coroutine
   /**
    * CPU execution context of the coroutine. This is the target context for the resume() function.
    */
-  boost::context::continuation _context;
+  ::boost::context::continuation _context;
 };
 
 } // namespace HiCR::backend::pthreads

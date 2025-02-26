@@ -5,7 +5,7 @@
 
 /**
  * @file executionState.hpp
- * @brief This file implements the abstract execution state class for the pthreads backend
+ * @brief This file implements the execution state class for the Boost backend
  * @author S. M. Martin
  * @date 9/10/2023
  */
@@ -15,9 +15,10 @@
 #include <functional>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/L0/executionState.hpp>
-#include <hicr/backends/pthreads/L0/executionUnit.hpp>
+#include <hicr/backends/boost/coroutine.hpp>
+#include <hicr/backends/boost/L0/executionUnit.hpp>
 
-namespace HiCR::backend::pthreads::L0
+namespace HiCR::backend::boost::L0
 {
 
 /**
@@ -34,39 +35,35 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    * \param[in] argument Argument (closure) to pass to the function to be ran
    */
   __INLINE__ ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> &executionUnit, void *const argument = nullptr)
-    : HiCR::L0::ExecutionState(executionUnit),
-    _argument(argument)
+    : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_pointer_cast<pthreads::L0::ExecutionUnit>(executionUnit);
+    auto e = dynamic_pointer_cast<boost::L0::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == nullptr) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType().c_str());
 
     // Getting function to execution from the execution unit
-    _fc = e->getFunction();
+    const auto &fc = e->getFunction();
+
+    // Starting coroutine containing the function
+    _coroutine.start(fc, argument);
   }
 
   protected:
 
-  __INLINE__ void resumeImpl() override
-  {
-    // Starting the function, passing its argument. It runs to completion.
-    _fc(_argument);
+  __INLINE__ void resumeImpl() override { _coroutine.resume(); }
 
-    // Setting as finished
-    _hasFinished = true;
-  }
+  __INLINE__ void suspendImpl() override { _coroutine.yield(); }
 
-  __INLINE__ void suspendImpl() override { HICR_THROW_LOGIC("Pthreads execution states do not support the 'suspend' operation"); }
-
-  __INLINE__ bool checkFinalizationImpl() override { return _hasFinished; }
+  __INLINE__ bool checkFinalizationImpl() override { return _coroutine.hasFinished(); }
 
   private:
 
-  ExecutionUnit::pthreadFc_t _fc;
-  void* const _argument;
-  bool _hasFinished = false;
+  /**
+   *  Task context preserved as a coroutine
+   */
+  boost::Coroutine _coroutine;
 };
 
 } // namespace HiCR::backend::pthreads::L0

@@ -14,12 +14,10 @@
 
 #include <memory>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/backends/hwloc/L0/computeResource.hpp>
-#include <hicr/backends/pthreads/L0/executionState.hpp>
-#include <hicr/backends/pthreads/L0/processingUnit.hpp>
+#include <hicr/backends/boost/L0/executionState.hpp>
 #include <hicr/core/L1/computeManager.hpp>
 
-namespace HiCR::backend::pthreads::L1
+namespace HiCR::backend::boost::L1
 {
 
  /**
@@ -53,84 +51,53 @@ class ComputeManager : public HiCR::L1::ComputeManager
    * \param[in] threadFunction The replicable function to execute
    * @return The newly created execution unit
    */
-  __INLINE__ static std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(const pthreadFc_t &threadFunction)
+  __INLINE__ static std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(const Coroutine::coroutineFc_t &coroutineFunction)
   {
-    return std::make_shared<pthreads::L0::ExecutionUnit>(threadFunction);
+    return std::make_shared<boost::L0::ExecutionUnit>(coroutineFunction);
   }
 
   __INLINE__ std::unique_ptr<HiCR::L0::ExecutionState> createExecutionState(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, void *const argument = nullptr) const override
   {
     // Creating and returning new execution state
-    return std::make_unique<pthreads::L0::ExecutionState>(executionUnit, argument);
+    return std::make_unique<boost::L0::ExecutionState>(executionUnit, argument);
   }
 
   [[nodiscard]] __INLINE__ std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
   {
-    return std::make_unique<pthreads::L0::ProcessingUnit>(computeResource);
+    { HICR_THROW_LOGIC("This backend does not implement this function"); }
   }
 
   private:
 
   __INLINE__ void initializeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    auto p = getPosixThreadPointer(processingUnit);
-
-    // The logic for starting the posix thread is in the class itself
-    p->initialize();
+    { HICR_THROW_LOGIC("This backend does not implement this function"); }
   }
 
   __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit, std::unique_ptr<HiCR::L0::ExecutionState> &executionState) override
   {
-    auto p = getPosixThreadPointer(processingUnit);
-
-    // The logic for starting the posix thread is in the class itself
-    p->start(executionState);
+    { HICR_THROW_LOGIC("This backend does not implement this function"); }
   }
 
   __INLINE__ void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    auto p = getPosixThreadPointer(processingUnit);
-
-    // The logic for suspending the posix thread is in the class itself
-    p->suspend();
+    { HICR_THROW_LOGIC("This backend does not implement this function"); }
   }
 
   __INLINE__ void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    auto p = getPosixThreadPointer(processingUnit);
-
-    // The logic for resuming the posix thread is in the class itself
-    p->resume();
+    { HICR_THROW_LOGIC("This backend does not implement this function"); }
   }
 
   __INLINE__ void terminateImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    auto p = getPosixThreadPointer(processingUnit);
-
-    // The logic for resuming the posix thread is in the class itself
-    p->terminate();
+    { HICR_THROW_LOGIC("This backend does not implement this function"); }
   }
 
   __INLINE__ void awaitImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    auto p = getPosixThreadPointer(processingUnit);
-
-    // The logic for awaiting the posix thread is in the class itself
-    p->await();
-  }
-
-  [[nodiscard]] __INLINE__ pthreads::L0::ProcessingUnit *getPosixThreadPointer(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit)
-  {
-    // We can only handle processing units of Posix Thread type. Make sure we got the correct one
-    // To make it fast and avoid string comparisons, we use the dynamic cast method
-    auto p = dynamic_cast<pthreads::L0::ProcessingUnit *>(processingUnit.get());
-
-    // If the processing unit is not recognized, throw error. We can use the processing unit's type (string) now.
-    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType());
-
-    // Returning converted pointer
-    return p;
+    { HICR_THROW_LOGIC("This backend does not implement this function"); }
   }
 };
 
-} // namespace HiCR::backend::pthreads::L1
+} // namespace HiCR::backend::boost::L1
