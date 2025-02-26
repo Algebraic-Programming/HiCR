@@ -66,4 +66,4 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   boost::Coroutine _coroutine;
 };
 
-} // namespace HiCR::backend::pthreads::L0
+} // namespace HiCR::backend::boost::L0

@@ -129,4 +129,4 @@ class Coroutine
   ::boost::context::continuation _context;
 };
 
-} // namespace HiCR::backend::pthreads
+} // namespace HiCR::backend::boost

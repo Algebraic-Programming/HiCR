@@ -59,4 +59,4 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
   const Coroutine::coroutineFc_t _fc;
 };
 
-} // namespace HiCR::backend::pthreads::L0
+} // namespace HiCR::backend::boost::L0

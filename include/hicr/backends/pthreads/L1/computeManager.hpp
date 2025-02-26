@@ -22,7 +22,7 @@
 namespace HiCR::backend::pthreads::L1
 {
 
- /**
+/**
  * Defines the function type including a closure pointer to be accepted for executiong by a pthread processing unit
  */
 using pthreadFc_t = std::function<void(void *)>;

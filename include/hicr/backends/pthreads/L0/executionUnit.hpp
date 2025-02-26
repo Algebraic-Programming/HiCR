@@ -62,7 +62,6 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    * Replicable internal C++ function to run in this execution unit
    */
   pthreadFc_t _fc;
-
 };
 
 } // namespace HiCR::backend::pthreads::L0

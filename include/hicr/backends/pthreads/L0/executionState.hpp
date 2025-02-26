@@ -35,7 +35,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    */
   __INLINE__ ExecutionState(const std::shared_ptr<HiCR::L0::ExecutionUnit> &executionUnit, void *const argument = nullptr)
     : HiCR::L0::ExecutionState(executionUnit),
-    _argument(argument)
+      _argument(argument)
   {
     // Getting up-casted pointer for the execution unit
     auto e = dynamic_pointer_cast<pthreads::L0::ExecutionUnit>(executionUnit);
@@ -65,8 +65,8 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   private:
 
   ExecutionUnit::pthreadFc_t _fc;
-  void* const _argument;
-  bool _hasFinished = false;
+  void *const                _argument;
+  bool                       _hasFinished = false;
 };
 
 } // namespace HiCR::backend::pthreads::L0

@@ -20,7 +20,7 @@
 namespace HiCR::backend::boost::L1
 {
 
- /**
+/**
  * Defines the function type including a closure pointer to be accepted for executiong by a pthread processing unit
  */
 using pthreadFc_t = std::function<void(void *)>;
@@ -48,7 +48,7 @@ class ComputeManager : public HiCR::L1::ComputeManager
    *
    * Its default constructor takes a simple replicable CPU-executable function
    *
-   * \param[in] threadFunction The replicable function to execute
+   * \param[in] coroutineFunction The replicable function to execute
    * @return The newly created execution unit
    */
   __INLINE__ static std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(const Coroutine::coroutineFc_t &coroutineFunction)
@@ -64,39 +64,53 @@ class ComputeManager : public HiCR::L1::ComputeManager
 
   [[nodiscard]] __INLINE__ std::unique_ptr<HiCR::L0::ProcessingUnit> createProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource) const override
   {
-    { HICR_THROW_LOGIC("This backend does not implement this function"); }
+    {
+      HICR_THROW_LOGIC("This backend does not implement this function");
+    }
   }
 
   private:
 
   __INLINE__ void initializeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    { HICR_THROW_LOGIC("This backend does not implement this function"); }
+    {
+      HICR_THROW_LOGIC("This backend does not implement this function");
+    }
   }
 
   __INLINE__ void startImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit, std::unique_ptr<HiCR::L0::ExecutionState> &executionState) override
   {
-    { HICR_THROW_LOGIC("This backend does not implement this function"); }
+    {
+      HICR_THROW_LOGIC("This backend does not implement this function");
+    }
   }
 
   __INLINE__ void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    { HICR_THROW_LOGIC("This backend does not implement this function"); }
+    {
+      HICR_THROW_LOGIC("This backend does not implement this function");
+    }
   }
 
   __INLINE__ void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    { HICR_THROW_LOGIC("This backend does not implement this function"); }
+    {
+      HICR_THROW_LOGIC("This backend does not implement this function");
+    }
   }
 
   __INLINE__ void terminateImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    { HICR_THROW_LOGIC("This backend does not implement this function"); }
+    {
+      HICR_THROW_LOGIC("This backend does not implement this function");
+    }
   }
 
   __INLINE__ void awaitImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override
   {
-    { HICR_THROW_LOGIC("This backend does not implement this function"); }
+    {
+      HICR_THROW_LOGIC("This backend does not implement this function");
+    }
   }
 };
 
