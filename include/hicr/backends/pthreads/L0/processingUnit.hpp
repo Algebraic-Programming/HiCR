@@ -22,8 +22,8 @@
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
-#include <hicr/backends/pthreads/L0/executionState.hpp>
-#include <hicr/backends/pthreads/L0/executionUnit.hpp>
+#include <hicr/backends/boost/L0/executionState.hpp>
+#include <hicr/backends/boost/L0/executionUnit.hpp>
 #include <hicr/backends/hwloc/L0/computeResource.hpp>
 
 #ifndef _GNU_SOURCE

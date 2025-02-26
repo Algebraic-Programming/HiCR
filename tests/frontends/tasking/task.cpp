@@ -11,8 +11,9 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/boost/L1/computeManager.hpp>
 #include <hicr/frontends/tasking/task.hpp>
 #include <hicr/frontends/tasking/tasking.hpp>
 
@@ -68,16 +69,19 @@ TEST(Task, Run)
   };
 
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::host::pthreads::L1::ComputeManager c;
+  HiCR::backend::pthreads::L1::ComputeManager cp;
+
+  // Instantiating Booost-based host (CPU) compute manager
+  HiCR::backend::boost::L1::ComputeManager cb;
 
   // Creating execution unit
-  auto u = c.createExecutionUnit(f);
+  auto u = cb.createExecutionUnit(f);
 
   // Creating task
   t = new HiCR::tasking::Task(u);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto tp = tm.queryTopology();
@@ -92,13 +96,13 @@ TEST(Task, Run)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating processing unit from the compute resource
-  auto processingUnit = c.createProcessingUnit(firstComputeResource);
+  auto processingUnit = cp.createProcessingUnit(firstComputeResource);
 
   // Initializing processing unit
-  c.initialize(processingUnit);
+  cp.initialize(processingUnit);
 
   // Creating execution state
-  auto executionState = c.createExecutionState(u, t);
+  auto executionState = cb.createExecutionState(u, t);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -161,16 +165,19 @@ TEST(Task, Callbacks)
   };
 
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::host::pthreads::L1::ComputeManager c;
+  HiCR::backend::pthreads::L1::ComputeManager cp;
+
+  // Instantiating Pthread-based host (CPU) compute manager
+  HiCR::backend::boost::L1::ComputeManager cb;
 
   // Creating execution unit
-  auto u = c.createExecutionUnit(f);
+  auto u = cb.createExecutionUnit(f);
 
   // Creating task
   t = new HiCR::tasking::Task(u);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto tp = tm.queryTopology();
@@ -185,13 +192,13 @@ TEST(Task, Callbacks)
   auto firstComputeResource = *computeResources.begin();
 
   // Creating processing unit from the compute resource
-  auto processingUnit = c.createProcessingUnit(firstComputeResource);
+  auto processingUnit = cp.createProcessingUnit(firstComputeResource);
 
   // Creating execution state
-  auto executionState = c.createExecutionState(u);
+  auto executionState = cb.createExecutionState(u);
 
   // Initializing processing unit
-  c.initialize(processingUnit);
+  cp.initialize(processingUnit);
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));
@@ -221,7 +228,7 @@ TEST(Task, Callbacks)
   t = new HiCR::tasking::Task(u);
 
   // Creating execution state
-  executionState = c.createExecutionState(t->getExecutionUnit());
+  executionState = cb.createExecutionState(t->getExecutionUnit());
 
   // Then initialize the task with the new execution state
   t->initialize(std::move(executionState));

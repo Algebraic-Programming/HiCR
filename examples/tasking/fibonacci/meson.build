@@ -1,6 +1,6 @@
 testSuite = [ 'examples', 'tasking' ]
 
-if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
+if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends and 'boost' in enabledBackends
 	fibonacci = executable('fibonacci', [ 'source/main.cpp'], dependencies: hicrBuildDep )
 
 	if get_option('buildTests')

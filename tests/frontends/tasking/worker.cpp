@@ -11,17 +11,17 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/pthreads/L1/computeManager.hpp>
 #include <hicr/frontends/tasking/task.hpp>
 #include <hicr/frontends/tasking/worker.hpp>
 #include <hicr/frontends/tasking/tasking.hpp>
 
 TEST(Worker, Construction)
 {
-  HiCR::tasking::Worker                            *w  = NULL;
-  HiCR::L1::ComputeManager                         *m1 = NULL;
-  HiCR::backend::host::pthreads::L1::ComputeManager m2;
+  HiCR::tasking::Worker                      *w  = NULL;
+  HiCR::L1::ComputeManager                   *m1 = NULL;
+  HiCR::backend::pthreads::L1::ComputeManager m2;
 
   EXPECT_THROW(w = new HiCR::tasking::Worker(m1, []() { return (HiCR::tasking::Task *)NULL; }), HiCR::LogicException);
   EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m2, []() { return (HiCR::tasking::Task *)NULL; }));
@@ -32,7 +32,7 @@ TEST(Worker, Construction)
 TEST(Task, SetterAndGetters)
 {
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::host::pthreads::L1::ComputeManager c;
+  HiCR::backend::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
   HiCR::tasking::Worker w(&c, []() { return (HiCR::tasking::Task *)NULL; });
@@ -43,7 +43,7 @@ TEST(Task, SetterAndGetters)
   // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -70,7 +70,7 @@ TEST(Task, SetterAndGetters)
 TEST(Worker, LifeCycle)
 {
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::host::pthreads::L1::ComputeManager c;
+  HiCR::backend::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
   HiCR::tasking::Worker w(&c, []() { return (HiCR::tasking::Task *)NULL; });
@@ -84,7 +84,7 @@ TEST(Worker, LifeCycle)
   // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();

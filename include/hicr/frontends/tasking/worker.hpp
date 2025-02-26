@@ -22,6 +22,7 @@
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
 #include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/boost/L1/computeManager.hpp>
 #include "task.hpp"
 
 namespace HiCR::tasking
@@ -144,7 +145,7 @@ class Worker
    */
   Worker(HiCR::L1::ComputeManager *computeManager, pullFunction_t pullFunction, workerCallbackMap_t *callbackMap = nullptr)
     : _pullFunction(std::move(pullFunction)),
-      _computeManager(dynamic_cast<HiCR::backend::pthreads::L1::ComputeManager *>(computeManager)),
+      _computeManager(computeManager),
       _callbackMap(callbackMap)
   {
     // Checking the passed compute manager is of a supported type
@@ -217,7 +218,7 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = HiCR::backend::pthreads::L1::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
+    auto executionUnit = HiCR::backend::boost::L1::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
 
     // Creating worker's execution state
     auto executionState = _computeManager->createExecutionState(executionUnit, this);
@@ -345,9 +346,9 @@ class Worker
   std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnits;
 
   /**
-   * Compute manager to use to instantiate and manage the worker's and task execution states
+   * Compute manager to use to instantiate and manage the workers
    */
-  HiCR::backend::pthreads::L1::ComputeManager *const _computeManager;
+  HiCR::L1::ComputeManager *const _computeManager;
 
   /**
    *  Map of callbacks to trigger
