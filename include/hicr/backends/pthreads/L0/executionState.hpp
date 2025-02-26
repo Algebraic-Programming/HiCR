@@ -37,8 +37,6 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     : HiCR::L0::ExecutionState(executionUnit),
       _argument(argument)
   {
-    bool isRecognized = false;
-
     // Getting up-casted pointer for the execution unit
     auto e = static_pointer_cast<pthreads::L0::ExecutionUnit>(executionUnit);
 
