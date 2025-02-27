@@ -20,10 +20,9 @@
 TEST(Worker, Construction)
 {
   HiCR::tasking::Worker                      *w  = NULL;
-  HiCR::L1::ComputeManager                   *m1 = NULL;
-  HiCR::backend::pthreads::L1::ComputeManager m2;
+  HiCR::backend::pthreads::L1::ComputeManager m;
 
-  EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m2, &m2, []() { return (HiCR::tasking::Task *)NULL; }));
+  EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m, &m, []() { return (HiCR::tasking::Task *)NULL; }));
   EXPECT_FALSE(w == nullptr);
   delete w;
 }
