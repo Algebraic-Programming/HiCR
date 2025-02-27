@@ -19,7 +19,7 @@
 
 TEST(Worker, Construction)
 {
-  HiCR::tasking::Worker                      *w  = NULL;
+  HiCR::tasking::Worker                      *w = NULL;
   HiCR::backend::pthreads::L1::ComputeManager m;
 
   EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m, &m, []() { return (HiCR::tasking::Task *)NULL; }));
