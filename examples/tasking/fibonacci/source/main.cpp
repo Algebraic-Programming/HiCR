@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <hwloc.h>
 #include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/boost/L1/computeManager.hpp>
 #include <hicr/backends/hwloc/L1/topologyManager.hpp>
 #include "fibonacci.hpp"
 
@@ -48,11 +49,20 @@ int main(int argc, char **argv)
     computeResources.insert(computeResources.end(), cr.begin(), cr.end());
   }
 
-  // Initializing Pthreads-based compute manager to run tasks in parallel
-  HiCR::backend::pthreads::L1::ComputeManager computeManager;
+  // Initializing Boost-based compute manager to instantiate suspendable coroutines
+  HiCR::backend::boost::L1::ComputeManager boostComputeManager;
+
+  // Initializing Pthreads-based compute manager to instantiate processing units
+  HiCR::backend::pthreads::L1::ComputeManager pthreadsComputeManager;
+
+  // Initializing runtime with the appropriate amount of max tasks
+  Runtime runtime(&boostComputeManager, &pthreadsComputeManager, fibonacciTaskCount[initialValue]);
+
+  // Assigning processing resource to the runtime system
+  for (const auto &computeResource : computeResources) runtime.addProcessingUnit(pthreadsComputeManager.createProcessingUnit(computeResource));
 
   // Running Fibonacci example
-  auto result = fibonacciDriver(initialValue, &computeManager, computeResources);
+  auto result = fibonacciDriver(runtime, initialValue);
 
   // Printing result
   printf("Fib(%lu) = %lu\n", initialValue, result);

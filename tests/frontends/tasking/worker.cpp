@@ -19,12 +19,10 @@
 
 TEST(Worker, Construction)
 {
-  HiCR::tasking::Worker                      *w  = NULL;
-  HiCR::L1::ComputeManager                   *m1 = NULL;
-  HiCR::backend::pthreads::L1::ComputeManager m2;
+  HiCR::tasking::Worker                      *w = NULL;
+  HiCR::backend::pthreads::L1::ComputeManager m;
 
-  EXPECT_THROW(w = new HiCR::tasking::Worker(m1, []() { return (HiCR::tasking::Task *)NULL; }), HiCR::LogicException);
-  EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m2, []() { return (HiCR::tasking::Task *)NULL; }));
+  EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m, &m, []() { return (HiCR::tasking::Task *)NULL; }));
   EXPECT_FALSE(w == nullptr);
   delete w;
 }
@@ -35,7 +33,7 @@ TEST(Task, SetterAndGetters)
   HiCR::backend::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
-  HiCR::tasking::Worker w(&c, []() { return (HiCR::tasking::Task *)NULL; });
+  HiCR::tasking::Worker w(&c, &c, []() { return (HiCR::tasking::Task *)NULL; });
 
   // Getting empty lists
   EXPECT_TRUE(w.getProcessingUnits().empty());
@@ -73,7 +71,7 @@ TEST(Worker, LifeCycle)
   HiCR::backend::pthreads::L1::ComputeManager c;
 
   // Creating taskr worker
-  HiCR::tasking::Worker w(&c, []() { return (HiCR::tasking::Task *)NULL; });
+  HiCR::tasking::Worker w(&c, &c, []() { return (HiCR::tasking::Task *)NULL; });
 
   // Worker state should in an uninitialized state first
   EXPECT_EQ(w.getState(), HiCR::tasking::Worker::state_t::uninitialized);

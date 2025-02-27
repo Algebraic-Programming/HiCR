@@ -4,9 +4,8 @@
 #include <hicr/backends/pthreads/L1/computeManager.hpp>
 #include "../runtime.hpp"
 
-static HiCR::backend::pthreads::L1::ComputeManager *_computeManager;
-static Runtime                                     *_runtime;
-static std::atomic<uint64_t>                        _taskCounter;
+static Runtime              *_runtime;
+static std::atomic<uint64_t> _taskCounter;
 
 // This function serves to encode a fibonacci task label
 inline const uint64_t getFibonacciLabel(const uint64_t x, const uint64_t _initialValue) { return _initialValue; }
@@ -23,8 +22,8 @@ uint64_t fibonacci(Task *currentTask, const uint64_t x)
 
   uint64_t result1 = 0;
   uint64_t result2 = 0;
-  auto     fibFc1  = _computeManager->createExecutionUnit([&](void *arg) { result1 = fibonacci((Task *)arg, x - 1); });
-  auto     fibFc2  = _computeManager->createExecutionUnit([&](void *arg) { result2 = fibonacci((Task *)arg, x - 2); });
+  auto     fibFc1  = [&](void *arg) { result1 = fibonacci((Task *)arg, x - 1); };
+  auto     fibFc2  = [&](void *arg) { result2 = fibonacci((Task *)arg, x - 2); };
 
   uint64_t taskId1 = _taskCounter.fetch_add(1);
   uint64_t taskId2 = _taskCounter.fetch_add(1);
@@ -43,27 +42,20 @@ uint64_t fibonacci(Task *currentTask, const uint64_t x)
   return result1 + result2;
 }
 
-uint64_t fibonacciDriver(const uint64_t initialValue, HiCR::backend::pthreads::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t &computeResources)
+uint64_t fibonacciDriver(Runtime &runtime, const uint64_t initialValue)
 {
-  // Initializing runtime with the appropriate amount of max tasks
-  Runtime runtime(fibonacciTaskCount[initialValue]);
-
   // Setting event handler to re-add task to the queue after it suspended itself
   runtime.setCallbackHandler(HiCR::tasking::Task::callback_t::onTaskSuspend, [&](HiCR::tasking::Task *task) { runtime.awakenTask(task); });
 
   // Setting global variables
-  _runtime        = &runtime;
-  _computeManager = computeManager;
-  _taskCounter    = 0;
-
-  // Assigning processing resource to TaskR
-  for (const auto &computeResource : computeResources) runtime.addProcessingUnit(computeManager->createProcessingUnit(computeResource));
+  _runtime     = &runtime;
+  _taskCounter = 0;
 
   // Storage for result
   uint64_t result = 0;
 
   // Creating task functions
-  auto initialFc = computeManager->createExecutionUnit([&](void *arg) { result = fibonacci((Task *)arg, initialValue); });
+  auto initialFc = [&](void *arg) { result = fibonacci((Task *)arg, initialValue); };
 
   // Now creating tasks and their dependency graph
   auto initialTask = new Task(_taskCounter.fetch_add(1), initialFc);
@@ -71,7 +63,7 @@ uint64_t fibonacciDriver(const uint64_t initialValue, HiCR::backend::pthreads::L
 
   // Running runtime
   auto startTime = std::chrono::high_resolution_clock::now();
-  runtime.run(computeManager);
+  runtime.run();
   auto endTime     = std::chrono::high_resolution_clock::now();
   auto computeTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
   printf("Running Time: %0.5fs\n", computeTime.count());

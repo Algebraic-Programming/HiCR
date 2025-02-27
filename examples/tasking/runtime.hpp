@@ -34,6 +34,16 @@ class Runtime
   private:
 
   /**
+   * Compute manager to use to instantiate task's execution states
+   */
+  HiCR::L1::ComputeManager *const _executionStateComputeManager;
+
+  /**
+   * Compute manager to use to instantiate processing units
+   */
+  HiCR::L1::ComputeManager *const _processingUnitComputeManager;
+
+  /**
    * Pointer to the internal HiCR event map, required to capture finishing or yielding tasks
    */
   HiCR::tasking::Task::taskCallbackMap_t *_callbackMap;
@@ -111,10 +121,15 @@ class Runtime
   public:
 
   /**
-   * Constructor of the TaskR Runtime.
+   * Constructor of the example tasking runtime.
    */
-  Runtime(const size_t maxTasks = __TASKR_DEFAULT_MAX_TASKS, const size_t maxWorkers = __TASKR_DEFAULT_MAX_WORKERS)
-    : _maxTasks(maxTasks),
+  Runtime(HiCR::L1::ComputeManager *executionStateComputeManager,
+          HiCR::L1::ComputeManager *processingUnitComputeManager,
+          const size_t              maxTasks   = __TASKR_DEFAULT_MAX_TASKS,
+          const size_t              maxWorkers = __TASKR_DEFAULT_MAX_WORKERS)
+    : _executionStateComputeManager(executionStateComputeManager),
+      _processingUnitComputeManager(processingUnitComputeManager),
+      _maxTasks(maxTasks),
       _maxWorkers(maxWorkers)
   {
     _callbackMap          = new HiCR::tasking::Task::taskCallbackMap_t();
@@ -237,7 +252,7 @@ class Runtime
    *
    * \param[in] computeManager The compute manager to use to coordinate the execution of processing units and tasks
    */
-  __INLINE__ void run(HiCR::L1::ComputeManager *computeManager)
+  __INLINE__ void run()
   {
     // Creating event map ands events
     _callbackMap->setCallback(HiCR::tasking::Task::callback_t::onTaskFinish, [this](HiCR::tasking::Task *task) { onTaskFinish((Task *)task); });
@@ -247,7 +262,7 @@ class Runtime
     for (auto &pu : _processingUnits)
     {
       // Creating new worker
-      auto worker = new HiCR::tasking::Worker(computeManager, [this, workerId]() { return checkWaitingTasks(workerId); });
+      auto worker = new HiCR::tasking::Worker(_executionStateComputeManager, _processingUnitComputeManager, [this, workerId]() { return checkWaitingTasks(workerId); });
 
       // Assigning resource to the thread
       worker->addProcessingUnit(std::move(pu));
