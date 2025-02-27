@@ -21,8 +21,8 @@
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
+#include <hicr/core/L1/computeManager.hpp>
 #include <hicr/backends/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/boost/L1/computeManager.hpp>
 #include "task.hpp"
 
 namespace HiCR::tasking
@@ -139,18 +139,20 @@ class Worker
   /**
    * Constructor for the worker class.
    *
-   * \param[in] computeManager A backend's compute manager, meant to initialize and run the task's execution states.
+   * \param[in] executionStateComputeManager A backend's compute manager to initialize and run the task's execution states.
+   * \param[in] processingUnitComputeManager A backend's compute manager to initialize and run processing units
    * \param[in] pullFunction A callback for the worker to get a new task to execute
    * @param[in] callbackMap Pointer to the callback map to be called by the worker
    */
-  Worker(HiCR::L1::ComputeManager *computeManager, pullFunction_t pullFunction, workerCallbackMap_t *callbackMap = nullptr)
-    : _pullFunction(std::move(pullFunction)),
-      _computeManager(computeManager),
+  Worker(HiCR::L1::ComputeManager *executionStateComputeManager,
+         HiCR::L1::ComputeManager *processingUnitComputeManager,
+         pullFunction_t            pullFunction,
+         workerCallbackMap_t      *callbackMap = nullptr)
+    : _executionStateComputeManager(executionStateComputeManager),
+      _processingUnitComputeManager(processingUnitComputeManager),
+      _pullFunction(std::move(pullFunction)),
       _callbackMap(callbackMap)
-  {
-    // Checking the passed compute manager is of a supported type
-    if (_computeManager == nullptr) HICR_THROW_LOGIC("HiCR workers can only be instantiated with a shared memory compute manager.");
-  }
+  {}
 
   virtual ~Worker() = default;
 
@@ -197,7 +199,7 @@ class Worker
     if (prevState != state_t::uninitialized && prevState != state_t::terminated) HICR_THROW_RUNTIME("Attempting to initialize already initialized worker");
 
     // Initializing all resources
-    for (auto &r : _processingUnits) _computeManager->initialize(r);
+    for (auto &r : _processingUnits) _processingUnitComputeManager->initialize(r);
 
     // Transitioning state
     _state = state_t::ready;
@@ -218,13 +220,13 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = HiCR::backend::boost::L1::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
+    auto executionUnit = HiCR::backend::pthreads::L1::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
 
     // Creating worker's execution state
-    auto executionState = _computeManager->createExecutionState(executionUnit, this);
+    auto executionState = _executionStateComputeManager->createExecutionState(executionUnit, this);
 
     // Launching worker in the lead resource (first one to be added)
-    _computeManager->start(_processingUnits[0], executionState);
+    _processingUnitComputeManager->start(_processingUnits[0], executionState);
   }
 
   /**
@@ -282,7 +284,7 @@ class Worker
       HICR_THROW_RUNTIME("Attempting to wait for a worker that has not yet started or has already terminated");
 
     // Wait for the resources to free up
-    for (auto &p : _processingUnits) _computeManager->await(p);
+    for (auto &p : _processingUnits) _processingUnitComputeManager->await(p);
 
     // Transitioning state
     _state = state_t::terminated;
@@ -321,6 +323,16 @@ class Worker
   private:
 
   /**
+   * Compute manager to use to instantiate task's execution states
+   */
+  HiCR::L1::ComputeManager *const _executionStateComputeManager;
+
+  /**
+   * Compute manager to use to instantiate processing units
+   */
+  HiCR::L1::ComputeManager *const _processingUnitComputeManager;
+
+  /**
    * Defines the current task being handled by this worker
   */
   HiCR::tasking::Task *_currentTask = nullptr;
@@ -344,11 +356,6 @@ class Worker
    * Group of resources the worker can freely use
    */
   std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnits;
-
-  /**
-   * Compute manager to use to instantiate and manage the workers
-   */
-  HiCR::L1::ComputeManager *const _computeManager;
 
   /**
    *  Map of callbacks to trigger
@@ -379,7 +386,7 @@ class Worker
         if (_currentTask->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
         {
           // First, create new execution state for the processing unit
-          auto executionState = _computeManager->createExecutionState(_currentTask->getExecutionUnit(), _currentTask);
+          auto executionState = _executionStateComputeManager->createExecutionState(_currentTask->getExecutionUnit(), _currentTask);
 
           // Then initialize the task with the new execution state
           _currentTask->initialize(std::move(executionState));
@@ -399,7 +406,7 @@ class Worker
         if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerSuspend);
 
         // Suspending other processing units
-        for (size_t i = 1; i < _processingUnits.size(); i++) _computeManager->suspend(_processingUnits[i]);
+        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnitComputeManager->suspend(_processingUnits[i]);
 
         // Putting current processing unit to check every so often
         while (checkResumeConditions() == false) usleep(_suspendIntervalMs * _MILISECONDS_PER_SECOND);
@@ -408,7 +415,7 @@ class Worker
         if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerResume);
 
         // Resuming other processing units
-        for (size_t i = 1; i < _processingUnits.size(); i++) _computeManager->resume(_processingUnits[i]);
+        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnitComputeManager->resume(_processingUnits[i]);
 
         // Setting worker as running
         _state = state_t::running;
@@ -421,10 +428,10 @@ class Worker
         if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerTerminate);
 
         // Terminate secondary processing units first
-        for (size_t i = 1; i < _processingUnits.size(); i++) _computeManager->terminate(_processingUnits[i]);
+        for (size_t i = 1; i < _processingUnits.size(); i++) _processingUnitComputeManager->terminate(_processingUnits[i]);
 
         // Then terminate current processing unit
-        _computeManager->terminate(_processingUnits[0]);
+        _processingUnitComputeManager->terminate(_processingUnits[0]);
 
         // Return immediately
         return;

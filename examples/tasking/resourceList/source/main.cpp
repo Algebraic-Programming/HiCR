@@ -28,7 +28,7 @@ int main(int argc, char **argv)
   for (auto d : t.getDevices()) computeResourceLists.push_back(d->getComputeResourceList());
 
   // Initializing runtime
-  Runtime runtime;
+  Runtime runtime(&computeManager, &computeManager);
 
   // Getting work task count
   size_t workTaskCount = 100;
@@ -66,15 +66,15 @@ int main(int argc, char **argv)
     }
 
   // Creating task  execution unit
-  auto taskExecutionUnit = computeManager.createExecutionUnit([&iterations](void *arg) { work(iterations); });
+  auto taskFc = [&iterations](void *arg) { work(iterations); };
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());
-  for (size_t i = 0; i < workTaskCount; i++) runtime.addTask(new Task(i, taskExecutionUnit));
+  for (size_t i = 0; i < workTaskCount; i++) runtime.addTask(new Task(i, taskFc));
 
   // Running runtime only on the core subset
   auto t0 = std::chrono::high_resolution_clock::now();
-  runtime.run(&computeManager);
+  runtime.run();
   auto tf = std::chrono::high_resolution_clock::now();
 
   auto dt = std::chrono::duration_cast<std::chrono::nanoseconds>(tf - t0).count();

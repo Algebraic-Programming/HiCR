@@ -5,18 +5,12 @@
 
 #define ITERATIONS 10
 
-void abcTasks(HiCR::backend::pthreads::L1::ComputeManager *computeManager, const HiCR::L0::Device::computeResourceList_t &computeResources)
+void abcTasks(Runtime &runtime)
 {
-  // Initializing runtime
-  Runtime runtime;
-
-  // Assigning processing Re to TaskR
-  for (const auto &computeResource : computeResources) runtime.addProcessingUnit(computeManager->createProcessingUnit(computeResource));
-
   // Creating task functions
-  auto taskAfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task A %lu\n", ((Task *)arg)->getLabel()); });
-  auto taskBfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task B %lu\n", ((Task *)arg)->getLabel()); });
-  auto taskCfc = computeManager->createExecutionUnit([&runtime](void *arg) { printf("Task C %lu\n", ((Task *)arg)->getLabel()); });
+  auto taskAfc = [&runtime](void *arg) { printf("Task A %lu\n", ((Task *)arg)->getLabel()); };
+  auto taskBfc = [&runtime](void *arg) { printf("Task B %lu\n", ((Task *)arg)->getLabel()); };
+  auto taskCfc = [&runtime](void *arg) { printf("Task C %lu\n", ((Task *)arg)->getLabel()); };
 
   // Now creating tasks and their dependency graph
   for (size_t i = 0; i < ITERATIONS; i++)
@@ -41,5 +35,5 @@ void abcTasks(HiCR::backend::pthreads::L1::ComputeManager *computeManager, const
   }
 
   // Running runtime
-  runtime.run(computeManager);
+  runtime.run();
 }

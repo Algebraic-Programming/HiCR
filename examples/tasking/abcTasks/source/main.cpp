@@ -26,8 +26,14 @@ int main(int argc, char **argv)
   // Initializing Pthreads-based compute manager to run tasks in parallel
   HiCR::backend::pthreads::L1::ComputeManager computeManager;
 
+  // Initializing runtime
+  Runtime runtime(&computeManager, &computeManager);
+
+  // Assigning processing units for the runtime
+  for (const auto &computeResource : computeResources) runtime.addProcessingUnit(computeManager.createProcessingUnit(computeResource));
+
   // Running ABCtasks example
-  abcTasks(&computeManager, computeResources);
+  abcTasks(runtime);
 
   // Freeing up memory
   hwloc_topology_destroy(topology);

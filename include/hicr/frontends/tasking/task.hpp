@@ -22,6 +22,7 @@
 #include <hicr/core/L0/executionState.hpp>
 #include <hicr/core/L0/executionUnit.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
+#include <hicr/core/L1/computeManager.hpp>
 #include "callbackMap.hpp"
 #include "common.hpp"
 
