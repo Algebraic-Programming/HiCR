@@ -40,9 +40,6 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     // Getting up-casted pointer for the execution unit
     auto e = static_cast<boost::L0::ExecutionUnit *>(executionUnit.get());
 
-    // Checking whether the execution unit passed is compatible with this backend
-    if (e == nullptr) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType().c_str());
-
     // Getting function to execution from the execution unit
     const auto &fc = e->getFunction();
 
