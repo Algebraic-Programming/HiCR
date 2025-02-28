@@ -29,110 +29,110 @@ namespace HiCR::tasking
 {
 
 /**
-  * Default interval (milliseconds) of idle time to trigger a worker to suspend
-  */
+ * Default interval (milliseconds) of idle time to trigger a worker to suspend
+ */
 constexpr size_t _DEFAULT_SUSPEND_INTERVAL_MS = 1000;
 
 /**
-  * Constant: Number of milliseconds in one second
-  */
+ * Constant: Number of milliseconds in one second
+ */
 constexpr size_t _MILISECONDS_PER_SECOND = 1000;
 
 /**
-  * Defines a standard type for a pull function.
-  */
+ * Defines a standard type for a pull function.
+ */
 using pullFunction_t = std::function<HiCR::tasking::Task *()>;
 
 /**
-  * Defines the worker class, which is in charge of executing tasks.
-  *
-  * To receive pending tasks for execution, the worker needs a pull function. Upon execution, the worker will constantly check the pull function in search for new tasks for execution.
-  *
-  * To execute a task, the worker needs to be assigned at least a computational resource capable to executing the type of task submitted.
-  */
+ * Defines the worker class, which is in charge of executing tasks.
+ *
+ * To receive pending tasks for execution, the worker needs a pull function. Upon execution, the worker will constantly check the pull function in search for new tasks for execution.
+ *
+ * To execute a task, the worker needs to be assigned at least a computational resource capable to executing the type of task submitted.
+ */
 class Worker
 {
   public:
 
   /**
-    * Enumeration of possible task-related callbacks that can trigger a user-defined function callback
-    */
+   * Enumeration of possible task-related callbacks that can trigger a user-defined function callback
+   */
   enum callback_t
   {
     /**
-      * Triggered as the task starts or resumes execution
-      */
+     * Triggered as the task starts or resumes execution
+     */
     onWorkerStart,
 
     /**
-      * Triggered as the workers received a task pointer
-      */
+     * Triggered as the workers received a task pointer
+     */
     onWorkerTaskPulled,
 
     /**
-      * Triggered as the worker is preempted into suspension by an asynchronous callback
-      */
+     * Triggered as the worker is preempted into suspension by an asynchronous callback
+     */
     onWorkerSuspend,
 
     /**
-      * Triggered as the worker is resumed from suspension
-      */
+     * Triggered as the worker is resumed from suspension
+     */
     onWorkerResume,
 
     /**
-      * Triggered as the worker terminates
-      */
+     * Triggered as the worker terminates
+     */
     onWorkerTerminate,
   };
 
   /**
-    * Type definition for the worker's callback map
-    */
+   * Type definition for the worker's callback map
+   */
   using workerCallbackMap_t = HiCR::tasking::CallbackMap<Worker *, callback_t>;
 
   /**
-    * Complete state set that a worker can be in
-    */
+   * Complete state set that a worker can be in
+   */
   enum state_t
   {
     /**
-      * The worker object has been instantiated but not initialized
-      */
+     * The worker object has been instantiated but not initialized
+     */
     uninitialized,
 
     /**
-      * The worker has been ininitalized (or is back from executing) and can currently run
-      */
+     * The worker has been ininitalized (or is back from executing) and can currently run
+     */
     ready,
 
     /**
-      * The worker has started executing
-      */
+     * The worker has started executing
+     */
     running,
 
     /**
-      * The worker is in the process of being suspended
-      */
+     * The worker is in the process of being suspended
+     */
     suspending,
 
     /**
-      * The worker has suspended
-      */
+     * The worker has suspended
+     */
     suspended,
 
     /**
-      * The worker is in the process of being resumed
-      */
+     * The worker is in the process of being resumed
+     */
     resuming,
 
     /**
-      * The worker has been issued for termination (but still running)
-      */
+     * The worker has been issued for termination (but still running)
+     */
     terminating,
 
     /**
-      * The worker has terminated
-      */
+     * The worker has terminated
+     */
     terminated
   };
 
@@ -157,36 +157,36 @@ class Worker
   virtual ~Worker() = default;
 
   /**
-    * Queries the worker's internal state.
-    *
-    * @return The worker's internal state
-    */
+   * Queries the worker's internal state.
+   *
+   * @return The worker's internal state
+   */
   __INLINE__ const state_t getState() { return _state; }
 
   /**
-    * Sets the worker's callback map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
-    *
-    * @param[in] callbackMap A pointer to an callback map
-    */
+   * Sets the worker's callback map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.
+   *
+   * @param[in] callbackMap A pointer to an callback map
+   */
   __INLINE__ void setCallbackMap(workerCallbackMap_t *callbackMap) { _callbackMap = callbackMap; }
 
   /**
-    * Gets the task's callback map.
-    *
-    * @return A pointer to the worker's an callback map. nullptr, if not defined.
-    */
+   * Gets the task's callback map.
+   *
+   * @return A pointer to the worker's an callback map. nullptr, if not defined.
+   */
   __INLINE__ workerCallbackMap_t *getCallbackMap() { return _callbackMap; }
 
   /**
-    * Gets the current task being handled by the worker
-    *
-    * @return A pointer to the task being handled by the worker. nullptr if none
-    */
+   * Gets the current task being handled by the worker
+   *
+   * @return A pointer to the task being handled by the worker. nullptr if none
+   */
   __INLINE__ HiCR::tasking::Task *getCurrentTask() { return _currentTask; }
 
   /**
-    * Initializes the worker and its resources
-    */
+   * Initializes the worker and its resources
+   */
   __INLINE__ void initialize()
   {
     // Grabbing state value
@@ -206,8 +206,8 @@ class Worker
   }
 
   /**
-    * Initializes the worker's task execution loop
-    */
+   * Initializes the worker's task execution loop
+   */
   __INLINE__ void start()
   {
     // Grabbing state value
@@ -230,11 +230,11 @@ class Worker
   }
 
   /**
-    * Suspends the execution of the underlying resource(s). The resources are guaranteed to be suspended after this function is called
-    * 
-    * @return True, if the worker has been put to suspended; False, otherwise. The latter is returned if the thread wasn't running in the first place
-    * 
-    */
+   * Suspends the execution of the underlying resource(s). The resources are guaranteed to be suspended after this function is called
+   * 
+   * @return True, if the worker has been put to suspended; False, otherwise. The latter is returned if the thread wasn't running in the first place
+   * 
+   */
   __INLINE__ bool suspend()
   {
     // Doing an atomic exchange
@@ -246,10 +246,10 @@ class Worker
   }
 
   /**
-    * Resumes the execution of the underlying resource(s) after suspension
-    * 
-    * @return True, if the worker has been put to resume; False, otherwise. The latter is returned if the thread wasn't suspended in the first place
-    */
+   * Resumes the execution of the underlying resource(s) after suspension
+   * 
+   * @return True, if the worker has been put to resume; False, otherwise. The latter is returned if the thread wasn't suspended in the first place
+   */
   __INLINE__ bool resume()
   {
     // Doing an atomic exchange
@@ -261,8 +261,8 @@ class Worker
   }
 
   /**
-    * Terminates the worker's task execution loop. After stopping it can be restarted later
-    */
+   * Terminates the worker's task execution loop. After stopping it can be restarted later
+   */
   __INLINE__ void terminate()
   {
     // Transitioning state
@@ -273,8 +273,8 @@ class Worker
   }
 
   /**
-    * A function that will suspend the execution of the caller until the worker has stopped
-    */
+   * A function that will suspend the execution of the caller until the worker has stopped
+   */
   __INLINE__ void await()
   {
     // Getting state
@@ -291,24 +291,24 @@ class Worker
   }
 
   /**
-    * Adds a processing unit to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
-    *
-    * @param[in] pu Processing unit to assign to the worker
-    */
+   * Adds a processing unit to the worker. The worker will freely use this resource during execution. The worker may contain multiple resources and resource types.
+   *
+   * @param[in] pu Processing unit to assign to the worker
+   */
   __INLINE__ void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
-    * Gets a reference to the workers assigned processing units.
-    *
-    * @return A container with the worker's resources
-    */
+   * Gets a reference to the workers assigned processing units.
+   *
+   * @return A container with the worker's resources
+   */
   __INLINE__ std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> &getProcessingUnits() { return _processingUnits; }
 
   /**
-    * This function sets the sleep intervals for a worker after it has been suspended, and in between checks for resuming
-    * 
-    * @param[in] suspendIntervalMs The interval (milliseconds) a worker sleeps for before checking for suspension conditions again
-    */
+   * This function sets the sleep intervals for a worker after it has been suspended, and in between checks for resuming
+   * 
+   * @param[in] suspendIntervalMs The interval (milliseconds) a worker sleeps for before checking for suspension conditions again
+   */
   __INLINE__ void setSuspendInterval(size_t suspendIntervalMs) { _suspendIntervalMs = suspendIntervalMs; }
 
   protected:
@@ -333,38 +333,38 @@ class Worker
   HiCR::L1::ComputeManager *const _processingUnitComputeManager;
 
   /**
-    * Defines the current task being handled by this worker
+   * Defines the current task being handled by this worker
    */
   HiCR::tasking::Task *_currentTask = nullptr;
 
   /**
-    * Function by which the worker can obtain new tasks to execute
-    */
+   * Function by which the worker can obtain new tasks to execute
+   */
   const pullFunction_t _pullFunction;
 
   /**
-    * The time to suspend a worker for, before checking suspend conditions again
-    */
+   * The time to suspend a worker for, before checking suspend conditions again
+   */
   size_t _suspendIntervalMs = _DEFAULT_SUSPEND_INTERVAL_MS;
 
   /**
-    * Represents the internal state of the worker. Uninitialized upon construction.
-    */
+   * Represents the internal state of the worker. Uninitialized upon construction.
+   */
   std::atomic<state_t> _state = state_t::uninitialized;
 
   /**
-    * Group of resources the worker can freely use
-    */
+   * Group of resources the worker can freely use
+   */
   std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnits;
 
   /**
-    *  Map of callbacks to trigger
-    */
+   *  Map of callbacks to trigger
+   */
   workerCallbackMap_t *_callbackMap = nullptr;
 
   /**
-    * Internal loop of the worker in which it searchers constantly for tasks to run
-    */
+   * Internal loop of the worker in which it searchers constantly for tasks to run
+   */
   __INLINE__ void mainLoop()
   {
     // Calling appropriate callback

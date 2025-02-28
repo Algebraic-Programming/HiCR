@@ -64,7 +64,7 @@ class Task
 
     /**
      * Triggered as the task receives a sync signal (used for mutual exclusion mechanisms)
-    */
+     */
     onTaskSync,
   };
 
