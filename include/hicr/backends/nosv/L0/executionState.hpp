@@ -27,12 +27,13 @@
 typedef struct _executionStateData
 {
   /**
-   * Boolean to check if this is the taskr mainLoop task
+   * Boolean to check if this is the worker mainLoop task
    */
   volatile bool mainLoop = false;
 
   /**
-   * nosv TaskR mainLoop barrier to block the parent task for waiting until the run_callback successfully executed
+   * nosv barrier for the worker mainLoop task
+   * This is need as the submitted task from the worker mainLoop has to wait until the run_callback successfully executed
    */
   nosv_barrier_t mainLoop_barrier;
 
@@ -93,7 +94,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
       // Accessing metadata from the task
       auto TaskMetadata = (executionStateMetaData_t *)getTaskMetadata(task);
 
-      // TaskR worker mainLoop barrier to wake up the main thread to continue as the run_callback succesfully has been called from here
+      // Unblocking the worker mainLoop  as the run_callback successfully has been called from here
       if (TaskMetadata->mainLoop) check(nosv_barrier_wait(TaskMetadata->mainLoop_barrier));
 
       // Get the fc
