@@ -24,8 +24,8 @@ class ExecutionUnit : public HiCR::L0::ExecutionUnit
   public:
 
   /**
-  * Accepting a replicable C++ function type with closure parameter
-  */
+   * Accepting a replicable C++ function type with closure parameter
+   */
   using pthreadFc_t = std::function<void(void *)>;
 
   /**
