@@ -78,7 +78,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   {
     // Getting the logical processor ID of the compute resource
     auto pid = _computeResource->getProcessorId();
-     
+
     // setting up the nosv affinity for the execution task
     _nosv_affinity = nosv_affinity_get(pid, NOSV_AFFINITY_LEVEL_CPU, NOSV_AFFINITY_TYPE_STRICT);
   }
@@ -86,18 +86,12 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Internal implementation of the resume function
    */
-  __INLINE__ void suspend()
-  {
-    HICR_THROW_RUNTIME("nOS-V can't suspend a worker thread. One could maybe let it 'busy-wait'.\n");
-  }
+  __INLINE__ void suspend() { HICR_THROW_RUNTIME("nOS-V can't suspend a worker thread.\n"); }
 
   /**
    * Internal implementation of the resume function
    */
-  __INLINE__ void resume()
-  {
-    HICR_THROW_RUNTIME("nOS-V can't resume a worker thread. One could maybe let it 'busy-wait'.\n");
-  }
+  __INLINE__ void resume() { HICR_THROW_RUNTIME("nOS-V can't resume a worker thread.\n"); }
 
   /**
    * Internal implementation of the start function
@@ -106,7 +100,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   {
     // Getting up-casted pointer of the execution state
     auto c = std::unique_ptr<HiCR::backend::nosv::L0::ExecutionState>(dynamic_cast<HiCR::backend::nosv::L0::ExecutionState *>(executionState.get()));
- 
+
     // Checking whether the execution state passed is compatible with this backend
     if (c == nullptr) HICR_THROW_LOGIC("The passed execution state is not supported by this processing unit type\n");
 
@@ -117,7 +111,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     _executionState = std::move(c);
 
     // Set execution statte task metadata for this PU
-    auto metadata = (executionStateMetaData_t *)getTaskMetadata(_executionState->_executionStateTask);
+    auto metadata      = (executionStateMetaData_t *)getTaskMetadata(_executionState->_executionStateTask);
     metadata->mainLoop = true;
 
     // Initialize the barrier
@@ -130,7 +124,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     check(nosv_submit(_executionState->_executionStateTask, NOSV_SUBMIT_NONE));
 
     // Barrier to as we have to wait until the execution state task is properly initialized and running
-    check(nosv_barrier_wait(metadata->mainLoop_barrier)); 
+    check(nosv_barrier_wait(metadata->mainLoop_barrier));
   }
 
   /**
@@ -148,13 +142,12 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   {
     // Get the execution state metadata
     auto metadata = (executionStateMetaData_t *)getTaskMetadata(_executionState->_executionStateTask);
- 
+
     // Assertion to check that only the PU task is getting to this
-    if(metadata->mainLoop == false)
-      HICR_THROW_RUNTIME("Abort, only PU from the worker mainLoop should get here.\n");
- 
+    if (metadata->mainLoop == false) HICR_THROW_RUNTIME("Abort, only PU from the worker mainLoop should get here.\n");
+
     // Busy wait until the function call fully executed (i.e. the worker mainLoop finished)
-    while(!(metadata->completed)){}
+    while (!(metadata->completed)) {}
   }
 
   /**
@@ -167,7 +160,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   std::unique_ptr<HiCR::backend::nosv::L0::ExecutionState> _executionState;
 
-   /**
+  /**
    * The affinity struct of nosv
    */
   nosv_affinity_t _nosv_affinity;
