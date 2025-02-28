@@ -74,6 +74,8 @@ inline void print_CPU_TID()
 
 /**
   * Print but with CPU and TID (For debugging)
+  * 
+  * @param[in] message to print 
   */
 inline void print(const char *message)
 {
