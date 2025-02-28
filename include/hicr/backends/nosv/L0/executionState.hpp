@@ -83,7 +83,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     : HiCR::L0::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer of the execution unit
-    auto c = dynamic_pointer_cast<HiCR::backend::nosv::L0::ExecutionUnit>(executionUnit);
+    auto c = static_pointer_cast<HiCR::backend::nosv::L0::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == nullptr) HICR_THROW_LOGIC("The passed execution unit is not supported by this execution state type\n");
