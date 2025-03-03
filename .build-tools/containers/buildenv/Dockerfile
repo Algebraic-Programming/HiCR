@@ -122,6 +122,10 @@ RUN echo 'export LIBRARY_PATH=/usr/local/lib:$LIBRARY_PATH' >> $HOME/.hicr-env.s
 RUN echo 'export CPATH=/usr/local/include:$CPATH' >> $HOME/.hicr-env.sh
 RUN echo 'export OMPI_ALLOW_RUN_AS_ROOT=1' >> $HOME/.hicr-env.sh
 RUN echo 'export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1' >> $HOME/.hicr-env.sh
+RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/x86_64-linux-gnu/pkgconfig' >> $HOME/.hicr-env.sh
+RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig' >> $HOME/.hicr-env.sh
+RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig' >> $HOME/.hicr-env.sh
+RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/share/pkgconfig' >> $HOME/.hicr-env.sh
 RUN echo 'source ${HOME}/.venv/bin/activate' >> $HOME/.hicr-env.sh
 
 
