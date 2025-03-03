@@ -5,19 +5,15 @@
 
 /**
  * @file executionUnit.hpp
- * @brief This file implements the abstract execution unit class for the Pthreads backend
- * @author S. M. Martin
- * @date 9/10/2023
+ * @brief nOS-V execution unit class. Main job is to store the function call
+ * @author N. Baumann
+ * @date 24/02/2025
  */
-
 #pragma once
 
-#include <hicr/core/definitions.hpp>
-#include <hicr/core/L0/executionUnit.hpp>
-#include <utility>
-#include <functional>
+#include <hicr/backends/pthreads/L0/executionUnit.hpp>
 
-namespace HiCR::backend::pthreads::L0
+namespace HiCR::backend::nosv::L0
 {
 
 /**
@@ -28,8 +24,8 @@ class ExecutionUnit : public HiCR::L0::ExecutionUnit
   public:
 
   /**
-  * Accepting a replicable C++ function type with closure parameter
-  */
+   * Accepting a replicable C++ function type with closure parameter
+   */
   using pthreadFc_t = std::function<void(void *)>;
 
   /**
@@ -64,4 +60,4 @@ class ExecutionUnit : public HiCR::L0::ExecutionUnit
   pthreadFc_t _fc;
 };
 
-} // namespace HiCR::backend::pthreads::L0
+} // namespace HiCR::backend::nosv::L0

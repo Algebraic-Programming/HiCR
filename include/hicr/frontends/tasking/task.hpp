@@ -29,8 +29,6 @@
 namespace HiCR::tasking
 {
 
-class Worker;
-
 /**
  * This class defines the basic execution unit managed by TaskR.
  *
@@ -66,7 +64,7 @@ class Task
 
     /**
      * Triggered as the task receives a sync signal (used for mutual exclusion mechanisms)
-    */
+     */
     onTaskSync,
   };
 

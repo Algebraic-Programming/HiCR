@@ -314,10 +314,10 @@ class Worker
   protected:
 
   /**
-  *  This function runs in in intervals defined by _suspendIntervalMs to check whether the suspension conditions remain true
-  *  
-  *  @return True, if the worker must now resume; False, otherwise.
-  */
+   *  This function runs in in intervals defined by _suspendIntervalMs to check whether the suspension conditions remain true
+   *  
+   *  @return True, if the worker must now resume; False, otherwise.
+   */
   __INLINE__ virtual bool checkResumeConditions() { return _state == state_t::resuming; }
 
   private:
@@ -334,7 +334,7 @@ class Worker
 
   /**
    * Defines the current task being handled by this worker
-  */
+   */
   HiCR::tasking::Task *_currentTask = nullptr;
 
   /**
