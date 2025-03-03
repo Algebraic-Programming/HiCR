@@ -47,7 +47,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    *
    * \return a pointer to the new execution unit
    */
-  __INLINE__ std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(const std::vector<ascend::Kernel *> &kernelOperations)
+  __INLINE__ std::shared_ptr<HiCR::L0::ExecutionUnit> createExecutionUnit(const std::vector<std::shared_ptr<ascend::Kernel>> &kernelOperations)
   {
     return std::make_shared<L0::ExecutionUnit>(kernelOperations);
   }
