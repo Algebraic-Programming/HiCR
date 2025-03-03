@@ -1,10 +1,10 @@
 # HiCR MPI Backend Configuration
 
-mpiDep = dependency('mpi', language: 'cpp', required: true)
+mpiDep = dependency('mpi', language: 'cpp', required: false)
     
 # If also not found, then trigger a failure
 if mpiDep.found() == false
-  mpiDep = dependency('mpich', required: false)
+  mpiDep = dependency('mpich', required: true)
 endif
 
 mpirunExecutable = find_program('mpirun', '/usr/bin/mpirun', '/usr/local/bin/mpirun', required : true)
