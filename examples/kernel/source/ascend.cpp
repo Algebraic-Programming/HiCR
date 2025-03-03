@@ -33,7 +33,7 @@ ascend::ComputationKernel createComputeKernelFromDirectory(std::string          
                                                            std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
                                                            aclopAttr                                            *kernelAttributes);
 
-void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice, std::vector<ascend::Kernel *> operations);
+void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice, std::vector<std::shared_ptr<ascend::Kernel>> operations);
 
 int main(int argc, char **argv)
 {
@@ -81,11 +81,11 @@ int main(int argc, char **argv)
   HiCR::backend::ascend::L1::CommunicationManager ascendCommunicationManager;
 
   // Copy the inputs from the host buffers to the device buffers using a MemoryKernel abstraction
-  ascend::MemoryKernel copyInput1MemoryKernel(&ascendCommunicationManager, input1Device, 0, input1Host, 0, size);
-  ascend::MemoryKernel copyInput2MemoryKernel(&ascendCommunicationManager, input2Device, 0, input2Host, 0, size);
+  auto copyInput1MemoryKernel = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, input1Device, 0, input1Host, 0, size);
+  auto copyInput2MemoryKernel = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, input2Device, 0, input2Host, 0, size);
 
   // Copy the result back on the host using a MemoryKernel abstraction
-  ascend::MemoryKernel copyOutputMemoryKernel(&ascendCommunicationManager, outputHost, 0, outputDevice, 0, size);
+  auto copyOutputMemoryKernel = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, outputHost, 0, outputDevice, 0, size);
 
   // Create tensor descriptor (what's inside the tensor). In this example it is the same for all tensors
   const int64_t dims[]           = {192, 1};
@@ -104,10 +104,11 @@ int main(int argc, char **argv)
   std::vector<ascend::ComputationKernel::tensorData_t> outputs({ascend::ComputationKernel::createTensorData(outputDevice, tensorDescriptor)});
 
   // Create the ComputationKernel by reading it from file
-  auto fileComputationKernel = createComputeKernelFromFile("/../examples/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om", inputs, outputs, kernelAttributes);
+  auto fileComputationKernel = std::make_shared<ascend::ComputationKernel>(
+    createComputeKernelFromFile("/../examples/kernel/op_models/0_Add_1_2_192_1_1_2_192_1_1_2_192_1.om", inputs, outputs, kernelAttributes));
 
   // Create the stream of Kernel operations to be executed on the device
-  auto operations = std::vector<ascend::Kernel *>{&copyInput1MemoryKernel, &copyInput2MemoryKernel, &fileComputationKernel, &copyOutputMemoryKernel};
+  auto operations = std::vector<std::shared_ptr<ascend::Kernel>>{copyInput1MemoryKernel, copyInput2MemoryKernel, fileComputationKernel, copyOutputMemoryKernel};
 
   // Execute the stream of Kernels
   executeKernel(ascendDevice, operations);
@@ -121,10 +122,11 @@ int main(int argc, char **argv)
   populateMemorySlot(outputHost, 0.0);
 
   // Create the ComputationKernel by looking up in a directory
-  auto directoryComputationKernel = createComputeKernelFromDirectory("/../examples/kernel/op_models", inputs, outputs, kernelAttributes);
+  auto directoryComputationKernel =
+    std::make_shared<ascend::ComputationKernel>(createComputeKernelFromDirectory("/../examples/kernel/op_models", inputs, outputs, kernelAttributes));
 
   // Create the stream of Kernel operations to be executed on the device
-  operations = std::vector<ascend::Kernel *>{&copyInput1MemoryKernel, &copyInput2MemoryKernel, &directoryComputationKernel, &copyOutputMemoryKernel};
+  operations = std::vector<std::shared_ptr<ascend::Kernel>>{copyInput1MemoryKernel, copyInput2MemoryKernel, directoryComputationKernel, copyOutputMemoryKernel};
 
   // Execute the stream of Kernels
   executeKernel(ascendDevice, operations);
@@ -184,7 +186,7 @@ ascend::ComputationKernel createComputeKernelFromDirectory(std::string          
   return kernel;
 }
 
-void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice, std::vector<ascend::Kernel *> operations)
+void executeKernel(std::shared_ptr<HiCR::L0::Device> ascendDevice, std::vector<std::shared_ptr<ascend::Kernel>> operations)
 {
   // Instantiating Ascend computation manager
   HiCR::backend::ascend::L1::ComputeManager ascendComputeManager;
