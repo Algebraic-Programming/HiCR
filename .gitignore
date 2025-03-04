@@ -3,3 +3,4 @@ build
 ~*
 .vscode
 atlas_*.sh
+**/token.env
