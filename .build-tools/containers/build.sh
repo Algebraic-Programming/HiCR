@@ -18,5 +18,5 @@ else
 fi
 
 folder=${1}
-echo "Building $folder for arch $target_arch"
-docker build -t "registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/${folder}-${target_arch}:latest" --build-arg ARCH=${target_arch} ${folder} 
+echo "Building $folder for arch $target_arch with token $OVNI_ACCESS_TOKEN"
+docker build -t "registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/${folder}-${target_arch}:latest" --build-arg ARCH=${target_arch} --build-arg OVNI_ACCESS_TOKEN=${OVNI_ACCESS_TOKEN}  ${folder} 

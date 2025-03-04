@@ -1,5 +1,7 @@
 FROM ubuntu:24.04
 
+ARG OVNI_ACCESS_TOKEN=
+
 ENV USER hicr
 ENV ROOT_USER root
 ENV HOME /home/$USER
@@ -84,7 +86,7 @@ RUN wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.2.tar.g
 USER $USER
 
 # Download lpf
-RUN git clone https://github.com/Algebraic-Programming/LPF.git $HOME/lpf \
+RUN git clone -b noc_extension --single-branch --depth 1 https://github.com/Algebraic-Programming/LPF.git $HOME/lpf \
   && cd $HOME/lpf \
   && git checkout noc_extension \
   && mkdir ./build \
@@ -94,15 +96,28 @@ RUN git clone https://github.com/Algebraic-Programming/LPF.git $HOME/lpf \
   && sudo make install || true \
   && sudo rm -rf $HOME/lpf
 
+
+RUN echo "toke is ${OVNI_ACCESS_TOKEN}"
+RUN git clone  -b master --single-branch --depth 1 https://oauth2:${OVNI_ACCESS_TOKEN}@gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/ovni.git $HOME/ovni \
+  && cd $HOME/ovni  \
+  && mkdir build  \
+  && cd build \ 
+  && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTING=FALSE  \
+  && make -j24  \
+  && sudo make install  \
+  && sudo rm -rf $HOME/ovni
+
 # Download nosv
-RUN git clone -b 3.1.0 --depth 1 https://github.com/bsc-pm/nos-v.git $HOME/nos-v && \
+RUN git clone -b 3.1.0 --single-branch --depth 1 https://github.com/bsc-pm/nos-v.git $HOME/nos-v && \
   cd $HOME/nos-v && \
   autoreconf -f -i -v && \
-  ./configure --prefix=/usr/local && \
+  ./configure --prefix=/usr/local --with-ovni=/usr && \
   make all && \
   sudo make install && \
   cd .. && \
-  rm -rf $HOME/nos-v
+  rm -rf $HOME/nos-v && \
+  sudo sed -i '/^\[instrumentation\]/,/^\[/{s/version *= *"none"/version = "ovni"/}' /usr/local/share/nosv.toml && \
+  sudo sed -i '/^\[ovni\]/,/^\[/{s/level *= *2/level = 0/}' /usr/local/share/nosv.toml
 
 RUN sudo apt purge -y g++-10
 RUN sudo apt purge -y gcc-10
