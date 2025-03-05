@@ -139,7 +139,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
-    HICR_THROW_RUNTIME("Not yet implemented for this backend");
+    return std::make_shared<HiCR::L0::LocalMemorySlot>(ptr, size, memorySpace);
   }
 
   __INLINE__ void memsetImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, int value, size_t size) override
@@ -186,7 +186,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    *
    * \param[in] memorySlot memory slot to deregister.
    */
-  __INLINE__ void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
+  __INLINE__ void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override {}
 };
 
 } // namespace L1

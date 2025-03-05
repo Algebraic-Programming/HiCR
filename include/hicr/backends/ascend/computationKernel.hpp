@@ -102,7 +102,7 @@ class ComputationKernel final : public Kernel
    * \param tensorDescriptor Ascend-specific metadata about the passed memory slot
    * \return The new Ascend tensor data object
    */
-  static tensorData_t createTensorData(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, aclTensorDesc *tensorDescriptor)
+  static tensorData_t createTensorData(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memorySlot, aclTensorDesc *tensorDescriptor)
   {
     // Using up-casting to determine device types
     auto ascendSlot = dynamic_pointer_cast<ascend::L0::LocalMemorySlot>(memorySlot);
