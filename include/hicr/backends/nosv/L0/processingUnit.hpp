@@ -111,7 +111,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     _executionState = std::move(c);
 
     // Set execution statte task metadata for this PU
-    auto metadata      = (executionStateMetaData_t *)getTaskMetadata(_executionState->_executionStateTask);
+    auto metadata      = (ExecutionState::taskMetadata_t *)getTaskMetadata(_executionState->_executionStateTask);
     metadata->mainLoop = true;
 
     // Initialize the barrier
@@ -141,13 +141,13 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   __INLINE__ void await()
   {
     // Get the execution state metadata
-    auto metadata = (executionStateMetaData_t *)getTaskMetadata(_executionState->_executionStateTask);
+    auto metadata = (ExecutionState::taskMetadata_t *)getTaskMetadata(_executionState->_executionStateTask);
 
     // Assertion to check that only the PU task is getting to this
     if (metadata->mainLoop == false) HICR_THROW_RUNTIME("Abort, only PU from the worker mainLoop should get here.\n");
 
     // Busy wait until the function call fully executed (i.e. the worker mainLoop finished)
-    while (!(metadata->completed)) {}
+    while (_executionState->checkFinalization() == false);
   }
 
   /**
