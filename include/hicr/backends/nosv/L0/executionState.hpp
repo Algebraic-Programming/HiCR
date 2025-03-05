@@ -66,9 +66,8 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     /**
      * A pointer to the execution state class corresponding to this task
      */
-    ExecutionState* executionState = nullptr;
+    ExecutionState *executionState = nullptr;
   };
-
 
   /**
    * nosv task for the executionState
@@ -107,20 +106,10 @@ class ExecutionState final : public HiCR::L0::ExecutionState
       // Executing the function (Else we throw at runtime)
       if (fc) { fc(arg); }
       else { HICR_THROW_RUNTIME("Error: No valid callback function.\n"); }
-
-      // Mark task as complete
-      TaskMetadata->executionState->_completed = true;
-
-      // Resume the parent task as its child task has just finished
-      if (!(TaskMetadata->mainLoop))
-      {
-        if (!(TaskMetadata->parent_task)) HICR_THROW_RUNTIME("The parent task is not existing (i.e. NULL).");
-        check(nosv_submit(TaskMetadata->parent_task, NOSV_SUBMIT_UNLOCKED));
-      }
     };
 
     // Initialize the nosv type with the new defined task type and its metadata
-    check(nosv_type_init(&_executionUnitTaskType, run_callback, NULL, NULL, "executionUnitTaskType", NULL, NULL, NOSV_TYPE_INIT_NONE));
+    check(nosv_type_init(&_executionUnitTaskType, run_callback, NULL, completed_callback, "executionUnitTaskType", NULL, NULL, NOSV_TYPE_INIT_NONE));
 
     // nosv create the execution task
     check(nosv_create(&_executionStateTask, _executionUnitTaskType, sizeof(taskMetadata_t), NOSV_CREATE_NONE));
@@ -130,8 +119,8 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
     // Store the function and function argument in the metadata
     metadata->executionState = this;
-    metadata->fc  = c->getFunction();
-    metadata->arg = argument;
+    metadata->fc             = c->getFunction();
+    metadata->arg            = argument;
   }
 
   protected:
@@ -186,12 +175,30 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    *
    * \return True, if the execution has finalized; False, otherwise.
    */
-  bool checkFinalizationImpl() override
-  {
-    return _completed;
-  }
+  bool checkFinalizationImpl() override { return _completed; }
 
   private:
+
+  /**
+   * The completed_callback function of nosv. 
+   * This will be called after the run_callback and it is save to continue the parent_task
+   */
+  static __INLINE__ void completed_callback(nosv_task_t task)
+  {
+    auto metadata = (taskMetadata_t *)getTaskMetadata(task);
+
+    metadata->executionState->_completed = true;
+
+    // Resume the parent task as its child task has just finished
+    if (!(metadata->mainLoop))
+    {
+      if (!(metadata->parent_task)) HICR_THROW_RUNTIME("The parent task is not existing (i.e. NULL).");
+      check(nosv_submit(metadata->parent_task, NOSV_SUBMIT_UNLOCKED));
+    }
+
+    // destroying this task
+    check(nosv_destroy(task, NOSV_DESTROY_NONE));
+  }
 
   /**
    * nosv task type of the executionUnit
