@@ -51,5 +51,4 @@ TEST(MemoryManager, Lifetime)
   EXPECT_ANY_THROW(im->createInstance(topology));
 
   EXPECT_DEATH(im->abort(1), "");
-  EXPECT_EQ(im->getSeed(), 0ULL);
 }

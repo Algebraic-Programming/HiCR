@@ -184,12 +184,6 @@ class InstanceManager
   [[nodiscard]] virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
 
   /**
-   * Returns the random seed generated at the startup
-   * @return the random seed
-   */
-  [[nodiscard]] virtual HiCR::L0::Instance::instanceId_t getSeed() const = 0;
-
-  /**
    * Generates a 64-bit hash value from a given string. Useful for compressing the name of RPCs
    *
    * @param[in] name A string (e.g., the name of an RPC to compress)

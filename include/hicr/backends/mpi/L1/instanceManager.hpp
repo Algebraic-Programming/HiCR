@@ -200,8 +200,6 @@ class InstanceManager final : public HiCR::L1::InstanceManager
 
   [[nodiscard]] __INLINE__ HiCR::L0::Instance::instanceId_t getRootInstanceId() const override { return HiCR::backend::mpi::L0::_HICR_MPI_INSTANCE_ROOT_ID; }
 
-  [[nodiscard]] __INLINE__ HiCR::L0::Instance::instanceId_t getSeed() const override { return 0; }
-
   private:
 
   /**
