@@ -4,3 +4,6 @@ build
 .vscode
 atlas_*.sh
 **/token.env
+**/fusion_result.json
+**/kernel_meta*
+ovni

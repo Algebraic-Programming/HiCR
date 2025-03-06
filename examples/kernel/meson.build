@@ -1,9 +1,11 @@
 testSuite = [ 'examples', 'hicr', 'kernel' ]
 
-if 'hwloc' in enabledBackends
+if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
 	# pthreads
 	if 'pthreads' in enabledBackends
-		pthreads = executable('pthreads', [ 'source/pthreads.cpp' ], dependencies: hicrBuildDep)
+		openblasDep = dependency('openblas', required: true)
+
+		pthreads = executable('pthreads', [ 'source/pthreads.cpp' ], dependencies: [hicrBuildDep, openblasDep])
 
 		if get_option('buildTests')
 		test('pthreads', pthreads, suite: testSuite )
@@ -12,7 +14,9 @@ if 'hwloc' in enabledBackends
 
 	# nosv
 	if 'nosv' in enabledBackends
-		nosv = executable('nosv', [ 'source/nosv.cpp'], dependencies: hicrBuildDep)
+		openblasDep = dependency('openblas', required: true)
+
+		nosv = executable('nosv', [ 'source/nosv.cpp'], dependencies: [hicrBuildDep, openblasDep])
 
 		if get_option('buildTests')
 		test('nosv', nosv, args : [ ], is_parallel: false, suite: testSuite )
