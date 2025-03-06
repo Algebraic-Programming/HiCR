@@ -29,14 +29,14 @@ namespace ascend
 
 /**
  * Core class implementation for the ascend backend responsible for initializing ACL
- * and get the default context for each device.
+ * 
  */
 class Core final
 {
   public:
 
   /**
-   * Constructor for the core class for the ascend backend. It inizialies ACL
+   * Constructor for the core class for the ascend backend
    *
    * @param[in] configPath Path to the configuration file to use for ACL. NULL sets a default configuration.
    *
@@ -50,25 +50,18 @@ class Core final
   ~Core() = default;
 
   /**
-   * Return the mapping between a device id and the ACL context for that device
-   *
-   * \return a map containing for each device Id its corresponding ascendState_t structure
-   */
-  __INLINE__ const std::unordered_map<deviceIdentifier_t, ascendState_t> &getContexts() const { return _deviceStatusMap; }
-
-  /**
-   * Discover available ascend devices, get memory information (HBM per single card), and create dedicated ACL contexts per device
+   * Initializes ACL runtime
    *
    * @param[in] configPath configuration file to initialize ACL
    */
-  void init(const char *configPath = NULL)
+  void init()
   {
     aclError err = aclInit(_configPath);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
   }
 
   /**
-   * Finalize the ACL environment by destroying the device contexts
+   * Finalize the ACL runtime
    */
   __INLINE__ void finalize()
   {
@@ -82,11 +75,6 @@ class Core final
    * Path to ACL config file
    */
   const char *_configPath;
-
-  /**
-   * Create ACL contexts for each available ascend device
-   */
-  __INLINE__ void createContexts() {}
 };
 
 } // namespace ascend

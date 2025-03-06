@@ -5,7 +5,7 @@ This is a set of simple examples showcasing how the HiCR L0 API can be used to e
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`ascend.cpp` corresponds to the :ref:`ascend` backend implementation
+    * :code:`ascend.cpp` corresponds to the :ref:`ascend` backend implementation. The available kernel is compiled for Ascend
     * :code:`pthreads.cpp` corresponds to the :ref:`pthreads` backend implementation
 
 Both examples follow the same pattern:
@@ -78,4 +78,6 @@ The expected result of running this example is:
 
 .. code-block:: bash
 
-    Hello, World!
+    First vector contains: 1.0
+    Second vector contains : 1.0
+    Third vector contains : 65.0Hello, World!

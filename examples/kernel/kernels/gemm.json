@@ -1,0 +1,55 @@
+[
+  {
+    "op": "GEMM",
+    "input_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          128,
+          64
+        ],
+        "type": "float16"
+      },
+      {
+        "format": "ND",
+        "shape": [
+          64,
+          256
+        ],
+        "type": "float16"
+      },
+      {
+        "format": "ND",
+        "shape": [
+          128,
+          256
+        ],
+        "type": "float16"
+      },
+      {
+        "format": "ND",
+        "shape": [
+          1
+        ],
+        "type": "float16"
+      },
+      {
+        "format": "ND",
+        "shape": [
+          1
+        ],
+        "type": "float16"
+      }
+    ],
+    "output_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          128,
+          256
+        ],
+        "type": "float16"
+      }
+    ]
+  }
+]
