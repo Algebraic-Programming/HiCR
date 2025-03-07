@@ -12,10 +12,9 @@
 
 #pragma once
 
-#include <thread>
-#include <vector>
-#include <chrono>
 #include <acl/acl.h>
+#include <string>
+#include <vector>
 #include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/core/L0/executionUnit.hpp>
 
@@ -67,7 +66,7 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    */
   __INLINE__ void start(const aclrtStream stream) const
   {
-    for (auto kernel : _kernels) kernel->start(stream);
+    for (auto &kernel : _kernels) kernel->start(stream);
   }
 
   private:
