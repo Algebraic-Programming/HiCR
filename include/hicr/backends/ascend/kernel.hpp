@@ -14,7 +14,6 @@
 
 #include <acl/acl.h>
 #include <hicr/core/definitions.hpp>
-#include <hicr/core/exceptions.hpp>
 
 namespace HiCR
 {

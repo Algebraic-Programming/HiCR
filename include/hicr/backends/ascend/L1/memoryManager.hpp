@@ -64,7 +64,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     // Checking whether the memory space passed belongs to the host
     if (hostMemSpace != NULL) return allocateLocalHostMemorySlot(memorySpace, size);
 
-    HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
+    HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager. Supported ascend and hwloc\n");
   }
 
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalDeviceMemorySlot(const std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size)
