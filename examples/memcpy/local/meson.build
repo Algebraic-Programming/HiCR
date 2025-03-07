@@ -16,3 +16,12 @@ if 'ascend' in enabledBackends and 'hwloc' in enabledBackends
 	  test('ascend', ascend, args : [ ], is_parallel: false, timeout: test_timeout, suite: testSuite ) 
 	endif
 endif
+
+if 'opencl' in enabledBackends and 'hwloc' in enabledBackends
+	opencl = executable('opencl', [ 'source/opencl.cpp'], dependencies: hicrBuildDep)
+
+	if get_option('buildTests')
+	  test('opencl', opencl, args : [ ], is_parallel: false, timeout: test_timeout, suite: testSuite ) 
+	endif
+endif
+
