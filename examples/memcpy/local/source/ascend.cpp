@@ -3,7 +3,6 @@
 #include <hicr/backends/ascend/L1/memoryManager.hpp>
 #include <hicr/backends/ascend/L1/topologyManager.hpp>
 #include <hicr/backends/ascend/L1/communicationManager.hpp>
-#include <hicr/backends/hwloc/L1/memoryManager.hpp>
 #include <hicr/backends/hwloc/L1/topologyManager.hpp>
 #include "include/telephoneGame.hpp"
 
@@ -43,20 +42,19 @@ int main(int argc, char **argv)
   memSpaceOrder.insert(memSpaceOrder.end(), ascendMemorySpaces.begin(), ascendMemorySpaces.end());
   memSpaceOrder.emplace_back(hostMemorySpace);
 
-  // Allocate and populate input memory slot
-  HiCR::backend::hwloc::L1::MemoryManager hostMemoryManager(&topology);
-  auto                                    input = hostMemoryManager.allocateLocalMemorySlot(hostMemorySpace, BUFFER_SIZE);
-  sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
-
   // Instantiating Ascend memory and communication managers
   HiCR::backend::ascend::L1::MemoryManager        ascendMemoryManager;
   HiCR::backend::ascend::L1::CommunicationManager ascendCommunicationManager;
+
+  // Allocate and populate input memory slot
+  auto input = ascendMemoryManager.allocateLocalMemorySlot(hostMemorySpace, BUFFER_SIZE);
+  sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 
   // Run the telephone game
   telephoneGame(ascendMemoryManager, ascendCommunicationManager, input, memSpaceOrder, 3);
 
   // Free input memory slot
-  hostMemoryManager.freeLocalMemorySlot(input);
+  ascendMemoryManager.freeLocalMemorySlot(input);
 
   // Finalize ACL
   err = aclFinalize();
