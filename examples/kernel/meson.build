@@ -33,3 +33,12 @@ if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
 	endif
 endif
 
+if 'opencl' in enabledBackends and 'hwloc' in enabledBackends
+	opencl = executable('opencl', [ 'source/opencl.cpp'], dependencies: hicrBuildDep)
+
+	if get_option('buildTests')
+	  test('opencl', opencl, args : [ meson.current_source_dir() + '/kernels/gemm.cl' ], is_parallel: false, timeout: test_timeout, suite: testSuite ) 
+	endif
+endif
+
+
