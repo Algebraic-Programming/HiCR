@@ -74,7 +74,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
       // Destroy the related event
       err = aclrtDestroyEvent(_syncEvent);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy event");
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to destroy event. Error %d", err);
 
       // avoid deleting the stream more than once
       _isStreamActive = false;
@@ -89,12 +89,12 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   __INLINE__ void resumeImpl() override
   {
     aclError err = aclrtCreateEvent(&_syncEvent);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize bit");
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize event. Error %d", err);
 
     // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
     // that reuse the same stream
     err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not create stream");
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not create stream. Error %d", err);
 
     _isStreamActive = true;
 

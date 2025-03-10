@@ -4,7 +4,7 @@
  */
 
 /**
- * @file memoryManager.hpp
+ * @file communicationManager.hpp
  * @brief This file implements the communication manager class for the Ascend backend
  * @author L. Terracciano & S. M. Martin
  * @date 21/12/2023
