@@ -54,8 +54,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
-
-    _context = c->getDevice().lock()->getContext();
   };
 
   private:
@@ -75,11 +73,14 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __INLINE__ void initialize()
   {
-    // Getting device id associated to the underlying compute resource (ascend)
-    auto deviceId = dynamic_pointer_cast<ascend::L0::ComputeResource>(getComputeResource())->getDevice().lock()->getId();
+    // Getting up-casted pointer for the instance
+    auto c = dynamic_pointer_cast<ascend::L0::ComputeResource>(getComputeResource());
 
-    aclError err = aclrtCreateContext(&_context, deviceId);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create ACL context on device %d. Error %d", deviceId, err);
+    // Checking whether the execution unit passed is compatible with this backend
+    if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+
+    // Get ACL context
+    _context = c->getDevice().lock()->getContext();
   }
 
   /**
