@@ -209,7 +209,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
      */
     device
   };
-  
+
   /**
    * Map of queues per device
   */
@@ -235,7 +235,6 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     }
     HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager. Supported opencl and hwloc\n");
   }
-
 };
 
 } // namespace L1

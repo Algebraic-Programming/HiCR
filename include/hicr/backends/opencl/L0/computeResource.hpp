@@ -41,7 +41,7 @@ class ComputeResource final : public HiCR::L0::ComputeResource
   ComputeResource(const std::shared_ptr<opencl::L0::Device> &device, const std::string &type)
     : HiCR::L0::ComputeResource(),
       _device(device),
-      _type(type) {};
+      _type(type){};
 
   /**
    * Default destructor

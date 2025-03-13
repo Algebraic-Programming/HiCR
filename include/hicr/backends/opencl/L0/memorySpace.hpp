@@ -51,7 +51,7 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   MemorySpace(const std::weak_ptr<opencl::L0::Device> device, const std::string &type, const size_t size)
     : HiCR::L0::MemorySpace(size),
       _device(device),
-      _type(type) {};
+      _type(type){};
 
   /**
    * Default destructor

@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
   // Define global and local work sizes
   cl::NDRange global(M, K); // Global work size: (M x N)
-  auto GEMMKernel = std::make_shared<opencl::ComputationKernel>(kernel, std::move(kernelArgs), cl::NullRange, global, cl::NullRange);
+  auto        GEMMKernel = std::make_shared<opencl::ComputationKernel>(kernel, std::move(kernelArgs), cl::NullRange, global, cl::NullRange);
 
   // Create the stream of Kernel operations to be executed on the device
   auto operations = std::vector<std::shared_ptr<opencl::Kernel>>{

@@ -38,8 +38,8 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    * \param[in] context the OpenCL context
    */
   ComputeManager(const std::shared_ptr<cl::Context> &context)
-    : HiCR::L1::ComputeManager(), 
-    _context(context){};
+    : HiCR::L1::ComputeManager(),
+      _context(context){};
 
   ~ComputeManager() override = default;
 

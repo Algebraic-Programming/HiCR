@@ -63,7 +63,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
     for (const auto &platform : platforms)
     {
-      // Retrieve all kind of devices detected by OpenCL 
+      // Retrieve all kind of devices detected by OpenCL
       std::vector<cl::Device> devices;
       platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
 
@@ -86,7 +86,8 @@ class TopologyManager final : public HiCR::L1::TopologyManager
         }
 
         // Create HiCR device, memory space, and compute resource
-        auto openclDevice = std::make_shared<opencl::L0::Device>(deviceId, deviceType, std::make_shared<cl::Device>(device), HiCR::L0::Device::computeResourceList_t({}), HiCR::L0::Device::memorySpaceList_t({}));
+        auto openclDevice = std::make_shared<opencl::L0::Device>(
+          deviceId, deviceType, std::make_shared<cl::Device>(device), HiCR::L0::Device::computeResourceList_t({}), HiCR::L0::Device::memorySpaceList_t({}));
         auto openclDeviceMemorySpace     = std::make_shared<opencl::L0::MemorySpace>(openclDevice, deviceType + " RAM", deviceMemorySize);
         auto openclDeviceComputeResource = std::make_shared<opencl::L0::ComputeResource>(openclDevice, deviceType + " Processing Unit");
         openclDevice->addMemorySpace(openclDeviceMemorySpace);

@@ -44,7 +44,7 @@ class LocalMemorySlot final : public HiCR::L0::LocalMemorySlot
    */
   LocalMemorySlot(void *const pointer, size_t size, const std::shared_ptr<cl::Buffer> buffer, std::shared_ptr<HiCR::L0::MemorySpace> memorySpace)
     : HiCR::L0::LocalMemorySlot(pointer, size, memorySpace),
-      _buffer(buffer) {};
+      _buffer(buffer){};
 
   /**
    * Default destructor

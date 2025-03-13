@@ -44,7 +44,7 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
    */
   ExecutionUnit(const std::vector<std::shared_ptr<opencl::Kernel>> &kernelOperations)
     : HiCR::L0::ExecutionUnit(),
-      _kernels(kernelOperations) {};
+      _kernels(kernelOperations){};
   ExecutionUnit() = delete;
 
   /**
