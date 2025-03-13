@@ -51,10 +51,10 @@ USER $USER
 RUN python3 -m venv ${HOME}/.venv
 RUN source ${HOME}/.venv/bin/activate \
   && pip3 install --upgrade pip \
-  &&  pip3 install 'cmake>=3.31.4' \
+  && pip3 install 'cmake>=3.31.4' \
   && pip3 install 'meson>=1.2' \
   && pip3 install 'ninja>=1.10' \
-  &&  pip3 install 'gcovr>=6.0'
+  && pip3 install 'gcovr>=6.0'
 
 USER ${ROOT_USER}
 
@@ -118,6 +118,19 @@ RUN git clone -b 3.1.0 --single-branch --depth 1 https://github.com/bsc-pm/nos-v
   rm -rf $HOME/nos-v && \
   sudo sed -i '/^\[instrumentation\]/,/^\[/{s/version *= *"none"/version = "ovni"/}' /usr/local/share/nosv.toml && \
   sudo sed -i '/^\[ovni\]/,/^\[/{s/level *= *2/level = 0/}' /usr/local/share/nosv.toml
+
+# Download opencl
+RUN sudo apt install -y cmake libstb-dev libsfml-dev libglew-dev libglm-dev libtclap-dev ruby doxygen -y
+RUN git clone -b v2024.10.24 --single-branch --depth 1 https://github.com/KhronosGroup/OpenCL-SDK.git $HOME/opencl && \
+  cd $HOME/opencl && \
+  git submodule update --init --recursive && \
+  cmake -D CMAKE_INSTALL_PREFIX=/usr/local -B ./build -S . && \
+  sudo cmake --build ./build --config Release --target install && \
+  cd .. && \
+  rm -rf $HOME/opencl
+  
+RUN sudo apt install -y intel-opencl-icd
+RUN sudo apt install -y nvidia-driver-570-server
 
 RUN sudo apt purge -y g++-10
 RUN sudo apt purge -y gcc-10
