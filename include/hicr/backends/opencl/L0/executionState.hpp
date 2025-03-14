@@ -58,6 +58,13 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   ~ExecutionState() = default;
 
   /**
+   * Set the OpenCL queue
+   * 
+   * \param[in] queue
+  */
+  __INLINE__ void setQueue(cl::CommandQueue *queue) { _queue = queue; }
+
+  /**
    * Synchronize and destroy the currently used queue
    */
   __INLINE__ void finalizeStream()
@@ -73,20 +80,6 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     }
   }
 
-  /**
-   * Set the OpenCL context
-   * 
-   * \param[in] context
-  */
-  __INLINE__ void setContext(const std::weak_ptr<cl::Context> &context) { _context = context; }
-
-  /**
-   * Set the OpenCL device
-   * 
-   * \param[in] device 
-  */
-  __INLINE__ void setDevice(const std::weak_ptr<const opencl::L0::Device> device) { _device = device; }
-
   protected:
 
   /**
@@ -97,13 +90,10 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     // Create event to wait for completion and check kernel status
     _syncEvent = cl::Event();
 
-    // Create queue
-    _queue = std::make_unique<cl::CommandQueue>(*(_context.lock()), _device.lock()->getOpenCLDevice());
-
     _isStreamActive = true;
 
     // start the sequence of kernels execution
-    _executionUnit->start(_queue.get());
+    _executionUnit->start(_queue);
 
     // add an event at the end of the operations to query its status and check for completion
     auto err = _queue->enqueueMarkerWithWaitList(nullptr, &_syncEvent);
@@ -134,15 +124,6 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   private:
 
   /**
-   * OpenCL context
-   */
-  std::weak_ptr<const cl::Context> _context;
-
-  /**
-   * OpenCL device
-  */
-  std::weak_ptr<const opencl::L0::Device> _device;
-  /**
    * Execution unit containing the kernel operations to execute
    */
   std::shared_ptr<ExecutionUnit> _executionUnit;
@@ -155,7 +136,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   /**
    * OpenCL command queue
    */
-  std::unique_ptr<cl::CommandQueue> _queue;
+  cl::CommandQueue *_queue;
 
   /**
    * Keep track of the stream status
