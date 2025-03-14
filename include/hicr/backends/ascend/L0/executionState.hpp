@@ -58,6 +58,13 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   ~ExecutionState() = default;
 
   /**
+   * Set the acl stream
+   * 
+   * \param stream
+  */
+  __INLINE__ void setStream(const aclrtStream stream) { _stream = stream; }
+
+  /**
    * Synchronize and destroy the currently used stream
    */
   __INLINE__ void finalizeStream()
@@ -67,10 +74,6 @@ class ExecutionState final : public HiCR::L0::ExecutionState
       // synchronize on the stream
       aclError err = aclrtSynchronizeStream(_stream);
       if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to synchronize stream after kernel execution. Error %d", err);
-
-      // destroy the stream
-      err = aclrtDestroyStream(_stream);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
 
       // Destroy the related event
       err = aclrtDestroyEvent(_syncEvent);
@@ -90,11 +93,6 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   {
     aclError err = aclrtCreateEvent(&_syncEvent);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize event. Error %d", err);
-
-    // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
-    // that reuse the same stream
-    err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not create stream. Error %d", err);
 
     _isStreamActive = true;
 
