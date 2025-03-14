@@ -52,7 +52,6 @@ class Core final
   /**
    * Initializes ACL runtime
    *
-   * @param[in] configPath configuration file to initialize ACL
    */
   void init()
   {
