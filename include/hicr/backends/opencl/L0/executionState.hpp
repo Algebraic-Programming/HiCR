@@ -66,7 +66,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     {
       // synchronize on the queue
       auto err = _syncEvent.wait();
-      if (err != CL_SUCCESS) HICR_THROW_RUNTIME("Failed to wait after kernel execution. Error %d", err);
+      if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Failed to wait after kernel execution. Error %d", err); }
 
       // avoid deleting the queue more than once
       _isStreamActive = false;
@@ -107,7 +107,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
     // add an event at the end of the operations to query its status and check for completion
     auto err = _queue->enqueueMarkerWithWaitList(nullptr, &_syncEvent);
-    if (err != CL_SUCCESS) HICR_THROW_RUNTIME("Failed to write event in the queue", err);
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Failed to write event in the queue", err); }
   }
 
   __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by opencl backend"); }

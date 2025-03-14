@@ -82,11 +82,11 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
     // Create OpenCL buffer on the device ready for read and write operations
     auto deviceBuffer = std::make_shared<cl::Buffer>(context, CL_MEM_READ_WRITE, size, nullptr, &err);
-    if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not allocate local memory slot on the device: %d", err); }
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not allocate local memory slot on the device: %d", err); }
 
     // Map it to the host in order to get a pointer to the data. Data are mapped in memory for writing
     auto hostPtr = queue->enqueueMapBuffer(*deviceBuffer, CL_TRUE, CL_MAP_READ | CL_MAP_READ | CL_MAP_WRITE, 0, size, nullptr, nullptr, &err);
-    if (err != CL_SUCCESS || hostPtr == nullptr) { HICR_THROW_RUNTIME("Can not retrieve pointer: %d", err); }
+    if (err != CL_SUCCESS || hostPtr == nullptr) [[unlikely]] { HICR_THROW_RUNTIME("Can not retrieve pointer: %d", err); }
 
     auto memSlot = std::make_shared<opencl::L0::LocalMemorySlot>(hostPtr, size, deviceBuffer, memorySpace);
 
@@ -102,11 +102,11 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
     // Create OpenCL buffer
     auto hostBuffer = std::make_shared<cl::Buffer>(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, size, nullptr, &err);
-    if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not allocate local memory slot on the host: %d", err); }
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not allocate local memory slot on the host: %d", err); }
 
     // Map it to the host in order to get a pointer to the data. Data are mapped in memory for writing
     auto hostPtr = queue->enqueueMapBuffer(*hostBuffer, CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, size, nullptr, nullptr, &err);
-    if (err != CL_SUCCESS || hostPtr == nullptr) { HICR_THROW_RUNTIME("Can not retrieve pointer: %d", err); }
+    if (err != CL_SUCCESS || hostPtr == nullptr) [[unlikely]] { HICR_THROW_RUNTIME("Can not retrieve pointer: %d", err); }
 
     auto memSlot = std::make_shared<opencl::L0::LocalMemorySlot>(hostPtr, size, hostBuffer, memorySpace);
 
@@ -134,7 +134,10 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     }
 
     // Checking whether the memory space passed belongs to the host
-    if (memSpaceType == memSpaceType_t::device) { HICR_THROW_RUNTIME("Can not register local memory slot on the provided memory space: %s", memorySpace->getType().c_str()); }
+    if (memSpaceType == memSpaceType_t::device) [[unlikely]]
+    {
+      HICR_THROW_RUNTIME("Can not register local memory slot on the provided memory space: %s", memorySpace->getType().c_str());
+    }
 
     cl_int err;
     auto   queue   = getQueue(memorySpace);
@@ -142,11 +145,11 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
     // Create OpenCL buffer
     auto buffer = std::make_shared<cl::Buffer>(context, CL_MEM_USE_HOST_PTR, size, ptr, &err);
-    if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not register local memory slot on the host: %d", err); }
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not register local memory slot on the host: %d", err); }
 
     // Map it to the host in order to get a pointer to the data. Data are mapped in memory for writing
     auto hostPtr = queue->enqueueMapBuffer(*buffer, CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, size, nullptr, nullptr, &err);
-    if (err != CL_SUCCESS || hostPtr == nullptr) { HICR_THROW_RUNTIME("Can not retrieve pointer: %d", err); }
+    if (err != CL_SUCCESS || hostPtr == nullptr) [[unlikely]] { HICR_THROW_RUNTIME("Can not retrieve pointer: %d", err); }
 
     // create the new memory slot
     return std::make_shared<opencl::L0::LocalMemorySlot>(hostPtr, size, buffer, memorySpace);
@@ -155,27 +158,27 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   __INLINE__ void memsetImpl(const std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, int value, size_t size) override
   {
     auto m = dynamic_pointer_cast<opencl::L0::LocalMemorySlot>(memorySlot);
-    if (m == nullptr) { HICR_THROW_RUNTIME("Unsupported local memory slot: %s", memorySlot->getMemorySpace()->getType().c_str()); }
+    if (m == nullptr) [[unlikely]] { HICR_THROW_RUNTIME("Unsupported local memory slot: %s", memorySlot->getMemorySpace()->getType().c_str()); }
 
     cl_int clValue = value;
 
     auto completionEvent = cl::Event();
     auto queue           = getQueue(m->getMemorySpace());
     auto err             = queue->enqueueFillBuffer(*(m->getBuffer()), clValue, 0, m->getSize(), nullptr, &completionEvent);
-    if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not perform memset: %d", err); }
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not perform memset: %d", err); }
     completionEvent.wait();
   }
 
   __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot) override
   {
     auto m = dynamic_pointer_cast<opencl::L0::LocalMemorySlot>(memorySlot);
-    if (m == nullptr) { HICR_THROW_RUNTIME("Unsupported local memory slot: %s", memorySlot->getMemorySpace()->getType().c_str()); }
+    if (m == nullptr) [[unlikely]] { HICR_THROW_RUNTIME("Unsupported local memory slot: %s", memorySlot->getMemorySpace()->getType().c_str()); }
 
     auto queue  = getQueue(m->getMemorySpace());
     auto buffer = m->getBuffer();
 
     auto err = queue->enqueueUnmapMemObject(*buffer, m->getPointer());
-    if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not unmap host pointer: %d", err); }
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not unmap host pointer: %d", err); }
 
     m->getBuffer().reset();
   }

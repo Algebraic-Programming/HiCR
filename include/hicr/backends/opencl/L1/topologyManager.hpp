@@ -121,7 +121,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
       const auto type = device["Type"].get<std::string>();
 
       // If the device type is recognized, add it to the new topology
-      if (type.find("OpenCL") != std::string::npos) t.addDevice(std::make_shared<opencl::L0::Device>(device));
+      if (type.find("OpenCL") != std::string::npos) { t.addDevice(std::make_shared<opencl::L0::Device>(device)); }
     }
 
     // Returning new topology

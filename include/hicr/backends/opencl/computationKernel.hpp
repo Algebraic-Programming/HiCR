@@ -100,7 +100,7 @@ class ComputationKernel final : public Kernel
 
     // start the kernel
     auto err = queue->enqueueNDRangeKernel(*_kernel, _offset, _global, _local);
-    if (err != CL_SUCCESS) HICR_THROW_RUNTIME("Failed to run the kernel. Error %d", err);
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Failed to run the kernel. Error %d", err); }
 
     for (size_t i = 0; i < _args.size(); i++)
     {

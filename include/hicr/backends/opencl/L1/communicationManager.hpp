@@ -131,8 +131,8 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
     auto dst = dynamic_pointer_cast<opencl::L0::LocalMemorySlot>(destination);
 
     // Checking whether the memory slot unit passed is compatible with this backend
-    if (src == nullptr) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
-    if (dst == nullptr) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
+    if (src == nullptr) [[unlikely]] { HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n"); }
+    if (dst == nullptr) [[unlikely]] { HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n"); }
 
     // Async version
     if (queue != nullptr)
@@ -144,7 +144,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
       unmap(queue, dst);
 
       err = queue->enqueueCopyBuffer(*(src->getBuffer()), *(dst->getBuffer()), src_offset, dst_offset, size, nullptr, nullptr);
-      if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not perform memcpy. Err: %d", err); }
+      if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not perform memcpy. Err: %d", err); }
     }
 
     // Sync version
@@ -160,7 +160,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
 
       cl::Event completionEvent;
       err = queue->enqueueCopyBuffer(*(src->getBuffer()), *(dst->getBuffer()), src_offset, dst_offset, size, nullptr, &completionEvent);
-      if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not perform memcpy. Err: %d", err); }
+      if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not perform memcpy. Err: %d", err); }
       completionEvent.wait();
     }
 
@@ -219,7 +219,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   {
     cl_int err;
     memSlot->getPointer() = queue->enqueueMapBuffer(*(memSlot->getBuffer()), CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, memSlot->getSize(), nullptr, nullptr, &err);
-    if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not map the buffer. Error: %d", err); }
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not map the buffer. Error: %d", err); }
   }
 
   /**
@@ -231,7 +231,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __INLINE__ void unmap(const cl::CommandQueue *queue, std::shared_ptr<HiCR::backend::opencl::L0::LocalMemorySlot> &memSlot)
   {
     auto err = queue->enqueueUnmapMemObject(*(memSlot->getBuffer()), memSlot->getPointer(), nullptr, nullptr);
-    if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not unmap the buffer. Error: %d", err); }
+    if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not unmap the buffer. Error: %d", err); }
   }
 };
 
