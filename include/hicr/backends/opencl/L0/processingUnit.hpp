@@ -40,8 +40,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
   public:
 
-  [[nodiscard]] __INLINE__ std::string getType() override { return "OpenCL Device"; }
-
   /**
    * Constructor for the Processing Unit (kernel) class
    *
@@ -49,21 +47,30 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    * \param context the OpenCL context
    */
   __INLINE__ ProcessingUnit(const std::shared_ptr<HiCR::L0::ComputeResource> &computeResource, const std::shared_ptr<cl::Context> &context)
-    : HiCR::L0::ProcessingUnit(computeResource),
-      _context(context)
+    : HiCR::L0::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the instance
     auto c = dynamic_pointer_cast<opencl::L0::ComputeResource>(computeResource);
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+
+    // Create queue
+    _queue = std::make_unique<cl::CommandQueue>(*context, c->getDevice().lock()->getOpenCLDevice());
   };
+
+  /**
+   * Get processing unit type
+   * 
+   * \return processing unit type
+  */
+  [[nodiscard]] __INLINE__ std::string getType() override { return "OpenCL Device"; }
 
   private:
 
   /**
-   * OpenCL context of the device
+   * OpenCL command queue
    */
-  const std::shared_ptr<cl::Context> &_context;
+  std::unique_ptr<cl::CommandQueue> _queue;
 
   /**
    * Variable to hold the execution state to run
@@ -91,14 +98,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     // Storing execution state object
     _executionState = std::move(e);
 
-    // Getting up-casted pointer for the instance
-    auto c = static_cast<opencl::L0::ComputeResource *>(getComputeResource().get());
-
-    // Set the device
-    _executionState->setDevice(c->getDevice().lock());
-
     // Set context
-    _executionState->setContext(_context);
+    _executionState->setQueue(_queue.get());
 
     // Staring execution state
     _executionState.get()->resume();

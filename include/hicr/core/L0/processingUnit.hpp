@@ -89,6 +89,9 @@ class ProcessingUnit
   __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::L0::ComputeResource> computeResource)
     : _computeResource(std::move(computeResource)) {};
 
+  /**
+   * Default destructor
+  */
   virtual ~ProcessingUnit() = default;
 
   /**

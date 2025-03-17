@@ -39,8 +39,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
   public:
 
-  [[nodiscard]] __INLINE__ std::string getType() override { return "Ascend Device"; }
-
   /**
    * Constructor for the Processing Unit (kernel) class
    *
@@ -54,14 +52,40 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
+
+    // Select the device
+    c->getDevice().lock()->select();
+
+    // Use FAST_LAUNCH option since the stream is meant to execute a sequence of kernels
+    // that reuse the same stream
+    auto err = aclrtCreateStreamWithConfig(&_stream, 0, ACL_STREAM_FAST_LAUNCH);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Could not create stream. Error %d", err);
   };
+
+  /**
+ * Destructor. Destroys the stream
+*/
+  ~ProcessingUnit()
+  {
+    // destroy the stream
+    auto err = aclrtDestroyStream(_stream);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to delete the stream after kernel execution. Error %d", err);
+  }
+
+  /**
+   * Get processing unit type
+   * 
+   * \return processing unit type
+  */
+
+  [[nodiscard]] __INLINE__ std::string getType() override { return "Ascend Device"; }
 
   private:
 
   /**
-   * ACL context of the device
-   */
-  aclrtContext _context;
+   * ACL stream
+  */
+  aclrtStream _stream;
 
   /**
    * Variable to hold the execution state to run
@@ -71,17 +95,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
   /**
    * Initialize the processing unit
    */
-  __INLINE__ void initialize()
-  {
-    // Getting up-casted pointer for the instance
-    auto c = dynamic_pointer_cast<ascend::L0::ComputeResource>(getComputeResource());
-
-    // Checking whether the execution unit passed is compatible with this backend
-    if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
-
-    // Get ACL context
-    _context = c->getDevice().lock()->getContext();
-  }
+  __INLINE__ void initialize() {}
 
   /**
    * Ascend backend implementation that starts the execution state in the processing unit.
@@ -104,6 +118,8 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
 
     // select the curent Ascend card before starting the execution state
     c->getDevice().lock()->select();
+
+    _executionState->setStream(_stream);
 
     // Staring execution state
     _executionState.get()->resume();
