@@ -12,12 +12,12 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 #include <nosv.h>
 #include <nosv/affinity.h>
 #include <hicr/core/definitions.hpp>
 #include <hicr/backends/hwloc/L0/computeResource.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
-#include <utility>
 
 #include <hicr/backends/nosv/L0/executionState.hpp>
 #include <hicr/backends/nosv/common.hpp>
@@ -58,8 +58,11 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     // Checking whether the execution unit passed is compatible with this backend
     if (c == nullptr) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
 
-    // move ownership to this instance
-    _computeResource = std::move(c);
+    // Getting the logical processor ID of the compute resource
+    auto pid = c->getProcessorId();
+
+    // setting up the nosv affinity for the execution task
+    _nosv_affinity = nosv_affinity_get(pid, NOSV_AFFINITY_LEVEL_CPU, NOSV_AFFINITY_TYPE_STRICT);
   };
 
   /**
@@ -76,11 +79,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
    */
   __INLINE__ void initialize()
   {
-    // Getting the logical processor ID of the compute resource
-    auto pid = _computeResource->getProcessorId();
-
-    // setting up the nosv affinity for the execution task
-    _nosv_affinity = nosv_affinity_get(pid, NOSV_AFFINITY_LEVEL_CPU, NOSV_AFFINITY_TYPE_STRICT);
+    // Nothing to do here
   }
 
   /**
@@ -149,11 +148,6 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     // Busy wait until the function call fully executed (i.e. the worker mainLoop finished)
     while (_executionState->checkFinalization() == false);
   }
-
-  /**
-   * shared instance of the compute resource
-   */
-  std::shared_ptr<HiCR::backend::hwloc::L0::ComputeResource> _computeResource;
 
   /**
    * instance of the execution state

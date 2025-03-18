@@ -197,7 +197,8 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     }
 
     // destroying this task
-    check(nosv_destroy(task, NOSV_DESTROY_NONE));
+    // TODO: Destroy a nOS-V task when no longer needed. Destroying the nOS-V task here does not work for all the TaskR examples (e.g. Jacobi3D).
+    // check(nosv_destroy(task, NOSV_DESTROY_NONE));
   }
 
   /**
