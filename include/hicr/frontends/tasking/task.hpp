@@ -26,6 +26,10 @@
 #include "callbackMap.hpp"
 #include "common.hpp"
 
+#ifdef ENABLE_INSTRUMENTATION
+  #include <tracr.hpp>
+#endif
+
 namespace HiCR::tasking
 {
 
@@ -163,14 +167,27 @@ class Task
     // Triggering execution callback, if defined
     if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onTaskExecute);
 
+// TraCR set trace of thread executing a task
+#ifdef ENABLE_INSTRUMENTATION
+    INSTRUMENTATION_THREAD_MARK_SET(0);
+#endif
+
     // Now resuming the task's execution
     _executionState->resume();
+
+// TraCR set trace of thread polling again
+#ifdef ENABLE_INSTRUMENTATION
+    INSTRUMENTATION_THREAD_MARK_SET(2);
+#endif
 
     // Checking execution state finalization
     _executionState->checkFinalization();
 
     // Getting state after execution
     const auto state = getState();
+
+    if (state != HiCR::L0::ExecutionState::state_t::suspended && state != HiCR::L0::ExecutionState::state_t::finished)
+      HICR_THROW_RUNTIME("Task has to be either in suspended or in finished state but I got State: %d.\n", state);
 
     // If the task is suspended and callback map is defined, trigger the corresponding callback.
     if (state == HiCR::L0::ExecutionState::state_t::suspended)
