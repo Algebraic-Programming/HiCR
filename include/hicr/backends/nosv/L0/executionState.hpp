@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <nosv.h>
+#include <nosv/hwinfo.h> // debug
 #include <nosv/affinity.h>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
@@ -20,6 +21,10 @@
 
 #include <hicr/backends/nosv/L0/executionUnit.hpp>
 #include <hicr/backends/nosv/common.hpp>
+
+#ifdef ENABLE_INSTRUMENTATION
+  #include <tracr.hpp>
+#endif
 
 namespace HiCR::backend::nosv::L0
 {
@@ -91,6 +96,11 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
     // nOS-V runtime callback wrapper for the fc
     nosv_task_run_callback_t run_callback = [](nosv_task_t task) {
+// TraCR set trace of thread executing a task
+#ifdef ENABLE_INSTRUMENTATION
+      INSTRUMENTATION_THREAD_MARK_SET(0);
+#endif
+
       // Accessing metadata from the task
       auto TaskMetadata = (taskMetadata_t *)getTaskMetadata(task);
 
@@ -165,6 +175,11 @@ class ExecutionState final : public HiCR::L0::ExecutionState
 
     // Resume the parent task to continue running other tasks.
     check(nosv_submit(metadata->parent_task, NOSV_SUBMIT_NONE));
+
+// TraCR set trace of thread polling again (as it suspended his task)
+#ifdef ENABLE_INSTRUMENTATION
+    INSTRUMENTATION_THREAD_MARK_SET(2);
+#endif
 
     // Now suspending this execution state.
     check(nosv_pause(NOSV_PAUSE_NONE));
