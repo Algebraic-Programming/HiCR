@@ -11,3 +11,7 @@ Infiniband networks (specifically with ConnectX-* generation adapters) provide h
 
 * polling on a local adapter via :code:`ibv_poll_cq` for the reception of messages. This allows e.g. to avoid remote communication when ensuring certain communication has completed.
 * Infiniband provides support for extended atomics, such as atomic Compare&Swap operations on a remote memory address. This allows HiCR to implement a hardware supported global mutex.
+
+The following management functionalities are implemented:
+- Memory: expose LPF memory allocation capabilities
+- Communication: enable data movements among different instances using Infiniband
