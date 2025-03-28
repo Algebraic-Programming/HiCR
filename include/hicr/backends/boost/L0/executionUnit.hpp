@@ -21,14 +21,14 @@ namespace HiCR::backend::boost::L0
 {
 
 /**
- * This class represents a replicable C++ executable function for the CPU-based backends
+ * This class represents a replicable C++ executable function for the Boost backends
  */
 class ExecutionUnit final : public HiCR::L0::ExecutionUnit
 {
   public:
 
   /**
-   * Constructor for the execution unit class of the sequential backend
+   * Constructor for the execution unit class of the Boost backend
    *
    * \param fc A replicable C++ function to run in this execution unit
    */
