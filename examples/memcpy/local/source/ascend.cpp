@@ -31,7 +31,7 @@ int main(int argc, char **argv)
   const auto                                 deviceTopology = ascendTopologyManager.queryTopology();
   auto                                       ascendDevices  = deviceTopology.getDevices();
 
-  // Getting access to all ascend devices memory spaces
+  // Getting access to all Ascend devices memory spaces
   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> ascendMemorySpaces;
   for (const auto &d : ascendDevices)
     for (const auto &m : d->getMemorySpaceList()) ascendMemorySpaces.push_back(m);
