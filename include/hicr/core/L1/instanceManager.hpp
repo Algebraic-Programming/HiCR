@@ -120,58 +120,6 @@ class InstanceManager
   }
 
   /**
-   * Function to add an RPC target with a name, and the combination of a execution unit and the processing unit that is in charge of executing it
-   * \param[in] RPCName Name of the RPC to add
-   * \param[in] fc Indicates function to run when this RPC is triggered
-   */
-  __INLINE__ void addRPCTarget(const std::string &RPCName, const RPCFunction_t &fc)
-  {
-    // Obtaining hash from the RPC name
-    const auto idx = getRPCTargetIndexFromString(RPCName);
-
-    // Inserting the new entry
-    _RPCTargetMap[idx] = fc;
-  }
-
-  /**
-   * Function to put the current instance to listen for incoming RPCs
-   */
-  __INLINE__ void listen()
-  {
-    // Calling the backend-specific implementation of the listen function
-    listenImpl();
-  }
-
-  /**
-   * Function to trigger the execution of a remote function in a remote HiCR instance
-   * \param[in] RPCName The name of the RPC to run
-   * \param[in] instance Instance on which to run the RPC
-   */
-  virtual void launchRPC(HiCR::L0::Instance &instance, const std::string &RPCName) const = 0;
-
-  /**
-   * Function to submit a return value for the currently running RPC
-   * \param[in] pointer Pointer to the start of the data buffer to send
-   * \param[in] size Size of the data buffer to send
-   */
-  __INLINE__ void submitReturnValue(void *pointer, const size_t size)
-  {
-    // Calling backend-specific implementation of this function
-    submitReturnValueImpl(pointer, size);
-  }
-
-  /**
-   * Function to get a return value from a remote instance that ran an RPC
-   * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
-   * \return A pointer to a newly allocated local memory slot containing the return value
-   */
-  __INLINE__ void *getReturnValue(HiCR::L0::Instance &instance) const
-  {
-    // Calling backend-specific implementation of this function
-    return getReturnValueImpl(instance);
-  }
-
-  /**
    * This function calls the internal implementation of the finalization procedure for the given instance manager
    */
   virtual void finalize() = 0;
@@ -189,28 +137,6 @@ class InstanceManager
    */
   [[nodiscard]] virtual HiCR::L0::Instance::instanceId_t getRootInstanceId() const = 0;
 
-  /**
-   * Generates a 64-bit hash value from a given string. Useful for compressing the name of RPCs
-   *
-   * @param[in] name A string (e.g., the name of an RPC to compress)
-   * @return The 64-bit hashed value of the name provided
-   */
-  static RPCTargetIndex_t getRPCTargetIndexFromString(const std::string &name) { return std::hash<std::string>()(name); }
-
-  /**
-   * Internal function used to initiate the execution of the requested RPC
-   * \param[in] rpcIdx Index to the RPC to run (hash to save overhead, the name is no longer recoverable)
-   */
-  __INLINE__ void executeRPC(const RPCTargetIndex_t rpcIdx) const
-  {
-    // Getting RPC target from the index
-    if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
-    auto &fc = _RPCTargetMap.at(rpcIdx);
-
-    // Running RPC function
-    fc();
-  }
-
   protected:
 
   /**
@@ -226,25 +152,6 @@ class InstanceManager
    * \return A pointer to the backend-specific instance
   */
   virtual std::shared_ptr<HiCR::L0::Instance> addInstanceImpl(HiCR::L0::Instance::instanceId_t instanceId) = 0;
-
-  /**
-   * Backend-specific implementation of the getReturnValue function
-   * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
-   * \return A pointer to a newly allocated local memory slot containing the return value
-   */
-  virtual void *getReturnValueImpl(HiCR::L0::Instance &instance) const = 0;
-
-  /**
-   * Backend-specific implementation of the submitReturnValue
-   * \param[in] pointer Pointer to the start of the data buffer to send
-   * \param[in] size Size of the data buffer to send
-   */
-  virtual void submitReturnValueImpl(const void *pointer, const size_t size) = 0;
-
-  /**
-   * Backend-specific implementation of the listen function
-   */
-  virtual void listenImpl() = 0;
 
   protected:
 
