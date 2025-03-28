@@ -5,7 +5,7 @@
 
 /**
  * @file computationKernel.hpp
- * @brief This file implements the computation kernel class for the opencl backend
+ * @brief This file implements the computation kernel class for the OpenCL backend
  * @author L. Terracciano
  * @date 07/03/2025
  */
@@ -31,7 +31,7 @@ namespace opencl
 {
 
 /**
- * This class represents a replicable Computation Kernel for the opencl backend.
+ * This class represents a replicable Computation Kernel for the OpenCL backend.
  * A Computation Kernel enables the kernel execution in the HiCR runtime, and in particular enables
  * the concatenation of kernel execution and memcpy operations in a common queue of operations.
  */
@@ -40,14 +40,14 @@ class ComputationKernel final : public Kernel
   public:
 
   /**
-   * Constructor for the Computation Kernel unit class of the opencl backend.
+   * Constructor for the Computation Kernel unit class of the OpenCL backend.
    * Set the kernel arguments.
    *
    * \param kernel OpenCL kernel
    * \param args kernel arguments
-   * \param offset 
-   * \param global 
-   * \param local 
+   * \param offset offset range
+   * \param global global range
+   * \param local local range
    */
   ComputationKernel(const std::shared_ptr<cl::Kernel>                             &kernel,
                     const std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> &args,
@@ -69,8 +69,12 @@ class ComputationKernel final : public Kernel
       if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not set kernel arg. Error: %d", err); }
     }
   };
-
+  
   ComputationKernel()  = delete;
+
+  /**
+   * Default destructor
+  */
   ~ComputationKernel() = default;
 
   /**

@@ -41,7 +41,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   public:
 
   /**
-   * Constructor for the memory manager class for the opencl backend.
+   * Constructor for the memory manager class for the OpenCL backend.
    * 
    * \param[in] deviceQueueMap map of device ids and command queues
    */
@@ -49,10 +49,19 @@ class MemoryManager final : public HiCR::L1::MemoryManager
     : HiCR::L1::MemoryManager(),
       _deviceQueueMap(deviceQueueMap)
   {}
+
+  /**
+   * Default destructor
+  */
   ~MemoryManager() = default;
 
   private:
 
+  /**
+   * Implementation of allocateLocalMemorySlot.allocateLocalMemorySlot.
+   * 
+   * \param[in] memorySpace memorySpace in which the allocation should be made
+  */
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
     auto memSpaceType = memSpaceType_t::none;

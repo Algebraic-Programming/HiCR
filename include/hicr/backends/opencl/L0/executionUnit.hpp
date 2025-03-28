@@ -5,7 +5,7 @@
 
 /**
  * @file executionUnit.hpp
- * @brief This file implements the execution unit class for the opencl backend
+ * @brief This file implements the execution unit class for the OpenCL backend
  * @author L. Terracciano
  * @date 07/03/2025
  */
@@ -38,7 +38,7 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
   public:
 
   /**
-   * Constructor for the execution unit class of the opencl backend
+   * Constructor for the execution unit class of the OpenCL backend
    *
    * \param kernelOperations kernels to execute
    */

@@ -5,7 +5,7 @@
 
 /**
  * @file executionState.hpp
- * @brief This file implements the execution state class for the opencl backend
+ * @brief This file implements the execution state class for the OpenCL backend
  * @author L. Terracciano
  * @date 07/03/2025
  */
@@ -31,7 +31,7 @@ namespace L0
 {
 
 /**
- * This class represents the execution state of a kernel for the opencl backend.
+ * This class represents the execution state of a kernel for the OpenCL backend.
  * Since kernels are not preemptible, it does not offer suspend/resume functionality.
  */
 class ExecutionState final : public HiCR::L0::ExecutionState
@@ -100,7 +100,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Failed to write event in the queue", err); }
   }
 
-  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by opencl backend"); }
+  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by OpenCL backend"); }
 
   /**
    * Internal implementation of checkFinalization routine. It periodically query the OpenCL event on the queue to check for completion and

@@ -24,7 +24,7 @@ namespace HiCR::backend::opencl::L1
 {
 
 /**
- * Implementation of the HiCR opencl backend compute manager.
+ * Implementation of the HiCR OpenCL backend compute manager.
  *
  * It stores the processing units detected by OpenCL.
  */
@@ -33,7 +33,7 @@ class ComputeManager final : public HiCR::L1::ComputeManager
   public:
 
   /**
-   * Constructor for the Compute Manager class for the opencl backend
+   * Constructor for the Compute Manager class for the OpenCL backend
    * 
    * \param[in] context the OpenCL context
    */
@@ -110,14 +110,14 @@ class ComputeManager final : public HiCR::L1::ComputeManager
    * 
    * @param processingUnit the processing unit to operate on
    */
-  __INLINE__ void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Suspend functionality not supported by opencl backend"); }
+  __INLINE__ void suspendImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Suspend functionality not supported by OpenCL backend"); }
 
   /**
    * Internal implementation of resumeImpl
    * 
    * @param processingUnit the processing unit to operate on
    */
-  __INLINE__ void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Resume functionality not supported by opencl backend"); }
+  __INLINE__ void resumeImpl(std::unique_ptr<HiCR::L0::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Resume functionality not supported by OpenCL backend"); }
 
   /**
    * Internal implementation of terminateImpl

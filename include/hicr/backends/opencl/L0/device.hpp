@@ -164,7 +164,7 @@ class Device final : public HiCR::L0::Device
   }
 
   /**
-   * Individual identifier for the opencl device
+   * Individual identifier for the OpenCL device
    */
   deviceIdentifier_t _id;
 
