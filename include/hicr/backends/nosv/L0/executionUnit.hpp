@@ -29,7 +29,7 @@ class ExecutionUnit : public HiCR::L0::ExecutionUnit
   using pthreadFc_t = std::function<void(void *)>;
 
   /**
-   * Constructor for the execution unit class of the sequential backend
+   * Constructor for the execution unit class of the nOS-V backend
    *
    * \param fc A replicable C++ function to run in this execution unit
    */

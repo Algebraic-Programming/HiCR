@@ -6,14 +6,13 @@
 /**
  * @file executionState.hpp
  * @brief nOS-V execution state class. Main job is to store the nosv task and its metadata
- * @author N.Baumann
+ * @author N. Baumann
  * @date 24/02/2025
  */
 #pragma once
 
 #include <memory>
 #include <nosv.h>
-#include <nosv/hwinfo.h> // debug
 #include <nosv/affinity.h>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
