@@ -29,7 +29,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   public:
 
   /**
-   * Constructor for the memory manager class for the shared memory backend
+   * Constructor for the memory manager class for the hwloc backend
    *
    * \param[in] topology An HWloc topology object that can be used to query the available memory resources
    */

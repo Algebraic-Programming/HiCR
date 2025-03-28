@@ -21,14 +21,14 @@ namespace HiCR::backend::hwloc::L0
 {
 
 /**
- * This class represents a memory space, as visible by the sequential backend. That is, the entire RAM that the running CPU has access to.
+ * This class represents a memory space, as visible by the hwloc backend. That is, the entire RAM that the running CPU has access to.
  */
 class MemorySpace final : public HiCR::L0::MemorySpace
 {
   public:
 
   /**
-   * Constructor for the memory space class of the shared memory backend
+   * Constructor for the memory space class of the hwloc backend
    *
    * \param size The maximum allocatable size detected for this memory space
    * \param hwlocObject HWLoc object for associated to this memory space

@@ -5,7 +5,7 @@
 
 /**
  * @file hwloc/L0/globalMemorySlot.hpp
- * @brief Provides a definition for the global memory slot class for the  HWLoc-based backend
+ * @brief Provides a definition for the global memory slot class for the HWLoc backend
  * @author S. M. Martin
  * @date 19/10/2023
  */
@@ -20,7 +20,7 @@ namespace HiCR::backend::hwloc::L0
 {
 
 /**
- * This class represents an abstract definition for a global Memory Slot resource for the host (CPU) backends
+ * This class represents an abstract definition for a global Memory Slot resource for the hwloc backends
  *
  * It uses mutexes to enforce the mutual exclusion logic
  */
