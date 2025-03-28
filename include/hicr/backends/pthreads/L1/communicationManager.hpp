@@ -5,7 +5,7 @@
 
 /**
  * @file communicationManager.hpp
- * @brief This file implements the pthread-based communication manager support for the host (CPU) memory backend
+ * @brief This file implements the communication manager support for the Pthreads backend
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -22,7 +22,7 @@ namespace HiCR::backend::pthreads::L1
 {
 
 /**
- * Implementation of the SharedMemory/HWloc-based communication manager for the HiCR Shared Memory Backend.
+ * Implementation of the Pthreads communication manager
  *
  * This backend uses pthread-based mutexes and barriers to prevent concurrent access violations
  */
@@ -31,7 +31,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   public:
 
   /**
-   * Constructor for the memory manager class for the shared memory backend
+   * Constructor for the memory manager class for the Pthreads backend
    *
    * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
    */
@@ -147,7 +147,7 @@ class CommunicationManager final : public HiCR::L1::CommunicationManager
   __INLINE__ void barrier() { pthread_barrier_wait(&_barrier); }
 
   /**
-   * Implementation of the fence operation for the shared memory backend. In this case, nothing needs to be done, as
+   * Implementation of the fence operation for the pthreads backend. In this case, nothing needs to be done, as
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
