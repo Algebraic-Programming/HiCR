@@ -108,7 +108,7 @@ class MockInstanceManager : public HiCR::L1::InstanceManager
   MOCK_METHOD(void, finalize, (), (override));
   MOCK_METHOD(void, abort, (int), (override));
   MOCK_METHOD(HiCR::L0::Instance::instanceId_t, getRootInstanceId, (), (const, override));
-  MOCK_METHOD(std::shared_ptr<HiCR::L0::Instance>, createInstanceImpl, (const HiCR::L0::Topology &), (override));
+  MOCK_METHOD(std::shared_ptr<HiCR::L0::Instance>, createInstanceImpl, (const std::shared_ptr<HiCR::L0::InstanceTemplate> &), (override));
   MOCK_METHOD(std::shared_ptr<HiCR::L0::Instance>, addInstanceImpl, (HiCR::L0::Instance::instanceId_t), (override));
   MOCK_METHOD(void *, getReturnValueImpl, (HiCR::L0::Instance &), (const, override));
   MOCK_METHOD(void, submitReturnValueImpl, (const void *, const size_t), (override));

@@ -19,6 +19,7 @@
 #include <functional>
 #include <hicr/core/L0/executionUnit.hpp>
 #include <hicr/core/L0/instance.hpp>
+#include <hicr/core/L0/instanceTemplate.hpp>
 #include <hicr/core/L0/localMemorySlot.hpp>
 #include <hicr/core/L0/memorySpace.hpp>
 #include <hicr/core/L0/processingUnit.hpp>
@@ -26,11 +27,6 @@
 #include <hicr/core/L1/memoryManager.hpp>
 #include <hicr/core/L1/communicationManager.hpp>
 #include <hicr/core/L1/computeManager.hpp>
-
-/**
- * This value is assigned to the default processing unit if no id is provided
- */
-constexpr size_t _HICR_DEFAULT_PROCESSING_UNIT_ID_ = 0xF0F0F0F0ul;
 
 namespace HiCR::L1
 {
@@ -83,14 +79,24 @@ class InstanceManager
   [[nodiscard]] __INLINE__ std::shared_ptr<HiCR::L0::Instance> getCurrentInstance() const { return _currentInstance; }
 
   /**
-   * Function to create a new HiCR instance
+   * Function to create new instance template 
    * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
+   * \return A pointer to the newly created instance template
+  */
+  __INLINE__ std::shared_ptr<HiCR::L0::InstanceTemplate> createInstanceTemplate(const HiCR::L0::Topology &requestedTopology = HiCR::L0::Topology())
+  {
+    return std::make_shared<HiCR::L0::InstanceTemplate>(requestedTopology);
+  }
+
+  /**
+   * Function to create a new HiCR instance
+   * \param[in] instanceTemplate The HiCR instance template to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstance(const HiCR::L0::Topology &requestedTopology = HiCR::L0::Topology())
+  __INLINE__ std::shared_ptr<HiCR::L0::Instance> createInstance(const std::shared_ptr<HiCR::L0::InstanceTemplate> &instanceTemplate)
   {
     // Requesting the creating of the instance to the specific backend
-    auto newInstance = createInstanceImpl(requestedTopology);
+    auto newInstance = createInstanceImpl(instanceTemplate);
 
     // If successul, adding the instance to the internal list
     _instances.push_back(newInstance);
@@ -209,10 +215,10 @@ class InstanceManager
 
   /**
    * Backend-specific implementation of the createInstance function
-   * \param[in] requestedTopology The HiCR topology to try to obtain in the new instance
+   * \param[in] instanceTemplate The HiCR instance template to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const HiCR::L0::Topology &requestedTopology) = 0;
+  virtual std::shared_ptr<HiCR::L0::Instance> createInstanceImpl(const std::shared_ptr<HiCR::L0::InstanceTemplate> &instanceTemplate) = 0;
 
   /**
    * Backend-specific implementation of the addInstance function
