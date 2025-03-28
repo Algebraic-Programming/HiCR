@@ -5,7 +5,7 @@
 
 /**
  * @file executionUnit.hpp
- * @brief This file implements the execution unit class for the ascend backend
+ * @brief This file implements the execution unit class for the Ascend backend
  * @author L. Terracciano
  * @date 30/10/2023
  */
@@ -13,6 +13,7 @@
 #pragma once
 
 #include <acl/acl.h>
+#include <memory>
 #include <string>
 #include <vector>
 #include <hicr/backends/ascend/kernel.hpp>
@@ -38,7 +39,7 @@ class ExecutionUnit final : public HiCR::L0::ExecutionUnit
   public:
 
   /**
-   * Constructor for the execution unit class of the ascend backend
+   * Constructor for the execution unit class of the Ascend backend
    *
    * \param kernelOperations kernels to execute
    */

@@ -55,13 +55,13 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     // Storage for the topology to return
     HiCR::L0::Topology t;
 
-    // Storage for getting the ascend device count
+    // Storage for getting the Ascend device count
     uint32_t deviceCount = 0;
 
     // ask ACL for available devices
     aclError err;
     err = aclrtGetDeviceCount((uint32_t *)&deviceCount);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device count. Error %d", err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve Ascend device count. Error %d", err);
 
     // add as many memory spaces as devices
     for (int32_t deviceId = 0; deviceId < (int32_t)deviceCount; deviceId++)
@@ -71,18 +71,18 @@ class TopologyManager final : public HiCR::L1::TopologyManager
 
       // set the device
       err = aclrtSetDevice(deviceId);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not select the ascend device %d. Error %d", deviceId, err);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not select the Ascend device %d. Error %d", deviceId, err);
 
       // Creating new Ascend device
       auto ascendDevice = std::make_shared<ascend::L0::Device>(deviceId, HiCR::L0::Device::computeResourceList_t({}), HiCR::L0::Device::memorySpaceList_t({}));
 
       // retrieve the default device context
       err = aclrtGetCurrentContext(ascendDevice->getContext());
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in ascend device %d. Error %d", deviceId, err);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not get default context in Ascend device %d. Error %d", deviceId, err);
 
       // get the memory info
       err = aclrtGetMemInfo(ACL_HBM_MEM, &ascendFreeMemory, &ascendMemorySize);
-      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve ascend device %d memory space. Error %d", deviceId, err);
+      if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not retrieve Ascend device %d memory space. Error %d", deviceId, err);
 
       // Creating Device's memory space
       auto ascendDeviceMemorySpace = std::make_shared<ascend::L0::MemorySpace>(ascendDevice, ascendMemorySize);
@@ -98,7 +98,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
       t.addDevice(ascendDevice);
     }
 
-    // Setting up communication between the local ascend devices
+    // Setting up communication between the local Ascend devices
     setupInterDeviceCommunication(t);
 
     // Returning topology
@@ -159,7 +159,7 @@ class TopologyManager final : public HiCR::L1::TopologyManager
     int32_t  canAccessPeer = 0;
     aclError err;
 
-    // enable communication among each pair of ascend cards
+    // enable communication among each pair of Ascend devices
     for (const auto &srcDevice : topology.getDevices())
       for (const auto &dstDevice : topology.getDevices())
       {
@@ -167,14 +167,14 @@ class TopologyManager final : public HiCR::L1::TopologyManager
         auto dst = (ascend::L0::Device *)dstDevice.get();
         if (src->getId() != dst->getId())
         {
-          // verify that the two cards can see each other
+          // verify that the two Ascend devices can see each other
           err = aclrtDeviceCanAccessPeer(&canAccessPeer, src->getId(), dst->getId());
           if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not determine peer accessibility to device %ld from device %ld.. Error %d", dst, src, err);
 
           if (canAccessPeer == 0) HICR_THROW_RUNTIME("Can not access device %ld from device %ld. Error %d", dst, src, err);
 
           // Selecting device
-          ascend::L0::Device::selectDevice(dst->getContext(), dst->getId());
+          dst->select();
 
           // enable the communication
           err = aclrtDeviceEnablePeerAccess(src->getId(), 0);

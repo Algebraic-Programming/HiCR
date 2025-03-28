@@ -5,7 +5,7 @@
 
 /**
  * @file computationKernel.hpp
- * @brief This file implements the computation kernel class for the ascend backend
+ * @brief This file implements the computation kernel class for the Ascend backend
  * @author S. M. Martin & L. Terracciano
  * @date 8/11/2023
  */
@@ -33,7 +33,7 @@ namespace ascend
 {
 
 /**
- * This class represents a replicable Computation Kernel for the ascend backend.
+ * This class represents a replicable Computation Kernel for the Ascend backend.
  * A Computation Kernel enables the kernel execution in the HiCR runtime, and in particular enables
  * the concatenation of kernel execution and memcpy operations in a common stream of operations.
  */
@@ -42,7 +42,7 @@ class ComputationKernel final : public Kernel
   public:
 
   /**
-   * Keep track of input and output tensor specific data for executing ascend kernel
+   * Keep track of input and output tensor-specific data for executing ascend kernel
    */
   struct tensorData_t
   {
@@ -57,7 +57,7 @@ class ComputationKernel final : public Kernel
   };
 
   /**
-   * Constructor for the Computation Kernel unit class of the ascend backend.
+   * Constructor for the Computation Kernel unit class of the Ascend backend.
    * This will not perform any model loading so this aspect should be handled manually (e.g., with aclopSetModelDir())
    *
    * \param kernelName name of the kernel
@@ -76,7 +76,7 @@ class ComputationKernel final : public Kernel
   };
 
   /**
-   * Constructor for the Computation Kernel unit class of the ascend backend.
+   * Constructor for the Computation Kernel unit class of the Ascend backend.
    * This will load an operator binary file located at the provided path with aclopLoad()
    *
    * \param kernelPath path the the kernel .om file

@@ -30,21 +30,21 @@ namespace L0
 {
 
 /**
- * Forward declaration of the ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the Ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class Device;
 
 /**
- * This class represents a memory space, as visible by the sequential backend. That is, the entire RAM that the running CPU has access to.
+ * This class represents a memory space, as visible by the Ascend backend. That is, the entire RAM that the running CPU has access to.
  */
 class MemorySpace final : public HiCR::L0::MemorySpace
 {
   public:
 
   /**
-   * Constructor for the compute resource class of the sequential backend
+   * Constructor for the compute resource class of the Ascend backend
    *
-   * \param device The ascend device in which this memory space was detected
+   * \param device The Ascend device in which this memory space was detected
    * \param size The size of this memory space
    */
   MemorySpace(const std::weak_ptr<ascend::L0::Device> device, const size_t size)
@@ -72,9 +72,9 @@ class MemorySpace final : public HiCR::L0::MemorySpace
   __INLINE__ std::string getType() const override { return "Ascend Device RAM"; }
 
   /**
-   * Function to get the ascend device associated to this memory space
+   * Function to get the Ascend device associated to this memory space
    *
-   * @return The ascend device corresponding to this memory space
+   * @return The Ascend device corresponding to this memory space
    */
   __INLINE__ const std::weak_ptr<const ascend::L0::Device> getDevice() const { return _device; }
 

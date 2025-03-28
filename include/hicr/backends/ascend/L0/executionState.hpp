@@ -5,7 +5,7 @@
 
 /**
  * @file executionState.hpp
- * @brief This file implements the execution state class for the ascend backend
+ * @brief This file implements the execution state class for the Ascend backend
  * @author L. Terracciano
  * @date 1/11/2023
  */
@@ -31,7 +31,7 @@ namespace L0
 {
 
 /**
- * This class represents the execution state of a kernel for the ascend backend.
+ * This class represents the execution state of a stream of kernel for the Ascend backend.
  * Since kernels are not preemptible, it does not offer suspend/resume functionality.
  */
 class ExecutionState final : public HiCR::L0::ExecutionState
@@ -55,6 +55,9 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     _executionUnit = e;
   }
 
+  /**
+   * Default destructor
+  */
   ~ExecutionState() = default;
 
   /**
@@ -91,9 +94,11 @@ class ExecutionState final : public HiCR::L0::ExecutionState
    */
   __INLINE__ void resumeImpl() override
   {
+    // Create an ACL event
     aclError err = aclrtCreateEvent(&_syncEvent);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not create synchronize event. Error %d", err);
 
+    // Signal that the execution unit is running
     _isStreamActive = true;
 
     // start the sequence of kernels execution
@@ -104,7 +109,7 @@ class ExecutionState final : public HiCR::L0::ExecutionState
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
   }
 
-  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend"); }
+  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by Ascend backend"); }
 
   /**
    * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and

@@ -31,7 +31,7 @@ namespace L0
 {
 
 /**
- * This class represents a device, as visible by the shared memory backend. That is, an assumed SMP processor plus a shared RAM that all process have access to.
+ * This class represents a device, as visible by the Ascend backend.
  */
 class Device final : public HiCR::L0::Device
 {
@@ -81,19 +81,6 @@ class Device final : public HiCR::L0::Device
   }
 
   /**
-   * Set the device on which the operations needs to be executed
-   *
-   * \param deviceContext the device ACL context
-   * \param deviceId the device identifier
-   */
-  __INLINE__ static void selectDevice(const aclrtContext *deviceContext, const deviceIdentifier_t deviceId)
-  {
-    // select the device context on which operations shoud be executed
-    aclError err = aclrtSetCurrentContext(*deviceContext);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set the device %ld context. Error %d", deviceId, err);
-  }
-
-  /**
    * Set this device as the one on which the operations needs to be executed
    */
   __INLINE__ void select() const { selectDevice(_context.get(), _id); }
@@ -108,12 +95,17 @@ class Device final : public HiCR::L0::Device
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy context for device %ld. Error %d", _id, err);
   };
 
+  /**
+   * Returns a string representing the Ascend device type
+   * 
+   * \return The string representing the Ascend device type
+  */
   __INLINE__ std::string getType() const override { return "Ascend Device"; }
 
   /**
    * Returns the internal id of the current Ascend device
    *
-   * \return The id of the ascend device
+   * \return The id of the Ascend device
    */
   __INLINE__ deviceIdentifier_t getId() const { return _id; }
 
@@ -174,7 +166,7 @@ class Device final : public HiCR::L0::Device
   }
 
   /**
-   * Individual identifier for the ascend device
+   * Individual identifier for the Ascend device
    */
   deviceIdentifier_t _id;
 
@@ -182,6 +174,21 @@ class Device final : public HiCR::L0::Device
    * The internal Ascend context associated to the device
    */
   const std::unique_ptr<aclrtContext> _context;
+
+  private:
+
+  /**
+   * Set the device on which the operations needs to be executed
+   *
+   * \param deviceContext the device ACL context
+   * \param deviceId the device identifier. Needed for loggin purposes
+   */
+  __INLINE__ static void selectDevice(const aclrtContext *deviceContext, const deviceIdentifier_t deviceId)
+  {
+    // select the device context on which operations shoud be executed
+    aclError err = aclrtSetCurrentContext(*deviceContext);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set the device %ld context. Error %d", deviceId, err);
+  }
 };
 
 } // namespace L0

@@ -41,7 +41,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
   public:
 
   /**
-   * Constructor for the ascend memory manager class for the ascend backend.
+   * Constructor for the ascend memory manager class for the Ascend backend.
    */
   MemoryManager()
     : HiCR::L1::MemoryManager()
@@ -112,7 +112,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
 
     // Do the allocation on device memory
     aclError err = aclrtMalloc(&ptr, size, ACL_MEM_MALLOC_HUGE_FIRST);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not allocate memory on ascend device %d. Error %d", device->getId(), err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not allocate memory on Ascend device %d. Error %d", device->getId(), err);
 
     // Returning allocated pointer
     return ptr;

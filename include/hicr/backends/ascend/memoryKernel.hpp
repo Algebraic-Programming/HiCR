@@ -5,7 +5,7 @@
 
 /**
  * @file memoryKernel.hpp
- * @brief This file implements the kernel class for the ascend backend
+ * @brief This file implements the kernel class for the Ascend backend
  * @author S. M. Martin & L. Terracciano
  * @date 13/11/2023
  */
@@ -28,7 +28,7 @@ namespace ascend
 {
 
 /**
- * This class represents a replicable Memory Kernel for the ascend backend.
+ * This class represents a replicable Memory Kernel for the Ascend backend.
  * A Memory Kernel enable the execution of memcopy operations in a stream/sequence of Kernels.
  * Memory Kernels currently supports memcpy operations on the same device, since they are meant to be chained
  * with other Kernels.
@@ -38,7 +38,7 @@ class MemoryKernel final : public Kernel
   public:
 
   /**
-   * Constructor for the execution unit class of the ascend backend
+   * Constructor for the execution unit class of the Ascend backend
    *
    * \param commManager the Ascend communication manager
    * \param destination destination pointer
@@ -69,7 +69,7 @@ class MemoryKernel final : public Kernel
   ~MemoryKernel() {}
 
   /**
-   * Execute the memcpy on the \p stream
+   * Execute the memcpy on the \p stream . The operation is just enqueued on the stream, that is, it is async
    *
    * \param stream ACL stream on which memcpy is executed
    */
