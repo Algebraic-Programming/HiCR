@@ -22,7 +22,6 @@ namespace HiCR::concurrent
  * @brief Generic class type for atomic datatypes
  *
  * @tparam T Represents the internal datatype
- * @tparam NV Represents the null value
  */
 template <class T>
 class Atomic

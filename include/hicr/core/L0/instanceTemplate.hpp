@@ -6,7 +6,7 @@
 /**
  * @file instanceTemplate.hpp
  * @brief Provides a definition for the HiCR Instance Template class.
- * @author L. Terracciano
+ * @author L. Terracciano S. M. Martin
  * @date 28/03/2025
  */
 
