@@ -131,7 +131,7 @@ class Device final : public HiCR::L0::Device
     _id   = input[idKey].get<deviceIdentifier_t>();
     _type = input[typeKey].get<std::string>();
 
-    for (const auto &computeResource : input["Compute Resources"])
+    for (const auto &computeResource : input[_HICR_DEVICE_COMPUTE_RESOURCES_KEY_])
     {
       // Getting device type
       const auto type = computeResource["Type"].get<std::string>();
@@ -147,7 +147,7 @@ class Device final : public HiCR::L0::Device
     }
 
     // Iterating over the memory space list
-    for (const auto &memorySpace : input["Memory Spaces"])
+    for (const auto &memorySpace : input[_HICR_DEVICE_MEMORY_SPACES_KEY_])
     {
       // Getting device type
       const auto type = memorySpace["Type"].get<std::string>();
