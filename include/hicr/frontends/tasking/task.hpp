@@ -34,7 +34,7 @@ namespace HiCR::tasking
 {
 
 /**
- * This class defines the basic execution unit managed by TaskR.
+ * This class defines the basic execution unit managed by a task-based runtime system.
  *
  * It includes a function to execute, an internal state, and an callback map that triggers callbacks (if defined) whenever a state transition occurs.
  *
@@ -81,7 +81,7 @@ class Task
   ~Task() = default;
 
   /**
-   * Constructor for the TaskR task class. It requires a user-defined function to execute
+   * Constructor for the task class. It requires a user-defined function to execute
    * The task is considered finished when the function runs to completion.
    *
    * @param[in] executionUnit Specifies the function/kernel to execute.
