@@ -17,6 +17,7 @@ The code is structured as follows:
 
     * :code:`pthreads.cpp` corresponds to the :ref:`pthreads` + :ref:`hwloc` backend implementation. This variant moves the initial allocation across all of the system's RAM NUMA domains.
     * :code:`ascend.cpp` corresponds to the :ref:`ascend` backend implementation. This variant moves the initial allocation across all Ascend GPU devices found.
+    * :code:`opencl.cpp` corresponds to the :ref:`opencl` backend implementation. This variant moves the initial allocation across all devices found by the OpenCL platform.
 
 Both the producer and consumer functions receive a set of :code:`HiCR::L0::MemorySpace`, each of which will take a turn in the telephone game. They also receive an instance of the :code:`HiCR::L1::MemoryManager`, for the allocation of local memory slots across all memory spaces provided, and; an instance of :code:`HiCR::L1::CommunicationManager`, to communicate the data the HICR memory spaces. 
 
