@@ -33,7 +33,7 @@ int main(int argc, char **argv)
   // Selecting first device
   auto d = *t.getDevices().begin();
 
-  // Getting memory space list from device
+ // Getting memory space list from device
   auto memSpaces = d->getMemorySpaceList();
 
   // Grabbing first memory space for buffering
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
   auto computeResources = d->getComputeResourceList();
 
   // Grabbing first compute resource for computing incoming RPCs
-  auto executeResource = *computeResources.begin();
+  auto executeResource = *computeResources.begin(); 
 
   // Creating execution unit to run as RPC
   auto executionUnit =
