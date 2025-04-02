@@ -15,11 +15,8 @@
 #include <hicr/backends/opencl/L1/computeManager.hpp>
 #include <hicr/backends/hwloc/L1/topologyManager.hpp>
 
+#include "./include/common.hpp"
 #include "./include/kernel.hpp"
-
-#define M 16
-#define N 16
-#define K 16
 
 namespace opencl = HiCR::backend::opencl;
 
@@ -49,6 +46,22 @@ std::string readFromFile(const std::string &path)
 void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, int rows, int columns, float value)
 {
   for (int i = 0; i < rows * columns; i++) { ((float *)memorySlot->getPointer())[i] = value; }
+}
+
+/**
+ * Print the matrix contained in a local memory slot
+ * 
+ * \param[in] memSlot memory slot containing the matrix
+ * \param[in] rows matrix rows
+ * \param[in] columns matrix columns
+*/
+void printMatrix(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memSlot, uint32_t rows, uint32_t columns)
+{
+  for (uint32_t i = 0; i < rows; i++)
+  {
+    for (uint32_t j = 0; j < columns; j++) { printf("%.1f ", ((const float *)memSlot->getPointer())[i * columns + j]); }
+    printf("\n");
+  }
 }
 
 int main(int argc, char **argv)
@@ -96,104 +109,101 @@ int main(int argc, char **argv)
   if (err != CL_SUCCESS) { HICR_THROW_RUNTIME("Can not build program. Error: %d\n", err); }
 
   /////////  Allocate input and output buffers on both host and the device
-  // First matrix (M)
-  auto sizeA = M * N * sizeof(float);
-  auto A_h   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeA);
-  auto A_d   = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeA);
+  // First matrix [M, K]
+  auto sizeInput1   = M * K * sizeof(float);
+  auto input1Host   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeInput1);
+  auto input1Device = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeInput1);
 
-  // Second matrix (N)
-  auto sizeB = N * K * sizeof(float);
-  auto B_h   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeB);
-  auto B_d   = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeB);
+  // Second matrix [K, N]
+  auto sizeInput2   = K * N * sizeof(float);
+  auto input2Host   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeInput2);
+  auto input2Device = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeInput2);
 
-  // Third matrix (K)
-  auto sizeC = M * K * sizeof(float);
-  auto C_h   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeC);
-  auto C_d   = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeC);
+  // Third matrix [M, N]
+  auto sizeInput3   = M * N * sizeof(float);
+  auto input3Host   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeInput3);
+  auto input3Device = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeInput3);
 
-  // Alpha coefficient
-  auto sizeMNK = sizeof(unsigned int);
-  auto M_h     = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeMNK);
-  auto M_d     = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeMNK);
+  // input1 matrix dimension
+  auto sizeABC = sizeof(unsigned int);
+  auto MHost   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeABC);
+  auto ADevice = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeABC);
 
-  // Beta coefficient
-  auto N_h = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeMNK);
-  auto N_d = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeMNK);
+  // input2 matrix dimension
+  auto NHost   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeABC);
+  auto BDevice = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeABC);
 
-  // Beta coefficient
-  auto K_h = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeMNK);
-  auto K_d = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeMNK);
+  // input3 matrix dimension
+  auto KHost   = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeABC);
+  auto CDevice = openclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeABC);
 
-  // Output matrix. Stores (alpha * M * N) + (beta * K)
-  auto outputHost = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeC);
+  // Output matrix. Stores (alpha * input1 * input2) + (beta * input3)
+  auto outputHost = openclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeInput3);
 
   ///////// Fill matrix with data
-  populateMemorySlot(A_h, M, N, 1.0);
-  populateMemorySlot(B_h, N, K, 1.0);
-  populateMemorySlot(C_h, M, K, 1.0);
-  *(unsigned int *)M_h->getPointer() = M;
-  *(unsigned int *)N_h->getPointer() = N;
-  *(unsigned int *)K_h->getPointer() = K;
+  populateMemorySlot(input1Host, M, K, 1.0);
+  populateMemorySlot(input2Host, K, N, 1.0);
+  populateMemorySlot(input3Host, M, N, 1.0);
+  *(unsigned int *)MHost->getPointer() = M;
+  *(unsigned int *)NHost->getPointer() = N;
+  *(unsigned int *)KHost->getPointer() = K;
+
+  // Print input matrices
+  printf("First matrix [M, K]\n");
+  printMatrix(input1Host, M, K);
+  printf("\nSecond matrix [K, N]\n");
+  printMatrix(input2Host, K, N);
+  printf("\nThird matrix [M, N]\n");
+  printMatrix(input3Host, M, N);
 
   // Map the input tensor descriptors with the allocated buffers
-  std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> kernelArgs({
-    M_d,
-    N_d,
-    K_d,
-    A_d,
-    B_d,
-    C_d,
-  });
+  std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> kernelArgs({ADevice, BDevice, CDevice, input1Device, input2Device, input3Device});
 
   ///////// Kernels definitions
   // Copy the kernelArgs from the host buffers to the device buffers using a MemoryKernel abstraction
-  auto copyAMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, A_d, 0, A_h, 0, sizeA);
-  auto copyBMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, B_d, 0, B_h, 0, sizeB);
-  auto copyCMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, C_d, 0, C_h, 0, sizeC);
-  auto copyMMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, M_d, 0, M_h, 0, sizeMNK);
-  auto copyNMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, N_d, 0, N_h, 0, sizeMNK);
-  auto copyKMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, K_d, 0, K_h, 0, sizeMNK);
+  auto copyAMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, input1Device, 0, input1Host, 0, sizeInput1);
+  auto copyBMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, input2Device, 0, input2Host, 0, sizeInput2);
+  auto copyCMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, input3Device, 0, input3Host, 0, sizeInput3);
+  auto copyMMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, ADevice, 0, MHost, 0, sizeABC);
+  auto copyNMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, BDevice, 0, NHost, 0, sizeABC);
+  auto copyKMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, CDevice, 0, KHost, 0, sizeABC);
 
   // Copy the result back on the host using a MemoryKernel abstraction
-  auto copyOutputMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, outputHost, 0, C_d, 0, sizeC);
+  auto copyOutputMemoryKernel = std::make_shared<opencl::MemoryKernel>(&openclCommunicationManager, outputHost, 0, input3Device, 0, sizeInput3);
 
   // Create the ComputationKernel by reading it from file
   // Create kernel object
   auto kernel = std::make_shared<cl::Kernel>(program, "gemm_kernel");
 
   // Define global and local work sizes
-  cl::NDRange global(M, K); // Global work size: (M x N)
-  auto        GEMMKernel = std::make_shared<opencl::ComputationKernel>(kernel, std::move(kernelArgs), cl::NullRange, global, cl::NullRange);
+  auto global = cl::NDRange(M, N);
+  auto GEMMKernel = std::make_shared<opencl::ComputationKernel>(kernel, std::move(kernelArgs), cl::NullRange, global, cl::NullRange);
 
   // Create the stream of Kernel operations to be executed on the device
   auto operations = std::vector<std::shared_ptr<opencl::Kernel>>{
     copyAMemoryKernel, copyBMemoryKernel, copyCMemoryKernel, copyMMemoryKernel, copyNMemoryKernel, copyKMemoryKernel, GEMMKernel, copyOutputMemoryKernel};
 
-  printf("Create execution unit\n");
   // Create execution unit
   auto executionUnit = openclComputeManager.createExecutionUnit(operations);
 
-  printf("Execute kernel\n");
   ///////// Execute the kernels through HiCR
   executeKernel(openclComputeManager, deviceComputeResource, executionUnit);
 
   // Print the result
-  printf("First vector contains: %.1f\n", ((const float *)A_h->getPointer())[0]);
-  printf("Second vector contains : %.1f\n", ((const float *)B_h->getPointer())[0]);
-  printf("Third vector contains : %.1f\n", ((const float *)C_h->getPointer())[0]);
-  printf("Vector sum is : %.1f\n", ((const float *)outputHost->getPointer())[0]);
+  printf("\nOutput matrix [M, N]\n");
+  printMatrix(outputHost, M, N);
 
   // Free memory slots
-  openclMemoryManager.freeLocalMemorySlot(A_h);
-  openclMemoryManager.freeLocalMemorySlot(A_d);
-  openclMemoryManager.freeLocalMemorySlot(B_h);
-  openclMemoryManager.freeLocalMemorySlot(B_d);
-  openclMemoryManager.freeLocalMemorySlot(C_h);
-  openclMemoryManager.freeLocalMemorySlot(C_d);
-  openclMemoryManager.freeLocalMemorySlot(M_h);
-  openclMemoryManager.freeLocalMemorySlot(M_d);
-  openclMemoryManager.freeLocalMemorySlot(N_h);
-  openclMemoryManager.freeLocalMemorySlot(N_d);
+  openclMemoryManager.freeLocalMemorySlot(input1Host);
+  openclMemoryManager.freeLocalMemorySlot(input1Device);
+  openclMemoryManager.freeLocalMemorySlot(input2Host);
+  openclMemoryManager.freeLocalMemorySlot(input2Device);
+  openclMemoryManager.freeLocalMemorySlot(input3Host);
+  openclMemoryManager.freeLocalMemorySlot(input3Device);
+  openclMemoryManager.freeLocalMemorySlot(MHost);
+  openclMemoryManager.freeLocalMemorySlot(ADevice);
+  openclMemoryManager.freeLocalMemorySlot(NHost);
+  openclMemoryManager.freeLocalMemorySlot(BDevice);
   openclMemoryManager.freeLocalMemorySlot(outputHost);
 
   hwloc_topology_destroy(topology);

@@ -15,11 +15,8 @@
 #include <hicr/backends/ascend/L1/computeManager.hpp>
 #include <hicr/backends/hwloc/L1/topologyManager.hpp>
 
+#include "./include/common.hpp"
 #include "./include/kernel.hpp"
-
-#define A 128
-#define B 64
-#define C 256
 
 namespace ascend = HiCR::backend::ascend;
 
@@ -35,6 +32,23 @@ void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, i
 {
   for (int i = 0; i < rows * columns; i++) { ((aclFloat16 *)memorySlot->getPointer())[i] = aclFloatToFloat16(value); }
 }
+
+/**
+ * Print the matrix contained in a local memory slot
+ * 
+ * \param[in] memSlot memory slot containing the matrix
+ * \param[in] rows matrix rows
+ * \param[in] columns matrix columns
+*/
+void printMatrix(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memSlot, uint32_t rows, uint32_t columns)
+{
+  for (uint32_t i = 0; i < rows; i++)
+  {
+    for (uint32_t j = 0; j < columns; j++) { printf("%.1f ", aclFloat16ToFloat(((const aclFloat16 *)memSlot->getPointer())[i * columns + j])); }
+    printf("\n");
+  }
+}
+
 
 /**
  * Create a Compute Kernel from a single .om file
@@ -96,18 +110,18 @@ int main(int argc, char **argv)
   HiCR::backend::ascend::L1::CommunicationManager ascendCommunicationManager;
 
   /////////  Allocate input and output buffers on both host and the device
-  // First matrix (A)
-  auto input1Size   = A * B * sizeof(aclFloat16);
+  // First matrix [M, K]
+  auto input1Size   = M * K * sizeof(aclFloat16);
   auto input1Host   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, input1Size);
   auto input1Device = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input1Size);
 
-  // Second matrix (B)
-  auto input2Size   = B * C * sizeof(aclFloat16);
+  // Second matrix [K, N]
+  auto input2Size   = K * N * sizeof(aclFloat16);
   auto input2Host   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, input2Size);
   auto input2Device = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input2Size);
 
-  // Third matrix (C)
-  auto input3Size   = A * C * sizeof(aclFloat16);
+  // Third matrix [M, N]
+  auto input3Size   = M * N * sizeof(aclFloat16);
   auto input3Host   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, input3Size);
   auto input3Device = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input3Size);
 
@@ -120,30 +134,30 @@ int main(int argc, char **argv)
   auto betaHost   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeAlphaBeta);
   auto betaDevice = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeAlphaBeta);
 
-  // Output matrix. Stores (alpha * A * B) + (beta * C)
+  // Output matrix. Stores (alpha * M * N) + (beta * K)
   auto outputHost   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, input3Size);
   auto outputDevice = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input3Size);
 
   ///////// Fill matrix with data
-  populateMemorySlot(input1Host, A, B, 1.0);
-  populateMemorySlot(input2Host, B, C, 1.0);
-  populateMemorySlot(input3Host, A, C, 1.0);
+  populateMemorySlot(input1Host, M, K, 1.0);
+  populateMemorySlot(input2Host, K, N, 1.0);
+  populateMemorySlot(input3Host, M, N, 1.0);
   ((aclFloat16 *)alphaHost->getPointer())[0] = aclFloatToFloat16(1.0);
   ((aclFloat16 *)betaHost->getPointer())[0]  = aclFloatToFloat16(1.0);
 
   ///////// Tensor descriptors definition. Describe the type and shape of data contained in each tensor
-  // A matrix
-  const int64_t input1Dimensions[]     = {A, B};
+  // M matrix
+  const int64_t input1Dimensions[]     = {M, K};
   auto          input1TensorDescriptor = aclCreateTensorDesc(ACL_FLOAT16, 2, input1Dimensions, ACL_FORMAT_ND);
   if (input1TensorDescriptor == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
 
-  // B matrix
-  const int64_t input2Dimensions[]     = {B, C};
+  // N matrix
+  const int64_t input2Dimensions[]     = {K, N};
   auto          input2TensorDescriptor = aclCreateTensorDesc(ACL_FLOAT16, 2, input2Dimensions, ACL_FORMAT_ND);
   if (input2TensorDescriptor == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
 
-  // C and output matrix
-  const int64_t input3Dimensions[]     = {A, C};
+  // K and output matrix
+  const int64_t input3Dimensions[]     = {M, N};
   auto          input3TensorDescriptor = aclCreateTensorDesc(ACL_FLOAT16, 2, input3Dimensions, ACL_FORMAT_ND);
   if (input3TensorDescriptor == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
 
@@ -181,7 +195,7 @@ int main(int argc, char **argv)
 
   // Create the ComputationKernel by reading it from file
   auto fileComputationKernel =
-    createComputeKernelFromFile("/../examples/kernel/op_models/0_GEMM_1_2_128_64_1_2_64_256_1_2_128_256_1_2_1_1_2_1_1_2_128_256.om", inputs, outputs, kernelAttributes);
+    createComputeKernelFromFile("/../examples/kernel/op_models/0_GEMM_1_2_4_8_1_2_8_2_1_2_4_2_1_2_1_1_2_1_1_2_4_2.om", inputs, outputs, kernelAttributes);
 
   // Create the stream of Kernel operations to be executed on the device
   auto operations = std::vector<std::shared_ptr<ascend::Kernel>>{
@@ -190,17 +204,23 @@ int main(int argc, char **argv)
   // Create execution unit
   auto executionUnit = ascendComputeManager.createExecutionUnit(operations);
 
+  // Print input matrices
+  printf("First matrix [M, K]\n");
+  printMatrix(input1Host, M, K);
+  printf("\nSecond matrix [K, N]\n");
+  printMatrix(input2Host, K, N);
+  printf("\nThird matrix [M, N]\n");
+  printMatrix(input3Host, M, N);
+
   ///////// Execute the kernels through HiCR
   executeKernel(ascendComputeManager, deviceComputeResource, executionUnit);
 
   // Print the result
-  printf("First vector contains: %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input1Host->getPointer())[0]));
-  printf("Second vector contains : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input2Host->getPointer())[0]));
-  printf("Third vector contains : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input3Host->getPointer())[0]));
-  printf("Vector sum is : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)outputHost->getPointer())[0]));
+  printf("\nOutput matrix [M, N]\n");
+  printMatrix(outputHost, M, N);
 
   // Reset output tensor
-  populateMemorySlot(outputHost, A, C, 0.0);
+  populateMemorySlot(outputHost, M, N, 0.0);
 
   // Create the ComputationKernel by looking up in a directory
   auto directoryComputationKernel = createComputeKernelFromDirectory("/../examples/kernel/op_models", inputs, outputs, kernelAttributes);
@@ -215,9 +235,8 @@ int main(int argc, char **argv)
   executeKernel(ascendComputeManager, deviceComputeResource, executionUnit);
 
   // Print the result
-  printf("First vector contains: %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input1Host->getPointer())[0]));
-  printf("Second vector contains : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)input2Host->getPointer())[0]));
-  printf("Vector sum is : %.1f\n", aclFloat16ToFloat(((const aclFloat16 *)outputHost->getPointer())[0]));
+  printf("\nOutput matrix [M, N]\n");
+  printMatrix(outputHost, M, N);
 
   // Free memory slots
   ascendMemoryManager.freeLocalMemorySlot(input1Host);
