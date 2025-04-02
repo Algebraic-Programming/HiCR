@@ -46,3 +46,10 @@ Whereas, for the Ascend example, it would look as follows:
     + 'Ascend Device'
       Compute Resources: 1 Ascend Processor(s)
       Memory Space:     'Ascend Device RAM', 32.000000 Gb
+
+and for OpenCL, for example:
+.. code-block:: bash
+    
+  + 'OpenCL GPU'
+    Compute Resources: 1 OpenCL GPU Processing Unit(s)
+    Memory Space:     'OpenCL GPU RAM', 49.908493 Gb
