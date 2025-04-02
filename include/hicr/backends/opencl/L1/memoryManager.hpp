@@ -61,6 +61,7 @@ class MemoryManager final : public HiCR::L1::MemoryManager
    * Implementation of allocateLocalMemorySlot.allocateLocalMemorySlot.
    * 
    * \param[in] memorySpace memorySpace in which the allocation should be made
+   * \param[in] size size of the slot allocation
   */
   __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, const size_t size) override
   {
