@@ -27,10 +27,22 @@ Below is the expected result of the application:
 
 .. code-block:: bash
 
-    PRODUCER sent:0,1,2,3
-    PRODUCER sent:4,5,6
-    PRODUCER sent:7,8
-    CONSUMER:0,1,2,3
-    CONSUMER:4,5,6
-    CONSUMER:7,8
+    =====
+    PRODUCER sent:0,1,2,3,
+    =====
+    =====
+    CONSUMER:0,1,2,3,
+    =====
+    =====
+    CONSUMER:4,5,6,
+    =====
+    =====
+    PRODUCER sent:4,5,6,
+    =====
+    =====
+    CONSUMER:7,8,
+    =====
+    =====
+    PRODUCER sent:7,8,
+    =====
 
