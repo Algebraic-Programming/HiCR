@@ -71,12 +71,12 @@ class ExecutionState final : public HiCR::L0::ExecutionState
   /**
    * Function arguments
   */
-  void *const                _argument;
+  void *const _argument;
 
   /**
    * Boolean to check whether the function has finished the execution
   */
-  bool                       _hasFinished = false;
+  bool _hasFinished = false;
 };
 
 } // namespace HiCR::backend::pthreads::L0

@@ -70,7 +70,7 @@ class ComputationKernel final : public Kernel
     }
   };
   
-  ComputationKernel()  = delete;
+  ComputationKernel() = delete;
 
   /**
    * Default destructor
