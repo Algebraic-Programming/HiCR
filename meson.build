@@ -2,7 +2,8 @@ project('HiCR', [ 'cpp', 'c'],
   default_options : [
   'cpp_std=c++20',
   'buildtype=release',
-  ]
+  ],
+  version: '1.0.0'
 )
 
 ####### Getting selected built-in backends
