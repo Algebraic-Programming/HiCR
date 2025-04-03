@@ -1,3 +1,5 @@
+.. _rpc engine:
+
 RPC Engine
 =====================
 
@@ -5,7 +7,7 @@ This example showcases the RPC Engine capabilities. The code is structured as fo
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`mpi.cpp` corresponds to the :ref:`mpi` backend implementation
+    * :code:`mpi.cpp` corresponds to the :ref:`mpi backend` backend implementation
    
 First, we use the topology manager to query the local HiCR instance's topology
 

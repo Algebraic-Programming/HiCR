@@ -1,11 +1,13 @@
-Object Store - Single Instance
-=====================
+.. _ossingle:
+
+Object Store: Single Instance
+=============================
 
 This example showcases the Object Store capabilities with a single HiCR Instance in the system. The code is structured as follows:
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`main.cpp` corresponds to the :ref:`hwloc` and :ref:`pthreads` backends implementation
+    * :code:`main.cpp` corresponds to the :ref:`hwloc backend` and :ref:`pthreads backend` backends implementation
    
 First, we create a DataObject from a Local Memory Slot:
 

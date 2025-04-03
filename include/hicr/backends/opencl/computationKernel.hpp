@@ -69,7 +69,7 @@ class ComputationKernel final : public Kernel
       if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Can not set kernel arg. Error: %d", err); }
     }
   };
-  
+
   ComputationKernel() = delete;
 
   /**

@@ -1,6 +1,6 @@
-.. _Memcpy Dist:
+.. _memcpy dist:
 
-Memcpy (Distributed)
+Memcpy: Distributed
 =======================
 
 In this example, we test HiCR's :code:`memcpy` operation to communicate a simple message back and forth (ping / pong) between two HiCR instances as detected by the :code:`HiCR::L1::InstanceManager` (See: :numref:`remoteMemcpyFig`).
@@ -17,8 +17,8 @@ The code is structured as follows:
 * :code:`include/remoteMemcpy.hpp` contains the application's backend-independent semantics
 * :code:`source/` contains variants of the main program implemented under different backends
 
-    * :code:`lpf.cpp` corresponds to the :ref:`lpf` backend implementation
-    * :code:`mpi.cpp` corresponds to the :ref:`mpi` backend implementation
+    * :code:`lpf.cpp` corresponds to the :ref:`lpf backend` backend implementation
+    * :code:`mpi.cpp` corresponds to the :ref:`mpi backend` backend implementation
 
 This example expects to be launched with exactly two HiCR instances. For example, by using the following commands:
 

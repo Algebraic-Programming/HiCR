@@ -1,12 +1,12 @@
-Local Topology Discovery
-=========================
+Topology: Local
+===============
 
 This example showcases how the abstract HiCR Core API can be used to discover compute and memory devices in the system. The code is structured as follows:
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`ascend.cpp` corresponds to the :ref:`ascend` backend implementation
-    * :code:`hwloc.cpp` corresponds to the :ref:`hwloc` (CPU) backend implementation
+    * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` backend implementation
+    * :code:`hwloc.cpp` corresponds to the :ref:`hwloc backend` (CPU) backend implementation
 
 First, we use the topology manager to query the local HiCR instance's topology
 

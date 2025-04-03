@@ -1,3 +1,5 @@
+.. _kernel execution:
+
 Kernel Execution
 =====================
 
@@ -5,10 +7,10 @@ This is a set of simple examples showcasing how the HiCR L0 API can be used to e
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`ascend.cpp` corresponds to the :ref:`ascend` backend implementation. The available kernel is compiled for Ascend 910. Run :code:`kernels/compile.sh` to call ATC and compile the kernel.
-    * :code:`opencl.cpp` corresponds to the :ref:`opencl` backend implementation. The available kernel is compiled for OpenCL.
-    * :code:`nosv.cpp` corresponds to the :ref:`nosv` backend implementation
-    * :code:`pthreads.cpp` corresponds to the :ref:`pthreads` backend implementation
+    * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` backend implementation. The available kernel is compiled for Ascend 910. Run :code:`kernels/compile.sh` to call ATC and compile the kernel.
+    * :code:`opencl.cpp` corresponds to the :ref:`opencl backend` backend implementation. The available kernel is compiled for OpenCL.
+    * :code:`nosv.cpp` corresponds to the :ref:`nosv backend` backend implementation
+    * :code:`pthreads.cpp` corresponds to the :ref:`pthreads backend` backend implementation
 
 All the examples perform a GEMM operation, and follow the same pattern:
 
