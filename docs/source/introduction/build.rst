@@ -11,11 +11,11 @@ The HiCR Core API is a self-sufficient include-only library that does not requir
 Getting HiCR
 ***********************
 
-HiCR is released in a continuous basis. The latest release is always the latest :code:`master` branch commit in its `git repository <https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr>`_. To obtain the latest release, simply run:
+HiCR is released in a continuous basis. The latest release is always the latest :code:`master` branch commit in its `git repository <https://github.com/Algebraic-Programming/HiCR>`_. To obtain the latest release, simply run:
 
 ..  code-block:: bash
 
-  git clone https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr.git
+  git clone https://github.com/Algebraic-Programming/HiCR
 
 .. _configure:
 
@@ -30,11 +30,11 @@ HiCR uses `meson` as build and installation system. To build HiCR, you can run t
   mkdir build 
   cd build
 
-  # [Example] Configuring HiCR's meson project, with its basic configuration
+  # [Example] Configuring HiCR's meson project, with its default configuration
   meson .. 
 
   # [Example] Configuring HiCR's meson project, with all its backends, and frontends.
-  meson .. -DbuildExamples=true -DbuildTests=true -Dbackends=host/hwloc,host/pthreads,mpi,lpf,ascend -Dfrontends=channel,deployer,machineModel,tasking
+  meson .. -DbuildExamples=true -DbuildTests=true -Dbackends=hwloc,boost,pthreads,mpi,lpf,ascend,nosv,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore 
 
   # Compiling 
   ninja
