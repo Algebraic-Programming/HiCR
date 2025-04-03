@@ -29,8 +29,7 @@ HiSilicon Common Runtime (HiCR) User Manual
    :caption: Development
    :maxdepth: 2
 
-   Git Repository (Blue Zone) <https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr>
-   Git Repository (Yellow Zone) <https://codehub-y.huawei.com/s00831018/HiCR>
+   Github Repository <https://github.com/Algebraic-Programming/HiCR>
    development/contributing
 
 * :ref:`genindex`
