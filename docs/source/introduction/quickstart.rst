@@ -3,7 +3,11 @@
 Quickstart Guides
 ##################
 
-These guides explain how to develop a HiCR-based application using its Core API using simple examples. For using HiCR through its built-in frontends, see the :ref:`builtinFrontends` section.
+These guides explain how to develop a HiCR-based application using its Core API using simple examples. For using HiCR through its built-in frontends, see the :ref:`builtinFrontends` section. 
+
+.. note:: 
+
+  Since HiCR is an include-only C++ library, it suffices that the relevant set of header files are included. Depending on the application and its choice of backends, only a subset of all header files need to be included.
 
 .. warning::
 
@@ -14,19 +18,19 @@ Instance Management
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Examples: :ref:`rpc engine`
 
 
 Instantiation
 -----------------
 
-Since HiCR is an include-only C++ library, it suffices that the relevant set of header files are included. Depending on the application and its choice of backends, only a subset of all header files need to be included. For example, to use the MPI-based instance manager backend, we need to include:
+To use the MPI-based instance manager backend, we need to include:
 
 ..  code-block:: C++
 
   #include <hicr/backends/mpi/L1/instanceManager.hpp>
 
-To use a backend, a user needs to instantiate an L1 class implemented by the chosen backend by calling its constructor with the correct parameters (see: `C++ API Reference <../doxygen/html/annotated.html>`_). For example:
+Then, we need to instantiate a Manager class implemented by the chosen backend by calling its constructor with the correct parameters (see: `C++ API Reference <../doxygen/html/annotated.html>`_). For example:
 
 ..  code-block:: C++
 
@@ -40,9 +44,9 @@ To use a backend, a user needs to instantiate an L1 class implemented by the cho
 
   /////// Application is implementation-agnostic from this point forward
   
-Creates a new MPI-based instance manager whose initial communicator is :code:`MPI_COMM_WORLD`. The instantiation of an L1 class is the only backend-specific part of a HiCR application. After all L1 classes are created, the rest of the application remains backend-agnostic. This includes all methods in L1 classes, as well as the creation/detection/manipulation of L0 objects. 
+Creates a new MPI-based instance manager whose initial communicator is :code:`MPI_COMM_WORLD`. The instantiation of a Manager class is the only backend-specific part of a HiCR application. After all Manager classes are created, the rest of the application remains backend-agnostic. This includes all methods in Manager classes, as well as the creation/detection/manipulation of Stateless and Stateful objects. 
 
-Detecting instances
+Detecting Instances
 --------------------------
 
 The following example shows how to detect the currently created instances:
@@ -96,7 +100,7 @@ Topology Management
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Example: :ref:`topology local`, :ref:`topology distributed`
 
 A programmer may discover the topology of the local system's devices by using backends that implement the :code:`HiCR::L1::TopologyManager` class. For example, the HWLoC backend may be used to discover the local CPU socket / core / processing unit distribution and their associated memory spaces.
 
@@ -178,7 +182,7 @@ Data Management
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Example: :ref:`memcpy local`
 
 HiCR uses Memory Slots to represent contiguous segments of memory upon which allocation, deallocation and data motion operations can be made. This abstraction enables different backends to represent allocations on devices other than the system's RAM (e.g., GPU RAM), or whose addressing do not correspond to a number (e.g., a port on a network device). 
 
@@ -286,9 +290,9 @@ Compute Management
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Example: :ref:`kernel execution`
 
-In HiCR, all computation is abstracted behind the Execution Unit class. This class represents functions, kernels, or operations as implemented by each individual backend. For example, a GPU backend may define its execution as a GPU kernel or stream. CPU-based backends may define an execution unit as a simple function or co-routine. The creation of execution units is handled entirely by the Compute Manager class. 
+In HiCR, all computation is abstracted behind the Execution Unit class. This class represents functions, kernels, or operations as implemented by each individual backend. For example, a GPU backend may define its execution as a single GPU kernel or as a stream of them. CPU-based backends may define an execution unit as a simple function or co-routine. The creation of execution units is handled entirely by the Compute Manager class. 
 
 Creating Execution units
 --------------------------
@@ -341,7 +345,7 @@ Processing Unit are hardware element capable of running an execution state. Comp
   auto processingUnit = computeManager.createProcessingUnit(computeResource);
 
   // Initializing the processing unit (This is necessary step. In this case, it creates the associated Pthread)
-  processingUnit->initialize();
+  computeManager.initialize(processingUnit);
 
 
 Managing an Execution State
@@ -352,118 +356,25 @@ The following snippet shows how to use a processing unit to run an execution sta
 .. code-block:: C++
 
   // Starting the execution of the execution state
-  // std::move is necessary here as the execution state is a non-replicable, stateful object
-  processingUnit->start(std::move(executionState));
+  computeManager.start(processingUnit, executionState);
 
 If the backend allows for it, the processing may be suspended (and resumed), even if it is currently running an execution state:
 
 .. code-block:: C++
 
   // Suspending processing unit
-  processingUnit->suspend();
+  computeManager.suspend(processingUnit);
 
   // Resuming processing unit
-  processingUnit->resume();
+  computeManager.resume(processingUnit);
 
 Finally, the following snippet shows how to synchronously wait for a processing unit to be done running an execution state:
 
 .. code-block:: C++
 
   // Suspend currently running thread until the processing unit has finished
-  processingUnit->await();
+  computeManager.await(processingUnit);
 
-RPC Execution
-***************************************
-
-.. note::
-
-    See Related Example: (TBD)
-
-
-HiCR enables instance to launch the execution of Remote Procedure Calls (RPC) on other HiCR instances. For an RPC to execute correctly, three conditions must be satisfied:
-
-* An RPC target must be defined by the receiver. This target is a function mapped to a numerical key and no return value.
-* The receiver enters 'listen' mode, which blocks the caller thread until an RPC is received.
-* The caller must invoke the RPC target by specifying the target instance and the RPC key.
-
-Declaring RPC Targets
------------------------
-
-RPCs are entirely managed by the Instance Manager class. The following snippet shows how a receiver instance can declare an RPC target and listen for incoming RPC requests:
-
-..  code-block:: C++
-
-  #define RPC1_TARGET_ID 1
-  #define RPC2_TARGET_ID 2
-  #define RPC3_TARGET_ID 3
-
-  // Adding RPC targets by id
-  instanceManager.addRPCTarget(RPC1_TARGET_ID, []() { printf("Running RPC Target 1\n"); });
-  instanceManager.addRPCTarget(RPC2_TARGET_ID, []() { printf("Running RPC Target 2\n"); });
-  instanceManager.addRPCTarget(RPC3_TARGET_ID, []() { printf("Running RPC Target 3\n"); });
-
-  // Listening for RPC requests
-  instanceManager.listen();
-
-RPC Invokation
------------------------
-
-RPCs are executed as soon as a request is recevied from the caller instance. The following snippet shows how to send RPC requests to all other instances.
-
-..  code-block:: C++
-
-  // Querying instance list
-  auto &instances = instanceManager.getInstances();
-
-  // Getting the pointer to our own (coordinator) instance
-  auto myInstance = instanceManager.getCurrentInstance();
-
-  // Printing instance information and invoking a simple RPC if its not ourselves
-  for (const auto &instance : instances) if (instance->getId() != myInstance->getId())
-  {
-     instanceManager.launchRPC(*instance, RPC3_TARGET_ID);
-     instanceManager.launchRPC(*instance, RPC2_TARGET_ID);
-     instanceManager.launchRPC(*instance, RPC1_TARGET_ID);
-  }
-
-Assuming only two instances were running, the result should look as follows:
-
-..  code-block:: bash
-
-  Running RPC Target 3
-  Running RPC Target 2
-  Running RPC Target 1
-
-.. note::
-
-    HiCR guarantees that RPCs request sent from instance A to instance B will execute in the order in which they were sent. No other ordering is guaranteed. 
-
-RPC Return Values
------------------------
-
-RPC Return values must be explicitly sent and received via methods to the Instance Manager class inside the RPC function, as follows:
-
-..  code-block:: C++
-
-  // Adding RPC targets by id
-  instanceManager.addRPCTarget(RPC1_TARGET_ID, [&]()
-  {
-    int returnValue = 42;
-    printf("Returning value: %d\n", returnValue);
-    instanceManager.submitReturnValue(&returnValue, sizeof(returnValue));
-  });
-
-The RPC caller can then wait for the reception of the return value by specifying the RPC reciever instance, as follows:
-
-..  code-block:: C++
-
-    instanceManager.launchRPC(*someInstance, RPC1_TARGET_ID);
-
-    // Getting return value
-    auto returnValue = *(int *)instanceManager.getReturnValue(*someInstance);
-
-    // Printing return value
-    printf("Obtained return value: %d\n", returnValue);
 
 Remote Communication
 ***************************************
@@ -473,7 +384,7 @@ Exchanging Memory Slots
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Example: :ref:`memcpy dist`
 
 Remote communication is achieved through a backend's communication manager's :code:`memcpy` operation, where at least one of the source / destination arguments is a Remote Memory Slot. Unlike local memory slots, remote memory slots are not directly allocated / registers. Instead, they are exchanged between two or more intervining instances through a collective operation. 
 
