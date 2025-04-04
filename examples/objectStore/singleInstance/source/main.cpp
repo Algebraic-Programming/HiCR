@@ -60,7 +60,7 @@ int main(int argc, char **argv)
   myBlockData[0] = 82;
 
   // Publish the block with arbitrary ID 1
-  std::shared_ptr<HiCR::objectStore::DataObject> myBlock = std::make_shared<HiCR::objectStore::DataObject>(objectStoreManager.createObject(myBlockSlot, 1));
+  std::shared_ptr<HiCR::objectStore::DataObject> myBlock = objectStoreManager.createObject(myBlockSlot, 1);
 
   objectStoreManager.publish(myBlock);
 
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
   myBlockData[0] = 83;
 
   // Re-publish the updated block
-  std::shared_ptr<HiCR::objectStore::DataObject> myBlock2 = std::make_shared<HiCR::objectStore::DataObject>(objectStoreManager.createObject(myBlockSlot, 2));
+  std::shared_ptr<HiCR::objectStore::DataObject> myBlock2 = objectStoreManager.createObject(myBlockSlot, 2);
   objectStoreManager.publish(myBlock2);
 
   auto  myBlockSlot2 = objectStoreManager.get(*myBlock2);
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
   std::shared_ptr<HiCR::L0::LocalMemorySlot> customMemorySlot = memoryManager->allocateLocalMemorySlot(memSpace, 4096);
 
   // Allocate our block in the given memory slot
-  HiCR::objectStore::DataObject customBlock = objectStoreManager.createObject(customMemorySlot, 3);
+  auto customBlock = objectStoreManager.createObject(customMemorySlot, 3);
 
   // Get the raw pointer
   char *customBlockData = (char *)customMemorySlot->getPointer();
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
   customBlockData[4]    = '\0';
 
   // Make a copy of our block; it should point to the same data
-  HiCR::objectStore::DataObject customBlock2 = customBlock;
+  HiCR::objectStore::DataObject customBlock2 = *customBlock;
 
   std::shared_ptr<HiCR::objectStore::DataObject> customBlock2Ptr = std::make_shared<HiCR::objectStore::DataObject>(customBlock2);
   objectStoreManager.publish(customBlock2Ptr);
