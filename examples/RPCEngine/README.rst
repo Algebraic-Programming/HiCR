@@ -9,6 +9,8 @@ This example showcases the RPC Engine capabilities. The code is structured as fo
 
     * :code:`mpi.cpp` corresponds to the :ref:`mpi backend` backend implementation
    
+Topology Discovery
+---------------------
 First, we use the topology manager to query the local HiCR instance's topology
 
 .. code-block:: C++
@@ -30,6 +32,8 @@ Then, we get the first available compute resource and memory space of the first 
   auto computeResources = d->getComputeResourceList();
   auto executeResource = *computeResources.begin(); 
 
+RPC Registration
+---------------------
 Then, create an RPC Engine define a lambda, and associate it with an RPC:
 
 .. code-block:: C++
@@ -48,6 +52,9 @@ Then, create an RPC Engine define a lambda, and associate it with an RPC:
   
   // Registering RPC to listen to
   rpcEngine.addRPCTarget("Test RPC", rpcExecutionUnit);
+
+SPMD: RPC Invokation and listening
+-----------------------------------
 
 The RPC is invoked by the root instance, the other instances listen to incoming RPCs:
 
