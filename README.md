@@ -9,7 +9,7 @@
  
 ## What is HiCR
 
-This is an include-only C++ library that implements a the HiCR model, used to represent the semantics of distributed heterogeneous applications, frameworks, and runtime systems. The model describes a minimal set of abstract operations to enable hardware topology discovery, kernel execution, memory management, communication, and instance management, without prescribing any implementation decisions.
+This is an include-only C++ library that implements the HiCR model, used to represent the semantics of distributed heterogeneous applications, frameworks, and runtime systems. The model describes a minimal set of abstract operations to enable hardware topology discovery, kernel execution, memory management, communication, and instance management, without prescribing any implementation decisions.
 
 ## Paper
 
