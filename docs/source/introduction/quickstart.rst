@@ -122,7 +122,7 @@ The following example shows how to instantiate the HWLoC topology manager:
         // Reserving memory for hwloc
         hwloc_topology_init(&topology);
 
-        // Initializing HWLoc-based host (CPU) topology manager
+        // Initializing HWLoC topology manager
         HiCR::backend::host::hwloc::L1::TopologyManager topologyManager(&topology);
 
         /////// Application is implementation-agnostic from this point forward
@@ -158,7 +158,7 @@ The expected result being:
     Compute Resources: 44 Processing Unit(s)
     Memory Space:     'RAM', 93.024166 Gb
 
-It is important to point that the HWLoc backend will not discover other type of devices (e.g., GPU). For other devices, the appropriate backend should be used.
+It is important to point out that the HWLoc backend will not discover other type of devices (e.g., GPU). For other devices, the appropriate backend should be used.
 
 Serialization
 -----------------
@@ -177,7 +177,7 @@ The resulted topologies may be joined together and serialized for sharing:
   // Serialize the resulting topolog into a JSON serialized object for sending to report to, for example, a remote instance
   auto serializedTopology = topology1.serialize();
 
-Data Management
+Memory Management
 *******************************************
 
 .. note::
@@ -252,38 +252,29 @@ If the backend supports it, it is also possible to register a new local memory s
 
     As much as possible, it is recommended to create local memory slots by allocation rather than by registration. Allocation gives the backend full control of the associated memory management and may result in a better overall performance.
 
-Local Data Transfer
+
+Memset
 -------------------
 
-All data transfers, local or remote, in HiCR are made through the communication manager's :code:`memcpy` operation. The following code snippet illustrates how to perform a simple exchange between two local memory slots:
+Memory slots can be conviently initialized by means of the :code:`memset` operation:
 
 .. code-block:: C++
 
-  // Allocating two one-byte local memory slots
-  auto localSlot1 = mm.allocateLocalMemorySlot(firstMemSpace, 1);
-  auto localSlot2 = mm.allocateLocalMemorySlot(firstMemSpace, 1);
+  // Previous memory space detection
+  ...
 
-  // Initializing the first memory slot
-  auto value1 = (uint8_t*) localSlot1->getLocalPointer();
-  *value1 = 42;
+  auto size      = 256;
+  auto localSlot = mm.allocateLocalMemorySlot(firstMemSpace, size);
 
-  // Performing the data transfer
-  const size_t offset1 = 0;
-  const size_t offset2 = 0;
-  const size_t sizeToTransfer = 1;
-  cm.memcpy(localSlot2, offset2, localSlot1, offset1, sizeToTransfer);
+  // Use memset to initialize the memory pointed by a local memory slot
+  int value = 0;
+  mm.memset(localSlot, value, size);
 
-  // Printing value from local memory slot 2
-  auto value2 = (uint8_t*) localSlot2->getLocalPointer();
-  printf("Transferred value: %u\n", *value2);
+  // Using memory slot
+  ...
 
-It is also possible to specify an offset (in bytes) from the start of the memory slot:
-
-.. code-block:: C++
-
-  const size_t offset1 = 512;
-  const size_t offset2 = 1024;
-  cm.memcpy(localSlot2, offset2, localSlot1, offset1, sizeToTransfer);
+  // Freeing memory slot
+  mm.freeLocalMemorySlot(localSlot);
 
 Compute Management
 *******************************************
@@ -376,15 +367,48 @@ Finally, the following snippet shows how to synchronously wait for a processing 
   computeManager.await(processingUnit);
 
 
-Remote Communication
+Communication Management
 ***************************************
+
+Local Data Transfer
+-------------------
+
+All data transfers, local or remote, in HiCR are made through the communication manager's :code:`memcpy` operation. The following code snippet illustrates how to perform a simple exchange between two local memory slots:
+
+.. code-block:: C++
+
+  // Allocating two one-byte local memory slots
+  auto localSlot1 = mm.allocateLocalMemorySlot(firstMemSpace, 1);
+  auto localSlot2 = mm.allocateLocalMemorySlot(firstMemSpace, 1);
+
+  // Initializing the first memory slot
+  auto value1 = (uint8_t*) localSlot1->getLocalPointer();
+  *value1 = 42;
+
+  // Performing the data transfer
+  const size_t offset1 = 0;
+  const size_t offset2 = 0;
+  const size_t sizeToTransfer = 1;
+  cm.memcpy(localSlot2, offset2, localSlot1, offset1, sizeToTransfer);
+
+  // Printing value from local memory slot 2
+  auto value2 = (uint8_t*) localSlot2->getLocalPointer();
+  printf("Transferred value: %u\n", *value2);
+
+It is also possible to specify an offset (in bytes) from the start of the memory slot:
+
+.. code-block:: C++
+
+  const size_t offset1 = 512;
+  const size_t offset2 = 1024;
+  cm.memcpy(localSlot2, offset2, localSlot1, offset1, sizeToTransfer);
 
 Exchanging Memory Slots
 -------------------------
 
 .. note::
 
-    See Related Example: :ref:`memcpy dist`
+    See Related Example: :ref:`memcpy local`, :ref:`memcpy dist`
 
 Remote communication is achieved through a backend's communication manager's :code:`memcpy` operation, where at least one of the source / destination arguments is a Remote Memory Slot. Unlike local memory slots, remote memory slots are not directly allocated / registers. Instead, they are exchanged between two or more intervining instances through a collective operation. 
 
