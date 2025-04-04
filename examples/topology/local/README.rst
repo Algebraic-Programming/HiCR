@@ -1,3 +1,5 @@
+.. _topology local:
+
 Topology: Local
 ===============
 
@@ -8,11 +10,17 @@ This example showcases how the abstract HiCR Core API can be used to discover co
     * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` backend implementation
     * :code:`hwloc.cpp` corresponds to the :ref:`hwloc backend` (CPU) backend implementation
 
+Topology detection
+------------------
+
 First, we use the topology manager to query the local HiCR instance's topology
 
 .. code-block:: C++
 
    auto topology = topologyManager.queryTopology();
+
+Compute Resources and Memory Spaces retrieval
+---------------------------------------------
 
 Then, we iterate over all its devices, printing the compute resources and memory spaces we find along with their types. For the latter, also their capacity.
 
@@ -48,6 +56,7 @@ Whereas, for the Ascend example, it would look as follows:
       Memory Space:     'Ascend Device RAM', 32.000000 Gb
 
 and for OpenCL, for example:
+
 .. code-block:: bash
     
   + 'OpenCL GPU'
