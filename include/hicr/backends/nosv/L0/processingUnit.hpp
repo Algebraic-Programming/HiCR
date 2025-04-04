@@ -157,7 +157,7 @@ class ProcessingUnit final : public HiCR::L0::ProcessingUnit
     if (metadata->mainLoop == false) HICR_THROW_RUNTIME("Abort, only PU from the worker mainLoop should get here.\n");
 
     // Busy wait until the function call fully executed (i.e. the worker mainLoop finished)
-    while (_executionState->checkFinalization() == false) { check(nosv_yield(NOSV_YIELD_NONE)); };
+    while (_executionState->checkFinalization() == false) { check(nosv_yield(NOSV_YIELD_NOFLUSH)); };
   }
 
   /**
