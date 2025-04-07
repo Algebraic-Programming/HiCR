@@ -61,9 +61,9 @@ TEST_F(ObjectStoreTest, CreateObjectTest)
   EXPECT_CALL(memoryManager, registerLocalMemorySlotImpl(_, ptr, 1024)).Times(1);
   auto block = store.createObject(ptr, 1024, 42ul);
 
-  EXPECT_EQ(block.getInstanceId(), 0ul);
-  EXPECT_EQ(block.getId(), 42ul);
-  EXPECT_EQ(block.getLocalSlot().getPointer(), ptr);
+  EXPECT_EQ(block->getInstanceId(), 0ul);
+  EXPECT_EQ(block->getId(), 42ul);
+  EXPECT_EQ(block->getLocalSlot().getPointer(), ptr);
 }
 
 // Test publish method
@@ -73,10 +73,9 @@ TEST_F(ObjectStoreTest, PublishTest)
   void       *ptr = malloc(1024);
 
   EXPECT_CALL(memoryManager, registerLocalMemorySlotImpl(_, ptr, 1024)).Times(1);
-  auto block   = store.createObject(ptr, 1024, 42);
-  auto dataObj = std::make_shared<DataObject>(block);
+  auto block = store.createObject(ptr, 1024, 42);
   EXPECT_CALL(communicationManager, promoteLocalMemorySlot(_, _)).Times(1);
-  store.publish(dataObj);
+  store.publish(block);
 }
 
 // Test get method
@@ -89,12 +88,11 @@ TEST_F(ObjectStoreTest, GetTest)
   char        data[8] = "test 12";
   auto        slot    = std::make_shared<HiCR::LocalMemorySlot>(&data, 8, memorySpace);
   auto        block   = store.createObject(slot, 0);
-  auto        dataObj = std::make_shared<DataObject>(block);
 
-  store.publish(dataObj);
+  store.publish(block);
 
   // The local slot allready exists, so we don't expect to allocate a new one; hence no test for that
-  auto fetchedSlot = store.get(*dataObj);
+  auto fetchedSlot = store.get(*block);
   EXPECT_EQ(fetchedSlot->getSize(), 8ul);
   char *fetchedData = static_cast<char *>(fetchedSlot->getPointer());
   for (size_t i = 0; i < 8; i++) { EXPECT_EQ(fetchedData[i], data[i]); }
@@ -107,14 +105,13 @@ TEST_F(ObjectStoreTest, DestroyTest)
   char        data[8] = "test";
 
   EXPECT_CALL(memoryManager, registerLocalMemorySlotImpl(_, &data, 8)).Times(1);
-  auto slot    = memoryManager.registerLocalMemorySlot(memorySpace, &data, 8);
-  auto block   = store.createObject(slot, 0);
-  auto dataObj = std::make_shared<DataObject>(block);
+  auto slot  = memoryManager.registerLocalMemorySlot(memorySpace, &data, 8);
+  auto block = store.createObject(slot, 0);
 
   EXPECT_CALL(communicationManager, promoteLocalMemorySlot(slot, tag)).Times(1);
-  store.publish(dataObj);
+  store.publish(block);
 
   EXPECT_CALL(communicationManager, destroyPromotedGlobalMemorySlot(_)).Times(1);
 
-  store.destroy(*dataObj);
+  store.destroy(*block);
 }

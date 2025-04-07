@@ -82,7 +82,7 @@ class Consumer final : public channel::fixedSize::Base
   {
     // Checking whether the memory slot is local. This backend only supports local data transfers
     if (tokenBuffer->getSourceLocalMemorySlot() == nullptr)
-      HICR_THROW_LOGIC("The passed coordination slot was not created locally (it must be to be used internally by the channel implementation)\n");
+      HICR_THROW_LOGIC("The passed token buffer slot was not created locally (it must be to be used internally by the channel implementation)\n");
 
     // Checking that the provided token exchange  buffer has the right size
     auto requiredTokenBufferSize = getTokenBufferSize(getTokenSize(), capacity);

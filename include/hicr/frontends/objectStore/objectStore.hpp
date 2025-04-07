@@ -158,12 +158,12 @@ class ObjectStore
    *
    * @returns A DataObject referring to the memory region.
    */
-  [[nodiscard]] __INLINE__ DataObject createObject(void *ptr, size_t size, blockId id)
+  [[nodiscard]] __INLINE__ std::shared_ptr<DataObject> createObject(void *ptr, size_t size, blockId id)
   {
     // Register the given allocation as a memory slot
     auto slot = _memoryManager.registerLocalMemorySlot(_memorySpace, ptr, size);
 
-    return DataObject(_instanceId, id, slot);
+    return std::make_shared<DataObject>(_instanceId, id, slot);
   }
 
   /**
@@ -175,7 +175,10 @@ class ObjectStore
    *
    * @returns A DataObject referring to the memory slot.
    */
-  [[nodiscard]] __INLINE__ DataObject createObject(std::shared_ptr<LocalMemorySlot> slot, blockId id) { return DataObject(_instanceId, id, slot); }
+  [[nodiscard]] __INLINE__ std::shared_ptr<DataObject> createObject(std::shared_ptr<LocalMemorySlot> slot, blockId id)
+  {
+    return std::make_shared<DataObject>(_instanceId, id, slot);
+  }
 
   /**
    * Publishes a block to the object store.

@@ -69,6 +69,13 @@ class ComputeManager : public HiCR::ComputeManager
     return std::make_shared<pthreads::ExecutionUnit>(threadFunction);
   }
 
+  /**
+   * Creates an execution state from an execution unit
+   * 
+   * @param[in] executionUnit The execution unit to run
+   * @param[in] argument Argument to pass to the execution unit
+   * @return A newly created execution state
+   */
   __INLINE__ std::unique_ptr<HiCR::ExecutionState> createExecutionState(std::shared_ptr<HiCR::ExecutionUnit> executionUnit, void *const argument = nullptr) const override
   {
     // Creating and returning new execution state

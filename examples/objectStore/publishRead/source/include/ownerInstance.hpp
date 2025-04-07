@@ -74,8 +74,8 @@ void owner(HiCR::MemoryManager &memoryManager, HiCR::CommunicationManager &commu
   char *myBlockData  = (char *)myBlockSlot->getPointer();
   char *myBlockData2 = (char *)myBlockSlot2->getPointer();
 
-  auto myBlock  = std::make_shared<HiCR::objectStore::DataObject>(objectStore.createObject(myBlockSlot, 0));
-  auto myBlock2 = std::make_shared<HiCR::objectStore::DataObject>(objectStore.createObject(myBlockSlot2, 1));
+  auto myBlock  = objectStore.createObject(myBlockSlot, 0);
+  auto myBlock2 = objectStore.createObject(myBlockSlot2, 1);
 
   // Initialize the block with "Test"
   myBlockData[0] = 'T';

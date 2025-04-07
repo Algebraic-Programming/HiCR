@@ -33,6 +33,7 @@
 
 namespace HiCR::backend::opencl
 {
+
 /**
  * Forward declaration of the OpenCL device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */

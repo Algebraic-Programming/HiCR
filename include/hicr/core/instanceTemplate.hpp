@@ -31,11 +31,12 @@
 
 namespace HiCR
 {
-class InstanceManager;
-}
 
-namespace HiCR
-{
+/**
+ * Forward declaration of HiCR Instance Manager -- avoid circular dependency
+*/
+class InstanceManager;
+
 
 /**
  * Defines the instance template class, which represents a blueprint to create new instances.

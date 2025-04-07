@@ -27,7 +27,8 @@
 #include <hicr/core/definitions.hpp>
 
 namespace HiCR::backend::ascend
-{ /**
+{ 
+/**
  * This class represents a replicable kernel for the Ascend backend.
  * A Kernel is a piece of computation meant to be executed on an Ascend device.
  */

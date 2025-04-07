@@ -78,11 +78,15 @@ class MemoryManager final : public HiCR::MemoryManager
     return registerLocalMemorySlotImpl(memorySpace, ptr, size);
   }
 
-  __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override
-  {
-    // We do not free up MPI local memory slots since they are freed upon promotion.
-    // If you did not promote the local memory slot, it will leak memory.
-  }
+  /**
+   * Frees a local memory slot memory
+   * 
+   * @param[in] memorySlot the memory slot to free up
+   * 
+   * We do not free up MPI local memory slots since they are freed upon promotion.
+   * If you did not promote the local memory slot, it will leak memory.
+   */
+  __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override {}
 
   __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
@@ -93,6 +97,11 @@ class MemoryManager final : public HiCR::MemoryManager
     return memorySlot;
   }
 
+  /**
+   * Deregisters a local memory slot
+   * 
+   * @param[in] memorySlot The memory slot to deregister
+   */
   __INLINE__ void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override
   {
     // Nothing to do here for this backend

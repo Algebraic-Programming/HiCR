@@ -30,7 +30,6 @@
 
 namespace HiCR::backend::ascend
 {
-
 /**
  * Forward declaration of the Ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */

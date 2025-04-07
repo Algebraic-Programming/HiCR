@@ -33,8 +33,8 @@
 #include <mutex>
 #include <hicr/frontends/tasking/tasking.hpp>
 #include <hicr/frontends/tasking/task.hpp>
-#include <hicr/core/concurrent/queue.hpp>
-#include <hicr/core/concurrent/hashSet.hpp>
+#include "queue.hpp"
+#include "hashSet.hpp"
 #include "task.hpp"
 
 #define __TASKR_DEFAULT_MAX_TASKS 65536

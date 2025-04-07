@@ -62,6 +62,13 @@ class ComputeManager : public HiCR::ComputeManager
     return std::make_shared<boost::ExecutionUnit>(coroutineFunction);
   }
 
+  /**
+   * Creates a new execution state (coroutine)
+   * 
+   * @param[in] executionUnit The (lambda) function to run
+   * @param[in] argument The argument to pass to the lambda function
+   * @return The newly created execution state
+   */
   __INLINE__ std::unique_ptr<HiCR::ExecutionState> createExecutionState(std::shared_ptr<HiCR::ExecutionUnit> executionUnit, void *const argument = nullptr) const override
   {
     // Creating and returning new execution state
