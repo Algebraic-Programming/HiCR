@@ -1,7 +1,7 @@
 .. _Variable-Size Channels:
 
 Variable-Size Channels
-======================
+----------------------
 
 For variable sized channels, the consumer allocates two internal buffers:
 

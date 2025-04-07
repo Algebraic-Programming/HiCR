@@ -39,3 +39,8 @@ Below is a possible expected result of the application for two producers and a b
     [Producer 004] Sent Value: 44
         [Consumer] Recv Value: 44  (12/12) Pos: 2
 
+ 
+Fixed-Size MPSC come in two different policies:
+
+* :ref:`Locking Fixed-Size MPSC`
+* :ref:`Nonlocking Fixed-Size MPSC`
