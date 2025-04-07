@@ -27,7 +27,7 @@
 #include <string>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/core/L0/computeResource.hpp>
+#include <hicr/core/computeResource.hpp>
 
 namespace HiCR::backend::hwloc
 {

@@ -27,8 +27,8 @@
 #include <cstring>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/core/L0/globalMemorySlot.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/globalMemorySlot.hpp>
+#include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/base.hpp>
 
 namespace HiCR::channel::fixedSize
@@ -59,7 +59,7 @@ class Base : public channel::Base
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(L1::CommunicationManager &communicationManager, const std::shared_ptr<L0::LocalMemorySlot> &coordinationBuffer, const size_t tokenSize, const size_t capacity)
+  Base(CommunicationManager &communicationManager, const std::shared_ptr<LocalMemorySlot> &coordinationBuffer, const size_t tokenSize, const size_t capacity)
     : channel::Base(communicationManager, coordinationBuffer, tokenSize, capacity)
   {}
 };

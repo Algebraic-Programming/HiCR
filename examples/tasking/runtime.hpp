@@ -33,8 +33,8 @@
 #include <mutex>
 #include <hicr/frontends/tasking/tasking.hpp>
 #include <hicr/frontends/tasking/task.hpp>
-#include <hicr/core/concurrent/queue.hpp>
-#include <hicr/core/concurrent/hashSet.hpp>
+#include "queue.hpp"
+#include "hashSet.hpp"
 #include "task.hpp"
 
 #define __TASKR_DEFAULT_MAX_TASKS 65536
@@ -52,12 +52,12 @@ class Runtime
   /**
    * Compute manager to use to instantiate task's execution states
    */
-  HiCR::L1::ComputeManager *const _executionStateComputeManager;
+  HiCR::ComputeManager *const _executionStateComputeManager;
 
   /**
    * Compute manager to use to instantiate processing units
    */
-  HiCR::L1::ComputeManager *const _processingUnitComputeManager;
+  HiCR::ComputeManager *const _processingUnitComputeManager;
 
   /**
    * Pointer to the internal HiCR event map, required to capture finishing or yielding tasks
@@ -103,7 +103,7 @@ class Runtime
   /**
    * The processing units assigned to taskr to run workers from
    */
-  std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnits;
+  std::vector<std::unique_ptr<HiCR::ProcessingUnit>> _processingUnits;
 
   /**
    * Determines the maximum amount of tasks (required by the lock-free queue)
@@ -139,10 +139,10 @@ class Runtime
   /**
    * Constructor of the example tasking runtime.
    */
-  Runtime(HiCR::L1::ComputeManager *executionStateComputeManager,
-          HiCR::L1::ComputeManager *processingUnitComputeManager,
-          const size_t              maxTasks   = __TASKR_DEFAULT_MAX_TASKS,
-          const size_t              maxWorkers = __TASKR_DEFAULT_MAX_WORKERS)
+  Runtime(HiCR::ComputeManager *executionStateComputeManager,
+          HiCR::ComputeManager *processingUnitComputeManager,
+          const size_t          maxTasks   = __TASKR_DEFAULT_MAX_TASKS,
+          const size_t          maxWorkers = __TASKR_DEFAULT_MAX_WORKERS)
     : _executionStateComputeManager(executionStateComputeManager),
       _processingUnitComputeManager(processingUnitComputeManager),
       _maxTasks(maxTasks),
@@ -175,7 +175,7 @@ class Runtime
    *
    * \param[in] pu The processing unit to add
    */
-  __INLINE__ void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
+  __INLINE__ void addProcessingUnit(std::unique_ptr<HiCR::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
    * Adds a task to the TaskR runtime for execution. This can be called at any point, before or during the execution of TaskR.

@@ -31,9 +31,9 @@
 #include <unistd.h>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/core/L0/processingUnit.hpp>
-#include <hicr/core/L1/computeManager.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/core/processingUnit.hpp>
+#include <hicr/core/computeManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
 #include "task.hpp"
 
 namespace HiCR::tasking
@@ -155,10 +155,10 @@ class Worker
    * \param[in] pullFunction A callback for the worker to get a new task to execute
    * @param[in] callbackMap Pointer to the callback map to be called by the worker
    */
-  Worker(HiCR::L1::ComputeManager *executionStateComputeManager,
-         HiCR::L1::ComputeManager *processingUnitComputeManager,
-         pullFunction_t            pullFunction,
-         workerCallbackMap_t      *callbackMap = nullptr)
+  Worker(HiCR::ComputeManager *executionStateComputeManager,
+         HiCR::ComputeManager *processingUnitComputeManager,
+         pullFunction_t        pullFunction,
+         workerCallbackMap_t  *callbackMap = nullptr)
     : _executionStateComputeManager(executionStateComputeManager),
       _processingUnitComputeManager(processingUnitComputeManager),
       _pullFunction(std::move(pullFunction)),
@@ -231,7 +231,7 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = HiCR::backend::pthreads::L1::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
+    auto executionUnit = HiCR::backend::pthreads::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
 
     // Creating worker's execution state
     auto executionState = _executionStateComputeManager->createExecutionState(executionUnit, this);
@@ -306,14 +306,14 @@ class Worker
    *
    * @param[in] pu Processing unit to assign to the worker
    */
-  __INLINE__ void addProcessingUnit(std::unique_ptr<HiCR::L0::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
+  __INLINE__ void addProcessingUnit(std::unique_ptr<HiCR::ProcessingUnit> pu) { _processingUnits.push_back(std::move(pu)); }
 
   /**
    * Gets a reference to the workers assigned processing units.
    *
    * @return A container with the worker's resources
    */
-  __INLINE__ std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> &getProcessingUnits() { return _processingUnits; }
+  __INLINE__ std::vector<std::unique_ptr<HiCR::ProcessingUnit>> &getProcessingUnits() { return _processingUnits; }
 
   /**
    * This function sets the sleep intervals for a worker after it has been suspended, and in between checks for resuming
@@ -336,12 +336,12 @@ class Worker
   /**
    * Compute manager to use to instantiate task's execution states
    */
-  HiCR::L1::ComputeManager *const _executionStateComputeManager;
+  HiCR::ComputeManager *const _executionStateComputeManager;
 
   /**
    * Compute manager to use to instantiate processing units
    */
-  HiCR::L1::ComputeManager *const _processingUnitComputeManager;
+  HiCR::ComputeManager *const _processingUnitComputeManager;
 
   /**
    * Defines the current task being handled by this worker
@@ -366,7 +366,7 @@ class Worker
   /**
    * Group of resources the worker can freely use
    */
-  std::vector<std::unique_ptr<HiCR::L0::ProcessingUnit>> _processingUnits;
+  std::vector<std::unique_ptr<HiCR::ProcessingUnit>> _processingUnits;
 
   /**
    *  Map of callbacks to trigger
@@ -394,7 +394,7 @@ class Worker
       if (_currentTask != nullptr) [[likely]]
       {
         // If the task hasn't been initialized yet, we need to do it now
-        if (_currentTask->getState() == HiCR::L0::ExecutionState::state_t::uninitialized)
+        if (_currentTask->getState() == HiCR::ExecutionState::state_t::uninitialized)
         {
           // First, create new execution state for the processing unit
           auto executionState = _executionStateComputeManager->createExecutionState(_currentTask->getExecutionUnit(), _currentTask);

@@ -16,9 +16,9 @@
 
 #include <cstdio>
 #include <hwloc.h>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/boost/L1/computeManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
+#include <hicr/backends/boost/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include "fibonacci.hpp"
 
 int main(int argc, char **argv)
@@ -47,13 +47,13 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
 
   // Compute resources to use
-  HiCR::L0::Device::computeResourceList_t computeResources;
+  HiCR::Device::computeResourceList_t computeResources;
 
   // Adding all compute resources found
   for (auto &d : t.getDevices())
@@ -66,10 +66,10 @@ int main(int argc, char **argv)
   }
 
   // Initializing Boost-based compute manager to instantiate suspendable coroutines
-  HiCR::backend::boost::L1::ComputeManager boostComputeManager;
+  HiCR::backend::boost::ComputeManager boostComputeManager;
 
   // Initializing Pthreads-based compute manager to instantiate processing units
-  HiCR::backend::pthreads::L1::ComputeManager pthreadsComputeManager;
+  HiCR::backend::pthreads::ComputeManager pthreadsComputeManager;
 
   // Initializing runtime with the appropriate amount of max tasks
   Runtime runtime(&boostComputeManager, &pthreadsComputeManager, fibonacciTaskCount[initialValue]);

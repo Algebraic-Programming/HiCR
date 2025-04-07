@@ -17,9 +17,9 @@
 #include <lpf/core.h>
 #include <lpf/mpi.h>
 #include <mpi.h>
-#include <hicr/backends/lpf/L1/memoryManager.hpp>
-#include <hicr/backends/lpf/L1/communicationManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/lpf/memoryManager.hpp>
+#include <hicr/backends/lpf/communicationManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include "include/consumer.hpp"
 #include "include/producer.hpp"
 
@@ -59,7 +59,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -71,8 +71,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   auto memSpaces = d->getMemorySpaceList();
 
   // Creating LPF memory and communication managers
-  HiCR::backend::lpf::L1::MemoryManager        m(lpf);
-  HiCR::backend::lpf::L1::CommunicationManager c(nprocs, pid, lpf);
+  HiCR::backend::lpf::MemoryManager        m(lpf);
+  HiCR::backend::lpf::CommunicationManager c(nprocs, pid, lpf);
 
   // Getting reference to the first memory space detected
   auto firstMemorySpace = *memSpaces.begin();

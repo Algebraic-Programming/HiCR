@@ -16,27 +16,27 @@
 
 #pragma once
 
-#include <hicr/core/L0/memorySpace.hpp>
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
-#include <hicr/core/L0/globalMemorySlot.hpp>
+#include <hicr/core/memorySpace.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/communicationManager.hpp>
+#include <hicr/core/globalMemorySlot.hpp>
 #include <hicr/frontends/channel/fixedSize/mpsc/nonlocking/consumer.hpp>
 #include "common.hpp"
 
-void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
-                HiCR::L1::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity,
-                const size_t                           producerCount)
+void consumerFc(HiCR::MemoryManager               &memoryManager,
+                HiCR::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
+                const size_t                       channelCapacity,
+                const size_t                       producerCount)
 {
   // Getting required buffer sizes
   auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
 
-  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> tokenBuffers;
-  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffers;
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               producerCoordinationBuffers;
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>>               globalTokenBuffers;
-  std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>                localCoordinationBuffers;
+  std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> tokenBuffers;
+  std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffers;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>>               producerCoordinationBuffers;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>>               globalTokenBuffers;
+  std::vector<std::shared_ptr<HiCR::LocalMemorySlot>>                localCoordinationBuffers;
 
   for (size_t i = 0; i < producerCount; i++)
   {

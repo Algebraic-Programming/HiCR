@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <hicr/core/L0/device.hpp>
-#include <hicr/core/L0/executionUnit.hpp>
+#include <hicr/core/device.hpp>
+#include <hicr/core/executionUnit.hpp>
 
 /**
  * Execute the execution unit on the specified compute resource
@@ -26,7 +26,7 @@
  * @param[in] computeResource
  * @param[in] executionUnit
 */
-void executeKernel(HiCR::L1::ComputeManager &computeManager, std::shared_ptr<HiCR::L0::ComputeResource> &computeResource, std::shared_ptr<HiCR::L0::ExecutionUnit> &executionUnit)
+void executeKernel(HiCR::ComputeManager &computeManager, std::shared_ptr<HiCR::ComputeResource> &computeResource, std::shared_ptr<HiCR::ExecutionUnit> &executionUnit)
 {
   // Create a processing unit on the desired compute resource
   auto processingUnit = computeManager.createProcessingUnit(computeResource);

@@ -16,19 +16,19 @@
 
 #pragma once
 
-#include <hicr/core/L1/computeManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/instanceManager.hpp>
+#include <hicr/core/computeManager.hpp>
+#include <hicr/core/communicationManager.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/instanceManager.hpp>
 #include <hicr/frontends/RPCEngine/RPCEngine.hpp>
 
-void RPCTestFc(HiCR::L1::CommunicationManager            &cm,
-               HiCR::L1::MemoryManager                   &mm,
-               HiCR::L1::ComputeManager                  &cpm,
-               HiCR::L1::InstanceManager                 &im,
-               std::shared_ptr<HiCR::L0::MemorySpace>     bufferMemorySpace,
-               std::shared_ptr<HiCR::L0::ComputeResource> computeResource,
-               std::shared_ptr<HiCR::L0::ExecutionUnit>   rpcExecutionUnit)
+void RPCTestFc(HiCR::CommunicationManager            &cm,
+               HiCR::MemoryManager                   &mm,
+               HiCR::ComputeManager                  &cpm,
+               HiCR::InstanceManager                 &im,
+               std::shared_ptr<HiCR::MemorySpace>     bufferMemorySpace,
+               std::shared_ptr<HiCR::ComputeResource> computeResource,
+               std::shared_ptr<HiCR::ExecutionUnit>   rpcExecutionUnit)
 {
   // Creating RPC engine instance
   HiCR::frontend::RPCEngine rpcEngine(cm, im, mm, cpm, bufferMemorySpace, computeResource);

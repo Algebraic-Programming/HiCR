@@ -27,8 +27,8 @@
 #include <cstring>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/core/L0/globalMemorySlot.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/globalMemorySlot.hpp>
+#include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/base.hpp>
 
 namespace HiCR::channel::variableSize
@@ -55,11 +55,11 @@ class Base : public channel::Base
    * The key extension to the base channel class is the use of an extended circular buffer instead of a circular buffer.
    * This is because we need to manage payload head and tail in addition to the head an tail pointers for different elements.
    */
-  Base(L1::CommunicationManager                   &communicationManager,
-       const std::shared_ptr<L0::LocalMemorySlot> &coordinationBufferForCounts,
-       const std::shared_ptr<L0::LocalMemorySlot> &coordinationBufferForPayloads,
-       const size_t                                capacity,
-       const size_t                                payloadCapacity)
+  Base(CommunicationManager                   &communicationManager,
+       const std::shared_ptr<LocalMemorySlot> &coordinationBufferForCounts,
+       const std::shared_ptr<LocalMemorySlot> &coordinationBufferForPayloads,
+       const size_t                            capacity,
+       const size_t                            payloadCapacity)
     : channel::Base(communicationManager, coordinationBufferForCounts, sizeof(size_t), capacity),
       _coordinationBufferForCounts(coordinationBufferForCounts),
       _coordinationBufferForPayloads(coordinationBufferForPayloads)
@@ -123,11 +123,11 @@ class Base : public channel::Base
   /**
    * Pointer to Local slot associated with circular buffer for counts
    */
-  const std::shared_ptr<L0::LocalMemorySlot> _coordinationBufferForCounts;
+  const std::shared_ptr<LocalMemorySlot> _coordinationBufferForCounts;
   /**
    * Pointer to Local slot associated with circular buffer for payloads
    */
-  const std::shared_ptr<L0::LocalMemorySlot> _coordinationBufferForPayloads;
+  const std::shared_ptr<LocalMemorySlot> _coordinationBufferForPayloads;
 };
 
 } // namespace HiCR::channel::variableSize

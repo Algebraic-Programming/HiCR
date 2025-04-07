@@ -19,10 +19,10 @@
 #include <memory>
 #include <stdio.h>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/backends/pthreads/L1/communicationManager.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/hwloc/L1/memoryManager.hpp>
+#include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
+#include <hicr/backends/hwloc/memoryManager.hpp>
 
 #include "./include/kernel.hpp"
 
@@ -38,7 +38,7 @@
  * @param[in] columns
  * @param[in] value 
 */
-void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, int rows, int columns, double value)
+void populateMemorySlot(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot, int rows, int columns, double value)
 {
   for (int i = 0; i < rows * columns; i++) { ((double *)memorySlot->getPointer())[i] = value; }
 }
@@ -65,17 +65,17 @@ int main(int argc, char **argv)
 
   ///////// Instantiate HiCR-specific entities for hwloc and pthreads
   // Initializing HWLoc-based host topology manager and retrieve host memory space and compute resource
-  HiCR::backend::hwloc::L1::TopologyManager hostTopologyManager(&topology);
-  auto                                      hostTopology        = hostTopologyManager.queryTopology();
-  auto                                      hostDevice          = *hostTopology.getDevices().begin();
-  auto                                      hostMemSpace        = *hostDevice->getMemorySpaceList().begin();
-  auto                                      hostComputeResource = *hostDevice->getComputeResourceList().begin();
+  HiCR::backend::hwloc::TopologyManager hostTopologyManager(&topology);
+  auto                                  hostTopology        = hostTopologyManager.queryTopology();
+  auto                                  hostDevice          = *hostTopology.getDevices().begin();
+  auto                                  hostMemSpace        = *hostDevice->getMemorySpaceList().begin();
+  auto                                  hostComputeResource = *hostDevice->getComputeResourceList().begin();
 
   // Instantiating hwloc memory manager
-  HiCR::backend::hwloc::L1::MemoryManager memoryManager(&topology);
+  HiCR::backend::hwloc::MemoryManager memoryManager(&topology);
 
   // Instantiating pthreads compute manager
-  HiCR::backend::pthreads::L1::ComputeManager computeManager;
+  HiCR::backend::pthreads::ComputeManager computeManager;
 
   /////////  Allocate input and output buffers on both host and the device
   // First matrix (A)

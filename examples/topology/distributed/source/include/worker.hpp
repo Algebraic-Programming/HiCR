@@ -16,21 +16,21 @@
 
 #pragma once
 
-#include <hicr/core/L0/memorySpace.hpp>
-#include <hicr/core/L0/topology.hpp>
-#include <hicr/core/L1/topologyManager.hpp>
-#include <hicr/core/L1/instanceManager.hpp>
-#include <hicr/core/L0/topology.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/core/memorySpace.hpp>
+#include <hicr/core/topology.hpp>
+#include <hicr/core/topologyManager.hpp>
+#include <hicr/core/instanceManager.hpp>
+#include <hicr/core/topology.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
 #include "common.hpp"
 
 void sendTopology(HiCR::frontend::RPCEngine &rpcEngine)
 {
   // Storage for the topology to send
-  HiCR::L0::Topology workerTopology;
+  HiCR::Topology workerTopology;
 
   // List of topology managers to query
-  std::vector<std::shared_ptr<HiCR::L1::TopologyManager>> topologyManagerList;
+  std::vector<std::shared_ptr<HiCR::TopologyManager>> topologyManagerList;
 
 // Now instantiating topology managers (which ones is determined by backend availability during compilation)
 #ifdef _HICR_USE_HWLOC_BACKEND_
@@ -42,7 +42,7 @@ void sendTopology(HiCR::frontend::RPCEngine &rpcEngine)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  auto hwlocTopologyManager = std::make_shared<HiCR::backend::hwloc::L1::TopologyManager>(&topology);
+  auto hwlocTopologyManager = std::make_shared<HiCR::backend::hwloc::TopologyManager>(&topology);
 
   // Adding topology manager to the list
   topologyManagerList.push_back(hwlocTopologyManager);
@@ -56,7 +56,7 @@ void sendTopology(HiCR::frontend::RPCEngine &rpcEngine)
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
 
   // Initializing ascend topology manager
-  auto ascendTopologyManager = std::make_shared<HiCR::backend::ascend::L1::TopologyManager>();
+  auto ascendTopologyManager = std::make_shared<HiCR::backend::ascend::TopologyManager>();
 
   // Adding topology manager to the list
   topologyManagerList.push_back(ascendTopologyManager);
@@ -83,10 +83,10 @@ void sendTopology(HiCR::frontend::RPCEngine &rpcEngine)
 void workerFc(HiCR::frontend::RPCEngine &rpcEngine)
 {
   // Creating compute manager (responsible for executing the RPC)
-  HiCR::backend::pthreads::L1::ComputeManager cpm;
+  HiCR::backend::pthreads::ComputeManager cpm;
 
   // Creating execution unit to run as RPC
-  auto executionUnit = std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&](void *closure) { sendTopology(rpcEngine); });
+  auto executionUnit = std::make_shared<HiCR::backend::pthreads::ExecutionUnit>([&](void *closure) { sendTopology(rpcEngine); });
 
   // Adding RPC target by name and the execution unit id to run
   rpcEngine.addRPCTarget(TOPOLOGY_RPC_NAME, executionUnit);

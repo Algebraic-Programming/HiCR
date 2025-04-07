@@ -15,9 +15,9 @@
  */
 
 #include "include/telephoneGame.hpp"
-#include <hicr/backends/hwloc/L1/memoryManager.hpp>
-#include <hicr/backends/pthreads/L1/communicationManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/hwloc/memoryManager.hpp>
+#include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 
 int main(int argc, char **argv)
 {
@@ -28,13 +28,13 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager dm(&topology);
+  HiCR::backend::hwloc::TopologyManager dm(&topology);
 
   // Instantiating host (CPU) memory manager
-  HiCR::backend::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Instantiating host (CPU) communication manager
-  HiCR::backend::pthreads::L1::CommunicationManager c;
+  HiCR::backend::pthreads::CommunicationManager c;
 
   // Asking backend to check the available devices
   const auto t = dm.queryTopology();
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   auto memSpaces = d->getMemorySpaceList();
 
   // Define the order of mem spaces for the telephone game
-  auto memSpaceOrder = std::vector<std::shared_ptr<HiCR::L0::MemorySpace>>(memSpaces.begin(), memSpaces.end());
+  auto memSpaceOrder = std::vector<std::shared_ptr<HiCR::MemorySpace>>(memSpaces.begin(), memSpaces.end());
 
   // Allocating memory slots in different NUMA domains
   auto firstMemSpace = *memSpaces.begin();

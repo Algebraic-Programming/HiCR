@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <hicr/core/L0/topology.hpp>
-#include <hicr/core/L1/instanceManager.hpp>
+#include <hicr/core/topology.hpp>
+#include <hicr/core/instanceManager.hpp>
 #include <hicr/frontends/RPCEngine/RPCEngine.hpp>
 #include "common.hpp"
 
@@ -53,15 +53,15 @@ void coordinatorFc(HiCR::frontend::RPCEngine &rpcEngine)
       rpcEngine.getMemoryManager()->freeLocalMemorySlot(returnValue);
 
       // HiCR topology object to obtain
-      HiCR::L0::Topology topology;
+      HiCR::Topology topology;
 
 // Obtaining the topology from the serialized object
 #ifdef _HICR_USE_HWLOC_BACKEND_
-      topology.merge(HiCR::backend::hwloc::L1::TopologyManager::deserializeTopology(topologyJson));
+      topology.merge(HiCR::backend::hwloc::TopologyManager::deserializeTopology(topologyJson));
 #endif // _HICR_USE_HWLOC_BACKEND_
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
-      topology.merge(HiCR::backend::ascend::L1::TopologyManager::deserializeTopology(topologyJson));
+      topology.merge(HiCR::backend::ascend::TopologyManager::deserializeTopology(topologyJson));
 #endif // _HICR_USE_ASCEND_BACKEND_
 
       // Now summarizing the devices seen by this topology

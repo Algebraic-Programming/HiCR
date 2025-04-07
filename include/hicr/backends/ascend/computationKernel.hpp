@@ -29,18 +29,12 @@
 #include <regex>
 #include <vector>
 #include <acl/acl.h>
-#include <hicr/core/L0/localMemorySlot.hpp>
+#include <hicr/core/localMemorySlot.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/backends/ascend/L0/localMemorySlot.hpp>
+#include <hicr/backends/ascend/localMemorySlot.hpp>
 #include <hicr/backends/ascend/kernel.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace ascend
+namespace HiCR::backend::ascend
 {
 
 /**
@@ -113,10 +107,10 @@ class ComputationKernel final : public Kernel
    * \param tensorDescriptor Ascend-specific metadata about the passed memory slot
    * \return The new Ascend tensor data object
    */
-  static tensorData_t createTensorData(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memorySlot, aclTensorDesc *tensorDescriptor)
+  static tensorData_t createTensorData(const std::shared_ptr<HiCR::LocalMemorySlot> &memorySlot, aclTensorDesc *tensorDescriptor)
   {
     // Using up-casting to determine device types
-    auto ascendSlot = dynamic_pointer_cast<ascend::L0::LocalMemorySlot>(memorySlot);
+    auto ascendSlot = dynamic_pointer_cast<ascend::LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot passed is compatible with this backend
     if (ascendSlot == NULL) HICR_THROW_LOGIC("Attempting to create Ascend tensor data with a memory slot that is not supported by this backend\n");
@@ -227,8 +221,4 @@ class ComputationKernel final : public Kernel
   }
 };
 
-} // namespace ascend
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::ascend

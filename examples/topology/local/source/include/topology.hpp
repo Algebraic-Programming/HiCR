@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include <hicr/core/L1/topologyManager.hpp>
+#include <hicr/core/topologyManager.hpp>
 
-void topologyFc(HiCR::L1::TopologyManager &topologyManager)
+void topologyFc(HiCR::TopologyManager &topologyManager)
 {
   // Querying the devices that this topology manager can detect
   auto topology = topologyManager.queryTopology();
