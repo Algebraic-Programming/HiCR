@@ -27,8 +27,8 @@
 #include <cstring>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/core/L0/globalMemorySlot.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/globalMemorySlot.hpp>
+#include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/circularBuffer.hpp>
 
 /**
@@ -97,7 +97,7 @@ class Base
    *
    * \param[in] coordinationBuffer Memory slot corresponding to the coordination buffer
    */
-  __INLINE__ static void initializeCoordinationBuffer(const std::shared_ptr<L0::LocalMemorySlot> &coordinationBuffer)
+  __INLINE__ static void initializeCoordinationBuffer(const std::shared_ptr<LocalMemorySlot> &coordinationBuffer)
   {
     // Checking for correct size
     auto requiredSize = getCoordinationBufferSize();
@@ -185,7 +185,7 @@ class Base
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(L1::CommunicationManager &communicationManager, const std::shared_ptr<L0::LocalMemorySlot> &coordinationBuffer, const size_t tokenSize, const size_t capacity)
+  Base(CommunicationManager &communicationManager, const std::shared_ptr<LocalMemorySlot> &coordinationBuffer, const size_t tokenSize, const size_t capacity)
     : _communicationManager(&communicationManager),
       _coordinationBuffer(coordinationBuffer),
       _tokenSize(tokenSize)
@@ -214,7 +214,7 @@ class Base
    * Get the internal communication buffer assigned to this channel
    * @return The internal communication buffer assigned to this channel
    */
-  [[nodiscard]] __INLINE__ L1::CommunicationManager *getCommunicationManager() const { return _communicationManager; }
+  [[nodiscard]] __INLINE__ CommunicationManager *getCommunicationManager() const { return _communicationManager; }
 
   /**
    * Get the internal coordination buffer assigned to this channel
@@ -227,12 +227,12 @@ class Base
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  L1::CommunicationManager *const _communicationManager;
+  CommunicationManager *const _communicationManager;
 
   /**
    * Local storage of coordination metadata
    */
-  const std::shared_ptr<L0::LocalMemorySlot> _coordinationBuffer;
+  const std::shared_ptr<LocalMemorySlot> _coordinationBuffer;
   /**
    * Token size
    */

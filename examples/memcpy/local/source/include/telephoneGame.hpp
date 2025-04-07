@@ -18,24 +18,24 @@
 
 #include <vector>
 #include <memory>
-#include <hicr/core/L0/memorySpace.hpp>
-#include <hicr/core/L0/localMemorySlot.hpp>
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/memorySpace.hpp>
+#include <hicr/core/localMemorySlot.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/communicationManager.hpp>
 
 #define BUFFER_SIZE 256
 #define ITERATIONS 3
 #define DST_OFFSET 0
 #define SRC_OFFSET 0
 
-void telephoneGame(HiCR::L1::MemoryManager                            &m,
-                   HiCR::L1::CommunicationManager                     &c,
-                   std::shared_ptr<HiCR::L0::LocalMemorySlot>          input,
-                   std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> memSpaces,
+void telephoneGame(HiCR::MemoryManager                            &m,
+                   HiCR::CommunicationManager                     &c,
+                   std::shared_ptr<HiCR::LocalMemorySlot>          input,
+                   std::vector<std::shared_ptr<HiCR::MemorySpace>> memSpaces,
                    int                                                 iterations)
 {
   // Collect the newly created memory slots
-  auto memSlots = std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>{};
+  auto memSlots = std::vector<std::shared_ptr<HiCR::LocalMemorySlot>>{};
 
   // iterate all over the memory spaces and create multiple memory slots in each one
   for (const auto &memSpace : memSpaces)

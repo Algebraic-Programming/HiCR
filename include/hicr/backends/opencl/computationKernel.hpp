@@ -27,18 +27,12 @@
 #include <vector>
 #include <unordered_set>
 #include <CL/opencl.hpp>
-#include <hicr/core/L0/localMemorySlot.hpp>
+#include <hicr/core/localMemorySlot.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/backends/opencl/L0/localMemorySlot.hpp>
+#include <hicr/backends/opencl/localMemorySlot.hpp>
 #include <hicr/backends/opencl/kernel.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace opencl
+namespace HiCR::backend::opencl
 {
 
 /**
@@ -61,7 +55,7 @@ class ComputationKernel final : public Kernel
    * \param local local range
    */
   ComputationKernel(const std::shared_ptr<cl::Kernel>                             &kernel,
-                    const std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> &args,
+                    const std::vector<std::shared_ptr<HiCR::LocalMemorySlot>> &args,
                     const cl::NDRange                                              offset,
                     const cl::NDRange                                              global,
                     const cl::NDRange                                              local)
@@ -95,7 +89,7 @@ class ComputationKernel final : public Kernel
    */
   __INLINE__ void start(const cl::CommandQueue *queue) override
   {
-    std::unordered_set<std::shared_ptr<HiCR::backend::opencl::L0::LocalMemorySlot>> unmappedSlots({});
+    std::unordered_set<std::shared_ptr<HiCR::backend::opencl::LocalMemorySlot>> unmappedSlots({});
 
     for (size_t i = 0; i < _args.size(); i++)
     {
@@ -159,7 +153,7 @@ class ComputationKernel final : public Kernel
   /**
    * Kernel arguments
   */
-  const std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> _args;
+  const std::vector<std::shared_ptr<HiCR::LocalMemorySlot>> _args;
 
   /**
    * Get the i-th argument casted as a opencl-specific memory slot
@@ -168,17 +162,13 @@ class ComputationKernel final : public Kernel
    * 
    * \return opencl-specific memory slot
   */
-  __INLINE__ std::shared_ptr<opencl::L0::LocalMemorySlot> getArgument(uint64_t i)
+  __INLINE__ std::shared_ptr<opencl::LocalMemorySlot> getArgument(uint64_t i)
   {
     const auto &arg = _args[i];
-    auto        a   = dynamic_pointer_cast<opencl::L0::LocalMemorySlot>(arg);
+    auto        a   = dynamic_pointer_cast<opencl::LocalMemorySlot>(arg);
     if (a == nullptr) [[unlikely]] { HICR_THROW_RUNTIME("Provided memory slot containing the argument is not supported."); }
     return a;
   }
 };
 
-} // namespace opencl
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::opencl

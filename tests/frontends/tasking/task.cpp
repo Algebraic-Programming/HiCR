@@ -22,16 +22,16 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/boost/L1/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
+#include <hicr/backends/boost/computeManager.hpp>
 #include <hicr/frontends/tasking/task.hpp>
 #include <hicr/frontends/tasking/tasking.hpp>
 
 TEST(Task, Construction)
 {
   HiCR::tasking::Task                     *t = NULL;
-  std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
+  std::shared_ptr<HiCR::ExecutionUnit> u(NULL);
 
   ASSERT_NO_THROW(t = new HiCR::tasking::Task(u, NULL));
   ASSERT_FALSE(t == nullptr);
@@ -40,16 +40,16 @@ TEST(Task, Construction)
 
 TEST(Task, SetterAndGetters)
 {
-  std::shared_ptr<HiCR::L0::ExecutionUnit> u(NULL);
+  std::shared_ptr<HiCR::ExecutionUnit> u(NULL);
   HiCR::tasking::Task                      t(u, NULL);
 
   HiCR::tasking::Task::taskCallbackMap_t e;
   ASSERT_NO_THROW(t.setCallbackMap(&e));
   ASSERT_EQ(t.getCallbackMap(), &e);
 
-  HiCR::L0::ExecutionState::state_t state;
+  HiCR::ExecutionState::state_t state;
   ASSERT_NO_THROW(state = t.getState());
-  ASSERT_EQ(state, HiCR::L0::ExecutionState::state_t::uninitialized);
+  ASSERT_EQ(state, HiCR::ExecutionState::state_t::uninitialized);
 }
 
 TEST(Task, Run)
@@ -70,7 +70,7 @@ TEST(Task, Run)
   // Creating task function
   auto f = [&t, &hasRunningState, &hasCorrectTaskPointer](void *arg) {
     // Checking whether the state is correctly assigned
-    if (t->getState() == HiCR::L0::ExecutionState::state_t::running) hasRunningState = true;
+    if (t->getState() == HiCR::ExecutionState::state_t::running) hasRunningState = true;
 
     // Checking whether the current task pointer is the correct one
     if ((HiCR::tasking::Task *)arg == t) hasCorrectTaskPointer = true;
@@ -80,10 +80,10 @@ TEST(Task, Run)
   };
 
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::pthreads::L1::ComputeManager cp;
+  HiCR::backend::pthreads::ComputeManager cp;
 
   // Instantiating Booost-based host (CPU) compute manager
-  HiCR::backend::boost::L1::ComputeManager cb;
+  HiCR::backend::boost::ComputeManager cb;
 
   // Creating execution unit
   auto u = cb.createExecutionUnit(f);
@@ -92,7 +92,7 @@ TEST(Task, Run)
   t = new HiCR::tasking::Task(u);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto tp = tm.queryTopology();
@@ -119,15 +119,15 @@ TEST(Task, Run)
   t->initialize(std::move(executionState));
 
   // A first run should start the task
-  ASSERT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::initialized);
+  ASSERT_EQ(t->getState(), HiCR::ExecutionState::state_t::initialized);
   ASSERT_NO_THROW(t->run());
   ASSERT_TRUE(hasRunningState);
   ASSERT_TRUE(hasCorrectTaskPointer);
-  ASSERT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::suspended);
+  ASSERT_EQ(t->getState(), HiCR::ExecutionState::state_t::suspended);
 
   // A second run should resume the task
   ASSERT_NO_THROW(t->run());
-  ASSERT_EQ(t->getState(), HiCR::L0::ExecutionState::state_t::finished);
+  ASSERT_EQ(t->getState(), HiCR::ExecutionState::state_t::finished);
 
   // The task has now finished, so a third run should fail
   ASSERT_THROW(t->run(), HiCR::RuntimeException);
@@ -176,10 +176,10 @@ TEST(Task, Callbacks)
   };
 
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::pthreads::L1::ComputeManager cp;
+  HiCR::backend::pthreads::ComputeManager cp;
 
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::boost::L1::ComputeManager cb;
+  HiCR::backend::boost::ComputeManager cb;
 
   // Creating execution unit
   auto u = cb.createExecutionUnit(f);
@@ -188,7 +188,7 @@ TEST(Task, Callbacks)
   t = new HiCR::tasking::Task(u);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto tp = tm.queryTopology();

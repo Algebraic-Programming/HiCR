@@ -17,7 +17,7 @@
 #include <hicr/frontends/channel/variableSize/spsc/producer.hpp>
 #include "common.hpp"
 
-void owner(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManager &communicationManager, HiCR::objectStore::ObjectStore &objectStore)
+void owner(HiCR::MemoryManager &memoryManager, HiCR::CommunicationManager &communicationManager, HiCR::objectStore::ObjectStore &objectStore)
 {
   auto memorySpace = objectStore.getMemorySpace();
   // BEGIN Channel initialization phase

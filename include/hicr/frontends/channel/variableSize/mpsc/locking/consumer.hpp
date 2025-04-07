@@ -62,13 +62,13 @@ class Consumer final : public variableSize::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
-  Consumer(L1::CommunicationManager                    &communicationManager,
-           std::shared_ptr<L0::GlobalMemorySlot>        payloadBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot>        tokenBuffer,
-           const std::shared_ptr<L0::LocalMemorySlot>  &internalCoordinationBufferForCounts,
-           const std::shared_ptr<L0::LocalMemorySlot>  &internalCoordinationBufferForPayloads,
-           const std::shared_ptr<L0::GlobalMemorySlot> &consumerCoordinationBufferForCounts,
-           std::shared_ptr<L0::GlobalMemorySlot>        consumerCoordinationBufferForPayloads,
+  Consumer(CommunicationManager                    &communicationManager,
+           std::shared_ptr<GlobalMemorySlot>        payloadBuffer,
+           std::shared_ptr<GlobalMemorySlot>        tokenBuffer,
+           const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBufferForCounts,
+           const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBufferForPayloads,
+           const std::shared_ptr<GlobalMemorySlot> &consumerCoordinationBufferForCounts,
+           std::shared_ptr<GlobalMemorySlot>        consumerCoordinationBufferForPayloads,
            const size_t                                 payloadCapacity,
            const size_t                                 capacity)
     : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
@@ -265,33 +265,33 @@ class Consumer final : public variableSize::Base
    *
    * @return The pointer to the payload buffer
    */
-  [[nodiscard]] std::shared_ptr<L0::GlobalMemorySlot> getPayloadBufferMemorySlot() const { return _payloadBuffer; }
+  [[nodiscard]] std::shared_ptr<GlobalMemorySlot> getPayloadBufferMemorySlot() const { return _payloadBuffer; }
 
   private:
 
   /**
    * The global slot holding all payload data
    */
-  std::shared_ptr<L0::GlobalMemorySlot> _payloadBuffer;
+  std::shared_ptr<GlobalMemorySlot> _payloadBuffer;
 
   /**
    * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
    * for updates from the remote producer. The token buffer is only used for metadata (payload message sizes) for
    * variable-sized consumer/producers
    */
-  const std::shared_ptr<L0::GlobalMemorySlot> _tokenSizeBuffer;
+  const std::shared_ptr<GlobalMemorySlot> _tokenSizeBuffer;
 
   /**
    * The memory slot pertaining to the consumer's message size information. This is a global slot to enable remote
    * update of the producer's internal circular buffer when doing a pop() operation
    */
-  const std::shared_ptr<L0::GlobalMemorySlot> _consumerCoordinationBufferForCounts;
+  const std::shared_ptr<GlobalMemorySlot> _consumerCoordinationBufferForCounts;
 
   /**
    * The memory slot pertaining to the consumer's payload information. This is a global slot to enable remote
    * update of the producer's internal circular buffer when doing a pop() operation
    */
-  const std::shared_ptr<L0::GlobalMemorySlot> _consumerCoordinationBufferForPayloads;
+  const std::shared_ptr<GlobalMemorySlot> _consumerCoordinationBufferForPayloads;
 };
 
 } // namespace HiCR::channel::variableSize::MPSC::locking

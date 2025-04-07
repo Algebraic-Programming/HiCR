@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include <hicr/core/L1/instanceManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/topologyManager.hpp>
+#include <hicr/core/instanceManager.hpp>
+#include <hicr/core/communicationManager.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/topologyManager.hpp>
 #include <hicr/frontends/channel/variableSize/mpsc/locking/consumer.hpp>
 #include <hicr/frontends/channel/variableSize/mpsc/locking/producer.hpp>
 #include <hicr/frontends/channel/fixedSize/mpsc/nonlocking/consumer.hpp>
@@ -77,12 +77,12 @@ class RPCEngine
    * @param[in] computeResource The compute resource to use to execute RPCs
    * @param[in] baseTag The tag to use for the creation of channels. Provide different values if you plan to create multiple RPC engines otherwise collisions might occur
    */
-  RPCEngine(L1::CommunicationManager            &communicationManager,
-            L1::InstanceManager                 &instanceManager,
-            L1::MemoryManager                   &memoryManager,
-            L1::ComputeManager                  &computeManager,
-            std::shared_ptr<L0::MemorySpace>     bufferMemorySpace,
-            std::shared_ptr<L0::ComputeResource> computeResource,
+  RPCEngine(CommunicationManager            &communicationManager,
+            InstanceManager                 &instanceManager,
+            MemoryManager                   &memoryManager,
+            ComputeManager                  &computeManager,
+            std::shared_ptr<MemorySpace>     bufferMemorySpace,
+            std::shared_ptr<ComputeResource> computeResource,
             const uint64_t                       baseTag = _HICR_RPC_ENGINE_CHANNEL_BASE_TAG)
     : _communicationManager(communicationManager),
       _instanceManager(instanceManager),
@@ -115,7 +115,7 @@ class RPCEngine
    * \param[in] RPCName Name of the RPC to add
    * \param[in] e Indicates the execution unit to run when this RPC is triggered
    */
-  __INLINE__ void addRPCTarget(const std::string &RPCName, const std::shared_ptr<HiCR::L0::ExecutionUnit> e)
+  __INLINE__ void addRPCTarget(const std::string &RPCName, const std::shared_ptr<HiCR::ExecutionUnit> e)
   {
     // Obtaining hash from the RPC name
     const auto idx = getRPCTargetIndexFromString(RPCName);
@@ -151,7 +151,7 @@ class RPCEngine
    * \param[in] RPCName The name of the RPC to run
    * \param[in] instance Instance on which to run the RPC
    */
-  virtual void requestRPC(HiCR::L0::Instance &instance, const std::string &RPCName)
+  virtual void requestRPC(HiCR::Instance &instance, const std::string &RPCName)
   {
     const auto targetInstanceId = instance.getId();
     const auto targetRPCIdx     = getRPCTargetIndexFromString(RPCName);
@@ -192,7 +192,7 @@ class RPCEngine
    * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  __INLINE__ std::shared_ptr<HiCR::L0::LocalMemorySlot> getReturnValue(HiCR::L0::Instance &instance) const
+  __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> getReturnValue(HiCR::Instance &instance) const
   {
     // Calling the backend-specific implementation of the listen function
     while (_returnValueConsumerChannel->isEmpty());
@@ -225,28 +225,28 @@ class RPCEngine
    * 
    * @return A pointer to the internal communication manager
    */
-  [[nodiscard]] __INLINE__ HiCR::L1::CommunicationManager *getCommunicationManager() const { return &_communicationManager; }
+  [[nodiscard]] __INLINE__ HiCR::CommunicationManager *getCommunicationManager() const { return &_communicationManager; }
 
   /**
    * Gets the internal instance manager this module was initialized with
    * 
    * @return A pointer to the internal instance manager
    */
-  [[nodiscard]] __INLINE__ HiCR::L1::InstanceManager *getInstanceManager() const { return &_instanceManager; }
+  [[nodiscard]] __INLINE__ HiCR::InstanceManager *getInstanceManager() const { return &_instanceManager; }
 
   /**
    * Gets the internal memory manager this module was initialized with
    * 
    * @return A pointer to the internal memory manager
    */
-  [[nodiscard]] __INLINE__ HiCR::L1::MemoryManager *getMemoryManager() const { return &_memoryManager; }
+  [[nodiscard]] __INLINE__ HiCR::MemoryManager *getMemoryManager() const { return &_memoryManager; }
 
   /**
    * Gets the internal compute manager this module was initialized with
    * 
    * @return A pointer to the internal computey manager
    */
-  [[nodiscard]] __INLINE__ HiCR::L1::ComputeManager *getComputeManager() const { return &_computeManager; }
+  [[nodiscard]] __INLINE__ HiCR::ComputeManager *getComputeManager() const { return &_computeManager; }
 
   private:
 
@@ -303,18 +303,18 @@ class RPCEngine
 
     // Creating and exchanging buffers
 
-    std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> tokenBuffers;
-    std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffers;
-    std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> producerCoordinationBuffers;
-    std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>                localConsumerCoordinationBuffers;
-    std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>                localProducerCoordinationBuffers;
+    std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> tokenBuffers;
+    std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffers;
+    std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> producerCoordinationBuffers;
+    std::vector<std::shared_ptr<HiCR::LocalMemorySlot>>                localConsumerCoordinationBuffers;
+    std::vector<std::shared_ptr<HiCR::LocalMemorySlot>>                localProducerCoordinationBuffers;
 
     auto coordinationBufferSize = HiCR::channel::fixedSize::Base::getCoordinationBufferSize();
 
     for (size_t i = 0; i < instanceCount; i++)
     {
       // Calculating these particular slots' key
-      const HiCR::L0::GlobalMemorySlot::globalKey_t slotkey = currentInstanceId * instanceCount + i;
+      const HiCR::GlobalMemorySlot::globalKey_t slotkey = currentInstanceId * instanceCount + i;
 
       // consumer needs to allocate #producers token buffers for #producers SPSCs
       auto tokenBufferSlot = _memoryManager.allocateLocalMemorySlot(_bufferMemorySpace, tokenBufferSize);
@@ -349,15 +349,15 @@ class RPCEngine
 
     ////////// Creating consumer channel to receive fixed sized RPC requests from other instances
     {
-      std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalConsumerTokenBuffers;
-      std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalConsumerCoordinationBuffers;
-      std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalProducerCoordinationBuffers;
+      std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalConsumerTokenBuffers;
+      std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalConsumerCoordinationBuffers;
+      std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalProducerCoordinationBuffers;
 
       for (size_t i = 0; i < instanceCount; i++)
       {
         // Calculating these particular slots' key
-        const HiCR::L0::GlobalMemorySlot::globalKey_t localSlotKey  = currentInstanceId * instanceCount + i;
-        const HiCR::L0::GlobalMemorySlot::globalKey_t remoteSlotKey = i * instanceCount + currentInstanceId;
+        const HiCR::GlobalMemorySlot::globalKey_t localSlotKey  = currentInstanceId * instanceCount + i;
+        const HiCR::GlobalMemorySlot::globalKey_t remoteSlotKey = i * instanceCount + currentInstanceId;
 
         auto globalConsumerTokenBufferSlot = _communicationManager.getGlobalMemorySlot(_HICR_RPC_ENGINE_CHANNEL_CONSUMER_TOKEN_BUFFER_TAG, localSlotKey);
         globalConsumerTokenBuffers.push_back(globalConsumerTokenBufferSlot);
@@ -376,15 +376,15 @@ class RPCEngine
     ////////// Creating producer channels to send fixed sized RPC requests to other instances
 
     {
-      std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalConsumerTokenBuffers;
-      std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalConsumerCoordinationBuffers;
-      std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalProducerCoordinationBuffers;
+      std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalConsumerTokenBuffers;
+      std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalConsumerCoordinationBuffers;
+      std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalProducerCoordinationBuffers;
 
       for (size_t i = 0; i < instanceCount; i++)
       {
         // Calculating these particular slots' key
-        const HiCR::L0::GlobalMemorySlot::globalKey_t localSlotKey  = currentInstanceId * instanceCount + i;
-        const HiCR::L0::GlobalMemorySlot::globalKey_t remoteSlotKey = i * instanceCount + currentInstanceId;
+        const HiCR::GlobalMemorySlot::globalKey_t localSlotKey  = currentInstanceId * instanceCount + i;
+        const HiCR::GlobalMemorySlot::globalKey_t remoteSlotKey = i * instanceCount + currentInstanceId;
 
         auto globalConsumerTokenBufferSlot = _communicationManager.getGlobalMemorySlot(_HICR_RPC_ENGINE_CHANNEL_CONSUMER_TOKEN_BUFFER_TAG, remoteSlotKey);
         globalConsumerTokenBuffers.push_back(globalConsumerTokenBufferSlot);
@@ -519,32 +519,32 @@ class RPCEngine
   /**
    * The associated communication manager.
    */
-  L1::CommunicationManager &_communicationManager;
+  CommunicationManager &_communicationManager;
 
   /**
    * The associated instance manager.
    */
-  L1::InstanceManager &_instanceManager;
+  InstanceManager &_instanceManager;
 
   /**
    * The associated memory manager.
    */
-  L1::MemoryManager &_memoryManager;
+  MemoryManager &_memoryManager;
 
   /**
    * The associated compute manager.
    */
-  L1::ComputeManager &_computeManager;
+  ComputeManager &_computeManager;
 
   /**
    * Memory space to use for all buffering
    */
-  const std::shared_ptr<HiCR::L0::MemorySpace> _bufferMemorySpace;
+  const std::shared_ptr<HiCR::MemorySpace> _bufferMemorySpace;
 
   /**
    * The compute resource to use for executing RPCs
    */
-  const std::shared_ptr<HiCR::L0::ComputeResource> _computeResource;
+  const std::shared_ptr<HiCR::ComputeResource> _computeResource;
 
   const uint64_t _baseTag;
 
@@ -558,7 +558,7 @@ class RPCEngine
   /**
    * Producer channels for sending return value messages to all other instances
    */
-  std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<HiCR::channel::variableSize::MPSC::locking::Producer>> _returnValueProducerChannels;
+  std::map<HiCR::Instance::instanceId_t, std::shared_ptr<HiCR::channel::variableSize::MPSC::locking::Producer>> _returnValueProducerChannels;
 
   /**
    * Consumer channels for receiving return value messages from all other instances
@@ -568,12 +568,12 @@ class RPCEngine
   /**
    * Producer channels for sending return value messages to all other instances
    */
-  std::map<HiCR::L0::Instance::instanceId_t, std::shared_ptr<HiCR::channel::fixedSize::MPSC::nonlocking::Producer>> _RPCProducerChannels;
+  std::map<HiCR::Instance::instanceId_t, std::shared_ptr<HiCR::channel::fixedSize::MPSC::nonlocking::Producer>> _RPCProducerChannels;
 
   /**
    * Map of execute units, representing potential RPC requests
    */
-  std::map<RPCTargetIndex_t, std::shared_ptr<HiCR::L0::ExecutionUnit>> _RPCTargetMap;
+  std::map<RPCTargetIndex_t, std::shared_ptr<HiCR::ExecutionUnit>> _RPCTargetMap;
 };
 
 } // namespace HiCR::frontend

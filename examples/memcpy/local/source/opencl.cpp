@@ -17,10 +17,10 @@
 #include <vector>
 #include <unordered_map>
 #include <CL/opencl.hpp>
-#include <hicr/backends/opencl/L1/memoryManager.hpp>
-#include <hicr/backends/opencl/L1/topologyManager.hpp>
-#include <hicr/backends/opencl/L1/communicationManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/opencl/memoryManager.hpp>
+#include <hicr/backends/opencl/topologyManager.hpp>
+#include <hicr/backends/opencl/communicationManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include "include/telephoneGame.hpp"
 
 int main(int argc, char **argv)
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager hostDeviceManager(&topology);
+  HiCR::backend::hwloc::TopologyManager hostDeviceManager(&topology);
   const auto                                hostTopology = hostDeviceManager.queryTopology();
   auto                                      hostDevice   = *hostTopology.getDevices().begin();
 
@@ -40,41 +40,41 @@ int main(int argc, char **argv)
   auto hostMemorySpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing opencl topology manager
-  HiCR::backend::opencl::L1::TopologyManager openclTopologyManager;
+  HiCR::backend::opencl::TopologyManager openclTopologyManager;
   const auto                                 deviceTopology = openclTopologyManager.queryTopology();
   auto                                       devices        = deviceTopology.getDevices();
 
   std::vector<cl::Device> openclDevices;
   for (const auto &d : devices)
   {
-    auto od = dynamic_pointer_cast<HiCR::backend::opencl::L0::Device>(d);
+    auto od = dynamic_pointer_cast<HiCR::backend::opencl::Device>(d);
     openclDevices.push_back(od->getOpenCLDevice());
   }
 
   // Create a context to work with all OpenCL devices;
   cl::Context context(openclDevices);
 
-  std::unordered_map<HiCR::backend::opencl::L0::Device::deviceIdentifier_t, std::shared_ptr<cl::CommandQueue>> deviceQueueMap;
+  std::unordered_map<HiCR::backend::opencl::Device::deviceIdentifier_t, std::shared_ptr<cl::CommandQueue>> deviceQueueMap;
   for (const auto &d : devices)
   {
-    auto od                     = dynamic_pointer_cast<HiCR::backend::opencl::L0::Device>(d);
+    auto od                     = dynamic_pointer_cast<HiCR::backend::opencl::Device>(d);
     deviceQueueMap[od->getId()] = std::make_shared<cl::CommandQueue>(context, od->getOpenCLDevice());
   }
 
   // Getting access to all OpenCL devices memory spaces
-  std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> openclMemorySpaces;
+  std::vector<std::shared_ptr<HiCR::MemorySpace>> openclMemorySpaces;
   for (const auto &d : devices)
     for (const auto &m : d->getMemorySpaceList()) openclMemorySpaces.push_back(m);
 
   // Define the order of mem spaces for the telephone game
-  std::vector<std::shared_ptr<HiCR::L0::MemorySpace>> memSpaceOrder;
+  std::vector<std::shared_ptr<HiCR::MemorySpace>> memSpaceOrder;
   memSpaceOrder.emplace_back(hostMemorySpace);
   memSpaceOrder.insert(memSpaceOrder.end(), openclMemorySpaces.begin(), openclMemorySpaces.end());
   memSpaceOrder.emplace_back(hostMemorySpace);
 
   // Instantiating Ascend memory and communication managers
-  HiCR::backend::opencl::L1::MemoryManager        openclMemoryManager(deviceQueueMap);
-  HiCR::backend::opencl::L1::CommunicationManager openclCommunicationManager(deviceQueueMap);
+  HiCR::backend::opencl::MemoryManager        openclMemoryManager(deviceQueueMap);
+  HiCR::backend::opencl::CommunicationManager openclCommunicationManager(deviceQueueMap);
 
   // Allocate and populate input memory slot
   auto input = openclMemoryManager.allocateLocalMemorySlot(hostMemorySpace, BUFFER_SIZE);

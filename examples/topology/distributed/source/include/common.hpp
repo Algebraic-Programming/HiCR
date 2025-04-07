@@ -24,10 +24,10 @@
 
 #ifdef _HICR_USE_ASCEND_BACKEND_
   #include <acl/acl.h>
-  #include <hicr/backends/ascend/L1/topologyManager.hpp>
+  #include <hicr/backends/ascend/topologyManager.hpp>
 #endif // _HICR_USE_ASCEND_BACKEND_
 
 #ifdef _HICR_USE_HWLOC_BACKEND_
   #include <hwloc.h>
-  #include <hicr/backends/hwloc/L1/topologyManager.hpp>
+  #include <hicr/backends/hwloc/topologyManager.hpp>
 #endif // _HICR_USE_HWLOC_BACKEND_

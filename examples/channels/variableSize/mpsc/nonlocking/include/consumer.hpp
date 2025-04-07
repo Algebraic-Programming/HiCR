@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/variableSize/mpsc/nonlocking/consumer.hpp>
 #include "common.hpp"
 
-void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
-                HiCR::L1::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
+void consumerFc(HiCR::MemoryManager               &memoryManager,
+                HiCR::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
                 const size_t                           channelCapacity,
                 const size_t                           producerCount)
 {
@@ -32,24 +32,24 @@ void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
   auto         sizesBufferSize   = HiCR::channel::variableSize::Base::getTokenBufferSize(tokenSize, channelCapacity);
   auto         payloadBufferSize = HiCR::channel::variableSize::Base::getTokenBufferSize(payloadSize, channelCapacity);
   // list of all consumer coordination buffers (= #producers); needed to construct consumer
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> coordinationBuffersForPayloadsAsSlots;
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> coordinationBuffersForCountsAsSlots;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> coordinationBuffersForPayloadsAsSlots;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> coordinationBuffersForCountsAsSlots;
   // list of all consumer coordination buffers (= #producers); needed to construct consumer
-  std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> internalCoordinationBuffersForCounts;
-  std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> internalCoordinationBuffersForPayloads;
+  std::vector<std::shared_ptr<HiCR::LocalMemorySlot>> internalCoordinationBuffersForCounts;
+  std::vector<std::shared_ptr<HiCR::LocalMemorySlot>> internalCoordinationBuffersForPayloads;
 
   // Helper lists of coordination buffers and counts/payload slots
   // These are useful when constructing arguments for the exchange call
-  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffersForCounts;
-  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffersForPayloads;
-  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> localBuffersForCounts;
-  std::vector<HiCR::L1::CommunicationManager::globalKeyMemorySlotPair_t> localBuffersForPayloads;
+  std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffersForCounts;
+  std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> consumerCoordinationBuffersForPayloads;
+  std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> localBuffersForCounts;
+  std::vector<HiCR::CommunicationManager::globalKeyMemorySlotPair_t> localBuffersForPayloads;
   // list of producer coordination buffers (= #producers); needed to construct consumer
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> producerCoordinationBuffersForCounts;
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> producerCoordinationBuffersForPayloads;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> producerCoordinationBuffersForCounts;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> producerCoordinationBuffersForPayloads;
   // list of consumer buffers for counts (= #producers) and payloads (= #producers); needed to construct consumer
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalBuffersForPayloads;
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalBuffersForCounts;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalBuffersForPayloads;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalBuffersForCounts;
   const size_t                                             coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
 
   // consumer needs to allocate #producers {size, payload} coord. buffers for #producers SPSCs

@@ -30,10 +30,10 @@
 #include <vector>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/core/L0/executionState.hpp>
-#include <hicr/core/L0/executionUnit.hpp>
-#include <hicr/core/L0/processingUnit.hpp>
-#include <hicr/core/L1/computeManager.hpp>
+#include <hicr/core/executionState.hpp>
+#include <hicr/core/executionUnit.hpp>
+#include <hicr/core/processingUnit.hpp>
+#include <hicr/core/computeManager.hpp>
 #include "callbackMap.hpp"
 #include "common.hpp"
 
@@ -98,7 +98,7 @@ class Task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    * @param[in] callbackMap Pointer to the callback map callbacks to be called by the task
    */
-  __INLINE__ Task(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit, taskCallbackMap_t *callbackMap = nullptr)
+  __INLINE__ Task(std::shared_ptr<HiCR::ExecutionUnit> executionUnit, taskCallbackMap_t *callbackMap = nullptr)
     : _executionUnit(std::move(executionUnit)),
       _callbackMap(callbackMap) {};
 
@@ -128,10 +128,10 @@ class Task
    *
    * \internal This is not a thread safe operation.
    */
-  __INLINE__ const HiCR::L0::ExecutionState::state_t getState()
+  __INLINE__ const HiCR::ExecutionState::state_t getState()
   {
     // If the execution state has not been initialized then return the value expliclitly
-    if (_executionState == nullptr) return HiCR::L0::ExecutionState::state_t::uninitialized;
+    if (_executionState == nullptr) return HiCR::ExecutionState::state_t::uninitialized;
 
     // Otherwise just query the initial execution state
     return _executionState->getState();
@@ -142,23 +142,23 @@ class Task
    *
    * \param[in] executionUnit The execution unit to assign to this task
    */
-  __INLINE__ void setExecutionUnit(std::shared_ptr<HiCR::L0::ExecutionUnit> executionUnit) { _executionUnit = std::move(executionUnit); }
+  __INLINE__ void setExecutionUnit(std::shared_ptr<HiCR::ExecutionUnit> executionUnit) { _executionUnit = std::move(executionUnit); }
 
   /**
    * Returns the execution unit assigned to this task
    *
    * \return The execution unit assigned to this task
    */
-  [[nodiscard]] __INLINE__ std::shared_ptr<HiCR::L0::ExecutionUnit> getExecutionUnit() const { return _executionUnit; }
+  [[nodiscard]] __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> getExecutionUnit() const { return _executionUnit; }
 
   /**
    * Implements the initialization routine of a task, that stores and initializes the execution state to run to completion
    *
    * \param[in] executionState A previously initialized execution state
    */
-  __INLINE__ void initialize(std::unique_ptr<HiCR::L0::ExecutionState> executionState)
+  __INLINE__ void initialize(std::unique_ptr<HiCR::ExecutionState> executionState)
   {
-    if (getState() != HiCR::L0::ExecutionState::state_t::uninitialized)
+    if (getState() != HiCR::ExecutionState::state_t::uninitialized)
       HICR_THROW_LOGIC("Attempting to initialize a task that has already been initialized (State: %d).\n", getState());
 
     // Getting execution state as a unique pointer (to prcallback sharing the same state among different tasks)
@@ -172,7 +172,7 @@ class Task
    */
   __INLINE__ void run()
   {
-    if (getState() != HiCR::L0::ExecutionState::state_t::initialized && getState() != HiCR::L0::ExecutionState::state_t::suspended)
+    if (getState() != HiCR::ExecutionState::state_t::initialized && getState() != HiCR::ExecutionState::state_t::suspended)
       HICR_THROW_RUNTIME("Attempting to run a task that is not in a initialized or suspended state (State: %d).\n", getState());
 
     // Triggering execution callback, if defined
@@ -197,17 +197,17 @@ class Task
     // Getting state after execution
     const auto state = getState();
 
-    if (state != HiCR::L0::ExecutionState::state_t::suspended && state != HiCR::L0::ExecutionState::state_t::finished)
+    if (state != HiCR::ExecutionState::state_t::suspended && state != HiCR::ExecutionState::state_t::finished)
       HICR_THROW_RUNTIME("Task has to be either in suspended or in finished state but I got State: %d.\n", state);
 
     // If the task is suspended and callback map is defined, trigger the corresponding callback.
-    if (state == HiCR::L0::ExecutionState::state_t::suspended)
+    if (state == HiCR::ExecutionState::state_t::suspended)
       if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onTaskSuspend);
 
     // If the task is still running (no suspension), then the task has fully finished executing. If so,
     // trigger the corresponding callback, if the callback map is defined. It is important that this function
     // is called from outside the context of a task to allow the upper layer to free its memory upon finishing
-    if (state == HiCR::L0::ExecutionState::state_t::finished)
+    if (state == HiCR::ExecutionState::state_t::finished)
       if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onTaskFinish);
   }
 
@@ -216,7 +216,7 @@ class Task
    */
   __INLINE__ void suspend()
   {
-    if (getState() != HiCR::L0::ExecutionState::state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", getState());
+    if (getState() != HiCR::ExecutionState::state_t::running) HICR_THROW_RUNTIME("Attempting to yield a task that is not in a running state (State: %d).\n", getState());
 
     // Yielding execution back to worker
     _executionState->suspend();
@@ -227,7 +227,7 @@ class Task
   /**
    * Execution unit that will be instantiated and executed by this task
    */
-  std::shared_ptr<HiCR::L0::ExecutionUnit> _executionUnit;
+  std::shared_ptr<HiCR::ExecutionUnit> _executionUnit;
 
   /**
    *  Map of callbacks to trigger
@@ -237,7 +237,7 @@ class Task
   /**
    * Internal execution state of the task. Will change based on runtime scheduling callbacks
    */
-  std::unique_ptr<HiCR::L0::ExecutionState> _executionState = nullptr;
+  std::unique_ptr<HiCR::ExecutionState> _executionState = nullptr;
 
 }; // class Task
 

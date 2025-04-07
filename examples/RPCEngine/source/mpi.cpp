@@ -15,17 +15,17 @@
  */
 
 #include <mpi.h>
-#include <hicr/backends/mpi/L1/instanceManager.hpp>
-#include <hicr/backends/mpi/L1/memoryManager.hpp>
-#include <hicr/backends/mpi/L1/communicationManager.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/mpi/instanceManager.hpp>
+#include <hicr/backends/mpi/memoryManager.hpp>
+#include <hicr/backends/mpi/communicationManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include "include/RPCTest.hpp"
 
 int main(int argc, char **argv)
 {
   // Initializing instance manager
-  auto im = HiCR::backend::mpi::L1::InstanceManager::createDefault(&argc, &argv);
+  auto im = HiCR::backend::mpi::InstanceManager::createDefault(&argc, &argv);
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -34,14 +34,14 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Creating compute manager (responsible for executing the RPC)
-  HiCR::backend::pthreads::L1::ComputeManager cpm;
+  HiCR::backend::pthreads::ComputeManager cpm;
 
   // Creating memory and communication managers (buffering and communication)
-  HiCR::backend::mpi::L1::MemoryManager        mm;
-  HiCR::backend::mpi::L1::CommunicationManager cc;
+  HiCR::backend::mpi::MemoryManager        mm;
+  HiCR::backend::mpi::CommunicationManager cc;
 
   // Gathering topology from the topology manager
   const auto t = tm.queryTopology();
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 
   // Creating execution unit to run as RPC
   auto executionUnit =
-    std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&im](void *closure) { printf("Instance %lu: running Test RPC\n", im->getCurrentInstance()->getId()); });
+    std::make_shared<HiCR::backend::pthreads::ExecutionUnit>([&im](void *closure) { printf("Instance %lu: running Test RPC\n", im->getCurrentInstance()->getId()); });
 
   // Calling common function for printing the topology
   RPCTestFc(cc, mm, cpm, *im, bufferMemorySpace, executeResource, executionUnit);

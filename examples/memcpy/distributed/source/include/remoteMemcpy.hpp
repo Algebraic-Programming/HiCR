@@ -17,20 +17,20 @@
 #pragma once
 
 #include <cstdio>
-#include <hicr/core/L1/instanceManager.hpp>
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
-#include <hicr/core/L1/topologyManager.hpp>
+#include <hicr/core/instanceManager.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/communicationManager.hpp>
+#include <hicr/core/topologyManager.hpp>
 
 #define BUFFER_SIZE 256
 #define DST_OFFSET 0
 #define SRC_OFFSET 0
 #define COMM_TAG 0
 
-void remoteMemcpy(HiCR::L1::InstanceManager      *instanceManager,
-                  HiCR::L1::TopologyManager      *topologyManager,
-                  HiCR::L1::MemoryManager        *memoryManager,
-                  HiCR::L1::CommunicationManager *communicationManager)
+void remoteMemcpy(HiCR::InstanceManager      *instanceManager,
+                  HiCR::TopologyManager      *topologyManager,
+                  HiCR::MemoryManager        *memoryManager,
+                  HiCR::CommunicationManager *communicationManager)
 {
   // Getting my current HiCR instance
   auto myInstance = instanceManager->getCurrentInstance();
@@ -53,7 +53,7 @@ void remoteMemcpy(HiCR::L1::InstanceManager      *instanceManager,
 
   // Determining receiver and sender instance ids
   auto                             senderId   = rootInstanceId;
-  HiCR::L0::Instance::instanceId_t receiverId = 0;
+  HiCR::Instance::instanceId_t receiverId = 0;
   for (const auto &instance : instanceList)
     if (instance->getId() != senderId) receiverId = instance->getId();
 

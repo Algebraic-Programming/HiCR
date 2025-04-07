@@ -15,11 +15,11 @@
  */
 
 #include <mpi.h>
-#include <hicr/backends/mpi/L1/instanceManager.hpp>
-#include <hicr/backends/mpi/L1/memoryManager.hpp>
-#include <hicr/backends/mpi/L1/communicationManager.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/mpi/instanceManager.hpp>
+#include <hicr/backends/mpi/memoryManager.hpp>
+#include <hicr/backends/mpi/communicationManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include "include/coordinator.hpp"
 #include "include/worker.hpp"
 
@@ -32,14 +32,14 @@ int main(int argc, char **argv)
   if (provided < requested) fprintf(stderr, "Warning, this example may not work properly if MPI does not support (serialized) threaded access\n");
 
   // Creating MPI-based instance manager
-  HiCR::backend::mpi::L1::InstanceManager im(MPI_COMM_WORLD);
+  HiCR::backend::mpi::InstanceManager im(MPI_COMM_WORLD);
 
   // Creating compute manager (responsible for executing the RPC)
-  HiCR::backend::pthreads::L1::ComputeManager cpm;
+  HiCR::backend::pthreads::ComputeManager cpm;
 
   // Creating memory and communication managers (buffering and communication)
-  HiCR::backend::mpi::L1::MemoryManager        mm;
-  HiCR::backend::mpi::L1::CommunicationManager cm;
+  HiCR::backend::mpi::MemoryManager        mm;
+  HiCR::backend::mpi::CommunicationManager cm;
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing hwloc (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Gathering topology from the topology manager
   const auto t = tm.queryTopology();

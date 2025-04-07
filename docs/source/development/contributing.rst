@@ -18,20 +18,20 @@ Docker
 Backend Development
 ***********************
 
-To create a backend, developers implement a subset of HiCR's core L1 and L0 core abstract classes to expose the functionality provided by the underlying technology / device. For example, to create a new backend which implements the L1 Communication Manager class, you need to create a file with a class definition as follows:
+To create a backend, developers implement a subset of HiCR's core abstract classes to expose the functionality provided by the underlying technology / device. For example, to create a new backend which implements the Communication Manager class, you need to create a file with a class definition as follows:
 
 ..  code-block:: C++
  :caption: myBackend.hpp
 
   // Including the abstract class header file
-  #include <hicr/core/L1/instanceManager.hpp>
+  #include <hicr/core/instanceManager.hpp>
 
-  class myCommManager final : public HiCR::L1::CommunicationManager
+  class myCommManager final : public HiCR::CommunicationManager
   {
   
     public:
 
-    myCommManager(argType myArg) : HiCR::L1::CommunicationManager()
+    myCommManager(argType myArg) : HiCR::CommunicationManager()
     {
       // ... Backend-specific constructor
     }

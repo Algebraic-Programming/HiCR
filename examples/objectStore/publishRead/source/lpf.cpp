@@ -16,10 +16,10 @@
 
 #include <lpf/core.h>
 #include <lpf/mpi.h>
-#include <hicr/backends/lpf/L1/memoryManager.hpp>
-#include <hicr/backends/lpf/L1/communicationManager.hpp>
-#include <hicr/backends/mpi/L1/instanceManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/lpf/memoryManager.hpp>
+#include <hicr/backends/lpf/communicationManager.hpp>
+#include <hicr/backends/mpi/instanceManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 
 #include <hicr/frontends/objectStore/objectStore.hpp>
 
@@ -53,7 +53,7 @@ typedef struct my_args
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
   my_args_t                                 *my_args         = (my_args_t *)args.input;
-  std::unique_ptr<HiCR::L1::InstanceManager> instanceManager = HiCR::backend::mpi::L1::InstanceManager::createDefault(&my_args->argc, &my_args->argv);
+  std::unique_ptr<HiCR::InstanceManager> instanceManager = HiCR::backend::mpi::InstanceManager::createDefault(&my_args->argc, &my_args->argv);
   auto                                       instanceId      = instanceManager->getCurrentInstance()->getId();
 
   // Initializing LPF
@@ -61,13 +61,13 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   CHECK(lpf_resize_memory_register(lpf, DEFAULT_MEMSLOTS));
   CHECK(lpf_sync(lpf, LPF_SYNC_DEFAULT));
 
-  auto communicationManager = std::make_unique<HiCR::backend::lpf::L1::CommunicationManager>(nprocs, pid, lpf);
-  auto memoryManager        = std::make_unique<HiCR::backend::lpf::L1::MemoryManager>(lpf);
+  auto communicationManager = std::make_unique<HiCR::backend::lpf::CommunicationManager>(nprocs, pid, lpf);
+  auto memoryManager        = std::make_unique<HiCR::backend::lpf::MemoryManager>(lpf);
 
   // Using HWLoc as topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  auto hwlocTopologyManager = std::make_unique<HiCR::backend::hwloc::L1::TopologyManager>(&topology);
+  auto hwlocTopologyManager = std::make_unique<HiCR::backend::hwloc::TopologyManager>(&topology);
 
   // Asking backend to check the available devices
   const auto t = hwlocTopologyManager->queryTopology();

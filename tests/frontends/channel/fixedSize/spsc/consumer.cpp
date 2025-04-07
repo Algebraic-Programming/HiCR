@@ -26,9 +26,9 @@
 #include <hicr/core/exceptions.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
-#include <hicr/backends/host/hwloc/L1/memoryManager.hpp>
-#include <hicr/backends/host/pthreads/L1/communicationManager.hpp>
-#include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/host/hwloc/memoryManager.hpp>
+#include <hicr/backends/host/pthreads/communicationManager.hpp>
+#include <hicr/backends/host/hwloc/topologyManager.hpp>
 
 #define CHANNEL_TAG 0
 #define TOKEN_BUFFER_KEY 0
@@ -46,13 +46,13 @@ TEST(ConsumerChannel, Construction)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
+  HiCR::backend::host::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -115,13 +115,13 @@ TEST(ConsumerChannel, PeekPop)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
+  HiCR::backend::host::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -204,13 +204,13 @@ TEST(ConsumerChannel, PeekWait)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::L1::MemoryManager m(&topology);
+  HiCR::backend::host::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::L1::CommunicationManager c(1);
+  HiCR::backend::host::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();

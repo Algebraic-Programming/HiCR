@@ -28,7 +28,7 @@ To use the MPI-based instance manager backend, we need to include:
 
 ..  code-block:: C++
 
-  #include <hicr/backends/mpi/L1/instanceManager.hpp>
+  #include <hicr/backends/mpi/instanceManager.hpp>
 
 Then, we need to instantiate a Manager class implemented by the chosen backend by calling its constructor with the correct parameters (see: `C++ API Reference <../doxygen/html/annotated.html>`_). For example:
 
@@ -40,7 +40,7 @@ Then, we need to instantiate a Manager class implemented by the chosen backend b
   MPI_Init(&argc, &argv);
 
   // Invoking constructor with the correct parameters 
-  HiCR::backend::mpi::L1::InstanceManager myInstanceManager(MPI_COMM_WORLD);
+  HiCR::backend::mpi::InstanceManager myInstanceManager(MPI_COMM_WORLD);
 
   /////// Application is implementation-agnostic from this point forward
   
@@ -102,7 +102,7 @@ Topology Management
 
     See Related Example: :ref:`topology local`, :ref:`topology distributed`
 
-A programmer may discover the topology of the local system's devices by using backends that implement the :code:`HiCR::L1::TopologyManager` class. For example, the HWLoC backend may be used to discover the local CPU socket / core / processing unit distribution and their associated memory spaces.
+A programmer may discover the topology of the local system's devices by using backends that implement the :code:`HiCR::TopologyManager` class. For example, the HWLoC backend may be used to discover the local CPU socket / core / processing unit distribution and their associated memory spaces.
 
 Instantiating a Topology Manager
 -----------------------------------
@@ -112,7 +112,7 @@ The following example shows how to instantiate the HWLoC topology manager:
 ..  code-block:: C++
 
     #include <hwloc.h>
-    #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+    #include <hicr/backends/host/hwloc/topologyManager.hpp>
 
     int main(int argc, char **argv)
     {
@@ -123,7 +123,7 @@ The following example shows how to instantiate the HWLoC topology manager:
         hwloc_topology_init(&topology);
 
         // Initializing HWLoC topology manager
-        HiCR::backend::host::hwloc::L1::TopologyManager topologyManager(&topology);
+        HiCR::backend::host::hwloc::TopologyManager topologyManager(&topology);
 
         /////// Application is implementation-agnostic from this point forward
         ...
@@ -200,8 +200,8 @@ Memory slots allocated by the currently running HiCR instance are deemed *local*
   hwloc_topology_init(&topology);
 
   // Initializing HWLoC-based topology and memory managers
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
-  HiCR::backend::host::hwloc::L1::MemoryManager mm(&topology);
+  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::MemoryManager mm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -292,10 +292,10 @@ The following snippet shows the creation of an execution unit using the :code:`P
 
 .. code-block:: C++
 
-  #include <hicr/backends/host/pthreads/L1/computeManager.hpp>
+  #include <hicr/backends/host/pthreads/computeManager.hpp>
 
   // Initializing Pthread-based (CPU) compute manager
-  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
+  HiCR::backend::host::pthreads::ComputeManager computeManager;
 
   // Defining a function to run
   auto myFunction = [](){ printf("Hello, World!\n"); };
@@ -320,8 +320,8 @@ Processing Unit are hardware element capable of running an execution state. Comp
 
 .. code-block:: C++
 
-  #include <hicr/backends/host/pthreads/L1/computeManager.hpp>
-  #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+  #include <hicr/backends/host/pthreads/computeManager.hpp>
+  #include <hicr/backends/host/hwloc/topologyManager.hpp>
 
   // Asking backend to check the available devices
   auto topology = topologyManager.queryTopology();

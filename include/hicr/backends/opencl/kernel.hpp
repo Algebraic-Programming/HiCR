@@ -26,13 +26,7 @@
 #include <CL/opencl.hpp>
 #include <hicr/core/definitions.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace opencl
+namespace HiCR::backend::opencl
 {
 
 /**
@@ -61,8 +55,4 @@ class Kernel
   __INLINE__ virtual void start(const cl::CommandQueue *queue) = 0;
 };
 
-} // namespace opencl
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::opencl

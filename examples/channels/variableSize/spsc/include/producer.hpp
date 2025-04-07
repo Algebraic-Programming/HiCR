@@ -17,13 +17,13 @@
 #pragma once
 
 #include "common.hpp"
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/variableSize/spsc/producer.hpp>
 
-void producerFc(HiCR::L1::MemoryManager               &memoryManager,
-                HiCR::L1::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
+void producerFc(HiCR::MemoryManager               &memoryManager,
+                HiCR::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
                 const size_t                           channelCapacity)
 {
   // Getting required buffer size

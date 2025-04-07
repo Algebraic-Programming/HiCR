@@ -16,16 +16,16 @@
 
 #pragma once
 
-#include <hicr/core/L0/memorySpace.hpp>
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/memorySpace.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/fixedSize/mpsc/nonlocking/producer.hpp>
 #include "common.hpp"
 #include <iostream>
 
-void producerFc(HiCR::L1::MemoryManager               &memoryManager,
-                HiCR::L1::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
+void producerFc(HiCR::MemoryManager               &memoryManager,
+                HiCR::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
                 const size_t                           channelCapacity,
                 const size_t                           producerId,
                 const size_t                           producerCount)
@@ -36,7 +36,7 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
   HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(coordinationBuffer);
 
   // these vectors hold all producer buffers and are only used for later deregistration
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalTokenBuffers;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalTokenBuffers;
 
   // get from consumer all the token buffer information
   communicationManager.exchangeGlobalMemorySlots(TOKEN_TAG, {});

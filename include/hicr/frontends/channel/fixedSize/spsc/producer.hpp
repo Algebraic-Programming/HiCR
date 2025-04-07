@@ -44,12 +44,12 @@ class Producer : public fixedSize::Base
   /**
    * Memory slot that represents the token buffer that producer sends data to
    */
-  const std::shared_ptr<L0::GlobalMemorySlot> _tokenBuffer;
+  const std::shared_ptr<GlobalMemorySlot> _tokenBuffer;
 
   /*
    * Global Memory slot pointing to the consumer coordination buffer
    */
-  const std::shared_ptr<L0::GlobalMemorySlot> _consumerCoordinationBuffer;
+  const std::shared_ptr<GlobalMemorySlot> _consumerCoordinationBuffer;
 
   public:
 
@@ -67,10 +67,10 @@ class Producer : public fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager                   &communicationManager,
-           std::shared_ptr<L0::GlobalMemorySlot>       tokenBuffer,
-           const std::shared_ptr<L0::LocalMemorySlot> &internalCoordinationBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot>       consumerCoordinationBuffer,
+  Producer(CommunicationManager                   &communicationManager,
+           std::shared_ptr<GlobalMemorySlot>       tokenBuffer,
+           const std::shared_ptr<LocalMemorySlot> &internalCoordinationBuffer,
+           std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBuffer,
            const size_t                                tokenSize,
            const size_t                                capacity)
     : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
@@ -97,7 +97,7 @@ class Producer : public fixedSize::Base
    *
    * \internal This variant could be expressed as a call to the next one.
    */
-  __INLINE__ void push(const std::shared_ptr<L0::LocalMemorySlot> &sourceSlot, const size_t n = 1)
+  __INLINE__ void push(const std::shared_ptr<LocalMemorySlot> &sourceSlot, const size_t n = 1)
   {
     // Make sure source slot is big enough to satisfy the operation
     auto requiredBufferSize = getTokenSize() * n;

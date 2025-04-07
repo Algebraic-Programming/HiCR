@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/hwloc/L1/memoryManager.hpp>
-#include <hicr/backends/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
+#include <hicr/backends/hwloc/memoryManager.hpp>
+#include <hicr/backends/pthreads/communicationManager.hpp>
 
 #include <hicr/frontends/objectStore/objectStore.hpp>
 
@@ -33,12 +33,12 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Using default instance, communication and memory manager for single instance
-  auto communicationManager = std::make_unique<HiCR::backend::pthreads::L1::CommunicationManager>();
-  auto memoryManager        = std::make_unique<HiCR::backend::hwloc::L1::MemoryManager>(&topology);
+  auto communicationManager = std::make_unique<HiCR::backend::pthreads::CommunicationManager>();
+  auto memoryManager        = std::make_unique<HiCR::backend::hwloc::MemoryManager>(&topology);
 
   // Using HWLoc as topology managers
-  std::vector<HiCR::L1::TopologyManager *> topologyManagers;
-  auto                                     hwlocTopologyManager = std::make_unique<HiCR::backend::hwloc::L1::TopologyManager>(&topology);
+  std::vector<HiCR::TopologyManager *> topologyManagers;
+  auto                                     hwlocTopologyManager = std::make_unique<HiCR::backend::hwloc::TopologyManager>(&topology);
   topologyManagers.push_back(hwlocTopologyManager.get());
 
   auto t = hwlocTopologyManager->queryTopology();
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 
   // Now experiment with an allocated block
   // We need a slot to create a block into
-  std::shared_ptr<HiCR::L0::LocalMemorySlot> customMemorySlot = memoryManager->allocateLocalMemorySlot(memSpace, 4096);
+  std::shared_ptr<HiCR::LocalMemorySlot> customMemorySlot = memoryManager->allocateLocalMemorySlot(memSpace, 4096);
 
   // Allocate our block in the given memory slot
   HiCR::objectStore::DataObject customBlock = objectStoreManager.createObject(customMemorySlot, 3);

@@ -59,14 +59,14 @@ class Producer final : public variableSize::SPSC::Producer
    * \param[in] payloadSize size in bytes of the datatype used for variable-sized messages
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(L1::CommunicationManager                   &communicationManager,
-           std::shared_ptr<L0::LocalMemorySlot>        sizeInfoBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot>       payloadBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot>       tokenBuffer,
-           const std::shared_ptr<L0::LocalMemorySlot> &internalCoordinationBufferForCounts,
-           const std::shared_ptr<L0::LocalMemorySlot> &internalCoordinationBufferForPayloads,
-           std::shared_ptr<L0::GlobalMemorySlot>       consumerCoordinationBufferForCounts,
-           std::shared_ptr<L0::GlobalMemorySlot>       consumerCoordinationBufferForPayloads,
+  Producer(CommunicationManager                   &communicationManager,
+           std::shared_ptr<LocalMemorySlot>        sizeInfoBuffer,
+           std::shared_ptr<GlobalMemorySlot>       payloadBuffer,
+           std::shared_ptr<GlobalMemorySlot>       tokenBuffer,
+           const std::shared_ptr<LocalMemorySlot> &internalCoordinationBufferForCounts,
+           const std::shared_ptr<LocalMemorySlot> &internalCoordinationBufferForPayloads,
+           std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBufferForCounts,
+           std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBufferForPayloads,
            const size_t                                payloadCapacity,
            const size_t                                payloadSize,
            const size_t                                capacity)

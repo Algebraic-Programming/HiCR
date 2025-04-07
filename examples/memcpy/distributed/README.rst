@@ -3,7 +3,7 @@
 Memcpy: Distributed
 =======================
 
-In this example, we test HiCR's :code:`memcpy` operation to communicate a simple message back and forth (ping / pong) between two HiCR instances as detected by the :code:`HiCR::L1::InstanceManager` (See: :numref:`remoteMemcpyFig`).
+In this example, we test HiCR's :code:`memcpy` operation to communicate a simple message back and forth (ping / pong) between two HiCR instances as detected by the :code:`HiCR::InstanceManager` (See: :numref:`remoteMemcpyFig`).
 
 .. _remoteMemcpyFig:
 .. figure:: remoteMemcpy.png
@@ -27,7 +27,7 @@ This example expects to be launched with exactly two HiCR instances. For example
     mpirun -n 2 examples/memcpy/distributed/mpi
     lpfrun -n 2 -engine ibverbs examples/memcpy/distributed/lpf
 
-Both the :code:`remoteMemcpy` function receives a full set of :code:`HiCR::L1` managers, used to perform the following steps:
+Both the :code:`remoteMemcpy` function receives a full set of :code:`HiCR` managers, used to perform the following steps:
 
 
 Identifying HiCR instances

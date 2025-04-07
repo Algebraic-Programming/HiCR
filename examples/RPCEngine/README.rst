@@ -46,7 +46,7 @@ Then, create an RPC Engine define a lambda, and associate it with an RPC:
 
   // Creating execution unit to run as RPC
   auto rpcExecutionUnit =
-    std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&im](void *closure) { 
+    std::make_shared<HiCR::backend::pthreads::ExecutionUnit>([&im](void *closure) { 
       printf("Instance %lu: running Test RPC\n", im->getCurrentInstance()->getId()); 
     });
   

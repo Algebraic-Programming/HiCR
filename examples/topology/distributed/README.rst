@@ -26,7 +26,7 @@ Each Instance discovers its own local topology
     hwloc_topology_init(&topology);
 
     // Initializing hwloc (CPU) topology manager
-    HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+    HiCR::backend::hwloc::TopologyManager tm(&topology);
 
     // Gathering topology from the topology manager
     const auto t = tm.queryTopology();
@@ -45,7 +45,7 @@ Each Instance instantiates the :code:`RPCEngine` and registers and RPC to serial
     rpcEngine.initialize();
 
     // Creating execution unit to run as RPC
-    auto executionUnit = std::make_shared<HiCR::backend::pthreads::L0::ExecutionUnit>([&](void *closure) { sendTopology(rpcEngine); });
+    auto executionUnit = std::make_shared<HiCR::backend::pthreads::ExecutionUnit>([&](void *closure) { sendTopology(rpcEngine); });
 
     // Adding RPC target by name and the execution unit id to run
     rpcEngine.addRPCTarget(TOPOLOGY_RPC_NAME, executionUnit);
@@ -97,10 +97,10 @@ The Root instance requests the topology from all the other instances, merge them
         rpcEngine.getMemoryManager()->freeLocalMemorySlot(returnValue);
 
         // HiCR topology object to obtain
-        HiCR::L0::Topology topology;
+        HiCR::Topology topology;
 
         // Merge topologies
-        topology.merge(HiCR::backend::hwloc::L1::TopologyManager::deserializeTopology(topologyJson));
+        topology.merge(HiCR::backend::hwloc::TopologyManager::deserializeTopology(topologyJson));
         }
     }
 

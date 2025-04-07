@@ -22,8 +22,8 @@
  */
 
 #include "gtest/gtest.h"
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
 #include <hicr/frontends/tasking/task.hpp>
 #include <hicr/frontends/tasking/worker.hpp>
 #include <hicr/frontends/tasking/tasking.hpp>
@@ -31,7 +31,7 @@
 TEST(Worker, Construction)
 {
   HiCR::tasking::Worker                      *w = NULL;
-  HiCR::backend::pthreads::L1::ComputeManager m;
+  HiCR::backend::pthreads::ComputeManager m;
 
   EXPECT_NO_THROW(w = new HiCR::tasking::Worker(&m, &m, []() { return (HiCR::tasking::Task *)NULL; }));
   EXPECT_FALSE(w == nullptr);
@@ -41,7 +41,7 @@ TEST(Worker, Construction)
 TEST(Task, SetterAndGetters)
 {
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::pthreads::L1::ComputeManager c;
+  HiCR::backend::pthreads::ComputeManager c;
 
   // Creating taskr worker
   HiCR::tasking::Worker w(&c, &c, []() { return (HiCR::tasking::Task *)NULL; });
@@ -52,7 +52,7 @@ TEST(Task, SetterAndGetters)
   // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -79,7 +79,7 @@ TEST(Task, SetterAndGetters)
 TEST(Worker, LifeCycle)
 {
   // Instantiating Pthread-based host (CPU) compute manager
-  HiCR::backend::pthreads::L1::ComputeManager c;
+  HiCR::backend::pthreads::ComputeManager c;
 
   // Creating tasking worker
   HiCR::tasking::Worker w(&c, &c, []() { return (HiCR::tasking::Task *)NULL; });
@@ -93,7 +93,7 @@ TEST(Worker, LifeCycle)
   // Initializing HWLoc-based host (CPU) topology manager
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();

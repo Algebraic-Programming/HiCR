@@ -3,7 +3,7 @@
 Kernel Execution
 =====================
 
-This is a set of simple examples showcasing how the HiCR L0 API can be used to execute kernels or functions in multiple available processing (CPU, GPU, NPU, etc) using the same API. The code is structured as follows:
+This is a set of simple examples showcasing how the HiCR API can be used to execute kernels or functions in multiple available processing (CPU, GPU, NPU, etc) using the same API. The code is structured as follows:
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 

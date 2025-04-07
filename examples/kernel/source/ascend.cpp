@@ -23,13 +23,13 @@
 #include <hicr/backends/ascend/computationKernel.hpp>
 #include <hicr/backends/ascend/kernel.hpp>
 #include <hicr/backends/ascend/memoryKernel.hpp>
-#include <hicr/backends/ascend/L0/executionUnit.hpp>
-#include <hicr/backends/ascend/L0/processingUnit.hpp>
-#include <hicr/backends/ascend/L1/memoryManager.hpp>
-#include <hicr/backends/ascend/L1/topologyManager.hpp>
-#include <hicr/backends/ascend/L1/communicationManager.hpp>
-#include <hicr/backends/ascend/L1/computeManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/ascend/executionUnit.hpp>
+#include <hicr/backends/ascend/processingUnit.hpp>
+#include <hicr/backends/ascend/memoryManager.hpp>
+#include <hicr/backends/ascend/topologyManager.hpp>
+#include <hicr/backends/ascend/communicationManager.hpp>
+#include <hicr/backends/ascend/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 
 #include "./include/common.hpp"
 #include "./include/kernel.hpp"
@@ -44,7 +44,7 @@ namespace ascend = HiCR::backend::ascend;
  * @param[in] columns
  * @param[in] value 
 */
-void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, int rows, int columns, float value)
+void populateMemorySlot(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot, int rows, int columns, float value)
 {
   for (int i = 0; i < rows * columns; i++) { ((aclFloat16 *)memorySlot->getPointer())[i] = aclFloatToFloat16(value); }
 }
@@ -56,7 +56,7 @@ void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, i
  * \param[in] rows matrix rows
  * \param[in] columns matrix columns
 */
-void printMatrix(const std::shared_ptr<HiCR::L0::LocalMemorySlot> &memSlot, uint32_t rows, uint32_t columns)
+void printMatrix(const std::shared_ptr<HiCR::LocalMemorySlot> &memSlot, uint32_t rows, uint32_t columns)
 {
   for (uint32_t i = 0; i < rows; i++)
   {
@@ -108,22 +108,22 @@ int main(int argc, char **argv)
 
   ///////// Instantiate HiCR-specific entities for hwloc and ascend
   // Initializing HWLoc-based host topology manager and retrieve host memory space
-  HiCR::backend::hwloc::L1::TopologyManager hostTopologyManager(&topology);
+  HiCR::backend::hwloc::TopologyManager hostTopologyManager(&topology);
   auto                                      hostTopology = hostTopologyManager.queryTopology();
   auto                                      hostDevice   = *hostTopology.getDevices().begin();
   auto                                      hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing ascend topology manager and retrieve memory space and compute resource of one of the devices
-  HiCR::backend::ascend::L1::TopologyManager ascendTopologyManager;
+  HiCR::backend::ascend::TopologyManager ascendTopologyManager;
   auto                                       ascendTopology        = ascendTopologyManager.queryTopology();
   auto                                       ascendDevice          = *ascendTopology.getDevices().begin();
   auto                                       deviceMemSpace        = *ascendDevice->getMemorySpaceList().begin();
   auto                                       deviceComputeResource = *ascendDevice->getComputeResourceList().begin();
 
   // Instantiating Ascend memory, compute, and communication manager
-  HiCR::backend::ascend::L1::MemoryManager        ascendMemoryManager;
-  HiCR::backend::ascend::L1::ComputeManager       ascendComputeManager;
-  HiCR::backend::ascend::L1::CommunicationManager ascendCommunicationManager;
+  HiCR::backend::ascend::MemoryManager        ascendMemoryManager;
+  HiCR::backend::ascend::ComputeManager       ascendComputeManager;
+  HiCR::backend::ascend::CommunicationManager ascendCommunicationManager;
 
   /////////  Allocate input and output buffers on both host and the device
   // First matrix [M, K]

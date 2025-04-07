@@ -3,7 +3,7 @@
 Memcpy: Local
 =============
 
-In this example, we test HiCR's :code:`memcpy` operation to run a *Telephone Game* test, where a contiguous memory array is copied along all the memory spaces found in the local HiCR instance, as detected by a :code:`HiCR::L1::TopologyManager`, and then back to the initial space (see :numref:`telephoneGameAPI`). The example then tests the initial and resulting array contain the same bytes. 
+In this example, we test HiCR's :code:`memcpy` operation to run a *Telephone Game* test, where a contiguous memory array is copied along all the memory spaces found in the local HiCR instance, as detected by a :code:`HiCR::TopologyManager`, and then back to the initial space (see :numref:`telephoneGameAPI`). The example then tests the initial and resulting array contain the same bytes. 
 
 .. _telephoneGameAPI:
 .. figure:: telephoneGame.png
@@ -21,7 +21,7 @@ The code is structured as follows:
     * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` + :ref:`hwloc backend` backend implementation. This variant moves the initial allocation across all Ascend GPU devices found.
     * :code:`opencl.cpp` corresponds to the :ref:`opencl backend` + :ref:`hwloc backend` backend implementation. This variant moves the initial allocation across all devices found by the OpenCL platform.
 
-Both the producer and consumer functions receive a set of :code:`HiCR::L0::MemorySpace`, each of which will take a turn in the telephone game. They also receive an instance of the :code:`HiCR::L1::MemoryManager`, for the allocation of local memory slots across all memory spaces provided, and; an instance of :code:`HiCR::L1::CommunicationManager`, to communicate the data the HICR memory spaces. 
+Both the producer and consumer functions receive a set of :code:`HiCR::MemorySpace`, each of which will take a turn in the telephone game. They also receive an instance of the :code:`HiCR::MemoryManager`, for the allocation of local memory slots across all memory spaces provided, and; an instance of :code:`HiCR::CommunicationManager`, to communicate the data the HICR memory spaces. 
 
 For each step of the telephone game, the following steps will happen.
 
@@ -34,10 +34,10 @@ First, we detect the available topology using one topology manager or more than 
 
     // Instantiating hwloc topology manager
     // Pthreads example will only use this
-    HiCR::backend::hwloc::L1::TopologyManager ht(&topology);
+    HiCR::backend::hwloc::TopologyManager ht(&topology);
    
     // Use to detect Ascend devices
-    HiCR::backend::ascend::L1::TopologyManager at();
+    HiCR::backend::ascend::TopologyManager at();
 
     // Query topologies
     ht.queryTopology();
@@ -53,7 +53,7 @@ We create the first local memory slot on the host RAM and initialize it with a m
 
     // Instantiating hwloc memory manager
     // Pthreads example will only use this
-    HiCR::backend::hwloc::L1::MemoryManager m(&topology);
+    HiCR::backend::hwloc::MemoryManager m(&topology);
 
     auto input         = m.allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE); // First NUMA Domain
 
@@ -71,7 +71,7 @@ We allocate *N* local memory slot on each memory space detected by the Topology 
     auto memspaces = ...
 
     // Collect the newly created memory slots
-    auto memSlots = std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>>{};
+    auto memSlots = std::vector<std::shared_ptr<HiCR::LocalMemorySlot>>{};
 
     // iterate all over the memory spaces and create N memory slots in each one
     for (const auto &memSpace : memSpaces)

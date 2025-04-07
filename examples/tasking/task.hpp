@@ -30,7 +30,7 @@
 
 #include <hicr/frontends/tasking/common.hpp>
 #include <hicr/frontends/tasking/task.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
 
 /**
  * An example of how a custom task can be built on top of the basic task definition in HiCR
@@ -76,8 +76,8 @@ class Task final : public HiCR::tasking::Task
    * @param[in] label The unique label to assign to this task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    */
-  __INLINE__ Task(const label_t label, const HiCR::backend::pthreads::L0::ExecutionUnit::pthreadFc_t threadFunction)
-    : HiCR::tasking::Task(HiCR::backend::pthreads::L1::ComputeManager::createExecutionUnit(threadFunction), nullptr),
+  __INLINE__ Task(const label_t label, const HiCR::backend::pthreads::ExecutionUnit::pthreadFc_t threadFunction)
+    : HiCR::tasking::Task(HiCR::backend::pthreads::ComputeManager::createExecutionUnit(threadFunction), nullptr),
       _label(label)
   {}
 

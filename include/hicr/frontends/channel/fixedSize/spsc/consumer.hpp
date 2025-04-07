@@ -45,13 +45,13 @@ class Consumer final : public channel::fixedSize::Base
    * The memory slot pertaining to the local token buffer. It needs to be a global slot to enable the check
    * for updates (received messages) from the remote producer.
    */
-  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _tokenBuffer;
+  const std::shared_ptr<HiCR::GlobalMemorySlot> _tokenBuffer;
 
   /**
    * The memory slot pertaining to the producer's coordination buffer. This is a global slot to enable remote
    * update of the producer's internal circular buffer when doing a pop() operation
    */
-  const std::shared_ptr<HiCR::L0::GlobalMemorySlot> _producerCoordinationBuffer;
+  const std::shared_ptr<HiCR::GlobalMemorySlot> _producerCoordinationBuffer;
 
   public:
 
@@ -69,10 +69,10 @@ class Consumer final : public channel::fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::CommunicationManager                    &communicationManager,
-           const std::shared_ptr<L0::GlobalMemorySlot> &tokenBuffer,
-           const std::shared_ptr<L0::LocalMemorySlot>  &internalCoordinationBuffer,
-           std::shared_ptr<L0::GlobalMemorySlot>        producerCoordinationBuffer,
+  Consumer(CommunicationManager                    &communicationManager,
+           const std::shared_ptr<GlobalMemorySlot> &tokenBuffer,
+           const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBuffer,
+           std::shared_ptr<GlobalMemorySlot>        producerCoordinationBuffer,
            const size_t                                 tokenSize,
            const size_t                                 capacity)
     : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
@@ -190,7 +190,7 @@ class Consumer final : public channel::fixedSize::Base
    * 
    * @return The reference to the internal token buffer
    */
-  [[nodiscard]] __INLINE__ std::shared_ptr<L0::GlobalMemorySlot> getTokenBuffer() const { return _tokenBuffer; }
+  [[nodiscard]] __INLINE__ std::shared_ptr<GlobalMemorySlot> getTokenBuffer() const { return _tokenBuffer; }
 };
 
 } // namespace HiCR::channel::fixedSize::SPSC
