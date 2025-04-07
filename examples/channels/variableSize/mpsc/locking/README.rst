@@ -5,7 +5,7 @@ Locking Variable-Size MPSC
 
 For running this example, both the number of producers and the size of the buffers is configurable per command line. For example:
 
-* :code:`mpirun -n 16 ./mpi 3` launches the examples with 15 producers and a consumer buffer of size 3.
+* :code:`mpirun -n 16 ./mpi 3` launches the examples with 15 producers and a consumer buffer of size 3, which *is shared among all the producers*.
 
 In the example, each producer will push numeric tokens into the consumer buffer. The semantics here is different from most other channel versions, as the channel is a shared resource with many producers. The push returns the success status of the operation, and to ensure success, busy waiting might be needed:
 
