@@ -58,12 +58,12 @@ class Consumer
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(L1::CommunicationManager                          &communicationManager,
-           std::vector<std::shared_ptr<L0::GlobalMemorySlot>> tokenBuffers,
-           std::vector<std::shared_ptr<L0::LocalMemorySlot>>  internalCoordinationBuffers,
-           std::vector<std::shared_ptr<L0::GlobalMemorySlot>> producerCoordinationBuffers,
-           const size_t                                       tokenSize,
-           const size_t                                       capacity)
+  Consumer(CommunicationManager                          &communicationManager,
+           std::vector<std::shared_ptr<GlobalMemorySlot>> tokenBuffers,
+           std::vector<std::shared_ptr<LocalMemorySlot>>  internalCoordinationBuffers,
+           std::vector<std::shared_ptr<GlobalMemorySlot>> producerCoordinationBuffers,
+           const size_t                                   tokenSize,
+           const size_t                                   capacity)
     : _tokenBuffers(tokenBuffers),
       _communicationManager(&communicationManager)
   {
@@ -203,7 +203,7 @@ class Consumer
    * 
    * @return The reference to the internal token buffers
    */
-  [[nodiscard]] __INLINE__ std::vector<std::shared_ptr<L0::GlobalMemorySlot>> getTokenBuffers() const { return _tokenBuffers; }
+  [[nodiscard]] __INLINE__ std::vector<std::shared_ptr<GlobalMemorySlot>> getTokenBuffers() const { return _tokenBuffers; }
 
   private:
 
@@ -211,7 +211,7 @@ class Consumer
    * The memory slot pertaining to the local token buffers. It needs to be a global slot to enable the check
    * for updates (received messages) from the remote producer.
    */
-  const std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> _tokenBuffers;
+  const std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> _tokenBuffers;
 
   /**
    * List of SPSC channels this MPSC consists of
@@ -229,7 +229,7 @@ class Consumer
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  L1::CommunicationManager *const _communicationManager;
+  CommunicationManager *const _communicationManager;
 };
 
 } // namespace HiCR::channel::fixedSize::MPSC::nonlocking

@@ -17,8 +17,8 @@
 #include <chrono>
 #include <cstdio>
 #include <hwloc.h>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include "../runtime.hpp"
 #include "source/workTask.hpp"
 
@@ -31,16 +31,16 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing Pthread-base compute manager to run tasks in parallel
-  HiCR::backend::pthreads::L1::ComputeManager computeManager;
+  HiCR::backend::pthreads::ComputeManager computeManager;
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
 
   // Getting compute resource lists from devices
-  std::vector<HiCR::L0::Device::computeResourceList_t> computeResourceLists;
+  std::vector<HiCR::Device::computeResourceList_t> computeResourceLists;
   for (auto d : t.getDevices()) computeResourceLists.push_back(d->getComputeResourceList());
 
   // Initializing runtime
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     for (auto computeResource : computeResourceList)
     {
       // Interpreting compute resource as core
-      auto core = dynamic_pointer_cast<HiCR::backend::hwloc::L0::ComputeResource>(computeResource);
+      auto core = dynamic_pointer_cast<HiCR::backend::hwloc::ComputeResource>(computeResource);
 
       // If the core affinity is included in the list, create new processing unit
       if (coreSubset.contains(core->getProcessorId()))

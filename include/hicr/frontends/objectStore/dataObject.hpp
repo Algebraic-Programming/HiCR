@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include <hicr/core/L0/localMemorySlot.hpp>
-#include <hicr/core/L0/globalMemorySlot.hpp>
-#include <hicr/core/L0/instance.hpp>
+#include <hicr/core/localMemorySlot.hpp>
+#include <hicr/core/globalMemorySlot.hpp>
+#include <hicr/core/instance.hpp>
 
 namespace HiCR::objectStore
 {
@@ -46,7 +46,7 @@ struct serializedMetadata_t
   /**
    * The instance ID of the block's owner.
    */
-  L0::Instance::instanceId_t instanceId;
+  Instance::instanceId_t instanceId;
 
   /**
    * The ID of the block.
@@ -88,7 +88,7 @@ class DataObject
    * @param id The ID of the data object.
    * @param localSlot The local memory slot of the data object.
    */
-  DataObject(L0::Instance::instanceId_t instanceId, blockId id, std::shared_ptr<L0::LocalMemorySlot> localSlot)
+  DataObject(Instance::instanceId_t instanceId, blockId id, std::shared_ptr<LocalMemorySlot> localSlot)
     : _instanceId(instanceId),
       _id(id),
       _size(0),
@@ -103,7 +103,7 @@ class DataObject
    *
    * @returns The owner instance ID of the data object.
    */
-  __INLINE__ L0::Instance::instanceId_t getInstanceId() const { return _instanceId; }
+  __INLINE__ Instance::instanceId_t getInstanceId() const { return _instanceId; }
 
   /**
    * Get the ID of the data object.
@@ -117,14 +117,14 @@ class DataObject
    *
    * @returns The local memory slot of the data object.
    */
-  __INLINE__ L0::LocalMemorySlot &getLocalSlot() const { return *_localSlot; }
+  __INLINE__ LocalMemorySlot &getLocalSlot() const { return *_localSlot; }
 
   private:
 
   /**
    * The ID of the instance owning the data object.
    */
-  const L0::Instance::instanceId_t _instanceId;
+  const Instance::instanceId_t _instanceId;
 
   /**
    * The ID of the data object.
@@ -139,12 +139,12 @@ class DataObject
   /**
    * The local memory slot of the data object.
    */
-  std::shared_ptr<L0::LocalMemorySlot> _localSlot;
+  std::shared_ptr<LocalMemorySlot> _localSlot;
 
   /**
    * The global memory slot of the data object.
    */
-  std::shared_ptr<L0::GlobalMemorySlot> _globalSlot;
+  std::shared_ptr<GlobalMemorySlot> _globalSlot;
 };
 
 } // namespace HiCR::objectStore

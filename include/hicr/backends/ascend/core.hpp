@@ -25,17 +25,11 @@
 
 #include <acl/acl.h>
 #include <backends/ascend/common.hpp>
-#include <backends/sequential/L1/memoryManager.hpp>
+#include <backends/sequential/memoryManager.hpp>
 #include <hicr/common/exceptions.hpp>
 #include <unordered_map>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace ascend
+namespace HiCR::backend::ascend
 {
 
 /**
@@ -87,8 +81,4 @@ class Core final
   const char *_configPath;
 };
 
-} // namespace ascend
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::ascend

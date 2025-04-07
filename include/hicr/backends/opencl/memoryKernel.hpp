@@ -25,17 +25,11 @@
 
 #include <CL/opencl.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/core/L0/localMemorySlot.hpp>
-#include <hicr/backends/opencl/L1/communicationManager.hpp>
+#include <hicr/core/localMemorySlot.hpp>
+#include <hicr/backends/opencl/communicationManager.hpp>
 #include <hicr/backends/opencl/kernel.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace opencl
+namespace HiCR::backend::opencl
 {
 
 /**
@@ -58,12 +52,12 @@ class MemoryKernel final : public Kernel
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(opencl::L1::CommunicationManager          *commManager,
-               std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-               const size_t                               destinationOffset,
-               std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-               const size_t                               sourceOffset,
-               size_t                                     size)
+  MemoryKernel(opencl::CommunicationManager          *commManager,
+               std::shared_ptr<HiCR::LocalMemorySlot> destination,
+               const size_t                           destinationOffset,
+               std::shared_ptr<HiCR::LocalMemorySlot> source,
+               const size_t                           sourceOffset,
+               size_t                                 size)
     : opencl::Kernel(),
       _dst(destination),
       _src(source),
@@ -91,12 +85,12 @@ class MemoryKernel final : public Kernel
   /**
    * Destionation memory slot
    */
-  const std::weak_ptr<HiCR::L0::LocalMemorySlot> _dst;
+  const std::weak_ptr<HiCR::LocalMemorySlot> _dst;
 
   /**
    * Source memory slot
    */
-  const std::weak_ptr<HiCR::L0::LocalMemorySlot> _src;
+  const std::weak_ptr<HiCR::LocalMemorySlot> _src;
 
   /**
    * Destination offset
@@ -116,11 +110,7 @@ class MemoryKernel final : public Kernel
   /**
    * OpenCL memory manager
    */
-  opencl::L1::CommunicationManager *const _commManager;
+  opencl::CommunicationManager *const _commManager;
 };
 
-} // namespace opencl
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::opencl

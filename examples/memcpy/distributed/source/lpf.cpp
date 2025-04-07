@@ -19,10 +19,10 @@
 #include <lpf/mpi.h>
 #include <mpi.h>
 
-#include <hicr/backends/mpi/L1/instanceManager.hpp>
-#include <hicr/backends/lpf/L1/memoryManager.hpp>
-#include <hicr/backends/lpf/L1/communicationManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/mpi/instanceManager.hpp>
+#include <hicr/backends/lpf/memoryManager.hpp>
+#include <hicr/backends/lpf/communicationManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include "include/remoteMemcpy.hpp"
 
 // flag needed when using MPI to launch
@@ -43,7 +43,7 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
 #define DEFAULT_MSGSLOTS 100
 
 // Global pointer to the
-HiCR::L1::InstanceManager *instanceManager;
+HiCR::InstanceManager *instanceManager;
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
@@ -59,11 +59,11 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Creating memory and communication managers
-  HiCR::backend::lpf::L1::MemoryManager        mm(lpf);
-  HiCR::backend::lpf::L1::CommunicationManager cc(nprocs, pid, lpf);
+  HiCR::backend::lpf::MemoryManager        mm(lpf);
+  HiCR::backend::lpf::CommunicationManager cc(nprocs, pid, lpf);
 
   // Running the remote memcpy example
   remoteMemcpy(instanceManager, &tm, &mm, &cc);
@@ -72,7 +72,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 int main(int argc, char **argv)
 {
   // Initializing instance manager
-  auto im         = HiCR::backend::mpi::L1::InstanceManager::createDefault(&argc, &argv);
+  auto im         = HiCR::backend::mpi::InstanceManager::createDefault(&argc, &argv);
   instanceManager = im.get();
 
   lpf_init_t init;

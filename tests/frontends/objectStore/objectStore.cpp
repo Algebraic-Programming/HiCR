@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <hicr/frontends/objectStore/objectStore.hpp>
-#include <hicr/backends/pthreads/L1/communicationManager.hpp>
+#include <hicr/backends/pthreads/communicationManager.hpp>
 
 #include <mocr.hpp>
 
@@ -28,24 +28,24 @@ class ObjectStoreTest : public ::testing::Test
 {
   protected:
 
-  MockCommunicationManager          communicationManager;
-  MockMemoryManager                 memoryManager;
-  std::shared_ptr<MockMemorySpace>  memorySpace;
-  HiCR::L0::GlobalMemorySlot::tag_t tag        = 0;
-  HiCR::L0::Instance::instanceId_t  instanceId = 0;
+  MockCommunicationManager         communicationManager;
+  MockMemoryManager                memoryManager;
+  std::shared_ptr<MockMemorySpace> memorySpace;
+  HiCR::GlobalMemorySlot::tag_t    tag        = 0;
+  HiCR::Instance::instanceId_t     instanceId = 0;
 
   void SetUp() override
   {
     memorySpace = std::make_shared<MockMemorySpace>(1024);
 
-    auto customRegisterLocalMemorySlotImpl = [this](std::shared_ptr<HiCR::L0::MemorySpace> memorySpace, void *const ptr, const size_t size) {
-      return std::make_shared<HiCR::L0::LocalMemorySlot>(ptr, size, memorySpace);
+    auto customRegisterLocalMemorySlotImpl = [this](std::shared_ptr<HiCR::MemorySpace> memorySpace, void *const ptr, const size_t size) {
+      return std::make_shared<HiCR::LocalMemorySlot>(ptr, size, memorySpace);
     };
 
     ON_CALL(memoryManager, registerLocalMemorySlotImpl(_, _, _)).WillByDefault(Invoke(customRegisterLocalMemorySlotImpl));
 
-    auto customPromoteLocalMemorySlot = [this](std::shared_ptr<HiCR::L0::LocalMemorySlot> slot, HiCR::L0::GlobalMemorySlot::tag_t tag) {
-      return std::make_shared<HiCR::L0::GlobalMemorySlot>(tag, 0, slot);
+    auto customPromoteLocalMemorySlot = [this](std::shared_ptr<HiCR::LocalMemorySlot> slot, HiCR::GlobalMemorySlot::tag_t tag) {
+      return std::make_shared<HiCR::GlobalMemorySlot>(tag, 0, slot);
     };
 
     ON_CALL(communicationManager, promoteLocalMemorySlot(_, _)).WillByDefault(Invoke(customPromoteLocalMemorySlot));
@@ -82,11 +82,11 @@ TEST_F(ObjectStoreTest, PublishTest)
 TEST_F(ObjectStoreTest, GetTest)
 {
   // We need a real communication manager for this test
-  HiCR::backend::pthreads::L1::CommunicationManager communicationManager;
+  HiCR::backend::pthreads::CommunicationManager communicationManager;
 
   ObjectStore store(communicationManager, tag, memoryManager, memorySpace, instanceId);
   char        data[8] = "test 12";
-  auto        slot    = std::make_shared<HiCR::L0::LocalMemorySlot>(&data, 8, memorySpace);
+  auto        slot    = std::make_shared<HiCR::LocalMemorySlot>(&data, 8, memorySpace);
   auto        block   = store.createObject(slot, 0);
 
   store.publish(block);

@@ -16,8 +16,8 @@
 
 #include <cstdio>
 #include <chrono>
-#include <hicr/core/L0/device.hpp>
-#include <hicr/backends/pthreads/L1/computeManager.hpp>
+#include <hicr/core/device.hpp>
+#include <hicr/backends/pthreads/computeManager.hpp>
 #include "../runtime.hpp"
 
 static Runtime              *_runtime;

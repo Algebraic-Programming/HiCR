@@ -16,16 +16,16 @@
 
 #include <iostream>
 #include <mpi.h>
-#include <hicr/backends/mpi/L1/instanceManager.hpp>
-#include <hicr/backends/mpi/L1/memoryManager.hpp>
-#include <hicr/backends/mpi/L1/communicationManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/mpi/instanceManager.hpp>
+#include <hicr/backends/mpi/memoryManager.hpp>
+#include <hicr/backends/mpi/communicationManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include "include/remoteMemcpy.hpp"
 
 int main(int argc, char **argv)
 {
   // Initializing instance manager
-  auto im = HiCR::backend::mpi::L1::InstanceManager::createDefault(&argc, &argv);
+  auto im = HiCR::backend::mpi::InstanceManager::createDefault(&argc, &argv);
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
@@ -34,11 +34,11 @@ int main(int argc, char **argv)
   hwloc_topology_init(&topology);
 
   // Initializing host (CPU) topology manager
-  HiCR::backend::hwloc::L1::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Creating memory and communication managers
-  HiCR::backend::mpi::L1::MemoryManager        mm;
-  HiCR::backend::mpi::L1::CommunicationManager cc;
+  HiCR::backend::mpi::MemoryManager        mm;
+  HiCR::backend::mpi::CommunicationManager cc;
 
   // Running the remote memcpy example
   remoteMemcpy(im.get(), &tm, &mm, &cc);

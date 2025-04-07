@@ -17,7 +17,7 @@
 #include <hicr/frontends/channel/variableSize/spsc/consumer.hpp>
 #include "common.hpp"
 
-void reader(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManager &communicationManager, HiCR::objectStore::ObjectStore &objectStore)
+void reader(HiCR::MemoryManager &memoryManager, HiCR::CommunicationManager &communicationManager, HiCR::objectStore::ObjectStore &objectStore)
 {
   auto memorySpace = objectStore.getMemorySpace();
   // BEGIN Channel initialization phase
@@ -56,7 +56,7 @@ void reader(HiCR::L1::MemoryManager &memoryManager, HiCR::L1::CommunicationManag
   communicationManager.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  std::shared_ptr<HiCR::L0::GlobalMemorySlot> globalSizesBufferSlot = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
+  std::shared_ptr<HiCR::GlobalMemorySlot> globalSizesBufferSlot = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
 
   auto producerCoordinationBufferForCounts   = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   auto producerCoordinationBufferForPayloads = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);

@@ -16,17 +16,17 @@
 
 #pragma once
 
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/variableSize/mpsc/nonlocking/producer.hpp>
 #include "common.hpp"
 
-void producerFc(HiCR::L1::MemoryManager               &memoryManager,
-                HiCR::L1::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity,
-                const size_t                           producerId,
-                const size_t                           producerCount)
+void producerFc(HiCR::MemoryManager               &memoryManager,
+                HiCR::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
+                const size_t                       channelCapacity,
+                const size_t                       producerId,
+                const size_t                       producerCount)
 {
   const size_t payloadCapacity = channelCapacity * sizeof(ELEMENT_TYPE);
 
@@ -39,18 +39,18 @@ void producerFc(HiCR::L1::MemoryManager               &memoryManager,
 
   // list of all consumer coordination buffers; only the one associated with the producerId
   // is needed to construct producer; the rest are needed for synchronous deregister of global slots
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> coordinationBuffersForPayloadsAsSlots;
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> coordinationBuffersForCountsAsSlots;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> coordinationBuffersForPayloadsAsSlots;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> coordinationBuffersForCountsAsSlots;
 
   // list of all producer coordination buffers as global slots; needed for synchronous deregister of global slots
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> producerCoordinationBuffersForCounts;
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> producerCoordinationBuffersForPayloads;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> producerCoordinationBuffersForCounts;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> producerCoordinationBuffersForPayloads;
 
   // list of all consumer buffers for counts and payloads;  only the one associated with the producerId
   // is needed to construct producer; the rest are needed for synchronous deregister of global slots
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalBuffersForPayloads;
-  std::vector<std::shared_ptr<HiCR::L0::GlobalMemorySlot>> globalBuffersForCounts;
-  auto                                                     countsBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, sizeof(size_t));
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalBuffersForPayloads;
+  std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalBuffersForCounts;
+  auto                                                 countsBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, sizeof(size_t));
 
   // get from consumer global count/payload slots
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY, {});

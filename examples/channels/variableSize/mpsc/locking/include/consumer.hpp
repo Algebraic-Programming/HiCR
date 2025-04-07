@@ -16,16 +16,16 @@
 
 #pragma once
 
-#include <hicr/core/L1/memoryManager.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
+#include <hicr/core/memoryManager.hpp>
+#include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/variableSize/mpsc/locking/consumer.hpp>
 #include "common.hpp"
 
-void consumerFc(HiCR::L1::MemoryManager               &memoryManager,
-                HiCR::L1::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::L0::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity,
-                const size_t                           producerCount)
+void consumerFc(HiCR::MemoryManager               &memoryManager,
+                HiCR::CommunicationManager        &communicationManager,
+                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
+                const size_t                       channelCapacity,
+                const size_t                       producerCount)
 {
   // Getting required buffer sizes
   auto sizesBufferSize = HiCR::channel::variableSize::Base::getTokenBufferSize(sizeof(size_t), channelCapacity);

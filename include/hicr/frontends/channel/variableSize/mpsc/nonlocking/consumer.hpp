@@ -61,16 +61,16 @@ class Consumer
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
-  Consumer(L1::CommunicationManager                                 &communicationManager,
-           const std::vector<std::shared_ptr<L0::GlobalMemorySlot>> &payloadBuffers,
-           const std::vector<std::shared_ptr<L0::GlobalMemorySlot>> &tokenBuffers,
-           const std::vector<std::shared_ptr<L0::LocalMemorySlot>>  &internalCoordinationBufferForCounts,
-           const std::vector<std::shared_ptr<L0::LocalMemorySlot>>  &internalCoordinationBufferForPayloads,
-           const std::vector<std::shared_ptr<L0::GlobalMemorySlot>> &producerCoordinationBufferForCounts,
-           const std::vector<std::shared_ptr<L0::GlobalMemorySlot>> &producerCoordinationBufferForPayloads,
-           const size_t                                              payloadCapacity,
-           const size_t                                              payloadSize,
-           const size_t                                              capacity)
+  Consumer(CommunicationManager                                 &communicationManager,
+           const std::vector<std::shared_ptr<GlobalMemorySlot>> &payloadBuffers,
+           const std::vector<std::shared_ptr<GlobalMemorySlot>> &tokenBuffers,
+           const std::vector<std::shared_ptr<LocalMemorySlot>>  &internalCoordinationBufferForCounts,
+           const std::vector<std::shared_ptr<LocalMemorySlot>>  &internalCoordinationBufferForPayloads,
+           const std::vector<std::shared_ptr<GlobalMemorySlot>> &producerCoordinationBufferForCounts,
+           const std::vector<std::shared_ptr<GlobalMemorySlot>> &producerCoordinationBufferForPayloads,
+           const size_t                                          payloadCapacity,
+           const size_t                                          payloadSize,
+           const size_t                                          capacity)
     : _communicationManager(&communicationManager)
   {
     // make sure producer and consumer sides have the same element size
@@ -247,7 +247,7 @@ class Consumer
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  L1::CommunicationManager *const _communicationManager;
+  CommunicationManager *const _communicationManager;
 };
 
 } // namespace HiCR::channel::variableSize::MPSC::nonlocking

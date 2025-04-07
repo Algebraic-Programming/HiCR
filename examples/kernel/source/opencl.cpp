@@ -23,13 +23,13 @@
 #include <hicr/backends/opencl/computationKernel.hpp>
 #include <hicr/backends/opencl/kernel.hpp>
 #include <hicr/backends/opencl/memoryKernel.hpp>
-#include <hicr/backends/opencl/L0/executionUnit.hpp>
-#include <hicr/backends/opencl/L0/processingUnit.hpp>
-#include <hicr/backends/opencl/L1/memoryManager.hpp>
-#include <hicr/backends/opencl/L1/topologyManager.hpp>
-#include <hicr/backends/opencl/L1/communicationManager.hpp>
-#include <hicr/backends/opencl/L1/computeManager.hpp>
-#include <hicr/backends/hwloc/L1/topologyManager.hpp>
+#include <hicr/backends/opencl/executionUnit.hpp>
+#include <hicr/backends/opencl/processingUnit.hpp>
+#include <hicr/backends/opencl/memoryManager.hpp>
+#include <hicr/backends/opencl/topologyManager.hpp>
+#include <hicr/backends/opencl/communicationManager.hpp>
+#include <hicr/backends/opencl/computeManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 
 #include "./include/kernel.hpp"
 
@@ -62,7 +62,7 @@ std::string readFromFile(const std::string &path)
  * @param[in] columns
  * @param[in] value 
 */
-void populateMemorySlot(std::shared_ptr<HiCR::L0::LocalMemorySlot> memorySlot, int rows, int columns, float value)
+void populateMemorySlot(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot, int rows, int columns, float value)
 {
   for (int i = 0; i < rows * columns; i++) { ((float *)memorySlot->getPointer())[i] = value; }
 }
@@ -78,30 +78,30 @@ int main(int argc, char **argv)
 
   ///////// Instantiate HiCR-specific entities for hwloc and opencl
   // Initializing HWLoc-based host topology manager and retrieve host memory space
-  HiCR::backend::hwloc::L1::TopologyManager hostTopologyManager(&topology);
-  auto                                      hostTopology = hostTopologyManager.queryTopology();
-  auto                                      hostDevice   = *hostTopology.getDevices().begin();
-  auto                                      hostMemSpace = *hostDevice->getMemorySpaceList().begin();
+  HiCR::backend::hwloc::TopologyManager hostTopologyManager(&topology);
+  auto                                  hostTopology = hostTopologyManager.queryTopology();
+  auto                                  hostDevice   = *hostTopology.getDevices().begin();
+  auto                                  hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing opencl topology manager and retrieve memory space and compute resource of one of the devices
-  HiCR::backend::opencl::L1::TopologyManager openclTopologyManager;
-  auto                                       openclTopology = openclTopologyManager.queryTopology();
+  HiCR::backend::opencl::TopologyManager openclTopologyManager;
+  auto                                   openclTopology = openclTopologyManager.queryTopology();
   if (openclTopology.getDevices().empty()) { HICR_THROW_RUNTIME("No devices detected"); }
   auto openclDevice          = *openclTopology.getDevices().begin();
-  auto clDevice              = dynamic_pointer_cast<HiCR::backend::opencl::L0::Device>(openclDevice);
+  auto clDevice              = dynamic_pointer_cast<HiCR::backend::opencl::Device>(openclDevice);
   auto deviceMemSpace        = *openclDevice->getMemorySpaceList().begin();
   auto deviceComputeResource = *openclDevice->getComputeResourceList().begin();
 
   auto devices         = std::vector<cl::Device>({clDevice->getOpenCLDevice()});
   auto defatultContext = std::make_shared<cl::Context>(devices);
 
-  std::unordered_map<HiCR::backend::opencl::L0::Device::deviceIdentifier_t, std::shared_ptr<cl::CommandQueue>> deviceQueueMap;
+  std::unordered_map<HiCR::backend::opencl::Device::deviceIdentifier_t, std::shared_ptr<cl::CommandQueue>> deviceQueueMap;
   deviceQueueMap[clDevice->getId()] = std::make_shared<cl::CommandQueue>(*defatultContext, clDevice->getOpenCLDevice());
 
   // Instantiating OpenCL memory, compute, and communication manager
-  HiCR::backend::opencl::L1::MemoryManager        openclMemoryManager(deviceQueueMap);
-  HiCR::backend::opencl::L1::ComputeManager       openclComputeManager(defatultContext);
-  HiCR::backend::opencl::L1::CommunicationManager openclCommunicationManager(deviceQueueMap);
+  HiCR::backend::opencl::MemoryManager        openclMemoryManager(deviceQueueMap);
+  HiCR::backend::opencl::ComputeManager       openclComputeManager(defatultContext);
+  HiCR::backend::opencl::CommunicationManager openclCommunicationManager(deviceQueueMap);
 
   // Build OpenCL program
   auto                 source = readFromFile(kernelPath);
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
   *(unsigned int *)K_h->getPointer() = K;
 
   // Map the input tensor descriptors with the allocated buffers
-  std::vector<std::shared_ptr<HiCR::L0::LocalMemorySlot>> kernelArgs({
+  std::vector<std::shared_ptr<HiCR::LocalMemorySlot>> kernelArgs({
     M_d,
     N_d,
     K_d,

@@ -25,10 +25,10 @@
 
 #include <atomic>
 
-#include <hicr/core/L0/globalMemorySlot.hpp>
-#include <hicr/core/L0/instance.hpp>
-#include <hicr/core/L1/communicationManager.hpp>
-#include <hicr/core/L1/memoryManager.hpp>
+#include <hicr/core/globalMemorySlot.hpp>
+#include <hicr/core/instance.hpp>
+#include <hicr/core/communicationManager.hpp>
+#include <hicr/core/memoryManager.hpp>
 #include <hicr/frontends/objectStore/dataObject.hpp>
 
 enum
@@ -124,11 +124,11 @@ class ObjectStore
    * @param[in] memorySpace The memory space the object store operates in.
    * @param[in] instanceId The ID of the instance running the object store. (Created objects will have this instance ID)
    */
-  ObjectStore(L1::CommunicationManager        &communicationManager,
-              L0::GlobalMemorySlot::tag_t      tag,
-              L1::MemoryManager               &memoryManager,
-              std::shared_ptr<L0::MemorySpace> memorySpace,
-              L0::Instance::instanceId_t       instanceId)
+  ObjectStore(CommunicationManager        &communicationManager,
+              GlobalMemorySlot::tag_t      tag,
+              MemoryManager               &memoryManager,
+              std::shared_ptr<MemorySpace> memorySpace,
+              Instance::instanceId_t       instanceId)
     : _memoryManager(memoryManager),
       _communicationManager(communicationManager),
       _tag(tag),
@@ -146,7 +146,7 @@ class ObjectStore
    *
    * @returns The memory space the object store operates in.
    */
-  [[nodiscard]] std::shared_ptr<L0::MemorySpace> getMemorySpace() const { return _memorySpace; }
+  [[nodiscard]] std::shared_ptr<MemorySpace> getMemorySpace() const { return _memorySpace; }
 
   /**
    * Creates a new data object from a given memory allocation.
@@ -175,7 +175,7 @@ class ObjectStore
    *
    * @returns A DataObject referring to the memory slot.
    */
-  [[nodiscard]] __INLINE__ std::shared_ptr<DataObject> createObject(std::shared_ptr<L0::LocalMemorySlot> slot, blockId id)
+  [[nodiscard]] __INLINE__ std::shared_ptr<DataObject> createObject(std::shared_ptr<LocalMemorySlot> slot, blockId id)
   {
     return std::make_shared<DataObject>(_instanceId, id, slot);
   }
@@ -247,7 +247,7 @@ class ObjectStore
    *       of this function must include an atomic guard that is unlocked at
    *       a call to #fence.
    */
-  __INLINE__ std::shared_ptr<L0::LocalMemorySlot> get(DataObject &dataObject)
+  __INLINE__ std::shared_ptr<LocalMemorySlot> get(DataObject &dataObject)
   {
     // Deduce globally unique block ID for the GlobalMemorySlot key, by combining the given instance and block IDs
     compoundId_t compoundId = dataObject._instanceId << OBJECT_STORE_KEY_INSTANCE_ID_BITS | dataObject._id;
@@ -402,24 +402,24 @@ class ObjectStore
   /**
    * The associated memory manager.
    */
-  L1::MemoryManager &_memoryManager;
+  MemoryManager &_memoryManager;
 
   /**
    * The associated communication manager.
    */
-  L1::CommunicationManager &_communicationManager;
+  CommunicationManager &_communicationManager;
 
   /**
    * The tag to associate with the objectStore instance.
    *
    * \note If we remove collectives, we can probably remove the tag.
    */
-  const L0::GlobalMemorySlot::tag_t _tag;
+  const GlobalMemorySlot::tag_t _tag;
 
   /**
    * The associated memory space the object store operates in.
    */
-  const std::shared_ptr<L0::MemorySpace> _memorySpace;
+  const std::shared_ptr<MemorySpace> _memorySpace;
 
   /**
    * Directory of blocks. TODO: Might remove, or keep as the responsibility of the object store to track the blocks.
@@ -432,7 +432,7 @@ class ObjectStore
   /**
    * The instance ID of the current instance owning the object store.
    */
-  const L0::Instance::instanceId_t _instanceId;
+  const Instance::instanceId_t _instanceId;
 };
 
 } // namespace HiCR::objectStore

@@ -26,13 +26,7 @@
 #include <acl/acl.h>
 #include <hicr/core/definitions.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace ascend
+namespace HiCR::backend::ascend
 {
 
 /**
@@ -58,8 +52,4 @@ class Kernel
   __INLINE__ virtual void start(const aclrtStream stream) = 0;
 };
 
-} // namespace ascend
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::ascend

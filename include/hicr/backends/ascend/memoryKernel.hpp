@@ -25,17 +25,11 @@
 
 #include <acl/acl.h>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/core/L0/localMemorySlot.hpp>
-#include <hicr/backends/ascend/L1/communicationManager.hpp>
+#include <hicr/core/localMemorySlot.hpp>
+#include <hicr/backends/ascend/communicationManager.hpp>
 #include <hicr/backends/ascend/kernel.hpp>
 
-namespace HiCR
-{
-
-namespace backend
-{
-
-namespace ascend
+namespace HiCR::backend::ascend
 {
 
 /**
@@ -58,12 +52,12 @@ class MemoryKernel final : public Kernel
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(ascend::L1::CommunicationManager          *commManager,
-               std::shared_ptr<HiCR::L0::LocalMemorySlot> destination,
-               const size_t                               destinationOffset,
-               std::shared_ptr<HiCR::L0::LocalMemorySlot> source,
-               const size_t                               sourceOffset,
-               size_t                                     size)
+  MemoryKernel(ascend::CommunicationManager          *commManager,
+               std::shared_ptr<HiCR::LocalMemorySlot> destination,
+               const size_t                           destinationOffset,
+               std::shared_ptr<HiCR::LocalMemorySlot> source,
+               const size_t                           sourceOffset,
+               size_t                                 size)
     : ascend::Kernel(),
       _dst(destination),
       _src(source),
@@ -91,11 +85,11 @@ class MemoryKernel final : public Kernel
   /**
    * Destionation memory slot
    */
-  const std::shared_ptr<HiCR::L0::LocalMemorySlot> _dst;
+  const std::shared_ptr<HiCR::LocalMemorySlot> _dst;
   /**
    * Source memory slot
    */
-  const std::shared_ptr<HiCR::L0::LocalMemorySlot> _src;
+  const std::shared_ptr<HiCR::LocalMemorySlot> _src;
 
   /**
    * Destination offset
@@ -114,11 +108,7 @@ class MemoryKernel final : public Kernel
   /**
    * Ascend memory manager
    */
-  ascend::L1::CommunicationManager *const _commManager;
+  ascend::CommunicationManager *const _commManager;
 };
 
-} // namespace ascend
-
-} // namespace backend
-
-} // namespace HiCR
+} // namespace HiCR::backend::ascend
