@@ -4,46 +4,57 @@
 Tasking
 ***********************
 
-Here we provide a simple runtime system for HiCR's tasking frontend.
+To utilize the HiCR tasking frontend, we provide a simple runtime system.
 
-This runtime system is kept to its minimal.
+This runtime system is kept minimal and consists of the following 4 steps:
 
-In the following, we will explain the important steps to set up the runtime system of HiCR's tasking.
-After that, we will go through the examples.
+1. Initializing the runtime
+2. Adding workers
+3. Adding tasks
+4. executing tasks (i.e. :code:`runtime.run()`)
 
-Initializing the runtime
+In the following section, we will explain the steps to set up this runtime system for HiCR tasking.
+
+1. Initializing the runtime
 ------------------------
 
-The first step is to initialize the runtime itself. For that one needs to use two compute managers. 
-One for the Execution States (tasks) and one for the ProcessingUnits (workers).
+The first step is to initialize the runtime itself. To do this, one needs to use two compute managers: 
+one for the Execution States (tasks) and one for the Processing Units (workers).
 
-In the current version of HiCR, the following two configurations are acceptable ComputeManagers:
+In the current version of HiCR, the following two configurations are acceptable ComputeManagers for this runtime:
 
-1. Boost + pthreads
+1. Pthreads + Boost
+
+The pthreads ComputeManager is for kernel-level thread-based workers, and Boost is for coroutine-based tasks.
+The main advantage of using this setup is the quick user-level context switching, especially for fine-grained tasks.
 
 ..  code-block:: C++
 
-    HiCR::backend::boost::L1::ComputeManager    executionStateComputeManager;
     HiCR::backend::pthreads::L1::ComputeManager processingUnitComputeManager;
+    HiCR::backend::boost::L1::ComputeManager    executionStateComputeManager;
 
 2. nOS-V
 
+Here, the workers and tasks are wrapped in nOS-V tasks. 
+nOS-V has the advantage of thread-level storage and co-execution of independent tasks.
+For example coarse-grained tasks can have a benefit of it.
+
 ..  code-block:: C++
 
-    HiCR::backend::nosv::L1::ComputeManager executionStateComputeManager;
     HiCR::backend::nosv::L1::ComputeManager processingUnitComputeManager;
+    HiCR::backend::nosv::L1::ComputeManager executionStateComputeManager;
 
-After the chosen compute managers one can initialize the runtime:
+After choosing the compute managers, one can initialize the runtime like this:
 
 ..  code-block:: C++
 
     // Initializing the runtime with chosen ComputeManagers
     Runtime runtime(&executionStateComputeManager, &processingUnitComputeManager);
 
-Adding a Processing Unit
+2. Adding workers
 ------------------------
 
-The next step is to add as many processing unit as wanted. Each processing unit is linked to a worker.
+The next step is to add as many processing units as available of your system. Each processing unit is linked to one worker.
 
 ..  code-block:: C++
 
@@ -54,12 +65,12 @@ The next step is to add as many processing unit as wanted. Each processing unit 
     runtime.addProcessingUnit(ProcessingUnit);
 
 
-Adding tasks
+3. Adding tasks
 ------------------------
 
 After the tasking workers have been initialized, the next step is to create the tasks.
-For this runtime system, each task consists of an unique label and a function which it has to execute.
-The label is an identifier for when this task has to be executed.
+For this runtime system, we modified the task class to also include a unique label for execution dependencies.
+This label refers to the order in which the tasks have to be executed in this runtime system.
 
 ..  code-block:: C++
 
@@ -71,12 +82,13 @@ The label is an identifier for when this task has to be executed.
 
     runtime.addTask(MyTask);
 
-Executing tasks
+4. Executing tasks
 ------------------------
 
-Finally, we can let the runtime execute.
+Finally, we can let the runtime execute the tasks.
 
 ..  code-block:: C++
+
     // Running tasks
     runtime.run();
 
