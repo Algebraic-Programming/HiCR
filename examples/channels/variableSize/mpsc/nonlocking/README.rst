@@ -11,7 +11,7 @@ For running this example, both the number of producers and the size of the buffe
 
 A possible excerpt from the output could be as follows; the consumer prints in detail the element popped, as well as which position of this 45-token channel we pop from, which dedicated producer channel it is from, and which position from this producer channel (1 to 15) it is from.
 
-.. code-block: bash
+.. code-block:: bash
 
   [Producer 005] Sent Value: 43
   [Producer 005] Sent Value: 44
