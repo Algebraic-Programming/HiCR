@@ -9,7 +9,6 @@ HiSilicon Common Runtime (HiCR) User Manual
    introduction/overview
    introduction/build
    introduction/quickstart
-   introduction/examples
 
 .. toctree::
    :caption: Built-in Features
@@ -17,6 +16,12 @@ HiSilicon Common Runtime (HiCR) User Manual
    
    builtin/frontends
    builtin/backends
+
+.. toctree:: 
+   :caption: Examples
+   :maxdepth: 2
+
+   introduction/examples
 
 .. toctree::
    :caption: C++ API Reference

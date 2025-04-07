@@ -1,11 +1,12 @@
 .. _memcpy local:
 
-Memcpy: Local
+Local Memcpy
 =============
 
 In this example, we test HiCR's :code:`memcpy` operation to run a *Telephone Game* test, where a contiguous memory array is copied along all the memory spaces found in the local HiCR instance, as detected by a :code:`HiCR::TopologyManager`, and then back to the initial space (see :numref:`telephoneGameAPI`). The example then tests the initial and resulting array contain the same bytes. 
 
 .. _telephoneGameAPI:
+
 .. figure:: telephoneGame.png
    :alt: Telephone Game Example
    :align: center
