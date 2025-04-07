@@ -35,7 +35,7 @@
 #include <hicr/backends/ascend/kernel.hpp>
 
 namespace HiCR::backend::ascend
-{/**
+{ /**
  * This class represents a replicable Computation Kernel for the Ascend backend.
  * A Computation Kernel enables the kernel execution in the HiCR runtime, and in particular enables
  * the concatenation of kernel execution and memcpy operations in a common stream of operations.
@@ -218,4 +218,4 @@ class ComputationKernel final : public Kernel
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to load kernel into memory. Error %d", err);
   }
 };
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

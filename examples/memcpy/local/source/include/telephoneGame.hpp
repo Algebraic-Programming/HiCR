@@ -32,7 +32,7 @@ void telephoneGame(HiCR::MemoryManager                            &m,
                    HiCR::CommunicationManager                     &c,
                    std::shared_ptr<HiCR::LocalMemorySlot>          input,
                    std::vector<std::shared_ptr<HiCR::MemorySpace>> memSpaces,
-                   int                                                 iterations)
+                   int                                             iterations)
 {
   // Collect the newly created memory slots
   auto memSlots = std::vector<std::shared_ptr<HiCR::LocalMemorySlot>>{};

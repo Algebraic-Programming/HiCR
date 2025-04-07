@@ -215,4 +215,4 @@ class TopologyManager final : public HiCR::TopologyManager
   }
 };
 
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

@@ -62,8 +62,8 @@ class Consumer
            std::vector<std::shared_ptr<GlobalMemorySlot>> tokenBuffers,
            std::vector<std::shared_ptr<LocalMemorySlot>>  internalCoordinationBuffers,
            std::vector<std::shared_ptr<GlobalMemorySlot>> producerCoordinationBuffers,
-           const size_t                                       tokenSize,
-           const size_t                                       capacity)
+           const size_t                                   tokenSize,
+           const size_t                                   capacity)
     : _tokenBuffers(tokenBuffers),
       _communicationManager(&communicationManager)
   {

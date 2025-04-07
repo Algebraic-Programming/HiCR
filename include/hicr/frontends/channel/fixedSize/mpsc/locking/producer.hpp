@@ -70,8 +70,8 @@ class Producer final : public fixedSize::Base
            std::shared_ptr<GlobalMemorySlot>       tokenBuffer,
            const std::shared_ptr<LocalMemorySlot> &internalCoordinationBuffer,
            std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBuffer,
-           const size_t                                tokenSize,
-           const size_t                                capacity)
+           const size_t                            tokenSize,
+           const size_t                            capacity)
     : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(std::move(tokenBuffer)),
       _consumerCoordinationBuffer(std::move(consumerCoordinationBuffer))

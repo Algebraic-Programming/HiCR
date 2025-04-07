@@ -46,9 +46,9 @@ class GlobalMemorySlot final : public HiCR::GlobalMemorySlot
    * @param[in] globalKey The global key associated to this global memory slot (for exchange purposes
    * @param[in] sourceLocalMemorySlot The local memory slot (if applicable) from whence this global memory slot is created
    */
-  GlobalMemorySlot(lpf_pid_t                                     rank,
-                   lpf_memslot_t                                 lpfMemSlot,
-                   lpf_memslot_t                                 lpfSwapSlot,
+  GlobalMemorySlot(lpf_pid_t                                 rank,
+                   lpf_memslot_t                             lpfMemSlot,
+                   lpf_memslot_t                             lpfSwapSlot,
                    const HiCR::GlobalMemorySlot::tag_t       globalTag             = 0,
                    const HiCR::GlobalMemorySlot::globalKey_t globalKey             = 0,
                    std::shared_ptr<HiCR::LocalMemorySlot>    sourceLocalMemorySlot = nullptr)

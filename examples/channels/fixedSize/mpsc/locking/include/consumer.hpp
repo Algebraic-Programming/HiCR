@@ -25,8 +25,8 @@
 void consumerFc(HiCR::MemoryManager               &memoryManager,
                 HiCR::CommunicationManager        &communicationManager,
                 std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity,
-                const size_t                           producerCount)
+                const size_t                       channelCapacity,
+                const size_t                       producerCount)
 {
   // Getting required buffer sizes
   auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
@@ -86,7 +86,8 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
     printf("    [Consumer] Recv Value: %u  (%lu/%lu) Pos: %ld\n", tokenBuffer[pos], receivedMessageCount, expectedMessageCount, pos);
 
     // Disposing of printed value
-    while (consumer.pop() == false);
+    while (consumer.pop() == false)
+      ;
   }
 
   // Synchronizing so that all actors have finished registering their global memory slots

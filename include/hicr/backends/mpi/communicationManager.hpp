@@ -151,10 +151,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
-                             const size_t                                      dst_offset,
+                             const size_t                                  dst_offset,
                              const std::shared_ptr<HiCR::LocalMemorySlot> &source,
-                             const size_t                                      src_offset,
-                             const size_t                                      size) override
+                             const size_t                                  src_offset,
+                             const size_t                                  size) override
   {
     // Getting slot pointers
     const auto srcPtr = source->getPointer();
@@ -173,10 +173,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot>  &destinationSlot,
-                             size_t                                             dst_offset,
+                             size_t                                         dst_offset,
                              const std::shared_ptr<HiCR::GlobalMemorySlot> &sourceSlotPtr,
-                             size_t                                             sourceOffset,
-                             size_t                                             size) override
+                             size_t                                         sourceOffset,
+                             size_t                                         size) override
   {
     // Getting up-casted pointer for the execution unit
     auto source = dynamic_pointer_cast<mpi::GlobalMemorySlot>(sourceSlotPtr);
@@ -227,10 +227,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::GlobalMemorySlot> &destinationSlotPtr,
-                             size_t                                             dst_offset,
+                             size_t                                         dst_offset,
                              const std::shared_ptr<HiCR::LocalMemorySlot>  &sourceSlot,
-                             size_t                                             sourceOffset,
-                             size_t                                             size) override
+                             size_t                                         sourceOffset,
+                             size_t                                         size) override
   {
     // Getting up-casted pointer for the execution unit
     auto destination = dynamic_pointer_cast<mpi::GlobalMemorySlot>(destinationSlotPtr);
@@ -435,12 +435,12 @@ class CommunicationManager final : public HiCR::CommunicationManager
     for (const auto count : perProcessSlotCount) globalSlotCount += count;
 
     // Allocating storage for local and global memory slot sizes, keys and process id
-    std::vector<size_t>                                  localSlotSizes(localSlotCount);
-    std::vector<size_t>                                  globalSlotSizes(globalSlotCount);
+    std::vector<size_t>                              localSlotSizes(localSlotCount);
+    std::vector<size_t>                              globalSlotSizes(globalSlotCount);
     std::vector<HiCR::GlobalMemorySlot::globalKey_t> localSlotKeys(localSlotCount);
     std::vector<HiCR::GlobalMemorySlot::globalKey_t> globalSlotKeys(globalSlotCount);
-    std::vector<int>                                     localSlotProcessId(localSlotCount);
-    std::vector<int>                                     globalSlotProcessId(globalSlotCount);
+    std::vector<int>                                 localSlotProcessId(localSlotCount);
+    std::vector<int>                                 globalSlotProcessId(globalSlotCount);
 
     // Filling in the local size and keys storage
     for (size_t i = 0; i < memorySlots.size(); i++)
@@ -463,9 +463,9 @@ class CommunicationManager final : public HiCR::CommunicationManager
     unlock();
 
     // Now also creating pointer vector to remember local pointers, when required for memcpys
-    std::vector<void **>                                    globalSlotPointers(globalSlotCount);
+    std::vector<void **>                                globalSlotPointers(globalSlotCount);
     std::vector<std::shared_ptr<HiCR::LocalMemorySlot>> globalSourceSlots(globalSlotCount);
-    size_t                                                  localPointerPos = 0;
+    size_t                                              localPointerPos = 0;
     for (size_t i = 0; i < globalSlotPointers.size(); i++)
     {
       // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
@@ -600,10 +600,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
     m->setLockAcquiredValue(false);
   }
 
-  std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(HiCR::GlobalMemorySlot::tag_t tag, HiCR::GlobalMemorySlot::globalKey_t globalKey) override
-  {
-    return nullptr;
-  }
+  std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(HiCR::GlobalMemorySlot::tag_t tag, HiCR::GlobalMemorySlot::globalKey_t globalKey) override { return nullptr; }
 };
 
 } // namespace HiCR::backend::mpi

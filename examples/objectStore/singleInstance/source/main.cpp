@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
   // Using HWLoc as topology managers
   std::vector<HiCR::TopologyManager *> topologyManagers;
-  auto                                     hwlocTopologyManager = std::make_unique<HiCR::backend::hwloc::TopologyManager>(&topology);
+  auto                                 hwlocTopologyManager = std::make_unique<HiCR::backend::hwloc::TopologyManager>(&topology);
   topologyManagers.push_back(hwlocTopologyManager.get());
 
   auto t = hwlocTopologyManager->queryTopology();

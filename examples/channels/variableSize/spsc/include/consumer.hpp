@@ -24,7 +24,7 @@
 void consumerFc(HiCR::MemoryManager               &memoryManager,
                 HiCR::CommunicationManager        &communicationManager,
                 std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity)
+                const size_t                       channelCapacity)
 {
   // Getting required buffer sizes
   auto sizesBufferSize = HiCR::channel::variableSize::Base::getTokenBufferSize(sizeof(size_t), channelCapacity);

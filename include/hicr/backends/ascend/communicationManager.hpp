@@ -90,11 +90,11 @@ class CommunicationManager final : public HiCR::CommunicationManager
    * \param[in] stream Ascend stream containing the state of the operation for later checks for completion
    */
   __INLINE__ void memcpyAsync(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
-                              const size_t                                      dst_offset,
+                              const size_t                                  dst_offset,
                               const std::shared_ptr<HiCR::LocalMemorySlot> &source,
-                              const size_t                                      src_offset,
-                              const size_t                                      size,
-                              const aclrtStream                                 stream)
+                              const size_t                                  src_offset,
+                              const size_t                                  size,
+                              const aclrtStream                             stream)
   {
     memcpyInternal(destination, dst_offset, source, src_offset, size, stream);
   }
@@ -108,8 +108,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
 
   __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 
-  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::GlobalMemorySlot::tag_t       tag,
-                                                                                 const HiCR::GlobalMemorySlot::globalKey_t globalKey) override
+  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::GlobalMemorySlot::tag_t tag, const HiCR::GlobalMemorySlot::globalKey_t globalKey) override
   {
     return nullptr;
   }
@@ -132,10 +131,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
    * \param[in] size the number of bytes to copy
    */
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
-                             const size_t                                      dst_offset,
+                             const size_t                                  dst_offset,
                              const std::shared_ptr<HiCR::LocalMemorySlot> &source,
-                             const size_t                                      src_offset,
-                             const size_t                                      size) override
+                             const size_t                                  src_offset,
+                             const size_t                                  size) override
   {
     memcpyInternal(destination, dst_offset, source, src_offset, size, NULL);
   }
@@ -155,11 +154,11 @@ class CommunicationManager final : public HiCR::CommunicationManager
    * \param[in] stream ACL stream. Triggers sync or async behavior if the passed value is NULL or not, respectively
    */
   __INLINE__ void memcpyInternal(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
-                                 const size_t                                      dst_offset,
+                                 const size_t                                  dst_offset,
                                  const std::shared_ptr<HiCR::LocalMemorySlot> &source,
-                                 const size_t                                      src_offset,
-                                 const size_t                                      size,
-                                 const aclrtStream                                 stream)
+                                 const size_t                                  src_offset,
+                                 const size_t                                  size,
+                                 const aclrtStream                             stream)
   {
     // Storage for device type
     deviceType_t srcType = deviceType_t::none;
@@ -238,4 +237,4 @@ class CommunicationManager final : public HiCR::CommunicationManager
   __INLINE__ void releaseGlobalLockImpl(std::shared_ptr<HiCR::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 };
 
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

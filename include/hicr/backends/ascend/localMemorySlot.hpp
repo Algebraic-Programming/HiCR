@@ -68,4 +68,4 @@ class LocalMemorySlot final : public HiCR::LocalMemorySlot
   const aclDataBuffer *_dataBuffer;
 };
 
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

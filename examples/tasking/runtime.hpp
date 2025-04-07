@@ -141,8 +141,8 @@ class Runtime
    */
   Runtime(HiCR::ComputeManager *executionStateComputeManager,
           HiCR::ComputeManager *processingUnitComputeManager,
-          const size_t              maxTasks   = __TASKR_DEFAULT_MAX_TASKS,
-          const size_t              maxWorkers = __TASKR_DEFAULT_MAX_WORKERS)
+          const size_t          maxTasks   = __TASKR_DEFAULT_MAX_TASKS,
+          const size_t          maxWorkers = __TASKR_DEFAULT_MAX_WORKERS)
     : _executionStateComputeManager(executionStateComputeManager),
       _processingUnitComputeManager(processingUnitComputeManager),
       _maxTasks(maxTasks),

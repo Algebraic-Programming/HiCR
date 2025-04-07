@@ -92,13 +92,13 @@ int main(int argc, char **argv)
   ///////// Instantiate HiCR-specific entities for hwloc and opencl
   // Initializing HWLoc-based host topology manager and retrieve host memory space
   HiCR::backend::hwloc::TopologyManager hostTopologyManager(&topology);
-  auto                                      hostTopology = hostTopologyManager.queryTopology();
-  auto                                      hostDevice   = *hostTopology.getDevices().begin();
-  auto                                      hostMemSpace = *hostDevice->getMemorySpaceList().begin();
+  auto                                  hostTopology = hostTopologyManager.queryTopology();
+  auto                                  hostDevice   = *hostTopology.getDevices().begin();
+  auto                                  hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing opencl topology manager and retrieve memory space and compute resource of one of the devices
   HiCR::backend::opencl::TopologyManager openclTopologyManager;
-  auto                                       openclTopology = openclTopologyManager.queryTopology();
+  auto                                   openclTopology = openclTopologyManager.queryTopology();
   if (openclTopology.getDevices().empty()) { HICR_THROW_RUNTIME("No devices detected"); }
   auto openclDevice          = *openclTopology.getDevices().begin();
   auto clDevice              = dynamic_pointer_cast<HiCR::backend::opencl::Device>(openclDevice);
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
   auto kernel = std::make_shared<cl::Kernel>(program, "gemm_kernel");
 
   // Define global and local work sizes
-  auto global = cl::NDRange(M, N);
+  auto global     = cl::NDRange(M, N);
   auto GEMMKernel = std::make_shared<opencl::ComputationKernel>(kernel, std::move(kernelArgs), cl::NullRange, global, cl::NullRange);
 
   // Create the stream of Kernel operations to be executed on the device

@@ -24,8 +24,8 @@
 void consumerFc(HiCR::MemoryManager               &memoryManager,
                 HiCR::CommunicationManager        &communicationManager,
                 std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity,
-                const size_t                           producerCount)
+                const size_t                       channelCapacity,
+                const size_t                       producerCount)
 {
   // Getting required buffer sizes
   auto sizesBufferSize = HiCR::channel::variableSize::Base::getTokenBufferSize(sizeof(size_t), channelCapacity);
@@ -89,7 +89,8 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
   char   prefix[64]  = {'\0'};
   while (poppedElems < expectedMessageCount)
   {
-    while (consumer.isEmpty()); // spin
+    while (consumer.isEmpty())
+      ; // spin
     auto res = consumer.peek();
     /**
      * An example-specific way to deduce the sender rank
@@ -98,7 +99,8 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
 
     Printer<ELEMENT_TYPE>::printBytes(prefix, payloadBufferPtr, payloadCapacity, res[0], res[1]);
 
-    while (consumer.pop() == false);
+    while (consumer.pop() == false)
+      ;
 
     poppedElems++;
   }

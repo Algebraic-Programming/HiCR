@@ -33,7 +33,7 @@
 
 namespace HiCR::backend::opencl
 {
-  
+
 /**
  * Implementation of the Communication Manager for the OpenCL backend.
  */

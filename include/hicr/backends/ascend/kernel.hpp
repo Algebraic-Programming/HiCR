@@ -27,7 +27,7 @@
 #include <hicr/core/definitions.hpp>
 
 namespace HiCR::backend::ascend
-{/**
+{ /**
  * This class represents a replicable kernel for the Ascend backend.
  * A Kernel is a piece of computation meant to be executed on an Ascend device.
  */
@@ -35,7 +35,7 @@ class Kernel
 {
   public:
 
-  __INLINE__ Kernel() {};
+  __INLINE__ Kernel(){};
 
   /**
    * Default destructor
@@ -49,4 +49,4 @@ class Kernel
    */
   __INLINE__ virtual void start(const aclrtStream stream) = 0;
 };
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

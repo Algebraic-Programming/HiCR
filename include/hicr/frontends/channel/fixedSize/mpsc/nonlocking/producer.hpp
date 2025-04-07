@@ -56,8 +56,8 @@ class Producer final : public fixedSize::SPSC::Producer
            std::shared_ptr<GlobalMemorySlot>        tokenBuffer,
            const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBuffer,
            const std::shared_ptr<GlobalMemorySlot> &producerCoordinationBuffer,
-           const size_t                                 tokenSize,
-           const size_t                                 capacity)
+           const size_t                             tokenSize,
+           const size_t                             capacity)
     : fixedSize::SPSC::Producer(communicationManager, std::move(tokenBuffer), internalCoordinationBuffer, producerCoordinationBuffer, tokenSize, capacity)
   {}
   ~Producer() = default;

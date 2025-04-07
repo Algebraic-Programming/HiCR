@@ -73,8 +73,8 @@ class Consumer final : public channel::fixedSize::Base
            const std::shared_ptr<GlobalMemorySlot> &tokenBuffer,
            const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBuffer,
            std::shared_ptr<GlobalMemorySlot>        producerCoordinationBuffer,
-           const size_t                                 tokenSize,
-           const size_t                                 capacity)
+           const size_t                             tokenSize,
+           const size_t                             capacity)
     : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(tokenBuffer),
       _producerCoordinationBuffer(std::move(producerCoordinationBuffer))

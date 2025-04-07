@@ -30,7 +30,7 @@
 #include <hicr/backends/ascend/kernel.hpp>
 
 namespace HiCR::backend::ascend
-{/**
+{ /**
  * This class represents a replicable Memory Kernel for the Ascend backend.
  * A Memory Kernel enable the execution of memcopy operations in a stream/sequence of Kernels.
  * Memory Kernels currently supports memcpy operations on the same device, since they are meant to be chained
@@ -52,10 +52,10 @@ class MemoryKernel final : public Kernel
    */
   MemoryKernel(ascend::CommunicationManager          *commManager,
                std::shared_ptr<HiCR::LocalMemorySlot> destination,
-               const size_t                               destinationOffset,
+               const size_t                           destinationOffset,
                std::shared_ptr<HiCR::LocalMemorySlot> source,
-               const size_t                               sourceOffset,
-               size_t                                     size)
+               const size_t                           sourceOffset,
+               size_t                                 size)
     : ascend::Kernel(),
       _dst(destination),
       _src(source),
@@ -108,4 +108,4 @@ class MemoryKernel final : public Kernel
    */
   ascend::CommunicationManager *const _commManager;
 };
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

@@ -67,9 +67,9 @@ class Producer final : public variableSize::SPSC::Producer
            const std::shared_ptr<LocalMemorySlot> &internalCoordinationBufferForPayloads,
            std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBufferForCounts,
            std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBufferForPayloads,
-           const size_t                                payloadCapacity,
-           const size_t                                payloadSize,
-           const size_t                                capacity)
+           const size_t                            payloadCapacity,
+           const size_t                            payloadSize,
+           const size_t                            capacity)
     : variableSize::SPSC::Producer(communicationManager,
                                    std::move(sizeInfoBuffer),
                                    std::move(payloadBuffer),

@@ -131,8 +131,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
    * @param[in] tag The tag to associate with the promoted global memory slot
    * @return A pointer to the promoted global memory slot
    */
-  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<HiCR::LocalMemorySlot> &memorySlot,
-                                                                                HiCR::GlobalMemorySlot::tag_t                 tag) override
+  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<HiCR::LocalMemorySlot> &memorySlot, HiCR::GlobalMemorySlot::tag_t tag) override
   {
     auto lpfSlot = dynamic_pointer_cast<lpf::LocalMemorySlot>(memorySlot);
     if (lpfSlot == nullptr) HICR_THROW_LOGIC("The memory slot is not supported by this backend\n");
@@ -188,10 +187,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
    */
   lpf_memslot_t _localSwapSlot;
 
-  std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(HiCR::GlobalMemorySlot::tag_t tag, HiCR::GlobalMemorySlot::globalKey_t globalKey) override
-  {
-    return nullptr;
-  }
+  std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(HiCR::GlobalMemorySlot::tag_t tag, HiCR::GlobalMemorySlot::globalKey_t globalKey) override { return nullptr; }
 
   __INLINE__ void exchangeGlobalMemorySlotsImpl(HiCR::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
@@ -290,8 +286,8 @@ class CommunicationManager final : public HiCR::CommunicationManager
     for (size_t i = 0; i < globalSlotCount; i++)
     {
       // If the rank associated with this slot is remote, don't store the pointer, otherwise store it.
-      void                                      *globalSlotPointer     = nullptr;
-      void                                      *globalSwapSlotPointer = nullptr;
+      void                                  *globalSlotPointer     = nullptr;
+      void                                  *globalSwapSlotPointer = nullptr;
       std::shared_ptr<HiCR::LocalMemorySlot> globalSourceSlot      = nullptr;
 
       globalSwapSlotSizes[i] = sizeof(uint64_t);
@@ -302,8 +298,8 @@ class CommunicationManager final : public HiCR::CommunicationManager
         globalSwapSlotSizes[i] = 0;
       }
 
-      lpf_memslot_t                             newSlot       = LPF_INVALID_MEMSLOT;
-      lpf_memslot_t                             swapValueSlot = LPF_INVALID_MEMSLOT;
+      lpf_memslot_t                         newSlot       = LPF_INVALID_MEMSLOT;
+      lpf_memslot_t                         swapValueSlot = LPF_INVALID_MEMSLOT;
       std::shared_ptr<lpf::LocalMemorySlot> localSlot;
       // If it's local, then assign the local information to it
       if (globalSlotProcessId[i] == _rank)
@@ -428,10 +424,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot>  &destination,
-                             size_t                                             dst_offset,
+                             size_t                                         dst_offset,
                              const std::shared_ptr<HiCR::GlobalMemorySlot> &source,
-                             size_t                                             src_offset,
-                             size_t                                             size) override
+                             size_t                                         src_offset,
+                             size_t                                         size) override
   {
     // Getting up-casted pointer
     auto src = dynamic_pointer_cast<lpf::GlobalMemorySlot>(source);
@@ -457,10 +453,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::GlobalMemorySlot> &destination,
-                             size_t                                             dst_offset,
+                             size_t                                         dst_offset,
                              const std::shared_ptr<HiCR::LocalMemorySlot>  &source,
-                             size_t                                             src_offset,
-                             size_t                                             size) override
+                             size_t                                         src_offset,
+                             size_t                                         size) override
   {
     // Getting up-casted pointer
     auto src = dynamic_pointer_cast<lpf::LocalMemorySlot>(source);

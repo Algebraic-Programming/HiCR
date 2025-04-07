@@ -58,8 +58,8 @@ class Base : public channel::Base
   Base(CommunicationManager                   &communicationManager,
        const std::shared_ptr<LocalMemorySlot> &coordinationBufferForCounts,
        const std::shared_ptr<LocalMemorySlot> &coordinationBufferForPayloads,
-       const size_t                                capacity,
-       const size_t                                payloadCapacity)
+       const size_t                            capacity,
+       const size_t                            payloadCapacity)
     : channel::Base(communicationManager, coordinationBufferForCounts, sizeof(size_t), capacity),
       _coordinationBufferForCounts(coordinationBufferForCounts),
       _coordinationBufferForPayloads(coordinationBufferForPayloads)

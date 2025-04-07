@@ -157,8 +157,8 @@ class Worker
    */
   Worker(HiCR::ComputeManager *executionStateComputeManager,
          HiCR::ComputeManager *processingUnitComputeManager,
-         pullFunction_t            pullFunction,
-         workerCallbackMap_t      *callbackMap = nullptr)
+         pullFunction_t        pullFunction,
+         workerCallbackMap_t  *callbackMap = nullptr)
     : _executionStateComputeManager(executionStateComputeManager),
       _processingUnitComputeManager(processingUnitComputeManager),
       _pullFunction(std::move(pullFunction)),

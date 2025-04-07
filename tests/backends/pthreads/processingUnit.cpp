@@ -108,7 +108,8 @@ TEST(ProcessingUnit, ThreadAffinity)
   ASSERT_NO_THROW(m.start(processingUnit, executionState));
 
   // Waiting for the thread to report
-  while (checkedAffinity == false);
+  while (checkedAffinity == false)
+    ;
 
   // Checking if the thread's affinity was correctly set
   ASSERT_TRUE(hasCorrectAffinity);

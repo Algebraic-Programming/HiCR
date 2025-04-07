@@ -52,7 +52,7 @@ void remoteMemcpy(HiCR::InstanceManager      *instanceManager,
   }
 
   // Determining receiver and sender instance ids
-  auto                             senderId   = rootInstanceId;
+  auto                         senderId   = rootInstanceId;
   HiCR::Instance::instanceId_t receiverId = 0;
   for (const auto &instance : instanceList)
     if (instance->getId() != senderId) receiverId = instance->getId();

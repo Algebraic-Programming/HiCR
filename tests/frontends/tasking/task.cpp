@@ -30,7 +30,7 @@
 
 TEST(Task, Construction)
 {
-  HiCR::tasking::Task                     *t = NULL;
+  HiCR::tasking::Task                 *t = NULL;
   std::shared_ptr<HiCR::ExecutionUnit> u(NULL);
 
   ASSERT_NO_THROW(t = new HiCR::tasking::Task(u, NULL));
@@ -41,7 +41,7 @@ TEST(Task, Construction)
 TEST(Task, SetterAndGetters)
 {
   std::shared_ptr<HiCR::ExecutionUnit> u(NULL);
-  HiCR::tasking::Task                      t(u, NULL);
+  HiCR::tasking::Task                  t(u, NULL);
 
   HiCR::tasking::Task::taskCallbackMap_t e;
   ASSERT_NO_THROW(t.setCallbackMap(&e));

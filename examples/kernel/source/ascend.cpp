@@ -65,7 +65,6 @@ void printMatrix(const std::shared_ptr<HiCR::LocalMemorySlot> &memSlot, uint32_t
   }
 }
 
-
 /**
  * Create a Compute Kernel from a single .om file
  * 
@@ -109,16 +108,16 @@ int main(int argc, char **argv)
   ///////// Instantiate HiCR-specific entities for hwloc and ascend
   // Initializing HWLoc-based host topology manager and retrieve host memory space
   HiCR::backend::hwloc::TopologyManager hostTopologyManager(&topology);
-  auto                                      hostTopology = hostTopologyManager.queryTopology();
-  auto                                      hostDevice   = *hostTopology.getDevices().begin();
-  auto                                      hostMemSpace = *hostDevice->getMemorySpaceList().begin();
+  auto                                  hostTopology = hostTopologyManager.queryTopology();
+  auto                                  hostDevice   = *hostTopology.getDevices().begin();
+  auto                                  hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing ascend topology manager and retrieve memory space and compute resource of one of the devices
   HiCR::backend::ascend::TopologyManager ascendTopologyManager;
-  auto                                       ascendTopology        = ascendTopologyManager.queryTopology();
-  auto                                       ascendDevice          = *ascendTopology.getDevices().begin();
-  auto                                       deviceMemSpace        = *ascendDevice->getMemorySpaceList().begin();
-  auto                                       deviceComputeResource = *ascendDevice->getComputeResourceList().begin();
+  auto                                   ascendTopology        = ascendTopologyManager.queryTopology();
+  auto                                   ascendDevice          = *ascendTopology.getDevices().begin();
+  auto                                   deviceMemSpace        = *ascendDevice->getMemorySpaceList().begin();
+  auto                                   deviceComputeResource = *ascendDevice->getComputeResourceList().begin();
 
   // Instantiating Ascend memory, compute, and communication manager
   HiCR::backend::ascend::MemoryManager        ascendMemoryManager;

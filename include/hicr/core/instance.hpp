@@ -81,7 +81,7 @@ class Instance
    *
    */
   __INLINE__ Instance(instanceId_t id)
-    : _id(id) {};
+    : _id(id){};
 
   private:
 

@@ -264,11 +264,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(const std::shared_ptr<LocalMemorySlot> &destination,
-                         size_t                                      dst_offset,
-                         const std::shared_ptr<LocalMemorySlot> &source,
-                         size_t                                      src_offset,
-                         size_t                                      size)
+  __INLINE__ void memcpy(const std::shared_ptr<LocalMemorySlot> &destination, size_t dst_offset, const std::shared_ptr<LocalMemorySlot> &source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -308,11 +304,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(const std::shared_ptr<GlobalMemorySlot> &destination,
-                         size_t                                       dst_offset,
-                         const std::shared_ptr<LocalMemorySlot>  &source,
-                         size_t                                       src_offset,
-                         size_t                                       size)
+  __INLINE__ void memcpy(const std::shared_ptr<GlobalMemorySlot> &destination, size_t dst_offset, const std::shared_ptr<LocalMemorySlot> &source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto srcSize = source->getSize();
@@ -341,11 +333,7 @@ class CommunicationManager
    * @param[in] size         The number of bytes to copy from the source to the
    *                         destination
    */
-  __INLINE__ void memcpy(const std::shared_ptr<LocalMemorySlot>  &destination,
-                         size_t                                       dst_offset,
-                         const std::shared_ptr<GlobalMemorySlot> &source,
-                         size_t                                       src_offset,
-                         size_t                                       size)
+  __INLINE__ void memcpy(const std::shared_ptr<LocalMemorySlot> &destination, size_t dst_offset, const std::shared_ptr<GlobalMemorySlot> &source, size_t src_offset, size_t size)
   {
     // Getting slot sizes. This operation is thread-safe
     const auto dstSize = destination->getSize();
@@ -553,7 +541,7 @@ class CommunicationManager
    *
    * \param[in] memorySlot Memory slot to deregister.
    */
-  virtual void deregisterGlobalMemorySlotImpl(const std::shared_ptr<GlobalMemorySlot> &memorySlot) {};
+  virtual void deregisterGlobalMemorySlotImpl(const std::shared_ptr<GlobalMemorySlot> &memorySlot){};
 
   /**
    * Deletes a global memory slot from the backend. This operation is collective.
@@ -572,11 +560,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(const std::shared_ptr<LocalMemorySlot> &destination,
-                          size_t                                      dst_offset,
-                          const std::shared_ptr<LocalMemorySlot> &source,
-                          size_t                                      src_offset,
-                          size_t                                      size)
+  virtual void memcpyImpl(const std::shared_ptr<LocalMemorySlot> &destination, size_t dst_offset, const std::shared_ptr<LocalMemorySlot> &source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Local->Local memcpy operations are unsupported by the given backend");
   };
@@ -590,11 +574,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(const std::shared_ptr<GlobalMemorySlot> &destination,
-                          size_t                                       dst_offset,
-                          const std::shared_ptr<LocalMemorySlot>  &source,
-                          size_t                                       src_offset,
-                          size_t                                       size)
+  virtual void memcpyImpl(const std::shared_ptr<GlobalMemorySlot> &destination, size_t dst_offset, const std::shared_ptr<LocalMemorySlot> &source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Local->Global memcpy operations are unsupported by the given backend");
   };
@@ -608,11 +588,7 @@ class CommunicationManager
    * @param[in] src_offset   The offset (in bytes) within \a source at \a src_locality
    * @param[in] size         The number of bytes to copy from the source to the destination
    */
-  virtual void memcpyImpl(const std::shared_ptr<LocalMemorySlot>  &destination,
-                          size_t                                       dst_offset,
-                          const std::shared_ptr<GlobalMemorySlot> &source,
-                          size_t                                       src_offset,
-                          size_t                                       size)
+  virtual void memcpyImpl(const std::shared_ptr<LocalMemorySlot> &destination, size_t dst_offset, const std::shared_ptr<GlobalMemorySlot> &source, size_t src_offset, size_t size)
   {
     HICR_THROW_LOGIC("Global->Local memcpy operations are unsupported by the given backend");
   };

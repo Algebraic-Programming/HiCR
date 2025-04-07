@@ -26,9 +26,9 @@
 void producerFc(HiCR::MemoryManager               &memoryManager,
                 HiCR::CommunicationManager        &communicationManager,
                 std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity,
-                const size_t                           producerId,
-                const size_t                           producerCount)
+                const size_t                       channelCapacity,
+                const size_t                       producerId,
+                const size_t                       producerCount)
 {
   // initialize producer coordination buffer
   auto coordinationBufferSize = HiCR::channel::fixedSize::Base::getCoordinationBufferSize();

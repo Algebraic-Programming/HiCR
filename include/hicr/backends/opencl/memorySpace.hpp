@@ -107,4 +107,4 @@ class MemorySpace final : public HiCR::MemorySpace
   std::string _type;
 };
 
-} // namespace HiCR::backend::hwloc
+} // namespace HiCR::backend::opencl

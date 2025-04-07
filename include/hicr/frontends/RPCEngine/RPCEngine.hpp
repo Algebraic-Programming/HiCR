@@ -83,7 +83,7 @@ class RPCEngine
             ComputeManager                  &computeManager,
             std::shared_ptr<MemorySpace>     bufferMemorySpace,
             std::shared_ptr<ComputeResource> computeResource,
-            const uint64_t                       baseTag = _HICR_RPC_ENGINE_CHANNEL_BASE_TAG)
+            const uint64_t                   baseTag = _HICR_RPC_ENGINE_CHANNEL_BASE_TAG)
     : _communicationManager(communicationManager),
       _instanceManager(instanceManager),
       _memoryManager(memoryManager),
@@ -195,7 +195,8 @@ class RPCEngine
   __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> getReturnValue(HiCR::Instance &instance) const
   {
     // Calling the backend-specific implementation of the listen function
-    while (_returnValueConsumerChannel->isEmpty());
+    while (_returnValueConsumerChannel->isEmpty())
+      ;
 
     // Calling backend-specific implementation of this function
     auto returnValue = _returnValueConsumerChannel->peek();

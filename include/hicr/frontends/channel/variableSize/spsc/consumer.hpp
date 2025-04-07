@@ -72,8 +72,8 @@ class Consumer final : public variableSize::Base
            const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBufferForPayloads,
            const std::shared_ptr<GlobalMemorySlot> &producerCoordinationBufferForCounts,
            std::shared_ptr<GlobalMemorySlot>        producerCoordinationBufferForPayloads,
-           const size_t                                 payloadCapacity,
-           const size_t                                 capacity)
+           const size_t                             payloadCapacity,
+           const size_t                             capacity)
     : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
 
       _payloadBuffer(std::move(payloadBuffer)),

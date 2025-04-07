@@ -44,20 +44,14 @@ class MockCommunicationManager : public HiCR::CommunicationManager
 
   MOCK_METHOD(void, exchangeGlobalMemorySlotsImpl, (const HiCR::GlobalMemorySlot::tag_t, const std::vector<globalKeyMemorySlotPair_t> &), (override));
   MOCK_METHOD(void, destroyGlobalMemorySlotImpl, (std::shared_ptr<HiCR::GlobalMemorySlot>), (override));
-  MOCK_METHOD(std::shared_ptr<HiCR::GlobalMemorySlot>,
-              getGlobalMemorySlotImpl,
-              (const HiCR::GlobalMemorySlot::tag_t, const HiCR::GlobalMemorySlot::globalKey_t),
-              (override));
+  MOCK_METHOD(std::shared_ptr<HiCR::GlobalMemorySlot>, getGlobalMemorySlotImpl, (const HiCR::GlobalMemorySlot::tag_t, const HiCR::GlobalMemorySlot::globalKey_t), (override));
   MOCK_METHOD(void, queryMemorySlotUpdatesImpl, (std::shared_ptr<HiCR::LocalMemorySlot>), (override));
   MOCK_METHOD(void, fenceImpl, (HiCR::GlobalMemorySlot::tag_t), (override));
   MOCK_METHOD(bool, acquireGlobalLockImpl, (std::shared_ptr<HiCR::GlobalMemorySlot>), (override));
   MOCK_METHOD(void, releaseGlobalLockImpl, (std::shared_ptr<HiCR::GlobalMemorySlot>), (override));
   MOCK_METHOD(uint8_t *, serializeGlobalMemorySlot, (const std::shared_ptr<HiCR::GlobalMemorySlot> &), (const, override));
   MOCK_METHOD(std::shared_ptr<HiCR::GlobalMemorySlot>, deserializeGlobalMemorySlot, (uint8_t *, HiCR::GlobalMemorySlot::tag_t), (override));
-  MOCK_METHOD(std::shared_ptr<HiCR::GlobalMemorySlot>,
-              promoteLocalMemorySlot,
-              (const std::shared_ptr<HiCR::LocalMemorySlot> &, HiCR::GlobalMemorySlot::tag_t),
-              (override));
+  MOCK_METHOD(std::shared_ptr<HiCR::GlobalMemorySlot>, promoteLocalMemorySlot, (const std::shared_ptr<HiCR::LocalMemorySlot> &, HiCR::GlobalMemorySlot::tag_t), (override));
   MOCK_METHOD(void, destroyPromotedGlobalMemorySlot, (const std::shared_ptr<HiCR::GlobalMemorySlot> &), (override));
 
   /* Helper functions to expose protected methods */

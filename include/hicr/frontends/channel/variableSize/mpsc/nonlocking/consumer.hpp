@@ -68,9 +68,9 @@ class Consumer
            const std::vector<std::shared_ptr<LocalMemorySlot>>  &internalCoordinationBufferForPayloads,
            const std::vector<std::shared_ptr<GlobalMemorySlot>> &producerCoordinationBufferForCounts,
            const std::vector<std::shared_ptr<GlobalMemorySlot>> &producerCoordinationBufferForPayloads,
-           const size_t                                              payloadCapacity,
-           const size_t                                              payloadSize,
-           const size_t                                              capacity)
+           const size_t                                          payloadCapacity,
+           const size_t                                          payloadSize,
+           const size_t                                          capacity)
     : _communicationManager(&communicationManager)
   {
     // make sure producer and consumer sides have the same element size

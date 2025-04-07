@@ -24,9 +24,9 @@
 void producerFc(HiCR::MemoryManager               &memoryManager,
                 HiCR::CommunicationManager        &communicationManager,
                 std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity,
-                const size_t                           producerId,
-                const size_t                           producerCount)
+                const size_t                       channelCapacity,
+                const size_t                       producerId,
+                const size_t                       producerCount)
 {
   const size_t payloadCapacity = channelCapacity * sizeof(ELEMENT_TYPE);
 
@@ -50,7 +50,7 @@ void producerFc(HiCR::MemoryManager               &memoryManager,
   // is needed to construct producer; the rest are needed for synchronous deregister of global slots
   std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalBuffersForPayloads;
   std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalBuffersForCounts;
-  auto                                                     countsBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, sizeof(size_t));
+  auto                                                 countsBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, sizeof(size_t));
 
   // get from consumer global count/payload slots
   communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY, {});

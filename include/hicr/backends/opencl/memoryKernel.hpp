@@ -54,10 +54,10 @@ class MemoryKernel final : public Kernel
    */
   MemoryKernel(opencl::CommunicationManager          *commManager,
                std::shared_ptr<HiCR::LocalMemorySlot> destination,
-               const size_t                               destinationOffset,
+               const size_t                           destinationOffset,
                std::shared_ptr<HiCR::LocalMemorySlot> source,
-               const size_t                               sourceOffset,
-               size_t                                     size)
+               const size_t                           sourceOffset,
+               size_t                                 size)
     : opencl::Kernel(),
       _dst(destination),
       _src(source),

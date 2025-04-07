@@ -80,4 +80,4 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   const std::vector<std::shared_ptr<ascend::Kernel>> _kernels;
 };
 
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

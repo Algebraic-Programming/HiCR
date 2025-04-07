@@ -33,16 +33,16 @@ int main(int argc, char **argv)
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager hostDeviceManager(&topology);
-  const auto                                hostTopology = hostDeviceManager.queryTopology();
-  auto                                      hostDevice   = *hostTopology.getDevices().begin();
+  const auto                            hostTopology = hostDeviceManager.queryTopology();
+  auto                                  hostDevice   = *hostTopology.getDevices().begin();
 
   // Getting access to the host memory space
   auto hostMemorySpace = *hostDevice->getMemorySpaceList().begin();
 
   // Initializing opencl topology manager
   HiCR::backend::opencl::TopologyManager openclTopologyManager;
-  const auto                                 deviceTopology = openclTopologyManager.queryTopology();
-  auto                                       devices        = deviceTopology.getDevices();
+  const auto                             deviceTopology = openclTopologyManager.queryTopology();
+  auto                                   devices        = deviceTopology.getDevices();
 
   std::vector<cl::Device> openclDevices;
   for (const auto &d : devices)

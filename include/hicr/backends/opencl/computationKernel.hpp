@@ -54,11 +54,11 @@ class ComputationKernel final : public Kernel
    * \param global global range
    * \param local local range
    */
-  ComputationKernel(const std::shared_ptr<cl::Kernel>                             &kernel,
+  ComputationKernel(const std::shared_ptr<cl::Kernel>                         &kernel,
                     const std::vector<std::shared_ptr<HiCR::LocalMemorySlot>> &args,
-                    const cl::NDRange                                              offset,
-                    const cl::NDRange                                              global,
-                    const cl::NDRange                                              local)
+                    const cl::NDRange                                          offset,
+                    const cl::NDRange                                          global,
+                    const cl::NDRange                                          local)
     : Kernel(),
       _kernel(kernel),
       _offset(offset),

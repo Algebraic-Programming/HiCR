@@ -24,8 +24,8 @@
 void consumerFc(HiCR::MemoryManager               &memoryManager,
                 HiCR::CommunicationManager        &communicationManager,
                 std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
-                const size_t                           channelCapacity,
-                const size_t                           producerCount)
+                const size_t                       channelCapacity,
+                const size_t                       producerCount)
 {
   const size_t payloadSize       = sizeof(ELEMENT_TYPE);
   const size_t tokenSize         = sizeof(size_t);
@@ -50,7 +50,7 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
   // list of consumer buffers for counts (= #producers) and payloads (= #producers); needed to construct consumer
   std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalBuffersForPayloads;
   std::vector<std::shared_ptr<HiCR::GlobalMemorySlot>> globalBuffersForCounts;
-  const size_t                                             coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
+  const size_t                                         coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
 
   // consumer needs to allocate #producers {size, payload} coord. buffers for #producers SPSCs
   for (size_t i = 0; i < producerCount; i++)

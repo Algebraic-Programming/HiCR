@@ -100,4 +100,4 @@ class MemorySpace final : public HiCR::MemorySpace
   std::weak_ptr<ascend::Device> _device;
 };
 
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

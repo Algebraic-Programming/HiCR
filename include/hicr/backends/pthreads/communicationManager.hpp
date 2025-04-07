@@ -69,7 +69,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::backend::hwloc::GlobalMemorySlot::tag_t       tag,
-                                                                                 const HiCR::backend::hwloc::GlobalMemorySlot::globalKey_t globalKey) override
+                                                                             const HiCR::backend::hwloc::GlobalMemorySlot::globalKey_t globalKey) override
   {
     if (_shadowMap.find(tag) != _shadowMap.end())
     {
@@ -89,8 +89,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
    * \param[in] tag Tag to associate with the promoted global memory slot
    * \return The promoted global memory slot
    */
-  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<HiCR::LocalMemorySlot> &memorySlot,
-                                                                                HiCR::GlobalMemorySlot::tag_t                 tag) override
+  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> promoteLocalMemorySlot(const std::shared_ptr<HiCR::LocalMemorySlot> &memorySlot, HiCR::GlobalMemorySlot::tag_t tag) override
   {
     // Creating new (generic) global memory slot
     auto globalMemorySlot = std::make_shared<HiCR::backend::hwloc::GlobalMemorySlot>(tag, 0 /* key */, memorySlot);
@@ -165,10 +164,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   __INLINE__ void fenceImpl(const HiCR::GlobalMemorySlot::tag_t tag) override { barrier(); }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
-                             const size_t                                      dst_offset,
+                             const size_t                                  dst_offset,
                              const std::shared_ptr<HiCR::LocalMemorySlot> &source,
-                             const size_t                                      src_offset,
-                             const size_t                                      size) override
+                             const size_t                                  src_offset,
+                             const size_t                                  size) override
   {
     // Getting slot pointers
     const auto srcPtr = source->getPointer();
@@ -198,10 +197,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::GlobalMemorySlot> &destination,
-                             const size_t                                       dst_offset,
+                             const size_t                                   dst_offset,
                              const std::shared_ptr<HiCR::LocalMemorySlot>  &source,
-                             const size_t                                       src_offset,
-                             const size_t                                       size) override
+                             const size_t                                   src_offset,
+                             const size_t                                   size) override
   {
     // Getting up-casted pointer for the execution unit
     auto dst = dynamic_pointer_cast<HiCR::GlobalMemorySlot>(destination);
@@ -221,10 +220,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot>  &destination,
-                             const size_t                                       dst_offset,
+                             const size_t                                   dst_offset,
                              const std::shared_ptr<HiCR::GlobalMemorySlot> &source,
-                             const size_t                                       src_offset,
-                             const size_t                                       size) override
+                             const size_t                                   src_offset,
+                             const size_t                                   size) override
   {
     // Getting up-casted pointer for the execution unit
     auto src = dynamic_pointer_cast<HiCR::GlobalMemorySlot>(source);

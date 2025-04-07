@@ -193,4 +193,4 @@ class Device final : public HiCR::Device
   }
 };
 
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

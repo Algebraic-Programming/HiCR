@@ -89,10 +89,10 @@ int main(int argc, char **argv)
   ///////// Instantiate HiCR-specific entities for hwloc
   // Initializing HWLoc-based host topology manager and retrieve host memory space and compute resource
   HiCR::backend::hwloc::TopologyManager hostTopologyManager(&topology);
-  auto                                      hostTopology        = hostTopologyManager.queryTopology();
-  auto                                      hostDevice          = *hostTopology.getDevices().begin();
-  auto                                      hostMemSpace        = *hostDevice->getMemorySpaceList().begin();
-  auto                                      hostComputeResource = *hostDevice->getComputeResourceList().begin();
+  auto                                  hostTopology        = hostTopologyManager.queryTopology();
+  auto                                  hostDevice          = *hostTopology.getDevices().begin();
+  auto                                  hostMemSpace        = *hostDevice->getMemorySpaceList().begin();
+  auto                                  hostComputeResource = *hostDevice->getComputeResourceList().begin();
 
   // Instantiating hwloc memory manager
   HiCR::backend::hwloc::MemoryManager memoryManager(&topology);

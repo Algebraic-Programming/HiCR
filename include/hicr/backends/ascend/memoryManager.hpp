@@ -198,4 +198,4 @@ class MemoryManager final : public HiCR::MemoryManager
   __INLINE__ void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override {}
 };
 
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

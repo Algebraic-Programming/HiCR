@@ -158,4 +158,4 @@ class ExecutionState final : public HiCR::ExecutionState
   bool _isStreamActive = false;
 };
 
-} // namespace HiCR::backend::ascend 
+} // namespace HiCR::backend::ascend

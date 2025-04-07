@@ -52,9 +52,9 @@ typedef struct my_args
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
-  my_args_t                                 *my_args         = (my_args_t *)args.input;
+  my_args_t                             *my_args         = (my_args_t *)args.input;
   std::unique_ptr<HiCR::InstanceManager> instanceManager = HiCR::backend::mpi::InstanceManager::createDefault(&my_args->argc, &my_args->argv);
-  auto                                       instanceId      = instanceManager->getCurrentInstance()->getId();
+  auto                                   instanceId      = instanceManager->getCurrentInstance()->getId();
 
   // Initializing LPF
   CHECK(lpf_resize_message_queue(lpf, DEFAULT_MSGSLOTS));

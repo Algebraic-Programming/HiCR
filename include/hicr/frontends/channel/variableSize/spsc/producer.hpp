@@ -67,9 +67,9 @@ class Producer : public variableSize::Base
            const std::shared_ptr<LocalMemorySlot> &internalCoordinationBufferForPayloads,
            std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBufferForCounts,
            std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBufferForPayloads,
-           const size_t                                payloadCapacity,
-           const size_t                                payloadSize,
-           const size_t                                capacity)
+           const size_t                            payloadCapacity,
+           const size_t                            payloadSize,
+           const size_t                            capacity)
     : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
       _payloadBuffer(std::move(payloadBuffer)),
       _sizeInfoBuffer(std::move(sizeInfoBuffer)),

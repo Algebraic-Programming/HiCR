@@ -28,11 +28,11 @@ class ObjectStoreTest : public ::testing::Test
 {
   protected:
 
-  MockCommunicationManager          communicationManager;
-  MockMemoryManager                 memoryManager;
-  std::shared_ptr<MockMemorySpace>  memorySpace;
-  HiCR::GlobalMemorySlot::tag_t tag        = 0;
-  HiCR::Instance::instanceId_t  instanceId = 0;
+  MockCommunicationManager         communicationManager;
+  MockMemoryManager                memoryManager;
+  std::shared_ptr<MockMemorySpace> memorySpace;
+  HiCR::GlobalMemorySlot::tag_t    tag        = 0;
+  HiCR::Instance::instanceId_t     instanceId = 0;
 
   void SetUp() override
   {

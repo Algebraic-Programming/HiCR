@@ -279,7 +279,8 @@ TEST(ConsumerChannel, PeekWait)
   std::thread consumerThread(consumerFc);
 
   // Waiting a bit to make sure the consumer thread has started
-  while (hasStarted == false);
+  while (hasStarted == false)
+    ;
 
   // The consumer flag should still be false
   sched_yield();
