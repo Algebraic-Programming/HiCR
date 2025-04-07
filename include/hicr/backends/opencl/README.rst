@@ -12,4 +12,4 @@ The OpenCL(`OpenCL <https://www.khronos.org/opencl/>`_) backend provides the fol
 * Communication: enable data movements from and to the device, and vice versa. Move data across devices and within the same device  
 
 .. note:: 
-    The memory manager supports :code:`MemorySpaces` provided by :ref:`hwloc backend` to trigger host memory allocation.
+    Examples: :ref:`memcpy local`, :ref:`kernel execution`, :ref:`topology local` 

@@ -1,3 +1,5 @@
+.. _fibonacci:
+
 Tasking: Fibonacci
 ==================
 

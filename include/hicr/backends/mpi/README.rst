@@ -12,3 +12,6 @@ The following management functionalities are implemented:
 * Instance: Detect available MPI instances
 * Memory: expose MPI memory allocation capabilities
 * Communication: enable data movements among different instances
+
+.. note:: 
+    Examples: :ref:`memcpy distributed`, :ref:`rpc engine`, :ref:`topology distributed`, :ref:`channelsFSPSC`, :ref:`channelsFMPSC`, :ref:`channelsVSPSC`, :ref:`channelsVMPSC`

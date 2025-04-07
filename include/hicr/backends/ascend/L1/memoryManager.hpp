@@ -50,7 +50,9 @@ namespace L1
 /**
  * Implementation of the Memory Manager for the Ascend backend.
  *
- * It stores the memory spaces detected by the Ascend computing language
+ * \note Supported memory spaces:
+ * - Ascend
+ * - HWLoC
  */
 class MemoryManager final : public HiCR::L1::MemoryManager
 {

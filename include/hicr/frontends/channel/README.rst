@@ -4,7 +4,7 @@
 Channels
 ***********************
 
-Apart from the primitive memcpy operations (See :ref:`Memcpy Dist`), channels are a higher-level abstraction for exchanging messages with remote processes.
+Apart from the primitive memcpy operations (See :ref:`memcpy distributed`), channels are a higher-level abstraction for exchanging messages with remote processes.
 The use of channels is mostly useful if for a user application:
 
 * the communication pattern is structured as a data flow, or stream

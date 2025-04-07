@@ -147,7 +147,7 @@ class MemoryManager
   protected:
 
   /**
-   * Backend-internal implementation of the queryLocalMemorySlot function
+   * Backend-internal implementation of the allocateLocalMemorySlot function
    *
    * \param[in] memorySpace Memory space to allocate memory from
    * \param[in] size Size of the memory slot to create

@@ -8,3 +8,5 @@ The nOS-V(`nOS-V <https://www.bsc.es/research-and-development/software-and-apps/
 
 * Computation: enable executing functions in nOS-V tasks
 
+.. note:: 
+    Examples: :ref:`kernel execution`

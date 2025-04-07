@@ -49,6 +49,10 @@ namespace L1
 
 /**
  * Implementation of the Communication Manager for the Ascend backend.
+ 
+ * \note Supported local memory slots:
+ * - Ascend
+ * - HWLoC
  */
 class CommunicationManager final : public HiCR::L1::CommunicationManager
 {

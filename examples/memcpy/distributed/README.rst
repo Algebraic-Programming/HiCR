@@ -1,4 +1,4 @@
-.. _memcpy dist:
+.. _memcpy distributed:
 
 Memcpy: Distributed
 =======================

@@ -1,3 +1,5 @@
+.. _resourceList:
+
 Tasking: Resource List
 ======================
 

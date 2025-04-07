@@ -408,7 +408,7 @@ Exchanging Memory Slots
 
 .. note::
 
-    See Related Example: :ref:`memcpy local`, :ref:`memcpy dist`
+    See Related Example: :ref:`memcpy local`, :ref:`memcpy distributed`
 
 Remote communication is achieved through a backend's communication manager's :code:`memcpy` operation, where at least one of the source / destination arguments is a Remote Memory Slot. Unlike local memory slots, remote memory slots are not directly allocated / registers. Instead, they are exchanged between two or more intervining instances through a collective operation. 
 

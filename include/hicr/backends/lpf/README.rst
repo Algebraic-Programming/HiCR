@@ -16,3 +16,6 @@ The following management functionalities are implemented:
 
 * Memory: expose LPF memory allocation capabilities
 * Communication: enable data movements among different instances using Infiniband
+
+.. note:: 
+    Examples: :ref:`memcpy distributed`, :ref:`ospubread`, :ref:`topology distributed`, :ref:`channelsFSPSC`, :ref:`channelsFMPSC`, :ref:`channelsVSPSC`, :ref:`channelsVMPSC`
