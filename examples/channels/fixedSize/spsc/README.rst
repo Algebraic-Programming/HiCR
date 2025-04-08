@@ -1,6 +1,6 @@
-.. _channelsFSPSC:
+.. _Fixed-Size SPSC Channels:
 
-Channels: Fixed SPSC
+Channels: Fixed-Size SPSC
 ==============================================================
 
 In this example, we use the :code:`Channel` frontend to exchange fixed-sized tokens between a single producer and a single consumer. The code is structured as follows:
@@ -12,11 +12,34 @@ In this example, we use the :code:`Channel` frontend to exchange fixed-sized tok
     * :code:`lpf.cpp` corresponds to the :ref:`lpf backend` backend implementation
     * :code:`mpi.cpp` corresponds to the :ref:`mpi backend` backend implementation
 
-Both the producer and consumer functions receive an instance of the :code:`HiCR::MemoryManager`, for the allocation of the token and coordination buffer(s), and; an instance of :code:`HiCR::CommunicationManager`, for the communication of tokens between the HICR instances. The size of the buffers is configurable per command line. For example:
+
+
+
+The size of the buffers is configurable per command line. For example:
 
 * :code:`mpirun -n 2 ./mpi 3` launches the examples with a consumer buffer of size 3.
 
-In the example, the producer will send attempt to push three numeric tokens, :code:`42`, :code:`43` and :code:`44`, into the consumer buffer. The consumer will first recieve, print, and pop a single token, and then it will wait until two more messages have arrived to print and pop. 
+In the example, the producer will send attempt to push three numeric tokens, :code:`42`, :code:`43` and :code:`44`, into the consumer buffer. 
+
+Each of these are done via
+.. code-block:: C++
+
+  producer.push(sendSlot);
+
+The consumer will first receive, print, and pop a single token, as follows:
+
+.. code-block:: C++
+
+  // Getting a single value from the channel
+  while (consumer.isEmpty()) consumer.updateDepth();
+
+  // Getting internal pointer of the token buffer slot
+  auto tokenBuffer = (ELEMENT_TYPE *)tokenBufferSlot->getPointer();
+
+  printf("Received Value: %u\n", tokenBuffer[consumer.peek()]);
+  consumer.pop();
+
+It will wait until two more messages have arrived to print and pop. 
 
 Below is the expected result of the application for a buffer size :code:`>= 2`:
 

@@ -18,4 +18,4 @@ The following management functionalities are implemented:
 * Communication: enable data movements among different instances using Infiniband
 
 .. note:: 
-    Examples: :ref:`memcpy distributed`, :ref:`ospubread`, :ref:`topology distributed`, :ref:`channelsFSPSC`, :ref:`channelsFMPSC`, :ref:`channelsVSPSC`, :ref:`channelsVMPSC`
+    Examples: :ref:`memcpy distributed`, :ref:`ospubread`, :ref:`topology distributed`, :ref:`Fixed-Size SPSC Channels`, :ref:`Fixed-Size MPSC Channels`, :ref:`Variable-Size SPSC Channels`, :ref:`Variable-Size MPSC Channels`

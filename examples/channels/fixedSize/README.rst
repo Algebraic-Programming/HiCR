@@ -1,14 +1,10 @@
-.. _fixedChannelsExample:
+.. _Fixed-Size Channels:
 
-Fixed Size
-=============
-
-These examples showcase HiCR's :code:`channels` frontend operations in the following settings:
-
+Fixed-size Channels
+-------------------
 
 .. toctree::
     :maxdepth: 4
 
     mpsc/README
     spsc/README
-  

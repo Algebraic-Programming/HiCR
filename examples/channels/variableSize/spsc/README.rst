@@ -1,25 +1,43 @@
-.. _channelsVSPSC:
+.. _Variable-Size SPSC Channels:
 
-Channels: Variable SPSC
-==============================================================
+Channels: Variable-Size SPSC
+============================
 
-In this example, we use the :code:`Channel` frontend to exchange variable-sized tokens between a single producer and a single consumer. The code is structured as follows:
+In contrast to :ref:`Fixed-Size SPSC Channels`, variable-sized channels can send tokens of varying sizes. This requires an additional coordination buffer, which denotes the message sizes of messages in the channel. It makes the declaration of a channel more involved, as now two coordination buffers are needed. For the producer, the declaration of the channel is as follows:
 
-* :code:`include/producer.hpp` contains the semantics for the producer
-* :code:`include/consumer.hpp` contains the semantics for the consumer
-* :code:`source/` contains variants of the main program implemented under different backends
+.. code-block:: C++
 
-    * :code:`lpf.cpp` corresponds to the :ref:`lpf backend` backend implementation
-    * :code:`mpi.cpp` corresponds to the :ref:`mpi backend` backend implementation
+  // Creating producer and consumer channels
+  auto producer = HiCR::channel::variableSize::SPSC::Producer(communicationManager,
+                                                              sizeInfoBuffer,
+                                                              payloadBuffer,
+                                                              sizesBuffer,
+                                                              coordinationBufferForCounts,
+                                                              coordinationBufferForPayloads,
+                                                              consumerCoordinationBufferForCounts,
+                                                              consumerCoordinationBufferForPayloads,
+                                                              PAYLOAD_CAPACITY,
+                                                              sizeof(ELEMENT_TYPE),
+                                                              channelCapacity);
 
-Both the producer and consumer functions receive an instance of the :code:`HiCR::MemoryManager`, for the allocation of the token and coordination buffer(s), and; an instance of :code:`HiCR::CommunicationManager`, for the communication of tokens between the HICR instances. 
 
-For variable sized channels, the consumer allocates two internal buffers:
+For the consumer, the declaration of the channel looks as follows:
 
-* **Token Data Buffer**. This is where the actual token data is stored. This buffer is configured with a maximum size that cannot be exceeded. The producer will fail to push if adding a new token of a given size will exceed the current capacity of the buffer. 
-* **Token Size Buffer**. This buffer holds the size (and starting position) of the currently received tokens. The producer will fail to push if adding a new token of this buffer is full, even if the data buffer has enough space lefta given size will exceed the current capacity of the buffer. 
+.. code-block:: C++
 
-The data buffer capacity in this example is fixed to 32 and the size buffer (channel capacity) is configurable per command line. For example:
+  // Creating producer and consumer channels
+  auto consumer = HiCR::channel::variableSize::SPSC::Consumer(communicationManager,
+                                                              payloadBuffer /*payload buffer */,
+                                                              globalSizesBufferSlot,
+                                                              coordinationBufferForCounts,
+                                                              coordinationBufferForPayloads,
+                                                              producerCoordinationBufferForCounts,
+                                                              producerCoordinationBufferForPayloads,
+                                                              PAYLOAD_CAPACITY,
+                                                              channelCapacity);
+
+
+The data buffer capacity in this example is fixed to 32 bytes and the size buffer (channel capacity) is configurable per command line. For example:
 
 * :code:`mpirun -n 2 ./mpi 3` launches the examples with a channel capacity 3.
 
