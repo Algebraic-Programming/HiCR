@@ -3,13 +3,15 @@
 Nonlocking Fixed-Size MPSC
 ==========================
 
-Nonlocking variable-size channels require large channel capacities, as the consumer then creates a dedicated channel with a fixed capacity *per producer* to avoid locking.
+Nonlocking variable-size channels require large channel capacities, as the consumer then creates a dedicated channel with a fixed capacity *per producer* to avoid locking. Other than that, they are just a collection of :ref:`Fixed-Size SPSC Channels`, and follow the same semantics.
 
 For running this example, both the number of producers and the size of the buffers is configurable per command line. For example:
 
 * :code:`mpirun -n 16 ./mpi 3` launches the examples with 15 producers and a consumer buffer of size 3. In effect, this creates a channel with capacity 45 ( = 15 producers * 3 tokens per channel).
 
-A possible excerpt from the output could be as follows; the consumer prints in detail the element popped, as well as which position of this 45-token channel we pop from, which dedicated producer channel it is from, and which position from this producer channel (1 to 15) it is from.
+In the example, each producer will push three numeric tokens, :code:`42`, :code:`43` and :code:`44`, into the consumer buffer. 
+
+A possible excerpt from the output could be as follows; the consumer prints in detail the element popped, as well as which position of this 45-token channel we pop from, which position (0-2) from this producer channel it is fromw, and which dedicated producer channel it is from (0-15).
 
 .. code-block:: bash
 

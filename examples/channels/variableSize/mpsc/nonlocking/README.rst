@@ -3,7 +3,7 @@
 Nonlocking Variable-Size MPSC
 =============================
 
-Nonlocking variable-size channels require large channel capacities, as the consumer then creates a dedicated channel with a fixed capacity *per producer* to avoid locking.
+Nonlocking variable-size channels require large channel capacities, as the consumer then creates a dedicated channel with a fixed capacity *per producer* to avoid locking. Other than that, they are essentially a collection of :ref:`Variable-Size SPSC Channels` and follow the same semantics.
 
 For running this example, both the number of producers and the size of the buffers is configurable per command line. For example:
 
