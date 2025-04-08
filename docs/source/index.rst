@@ -1,4 +1,4 @@
-HiSilicon Common Runtime (HiCR) User Manual
+HiCR User Manual
 ============================================
 
 .. toctree::

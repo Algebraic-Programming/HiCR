@@ -15,7 +15,7 @@ HiCR enables instance to launch the execution of Remote Procedure Calls (RPC) on
 Declaring RPC Targets
 -----------------------
 
-RPCs are entirely managed by the Instance Manager class. The following snippet shows how a receiver instance can declare an RPC target and listen for incoming RPC requests:
+RPCs are entirely managed by the Instance Manager class. The following snippet shows how a receiver instance can declare an RPC target:
 
 ..  code-block:: C++
 
@@ -27,6 +27,13 @@ RPCs are entirely managed by the Instance Manager class. The following snippet s
   instanceManager.addRPCTarget(RPC1_TARGET_ID, []() { printf("Running RPC Target 1\n"); });
   instanceManager.addRPCTarget(RPC2_TARGET_ID, []() { printf("Running RPC Target 2\n"); });
   instanceManager.addRPCTarget(RPC3_TARGET_ID, []() { printf("Running RPC Target 3\n"); });
+
+RPC Listening
+------------------------
+
+After RPCs have been registered, the instance listens for incoming messages:
+
+.. code-block:: c++
 
   // Listening for RPC requests
   instanceManager.listen();
