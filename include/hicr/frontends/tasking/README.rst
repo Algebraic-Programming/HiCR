@@ -26,7 +26,7 @@ This compute manager is then used to construct the execution unit which holds th
     // Initialize the execution unit with the function (e.g. Boost)
     auto executionUnit = cm.createExecutionUnit([](){ printf("Hello, I am a Task\n"); });
 
-    // create a task
+    // Create a task
     auto task = new Task(executionUnit);
 
 After that,  one has to create the execution state with the compute manager.
@@ -39,7 +39,7 @@ After that,  one has to create the execution state with the compute manager.
     // Initialize the task with the execution state
     task.initialize(executionState);
 
-    // run the task
+    // Run the task
     task.run();
 
 The following methods are present in a task:
@@ -72,7 +72,7 @@ This time we will use the :ref:`nOS-V backend`
     HiCR::backend::nosv::ComputeManager processingUnitComputeManager;
     HiCR::backend::nosv::ComputeManager executionStateComputeManager;
 
-    //
+    // Create the worker
     auto worker = Worker(&executionStateComputeManager, &processingUnitComputeManager);
 
 After this we add as many processing units as wanted.
@@ -86,6 +86,7 @@ After this we add as many processing units as wanted.
     // Creating a Processing Unit of the first available computeResource
     auto ProcessingUnit = processingUnitComputeManager.createProcessingUnit(computeResources[0]);
 
+    // Add the PU to the worker
     worker.addProcessingUnit(ProcessingUnit)
 
 This worker is now ready to get tasks.
