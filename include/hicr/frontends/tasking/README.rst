@@ -60,7 +60,7 @@ Worker
 ------------------------
 
 The workers are build upon HiCR processing units.
-The worker class also contains a simple loop that calls a :code:`pull()` function, i.e.,
+The worker class also contains a simple loop that calls a :code:`_pullFunction()` , i.e.,
 a user-defined scheduling function that should return the next task to execute (or a null pointer, if none is available).
 
 Instead of initializing a task directly one can create a worker running those tasks.
