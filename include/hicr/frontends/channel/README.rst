@@ -36,6 +36,8 @@ There are a following different channel versions implemented (each line being a 
 
 The locking policy implies that all producers attempt to lock the same shared channel, and the nonlocking policy implies that all producers nonlockingly access dedicated channels.
 
+.. _channel-instantiation:
+
 Instantiate channels
 ====================
 

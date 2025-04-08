@@ -1,7 +1,7 @@
 .. _Fixed-Size Channels:
 
-Fixed-size Channels
--------------------
+Channels: Fixed-size 
+---------------------
 
 For fixed sized channels, the consumer allocates one internal buffer:
 

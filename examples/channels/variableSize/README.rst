@@ -1,7 +1,7 @@
 .. _Variable-Size Channels:
 
-Variable-Size Channels
-----------------------
+Channels: Variable-Size
+-----------------------
 
 Variable-sized channels can send tokens of varying sizes. This requires an additional coordination buffer, which denotes the message sizes of messages in the channel.
 The consumer allocates two internal buffers:

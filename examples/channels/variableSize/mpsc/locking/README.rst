@@ -1,7 +1,7 @@
 .. _Locking Variable-Size MPSC:
 
-Locking Variable-Size MPSC
-==========================
+Channels: Variable-Size MPSC locking 
+========================================
 
 For running this example, both the number of producers and the size of the buffers is configurable per command line. For example:
 

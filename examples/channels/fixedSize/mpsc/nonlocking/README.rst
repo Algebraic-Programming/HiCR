@@ -1,7 +1,7 @@
 .. _Nonlocking Fixed-Size MPSC:
 
-Nonlocking Fixed-Size MPSC
-==========================
+Channels: Fixed-Size MPSC non-locking
+==============================================================
 
 Nonlocking variable-size channels require large channel capacities, as the consumer then creates a dedicated channel with a fixed capacity *per producer* to avoid locking. Other than that, they are just a collection of :ref:`Fixed-Size SPSC Channels`, and follow the same semantics.
 

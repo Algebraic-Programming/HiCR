@@ -1,6 +1,6 @@
 .. _memcpy distributed:
 
-Distributed Memcpy
+Memcpy: Distributed
 =======================
 
 In this example, we test HiCR's :code:`memcpy` operation to communicate a simple message back and forth (ping / pong) between two HiCR instances as detected by the :code:`HiCR::InstanceManager` (See: :numref:`remoteMemcpyFig`).
