@@ -3,8 +3,6 @@
 Channels: Variable-Size SPSC
 ============================
 
-As outlined in :ref:`Variable-Size Channels`, variable-sized channels can send tokens of varying sizes. This requires an additional coordination buffer, which denotes the message sizes of messages in the channel.
-
 The data buffer capacity in this example is fixed to 32 bytes and the size buffer (channel capacity) is configurable per command line. For example:
 
 * :code:`mpirun -n 2 ./mpi 3` launches the examples with a channel capacity 3.

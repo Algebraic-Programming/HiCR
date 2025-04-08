@@ -14,6 +14,8 @@ In this example, we use the :code:`Channel` frontend to exchange tokens between 
 
 Both the producer and consumer functions receive an instance of the :code:`HiCR::L1::MemoryManager`, for the allocation of the token and coordination buffer(s), and; an instance of :code:`HiCR::L1::CommunicationManager`, for the communication of tokens between the HICR instances. 
 
+:ref:`channel instantiation` has more on allocating memory slots, making them globally available, and create channels.
+
 For details on each example, choose one of the following:
 
 .. toctree::

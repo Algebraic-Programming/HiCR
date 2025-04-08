@@ -27,8 +27,8 @@ HiCR User Manual
    :caption: C++ API Reference
    :maxdepth: 2
    
-   C++ Classes <doxygen/html/annotated_classes>
-   C++ Files <doxygen/html/files_files>
+   C++ Classes <doxygen/html/annotated>
+   C++ Files <doxygen/html/files>
    
 .. toctree::
    :caption: Development
