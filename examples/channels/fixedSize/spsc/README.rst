@@ -21,7 +21,7 @@ Each of these are done via:
   producer.push(sendSlot);
 
 Receive tokens
-------------
+--------------
 
 The consumer will first receive, print, and pop a single token, as follows:
 

@@ -45,6 +45,8 @@ Channels themselves do not allocate memory, hence the user needs to first alloca
 * A **capacity** (in number of tokens), and a **token size** (in bytes) needs to be specified for the channel at both producer and consumer
 * A **token buffer** of the specified capacity needs to be created at the consumer side, and needs to be advertised to the producer
 
+:ref:`quickstart` has more on allocating memory slots and making them globally available.
+
 Producer
 ----------------------
 
