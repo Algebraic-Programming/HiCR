@@ -6,6 +6,36 @@ Channels
 
 Channels are a frontend for data exchange between instances, built on top of the :code:`memcpy` of the Core API (See :ref:`memcpy distributed`). A channel is a global, distributed entity, which consists of at least one producer channel, and one consumer channel in its simplest form.
 
+There are a following different channel versions implemented (each line being a version), based on the size of the elements, the type of channel (single-producer or multiple-producer at the moment), and the policy, which is currently implemented for MPSC:
+
+.. list-table:: Channels
+   :widths: 50 50 50
+   :header-rows: 1
+
+   * - Element sizes
+     - Channel type
+     - Policy
+   * - Fixed-Size
+     - SPSC
+     -
+   * - Variable-Size
+     - SPSC
+     -
+   * - Fixed-Size
+     - MPSC
+     - Locking
+   * - Variable-Size
+     - MPSC
+     - Locking
+   * - Fixed-Size
+     - MPSC
+     - Nonlocking
+   * - Variable-Size
+     - MPSC
+     - Nonlocking
+
+The locking policy implies that all producers attempt to lock the same shared channel, and the nonlocking policy implies that all producers nonlockingly access dedicated channels.
+
 Instantiate channels
 ====================
 
