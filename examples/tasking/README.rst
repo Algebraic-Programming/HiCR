@@ -30,19 +30,19 @@ The main advantage of using this setup is the quick user-level context switching
 
 ..  code-block:: C++
 
-    HiCR::backend::pthreads::L1::ComputeManager processingUnitComputeManager;
-    HiCR::backend::boost::L1::ComputeManager    executionStateComputeManager;
+    HiCR::backend::pthreads::ComputeManager processingUnitComputeManager;
+    HiCR::backend::boost::ComputeManager    executionStateComputeManager;
 
 2. nOS-V
 
 Here, the workers and tasks are wrapped in nOS-V tasks. 
 nOS-V has the advantage of thread-level storage and co-execution of independent tasks.
-For example coarse-grained tasks can have a benefit of it.
+Coarse-grained tasks can have a benefit of it.
 
 ..  code-block:: C++
 
-    HiCR::backend::nosv::L1::ComputeManager processingUnitComputeManager;
-    HiCR::backend::nosv::L1::ComputeManager executionStateComputeManager;
+    HiCR::backend::nosv::ComputeManager processingUnitComputeManager;
+    HiCR::backend::nosv::ComputeManager executionStateComputeManager;
 
 After choosing the compute managers, one can initialize the runtime like this:
 
