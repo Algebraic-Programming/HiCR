@@ -17,7 +17,7 @@ In the example, each producer will push numeric tokens into the consumer buffer.
   while (producer.push(sendSlot1) == false);
 
 Receive tokens
-------------
+-----------------
 
 For each producer, the consumer will first recieve, print, and pop all the tokens, one by one. Again, the channel is a shared resource with many producers, so the pop immediately returns the success status of the operation. To ensure success, busy waiting might be needed:
 
