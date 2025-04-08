@@ -54,7 +54,12 @@ A producer might declare a channel as follows:
 
   // Creating producer channel
   auto producer =
-    HiCR::channel::fixedSize::SPSC::Producer(communicationManager, tokenBuffer, coordinationBuffer, consumerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+    HiCR::channel::fixedSize::SPSC::Producer(communicationManager, 
+                                             tokenBuffer, 
+                                             coordinationBuffer, 
+                                             consumerCoordinationBuffer, 
+                                             sizeof(ELEMENT_TYPE), 
+                                             channelCapacity);
 
 Consumer
 ----------------------
@@ -65,7 +70,12 @@ A consumer might declare a channel as follows:
 
   // Creating consumer channel
   auto consumer =
-    HiCR::channel::fixedSize::SPSC::Consumer(communicationManager, globalTokenBufferSlot, coordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+    HiCR::channel::fixedSize::SPSC::Consumer(communicationManager, 
+                                             globalTokenBufferSlot, 
+                                             coordinationBuffer, 
+                                             producerCoordinationBuffer, 
+                                             sizeof(ELEMENT_TYPE), 
+                                             channelCapacity);
 
 
 Using channels

@@ -3,17 +3,7 @@
 Channels: Fixed-Size SPSC
 ==============================================================
 
-In this example, we use the :code:`Channel` frontend to exchange fixed-sized tokens between a single producer and a single consumer. The code is structured as follows:
-
-* :code:`include/producer.hpp` contains the semantics for the producer
-* :code:`include/consumer.hpp` contains the semantics for the consumer
-* :code:`source/` contains variants of the main program implemented under different backends
-
-    * :code:`lpf.cpp` corresponds to the :ref:`lpf backend` backend implementation
-    * :code:`mpi.cpp` corresponds to the :ref:`mpi backend` backend implementation
-
-
-
+In this example, we use the :code:`Channel` frontend to exchange fixed-sized tokens between a single producer and a single consumer.
 
 The size of the buffers is configurable per command line. For example:
 
@@ -21,10 +11,17 @@ The size of the buffers is configurable per command line. For example:
 
 In the example, the producer will send attempt to push three numeric tokens, :code:`42`, :code:`43` and :code:`44`, into the consumer buffer. 
 
-Each of these are done via
+Push tokens
+------------
+
+Each of these are done via:
+
 .. code-block:: C++
 
   producer.push(sendSlot);
+
+Receive tokens
+------------
 
 The consumer will first receive, print, and pop a single token, as follows:
 

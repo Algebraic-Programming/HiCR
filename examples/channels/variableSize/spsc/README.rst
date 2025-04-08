@@ -49,6 +49,8 @@ In the example, the producer will send 3 arrays of variable sizes to the consume
 
 The consumer will first receive, print, and pop a single token each time, printing its full contents, regardless of the size.
 
+Details on each single operation are the same as :ref:`Fixed-Size SPSC Channels`
+
 Below is the expected result of the application:
 
 .. code-block:: bash

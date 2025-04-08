@@ -14,11 +14,17 @@ In the example, each producer will push 3 different-size arrays into the consume
 * `{producerId, 7 * producerId, 8 * producerId}`
 
 
+Push tokens
+------------
+
 The semantics for locking channels is different from most other channel versions, as the channel is a shared resource with many producers. The push returns the success status of the operation, and to ensure success, busy waiting might be needed:
 
 .. code-block:: C++
 
   while (producer.push(sendSlot1) == false);
+
+Receive tokens
+------------
 
 For each producer, the consumer will first recieve, print, and pop all the tokens, one by one. Again, the channel is a shared resource with many producers, so the pop immediately returns the success status of the operation. To ensure success, busy waiting might be needed:
 
