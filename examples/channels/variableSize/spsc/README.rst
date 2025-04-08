@@ -3,39 +3,7 @@
 Channels: Variable-Size SPSC
 ============================
 
-In contrast to :ref:`Fixed-Size SPSC Channels`, variable-sized channels can send tokens of varying sizes. This requires an additional coordination buffer, which denotes the message sizes of messages in the channel. It makes the declaration of a channel more involved, as now two coordination buffers are needed. For the producer, the declaration of the channel is as follows:
-
-.. code-block:: C++
-
-  // Creating producer and consumer channels
-  auto producer = HiCR::channel::variableSize::SPSC::Producer(communicationManager,
-                                                              sizeInfoBuffer,
-                                                              payloadBuffer,
-                                                              sizesBuffer,
-                                                              coordinationBufferForCounts,
-                                                              coordinationBufferForPayloads,
-                                                              consumerCoordinationBufferForCounts,
-                                                              consumerCoordinationBufferForPayloads,
-                                                              PAYLOAD_CAPACITY,
-                                                              sizeof(ELEMENT_TYPE),
-                                                              channelCapacity);
-
-
-For the consumer, the declaration of the channel looks as follows:
-
-.. code-block:: C++
-
-  // Creating producer and consumer channels
-  auto consumer = HiCR::channel::variableSize::SPSC::Consumer(communicationManager,
-                                                              payloadBuffer /*payload buffer */,
-                                                              globalSizesBufferSlot,
-                                                              coordinationBufferForCounts,
-                                                              coordinationBufferForPayloads,
-                                                              producerCoordinationBufferForCounts,
-                                                              producerCoordinationBufferForPayloads,
-                                                              PAYLOAD_CAPACITY,
-                                                              channelCapacity);
-
+As outlined in :ref:`Variable-Size Channels`, variable-sized channels can send tokens of varying sizes. This requires an additional coordination buffer, which denotes the message sizes of messages in the channel.
 
 The data buffer capacity in this example is fixed to 32 bytes and the size buffer (channel capacity) is configurable per command line. For example:
 

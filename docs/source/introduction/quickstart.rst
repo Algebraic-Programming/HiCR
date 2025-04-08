@@ -366,6 +366,7 @@ Finally, the following snippet shows how to synchronously wait for a processing 
   // Suspend currently running thread until the processing unit has finished
   computeManager.await(processingUnit);
 
+.. _communication mangement:
 
 Communication Management
 ***************************************
