@@ -6,13 +6,6 @@ Contributing
 
 (To be written)
    
-.. _docker:
-
-Docker
-***********************
-
-(To be written)
-
 .. _backendDevelopment:
 
 Backend Development
