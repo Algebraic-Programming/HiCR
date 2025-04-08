@@ -10,4 +10,4 @@ The Pthreads(`Pthreads <https://man7.org/linux/man-pages/man7/pthreads.7.html>`_
 * Communication: move data via standard memcpy
 
 .. note:: 
-    Examples: :ref:`memcpy local`, :ref:`kernel execution`, :ref:`topology distributed`, :ref:`abcTasks`, :ref:`fibonacci`, :ref:`resourceList`
+    Examples: :ref:`memcpy local`, :ref:`kernel execution`, :ref:`topology distributed`, :ref:`taskingExample`

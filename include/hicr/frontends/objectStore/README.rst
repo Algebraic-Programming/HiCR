@@ -4,16 +4,16 @@
 Object Store
 ***********************
 
-Object Store is a communication mechanism complementary to the one offered by channels. Object Store is suitable for less frequent communications that involve large data exchange.
+Object Store is a communication mechanism complementary to the one offered by :ref:`channels`. Object Store is suitable for less frequent communications that involve large data exchange.
 
-Any instance can create a Data Object and publish it. This makes the object available to any other instance, provided the instance acquires the object's metadata (handle).
+Any HiCR instance can create a :code:`Data Object` and publish it. That is, it makes the object available all the other instances. An object can be retrieved by providing it's :code:`handle`: the object's metadata.
 
 To use the Object Store, the following steps are required:
 
 * Create a Data Object, out of a Memory Slot, and publish it.
-* Acquire the Data Object's metadata (handle) from the Object Store, via serialization.
+* Acquire the Data Object's handle from the Object Store, via serialization.
 * Transfer the handle to the other instance. (This can be done via e.g., a channel.)
-* The other instance can then deserialize the handle and access the Data Object via get().
+* The other instance can then deserialize the handle and access the Data Object via :code:`get()`.
 
 Creating and publishing a Data Object
 ----------------------------------------
@@ -33,7 +33,7 @@ The following snippet shows how to create a Data Object and publish it. The obje
 Data Object serialization and transfer
 -------------------------------------------
 
-The following snippet shows how to serialize the Data Object's metadata (handle) and transfer it to another instance. The handle can then be deserialized to access the Data Object.
+The following snippet shows how to serialize the Data Object's handle and transfer it to another instance. The handle can then be deserialized to access the Data Object.
 
 ..  code-block:: C++
 

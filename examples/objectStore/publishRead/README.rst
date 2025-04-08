@@ -56,7 +56,10 @@ Then it sends over channels the `handle` of each data object to the other instan
   // Fence to ensure all blocks are sent
   communicationManager.fence(CHANNEL_TAG);
 
-Then, on the reader side the `handle` is recevied and then the data object is retrieved: 
+Data Object handle deserialization
+----------------------------------------------
+
+Then, on the reader side the `handle` is recevied and then deserialized: 
 
 .. code-block:: C++
 
@@ -69,13 +72,30 @@ Then, on the reader side the `handle` is recevied and then the data object is re
   // Deserialize the handle
   auto dataObject1 = objectStore.deserialize(handle1);
 
+
+Get Data Object
+----------------
+
+The Data Object can be retrieved:
+
+.. code-block:: c++
+
   auto objSlot1 = objectStore.get(*dataObject1);
 
   // One-sided fence to ensure this block is received
   objectStore.fence(dataObject1);
 
 The same is done for the second data object.
-Finally, the data object are destroyed.
+
+Data Object destruction
+-----------------------
+
+Finally, the data object are destroyed:
+
+.. code-block:: c++
+  
+  objectStore.destroy(*dataObject1);
+
 The output should like the following:
 
 .. code-block:: bash

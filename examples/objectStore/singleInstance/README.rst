@@ -9,6 +9,9 @@ This example showcases the Object Store capabilities with a single HiCR Instance
 
     * :code:`main.cpp` corresponds to the :ref:`hwloc backend` and :ref:`pthreads backend` backends implementation
    
+Data Object creation 
+---------------------
+
 First, we create a DataObject from a Local Memory Slot:
 
 .. code-block:: C++
@@ -23,12 +26,17 @@ First, we create a DataObject from a Local Memory Slot:
   // Publish the block with arbitrary ID 1
   std::shared_ptr<HiCR::objectStore::DataObject> myBlock = objectStoreManager.createObject(myBlockSlot, 1);
 
+Publish Data Object 
+---------------------
 
 Then, we publish it. That is, make it avaialable for retrieval: 
 
 .. code-block:: C++
 
   objectStoreManager.publish(myBlock);
+
+Get Data Object  
+---------------------
 
 Then, we get it: 
 
@@ -43,7 +51,19 @@ The output should be:
 
   Block 1: R
 
-We do it again by modifying the buffer content first, and then testing out data object copying capabilities. The complete output should be:
+We do it again by modifying the buffer content first, and then testing out data object copying capabilities.
+
+Destroy Data Object
+-------------------
+
+Finally, we destroy the Data Object:
+
+.. code-block:: c++
+
+  // Delete the data object
+  objectStoreManager.destroy(*myBlock2);
+
+The complete output should be:
 
 .. code-block:: bash
 
