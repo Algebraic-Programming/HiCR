@@ -3,20 +3,20 @@
 Object Store: Single Instance
 =============================
 
-This example showcases the Object Store capabilities with a single HiCR Instance in the system. The code is structured as follows:
+This example showcases the object store capabilities with a single HiCR instance in the system. The code is structured as follows:
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
     * :code:`main.cpp` corresponds to the :ref:`hwloc backend` and :ref:`pthreads backend` backends implementation
    
-Data Object creation 
+Data object creation 
 ---------------------
 
-First, we create a DataObject from a Local Memory Slot:
+First, we create a DataObject from a local memory slot:
 
 .. code-block:: C++
 
-  // Allocate Local Memory Slot
+  // Allocate local memory slot
   auto myBlockSlot = memoryManager->allocateLocalMemorySlot(memSpace, 4096);
   
   // Initialize the block with a ASCII representation of 'R'
@@ -26,7 +26,7 @@ First, we create a DataObject from a Local Memory Slot:
   // Publish the block with arbitrary ID 1
   std::shared_ptr<HiCR::objectStore::DataObject> myBlock = objectStoreManager.createObject(myBlockSlot, 1);
 
-Publish Data Object 
+Publish data object 
 ---------------------
 
 Then, we publish it. That is, make it avaialable for retrieval: 
@@ -35,7 +35,7 @@ Then, we publish it. That is, make it avaialable for retrieval:
 
   objectStoreManager.publish(myBlock);
 
-Get Data Object  
+Get data object  
 ---------------------
 
 Then, we get it: 
@@ -53,10 +53,10 @@ The output should be:
 
 We do it again by modifying the buffer content first, and then testing out data object copying capabilities.
 
-Destroy Data Object
+Destroy data object
 -------------------
 
-Finally, we destroy the Data Object:
+Finally, we destroy the data object:
 
 .. code-block:: c++
 

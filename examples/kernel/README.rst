@@ -33,10 +33,10 @@ The first step is to discover the local compute topology, to find out the availa
   // Selecting the first compute resource found
   auto firstComputeResource = *computeResources.begin();
 
-Creating an Execution State
+Creating an execution state
 ----------------------------
 
-The HiCR Core API defines Execution Units as a abstract description of a function or kernel for any kind of device. In the :code:`pthreads.cpp` example, we use a lambda function to describe work to be performed in the CPU and create an execution unit around it:
+The HiCR Core API defines execution units as a abstract description of a function or kernel for any kind of device. In the :code:`pthreads.cpp` example, we use a lambda function to describe work to be performed in the CPU and create an execution unit around it:
 
 .. code-block:: C++
 
@@ -55,7 +55,7 @@ The execution unit can be instantiated many times into an execution state object
 
   auto executionState = computeManager.createExecutionState(executionUnit);
 
-Creating an Processing Unit
+Creating a processing unit
 ----------------------------
 
 A processing unit represents an active compute resource than can be employed to run an execution state to its completion. The example creates one such processing unit out of the first available CPU core, as found by the topology manager.

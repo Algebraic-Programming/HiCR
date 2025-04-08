@@ -3,16 +3,16 @@
 Object Store: Publish Read
 ==========================
 
-This example showcases the Object Store capabilities with a multiples HiCR Instances in the system. The code is structured as follows:
+This example showcases the object store capabilities with a multiples HiCR instances in the system. The code is structured as follows:
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`lpf.cpp` corresponds to the :ref:`lpf backend` backends implementation. As Instance Manager, the :ref:`mpi backend` one is used
+    * :code:`lpf.cpp` corresponds to the :ref:`lpf backend` backends implementation. As instance manager, the :ref:`mpi backend` one is used
 
 Data Object creation 
 --------------------
 
-First, the root instance is the owner of 2 Data Objects: 
+First, the root instance is the owner of 2 data objects: 
 
 .. code-block:: c++
   
@@ -32,7 +32,7 @@ First, the root instance is the owner of 2 Data Objects:
   // Publish the second block
   objectStore.publish(myBlock2);
 
-Data Object handle serialization and broadcast
+Data object handle serialization and broadcast
 ----------------------------------------------
 
 Then it sends over channels the `handle` of each data object to the other instances:
@@ -56,7 +56,7 @@ Then it sends over channels the `handle` of each data object to the other instan
   // Fence to ensure all blocks are sent
   communicationManager.fence(CHANNEL_TAG);
 
-Data Object handle deserialization
+Data object handle deserialization
 ----------------------------------------------
 
 Then, on the reader side the `handle` is recevied and then deserialized: 
@@ -73,10 +73,10 @@ Then, on the reader side the `handle` is recevied and then deserialized:
   auto dataObject1 = objectStore.deserialize(handle1);
 
 
-Get Data Object
+Get data object
 ----------------
 
-The Data Object can be retrieved:
+The data object can be retrieved:
 
 .. code-block:: c++
 
@@ -87,7 +87,7 @@ The Data Object can be retrieved:
 
 The same is done for the second data object.
 
-Data Object destruction
+Data object destruction
 -----------------------
 
 Finally, the data object are destroyed:

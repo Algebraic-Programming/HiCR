@@ -3,7 +3,7 @@
 Object Store
 =============
 
-These examples showcase HiCR's :code:`Object Store` frontend operations in the following settings:
+These examples showcase HiCR's :code:`object store` frontend operations in the following settings:
 
 
 .. toctree::

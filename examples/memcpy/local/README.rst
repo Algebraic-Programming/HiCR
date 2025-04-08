@@ -45,7 +45,7 @@ First, we detect the available topology using one topology manager or more than 
     at.queryTopology();
 
 
-Source Local Memory Slot allocation and initialization
+Source local memory slot allocation and initialization
 ------------------------------------------------------
 
 We create the first local memory slot on the host RAM and initialize it with a message.
@@ -61,10 +61,10 @@ We create the first local memory slot on the host RAM and initialize it with a m
     // Initializing values in memory slot 1
     sprintf((char *)input->getPointer(), "Hello, HiCR user!\n");
 
-Local Memory Slot allocations
+Local memory slot allocations
 -----------------------------
 
-We allocate *N* local memory slot on each memory space detected by the Topology Managers.
+We allocate *N* local memory slot on each memory space detected by the topology managers.
 
 .. code-block:: c++
 
@@ -78,7 +78,7 @@ We allocate *N* local memory slot on each memory space detected by the Topology 
     for (const auto &memSpace : memSpaces)
         for (int i = 0; i < N; i++) memSlots.emplace_back(m.allocateLocalMemorySlot(memSpace, BUFFER_SIZE));
 
-Local Memory Slot memcpy
+Local memory slot memcpy
 ------------------------
 
 We now iterate through all the memory slots, copying the message around. The fist is the :code:`input` previously created, and the last memory slot is again on the host RAM.

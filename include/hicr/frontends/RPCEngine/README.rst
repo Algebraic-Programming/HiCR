@@ -15,7 +15,7 @@ HiCR enables instance to launch the execution of Remote Procedure Calls (RPC) on
 Declaring RPC Targets
 -----------------------
 
-RPCs are entirely managed by the Instance Manager class. The following snippet shows how a receiver instance can declare an RPC target:
+RPCs are entirely managed by the instance manager class. The following snippet shows how a receiver instance can declare an RPC target:
 
 ..  code-block:: C++
 
@@ -74,7 +74,7 @@ Assuming only two instances were running, the result should look as follows:
 RPC Return Values
 -----------------------
 
-RPC Return values must be explicitly sent and received via methods to the Instance Manager class inside the RPC function, as follows:
+RPC Return values must be explicitly sent and received via methods to the instance manager class inside the RPC function, as follows:
 
 ..  code-block:: C++
 

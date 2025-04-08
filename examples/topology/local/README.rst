@@ -19,7 +19,7 @@ First, we use the topology manager to query the local HiCR instance's topology
 
    auto topology = topologyManager.queryTopology();
 
-Compute Resources and Memory Spaces retrieval
+Compute resources and memory spaces retrieval
 ---------------------------------------------
 
 Then, we iterate over all its devices, printing the compute resources and memory spaces we find along with their types. For the latter, also their capacity.

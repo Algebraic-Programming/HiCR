@@ -33,6 +33,8 @@ namespace HiCR::backend::boost
 
 /**
  * Implementation of the Boost compute manager.
+ * 
+ * \note The compute manager does not offer a processing unit implementation. However, the execution unit and states are fully compatible with the processing unit offered by pthreads backend 
  */
 class ComputeManager : public HiCR::ComputeManager
 {

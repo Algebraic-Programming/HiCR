@@ -18,7 +18,7 @@ Docker
 Backend Development
 ***********************
 
-To create a backend, developers implement a subset of HiCR's core abstract classes to expose the functionality provided by the underlying technology / device. For example, to create a new backend which implements the Communication Manager class, you need to create a file with a class definition as follows:
+To create a backend, developers implement a subset of HiCR's core abstract classes to expose the functionality provided by the underlying technology / device. For example, to create a new backend which implements the communication manager class, you need to create a file with a class definition as follows:
 
 ..  code-block:: C++
  :caption: myBackend.hpp

@@ -47,7 +47,7 @@ Second, we need to decide which instance is going to be the sender and which the
 
     auto senderId = instanceManager->getRootInstanceId();
 
-Memory Slot Allocation
+Memory slot allocation
 ------------------------
 
 To allocate the memory slots to use as send/receive buffer, we must first identify the local topology and find a suitable memory space from whence to allocate them.
@@ -73,7 +73,7 @@ Having found a suitable memory space, we allocate our buffers from it:
   // Allocating send/receive buffer
   auto bufferSlot = memoryManager->allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE);
 
-Memory Slot Exchange
+Memory slot exchange
 -------------------------
 
 After creating the local memory slots, we need to exchange them before they engage in remote communication. The receiver instance exchanges its receive buffer to be visible by the sender. On the other hand, the sender instance does not need to exchange its own buffer.
@@ -91,7 +91,7 @@ After creating the local memory slots, we need to exchange them before they enga
   auto receiverSlot = communicationManager->getGlobalMemorySlot(COMM_TAG, receiverId);
 
 
-Copying Data and Syncing
+Copying data and syncing
 ----------------------------
 
 To copy data, the sender runs :code:`memcpy` with the receiver's memory slot as destination. This acts as a one-sided *put* operation. 

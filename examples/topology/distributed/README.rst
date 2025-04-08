@@ -15,7 +15,7 @@ This example showcases how the abstract HiCR Core API can be used to discover co
 Local Topology Discovery
 ------------------------
 
-Each Instance discovers its own local topology
+Each instance discovers its own local topology
 
 .. code-block:: c++
 
@@ -34,7 +34,7 @@ Each Instance discovers its own local topology
 Topology RPC registration
 -------------------------
 
-Each Instance instantiates the :code:`RPCEngine` and registers and RPC to serialize and send its local topology to the caller
+Each instance instantiates the :code:`RPCEngine` and registers and RPC to serialize and send its local topology to the caller
 
 .. code-block:: c++
 
