@@ -35,7 +35,7 @@
 #include <hicr/backends/ascend/kernel.hpp>
 
 namespace HiCR::backend::ascend
-{ 
+{
 /**
  * This class represents a replicable Computation Kernel for the Ascend backend.
  * A Computation Kernel enables the kernel execution in the HiCR runtime, and in particular enables

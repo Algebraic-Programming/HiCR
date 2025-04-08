@@ -100,7 +100,7 @@ class Task
    */
   __INLINE__ Task(std::shared_ptr<HiCR::ExecutionUnit> executionUnit, taskCallbackMap_t *callbackMap = nullptr)
     : _executionUnit(std::move(executionUnit)),
-      _callbackMap(callbackMap){};
+      _callbackMap(callbackMap) {};
 
   /**
    * Sets the task's callback map. This map will be queried whenever a state transition occurs, and if the map defines a callback for it, it will be executed.

@@ -86,8 +86,7 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
     printf("    [Consumer] Recv Value: %u  (%lu/%lu) Pos: %ld\n", tokenBuffer[pos], receivedMessageCount, expectedMessageCount, pos);
 
     // Disposing of printed value
-    while (consumer.pop() == false)
-      ;
+    while (consumer.pop() == false);
   }
 
   // Synchronizing so that all actors have finished registering their global memory slots

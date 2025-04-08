@@ -62,7 +62,7 @@ class MemoryKernel final : public Kernel
       _dstOffset(destinationOffset),
       _srcOffset(sourceOffset),
       _size(size),
-      _commManager(commManager) {};
+      _commManager(commManager){};
 
   MemoryKernel() = delete;
 

@@ -89,8 +89,7 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
   char   prefix[64]  = {'\0'};
   while (poppedElems < expectedMessageCount)
   {
-    while (consumer.isEmpty())
-      ; // spin
+    while (consumer.isEmpty()); // spin
     auto res = consumer.peek();
     /**
      * An example-specific way to deduce the sender rank
@@ -99,8 +98,7 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
 
     Printer<ELEMENT_TYPE>::printBytes(prefix, payloadBufferPtr, payloadCapacity, res[0], res[1]);
 
-    while (consumer.pop() == false)
-      ;
+    while (consumer.pop() == false);
 
     poppedElems++;
   }

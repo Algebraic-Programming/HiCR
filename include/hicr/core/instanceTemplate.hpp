@@ -37,7 +37,6 @@ namespace HiCR
 */
 class InstanceManager;
 
-
 /**
  * Defines the instance template class, which represents a blueprint to create new instances.
  */

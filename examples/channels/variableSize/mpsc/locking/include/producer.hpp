@@ -81,18 +81,15 @@ void producerFc(HiCR::MemoryManager               &memoryManager,
   // Pushing first batch
   char prefix[64] = {'\0'};
   sprintf(prefix, "PRODUCER %u sent:", producerId);
-  while (producer.push(sendSlot1) == false)
-    ;
+  while (producer.push(sendSlot1) == false);
   Printer<ELEMENT_TYPE>::printBytes(prefix, sendBuffer1Ptr, sizeof(sendBuffer1), 0, sizeof(sendBuffer1));
 
   // Sending second batch
-  while (producer.push(sendSlot2) == false)
-    ;
+  while (producer.push(sendSlot2) == false);
   Printer<ELEMENT_TYPE>::printBytes(prefix, sendBuffer2Ptr, sizeof(sendBuffer2), 0, sizeof(sendBuffer2));
 
   // Sending third batch (same as first batch)
-  while (producer.push(sendSlot3) == false)
-    ;
+  while (producer.push(sendSlot3) == false);
   Printer<ELEMENT_TYPE>::printBytes(prefix, sendBuffer3Ptr, sizeof(sendBuffer3), 0, sizeof(sendBuffer3));
 
   // Synchronizing so that all actors have finished registering their global memory slots

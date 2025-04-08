@@ -98,7 +98,7 @@ class ProcessingUnit
    * \param computeResource The instance of the compute resource to instantiate, as indicated by the backend
    */
   __INLINE__ ProcessingUnit(std::shared_ptr<HiCR::ComputeResource> computeResource)
-    : _computeResource(std::move(computeResource)){};
+    : _computeResource(std::move(computeResource)) {};
 
   /**
    * Default destructor
