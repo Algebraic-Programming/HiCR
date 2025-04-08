@@ -21,8 +21,7 @@ First, we create a DataObject from a Local Memory Slot:
   myBlockData[0] = 82;
 
   // Publish the block with arbitrary ID 1
-  std::shared_ptr<HiCR::objectStore::DataObject> myBlock = 
-  std::make_shared<HiCR::objectStore::DataObject>(objectStoreManager.createObject(myBlockSlot, 1));
+  std::shared_ptr<HiCR::objectStore::DataObject> myBlock = objectStoreManager.createObject(myBlockSlot, 1);
 
 
 Then, we publish it. That is, make it avaialable for retrieval: 
@@ -44,7 +43,7 @@ The output should be:
 
   Block 1: R
 
-We do it again by modifying the buffer content first, and then testing out copying capabilities. The complete output should be:
+We do it again by modifying the buffer content first, and then testing out data object copying capabilities. The complete output should be:
 
 .. code-block:: bash
 
