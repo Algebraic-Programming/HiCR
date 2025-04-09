@@ -8,7 +8,7 @@ The nOS-V(`nOS-V <https://www.bsc.es/research-and-development/software-and-apps/
 
 * Computation: enable executing functions in nOS-V tasks
 
-API reference available: `Doxygen documentation <../../../doxygen/html/dir_282ceabac63a11425a005ab7cdef1bd5.html>`_
+API reference available: `Doxygen <../../../doxygen/html/dir_282ceabac63a11425a005ab7cdef1bd5.html>`_
 
 .. note:: 
     Examples: :ref:`kernel execution`

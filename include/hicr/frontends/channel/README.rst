@@ -129,4 +129,4 @@ A consumer might inspect an element by getting its position with the peek operat
 .. note::
   For locking channels, such as the locking MPSC, push and pop have a special semantics. Instead of returning void, they return a boolean, which returns true/false depending on the success status of the operation on the limited shared resource. In this case, a busy waiting loop with push/pop is more sensible.
 
-API reference available: `Doxygen documentation <../../../doxygen/html/dir_7e0f30d5b1a3553ca3567294ffe88b4f.html>`_
+API reference available: `Doxygen <../../../doxygen/html/dir_7e0f30d5b1a3553ca3567294ffe88b4f.html>`_

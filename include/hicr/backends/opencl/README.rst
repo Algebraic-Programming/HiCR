@@ -11,7 +11,7 @@ The OpenCL(`OpenCL <https://www.khronos.org/opencl/>`_) backend provides the fol
 * Computation: enable execution of kernels on the device
 * Communication: enable data movements from and to the device, and vice versa. Move data across devices and within the same device
 
-API reference available: `Doxygen documentation <../../../doxygen/html/dir_d552480fe1dfa7483d97bd1f4d0f7a34.html>`_
+API reference available: `Doxygen <../../../doxygen/html/dir_d552480fe1dfa7483d97bd1f4d0f7a34.html>`_
 
 .. note:: 
     Examples: :ref:`memcpy local`, :ref:`kernel execution`, :ref:`topology local` 
