@@ -19,5 +19,7 @@ The following management functionalities are implemented:
 
 API reference available: `Doxygen <../../../doxygen/html/dir_c89dd88ba1da6ee0845bdc3ad1dde092.html>`_
 
+Checkout which version is required: :ref:`software requirements`
+
 .. note:: 
     Examples: :ref:`memcpy distributed`, :ref:`ospubread`, :ref:`topology distributed`, :ref:`channels`

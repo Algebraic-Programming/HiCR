@@ -13,5 +13,7 @@ The OpenCL(`OpenCL <https://www.khronos.org/opencl/>`_) backend provides the fol
 
 API reference available: `Doxygen <../../../doxygen/html/dir_d552480fe1dfa7483d97bd1f4d0f7a34.html>`_
 
+Checkout which version is required: :ref:`software requirements`
+
 .. note:: 
     Examples: :ref:`memcpy local`, :ref:`kernel execution`, :ref:`topology local` 

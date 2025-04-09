@@ -17,7 +17,7 @@ HiCR is released in a continuous basis. The latest release is always the latest 
 
   git clone https://github.com/Algebraic-Programming/HiCR
 
-.. _configure:
+.. _software requirements:
 
 Software Requirements
 ***********************
@@ -46,7 +46,9 @@ The following libraries and tools are only necessary for certain HiCR backends:
 
 * :ref:`opencl backend` :code:`intel-opencl-icd (version >= 3.0)`
 
-* :ref:`pthreads backend` :code:`Pthreads (version any)`
+* :ref:`pthreads backend`
+
+.. _configure:
 
 Configuration
 ***********************

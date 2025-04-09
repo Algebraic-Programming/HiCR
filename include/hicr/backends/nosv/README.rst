@@ -10,5 +10,7 @@ The nOS-V(`nOS-V <https://www.bsc.es/research-and-development/software-and-apps/
 
 API reference available: `Doxygen <../../../doxygen/html/dir_282ceabac63a11425a005ab7cdef1bd5.html>`_
 
+Checkout which version is required: :ref:`software requirements`
+
 .. note:: 
     Examples: :ref:`kernel execution`

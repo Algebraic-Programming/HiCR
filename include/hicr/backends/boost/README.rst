@@ -10,5 +10,7 @@ The Boost(`Boost Context <https://www.boost.org/doc/libs/1_84_0/libs/context/doc
 
 API reference available: `Doxygen <../../../doxygen/html/dir_a5d2015667a3dea5a5670b97c01aa43f.html>`_
 
+Checkout which version is required: :ref:`software requirements`
+
 .. note:: 
     Examples: :ref:`taskingExample`

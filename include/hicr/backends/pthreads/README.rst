@@ -11,5 +11,7 @@ The Pthreads(`Pthreads <https://man7.org/linux/man-pages/man7/pthreads.7.html>`_
 
 API reference available: `Doxygen <../../../doxygen/html/dir_cb2e0100c474338ea507add51adcb71e.html>`_
 
+Checkout which version is required: :ref:`software requirements`
+
 .. note:: 
     Examples: :ref:`memcpy local`, :ref:`kernel execution`, :ref:`topology distributed`, :ref:`taskingExample`

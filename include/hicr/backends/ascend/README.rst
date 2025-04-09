@@ -13,5 +13,7 @@ The Ascend (`hiAscend <https://www.hiascend.com/>`_) backend provides the follow
 
 API reference available: `Doxygen <../../../doxygen/html/dir_42b7d869cd2bc092c1bc66b28875e517.html>`_
 
+Checkout which version is required: :ref:`software requirements`
+
 .. note:: 
     Examples: :ref:`memcpy local`, :ref:`kernel execution`, :ref:`topology local` 
