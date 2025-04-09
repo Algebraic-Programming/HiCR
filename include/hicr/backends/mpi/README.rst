@@ -13,5 +13,7 @@ The following management functionalities are implemented:
 * Memory: expose MPI memory allocation capabilities
 * Communication: enable data movements among different instances
 
+API reference available: `Doxygen documentation <../../../doxygen/html/dir_cc8d11758c8576e64833aae972b40fb8.html>`_
+
 .. note:: 
     Examples: :ref:`memcpy distributed`, :ref:`rpc engine`, :ref:`topology distributed`, :ref:`channels`

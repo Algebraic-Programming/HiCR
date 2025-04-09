@@ -11,6 +11,7 @@ The Ascend (`hiAscend <https://www.hiascend.com/>`_) backend provides the follow
 * Computation: enable execution of kernels on the device
 * Communication: enable data movements from and to the device, and vice versa. Move data across devices and within the same device  
 
+API reference available: `Doxygen documentation <../../../doxygen/html/dir_42b7d869cd2bc092c1bc66b28875e517.html>`_
 
 .. note:: 
     Examples: :ref:`memcpy local`, :ref:`kernel execution`, :ref:`topology local` 

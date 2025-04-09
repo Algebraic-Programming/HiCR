@@ -98,3 +98,4 @@ The RPC caller can then wait for the reception of the return value by specifying
     // Printing return value
     printf("Obtained return value: %d\n", returnValue);
    
+API reference available: `Doxygen documentation <../../../doxygen/html/dir_82fb27424b1984dde9c93a14a78e097d.html>`_

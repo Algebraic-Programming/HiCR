@@ -84,3 +84,5 @@ The data object can be destroyed when it is no longer needed. This can be done v
    /* Do something with the data object */
 
    objectStore.destroy(*dataObject);
+
+API reference available: `Doxygen documentation <../../../doxygen/html/dir_909ac9aaf85ef872017c2f1530af546a.html>`_

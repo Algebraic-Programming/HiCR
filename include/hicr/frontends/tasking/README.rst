@@ -129,3 +129,5 @@ Additionally, these are the following states a worker can be:
 * :code:`resuming`     : The worker is in the process of being resumed
 * :code:`terminating`  : The worker has been issued for termination (but still running)
 * :code:`terminated`   : The worker has terminated
+
+API reference available: `Doxygen documentation <../../../doxygen/html/dir_d4fe7746e52f75caaad4a2ecd41d54d7.html>`_
