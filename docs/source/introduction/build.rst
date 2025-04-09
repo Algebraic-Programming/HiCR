@@ -19,6 +19,35 @@ HiCR is released in a continuous basis. The latest release is always the latest 
 
 .. _configure:
 
+Software Requirements
+***********************
+
+Before installing HiCR, make sure the following libraries and tools are installed:
+
+* C++ compiler with suppport for C++20 (e.g., :code:`g++ >= 11.0`)
+* :code:`python (version >= 3.9)`
+* :code:`meson (version > 1.0.0)`
+* :code:`ninja (version > 1.0.0)`
+* :code:`gtest`
+
+The following libraries and tools are only necessary for certain HiCR backends:
+
+* :ref:`ascend backend` :code:`ascend-toolkit 7.0.RC1.alpha003`
+
+* :ref:`boost backend` :code:`libboost-context-dev (version >= 1.71)`
+
+* :ref:`hwloc backend` :code:`hwloc (version >= 2.1.0)`
+
+* :ref:`lpf backend` :code:`LPF (version 'noc_extension')`
+
+* :ref:`mpi backend` :code:`openmpi (version >= 5.0.2)`
+
+* :ref:`nosv backend` :code:`nos-v (version >= 3.1.0)`
+
+* :ref:`opencl backend` :code:`intel-opencl-icd (version >= 3.0)`
+
+* :ref:`pthreads backend` :code:`Pthreads (version any)`
+
 Configuration
 ***********************
 
