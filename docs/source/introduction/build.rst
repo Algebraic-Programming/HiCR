@@ -26,17 +26,17 @@ HiCR uses `meson` as build and installation system. To build HiCR, you can run t
 
 ..  code-block:: bash
 
-  # Creating and entering a build folder.
-  mkdir build 
-  cd build
+  # [Example] Configuring HiCR's meson project, with its default configuration, in the folder "build"
+  meson setup build 
 
-  # [Example] Configuring HiCR's meson project, with its default configuration
-  meson .. 
-
-  # [Example] Configuring HiCR's meson project, with all its backends, and frontends.
-  meson .. -DbuildExamples=true -DbuildTests=true -Dbackends=hwloc,boost,pthreads,mpi,lpf,ascend,nosv,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore 
+  # [Example] Configuring HiCR's meson project, with all its backends, and frontends. The build folder is "build"
+  meson setup build -DbuildExamples=true -DbuildTests=true -Dbackends=hwloc,boost,pthreads,mpi,lpf,ascend,nosv,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore 
 
   # Compiling 
+  meson compile -C build
+
+  # or
+  cd build
   ninja
 
 
@@ -50,8 +50,13 @@ To compile HiCR's tests and examples, add the corresponding flags in the configu
 ..  code-block:: bash
 
   # Configuring HiCR's meson project, along with its examples and tests
-  meson .. -DbuildExamples=true -DbuildTests=true
+  meson setup build -DbuildExamples=true -DbuildTests=true
 
+To execute them:
+
+.. code-block:: bash
+  
+  meson test -C build
 
 .. _installation:
 
@@ -63,10 +68,10 @@ By default, HiCR will install in the system's default folder, but this can be co
 ..  code-block:: bash
 
   # Configuring HiCR's meson project with a non-default install folder
-  meson .. -Dprefix=$HOME/.local
+  meson setup build -Dprefix=$HOME/.local
 
   # Installing
-  ninja install
+  meson install -C build
 
 .. _running:
 
