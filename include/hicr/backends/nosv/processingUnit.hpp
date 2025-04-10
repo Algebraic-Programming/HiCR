@@ -35,11 +35,11 @@
 
 namespace HiCR::backend::nosv
 {
-class ComputeManager;
-}
 
-namespace HiCR::backend::nosv
-{
+/**
+ * Forward declaration of the nOS-V compute manager -- avoid circular dependencies
+ */
+class ComputeManager;
 
 /**
  * This class represents an abstract definition for a Processing Unit resource in HiCR that:

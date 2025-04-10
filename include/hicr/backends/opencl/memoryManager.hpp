@@ -32,18 +32,19 @@
 
 namespace HiCR::backend::opencl
 {
-
 /**
  * Implementation of the Memory Manager for the OpenCL backend.
  *
- * It stores the memory spaces detected by OpenCL
+ * \note Supported memory spaces:
+ * - OpenCL
+ * - HWLoC
  */
 class MemoryManager final : public HiCR::MemoryManager
 {
   public:
 
   /**
-   * Constructor for the memory manager class for the opencl backend.
+   * Constructor for the memory manager class for the OpenCL backend.
    * 
    * \param[in] deviceQueueMap map of device ids and command queues
    */
@@ -51,6 +52,10 @@ class MemoryManager final : public HiCR::MemoryManager
     : HiCR::MemoryManager(),
       _deviceQueueMap(deviceQueueMap)
   {}
+
+  /**
+   * Default destructor
+  */
   ~MemoryManager() = default;
 
   private:

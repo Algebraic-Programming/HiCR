@@ -3,7 +3,11 @@
 Quickstart Guides
 ##################
 
-These guides explain how to develop a HiCR-based application using its Core API using simple examples. For using HiCR through its built-in frontends, see the :ref:`builtinFrontends` section.
+These guides explain how to develop a HiCR-based application using its Core API using simple examples. For using HiCR through its built-in frontends, see the :ref:`builtinFrontends` section. 
+
+.. note:: 
+
+  Since HiCR is an include-only C++ library, it suffices that the relevant set of header files are included. Depending on the application and its choice of backends, only a subset of all header files need to be included.
 
 .. warning::
 
@@ -14,19 +18,19 @@ Instance Management
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Examples: :ref:`rpc engine`
 
 
 Instantiation
 -----------------
 
-Since HiCR is an include-only C++ library, it suffices that the relevant set of header files are included. Depending on the application and its choice of backends, only a subset of all header files need to be included. For example, to use the MPI-based instance manager backend, we need to include:
+To use the MPI-based instance manager backend, we need to include:
 
 ..  code-block:: C++
 
-  #include <hicr/backends/mpi/L1/instanceManager.hpp>
+  #include <hicr/backends/mpi/instanceManager.hpp>
 
-To use a backend, a user needs to instantiate an L1 class implemented by the chosen backend by calling its constructor with the correct parameters (see: `C++ API Reference <../doxygen/html/annotated.html>`_). For example:
+Then, we need to instantiate a manager class implemented by the chosen backend by calling its constructor with the correct parameters (see: `C++ API Reference <../doxygen/html/annotated.html>`_). For example:
 
 ..  code-block:: C++
 
@@ -36,11 +40,11 @@ To use a backend, a user needs to instantiate an L1 class implemented by the cho
   MPI_Init(&argc, &argv);
 
   // Invoking constructor with the correct parameters 
-  HiCR::backend::mpi::L1::InstanceManager myInstanceManager(MPI_COMM_WORLD);
+  HiCR::backend::mpi::InstanceManager myInstanceManager(MPI_COMM_WORLD);
 
   /////// Application is implementation-agnostic from this point forward
   
-Creates a new MPI-based instance manager whose initial communicator is :code:`MPI_COMM_WORLD`. The instantiation of an L1 class is the only backend-specific part of a HiCR application. After all L1 classes are created, the rest of the application remains backend-agnostic. This includes all methods in L1 classes, as well as the creation/detection/manipulation of L0 objects. 
+Creates a new MPI-based instance manager whose initial communicator is :code:`MPI_COMM_WORLD`. The instantiation of a manager class is the only backend-specific part of a HiCR application. After all manager classes are created, the rest of the application remains backend-agnostic. This includes all methods in manager classes, as well as the creation/detection/manipulation of stateless and stateful objects. 
 
 Detecting instances
 --------------------------
@@ -96,11 +100,11 @@ Topology Management
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Example: :ref:`topology local`, :ref:`topology distributed`
 
-A programmer may discover the topology of the local system's devices by using backends that implement the :code:`HiCR::L1::TopologyManager` class. For example, the HWLoC backend may be used to discover the local CPU socket / core / processing unit distribution and their associated memory spaces.
+A programmer may discover the topology of the local system's devices by using backends that implement the :code:`HiCR::TopologyManager` class. For example, the HWLoC backend may be used to discover the local CPU socket / core / processing unit distribution and their associated memory spaces.
 
-Instantiating a Topology Manager
+Instantiating a topology manager
 -----------------------------------
 
 The following example shows how to instantiate the HWLoC topology manager:
@@ -108,7 +112,7 @@ The following example shows how to instantiate the HWLoC topology manager:
 ..  code-block:: C++
 
     #include <hwloc.h>
-    #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
+    #include <hicr/backends/host/hwloc/topologyManager.hpp>
 
     int main(int argc, char **argv)
     {
@@ -118,8 +122,8 @@ The following example shows how to instantiate the HWLoC topology manager:
         // Reserving memory for hwloc
         hwloc_topology_init(&topology);
 
-        // Initializing HWLoc-based host (CPU) topology manager
-        HiCR::backend::host::hwloc::L1::TopologyManager topologyManager(&topology);
+        // Initializing HWLoC topology manager
+        HiCR::backend::host::hwloc::TopologyManager topologyManager(&topology);
 
         /////// Application is implementation-agnostic from this point forward
         ...
@@ -154,7 +158,7 @@ The expected result being:
     Compute Resources: 44 Processing Unit(s)
     Memory Space:     'RAM', 93.024166 Gb
 
-It is important to point that the HWLoc backend will not discover other type of devices (e.g., GPU). For other devices, the appropriate backend should be used.
+It is important to point out that the HWLoc backend will not discover other type of devices (e.g., GPU). For other devices, the appropriate backend should be used.
 
 Serialization
 -----------------
@@ -173,19 +177,19 @@ The resulted topologies may be joined together and serialized for sharing:
   // Serialize the resulting topolog into a JSON serialized object for sending to report to, for example, a remote instance
   auto serializedTopology = topology1.serialize();
 
-Data Management
+Memory Management
 *******************************************
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Example: :ref:`memcpy local`
 
-HiCR uses Memory Slots to represent contiguous segments of memory upon which allocation, deallocation and data motion operations can be made. This abstraction enables different backends to represent allocations on devices other than the system's RAM (e.g., GPU RAM), or whose addressing do not correspond to a number (e.g., a port on a network device). 
+HiCR uses memory slots to represent contiguous segments of memory upon which allocation, deallocation and data motion operations can be made. This abstraction enables different backends to represent allocations on devices other than the system's RAM (e.g., GPU RAM), or whose addressing do not correspond to a number (e.g., a port on a network device). 
 
 Memory Allocation
 -------------------
 
-Memory slots allocated by the currently running HiCR instance are deemed *local*. The allocation is made by request to a Memory Manager by passing a memory space. The memory space must have been detected a topology manager from the same or related backend. The following example shows a simple 256-byte allocation made from the first memory space (NUMA Domain) found in the system.
+Memory slots allocated by the currently running HiCR instance are deemed *local*. The allocation is made by request to a memory manager by passing a memory space. The memory space must have been detected a topology manager from the same or related backend. The following example shows a simple 256-byte allocation made from the first memory space (NUMA Domain) found in the system.
 
 .. code-block:: C++
 
@@ -196,8 +200,8 @@ Memory slots allocated by the currently running HiCR instance are deemed *local*
   hwloc_topology_init(&topology);
 
   // Initializing HWLoC-based topology and memory managers
-  HiCR::backend::host::hwloc::L1::TopologyManager tm(&topology);
-  HiCR::backend::host::hwloc::L1::MemoryManager mm(&topology);
+  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
+  HiCR::backend::host::hwloc::MemoryManager mm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -248,6 +252,125 @@ If the backend supports it, it is also possible to register a new local memory s
 
     As much as possible, it is recommended to create local memory slots by allocation rather than by registration. Allocation gives the backend full control of the associated memory management and may result in a better overall performance.
 
+
+Memset
+-------------------
+
+Memory slots can be conviently initialized by means of the :code:`memset` operation:
+
+.. code-block:: C++
+
+  // Previous memory space detection
+  ...
+
+  auto size      = 256;
+  auto localSlot = mm.allocateLocalMemorySlot(firstMemSpace, size);
+
+  // Use memset to initialize the memory pointed by a local memory slot
+  int value = 0;
+  mm.memset(localSlot, value, size);
+
+  // Using memory slot
+  ...
+
+  // Freeing memory slot
+  mm.freeLocalMemorySlot(localSlot);
+
+Compute management
+*******************************************
+
+.. note::
+
+    See Related Example: :ref:`kernel execution`
+
+In HiCR, all computation is abstracted behind the execution unit class. This class represents functions, kernels, or operations as implemented by each individual backend. For example, a GPU backend may define its execution as a single GPU kernel or as a stream of them. CPU-based backends may define an execution unit as a simple function or co-routine. The creation of execution units is handled entirely by the compute manager class. 
+
+Creating Execution units
+--------------------------
+
+The following snippet shows the creation of an execution unit using the :code:`Pthreads` backend:
+
+.. code-block:: C++
+
+  #include <hicr/backends/host/pthreads/computeManager.hpp>
+
+  // Initializing Pthread-based (CPU) compute manager
+  HiCR::backend::host::pthreads::ComputeManager computeManager;
+
+  // Defining a function to run
+  auto myFunction = [](){ printf("Hello, World!\n"); };
+
+  // Creating execution unit
+  auto executionUnit = computeManager.createExecutionUnit(myFunction);
+
+Creating an execution state
+---------------------------
+
+While execution units represent a blueprint of a kernel or function to execution, its actual execution is represented by an execution state. Execution states represent a single (unique) execution lifetime of an execution unit. When supported, execution states may be suspended, resumed on demand. After the execution state reaches its end, it cannot be re-started. The following snippet shows how to create an execution state from an execution unit:
+
+.. code-block:: C++
+
+  // Creating execution unit
+  auto executionState = computeManager.createExecutionState(executionUnit);
+
+Creating processing units
+---------------------------
+
+processing unit are hardware element capable of running an execution state. Compute managers instantiate processing units from an compatible compute resource, as detected by a topology manager. The following snippet shows how to create and initialize a processing unit.
+
+.. code-block:: C++
+
+  #include <hicr/backends/host/pthreads/computeManager.hpp>
+  #include <hicr/backends/host/hwloc/topologyManager.hpp>
+
+  // Asking backend to check the available devices
+  auto topology = topologyManager.queryTopology();
+
+  // Getting first device found in the topology
+  auto device = topology.getDevices()[0];
+
+  // Getting first compute resource found in the device
+  auto computeResource = device->getComputeResourceList()[0];
+
+  // Creating processing unit from the compute resource
+  auto processingUnit = computeManager.createProcessingUnit(computeResource);
+
+  // Initializing the processing unit (This is necessary step. In this case, it creates the associated Pthread)
+  computeManager.initialize(processingUnit);
+
+
+Managing an execution state
+-----------------------------
+
+The following snippet shows how to use a processing unit to run an execution state:
+
+.. code-block:: C++
+
+  // Starting the execution of the execution state
+  computeManager.start(processingUnit, executionState);
+
+If the backend allows for it, the processing may be suspended (and resumed), even if it is currently running an execution state:
+
+.. code-block:: C++
+
+  // Suspending processing unit
+  computeManager.suspend(processingUnit);
+
+  // Resuming processing unit
+  computeManager.resume(processingUnit);
+
+Finally, the following snippet shows how to synchronously wait for a processing unit to be done running an execution state:
+
+.. code-block:: C++
+
+  // Suspend currently running thread until the processing unit has finished
+  computeManager.await(processingUnit);
+
+.. _communication mangement:
+
+Communication Management
+***************************************
+
 Local Data Transfer
 -------------------
 
@@ -281,201 +404,14 @@ It is also possible to specify an offset (in bytes) from the start of the memory
   const size_t offset2 = 1024;
   cm.memcpy(localSlot2, offset2, localSlot1, offset1, sizeToTransfer);
 
-Compute Management
-*******************************************
-
-.. note::
-
-    See Related Example: (TBD)
-
-In HiCR, all computation is abstracted behind the Execution Unit class. This class represents functions, kernels, or operations as implemented by each individual backend. For example, a GPU backend may define its execution as a GPU kernel or stream. CPU-based backends may define an execution unit as a simple function or co-routine. The creation of execution units is handled entirely by the Compute Manager class. 
-
-Creating Execution units
---------------------------
-
-The following snippet shows the creation of an execution unit using the :code:`Pthreads` backend:
-
-.. code-block:: C++
-
-  #include <hicr/backends/host/pthreads/L1/computeManager.hpp>
-
-  // Initializing Pthread-based (CPU) compute manager
-  HiCR::backend::host::pthreads::L1::ComputeManager computeManager;
-
-  // Defining a function to run
-  auto myFunction = [](){ printf("Hello, World!\n"); };
-
-  // Creating execution unit
-  auto executionUnit = computeManager.createExecutionUnit(myFunction);
-
-Creating an Execution State
----------------------------
-
-While execution units represent a blueprint of a kernel or function to execution, its actual execution is represented by an Execution State. Execution states represent a single (unique) execution lifetime of an execution unit. When supported, execution states may be suspended, resumed on demand. After the execution state reaches its end, it cannot be re-started. The following snippet shows how to create an execution state from an execution unit:
-
-.. code-block:: C++
-
-  // Creating execution unit
-  auto executionState = computeManager.createExecutionState(executionUnit);
-
-Creating Processing Units
----------------------------
-
-Processing Unit are hardware element capable of running an execution state. Compute managers instantiate processing units from an compatible compute resource, as detected by a topology manager. The following snippet shows how to create and initialize a processing unit.
-
-.. code-block:: C++
-
-  #include <hicr/backends/host/pthreads/L1/computeManager.hpp>
-  #include <hicr/backends/host/hwloc/L1/topologyManager.hpp>
-
-  // Asking backend to check the available devices
-  auto topology = topologyManager.queryTopology();
-
-  // Getting first device found in the topology
-  auto device = topology.getDevices()[0];
-
-  // Getting first compute resource found in the device
-  auto computeResource = device->getComputeResourceList()[0];
-
-  // Creating processing unit from the compute resource
-  auto processingUnit = computeManager.createProcessingUnit(computeResource);
-
-  // Initializing the processing unit (This is necessary step. In this case, it creates the associated Pthread)
-  processingUnit->initialize();
-
-
-Managing an Execution State
------------------------------
-
-The following snippet shows how to use a processing unit to run an execution state:
-
-.. code-block:: C++
-
-  // Starting the execution of the execution state
-  // std::move is necessary here as the execution state is a non-replicable, stateful object
-  processingUnit->start(std::move(executionState));
-
-If the backend allows for it, the processing may be suspended (and resumed), even if it is currently running an execution state:
-
-.. code-block:: C++
-
-  // Suspending processing unit
-  processingUnit->suspend();
-
-  // Resuming processing unit
-  processingUnit->resume();
-
-Finally, the following snippet shows how to synchronously wait for a processing unit to be done running an execution state:
-
-.. code-block:: C++
-
-  // Suspend currently running thread until the processing unit has finished
-  processingUnit->await();
-
-RPC Execution
-***************************************
-
-.. note::
-
-    See Related Example: (TBD)
-
-
-HiCR enables instance to launch the execution of Remote Procedure Calls (RPC) on other HiCR instances. For an RPC to execute correctly, three conditions must be satisfied:
-
-* An RPC target must be defined by the receiver. This target is a function mapped to a numerical key and no return value.
-* The receiver enters 'listen' mode, which blocks the caller thread until an RPC is received.
-* The caller must invoke the RPC target by specifying the target instance and the RPC key.
-
-Declaring RPC Targets
------------------------
-
-RPCs are entirely managed by the Instance Manager class. The following snippet shows how a receiver instance can declare an RPC target and listen for incoming RPC requests:
-
-..  code-block:: C++
-
-  #define RPC1_TARGET_ID 1
-  #define RPC2_TARGET_ID 2
-  #define RPC3_TARGET_ID 3
-
-  // Adding RPC targets by id
-  instanceManager.addRPCTarget(RPC1_TARGET_ID, []() { printf("Running RPC Target 1\n"); });
-  instanceManager.addRPCTarget(RPC2_TARGET_ID, []() { printf("Running RPC Target 2\n"); });
-  instanceManager.addRPCTarget(RPC3_TARGET_ID, []() { printf("Running RPC Target 3\n"); });
-
-  // Listening for RPC requests
-  instanceManager.listen();
-
-RPC Invokation
------------------------
-
-RPCs are executed as soon as a request is recevied from the caller instance. The following snippet shows how to send RPC requests to all other instances.
-
-..  code-block:: C++
-
-  // Querying instance list
-  auto &instances = instanceManager.getInstances();
-
-  // Getting the pointer to our own (coordinator) instance
-  auto myInstance = instanceManager.getCurrentInstance();
-
-  // Printing instance information and invoking a simple RPC if its not ourselves
-  for (const auto &instance : instances) if (instance->getId() != myInstance->getId())
-  {
-     instanceManager.launchRPC(*instance, RPC3_TARGET_ID);
-     instanceManager.launchRPC(*instance, RPC2_TARGET_ID);
-     instanceManager.launchRPC(*instance, RPC1_TARGET_ID);
-  }
-
-Assuming only two instances were running, the result should look as follows:
-
-..  code-block:: bash
-
-  Running RPC Target 3
-  Running RPC Target 2
-  Running RPC Target 1
-
-.. note::
-
-    HiCR guarantees that RPCs request sent from instance A to instance B will execute in the order in which they were sent. No other ordering is guaranteed. 
-
-RPC Return Values
------------------------
-
-RPC Return values must be explicitly sent and received via methods to the Instance Manager class inside the RPC function, as follows:
-
-..  code-block:: C++
-
-  // Adding RPC targets by id
-  instanceManager.addRPCTarget(RPC1_TARGET_ID, [&]()
-  {
-    int returnValue = 42;
-    printf("Returning value: %d\n", returnValue);
-    instanceManager.submitReturnValue(&returnValue, sizeof(returnValue));
-  });
-
-The RPC caller can then wait for the reception of the return value by specifying the RPC reciever instance, as follows:
-
-..  code-block:: C++
-
-    instanceManager.launchRPC(*someInstance, RPC1_TARGET_ID);
-
-    // Getting return value
-    auto returnValue = *(int *)instanceManager.getReturnValue(*someInstance);
-
-    // Printing return value
-    printf("Obtained return value: %d\n", returnValue);
-
-Remote Communication
-***************************************
-
-Exchanging Memory Slots
+Exchanging memory slots
 -------------------------
 
 .. note::
 
-    See Related Example: (TBD)
+    See Related Example: :ref:`memcpy local`, :ref:`memcpy distributed`
 
-Remote communication is achieved through a backend's communication manager's :code:`memcpy` operation, where at least one of the source / destination arguments is a Remote Memory Slot. Unlike local memory slots, remote memory slots are not directly allocated / registers. Instead, they are exchanged between two or more intervining instances through a collective operation. 
+Remote communication is achieved through a backend's communication manager's :code:`memcpy` operation, where at least one of the source / destination arguments is a remote memory slot. Unlike local memory slots, remote memory slots are not directly allocated / registers. Instead, they are exchanged between two or more intervining instances through a collective operation. 
 
 The arguments for the exchange are local memory slots which, after the operation, become visible and accessible by the other instances. The following code snippet illustrates such an exchange:
 

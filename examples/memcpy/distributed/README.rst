@@ -1,11 +1,12 @@
-.. _Memcpy Dist:
+.. _memcpy distributed:
 
-Memcpy (Distributed)
+Memcpy: Distributed
 =======================
 
-In this example, we test HiCR's :code:`memcpy` operation to communicate a simple message back and forth (ping / pong) between two HiCR instances as detected by the :code:`HiCR::L1::InstanceManager` (See: :numref:`remoteMemcpyFig`).
+In this example, we test HiCR's :code:`memcpy` operation to communicate a simple message back and forth (ping / pong) between two HiCR instances as detected by the :code:`HiCR::InstanceManager` (See: :numref:`remoteMemcpyFig`).
 
 .. _remoteMemcpyFig:
+
 .. figure:: remoteMemcpy.png
    :alt: Remote Memcpy Example
    :align: center
@@ -17,8 +18,8 @@ The code is structured as follows:
 * :code:`include/remoteMemcpy.hpp` contains the application's backend-independent semantics
 * :code:`source/` contains variants of the main program implemented under different backends
 
-    * :code:`lpf.cpp` corresponds to the :ref:`lpf` backend implementation
-    * :code:`mpi.cpp` corresponds to the :ref:`mpi` backend implementation
+    * :code:`lpf.cpp` corresponds to the :ref:`lpf backend` backend implementation
+    * :code:`mpi.cpp` corresponds to the :ref:`mpi backend` backend implementation
 
 This example expects to be launched with exactly two HiCR instances. For example, by using the following commands:
 
@@ -27,7 +28,7 @@ This example expects to be launched with exactly two HiCR instances. For example
     mpirun -n 2 examples/memcpy/distributed/mpi
     lpfrun -n 2 -engine ibverbs examples/memcpy/distributed/lpf
 
-Both the :code:`remoteMemcpy` function receives a full set of :code:`HiCR::L1` managers, used to perform the following steps:
+Both the :code:`remoteMemcpy` function receives a full set of :code:`HiCR` managers, used to perform the following steps:
 
 
 Identifying HiCR instances
@@ -46,7 +47,7 @@ Second, we need to decide which instance is going to be the sender and which the
 
     auto senderId = instanceManager->getRootInstanceId();
 
-Memory Slot Allocation
+Memory slot allocation
 ------------------------
 
 To allocate the memory slots to use as send/receive buffer, we must first identify the local topology and find a suitable memory space from whence to allocate them.
@@ -72,7 +73,7 @@ Having found a suitable memory space, we allocate our buffers from it:
   // Allocating send/receive buffer
   auto bufferSlot = memoryManager->allocateLocalMemorySlot(firstMemSpace, BUFFER_SIZE);
 
-Memory Slot Exchange
+Memory slot exchange
 -------------------------
 
 After creating the local memory slots, we need to exchange them before they engage in remote communication. The receiver instance exchanges its receive buffer to be visible by the sender. On the other hand, the sender instance does not need to exchange its own buffer.
@@ -90,7 +91,7 @@ After creating the local memory slots, we need to exchange them before they enga
   auto receiverSlot = communicationManager->getGlobalMemorySlot(COMM_TAG, receiverId);
 
 
-Copying Data and Syncing
+Copying data and syncing
 ----------------------------
 
 To copy data, the sender runs :code:`memcpy` with the receiver's memory slot as destination. This acts as a one-sided *put* operation. 

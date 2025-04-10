@@ -43,7 +43,7 @@ void RPCTestFc(HiCR::CommunicationManager            &cm,
   rpcEngine.addRPCTarget("Test RPC", rpcExecutionUnit);
 
   // If I'm instance zero, I request an RPC.
-  if (currentInstance->getId() == 0)
+  if (currentInstance->isRootInstance())
   {
     for (auto &instance : im.getInstances())
       if (instance != currentInstance) rpcEngine.requestRPC(*instance, "Test RPC");

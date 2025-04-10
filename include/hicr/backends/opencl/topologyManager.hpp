@@ -32,7 +32,6 @@
 
 namespace HiCR::backend::opencl
 {
-
 /**
  * Implementation of the topology manager for the discovery and use of OpenCL devices
  */

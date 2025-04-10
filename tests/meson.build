@@ -4,7 +4,7 @@
 hicrMockDep = declare_dependency(
   dependencies: [gmock_dep],
   include_directories: ([ 'include' ])
-  )
+)
 
 HiCRTestBuildDependencies = [ hicrBuildDep, hicrTestDep ]
 

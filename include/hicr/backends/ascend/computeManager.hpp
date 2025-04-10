@@ -40,7 +40,7 @@ namespace HiCR::backend::ascend
 {
 
 /**
- * Implementation of the HiCR ascend backend compute manager.
+ * Implementation of the HiCR Ascend backend compute manager.
  *
  * It stores the processing units detected by Ascend Computing Language.
  */
@@ -49,7 +49,7 @@ class ComputeManager final : public HiCR::ComputeManager
   public:
 
   /**
-   * Constructor for the Compute Manager class for the ascend backend
+   * Constructor for the Compute Manager class for the Ascend backend
    */
   ComputeManager()
     : HiCR::ComputeManager(){};
@@ -69,7 +69,7 @@ class ComputeManager final : public HiCR::ComputeManager
   }
 
   /**
-   * Creates an execution state using the device context information and the exection unit to run on the ascend
+   * Creates an execution state using the device context information and the exection unit to run on the Ascend
    *
    * \param[in] executionUnit execution Unit to launch on the ascend
    * \param[in] argument argument (not required by ascend)
@@ -123,14 +123,14 @@ class ComputeManager final : public HiCR::ComputeManager
    * 
    * @param processingUnit the processing unit to operate on
    */
-  __INLINE__ void suspendImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Suspend functionality not supported by ascend backend"); }
+  __INLINE__ void suspendImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Suspend functionality not supported by Ascend backend"); }
 
   /**
    * Internal implementation of resumeImpl
    * 
    * @param processingUnit the processing unit to operate on
    */
-  __INLINE__ void resumeImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Resume functionality not supported by ascend backend"); }
+  __INLINE__ void resumeImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Resume functionality not supported by Ascend backend"); }
 
   /**
    * Internal implementation of terminateImpl
@@ -152,6 +152,13 @@ class ComputeManager final : public HiCR::ComputeManager
 
   private:
 
+  /**
+   * Return a pointer to an ascend processing unit.
+   * 
+   * \param processingUnit HiCR processing unit
+   * 
+   * \return ascend processung unit
+  */
   [[nodiscard]] __INLINE__ ascend::ProcessingUnit *getAscendPointer(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit)
   {
     // We can only handle processing units of Ascend type. Make sure we got the correct one
