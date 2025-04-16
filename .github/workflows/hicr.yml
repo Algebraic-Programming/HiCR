@@ -20,7 +20,7 @@ jobs:
     - name: Installing meson, ninja and gcovr
       run: python3 -m pip install meson ninja gcovr
     - name: Install UCX 
-    - run:  |
+      run:  |
             wget https://github.com/openucx/ucx/releases/download/v1.15.0/ucx-1.15.0.tar.gz 
             tar -zxf ucx-1.15.0.tar.gz 
             cd ucx-1.15.0 
@@ -32,7 +32,7 @@ jobs:
             rm -rf /ucx-1.15.0.tar.gz
             rm -rf /ucx-1.15.0
     - name: Install LPF 
-    - run:  |
+      run:  |
             git clone -b noc_extension --single-branch --depth 1 https://github.com/Algebraic-Programming/LPF.git $HOME/lpf
             cd $HOME/lpf
             git checkout noc_extension
