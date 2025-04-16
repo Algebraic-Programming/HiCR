@@ -35,6 +35,7 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Install Dependencies
         run: |
+            curl -fsSL https://pyenv.run | bash
             pyenv install 3.8.2 && pyenv global 3.8.2
             pip install --upgrade pip
             pip install sphinx
