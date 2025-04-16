@@ -54,18 +54,18 @@ jobs:
             pip install sphinx-book-theme
             pip install 'clang-format==18.1.0'
 
-            apt update
-            apt install -y build-essential
-            apt install -y doxygen
-            apt install -y graphviz
-            apt install -y fonts-freefont-ttf
-            apt install -y texlive
-            apt install -y texlive-latex-extra
-            apt install -y texlive-fonts-extra
-            apt install -y libffi-dev
-            apt install -y ghostscript
-            apt install -y texlive-extra-utils
-            apt install -y texlive-font-utils
+            sudo apt update
+            sudo apt install -y build-essential
+            sudo apt install -y doxygen
+            sudo apt install -y graphviz
+            sudo apt install -y fonts-freefont-ttf
+            sudo apt install -y texlive
+            sudo apt install -y texlive-latex-extra
+            sudo apt install -y texlive-fonts-extra
+            sudo apt install -y libffi-dev
+            sudo apt install -y ghostscript
+            sudo apt install -y texlive-extra-utils
+            sudo apt install -y texlive-font-utils
       - name: Build documentation
         run: |
           echo "Building code documentation..."
