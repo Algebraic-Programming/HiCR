@@ -16,7 +16,7 @@ jobs:
     - name: Updating Apt
       run: sudo apt update
     - name: Installing apt packages
-      run: sudo apt install build-essential git libgtest-dev libhwloc-dev openssh-client libopenblas-dev liblapack-dev liblapacke-dev libfabric-dev libibverbs-dev infiniband-diags libboost-context-dev curl jq  python3-pip python3-venv pkgconf wget sudo
+      run: sudo apt install build-essential git libgtest-dev libhwloc-dev openssh-client libopenblas-dev liblapack-dev liblapacke-dev libfabric-dev libibverbs-dev infiniband-diags libboost-context-dev curl jq  python3-pip python3-venv pkgconf wget sudo libopenmpi-dev
     - name: Installing meson, ninja and gcovr
       run: python3 -m pip install meson ninja gcovr
     - name: Updating submodules 
