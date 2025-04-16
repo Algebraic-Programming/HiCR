@@ -32,15 +32,14 @@ namespace HiCR::backend::pthreads
 {
 
 /**
- * This class represents the execution state of a resumable function for the sequential (and shared memory) backends.
- * It uses a coroutine object to enable suspend/resume functionality.
+ * This class represents the execution state of a resumable function for the pthreads backends.
  */
 class ExecutionState final : public HiCR::ExecutionState
 {
   public:
 
   /**
-   * Creates a new suspendable execution state (coroutine) for execution based on a sequential execution unit
+   * Creates a new execution state to be executed in a pthread
    * \param[in] executionUnit The replicable stateless execution unit to instantiate
    * \param[in] argument Argument (closure) to pass to the function to be ran
    */
@@ -75,9 +74,20 @@ class ExecutionState final : public HiCR::ExecutionState
 
   private:
 
+  /**
+   * Function to execute
+  */
   ExecutionUnit::pthreadFc_t _fc;
-  void *const                _argument;
-  bool                       _hasFinished = false;
+
+  /**
+   * Function arguments
+  */
+  void *const _argument;
+
+  /**
+   * Boolean to check whether the function has finished the execution
+  */
+  bool _hasFinished = false;
 };
 
 } // namespace HiCR::backend::pthreads

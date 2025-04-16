@@ -44,7 +44,7 @@ hicrBuildDep = declare_dependency(
 
 # Define HiCR standard test configuration and create a new dependency
 
-if meson.is_subproject() or get_option('buildTests')
+if meson.is_subproject() == false and get_option('buildTests')
   gtest_dep = dependency('gtest', main: true, required: true)
   gmock_dep = dependency('gmock', main: true, required: true)
 

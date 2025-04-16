@@ -1,12 +1,12 @@
 option('backends', type : 'array', choices : ['hwloc', 'boost', 'pthreads', 'mpi', 'lpf', 'ascend', 'nosv', 'opencl'], 
        description : 'Specifies which builtin backends to enable for compilation with HiCR',
        value: [ 'hwloc', 'pthreads', 'boost' ]
-       )
+)
 
 option('frontends', type : 'array', choices : [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ],
        description : 'Specifies which builtin frontends to enable for compilation with HiCR',
        value: [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ]
-       )
+)
              
       
 option('buildTests', type : 'boolean', value : false,
@@ -19,7 +19,7 @@ option('buildExamples', type : 'boolean', value : false,
 
 option('exceptionModel', type : 'combo', choices : [ 'stdexception', 'abort' ], value : 'stdexception',
        description : 'Specifies how exceptions are implemented in HiCR'
-       )
+)
       
 option('compileWarningsAsErrors', type : 'boolean', value : false,
        description: 'Indicates whether a compilation warning should result in a fatal error. This is useful for CI testing but may result in inconveniences for normal users, hence it should be false by default'

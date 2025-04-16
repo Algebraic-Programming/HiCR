@@ -16,7 +16,7 @@
 
 /**
  * @file device.hpp
- * @brief This file implements the Device class for the  HWLoc-based backend
+ * @brief This file implements the Device class for the hwloc backend
  * @author S. M. Martin
  * @date 18/12/2023
  */
@@ -32,7 +32,7 @@ namespace HiCR::backend::hwloc
 {
 
 /**
- * This class represents a device, as visible by the shared memory backend. That is, an assumed SMP processor plus a shared RAM that all process have access to.
+ * This class represents a device, as visible by the hwloc backend. That is, an assumed SMP processor plus a shared RAM that all process have access to.
  */
 class Device final : public HiCR::Device
 {
@@ -44,7 +44,7 @@ class Device final : public HiCR::Device
   using NUMADomainID_t = unsigned int;
 
   /**
-   * Constructor for the device class of the sequential backend
+   * Constructor for the device class of the HWLoC backend
    *
    * @param[in] NUMADomainId The OS-given NUMA domain identifier represented by this class
    * @param[in] computeResources The compute resources (cores or hyperthreads) detected in this device (CPU)
@@ -107,7 +107,7 @@ class Device final : public HiCR::Device
     _NUMADomainId = input[key].get<NUMADomainID_t>();
 
     // Iterating over the compute resource list
-    for (const auto &computeResource : input["Compute Resources"])
+    for (const auto &computeResource : input[_HICR_DEVICE_COMPUTE_RESOURCES_KEY_])
     {
       // Getting device type
       const auto type = computeResource["Type"].get<std::string>();
@@ -123,7 +123,7 @@ class Device final : public HiCR::Device
     }
 
     // Iterating over the memory space list
-    for (const auto &memorySpace : input["Memory Spaces"])
+    for (const auto &memorySpace : input[_HICR_DEVICE_MEMORY_SPACES_KEY_])
     {
       // Getting device type
       const auto type = memorySpace["Type"].get<std::string>();

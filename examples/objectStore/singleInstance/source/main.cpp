@@ -115,7 +115,6 @@ int main(int argc, char **argv)
 
   // Delete the blocks
   objectStoreManager.destroy(*myBlock2);
-  // objectStoreManager.destroy(*customBlock2Ptr);
 
   hwloc_topology_destroy(topology);
 

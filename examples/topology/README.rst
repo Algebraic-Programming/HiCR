@@ -1,4 +1,14 @@
-Topology Examples
-===================
+.. _topologyExample:
 
-These are HiCR-based examples showing how the topology of an instance can be detected and exchanged among instances
+Topology
+=============
+
+These examples showcase HiCR's :code:`Topology` management capabilities:
+
+
+.. toctree::
+    :maxdepth: 4
+
+    local/README
+    distributed/README
+  

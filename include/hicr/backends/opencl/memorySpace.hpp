@@ -32,7 +32,7 @@ namespace HiCR::backend::opencl
 {
 
 /**
- * Forward declaration of the opencl device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the OpenCL device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class Device;
 
@@ -46,7 +46,7 @@ class MemorySpace final : public HiCR::MemorySpace
   /**
    * Constructor for the compute resource class of the OpenCL backend
    *
-   * \param device The opencl device in which this memory space was detected
+   * \param device The OpenCL device in which this memory space was detected
    * \param type The memory space type
    * \param size The size of this memory space
    */
@@ -76,9 +76,9 @@ class MemorySpace final : public HiCR::MemorySpace
   __INLINE__ std::string getType() const override { return _type; }
 
   /**
-   * Function to get the opencl device associated to this memory space
+   * Function to get the OpenCL device associated to this memory space
    *
-   * @return The opencl device corresponding to this memory space
+   * @return The OpenCL device corresponding to this memory space
    */
   __INLINE__ const std::weak_ptr<const opencl::Device> getDevice() const { return _device; }
 

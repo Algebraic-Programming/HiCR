@@ -16,7 +16,7 @@
 
 /**
  * @file executionState.hpp
- * @brief Provides a base definition for a HiCR ExecutionState class
+ * @brief Provides a base definition for a HiCR Execution State class
  * @author S. M. Martin
  * @date 13/10/2023
  */
@@ -70,7 +70,7 @@ class ExecutionState
   };
 
   /**
-   * This function starts a newly initialized execution states or resumes a suspended one
+   * Starts a newly initialized execution states or resumes a suspended one
    */
   __INLINE__ void resume()
   {
@@ -85,7 +85,7 @@ class ExecutionState
   }
 
   /**
-   * This function suspends the execution of a running execution state
+   * Suspends the execution of a running execution state
    */
   __INLINE__ void suspend()
   {
@@ -99,7 +99,7 @@ class ExecutionState
   }
 
   /**
-   * This function actively checks for the finalization of an initialized execution state
+   * Actively check for the finalization of an initialized execution state
    *
    * \return True, if the execution has finalized; False, otherwise.
    */
@@ -116,7 +116,7 @@ class ExecutionState
   }
 
   /**
-   * This function returns the current state of the execution
+   * Returns the current state of the execution
    *
    * \return The current execution state
    */

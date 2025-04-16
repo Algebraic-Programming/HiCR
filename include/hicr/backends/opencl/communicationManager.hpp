@@ -42,7 +42,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
   public:
 
   /**
-   * Constructor for the opencl communication manager class for the opencl backend.
+   * Constructor for the opencl communication manager class for the OpenCL backend.
    * 
    * \param[in] deviceQueueMap map of device ids and command queues
    */
@@ -99,10 +99,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
 
   /**
    * This memcpy implementation does support asynchronous inter-device communication, meaning the fence should be called when date are
-   * moved among different opencl devices.
-   *
-   * Restrictions:
-   * - Only memory copying between devices in the same thread or between different threads in the same process is supported. Memory copying between Devices in different processes is not supported.
+   * moved among different OpenCL devices.
    *
    * \param[in] destination destination memory slot
    * \param[in] dst_offset destination offset

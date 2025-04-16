@@ -16,7 +16,7 @@
 
 /**
  * @file processingUnit.hpp
- * @brief Implements the processing unit class for the ascend backend.
+ * @brief Implements the processing unit class for the Ascend backend.
  * @author L. Terracciano & S. M. Martin
  * @date 1/11/2023
  */
@@ -34,7 +34,7 @@ namespace HiCR::backend::ascend
 {
 
 /**
- * Forward declaration of the ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the Ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class ComputeManager;
 } // namespace HiCR::backend::ascend
@@ -43,7 +43,7 @@ namespace HiCR::backend::ascend
 {
 
 /**
- * Implementation of a processing unit (a device capable of executing kernels) for the ascend backend
+ * Implementation of a processing unit (a device capable of executing kernels) for the Ascend backend
  */
 class ProcessingUnit final : public HiCR::ProcessingUnit
 {
@@ -75,8 +75,8 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   };
 
   /**
- * Destructor. Destroys the stream
-*/
+   * Destructor. Destroys the stream
+  */
   ~ProcessingUnit()
   {
     // destroy the stream
@@ -131,6 +131,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     // select the curent Ascend card before starting the execution state
     c->getDevice().lock()->select();
 
+    // set the stream in the execution state
     _executionState->setStream(_stream);
 
     // Staring execution state

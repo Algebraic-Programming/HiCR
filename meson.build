@@ -2,7 +2,8 @@ project('HiCR', [ 'cpp', 'c'],
   default_options : [
   'cpp_std=c++20',
   'buildtype=release',
-  ]
+  ],
+  version: '1.0.0'
 )
 
 ####### Getting selected built-in backends
@@ -29,7 +30,7 @@ endforeach
 
 subdir('include/hicr/core')
 
-####### Build test / example targets only if HiCR is being loaded as a subproject
+####### Build test / example targets only if HiCR is not being loaded as a subproject
 
 if meson.is_subproject() == false
 

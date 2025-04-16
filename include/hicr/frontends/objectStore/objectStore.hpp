@@ -52,7 +52,7 @@ using compoundId_t = uint64_t;
  * This is the front-end, managing entity for the object store.
  * Multiple instances of this class can be created, one for each tag.
  *
- * It has a role similar to core HiCR's L1 Manager classes, hence it
+ * It has a role similar to core HiCR's Manager classes, hence it
  * uses these managers as dependencies. The ObjectStore is responsible
  * for the management of data-objects/blocks.
  *

@@ -16,7 +16,7 @@
 
 /**
  * @file computeManager.hpp
- * @brief This file implements the pthread-based compute manager for host (CPU) backends
+ * @brief This file implements the compute manager for Pthreads backend
  * @authors S. M. Martin, O. Korakitis
  * @date 10/12/2023
  */
@@ -39,21 +39,21 @@ namespace HiCR::backend::pthreads
 using pthreadFc_t = std::function<void(void *)>;
 
 /**
- * Implementation of the pthread-based HiCR Shared Memory backend's compute manager.
+ * Implementation of the pthreads compute manager.
  */
 class ComputeManager : public HiCR::ComputeManager
 {
   public:
 
   /**
-   * The constructor is employed to reserve memory required for hwloc
+   * Compute Manager constructor
    */
   ComputeManager()
     : HiCR::ComputeManager()
   {}
 
   /**
-   * The constructor is employed to free memory required for hwloc
+   * Default destructor
    */
   ~ComputeManager() override = default;
 

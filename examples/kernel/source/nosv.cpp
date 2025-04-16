@@ -23,11 +23,8 @@
 #include <hicr/backends/hwloc/memoryManager.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 
+#include "./include/common.hpp"
 #include "./include/kernel.hpp"
-
-#define A 128
-#define B 64
-#define C 256
 
 /**
  * Populate a matrix contained in a memory slot with the desired value converted to aclFloat16
@@ -43,6 +40,22 @@ void populateMemorySlot(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot, int r
 }
 
 /**
+ * Print the matrix contained in a local memory slot
+ * 
+ * \param[in] memSlot memory slot containing the matrix
+ * \param[in] rows matrix rows
+ * \param[in] columns matrix columns
+*/
+void printMatrix(const std::shared_ptr<HiCR::LocalMemorySlot> &memSlot, uint32_t rows, uint32_t columns)
+{
+  for (uint32_t i = 0; i < rows; i++)
+  {
+    for (uint32_t j = 0; j < columns; j++) { printf("%.1f ", ((const double *)memSlot->getPointer())[i * columns + j]); }
+    printf("\n");
+  }
+}
+
+/**
  * Wrapper for cblas_dgemm operation
  * 
  * @param[in] input1 first matrix
@@ -53,7 +66,7 @@ void populateMemorySlot(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot, int r
 */
 __INLINE__ void gemm(double *input1, double *input2, double *input3, double *alpha, double *beta)
 {
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, A, C, B, *alpha, input1, B, input2, C, *beta, input3, C);
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, *alpha, input1, K, input2, N, *beta, input3, N);
 }
 
 int main(int argc, char **argv)
@@ -88,16 +101,16 @@ int main(int argc, char **argv)
   HiCR::backend::nosv::ComputeManager computeManager;
 
   /////////  Allocate input and output buffers on both host and the device
-  // First matrix (A)
-  auto input1Size = A * B * sizeof(double);
+  // First matrix [M, K]
+  auto input1Size = M * K * sizeof(double);
   auto input1Host = memoryManager.allocateLocalMemorySlot(hostMemSpace, input1Size);
 
-  // Second matrix (B)
-  auto input2Size = B * C * sizeof(double);
+  // Second matrix [K, N]
+  auto input2Size = K * N * sizeof(double);
   auto input2Host = memoryManager.allocateLocalMemorySlot(hostMemSpace, input2Size);
 
-  // Third matrix (C)
-  auto input3Size = A * C * sizeof(double);
+  // Third matrix [M, N]
+  auto input3Size = M * N * sizeof(double);
   auto input3Host = memoryManager.allocateLocalMemorySlot(hostMemSpace, input3Size);
 
   // Alpha and beta coefficient
@@ -105,13 +118,13 @@ int main(int argc, char **argv)
   auto alphaHost     = memoryManager.allocateLocalMemorySlot(hostMemSpace, sizeAlphaBeta);
   auto betaHost      = memoryManager.allocateLocalMemorySlot(hostMemSpace, sizeAlphaBeta);
 
-  // Output matrix. Stores (alpha * A * B) + (beta * C)
+  // Output matrix. Stores (alpha * M * N) + (beta * K)
   auto outputHost = memoryManager.allocateLocalMemorySlot(hostMemSpace, input3Size);
 
   ///////// Fill matrix with data
-  populateMemorySlot(input1Host, A, B, 1.0);
-  populateMemorySlot(input2Host, B, C, 1.0);
-  populateMemorySlot(input3Host, A, C, 1.0);
+  populateMemorySlot(input1Host, M, K, 1.0);
+  populateMemorySlot(input2Host, K, N, 1.0);
+  populateMemorySlot(input3Host, M, N, 1.0);
   ((double *)alphaHost->getPointer())[0] = 1.0;
   ((double *)betaHost->getPointer())[0]  = 1.0;
 
@@ -124,13 +137,20 @@ int main(int argc, char **argv)
          (double *)betaHost->getPointer());
   });
 
+  // Print input matrices
+  printf("First matrix [M, K]\n");
+  printMatrix(input1Host, M, K);
+  printf("\nSecond matrix [K, N]\n");
+  printMatrix(input2Host, K, N);
+  printf("\nThird matrix [M, N]\n");
+  printMatrix(input3Host, M, N);
+
   ///////// Execute the kernel through HiCR
   executeKernel(computeManager, hostComputeResource, executionUnit);
 
   // Print the result
-  printf("First vector contains: %.1f\n", ((const double *)input1Host->getPointer())[0]);
-  printf("Second vector contains : %.1f\n", ((const double *)input2Host->getPointer())[0]);
-  printf("Third vector contains : %.1f\n", ((const double *)input3Host->getPointer())[0]);
+  printf("\nOutput matrix [M, N]\n");
+  printMatrix(input3Host, M, N);
 
   // Free memory slots
   memoryManager.freeLocalMemorySlot(input1Host);

@@ -28,7 +28,6 @@
 
 namespace HiCR::backend::opencl
 {
-
 /**
  * This class represents an abstract definition for a Local Memory Slot resource for the OpenCL backend
  */

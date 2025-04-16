@@ -81,7 +81,7 @@ TEST(Worker, LifeCycle)
   // Instantiating Pthread-based host (CPU) compute manager
   HiCR::backend::pthreads::ComputeManager c;
 
-  // Creating taskr worker
+  // Creating tasking worker
   HiCR::tasking::Worker w(&c, &c, []() { return (HiCR::tasking::Task *)NULL; });
 
   // Worker state should in an uninitialized state first

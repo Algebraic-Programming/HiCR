@@ -15,7 +15,7 @@
  */
 
 /**
- * @file memoryManager.hpp
+ * @file communicationManager.hpp
  * @brief This file implements the communication manager class for the MPI backend
  * @author S. M. Martin
  * @date 19/12/2023

@@ -1,8 +1,16 @@
-.. _boost:
+.. _boost backend:
 
 ***********************
 Boost
 ***********************
 
-(To be written)
-   
+The Boost(`Boost Context <https://www.boost.org/doc/libs/1_84_0/libs/context/doc/html/index.html>`_) backend provides means to execute coroutines using Boost. The following management functionalities are implemented:
+
+* Computation: enable creation of suspendable coroutines 
+
+API reference available: `Doxygen <../../../doxygen/html/dir_a5d2015667a3dea5a5670b97c01aa43f.html>`_
+
+Checkout which version is required: :ref:`software requirements`
+
+.. note:: 
+    Examples: :ref:`taskingExample`

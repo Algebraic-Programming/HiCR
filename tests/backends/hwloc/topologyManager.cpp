@@ -16,7 +16,7 @@
 
 /**
  * @file topologyManager.cpp
- * @brief Unit tests for the HWLoc-based memory manager backend
+ * @brief Unit tests for the HWLoc-based topology manager backend
  * @author S. M. Martin
  * @date 16/8/2024
  */

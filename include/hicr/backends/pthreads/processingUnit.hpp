@@ -16,7 +16,7 @@
 
 /**
  * @file processingUnit.hpp
- * @brief Implements the processing unit class for the pthread-based host (CPU) backend.
+ * @brief Implements the processing unit class for the Pthreads backend.
  * @author S. M. Martin
  * @date 14/8/2023
  */
@@ -63,9 +63,9 @@ namespace HiCR::backend::pthreads
 class ProcessingUnit;
 
 /**
- * Implementation of a kernel-level thread as processing unit for the pthread-based host (CPU) backend.
+ * Implementation of a kernel-level thread as processing unit for the pthreads backend.
  *
- * This implementation uses PThreads as backend for the creation and management of OS threads.
+ * This implementation uses Pthreads as backend for the creation and management of OS threads.
  */
 class ProcessingUnit final : public HiCR::ProcessingUnit
 {
@@ -252,7 +252,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
   __INLINE__ void terminate()
   {
-    // Nothing to do actiely, just wait for the thread to finalize in its own accord
+    // Nothing to do actively, just wait for the thread to finalize in its own accord
   }
 
   __INLINE__ void await()
