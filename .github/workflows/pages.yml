@@ -1,0 +1,81 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["master"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Install Dependencies
+        run: |
+            pip install --upgrade pip
+            pip install sphinx
+            pip install sphinx_rtd_theme
+            pip install sphinxcontrib-bibtex
+            pip install doxysphinx
+            pip install sphinxcontrib.needs
+            pip install sphinxcontrib.plantuml
+            pip install autoapi
+            pip install sphinx-autoapi
+            pip install myst_parser
+            pip install sphinx_copybutton
+            pip install sphinxcontrib.doxylink
+            pip install sphinx_design
+            pip install Sphinx-Substitution-Extensions
+            pip install sphinx_toolbox
+            pip install sphinx-theme
+            pip install sphinx-book-theme
+            pip install 'clang-format==18.1.0'
+
+            apt update
+            apt install -y build-essential
+            apt install -y doxygen
+            apt install -y graphviz
+            apt install -y fonts-freefont-ttf
+            apt install -y texlive
+            apt install -y texlive-latex-extra
+            apt install -y texlive-fonts-extra
+            apt install -y libffi-dev
+            apt install -y ghostscript
+            apt install -y texlive-extra-utils
+            apt install -y texlive-font-utils
+      - name: Build documentation
+        run: |
+          echo "Building code documentation..."
+          make -j1 -C docs
+          mv docs/build/html public
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload entire repository
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
