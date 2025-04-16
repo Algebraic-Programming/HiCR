@@ -16,7 +16,7 @@
 
 /**
  * @file executionUnit.hpp
- * @brief Provides a base definition for a HiCR ExecutionUnit class
+ * @brief Provides a base definition for a HiCR Execution Unit class
  * @author S. M. Martin
  * @date 06/10/2023
  */

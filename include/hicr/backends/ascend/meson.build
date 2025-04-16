@@ -11,6 +11,8 @@ backendCppArgs = [
  ]
 
 backendLinkArgs = [
+   # TODO: put as meson argument since acl does not provide pkg config or cmake.
+   # in the majority of cases this will work since the default installation path is this one
    '-L/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64/stub',
    '-lascendcl',
 ]

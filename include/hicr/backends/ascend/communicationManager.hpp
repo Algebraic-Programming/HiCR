@@ -40,6 +40,10 @@ namespace HiCR::backend::ascend
 
 /**
  * Implementation of the Communication Manager for the Ascend backend.
+ 
+ * \note Supported local memory slots:
+ * - Ascend
+ * - HWLoC
  */
 class CommunicationManager final : public HiCR::CommunicationManager
 {
@@ -67,7 +71,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
   };
 
   /**
-   * Constructor for the ascend communication manager class for the ascend backend.
+   * Constructor for the ascend communication manager class for the Ascend backend.
    */
   CommunicationManager()
     : HiCR::CommunicationManager(){};
@@ -83,7 +87,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
    * \param[in] source source memory slot
    * \param[in] src_offset source offset
    * \param[in] size the number of bytes to copy
-   * \param[in] stream Ascend stream containing the state of the operation for later check
+   * \param[in] stream Ascend stream containing the state of the operation for later checks for completion
    */
   __INLINE__ void memcpyAsync(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
                               const size_t                                  dst_offset,
@@ -118,11 +122,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
   __INLINE__ void destroyGlobalMemorySlotImpl(const std::shared_ptr<HiCR::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 
   /**
-   * This memcpy implementation does support asynchronous inter-device communication, meaning the fence should be called when date are
-   * moved among different ascend devices.
-   *
-   * Restrictions:
-   * - Only memory copying between devices in the same thread or between different threads in the same process is supported. Memory copying between Devices in different processes is not supported.
+   * Implementation for memcpy operation
    *
    * \param[in] destination destination memory slot
    * \param[in] dst_offset destination offset
@@ -139,6 +139,20 @@ class CommunicationManager final : public HiCR::CommunicationManager
     memcpyInternal(destination, dst_offset, source, src_offset, size, NULL);
   }
 
+  /**
+   * Implementation for sync and async memcpy operation
+   *
+   * Restrictions:
+   * - Only memory copying between devices in the same thread or between different threads in the same process is supported. 
+   *   Memory copying between Devices in different processes is not supported.
+   *
+   * \param[in] destination destination memory slot
+   * \param[in] dst_offset destination offset
+   * \param[in] source source memory slot
+   * \param[in] src_offset source offset
+   * \param[in] size the number of bytes to copy
+   * \param[in] stream ACL stream. Triggers sync or async behavior if the passed value is NULL or not, respectively
+   */
   __INLINE__ void memcpyInternal(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
                                  const size_t                                  dst_offset,
                                  const std::shared_ptr<HiCR::LocalMemorySlot> &source,

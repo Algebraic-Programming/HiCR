@@ -16,7 +16,7 @@
 
 /**
  * @file mocr.hpp
- * @brief Provides mock classes for HiCR's (L1) classes for testing purposes
+ * @brief Provides mock classes for HiCR's Manager classes for testing purposes
  * @author O. Korakitis
  * @date 03/10/2024
  */
@@ -36,7 +36,7 @@ using namespace testing;
 
 /* MoCR mocks HiCR :) */
 
-/* Mock classes for dependencies. Currently, only the higher level (L1) classes are mocked. */
+/* Mock classes for dependencies. Currently, only the Manager classes are mocked. */
 
 class MockCommunicationManager : public HiCR::CommunicationManager
 {
@@ -109,15 +109,11 @@ class MockInstanceManager : public HiCR::InstanceManager
 {
   public:
 
-  MOCK_METHOD(void, launchRPC, (HiCR::Instance &, const std::string &), (const, override));
   MOCK_METHOD(void, finalize, (), (override));
   MOCK_METHOD(void, abort, (int), (override));
   MOCK_METHOD(HiCR::Instance::instanceId_t, getRootInstanceId, (), (const, override));
   MOCK_METHOD(std::shared_ptr<HiCR::Instance>, createInstanceImpl, (const std::shared_ptr<HiCR::InstanceTemplate> &), (override));
   MOCK_METHOD(std::shared_ptr<HiCR::Instance>, addInstanceImpl, (HiCR::Instance::instanceId_t), (override));
-  MOCK_METHOD(void *, getReturnValueImpl, (HiCR::Instance &), (const, override));
-  MOCK_METHOD(void, submitReturnValueImpl, (const void *, const size_t), (override));
-  MOCK_METHOD(void, listenImpl, (), (override));
 
   MockInstanceManager()
   {

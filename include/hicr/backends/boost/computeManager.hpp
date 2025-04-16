@@ -16,7 +16,7 @@
 
 /**
  * @file computeManager.hpp
- * @brief This file implements the pthread-based compute manager for host (CPU) backends
+ * @brief This file implements the pthread-based compute manager for Boost backend
  * @authors S. M. Martin, O. Korakitis
  * @date 10/12/2023
  */
@@ -32,26 +32,23 @@ namespace HiCR::backend::boost
 {
 
 /**
- * Defines the function type including a closure pointer to be accepted for executiong by a pthread processing unit
- */
-using pthreadFc_t = std::function<void(void *)>;
-
-/**
- * Implementation of the pthread-based HiCR Shared Memory backend's compute manager.
+ * Implementation of the Boost compute manager.
+ * 
+ * \note The compute manager does not offer a processing unit implementation. However, the execution unit and states are fully compatible with the processing unit offered by pthreads backend 
  */
 class ComputeManager : public HiCR::ComputeManager
 {
   public:
 
   /**
-   * The constructor is employed to reserve memory required for hwloc
+   * Default constructor
    */
   ComputeManager()
     : HiCR::ComputeManager()
   {}
 
   /**
-   * The constructor is employed to free memory required for hwloc
+   * Default destructor
    */
   ~ComputeManager() override = default;
 

@@ -16,7 +16,7 @@
 
 /**
  * @file processingUnit.hpp
- * @brief Implements the processing unit class for the opencl backend.
+ * @brief Implements the processing unit class for the OpenCL backend.
  * @author L. Terracciano 
  * @date 07/03/2025
  */
@@ -35,7 +35,7 @@ namespace HiCR::backend::opencl
 {
 
 /**
- * Forward declaration of the opencl device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the OpenCL device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class ComputeManager;
 } // namespace HiCR::backend::opencl
@@ -44,7 +44,7 @@ namespace HiCR::backend::opencl
 {
 
 /**
- * Implementation of a processing unit (a device capable of executing kernels) for the opencl backend
+ * Implementation of a processing unit (a device capable of executing kernels) for the OpenCL backend
  */
 class ProcessingUnit final : public HiCR::ProcessingUnit
 {

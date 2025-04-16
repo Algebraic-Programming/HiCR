@@ -31,19 +31,19 @@
 namespace HiCR::backend::ascend
 {
 /**
- * Forward declaration of the ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the Ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class Device;
 
 /**
- * This class represents a compute resource, visible by the ascend backend. That is, a processing unit (ascend device) with information about the ascend context.
+ * This class represents a compute resource, visible by the Ascend backend. That is, a processing unit (Ascend device) with information about the ascend context.
  */
 class ComputeResource final : public HiCR::ComputeResource
 {
   public:
 
   /**
-   * Constructor for the compute resource class of the ascend backend
+   * Constructor for the compute resource class of the Ascend backend
    *
    * \param device The Ascend device that contains this compute resource
    */

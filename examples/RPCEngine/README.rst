@@ -1,48 +1,79 @@
-Topology Discovery
+.. _rpc engine:
+
+RPC Engine
 =====================
 
-This example showcases how the abstract HiCR Core API can be used to discover compute and memory devices in the system. The code is structured as follows:
+This example showcases the RPC Engine capabilities. The code is structured as follows:
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`ascend.cpp` corresponds to the :ref:`ascend` backend implementation
-    * :code:`hwloc.cpp` corresponds to the :ref:`hwloc` (CPU) backend implementation
-
+    * :code:`mpi.cpp` corresponds to the :ref:`mpi backend` backend implementation
+   
+Topology Discovery
+---------------------
 First, we use the topology manager to query the local HiCR instance's topology
 
 .. code-block:: C++
 
    auto topology = topologyManager.queryTopology();
 
-Then, we iterate over all its devices, printing the compute resources and memory spaces we find along with their types. For the latter, also their capacity.
+Then, we get the first available compute resource and memory space of the first device: 
 
 .. code-block:: C++
 
-  for (const auto &d : topology.getDevices())
-   {
-     auto c = d->getComputeResourceList(); // Used to print compute resources
-     auto m = d->getMemorySpaceList(); // Used to print memory spaces
-   }
-    
+  // Selecting first device
+  auto d = *topology.getDevices().begin();
 
-The result of running the hwloc example might be, for example:
+  // Get first memory space for RPC buffers
+  auto memSpaces = d->getMemorySpaceList();
+  auto bufferMemorySpace = *memSpaces.begin();
+  
+  // Grabbing first compute resource for computing RPCs
+  auto computeResources = d->getComputeResourceList();
+  auto executeResource = *computeResources.begin(); 
+
+RPC Registration
+---------------------
+Then, create an RPC Engine define a lambda, and associate it with an RPC:
+
+.. code-block:: C++
+
+   // Creating RPC engine instance
+  HiCR::frontend::RPCEngine rpcEngine(...);
+
+  // Initialize RPC engine
+  rpcEngine.initialize();
+
+  // Creating execution unit to run as RPC
+  auto rpcExecutionUnit =
+    std::make_shared<HiCR::backend::pthreads::ExecutionUnit>([&im](void *closure) { 
+      printf("Instance %lu: running Test RPC\n", im->getCurrentInstance()->getId()); 
+    });
+  
+  // Registering RPC to listen to
+  rpcEngine.addRPCTarget("Test RPC", rpcExecutionUnit);
+
+SPMD: RPC Invokation and listening
+-----------------------------------
+
+The RPC is invoked by the root instance, the other instances listen to incoming RPCs:
+
+.. code-block:: c++
+
+ if (currentInstance->isRootInstance())
+  {
+    for (auto &instance : im.getInstances())
+      if (instance != currentInstance) rpcEngine.requestRPC(*instance, "Test RPC");
+  }
+  else
+    rpcEngine.listen();
+
+The result should look like the following:
 
 .. code-block:: bash
 
-  + 'NUMA Domain'
-    Compute Resources: 44 Processing Unit(s)
-    Memory Space:     'RAM', 94.483532 Gb
-  + 'NUMA Domain'
-    Compute Resources: 44 Processing Unit(s)
-    Memory Space:     'RAM', 93.024166 Gb
-
-Whereas, for the Ascend example, it would look as follows:
-
-.. code-block:: bash
-    
-    + 'Ascend Device'
-      Compute Resources: 1 Ascend Processor(s)
-      Memory Space:     'Ascend Device RAM', 32.000000 Gb
-    + 'Ascend Device'
-      Compute Resources: 1 Ascend Processor(s)
-      Memory Space:     'Ascend Device RAM', 32.000000 Gb
+  Instance 1: running Test RPC
+  Instance 2: running Test RPC
+  Instance 4: running Test RPC
+  Instance 3: running Test RPC
+  Instance 5: running Test RPC

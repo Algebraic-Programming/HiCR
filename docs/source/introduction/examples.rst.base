@@ -5,7 +5,6 @@ Examples
 ***************
 
 .. toctree::
-   :caption: Examples
-   :maxdepth: 2
+   :maxdepth: 10
    
 [[Examples]]

@@ -17,8 +17,7 @@
 /**
  * @file communicationManager.hpp
  * @brief This is the LPF communication backend implementation, which is currently tested with
- * the LPF implementation under https://github.com/Algebraic-Programming/LPF/tree/hicr
- * (e.g. commit #8dea881)
+ * the LPF implementation under https://github.com/Algebraic-Programming/LPF/tree/noc_extension
  * @author K. Dichev
  * @date 24/10/2023
  */
@@ -41,7 +40,7 @@ namespace HiCR::backend::lpf
 /**
  * Implementation of the HiCR LPF communication manager
  *
- * The only LPF engine currently of interest is the IB Verbs engine (see above for branch and hash)
+ * The only LPF engine currently of interest is the IB Verbs engine
  */
 class CommunicationManager final : public HiCR::CommunicationManager
 {

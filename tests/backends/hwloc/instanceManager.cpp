@@ -40,23 +40,6 @@ TEST(MemoryManager, Lifetime)
 {
   auto im = HiCR::backend::hwloc::InstanceManager::createDefault(nullptr, nullptr);
 
-  bool RPCExecuted = false;
-  EXPECT_NO_THROW(im->addRPCTarget("Test", [&]() {
-    RPCExecuted = true;
-    int value   = TEST_VALUE;
-    im->submitReturnValue(&value, sizeof(int));
-  }));
-
-  auto currentInstance = im->getCurrentInstance();
-  EXPECT_TRUE(currentInstance->isRootInstance());
-  EXPECT_NO_THROW(im->launchRPC(*currentInstance, "Test"));
-  EXPECT_TRUE(RPCExecuted);
-
-  int *returnBuffer = nullptr;
-  EXPECT_NO_THROW(returnBuffer = (int *)im->getReturnValue(*currentInstance));
-  EXPECT_EQ(*returnBuffer, TEST_VALUE);
-
-  EXPECT_ANY_THROW(im->listen());
   EXPECT_ANY_THROW(im->addInstance(1));
   HiCR::Topology                          topology;
   std::shared_ptr<HiCR::InstanceTemplate> instanceTemplate(NULL);

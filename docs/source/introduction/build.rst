@@ -11,11 +11,42 @@ The HiCR Core API is a self-sufficient include-only library that does not requir
 Getting HiCR
 ***********************
 
-HiCR is released in a continuous basis. The latest release is always the latest :code:`master` branch commit in its `git repository <https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr>`_. To obtain the latest release, simply run:
+HiCR is released in a continuous basis. The latest release is always the latest :code:`master` branch commit in its `git repository <https://github.com/Algebraic-Programming/HiCR>`_. To obtain the latest release, simply run:
 
 ..  code-block:: bash
 
-  git clone https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr.git
+  git clone https://github.com/Algebraic-Programming/HiCR
+
+.. _software requirements:
+
+Software Requirements
+***********************
+
+Before installing HiCR, make sure the following libraries and tools are installed:
+
+* C++ compiler with suppport for C++20 (e.g., :code:`g++ >= 11.0`)
+* :code:`python (version >= 3.9)`
+* :code:`meson (version > 1.0.0)`
+* :code:`ninja (version > 1.0.0)`
+* :code:`gtest`
+
+The following libraries and tools are only necessary for certain HiCR backends:
+
+* :ref:`ascend backend` :code:`ascend-toolkit 7.0.RC1.alpha003`
+
+* :ref:`boost backend` :code:`libboost-context-dev (version >= 1.71)`
+
+* :ref:`hwloc backend` :code:`hwloc (version >= 2.1.0)`
+
+* :ref:`lpf backend` :code:`LPF (version 'noc_extension')`
+
+* :ref:`mpi backend` :code:`openmpi (version >= 5.0.2)`
+
+* :ref:`nosv backend` :code:`nos-v (version >= 3.1.0)`
+
+* :ref:`opencl backend` :code:`intel-opencl-icd (version >= 3.0)`
+
+* :ref:`pthreads backend`
 
 .. _configure:
 
@@ -26,17 +57,17 @@ HiCR uses `meson` as build and installation system. To build HiCR, you can run t
 
 ..  code-block:: bash
 
-  # Creating and entering a build folder.
-  mkdir build 
-  cd build
+  # [Example] Configuring HiCR's meson project, with its default configuration, in the folder "build"
+  meson setup build 
 
-  # [Example] Configuring HiCR's meson project, with its basic configuration
-  meson .. 
-
-  # [Example] Configuring HiCR's meson project, with all its backends, and frontends.
-  meson .. -DbuildExamples=true -DbuildTests=true -Dbackends=host/hwloc,host/pthreads,mpi,lpf,ascend -Dfrontends=channel,deployer,machineModel,tasking
+  # [Example] Configuring HiCR's meson project, with all its backends, and frontends. The build folder is "build"
+  meson setup build -DbuildExamples=true -DbuildTests=true -Dbackends=hwloc,boost,pthreads,mpi,lpf,ascend,nosv,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore 
 
   # Compiling 
+  meson compile -C build
+
+  # or
+  cd build
   ninja
 
 
@@ -50,8 +81,13 @@ To compile HiCR's tests and examples, add the corresponding flags in the configu
 ..  code-block:: bash
 
   # Configuring HiCR's meson project, along with its examples and tests
-  meson .. -DbuildExamples=true -DbuildTests=true
+  meson setup build -DbuildExamples=true -DbuildTests=true
 
+To execute them:
+
+.. code-block:: bash
+  
+  meson test -C build
 
 .. _installation:
 
@@ -63,10 +99,10 @@ By default, HiCR will install in the system's default folder, but this can be co
 ..  code-block:: bash
 
   # Configuring HiCR's meson project with a non-default install folder
-  meson .. -Dprefix=$HOME/.local
+  meson setup build -Dprefix=$HOME/.local
 
   # Installing
-  ninja install
+  meson install -C build
 
 .. _running:
 

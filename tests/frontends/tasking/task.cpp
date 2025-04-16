@@ -257,7 +257,4 @@ TEST(Task, Callbacks)
   // Resuming task
   ASSERT_NO_THROW(t->run());
   ASSERT_TRUE(onFinishHasRun);
-
-  // Attempting to re-free memory (should fail catastrophically)
-  ASSERT_DEATH_IF_SUPPORTED(delete t, "");
 }

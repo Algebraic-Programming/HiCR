@@ -16,7 +16,7 @@
 
 /**
  * @file memoryKernel.hpp
- * @brief This file implements the memory kernel class for the opencl backend
+ * @brief This file implements the memory kernel class for the OpenCL backend
  * @author L. Terracciano
  * @date 07/03/2025
  */
@@ -33,7 +33,7 @@ namespace HiCR::backend::opencl
 {
 
 /**
- * This class represents a replicable Memory Kernel for the opencl backend.
+ * This class represents a replicable Memory Kernel for the OpenCL backend.
  * A Memory Kernel enable the execution of memcopy operations in a stream/sequence of Kernels.
  * Memory Kernels currently supports memcpy operations on the same device, since they are meant to be chained
  * with other Kernels.
@@ -43,7 +43,7 @@ class MemoryKernel final : public Kernel
   public:
 
   /**
-   * Constructor for the execution unit class of the opencl backend
+   * Constructor for the execution unit class of the OpenCL backend
    *
    * \param commManager the OpenCL communication manager
    * \param destination destination pointer

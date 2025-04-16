@@ -27,11 +27,11 @@
 
 namespace HiCR::backend::mpi
 {
-class CommunicationManager;
-}
 
-namespace HiCR::backend::mpi
-{
+/**
+   * Forward declaration of the MPI communication manager -- avoid circular dependencies
+  */
+class CommunicationManager;
 
 /**
  * This class represents an abstract definition for a Memory Slot resource in HiCR that:

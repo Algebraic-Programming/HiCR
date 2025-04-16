@@ -5,18 +5,26 @@ import pathlib
 
 def findModules(baseDir, docFileName):
   moduleList = []
-  for subdir, dirs, files in os.walk(baseDir):
+  for subdir, dirs, _ in os.walk(baseDir):
     for dir in dirs:
-      folderPath = os.path.join(subdir, dir)
       if (os.path.isfile(os.path.join(subdir, dir, docFileName))):
         moduleList.append(os.path.join(subdir, dir).replace(os.path.commonprefix([baseDir, subdir ]), ''))
   return moduleList
 
+def findTopModules(baseDir, docFileName):
+    moduleList = []
+    for dir in os.listdir(baseDir):
+        dirPath = os.path.join(baseDir, dir)
+        if os.path.isdir(dirPath):
+            if os.path.isfile(os.path.join(dirPath, docFileName)):
+                moduleList.append(os.path.relpath(dirPath, baseDir))
+    
+    return moduleList
+
+
 def copyModuleFiles(srcDir, dstDir, docFileName, moduleList):
    for module in moduleList:
-    srcFile = os.path.join(srcDir, module, docFileName)
     dstFolder = os.path.join(dstDir, module)
-    dstFile = os.path.join(dstFolder, docFileName)
     pathlib.Path(dstFolder).mkdir(parents=True, exist_ok=True)
 
     # Copying README file
@@ -32,7 +40,7 @@ docFileName = 'README.rst'
 
 backendsSrcDir = '../../include/hicr/backends/'
 backendsDstDir = 'builtin/backends/'
-backendList = findModules(backendsSrcDir, docFileName)
+backendList = sorted(findModules(backendsSrcDir, docFileName), key=str.casefold)
 
 # Copying documentation file into the backends folders
 copyModuleFiles(backendsSrcDir, backendsDstDir, docFileName, backendList)
@@ -44,7 +52,7 @@ for backend in backendList: backendFormattedList += ('   ' + os.path.join('backe
 # Detecting frontends
 frontendsSrcDir = '../../include/hicr/frontends/'
 frontendsDstDir = 'builtin/frontends/'
-frontendList = findModules(frontendsSrcDir, docFileName)
+frontendList = sorted(findModules(frontendsSrcDir, docFileName), key=str.casefold)
 
 # Copying documentation file into the frontends folders
 copyModuleFiles(frontendsSrcDir, frontendsDstDir, docFileName, frontendList)
@@ -58,12 +66,13 @@ examplesSrcDir = '../../examples/'
 examplesDstDir = 'introduction/examples/'
 exampleList = findModules(examplesSrcDir, docFileName)
 
-# Copying documentation file into the frontends folders
+# Copying documentation file into the examples folders
 copyModuleFiles(examplesSrcDir, examplesDstDir, docFileName, exampleList)
 
-# Creating RST formatted lists
+# Creating RST formatted lists only using the top level folders
+examplesCategories = sorted(findTopModules(examplesSrcDir, docFileName), key=str.casefold)
 exampleFormattedList = ""
-for example in exampleList: exampleFormattedList += ('   ' + os.path.join('examples/', example, docFileName) + '\n')
+for example in examplesCategories: exampleFormattedList += ('   ' + os.path.join('examples/', example, docFileName) + '\n')
 
 #### Getting the contents of the backends file
 

@@ -16,7 +16,7 @@
 
 /**
  * @file kernel.hpp
- * @brief This file implements the Kernel class for the opencl backend
+ * @brief This file implements the Kernel class for the OpenCL backend
  * @author L. Terracciano
  * @date 07/03/2025
  */
@@ -30,14 +30,17 @@ namespace HiCR::backend::opencl
 {
 
 /**
- * This class represents a replicable kernel for the opencl backend.
- * A Kernel is a piece of computation meant to be executed on an opencl device.
+ * This class represents a replicable kernel for the OpenCL backend.
+ * A Kernel is a piece of computation meant to be executed on an OpenCL device.
  */
 class Kernel
 {
   public:
 
-  __INLINE__ Kernel() {};
+  /**
+   * Default constructor
+  */
+  __INLINE__ Kernel() = default;
 
   /**
    * Default destructor

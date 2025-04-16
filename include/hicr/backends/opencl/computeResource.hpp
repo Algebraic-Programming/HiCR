@@ -31,19 +31,19 @@
 namespace HiCR::backend::opencl
 {
 /**
- * Forward declaration of the opencl device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the OpenCL device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class Device;
 
 /**
- * This class represents a compute resource, visible by the opencl backend.
+ * This class represents a compute resource, visible by the OpenCL backend.
  */
 class ComputeResource final : public HiCR::ComputeResource
 {
   public:
 
   /**
-   * Constructor for the compute resource class of the opencl backend
+   * Constructor for the compute resource class of the OpenCL backend
    *
    * \param device The OpenCL device that contains this compute resource
    * \param type device resource type

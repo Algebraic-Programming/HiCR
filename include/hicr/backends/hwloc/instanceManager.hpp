@@ -52,49 +52,6 @@ class InstanceManager final : public HiCR::InstanceManager
 
   ~InstanceManager() override = default;
 
-  /**
-   * Triggers the execution of the specified RPC (by name) in the specified instance
-   *
-   * @param[in] instance The instance in which to execute the RPC
-   * @param[in] RPCTargetName The name of the target RPC to execute
-   *
-   */
-  __INLINE__ void launchRPC(HiCR::Instance &instance, const std::string &RPCTargetName) const override
-  {
-    // Calculating index for the RPC target's name
-    auto idx = getRPCTargetIndexFromString(RPCTargetName);
-
-    // Executing the RPC directly
-    executeRPC(idx);
-  }
-
-  __INLINE__ void *getReturnValueImpl(HiCR::Instance &instance) const override
-  {
-    // Returning buffer containing the return value
-    return _returnValueBuffer;
-  }
-
-  __INLINE__ void submitReturnValueImpl(const void *pointer, const size_t size) override
-  {
-    // Allocating buffer locally
-    _returnValueBuffer = malloc(size);
-
-    // Copying values to buffer
-    memcpy(_returnValueBuffer, pointer, size);
-  }
-
-  __INLINE__ void listenImpl() override { HICR_THROW_LOGIC("Calling listen using the Host instance manager results in a deadlock (nobody else to notify us). Aborting."); }
-
-  __INLINE__ std::shared_ptr<HiCR::Instance> createInstanceImpl(const std::shared_ptr<HiCR::InstanceTemplate> &instanceTemplate) override
-  {
-    HICR_THROW_LOGIC("The Host backend does not currently support the launching of new instances during runtime");
-  }
-
-  __INLINE__ std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId) override
-  {
-    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
-  }
-
   __INLINE__ void finalize() override {}
 
   __INLINE__ void abort(int errorCode) override { std::abort(); }
@@ -113,6 +70,18 @@ class InstanceManager final : public HiCR::InstanceManager
   }
 
   [[nodiscard]] __INLINE__ HiCR::Instance::instanceId_t getRootInstanceId() const override { return 0; }
+
+  protected:
+
+  __INLINE__ std::shared_ptr<HiCR::Instance> createInstanceImpl(const std::shared_ptr<HiCR::InstanceTemplate> &instanceTemplate) override
+  {
+    HICR_THROW_LOGIC("The Host backend does not currently support the launching of new instances during runtime");
+  }
+
+  __INLINE__ std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId) override
+  {
+    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
+  }
 
   private:
 

@@ -16,7 +16,7 @@
 
 /**
  * @file kernel.hpp
- * @brief This file implements the Kernel class for the ascend backend
+ * @brief This file implements the Kernel class for the Ascend backend
  * @author S. M. Martin & L. Terracciano
  * @date 8/11/2023
  */
@@ -28,10 +28,9 @@
 
 namespace HiCR::backend::ascend
 {
-
 /**
- * This class represents a replicable kernel for the ascend backend.
- * A Kernel is a piece of computation meant to be executed on an ascend device.
+ * This class represents a replicable kernel for the Ascend backend.
+ * A Kernel is a piece of computation meant to be executed on an Ascend device.
  */
 class Kernel
 {
@@ -51,5 +50,4 @@ class Kernel
    */
   __INLINE__ virtual void start(const aclrtStream stream) = 0;
 };
-
 } // namespace HiCR::backend::ascend

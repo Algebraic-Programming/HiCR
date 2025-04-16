@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('.'))
 import subprocess as sp
 
 # -- Project information -----------------------------------------------------
-project = 'HiSilicon Common Runtime (HiCR)'
+project = 'HiCR'
 copyright = 'Huawei Technologies Switzerland AG'
 author = 'Sergio Martin'
 

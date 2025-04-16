@@ -28,14 +28,14 @@ namespace HiCR::backend::hwloc
 {
 
 /**
- * This class represents an abstract definition for a HICR instance as represented by the Host backend
+ * This class represents an abstract definition for a HICR instance as represented by the hwloc backend
  */
 class Instance final : public HiCR::Instance
 {
   public:
 
   /**
-   * Constructor for a Instance class for the Host backend
+   * Constructor for a Instance class for the hwloc backend
    */
   Instance()
     : HiCR::Instance(0)

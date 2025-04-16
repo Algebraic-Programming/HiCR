@@ -33,7 +33,7 @@ namespace HiCR::backend::boost
 {
 
 /**
- * This class represents the execution state of a resumable function for the sequential (and shared memory) backends.
+ * This class represents the execution state of a resumable function for the Boost backend.
  * It uses a coroutine object to enable suspend/resume functionality.
  */
 class ExecutionState final : public HiCR::ExecutionState
@@ -41,7 +41,7 @@ class ExecutionState final : public HiCR::ExecutionState
   public:
 
   /**
-   * Creates a new suspendable execution state (coroutine) for execution based on a sequential execution unit
+   * Creates a new suspendable execution state (coroutine) for execution based on a Boost execution unit
    * \param[in] executionUnit The replicable stateless execution unit to instantiate
    * \param[in] argument Argument (closure) to pass to the function to be ran
    */

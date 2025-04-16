@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     deviceQueueMap[od->getId()] = std::make_shared<cl::CommandQueue>(context, od->getOpenCLDevice());
   }
 
-  // Getting access to all opencl devices memory spaces
+  // Getting access to all OpenCL devices memory spaces
   std::vector<std::shared_ptr<HiCR::MemorySpace>> openclMemorySpaces;
   for (const auto &d : devices)
     for (const auto &m : d->getMemorySpaceList()) openclMemorySpaces.push_back(m);

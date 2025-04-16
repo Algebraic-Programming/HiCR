@@ -92,92 +92,6 @@ class InstanceManager final : public HiCR::InstanceManager
 
   ~InstanceManager() override = default;
 
-  /**
-   * Triggers the execution of the specified RPC (by name) in the specified instance
-   *
-   * @param[in] instance The instance in which to execute the RPC
-   * @param[in] RPCTargetName The name of the target RPC to execute
-   *
-   */
-  __INLINE__ void launchRPC(HiCR::Instance &instance, const std::string &RPCTargetName) const override
-  {
-    // Calculating hash for the RPC target's name
-    auto hash = getRPCTargetIndexFromString(RPCTargetName);
-
-    // Getting up-casted pointer for the MPI instance
-    auto MPIInstance = dynamic_cast<mpi::Instance *>(&instance);
-
-    // Checking whether the execution unit passed is compatible with this backend
-    if (MPIInstance == nullptr) HICR_THROW_LOGIC("The passed instance is not supported by this instance manager\n");
-
-    // Getting rank Id for the passed instance
-    const auto dest = MPIInstance->getRank();
-
-    // Sending request
-    MPI_Send(&hash, 1, MPI_UNSIGNED_LONG, dest, _HICR_MPI_RPC_TAG, _comm);
-  }
-
-  __INLINE__ void *getReturnValueImpl(HiCR::Instance &instance) const override
-  {
-    // Getting up-casted pointer for the MPI instance
-    auto MPIInstance = dynamic_cast<mpi::Instance *const>(&instance);
-
-    // Checking whether the execution unit passed is compatible with this backend
-    if (MPIInstance == nullptr) HICR_THROW_LOGIC("The passed instance is not supported by this instance manager\n");
-
-    // Buffer to store the size
-    size_t size = 0;
-
-    // Getting return value size
-    MPI_Recv(&size, 1, MPI_UNSIGNED_LONG, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm, MPI_STATUS_IGNORE);
-
-    // Allocating memory slot to store the return value
-    auto buffer = malloc(size);
-
-    // Getting data directly
-    MPI_Recv(buffer, (int)size, MPI_BYTE, MPIInstance->getRank(), _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm, MPI_STATUS_IGNORE);
-
-    // Returning memory slot containing the return value
-    return buffer;
-  }
-
-  __INLINE__ void submitReturnValueImpl(const void *pointer, const size_t size) override
-  {
-    // Sending message size
-    MPI_Ssend(&size, 1, MPI_UNSIGNED_LONG, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_SIZE_TAG, _comm);
-
-    // Getting RPC execution unit index
-    MPI_Ssend(pointer, (int)size, MPI_BYTE, _RPCRequestRank, _HICR_MPI_INSTANCE_RETURN_DATA_TAG, _comm);
-  }
-
-  __INLINE__ void listenImpl() override
-  {
-    // We need to preserve the status to receive more information about the RPC
-    MPI_Status status;
-
-    // Storage for incoming execution unit index
-    RPCTargetIndex_t rpcIdx = 0;
-
-    // Getting RPC execution unit index
-    MPI_Recv(&rpcIdx, 1, MPI_UNSIGNED_LONG, MPI_ANY_SOURCE, _HICR_MPI_RPC_TAG, _comm, &status);
-
-    // Getting requester instance rank
-    _RPCRequestRank = status.MPI_SOURCE;
-
-    // Trying to execute RPC
-    executeRPC(rpcIdx);
-  }
-
-  __INLINE__ std::shared_ptr<HiCR::Instance> createInstanceImpl [[noreturn]] (const std::shared_ptr<HiCR::InstanceTemplate> &instanceTemplate) override
-  {
-    HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
-  }
-
-  __INLINE__ std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId) override
-  {
-    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
-  }
-
   __INLINE__ void finalize() override { MPI_Finalize(); }
 
   __INLINE__ void abort(int errorCode) override { MPI_Abort(MPI_COMM_WORLD, errorCode); }
@@ -210,6 +124,18 @@ class InstanceManager final : public HiCR::InstanceManager
   }
 
   [[nodiscard]] __INLINE__ HiCR::Instance::instanceId_t getRootInstanceId() const override { return HiCR::backend::mpi::_HICR_MPI_INSTANCE_ROOT_ID; }
+
+  protected:
+
+  __INLINE__ std::shared_ptr<HiCR::Instance> createInstanceImpl [[noreturn]] (const std::shared_ptr<HiCR::InstanceTemplate> &instanceTemplate) override
+  {
+    HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
+  }
+
+  __INLINE__ std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId) override
+  {
+    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
+  }
 
   private:
 

@@ -16,7 +16,7 @@
 
 /**
  * @file device.hpp
- * @brief Provides a base definition for a HiCR Device class
+ * @brief Provides a base definition for a HiCR Topology class
  * @author S. M. Martin
  * @date 18/12/2023
  */

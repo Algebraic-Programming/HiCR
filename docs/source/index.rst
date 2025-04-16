@@ -1,4 +1,4 @@
-HiSilicon Common Runtime (HiCR) User Manual
+HiCR User Manual
 ============================================
 
 .. toctree::
@@ -9,7 +9,6 @@ HiSilicon Common Runtime (HiCR) User Manual
    introduction/overview
    introduction/build
    introduction/quickstart
-   introduction/examples
 
 .. toctree::
    :caption: Built-in Features
@@ -18,19 +17,24 @@ HiSilicon Common Runtime (HiCR) User Manual
    builtin/frontends
    builtin/backends
 
+.. toctree:: 
+   :caption: Examples
+   :maxdepth: 2
+
+   introduction/examples
+
 .. toctree::
    :caption: C++ API Reference
    :maxdepth: 2
    
-   C++ Classes <doxygen/html/annotated_classes>
-   C++ Files <doxygen/html/files_files>
+   C++ Classes <doxygen/html/annotated>
+   C++ Files <doxygen/html/files>
    
 .. toctree::
    :caption: Development
    :maxdepth: 2
 
-   Git Repository (Blue Zone) <https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr>
-   Git Repository (Yellow Zone) <https://codehub-y.huawei.com/s00831018/HiCR>
+   Github Repository <https://github.com/Algebraic-Programming/HiCR>
    development/contributing
 
 * :ref:`genindex`
