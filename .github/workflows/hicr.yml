@@ -16,18 +16,95 @@ jobs:
     - name: Updating Apt
       run: sudo apt update
     - name: Installing apt packages
-      run: sudo apt install clang-format doxygen graphviz
+      run: |
+            sudo apt install -y build-essential
+            sudo apt install -y git
+            sudo apt install -y libgtest-dev
+            sudo apt install -y libhwloc-dev
+            sudo apt install -y openssh-client
+            sudo apt install -y libopenblas-dev
+            sudo apt install -y liblapack-dev
+            sudo apt install -y liblapacke-dev
+            sudo apt install -y libfabric-dev
+            sudo apt install -y libibverbs-dev
+            sudo apt install -y infiniband-diags
+            sudo apt install -y libboost-context-dev
+            sudo apt install -y curl
+            sudo apt install -y jq
+            sudo apt install -y python3-pip
+            sudo apt install -y python3-venv
+            sudo apt install -y pkgconf
+            sudo apt install -y wget
+            sudo apt install -y sudo
+            sudo apt install -y libopenmpi-dev
+            sudo apt install -y cmake
+            sudo apt install -y libstb-dev
+            sudo apt install -y libsfml-dev
+            sudo apt install -y libglew-dev
+            sudo apt install -y libglm-dev
+            sudo apt install -y libtclap-dev
+            sudo apt install -y ruby
+            sudo apt install -y doxygen
+            sudo apt install -y intel-opencl-icd 
+    - name: Installing meson, ninja and gcovr
+      run: python3 -m pip install meson ninja gcovr
+    - name: Install LPF 
+      run:  |
+            git clone -b noc_extension --single-branch --depth 1 https://github.com/Algebraic-Programming/LPF.git $HOME/lpf
+            cd $HOME/lpf
+            git checkout noc_extension
+            mkdir ./build
+            cd ./build
+            ../bootstrap.sh --prefix=/usr/local
+            make -j8
+            sudo make install || true
+            sudo rm -rf $HOME/lpf
+    - name: Install OVNI 
+      run:  |
+            git clone --recursive https://github.com/bsc-pm/ovni.git $HOME/ovni
+            cd $HOME/ovni
+            mkdir build
+            cd build
+            cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTING=FALSE
+            make -j8
+            sudo make install
+            sudo rm -rf $HOME/ovni
+    - name: Install NOS-V 
+      run:  |
+            git clone -b 3.1.0 --recursive https://github.com/bsc-pm/nos-v.git $HOME/nos-v
+            cd $HOME/nos-v
+            autoreconf -f -i -v
+            ./configure --prefix=/usr/local --with-ovni=/usr/local
+            make all
+            sudo make install
+            cd ..
+            rm -rf $HOME/nos-v
+            sudo sed -i '/^\[instrumentation\]/,/^\[/{s/version *= *"none"/version = "ovni"/}' /usr/local/share/nosv.toml 
+            sudo sed -i '/^\[ovni\]/,/^\[/{s/level *= *2/level = 0/}' /usr/local/share/nosv.toml
+    - name: Install OpenCL 
+      run:  |
+            git clone -b v2024.10.24 --recursive https://github.com/KhronosGroup/OpenCL-SDK.git $HOME/opencl
+            cd $HOME/opencl
+            git submodule update --init --recursive
+            cmake -D CMAKE_INSTALL_PREFIX=/usr/local -B ./build -S .
+            sudo cmake --build ./build --config Release --target install
+            cd ..
+            rm -rf $HOME/opencl
     - name: Updating submodules 
       run: git submodule update --init --recursive
-    - name: 
+    - name: Building all modules
       run:  |
-        export HOME=/home/hicr
-        source /home/hicr/.hicr-env.sh
-        echo "Building..."
-        mkdir build
-        meson setup build -Dbuildtype=debug -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
-        meson compile -C build
-        echo "Running tests..."
-        meson test -C build
-        echo "Creating coverage report..."
-        ninja -C build coverage
+            echo "Building..."
+            mkdir build
+            meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+            meson compile -C build
+    - name: Running tests and creating coverage report
+      run:  |
+            echo "Running Tests..."
+            meson setup build --reconfigure -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+            meson test -C build
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: meson-logs
+        path: build/meson-logs/
