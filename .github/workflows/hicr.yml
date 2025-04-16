@@ -19,18 +19,6 @@ jobs:
       run: sudo apt install build-essential git libgtest-dev libhwloc-dev openssh-client libopenblas-dev liblapack-dev liblapacke-dev libfabric-dev libibverbs-dev infiniband-diags libboost-context-dev curl jq  python3-pip python3-venv pkgconf wget sudo libopenmpi-dev
     - name: Installing meson, ninja and gcovr
       run: python3 -m pip install meson ninja gcovr
-    - name: Install UCX 
-      run:  |
-            wget https://github.com/openucx/ucx/releases/download/v1.15.0/ucx-1.15.0.tar.gz 
-            tar -zxf ucx-1.15.0.tar.gz 
-            cd ucx-1.15.0 
-            mkdir build
-            cd build
-            ../configure --prefix=/usr/local 
-            make -j8
-            sudo make install
-            rm -rf /ucx-1.15.0.tar.gz
-            rm -rf /ucx-1.15.0
     - name: Install LPF 
       run:  |
             git clone -b noc_extension --single-branch --depth 1 https://github.com/Algebraic-Programming/LPF.git $HOME/lpf
