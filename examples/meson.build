@@ -8,6 +8,7 @@ endif
 
 if 'channel' in enabledFrontends
  subdir('channels')
+ subdir('pingPong')
 endif 
 
 if 'tasking' in enabledFrontends
