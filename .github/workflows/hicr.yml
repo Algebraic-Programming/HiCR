@@ -46,11 +46,11 @@ jobs:
       run: git submodule update --init --recursive
     - name: 
       run:  |
-        echo "Building..."
-        mkdir build
-        meson setup build -Dbuildtype=debug -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
-        meson compile -C build
-        echo "Running tests..."
-        meson test -C build
-        echo "Creating coverage report..."
-        ninja -C build coverage
+            echo "Building..."
+            mkdir build
+            meson setup build -Dbuildtype=debug -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+            meson compile -C build
+            echo "Running tests..."
+            meson test -C build
+            echo "Creating coverage report..."
+            ninja -C build coverage
