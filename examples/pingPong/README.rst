@@ -19,7 +19,7 @@ The output shows the benchmarked execution time of the ping-pong itself at the p
 
  .. code-block:: bash
 
- Time: 0.012845 seconds
+  Time: 0.012845 seconds
 
 This example is implemented with two backends:
 
