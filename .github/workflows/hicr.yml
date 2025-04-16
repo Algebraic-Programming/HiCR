@@ -92,7 +92,7 @@ jobs:
             rm -rf $HOME/opencl
     - name: Updating submodules 
       run: git submodule update --init --recursive
-    - name: 
+    - name: Building all modules
       run:  |
             echo "Building..."
             mkdir build
@@ -102,13 +102,12 @@ jobs:
             meson test -C build
             echo "Creating coverage report..."
             ninja -C build coverage
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4.0.1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: Algebraic-Programming/HiCR
-        fail_ci_if_error: true
-        files: build/meson-logs/coverage.xml
+    - name: Running tests and creating coverage report
+      run:  |
+            echo "Building..."
+            mkdir build
+            meson setup build --reconfigure -Dbuildtype=debug -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+            meson test -C build
     - uses: actions/upload-artifact@v4
       if: always()
       with:
