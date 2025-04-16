@@ -74,7 +74,7 @@ jobs:
             git clone -b 3.1.0 --recursive https://github.com/bsc-pm/nos-v.git $HOME/nos-v
             cd $HOME/nos-v
             autoreconf -f -i -v
-            ./configure --prefix=/usr/local --with-ovni=/usr
+            ./configure --prefix=/usr/local --with-ovni=/usr/local
             make all
             sudo make install
             cd ..
