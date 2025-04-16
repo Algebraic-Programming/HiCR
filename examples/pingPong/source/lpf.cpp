@@ -24,16 +24,17 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
  */
 #define DEFAULT_MSGSLOTS 100
 
-typedef struct argList {
-    int capacity;
-    int msgCount;
-    int tokenSize;
+typedef struct argList
+{
+  int capacity;
+  int msgCount;
+  int tokenSize;
 } argList_t;
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
   // Capacity must be larger than zero
-  argList_t * argList = (argList_t *)args.input;
+  argList_t *argList = (argList_t *)args.input;
   if (argList->capacity == 0)
     if (pid == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
 
@@ -67,7 +68,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Getting reference to the first memory space detected
   auto firstMemorySpace = *memSpaces.begin();
 
-  auto start = MPI_Wtime();
+  auto   start  = MPI_Wtime();
   size_t rankId = pid;
 
   // Rank 0 is producer, Rank 1 is consumer
@@ -76,8 +77,7 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 
   auto end = MPI_Wtime();
 
-  if (rankId == 0)
-      printf("Time: %lf seconds\n", end - start);
+  if (rankId == 0) printf("Time: %lf seconds\n", end - start);
 }
 
 int main(int argc, char **argv)
@@ -102,8 +102,8 @@ int main(int argc, char **argv)
       MPI_Abort(MPI_COMM_WORLD, -1);
     }
     // For portability, only read STDIN from process 0
-    capacity = atoi(argv[1]);
-    msgCount = atoi(argv[2]);
+    capacity  = atoi(argv[1]);
+    msgCount  = atoi(argv[2]);
     tokenSize = atoi(argv[3]);
   }
   MPI_Bcast(&capacity, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -111,8 +111,8 @@ int main(int argc, char **argv)
   MPI_Bcast(&tokenSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   argList_t myArgs;
-  myArgs.capacity = capacity;
-  myArgs.msgCount = msgCount;
+  myArgs.capacity  = capacity;
+  myArgs.msgCount  = msgCount;
   myArgs.tokenSize = tokenSize;
   lpf_args_t args;
   memset(&args, 0, sizeof(lpf_args_t));
@@ -129,5 +129,4 @@ int main(int argc, char **argv)
   MPI_Finalize();
 
   return 0;
-
 }
