@@ -1,4 +1,4 @@
-[![Latest Release](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/-/badges/release.svg)](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/-/releases) [![pipeline status](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/badges/master/pipeline.svg)](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/-/commits/master) [![coverage report](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/badges/master/coverage.svg)](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/-/commits/master) 
+[![Build and Run Tests](https://github.com/Algebraic-Programming/HiCR/actions/workflows/hicr.yml/badge.svg)](https://github.com/Algebraic-Programming/HiCR/actions/workflows/hicr.yml)
 ```
  _   _ ___ ____ ____  
 | | | |_ _/ ___|  _ \ 

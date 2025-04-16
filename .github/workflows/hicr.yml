@@ -96,13 +96,12 @@ jobs:
       run:  |
             echo "Building..."
             mkdir build
-            meson setup build -Dbuildtype=debug -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+            meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
             meson compile -C build
     - name: Running tests and creating coverage report
       run:  |
             echo "Running Tests..."
-            cd build
-            meson setup build --reconfigure -Dbuildtype=debug -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+            meson setup build --reconfigure -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
             meson test -C build
     - uses: actions/upload-artifact@v4
       if: always()
