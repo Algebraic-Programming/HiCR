@@ -16,7 +16,36 @@ jobs:
     - name: Updating Apt
       run: sudo apt update
     - name: Installing apt packages
-      run: sudo apt install build-essential git libgtest-dev libhwloc-dev openssh-client libopenblas-dev liblapack-dev liblapacke-dev libfabric-dev libibverbs-dev infiniband-diags libboost-context-dev curl jq  python3-pip python3-venv pkgconf wget sudo libopenmpi-dev
+      run: |
+            sudo apt install -y build-essential
+            sudo apt install -y git
+            sudo apt install -y libgtest-dev
+            sudo apt install -y libhwloc-dev
+            sudo apt install -y openssh-client
+            sudo apt install -y libopenblas-dev
+            sudo apt install -y liblapack-dev
+            sudo apt install -y liblapacke-dev
+            sudo apt install -y libfabric-dev
+            sudo apt install -y libibverbs-dev
+            sudo apt install -y infiniband-diags
+            sudo apt install -y libboost-context-dev
+            sudo apt install -y curl
+            sudo apt install -y jq
+            sudo apt install -y python3-pip
+            sudo apt install -y python3-venv
+            sudo apt install -y pkgconf
+            sudo apt install -y wget
+            sudo apt install -y sudo
+            sudo apt install -y libopenmpi-dev
+            sudo apt install -y cmake
+            sudo apt install -y libstb-dev
+            sudo apt install -y libsfml-dev
+            sudo apt install -y libglew-dev
+            sudo apt install -y libglm-dev
+            sudo apt install -y libtclap-dev
+            sudo apt install -y ruby
+            sudo apt install -y doxygen
+            sudo apt install -y intel-opencl-icd 
     - name: Installing meson, ninja and gcovr
       run: python3 -m pip install meson ninja gcovr
     - name: Install LPF 
@@ -30,6 +59,37 @@ jobs:
             make -j8
             sudo make install || true
             sudo rm -rf $HOME/lpf
+    - name: Install OVNI 
+      run:  |
+            git clone --recursive https://github.com/bsc-pm/ovni.git $HOME/ovni
+            cd $HOME/ovni
+            mkdir build
+            cd build
+            cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTING=FALSE
+            make -j8
+            sudo make install
+            sudo rm -rf $HOME/ovni
+    - name: Install OVNI 
+      run:  |
+            git clone -b 3.1.0 --recursive https://github.com/bsc-pm/nos-v.git $HOME/nos-v
+            cd $HOME/nos-v
+            autoreconf -f -i -v
+            ./configure --prefix=/usr/local --with-ovni=/usr
+            make all
+            sudo make install
+            cd ..
+            rm -rf $HOME/nos-v
+            sudo sed -i '/^\[instrumentation\]/,/^\[/{s/version *= *"none"/version = "ovni"/}' /usr/local/share/nosv.toml 
+            sudo sed -i '/^\[ovni\]/,/^\[/{s/level *= *2/level = 0/}' /usr/local/share/nosv.toml
+    - name: Install OpenCL 
+      run:  |
+            git clone -b v2024.10.24 --recursive https://github.com/KhronosGroup/OpenCL-SDK.git $HOME/opencl
+            cd $HOME/opencl
+            git submodule update --init --recursive
+            cmake -D CMAKE_INSTALL_PREFIX=/usr/local -B ./build -S .
+            sudo cmake --build ./build --config Release --target install
+            cd ..
+            rm -rf $HOME/opencl
     - name: Updating submodules 
       run: git submodule update --init --recursive
     - name: 
@@ -42,3 +102,25 @@ jobs:
             meson test -C build
             echo "Creating coverage report..."
             ninja -C build coverage
+
+RUN echo "toke is ${OVNI_ACCESS_TOKEN}"
+RUN git clone  -b master --single-branch --depth 1 https://oauth2:${OVNI_ACCESS_TOKEN}@gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/ovni.git $HOME/ovni \
+  && cd $HOME/ovni  \
+  && mkdir build  \
+  && cd build \ 
+  && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTING=FALSE  \
+  && make -j24  \
+  && sudo make install  \
+  && sudo rm -rf $HOME/ovni
+
+# Download nosv
+RUN git clone -b 3.1.0 --single-branch --depth 1 https://github.com/bsc-pm/nos-v.git $HOME/nos-v && \
+  cd $HOME/nos-v && \
+  autoreconf -f -i -v && \
+  ./configure --prefix=/usr/local --with-ovni=/usr && \
+  make all && \
+  sudo make install && \
+  cd .. && \
+  rm -rf $HOME/nos-v && \
+  sudo sed -i '/^\[instrumentation\]/,/^\[/{s/version *= *"none"/version = "ovni"/}' /usr/local/share/nosv.toml && \
+  sudo sed -i '/^\[ovni\]/,/^\[/{s/level *= *2/level = 0/}' /usr/local/share/nosv.toml
