@@ -48,10 +48,10 @@ jobs:
             python3 -m pip install sphinx_copybutton
             python3 -m pip install sphinxcontrib.doxylink
             python3 -m pip install sphinx_design
-            python3 -m pip install --no-deps Sphinx-Substitution-Extensions
-            python3 -m pip install 'sphinx_toolbox==3.8.1'
-            python3 -m pip install --no-deps sphinx-theme
-            python3 -m pip install --no-deps sphinx-book-theme
+            python3 -m pip install Sphinx-Substitution-Extensions
+            python3 -m pip install sphinx_toolbox
+            python3 -m pip install sphinx-theme
+            python3 -m pip install sphinx-book-theme
             python3 -m pip install 'clang-format==18.1.0'
             sudo apt install -y build-essential \
             doxygen \
@@ -65,7 +65,7 @@ jobs:
             texlive-extra-utils \
             texlive-font-utils
 
-            python3 -m pip install 'sphinx==8.1.0'
+            python3 -m pip install 'sphinx==7.2.6'
             sphinx-build --version
 
       - name: Build documentation
