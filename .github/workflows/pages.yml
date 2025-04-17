@@ -40,8 +40,8 @@ jobs:
             python3 -m pip install sphinx_rtd_theme
             python3 -m pip install sphinxcontrib-bibtex
             python3 -m pip install doxysphinx
-            python3 -m pip install --no-deps sphinxcontrib.needs
-            python3 -m pip install --no-deps sphinxcontrib.plantuml
+            python3 -m pip install sphinxcontrib.needs
+            python3 -m pip install sphinxcontrib.plantuml
             python3 -m pip install --no-deps autoapi
             python3 -m pip install --no-deps sphinx-autoapi
             python3 -m pip install --no-deps myst_parser
