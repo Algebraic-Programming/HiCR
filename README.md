@@ -17,8 +17,8 @@ For a detailed explanation of the HiCR model, please see our pre-print on arXiv:
 
 ## Documentation
 
-* (HiCR User Manual)[https://algebraic-programming.github.io/HiCR/]
-* (HiCR C++ API Reference)[https://algebraic-programming.github.io/HiCR/doxygen/html/annotated.html]
+* [HiCR User Manual](https://algebraic-programming.github.io/HiCR/)
+* [HiCR C++ API Reference](https://algebraic-programming.github.io/HiCR/doxygen/html/annotated.html)
 
 ## License
 
