@@ -65,8 +65,10 @@ jobs:
             sudo apt install -y ghostscript
             sudo apt install -y texlive-extra-utils
             sudo apt install -y texlive-font-utils
-          
-            export PYENV_ROOT="$HOME/.pyenv" && [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH" && eval "$(pyenv virtualenv-init -)" && pyenv global 3.8.2 && make -j1 -C docs
+
+            echo "Building code documentation..."
+            make -j1 -C docs
+            ls docs/build/html
             mkdir public
             mv docs/build/html public
       - name: Upload artifact
