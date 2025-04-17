@@ -35,7 +35,7 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Install Dependencies
         run: |
-            sudo apt install sphinx
+            sudo apt install sphinx sphinx-common sphinxbase-utils sphinx-rtd-theme-common
             sphinx-build --version
             cd docs; sphinx-build -M html source/ build -a
 
