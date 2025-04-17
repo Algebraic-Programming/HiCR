@@ -37,8 +37,8 @@ jobs:
         run: |
             python3 -m pip install --upgrade pip
             python3 -m pip install 'sphinx==8.1.0'
-            python3 -m pip install --no-deps sphinx_rtd_theme
-            python3 -m pip install --no-deps sphinxcontrib-bibtex
+            python3 -m pip install sphinx_rtd_theme
+            python3 -m pip install sphinxcontrib-bibtex
             python3 -m pip install doxysphinx
             python3 -m pip install --no-deps sphinxcontrib.needs
             python3 -m pip install --no-deps sphinxcontrib.plantuml
@@ -52,19 +52,18 @@ jobs:
             python3 -m pip install --no-deps sphinx_toolbox
             python3 -m pip install --no-deps sphinx-theme
             python3 -m pip install --no-deps sphinx-book-theme
-            python3 -m pip install 'clang-format==18.1.0'
-
-            sudo apt install -y build-essential \
-            doxygen \
-            graphviz \
-            fonts-freefont-ttf \
-            texlive \
-            texlive-latex-extra \
-            texlive-fonts-extra \
-            libffi-dev \
-            ghostscript \
-            texlive-extra-utils \
-            texlive-font-utils
+            #python3 -m pip install 'clang-format==18.1.0'
+            #sudo apt install -y build-essential \
+            #doxygen \
+            #graphviz \
+            #fonts-freefont-ttf \
+            #texlive \
+            #texlive-latex-extra \
+            #texlive-fonts-extra \
+            #libffi-dev \
+            #ghostscript \
+            #texlive-extra-utils \
+            #texlive-font-utils
 
             sphinx-build --version
             exit 0
