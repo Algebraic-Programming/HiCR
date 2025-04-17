@@ -65,6 +65,7 @@ jobs:
             #texlive-extra-utils \
             #texlive-font-utils
 
+            python3 -m pip install 'sphinx==8.1.0'
             sphinx-build --version
             exit 0
 
