@@ -46,8 +46,8 @@ jobs:
             python3 -m pip install sphinx-autoapi
             python3 -m pip install myst_parser
             python3 -m pip install sphinx_copybutton
-            python3 -m pip install --no-deps sphinxcontrib.doxylink
-            python3 -m pip install --no-deps sphinx_design
+            python3 -m pip install sphinxcontrib.doxylink
+            python3 -m pip install sphinx_design
             python3 -m pip install --no-deps Sphinx-Substitution-Extensions
             python3 -m pip install --no-deps sphinx_toolbox
             python3 -m pip install --no-deps sphinx-theme
