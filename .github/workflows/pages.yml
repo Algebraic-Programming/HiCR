@@ -35,27 +35,28 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Install Dependencies
         run: |
-            python3 -m pip install --upgrade pip
-            python3 -m pip install 'sphinx==8.1.0'
+            python3 -m pip install --upgrade-strategy only-if-needed --upgrade pip
+            python3 -m pip install --upgrade-strategy only-if-needed 'sphinx==8.1.0'
             sphinx-build --version
-            python3 -m pip install sphinx_rtd_theme
-            python3 -m pip install sphinxcontrib-bibtex
-            python3 -m pip install doxysphinx
-            python3 -m pip install sphinxcontrib.needs
-            python3 -m pip install sphinxcontrib.plantuml
-            python3 -m pip install autoapi
-            python3 -m pip install sphinx-autoapi
-            python3 -m pip install myst_parser
-            python3 -m pip install sphinx_copybutton
-            python3 -m pip install sphinxcontrib.doxylink
-            python3 -m pip install sphinx_design
-            python3 -m pip install Sphinx-Substitution-Extensions
-            python3 -m pip install sphinx_toolbox
-            python3 -m pip install sphinx-theme
-            python3 -m pip install sphinx-book-theme
-            python3 -m pip install 'clang-format==18.1.0'
+            python3 -m pip install --upgrade-strategy only-if-needed sphinx_rtd_theme
+            python3 -m pip install --upgrade-strategy only-if-needed sphinxcontrib-bibtex
+            python3 -m pip install --upgrade-strategy only-if-needed doxysphinx
+            python3 -m pip install --upgrade-strategy only-if-needed sphinxcontrib.needs
+            python3 -m pip install --upgrade-strategy only-if-needed sphinxcontrib.plantuml
+            python3 -m pip install --upgrade-strategy only-if-needed autoapi
+            python3 -m pip install --upgrade-strategy only-if-needed sphinx-autoapi
+            python3 -m pip install --upgrade-strategy only-if-needed myst_parser
+            python3 -m pip install --upgrade-strategy only-if-needed sphinx_copybutton
+            python3 -m pip install --upgrade-strategy only-if-needed sphinxcontrib.doxylink
+            python3 -m pip install --upgrade-strategy only-if-needed sphinx_design
+            python3 -m pip install --upgrade-strategy only-if-needed Sphinx-Substitution-Extensions
+            python3 -m pip install --upgrade-strategy only-if-needed sphinx_toolbox
+            python3 -m pip install --upgrade-strategy only-if-needed sphinx-theme
+            python3 -m pip install --upgrade-strategy only-if-needed sphinx-book-theme
             sphinx-build --version
             exit 0
+
+            python3 -m pip install 'clang-format==18.1.0'
             sudo apt install -y build-essential
             sudo apt install -y doxygen
             sudo apt install -y graphviz
