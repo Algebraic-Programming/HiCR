@@ -15,13 +15,10 @@ For a detailed explanation of the HiCR model, please see our pre-print on arXiv:
 
 [https://arxiv.org/abs/xxxx.xxxxxx]
 
-## User Manual
+## Documentation
 
-[zrc-von-neumann-lab.pages.huaweirc.ch/runtime-system-innovations/hicr](https://zrc-von-neumann-lab.pages.huaweirc.ch/runtime-system-innovations/hicr/) 
-
-## C++ API Reference
-
-[zrc-von-neumann-lab.pages.huaweirc.ch/runtime-system-innovations/hicr](https://zrc-von-neumann-lab.pages.huaweirc.ch/runtime-system-innovations/hicr/) 
+* (HiCR User Manual)[https://algebraic-programming.github.io/HiCR/]
+* (HiCR C++ API Reference)[https://algebraic-programming.github.io/HiCR/doxygen/html/annotated.html]
 
 ## License
 
