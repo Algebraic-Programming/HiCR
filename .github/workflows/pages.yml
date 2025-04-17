@@ -37,7 +37,6 @@ jobs:
         run: |
             sudo apt install sphinx
             sphinx-build --version
-            exit
 
             python3 -m pip install --upgrade pip
             python3 -m pip install 'sphinx<8'
@@ -71,10 +70,10 @@ jobs:
             sudo apt install -y texlive-font-utils
       - name: Build documentation
         run: |
-          echo "Building code documentation..."
-          make -j1 -C docs
-          mkdir public
-          mv docs/build/html public
+            echo "Building code documentation..."
+            make -j1 -C docs
+            mkdir public
+            mv docs/build/html public
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
