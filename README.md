@@ -11,9 +11,9 @@ This repository provides include-only C++ implementation of the HiCR model. It a
 
 ## Paper
 
-For a detailed explanation of the HiCR model, please see our pre-print on arXiv:
+For a detailed explanation of the HiCR model, please see our preprint:
 
-[https://arxiv.org/abs/xxxx.xxxxxx]
+[https://github.com/Algebraic-Programming/Preprints/tree/master/HiCR]
 
 ## Documentation
 
