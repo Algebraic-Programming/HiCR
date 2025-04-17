@@ -52,21 +52,23 @@ jobs:
             python3 -m pip install --no-deps sphinx_toolbox
             python3 -m pip install --no-deps sphinx-theme
             python3 -m pip install --no-deps sphinx-book-theme
+            python3 -m pip install 'clang-format==18.1.0'
+
+            sudo apt install -y build-essential \
+            doxygen \
+            graphviz \
+            fonts-freefont-ttf \
+            texlive \
+            texlive-latex-extra \
+            texlive-fonts-extra \
+            libffi-dev \
+            ghostscript \
+            texlive-extra-utils \
+            texlive-font-utils
+
             sphinx-build --version
             exit 0
 
-            python3 -m pip install 'clang-format==18.1.0'
-            sudo apt install -y build-essential
-            sudo apt install -y doxygen
-            sudo apt install -y graphviz
-            sudo apt install -y fonts-freefont-ttf
-            sudo apt install -y texlive
-            sudo apt install -y texlive-latex-extra
-            sudo apt install -y texlive-fonts-extra
-            sudo apt install -y libffi-dev
-            sudo apt install -y ghostscript
-            sudo apt install -y texlive-extra-utils
-            sudo apt install -y texlive-font-utils
       - name: Build documentation
         run: |
           echo "Building code documentation..."
