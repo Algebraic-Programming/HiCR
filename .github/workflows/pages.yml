@@ -35,28 +35,30 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Install Dependencies
         run: |
-            curl -fsSL https://pyenv.run | bash
-            export PYENV_ROOT="$HOME/.pyenv" && [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH" && eval "$(pyenv virtualenv-init -)" && pyenv install 3.8.2 && pyenv global 3.8.2
-            pip install --upgrade pip
-            pip install sphinx
-            pip install sphinx_rtd_theme
-            pip install sphinxcontrib-bibtex
-            pip install doxysphinx
-            pip install sphinxcontrib.needs
-            pip install sphinxcontrib.plantuml
-            pip install autoapi
-            pip install sphinx-autoapi
-            pip install myst_parser
-            pip install sphinx_copybutton
-            pip install sphinxcontrib.doxylink
-            pip install sphinx_design
-            pip install Sphinx-Substitution-Extensions
-            pip install sphinx_toolbox
-            pip install sphinx-theme
-            pip install sphinx-book-theme
-            pip install 'clang-format==18.1.0'
-
+            sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt update
+            sudo apt install -y python3.8
+            ln -sf `which python3` `which python3.8`
+
+            python3 -m pip install --upgrade pip
+            python3 -m pip install sphinx
+            python3 -m pip install sphinx_rtd_theme
+            python3 -m pip install sphinxcontrib-bibtex
+            python3 -m pip install doxysphinx
+            python3 -m pip install sphinxcontrib.needs
+            python3 -m pip install sphinxcontrib.plantuml
+            python3 -m pip install autoapi
+            python3 -m pip install sphinx-autoapi
+            python3 -m pip install myst_parser
+            python3 -m pip install sphinx_copybutton
+            python3 -m pip install sphinxcontrib.doxylink
+            python3 -m pip install sphinx_design
+            python3 -m pip install Sphinx-Substitution-Extensions
+            python3 -m pip install sphinx_toolbox
+            python3 -m pip install sphinx-theme
+            python3 -m pip install sphinx-book-theme
+            python3 -m pip install 'clang-format==18.1.0'
+
             sudo apt install -y build-essential
             sudo apt install -y doxygen
             sudo apt install -y graphviz
