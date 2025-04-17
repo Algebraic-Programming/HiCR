@@ -37,7 +37,7 @@ jobs:
         run: |
             sudo apt install sphinx
             sphinx-build --version
-            sphinx-build -M html source/ build -a
+            cd docs; sphinx-build -M html source/ build -a
 
             #python3 -m pip install --upgrade pip
             #python3 -m pip install sphinx_rtd_theme
