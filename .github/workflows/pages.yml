@@ -52,29 +52,28 @@ jobs:
             python3 -m pip install 'sphinx_toolbox==3.8.1'
             python3 -m pip install --no-deps sphinx-theme
             python3 -m pip install --no-deps sphinx-book-theme
-            #python3 -m pip install 'clang-format==18.1.0'
-            #sudo apt install -y build-essential \
-            #doxygen \
-            #graphviz \
-            #fonts-freefont-ttf \
-            #texlive \
-            #texlive-latex-extra \
-            #texlive-fonts-extra \
-            #libffi-dev \
-            #ghostscript \
-            #texlive-extra-utils \
-            #texlive-font-utils
+            python3 -m pip install 'clang-format==18.1.0'
+            sudo apt install -y build-essential \
+            doxygen \
+            graphviz \
+            fonts-freefont-ttf \
+            texlive \
+            texlive-latex-extra \
+            texlive-fonts-extra \
+            libffi-dev \
+            ghostscript \
+            texlive-extra-utils \
+            texlive-font-utils
 
             python3 -m pip install 'sphinx==8.1.0'
             sphinx-build --version
-            exit 0
 
       - name: Build documentation
         run: |
-          echo "Building code documentation..."
-          make -j1 -C docs
-          mkdir public
-          mv docs/build/html public
+            echo "Building code documentation..."
+            make -j1 -C docs
+            mkdir public
+            mv docs/build/html public
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
