@@ -35,6 +35,9 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Install Dependencies
         run: |
+            sudo apt install sphinx
+            exit
+            
             python3 -m pip install --upgrade pip
             python3 -m pip install 'sphinx<8'
             python3 -m pip install sphinx_rtd_theme
