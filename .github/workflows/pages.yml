@@ -36,7 +36,7 @@ jobs:
       - name: Install Dependencies
         run: |
             python3 -m pip install --upgrade pip
-            python3 -m pip install 'sphinx==7.2.6'
+            python3 -m pip install 'sphinx==7.4.0'
             sphinx-build --version
             python3 -m pip install sphinx_rtd_theme
             python3 -m pip install sphinxcontrib-bibtex
