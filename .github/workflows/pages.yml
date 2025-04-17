@@ -38,7 +38,7 @@ jobs:
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt update
             sudo apt install -y python3.8
-            ln -sf `which python3` `which python3.8`
+            sudo ln -sf `which python3` `which python3.8`
 
             python3 -m pip install --upgrade pip
             python3 -m pip install sphinx
