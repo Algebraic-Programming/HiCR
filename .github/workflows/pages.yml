@@ -52,7 +52,6 @@ jobs:
             python3 -m pip install sphinx_toolbox
             python3 -m pip install sphinx-theme
             python3 -m pip install sphinx-book-theme
-            python3 -m pip install 'clang-format==18.1.0'
             sudo apt install -y build-essential \
             doxygen \
             graphviz \
