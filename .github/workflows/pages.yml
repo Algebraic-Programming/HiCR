@@ -42,8 +42,8 @@ jobs:
             python3 -m pip install doxysphinx
             python3 -m pip install sphinxcontrib.needs
             python3 -m pip install sphinxcontrib.plantuml
-            python3 -m pip install --no-deps autoapi
-            python3 -m pip install --no-deps sphinx-autoapi
+            python3 -m pip install autoapi
+            python3 -m pip install sphinx-autoapi
             python3 -m pip install --no-deps myst_parser
             python3 -m pip install --no-deps sphinx_copybutton
             python3 -m pip install --no-deps sphinxcontrib.doxylink
