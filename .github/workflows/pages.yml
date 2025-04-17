@@ -36,7 +36,7 @@ jobs:
       - name: Install Dependencies
         run: |
             python3 -m pip install --upgrade pip
-            python3 -m pip install 'sphinx==8.1.0'
+            python3 -m pip install sphinx
             python3 -m pip install sphinx_rtd_theme
             python3 -m pip install sphinxcontrib-bibtex
             python3 -m pip install doxysphinx
@@ -73,7 +73,7 @@ jobs:
             echo "Building code documentation..."
             make -j1 -C docs
             mkdir public
-            mv docs/build/html public
+            cp -r docs/build/html/* public
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
