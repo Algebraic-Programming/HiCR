@@ -36,6 +36,8 @@ jobs:
       - name: Install Dependencies
         run: |
             python3 -m pip install --upgrade pip
+            python3 -m pip install 'sphinx=7.2.6'
+            sphinx-build --version
             python3 -m pip install sphinx_rtd_theme
             python3 -m pip install sphinxcontrib-bibtex
             python3 -m pip install doxysphinx
@@ -44,35 +46,33 @@ jobs:
             python3 -m pip install autoapi
             python3 -m pip install sphinx-autoapi
             python3 -m pip install myst_parser
+            python3 -m pip install sphinx_copybutton
             python3 -m pip install sphinxcontrib.doxylink
-            sudo apt install sphinx
+            python3 -m pip install sphinx_design
+            python3 -m pip install Sphinx-Substitution-Extensions
+            python3 -m pip install sphinx_toolbox
+            python3 -m pip install sphinx-theme
+            python3 -m pip install sphinx-book-theme
+            python3 -m pip install 'clang-format==18.1.0'
             sphinx-build --version
-            cd docs; sphinx-build -M html source/ build -a
-
-            #python3 -m pip install sphinx_copybutton
-            #python3 -m pip install sphinx_design
-            #python3 -m pip install Sphinx-Substitution-Extensions
-            #python3 -m pip install sphinx_toolbox
-            #python3 -m pip install sphinx-theme
-            #python3 -m pip install sphinx-book-theme
-            #python3 -m pip install 'clang-format==18.1.0'
-            #sudo apt install -y build-essential
-            #sudo apt install -y doxygen
-            #sudo apt install -y graphviz
-            #sudo apt install -y fonts-freefont-ttf
-            #sudo apt install -y texlive
-            #sudo apt install -y texlive-latex-extra
-            #sudo apt install -y texlive-fonts-extra
-            #sudo apt install -y libffi-dev
-            #sudo apt install -y ghostscript
-            #sudo apt install -y texlive-extra-utils
-            #sudo apt install -y texlive-font-utils
+            exit 0
+            sudo apt install -y build-essential
+            sudo apt install -y doxygen
+            sudo apt install -y graphviz
+            sudo apt install -y fonts-freefont-ttf
+            sudo apt install -y texlive
+            sudo apt install -y texlive-latex-extra
+            sudo apt install -y texlive-fonts-extra
+            sudo apt install -y libffi-dev
+            sudo apt install -y ghostscript
+            sudo apt install -y texlive-extra-utils
+            sudo apt install -y texlive-font-utils
       - name: Build documentation
         run: |
-            echo "Building code documentation..."
-            make -j1 -C docs
-            mkdir public
-            mv docs/build/html public
+          echo "Building code documentation..."
+          make -j1 -C docs
+          mkdir public
+          mv docs/build/html public
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
