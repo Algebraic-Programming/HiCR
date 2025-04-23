@@ -1,0 +1,33 @@
+[
+  {
+    "op": "Add",
+    "input_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          100
+        ],
+        "type": "float32"
+      },
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          100
+        ],
+        "type": "float32"
+      }
+    ],
+    "output_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          100
+        ],
+        "type": "float32"
+      }
+    ]
+  }
+]

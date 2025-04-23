@@ -1,0 +1,71 @@
+[
+  {
+    "op": "Relu",
+    "input_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          512
+        ],
+        "type": "float32"
+      }
+    ],
+    "output_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          512
+        ],
+        "type": "float32"
+      }
+    ]
+  },
+    {
+    "op": "Relu",
+    "input_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          200
+        ],
+        "type": "float32"
+      }
+    ],
+    "output_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          200
+        ],
+        "type": "float32"
+      }
+    ]
+  },
+    {
+    "op": "Relu",
+    "input_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          100
+        ],
+        "type": "float32"
+      }
+    ],
+    "output_desc": [
+      {
+        "format": "ND",
+        "shape": [
+          1,
+          100
+        ],
+        "type": "float32"
+      }
+    ]
+  }
+]

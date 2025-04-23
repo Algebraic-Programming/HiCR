@@ -1,6 +1,7 @@
 subdir('memcpy')
 subdir('kernel')
 subdir('topology')
+subdir('neuralNetwork')
 
 if 'RPCEngine' in enabledFrontends
  subdir('RPCEngine')
