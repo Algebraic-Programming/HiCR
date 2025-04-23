@@ -144,7 +144,7 @@ RUN touch $HOME/.hicr-env.sh
 RUN chmod +rwx $HOME/.hicr-env.sh
 RUN echo 'export PATH=$HOME/.venv/bin:$PATH' >> $HOME/.hicr-env.sh
 RUN echo 'export PATH=/usr/local/bin:$PATH' >> $HOME/.hicr-env.sh
-RUN echo 'export LD_LIBRARY_PATH=/usr/local/lib:$PATH' >> $HOME/.hicr-env.sh
+RUN echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> $HOME/.hicr-env.sh
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH' >> $HOME/.hicr-env.sh
 RUN echo 'export LIBRARY_PATH=/usr/local/lib:$LIBRARY_PATH' >> $HOME/.hicr-env.sh
 RUN echo 'export CPATH=/usr/local/include:$CPATH' >> $HOME/.hicr-env.sh
