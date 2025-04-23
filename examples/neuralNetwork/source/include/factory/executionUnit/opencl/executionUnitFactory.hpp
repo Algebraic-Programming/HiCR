@@ -28,11 +28,11 @@ class ExecutionUnitFactory final : public factory::ExecutionUnitFactory
    *
   */
   ExecutionUnitFactory(HiCR::backend::opencl::ComputeManager       &computeManager,
-                                             HiCR::backend::opencl::CommunicationManager &communicationManager,
-                                             HiCR::backend::opencl::MemoryManager        &memoryManager,
-                                             std::shared_ptr<HiCR::MemorySpace>          &deviceMemorySpace,
-                                             std::shared_ptr<HiCR::MemorySpace>          &hostMemorySpace,
-                                             cl::Program                                     &program)
+                       HiCR::backend::opencl::CommunicationManager &communicationManager,
+                       HiCR::backend::opencl::MemoryManager        &memoryManager,
+                       std::shared_ptr<HiCR::MemorySpace>          &deviceMemorySpace,
+                       std::shared_ptr<HiCR::MemorySpace>          &hostMemorySpace,
+                       cl::Program                                 &program)
     : _computeManager(computeManager),
       _communicationManager(communicationManager),
       _memoryManager(memoryManager),

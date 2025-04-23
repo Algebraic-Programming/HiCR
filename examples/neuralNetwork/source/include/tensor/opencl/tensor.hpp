@@ -16,13 +16,13 @@ class Tensor : public tensor_t
    * @param[in] data tensor data
   */
   Tensor(std::vector<uint64_t> shape, std::shared_ptr<HiCR::LocalMemorySlot> &data)
-    : tensor_t(shape, data) {};
+    : tensor_t(shape, data){};
 
   ~Tensor() = default;
 
   static std::shared_ptr<tensor_t> create(std::vector<uint64_t> &shape, std::shared_ptr<HiCR::LocalMemorySlot> &data);
 
-  static std::shared_ptr<tensor_t> clone(const tensor_t                         &other,
+  static std::shared_ptr<tensor_t> clone(const tensor_t                     &other,
                                          HiCR::MemoryManager                &memoryManager,
                                          std::shared_ptr<HiCR::MemorySpace> &memorySpace,
                                          HiCR::CommunicationManager         &communicationManager);

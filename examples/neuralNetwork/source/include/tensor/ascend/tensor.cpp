@@ -21,7 +21,7 @@ std::shared_ptr<tensor_t> Tensor::create(std::vector<uint64_t> &shape, std::shar
   return std::make_shared<tensor::ascend::Tensor>(shape, data);
 }
 
-std::shared_ptr<tensor_t> Tensor::clone(const tensor_t                         &other,
+std::shared_ptr<tensor_t> Tensor::clone(const tensor_t                     &other,
                                         HiCR::MemoryManager                &memoryManager,
                                         std::shared_ptr<HiCR::MemorySpace> &memorySpace,
                                         HiCR::CommunicationManager         &communicationManager)
@@ -32,8 +32,8 @@ std::shared_ptr<tensor_t> Tensor::clone(const tensor_t                         &
 }
 
 std::shared_ptr<HiCR::LocalMemorySlot> Tensor::toHost(HiCR::MemoryManager                      &memoryManager,
-                                                  HiCR::CommunicationManager               &communicationManager,
-                                                  const std::shared_ptr<HiCR::MemorySpace> &hostMemSpace)
+                                                      HiCR::CommunicationManager               &communicationManager,
+                                                      const std::shared_ptr<HiCR::MemorySpace> &hostMemSpace)
 {
   auto dstMemSlot = memoryManager.allocateLocalMemorySlot(hostMemSpace, _data->getSize());
   communicationManager.memcpy(dstMemSlot, 0, _data, 0, _data->getSize());

@@ -43,7 +43,7 @@ class ExecutionUnitFactory final : public factory::ExecutionUnitFactory
    * 
    * @return gemm execution unit
   */
-  std::shared_ptr<HiCR::ExecutionUnit> gemm(const gemmArgs_t &args) override; 
+  std::shared_ptr<HiCR::ExecutionUnit> gemm(const gemmArgs_t &args) override;
 
   /**
    * Create execution unit for relu operation

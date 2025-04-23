@@ -53,14 +53,14 @@ class NeuralNetwork
    * @param[in] memoryManager HiCR memory manager
    * @param[in] memorySpace HiCR memory space 
   */
-  NeuralNetwork(HiCR::ComputeManager                  &computeManager,
+  NeuralNetwork(HiCR::ComputeManager                 &computeManager,
                 std::unique_ptr<HiCR::ProcessingUnit> processingUnit,
-                HiCR::CommunicationManager            &communicationManager,
-                HiCR::MemoryManager                   &memoryManager,
-                std::shared_ptr<HiCR::MemorySpace>    &memorySpace,
-                factory::ExecutionUnitFactory             &executionUnitFactory,
-                tensorFactoryFc_t                          tensorFactoryFunction,
-                tensorCloneFc_t                            tensorCloneFunction)
+                HiCR::CommunicationManager           &communicationManager,
+                HiCR::MemoryManager                  &memoryManager,
+                std::shared_ptr<HiCR::MemorySpace>   &memorySpace,
+                factory::ExecutionUnitFactory        &executionUnitFactory,
+                tensorFactoryFc_t                     tensorFactoryFunction,
+                tensorCloneFc_t                       tensorCloneFunction)
     : _communicationManager(communicationManager),
       _computeManager(computeManager),
       _memoryManager(memoryManager),

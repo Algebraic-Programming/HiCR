@@ -80,6 +80,5 @@ class Tensor
 
 using tensor_t          = tensor::Tensor;
 using tensorFactoryFc_t = std::function<std::shared_ptr<tensor_t>(std::vector<uint64_t> &, std::shared_ptr<HiCR::LocalMemorySlot> &)>;
-using tensorCloneFc_t =
-  std::function<std::shared_ptr<tensor_t>(const tensor_t &, HiCR::MemoryManager &, std::shared_ptr<HiCR::MemorySpace> &, HiCR::CommunicationManager &)>;
-using tensorsMap_t = std::unordered_map<std::string, std::shared_ptr<tensor_t>>;
+using tensorCloneFc_t   = std::function<std::shared_ptr<tensor_t>(const tensor_t &, HiCR::MemoryManager &, std::shared_ptr<HiCR::MemorySpace> &, HiCR::CommunicationManager &)>;
+using tensorsMap_t      = std::unordered_map<std::string, std::shared_ptr<tensor_t>>;

@@ -24,7 +24,7 @@ class Operation
    * @param[in] attributes the set of attributes of the operation
   */
   Operation(attributes_t &attributes)
-    : _attributes(attributes) {};
+    : _attributes(attributes){};
 
   /**
    * Return a specific attribute value as a int64_t provided as a string. 

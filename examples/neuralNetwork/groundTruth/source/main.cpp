@@ -25,7 +25,7 @@ int main(int argc, char **argv)
   if (!model.ParseFromIstream(&modelFile)) { HICR_THROW_RUNTIME("Failed to parse the model."); }
 
   // Load MNIST labels
-  auto labels = loadLabels(labelsFilePath);
+  auto labels     = loadLabels(labelsFilePath);
   imagesToAnalyze = std::min(imagesToAnalyze, labels.size());
 
   auto     totalDuration = std::chrono::duration<double>::zero();

@@ -49,12 +49,12 @@ std::vector<uint32_t> loadLabels(const std::string &labelFilePath)
  * 
  * @return a tensor containig the image
 */
-std::shared_ptr<tensor_t> loadImage(const std::string                            &inputFilePath,
+std::shared_ptr<tensor_t> loadImage(const std::string                        &inputFilePath,
                                     HiCR::CommunicationManager               &communicationManager,
                                     HiCR::MemoryManager                      &memoryManager,
                                     const std::shared_ptr<HiCR::MemorySpace> &hostMemorySpace,
                                     const std::shared_ptr<HiCR::MemorySpace> &dstMemorySpace,
-                                    tensorFactoryFc_t                             tensorFactoryFunction)
+                                    tensorFactoryFc_t                         tensorFactoryFunction)
 {
   // Create a stream of the file
   std::ifstream file(inputFilePath, std::ios::binary);

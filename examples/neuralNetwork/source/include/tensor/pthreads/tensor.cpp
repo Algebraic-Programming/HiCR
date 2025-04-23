@@ -7,7 +7,7 @@ std::shared_ptr<tensor_t> Tensor::create(std::vector<uint64_t> &shape, std::shar
   return std::make_shared<tensor::pthreads::Tensor>(shape, data);
 }
 
-std::shared_ptr<tensor_t> Tensor::clone(const tensor_t                         &other,
+std::shared_ptr<tensor_t> Tensor::clone(const tensor_t                     &other,
                                         HiCR::MemoryManager                &memoryManager,
                                         std::shared_ptr<HiCR::MemorySpace> &memorySpace,
                                         HiCR::CommunicationManager         &communicationManager)

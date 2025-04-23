@@ -4,10 +4,10 @@
 using namespace factory::ascend;
 
 ExecutionUnitFactory::ExecutionUnitFactory(HiCR::backend::ascend::ComputeManager       &computeManager,
-                                                            HiCR::backend::ascend::CommunicationManager &communicationManager,
-                                                            HiCR::backend::ascend::MemoryManager        &memoryManager,
-                                                            std::shared_ptr<HiCR::MemorySpace>          &deviceMemorySpace,
-                                                            std::shared_ptr<HiCR::MemorySpace>          &hostMemorySpace)
+                                           HiCR::backend::ascend::CommunicationManager &communicationManager,
+                                           HiCR::backend::ascend::MemoryManager        &memoryManager,
+                                           std::shared_ptr<HiCR::MemorySpace>          &deviceMemorySpace,
+                                           std::shared_ptr<HiCR::MemorySpace>          &hostMemorySpace)
   : _computeManager(computeManager),
     _communicationManager(communicationManager),
     _memoryManager(memoryManager),

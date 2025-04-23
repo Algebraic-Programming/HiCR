@@ -8,7 +8,6 @@
 
 #include "./tensor.hpp"
 
-
 /**
  * Load MNIST labels into a vector
  */
