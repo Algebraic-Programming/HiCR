@@ -16,12 +16,12 @@ To get an overview of the project, read the `README <https://github.com/Algebrai
 Create a new Issue
 ====================
 
-If you spot a problem, search if an `issue <https://github.com/Algebraic-Programming/HiCR/issues>`_ already exists. If a related issue doesn't exist, you can open a new one using `this template <https://github.com/Algebraic-Programming/HiCR/blob/master/.github/ISSUE_TEMPLATE/>`_.
+If you spot a problem, search if an `issue <https://github.com/Algebraic-Programming/HiCR/issues>`_ already exists. If a related issue doesn't exist, you can open a new one using `this template <https://github.com/Algebraic-Programming/HiCR/blob/master/.github/ISSUE_TEMPLATE/>`__.
 
 Create a new PR
 ================
 
-Create a pull request using `this template <https://github.com/Algebraic-Programming/HiCR/blob/master/.github/PULL_REQUEST_TEMPLATE.md>`_.
+Create a pull request using `this template <https://github.com/Algebraic-Programming/HiCR/blob/master/.github/PULL_REQUEST_TEMPLATE.md>`__.
 Don't forget to link PR to the relevant issue(s), if you are solving some.
 
 During the review process, we may ask for changes to be made before a PR can be merged.
@@ -70,7 +70,7 @@ You have two options to do it:
   
 
 Implementing HiCR
-===============
+===================
 
 To create a backend, developers implement a subset of HiCR's core abstract classes to expose the functionality provided by the underlying technology / device. For example, to create a new backend which implements the communication manager class, you need to create a file with a class definition as follows:
 
