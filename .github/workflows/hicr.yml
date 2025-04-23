@@ -94,6 +94,26 @@ jobs:
             sudo cmake --build ./build --config Release --target install
             cd ..
             rm -rf $HOME/opencl
+    - name: Install Protobuf 
+      run:  |
+            git clone --recursive -b v29.3 --single-branch --depth 1 https://github.com/protocolbuffers/protobuf.git $HOME/protobuf && \
+            cd $HOME/protobuf && \
+            git submodule update --init --recursive && \
+            mkdir build && \
+            cd    build && \
+            cmake -D CMAKE_INSTALL_PREFIX=/usr/local  \
+            -D CMAKE_BUILD_TYPE=Release  \
+            -D CMAKE_SKIP_INSTALL_RPATH=ON  \
+            -D protobuf_BUILD_TESTS=OFF              \
+            -D protobuf_ABSL_PROVIDER=module        \
+            -D protobuf_BUILD_LIBUPB=OFF             \
+            -D protobuf_BUILD_SHARED_LIBS=ON         \
+            -G Ninja .. &&  \
+            export NINJA=$(which ninja) && \
+            $NINJA && \
+            sudo $NINJA install && \
+            cd .. && \
+            rm -rf $HOME/protobuf
     - name: Updating submodules 
       run: git submodule update --init --recursive
     - name: Building all modules
@@ -105,6 +125,8 @@ jobs:
     - name: Running tests and creating coverage report
       run:  |
             echo "Running Tests..."
+            export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
             meson setup build --reconfigure -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
             meson test -C build
     - uses: actions/upload-artifact@v4
