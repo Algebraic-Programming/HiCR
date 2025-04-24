@@ -119,7 +119,7 @@ int main(int argc, char **argv)
   auto labels     = loadLabels(labelsFilePath);
   imagesToAnalyze = std::min(imagesToAnalyze, labels.size());
 
-  uint64_t failures      = 0;
+  uint64_t failures = 0;
 
   for (uint64_t i = 0; i < imagesToAnalyze; i++)
   {
@@ -155,6 +155,8 @@ int main(int argc, char **argv)
     auto actualPrediction  = neuralNetwork.getPrediction(output->getData(), output->size());
 
     if (desiredPrediction != actualPrediction) { failures++; }
+
+    if (i == 0) { printf("img-0 score: %.9f\n", ((const float *)hostOutputTensor->getPointer())[actualPrediction]); }
 
     openclMemoryManager.freeLocalMemorySlot(hostOutputTensor);
 

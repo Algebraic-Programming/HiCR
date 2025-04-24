@@ -118,6 +118,8 @@ int main(int argc, char **argv)
 
     if (desiredPrediction != actualPrediction) { failures++; }
 
+    if (i == 0) { printf("img-0 score: %.9f\n", ((const float *)hostOutputTensor->getPointer())[actualPrediction]); }
+
     ascendMemoryManager.freeLocalMemorySlot(hostOutputTensor);
 
     // Free the input image tensor

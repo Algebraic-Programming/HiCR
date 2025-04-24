@@ -28,7 +28,7 @@ int main(int argc, char **argv)
   auto labels     = loadLabels(labelsFilePath);
   imagesToAnalyze = std::min(imagesToAnalyze, labels.size());
 
-  uint64_t failures      = 0;
+  uint64_t failures = 0;
 
   for (uint64_t i = 0; i < imagesToAnalyze; i++)
   {
@@ -49,6 +49,8 @@ int main(int argc, char **argv)
     auto actualPrediction  = output.indexOfMax();
 
     if (desiredPrediction != actualPrediction) { failures++; }
+
+    if (i == 0) { printf("img-0 score: %.9f\n", output.toCFloat()[actualPrediction]); }
 
     if (i % 100 == 0 && i > 0) { printf("Analyzed images: %lu/%lu\n", i, labels.size()); }
   }
