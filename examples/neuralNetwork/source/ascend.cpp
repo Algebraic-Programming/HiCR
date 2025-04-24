@@ -1,5 +1,4 @@
 #include <acl/acl.h>
-#include <chrono>
 #include <cstdio>
 
 #include <hicr/backends/hwloc/memorySpace.hpp>
@@ -83,8 +82,6 @@ int main(int argc, char **argv)
   auto labels     = loadLabels(labelsFilePath);
   imagesToAnalyze = std::min(imagesToAnalyze, labels.size());
 
-  auto totalDuration = std::chrono::duration<double>::zero();
-
   uint64_t failures = 0;
 
   for (uint64_t i = 0; i < imagesToAnalyze; i++)
@@ -107,10 +104,7 @@ int main(int argc, char **argv)
     auto imageTensor   = loadImage(imageFilePath, ascendCommunicationManager, ascendMemoryManager, hostMemorySpace, deviceMemorySpace, tensor::ascend::Tensor::create);
 
     // Run the inference on the imageTensor
-    auto       start  = std::chrono::high_resolution_clock::now();
     const auto output = neuralNetwork.forward(imageTensor);
-    auto       end    = std::chrono::high_resolution_clock::now();
-    totalDuration += end - start;
 
     deviceProcessingUnit = neuralNetwork.releaseProcessingUnit();
 
@@ -132,8 +126,6 @@ int main(int argc, char **argv)
     if (i % 100 == 0 && i > 0) { printf("Analyzed images: %lu/%lu\n", i, labels.size()); }
   }
 
-  auto totalExecutionTimeSeconds = std::chrono::duration_cast<std::chrono::seconds>(totalDuration).count();
-  printf("Total execution time: %ld seconds\n", totalExecutionTimeSeconds);
   printf("Total failures: %lu/%lu\n", failures, imagesToAnalyze);
 
   err = aclFinalize();
