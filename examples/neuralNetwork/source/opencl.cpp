@@ -43,9 +43,9 @@ int main(int argc, char **argv)
   if (argc < 5) { HICR_THROW_RUNTIME("Not enough arguments"); }
   const std::string onnxModelFilePath = argv[1];
   const std::string imagePathPrefix   = argv[2];
-  const std::string kernelsPath       = argv[3];
-  const std::string labelsFilePath    = argv[4];
-  uint64_t          imagesToAnalyze   = std::stoull(argv[5]);
+  const std::string labelsFilePath    = argv[3];
+  uint64_t          imagesToAnalyze   = std::stoull(argv[4]);
+  const std::string kernelsPath       = argv[5];
 
   ////// Declare backend-specific HiCR resources
   // Creating HWloc topology object

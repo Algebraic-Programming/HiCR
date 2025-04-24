@@ -37,10 +37,10 @@ if 'ascend' in enabledBackends and 'hwloc' in enabledBackends
 		ascend,
 		args: [
 			modelPath,
-			testsetDir,
-			kernelsPath,
+			testsetDir,	
 			testsetDir + '/labels.bin',
-			'50'
+			'50',
+			kernelsPath
 		],
 		timeout: 600,
 		suite: testSuite,
@@ -63,9 +63,9 @@ if 'opencl' in enabledBackends and 'hwloc' in enabledBackends
 		args: [
 			modelPath,
 			testsetDir,
-			kernelsPath,
 			testsetDir + '/labels.bin',
-			'50'
+			'50',
+			kernelsPath
 		],
 		timeout: 600,
 		suite: testSuite,
