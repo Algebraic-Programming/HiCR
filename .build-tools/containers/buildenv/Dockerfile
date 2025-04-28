@@ -1,7 +1,5 @@
 FROM ubuntu:24.04
 
-ARG OVNI_ACCESS_TOKEN=
-
 ENV USER hicr
 ENV ROOT_USER root
 ENV HOME /home/$USER
@@ -97,8 +95,7 @@ RUN git clone -b noc_extension --single-branch --depth 1 https://github.com/Alge
   && sudo rm -rf $HOME/lpf
 
 
-RUN echo "toke is ${OVNI_ACCESS_TOKEN}"
-RUN git clone  -b master --single-branch --depth 1 https://oauth2:${OVNI_ACCESS_TOKEN}@gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/ovni.git $HOME/ovni \
+RUN git clone -b 1.11.0 --single-branch --depth 1 https://github.com/bsc-pm/ovni.git $HOME/ovni \
   && cd $HOME/ovni  \
   && mkdir build  \
   && cd build \ 
@@ -128,7 +125,27 @@ RUN git clone -b v2024.10.24 --single-branch --depth 1 https://github.com/Khrono
   sudo cmake --build ./build --config Release --target install && \
   cd .. && \
   rm -rf $HOME/opencl
-  
+
+# Download protobuf
+RUN git clone --recursive -b v29.3 --single-branch --depth 1 https://github.com/protocolbuffers/protobuf.git $HOME/protobuf && \
+  cd $HOME/protobuf && \
+  git submodule update --init --recursive && \
+  mkdir build && \
+  cd    build && \
+  cmake -D CMAKE_INSTALL_PREFIX=/usr/local  \
+  -D CMAKE_BUILD_TYPE=Release  \
+  -D CMAKE_SKIP_INSTALL_RPATH=ON  \
+  -D protobuf_BUILD_TESTS=OFF              \
+  -D protobuf_ABSL_PROVIDER=module        \
+  -D protobuf_BUILD_LIBUPB=OFF             \
+  -D protobuf_BUILD_SHARED_LIBS=ON         \
+  -G Ninja .. &&  \
+  sudo ${HOME}/.venv/bin/ninja && \
+  sudo ${HOME}/.venv/bin/ninja install && \
+  cd .. && \
+  rm -rf $HOME/protobuf
+
+
 RUN sudo apt install -y intel-opencl-icd
 RUN sudo apt install -y nvidia-driver-570-server
 
