@@ -128,6 +128,7 @@ jobs:
             export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
             export LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
             meson setup build --reconfigure --wipe -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+            meson compile -C build
             meson test -C build
             echo "Creating coverage report..."
             ninja -C build coverage
