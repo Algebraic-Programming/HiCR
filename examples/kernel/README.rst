@@ -7,7 +7,7 @@ This is a set of simple examples showcasing how the HiCR API can be used to exec
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` backend implementation. The available kernel is compiled for Ascend 910. Run :code:`kernels/compile.sh` to call ATC and compile the kernel.
+    * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` backend implementation. The available kernel is compiled for Ascend 910. Run :code:`kernels/compile.sh` to call `ATC <https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devaids/devtools/atc/atlasatc_16_0005.html>`__ and compile the kernel.
     * :code:`opencl.cpp` corresponds to the :ref:`opencl backend` backend implementation. The available kernel is compiled for OpenCL.
     * :code:`nosv.cpp` corresponds to the :ref:`nosv backend` backend implementation
     * :code:`pthreads.cpp` corresponds to the :ref:`pthreads backend` backend implementation

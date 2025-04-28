@@ -2,8 +2,12 @@ build
 *.patch
 ~*
 .vscode
-atlas_*.sh
 **/token.env
-**/fusion_result.json
 **/kernel_meta*
 ovni
+atlas_*
+**/fusion_result.json
+**/*.bin
+**/*ubyte*
+**/.venv
+.cache
