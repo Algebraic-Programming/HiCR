@@ -28,6 +28,21 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
       
     steps:
+    - name: Add PR Checks
+      uses: patriknyblad/add-pr-checks@v1.1.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        checks: |
+         {
+            "name": "Build and Run Tests",
+            "head_sha": ${{ github.sha }},
+            "status": "in_progress",
+            "output": {
+                "title": "Build and Run Tests",
+                "summary": "Build and Run Tests",
+                "text": "Build and Run Tests"
+            }
+          }
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -79,7 +94,8 @@ jobs:
          {
             "name": "Build and Run Tests",
             "head_sha": ${{ github.sha }},
-            "status": ${{ steps.tests.conclusion }},
+            "status": "completed",
+            "conclusion": ${{ steps.tests.conclusion }},
             "output": {
                 "title": "Build and Run Tests",
                 "summary": "Build and Run Tests",
