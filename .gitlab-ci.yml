@@ -31,9 +31,6 @@ build:
         path: build/meson-logs/coverage.xml 
   only:
   - master
-  - develop 
-  - merge_requests
-  - tags
 
 build-ascend:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-ascend-arm64v8:latest
@@ -57,9 +54,7 @@ build-ascend:
       - build/meson-logs/*
   only:
   - master
-  - develop 
-  - merge_requests
-  - tags
+
 
 docs:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:1.0
@@ -75,9 +70,6 @@ docs:
   - make -j1 -C docs
   only: 
   - master
-  - develop
-  - merge_requests
-  - tags
 
 pages:
   image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest

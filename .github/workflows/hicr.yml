@@ -19,7 +19,7 @@ jobs:
   # Build HiCR and run tests
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'skipped' }}
     container:
       image: ghcr.io/algebraic-programming/hicr/buildenv:latest
       options: --user hicr
