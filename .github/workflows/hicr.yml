@@ -38,6 +38,7 @@ jobs:
       run:  meson compile -C build
 
     - name: Running tests and creating coverage report
+      id: tests
       shell: bash
       run:  |
             echo "Running Tests..."
@@ -74,4 +75,14 @@ jobs:
       uses: patriknyblad/add-pr-checks@v1.1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        checks-path: '**/workflows/*'
+        checks: |
+         {
+            "name": "Build and Run Tests",
+            "head_sha": ${{ github.sha }},
+            "status": ${{ steps.tests.conclusion }},
+            "output": {
+                "title": "Build and Run Tests",
+                "summary": "Build and Run Tests",
+                "text": "Build and Run Tests"
+            }
+          }
