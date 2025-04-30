@@ -32,6 +32,7 @@ jobs:
         with:
           fetch-depth: 2
 
+          
       # Check the PR diff using the current branch and the base branch of the PR
       - name: Run git diff
         run: |
