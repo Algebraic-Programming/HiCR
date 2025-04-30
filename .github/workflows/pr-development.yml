@@ -100,7 +100,7 @@ jobs:
     needs: [check-dockerfile-modifications, check-docker-artifact-existence]
     if: ${{ needs.check-dockerfile-modifications.outputs.dockerfile-modified == 'true' && needs.check-docker-artifact-existence.outputs.artifact-exists == 'false' }}
     outputs:
-      new-artifact-run-id:  ${{ steps.get-new-run-id.outputs.new-artifact-run-id }}
+      new-artifact-run-id: ${{ steps.get-new-run-id.outputs.new-artifact-run-id }}
     permissions:
       contents: read
       attestations: write
@@ -155,7 +155,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-    needs: [build-image, check-docker-artifact-existence, check-dockerfile-modifications]
+    needs:
+      [
+        build-image,
+        check-docker-artifact-existence,
+        check-dockerfile-modifications,
+      ]
     if: |
       always() &&
       (contains(needs.build-image.result, 'success') || contains(needs.build-image.result, 'skipped')) &&
@@ -172,7 +177,7 @@ jobs:
           path: ${{ runner.temp }}
           run-id: ${{ needs.build-image.outputs.new-artifact-run-id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Download local docker image
         if: ${{ needs.build-image.result == 'skipped' }}
         uses: actions/download-artifact@v4
