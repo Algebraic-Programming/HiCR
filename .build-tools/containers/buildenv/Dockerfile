@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
-ENV USER hicr
-ENV ROOT_USER root
+ENV USER=hicr
+ENV ROOT_USER=root
 ENV HOME /home/$USER
 
 RUN apt update --fix-missing
@@ -9,6 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends tzdata
 
 RUN apt install -y bash
 SHELL ["/bin/bash", "-c"]
+
 
 RUN apt install -y build-essential
 RUN apt install -y git
@@ -144,7 +145,7 @@ RUN git clone --recursive -b v29.3 --single-branch --depth 1 https://github.com/
   sudo ${HOME}/.venv/bin/ninja install && \
   cd .. && \
   rm -rf $HOME/protobuf
-
+  
 
 RUN sudo apt install -y intel-opencl-icd
 RUN sudo apt install -y nvidia-driver-570-server
@@ -156,6 +157,9 @@ RUN sudo apt install -y gcc-14
 RUN sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 30
 RUN sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 30
 RUN sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-14 30
+
+RUN sudo apt install -y neofetch
+
 
 RUN touch $HOME/.hicr-env.sh
 RUN chmod +rwx $HOME/.hicr-env.sh
