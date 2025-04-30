@@ -1,0 +1,141 @@
+name: Merge into master - Build and Run Tests
+
+# if statements modified to avoid: https://stackoverflow.com/questions/69354003/github-action-job-fire-when-previous-job-skipped
+
+on:
+  push:
+    branches: ["master"]
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  DOCKERIMAGE: ghcr.io/algebraic-programming/hicr/buildenv
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check-dockerfile-modifications:
+    runs-on: ubuntu-latest
+    outputs:
+      dockerfile-modified: ${{ steps.check-dockerfile.outputs.dockerfile-modified }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # Check the PR diff using the current branch and the base branch of the PR
+      - name: Run git diff
+        run: |
+          git diff --name-only HEAD^..HEAD > ${{ runner.temp }}/diff.txt
+
+      - name: Check if Dockerfile was modified
+        id: check-dockerfile
+        env:
+          MODIFIED_FILES_PATH: ${{ runner.temp }}/diff.txt
+        run: |
+          cat $MODIFIED_FILES_PATH
+          if cat $MODIFIED_FILES_PATH | grep -q 'Dockerfile' ; then
+            echo "Dockerfile was modified"
+            echo "dockerfile-modified=true" >> $GITHUB_OUTPUT
+          else
+            echo "Dockerfile was not modified"
+            echo "dockerfile-modified=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-image:
+    runs-on: ubuntu-latest
+    needs: [check-dockerfile-modifications]
+    if: ${{ needs.check-dockerfile-modifications.outputs.dockerfile-modified == 'true' }}
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata
+        id: dockermeta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.DOCKERIMAGE }}
+          tags: latest
+
+      - name: Build and push docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: "{{defaultContext}}:.build-tools/containers/buildenv"
+          push: true
+          tags: ${{ steps.dockermeta.outputs.tags }}
+          labels: ${{ steps.dockermeta.outputs.labels }}
+
+  # Build HiCR and run tests and the remote image
+  compile-and-test:
+    runs-on: ubuntu-latest
+    needs: [build-image]
+    if: |
+      always() &&
+      (contains(needs.build-image.result, 'success') || contains(needs.build-image.result, 'skipped'))
+    container:
+      image: ghcr.io/algebraic-programming/hicr/buildenv:latest
+      options: --user hicr
+      credentials:
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup
+        run: meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+
+      - name: Compile
+        run: meson compile -C build
+
+      - name: Running tests and creating coverage report
+        shell: bash
+        run: |
+          echo "Running Tests..."
+          meson setup build --wipe -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+          meson compile -C build
+          meson test -C build
+          echo "Creating coverage report..."
+          ninja -C build coverage
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: build/meson-logs/coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: "60 80"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: meson-logs
+          path: build/meson-logs/

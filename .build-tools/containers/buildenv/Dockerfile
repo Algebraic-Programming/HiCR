@@ -1,8 +1,8 @@
 FROM ubuntu:24.04
 
-ENV USER hicr
-ENV ROOT_USER root
-ENV HOME /home/$USER
+ENV USER=hicr
+ENV ROOT_USER=root
+ENV HOME=/home/$USER
 
 RUN apt update --fix-missing
 RUN DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends tzdata
