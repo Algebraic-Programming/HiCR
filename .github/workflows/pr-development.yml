@@ -116,21 +116,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      - name: Download local docker image
-        if: ${{ needs.check-docker-artifact-existence.outputs.artifact-exists == 'true' }}
-        uses: actions/download-artifact@v4
-        with:
-          name: buildenv-${{ github.event.number }}.tar
-          path: ${{ runner.temp }}
-          run-id: ${{ needs.check-docker-artifact-existence.outputs.artifact-run-id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Load local image
-        if: ${{ needs.check-docker-artifact-existence.outputs.artifact-exists == 'true' }}
-        run: |
-          docker load --input ${{ runner.temp }}/buildenv-${{ github.event.number }}.tar
-          docker image ls -a
-
       - name: Docker metadata
         id: dockermeta
         uses: docker/metadata-action@v4
