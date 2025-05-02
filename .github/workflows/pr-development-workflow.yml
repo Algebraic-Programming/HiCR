@@ -1,0 +1,357 @@
+name: PR development - Build and Run Tests Workflow
+
+# if statements modified to avoid: https://stackoverflow.com/questions/69354003/github-action-job-fire-when-previous-job-skipped
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      arch:
+          required: true
+          type: string
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  DOCKERIMAGE: ghcr.io/algebraic-programming/hicr/buildenv
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check-dockerfile-modifications-with-base:
+    runs-on: ${{ inputs.os }}
+    outputs:
+      dockerfile-modified: ${{ steps.check-dockerfile.outputs.dockerfile-modified }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      # Check the PR diff using the current branch and the base branch of the PR
+      - name: Run git diff
+        run: |
+          git diff --name-only HEAD^ HEAD > ${{ runner.temp }}/diff.txt
+
+      - name: Check if Dockerfile was modified
+        id: check-dockerfile
+        env:
+          MODIFIED_FILES_PATH: ${{ runner.temp }}/diff.txt
+        run: |
+          echo "HEAD^: $(git rev-parse HEAD^)"
+          echo "HEAD: $(git rev-parse HEAD)"
+          cat $MODIFIED_FILES_PATH
+          if cat $MODIFIED_FILES_PATH | grep -q 'buildenv/Dockerfile' ; then
+            echo "Dockerfile was modified"
+            echo "dockerfile-modified=true" >> $GITHUB_OUTPUT
+          else
+            echo "Dockerfile was not modified"
+            echo "dockerfile-modified=false" >> $GITHUB_OUTPUT
+          fi
+
+  check-dockerfile-modifications-with-last-commit:
+    runs-on: ${{ inputs.os }}
+    outputs:
+      dockerfile-modified: ${{ steps.check-dockerfile.outputs.dockerfile-modified }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          ref: ${{ github.event.pull_request.head.sha }}
+          
+      # Check the PR diff using the current branch and the base branch of the PR
+      - name: Run git diff
+        run: |
+          git diff --name-only HEAD^ HEAD > ${{ runner.temp }}/diff.txt
+
+      - name: Check if Dockerfile was modified
+        id: check-dockerfile
+        env:
+          MODIFIED_FILES_PATH: ${{ runner.temp }}/diff.txt
+        run: |
+          echo "HEAD^: $(git rev-parse HEAD^)"
+          echo "HEAD: $(git rev-parse HEAD)"
+          cat $MODIFIED_FILES_PATH
+          if cat $MODIFIED_FILES_PATH | grep -q 'buildenv/Dockerfile' ; then
+            echo "Dockerfile was modified"
+            echo "dockerfile-modified=true" >> $GITHUB_OUTPUT
+          else
+            echo "Dockerfile was not modified"
+            echo "dockerfile-modified=false" >> $GITHUB_OUTPUT
+          fi
+
+  check-docker-artifact-existence:
+    runs-on: ${{ inputs.os }}
+    # Trigger only if there are modification to the dockerfile and a temporary image should be used
+    outputs:
+      artifact-exists: ${{ steps.temporary-docker-exists.outputs.artifact-exists }}
+      artifact-run-id: ${{ steps.temporary-docker-exists.outputs.artifact-run-id }}
+    steps:
+      - name: Fetch artifacts JSON
+        run: |
+          curl https://api.github.com/repos/${{ github.repository }}/actions/artifacts?per_page=100&name=buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar > artifacts.json
+          cat artifacts.json
+
+      - name: Check artifact existence
+        id: temporary-docker-exists
+        run: |
+          echo "Running on ${{ inputs.arch }}"
+
+          # count how many artifacts match our branch & name
+          COUNT=$(cat artifacts.json \
+              | jq --arg branch "${{github.head_ref}}" --arg name "buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar" \
+                 '[ .artifacts[] 
+                  | select(.workflow_run.head_branch==$branch and .name==$name)
+                 ] | length')
+
+          # export found=true/false (and the count if you like)
+          if [ "$COUNT" -gt 0 ]; then
+            echo "artifact-exists=true"  >> $GITHUB_OUTPUT
+            echo "artifact-exists=true"
+          else
+            echo "artifact-exists=false"  >> $GITHUB_OUTPUT
+            echo "artifact-run-id=none"   >> $GITHUB_OUTPUT
+            echo "artifact-exists=false"
+            echo "artifact-run-id=none"
+            exit 0
+          fi
+
+          ARTIFACT_ID=$(cat artifacts.json  | jq -r --arg branch "${{github.head_ref}}" --arg name "buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar" \
+                          '
+                          .artifacts
+                          | map(select(.workflow_run.head_branch == $branch and .name == $name))
+                          | max_by(.created_at)
+                          | .workflow_run.id
+                          ' )
+          echo "artifact-run-id=$ARTIFACT_ID"
+          echo "artifact-run-id=$ARTIFACT_ID" >> $GITHUB_OUTPUT
+
+  build-image:
+    runs-on: ${{ inputs.os }}
+    needs: [check-dockerfile-modifications-with-last-commit]
+    if: ${{ needs.check-dockerfile-modifications-with-last-commit.outputs.dockerfile-modified == 'true' }}
+    outputs:
+      new-artifact-run-id: ${{ steps.get-new-run-id.outputs.new-artifact-run-id }}
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Docker metadata
+        id: dockermeta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.DOCKERIMAGE }}
+          tags: ${{ inputs.arch }}-latest
+
+      - name: Build docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: "{{defaultContext}}:.build-tools/containers/buildenv"
+          push: false
+          tags: ${{ steps.dockermeta.outputs.tags }}
+          labels: ${{ steps.dockermeta.outputs.labels }}
+          build-args: ARCH=${{ inputs.arch }}
+          outputs: type=docker,dest=/tmp/buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar
+
+      - name: Upload to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar
+          path: /tmp/buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar
+          compression-level: 9
+      - name: Get the new run id
+        id: get-new-run-id
+        run: |
+          echo "new-artifact-run-id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+  # Build HiCR and run tests on the locally built image
+  compile-and-test-local-custom-image:
+    runs-on: ${{ inputs.os }}
+    permissions:
+      pull-requests: write
+    needs:
+      [
+        build-image,
+        check-docker-artifact-existence,
+        check-dockerfile-modifications-with-base,
+      ]
+    if: |
+      always() &&
+      (contains(needs.build-image.result, 'success') || contains(needs.build-image.result, 'skipped')) &&
+      contains(needs.check-dockerfile-modifications-with-base.outputs.dockerfile-modified , 'true')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download new local docker image
+        if: ${{ needs.build-image.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar
+          path: ${{ runner.temp }}
+          run-id: ${{ needs.build-image.outputs.new-artifact-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download local docker image
+        if: ${{ needs.build-image.result == 'skipped' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar
+          path: ${{ runner.temp }}
+          run-id: ${{ needs.check-docker-artifact-existence.outputs.artifact-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load local image
+        run: |
+          docker load --input ${{ runner.temp }}/buildenv-${{ github.event.number }}-${{ inputs.arch }}.tar
+          docker image ls -a
+
+      - name: Start local container
+        run: |
+          docker run --name hicr --shm-size=1024M --privileged -v $PWD:/home/hicr/hicr -w /home/hicr/hicr -td ${{ env.DOCKERIMAGE }}:${{ inputs.arch }}-latest bash
+
+      - name: Setup
+        run: docker exec -u hicr hicr bash -c "meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true"
+
+      - name: Compile
+        run: docker exec -u hicr hicr bash -c "meson compile -C build"
+
+      - name: Running tests and creating coverage report
+        run: |
+          echo "Running Tests..."
+          docker exec -u hicr hicr bash -c "source /home/hicr/.bashrc && meson setup build --wipe -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true"
+          docker exec -u hicr hicr bash -c "source /home/hicr/.bashrc && meson compile -C build"
+          docker exec -u hicr hicr bash -c "source /home/hicr/.bashrc && meson test -C build"
+          echo "Creating coverage report..."
+          docker exec -u hicr hicr bash -c "ninja -C build coverage"
+          docker stop hicr
+          docker container rm hicr
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-local-${{ inputs.arch }}
+          path: build/
+  
+
+  # Build HiCR and run tests and the remote image
+  compile-and-test-standard:
+    runs-on: ${{ inputs.os }}
+    needs: [check-dockerfile-modifications-with-base]
+    if: |
+      always() &&
+      contains(needs.check-dockerfile-modifications-with-base.outputs.dockerfile-modified , 'false')
+    container:
+      image: ghcr.io/algebraic-programming/hicr/buildenv:latest
+      options: --user hicr
+      credentials:
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup
+        run: source /home/hicr/.bashrc && meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+
+      - name: Compile
+        run: source /home/hicr/.bashrc && meson compile -C build
+
+      - name: Running tests and creating coverage report
+        shell: bash
+        run: |
+          echo "Running Tests..."
+          source /home/hicr/.bashrc
+          meson setup build --wipe -Db_coverage=true -Dbackends=hwloc,pthreads,mpi,nosv,boost -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+          meson compile -C build
+          meson test -C build
+          echo "Creating coverage report..."
+          ninja -C build coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-standard-${{ inputs.arch }}
+          path: build/
+
+
+  analyze-coverage-report:
+    runs-on: ubuntu-latest
+    needs: [compile-and-test-standard, compile-and-test-local-custom-image]
+    permissions:
+      pull-requests: write
+    if: |
+      always() &&
+      (contains(needs.compile-and-test-standard.result, 'success') || contains(needs.compile-and-test-local-custom-image.result, 'success'))
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Create temp build folder
+        run: |
+          mkdir ${{ runner.temp }}/build
+      - name: Download standard coverage file
+        if: ${{ needs.compile-and-test-standard.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: build-standard-${{ inputs.arch }}
+          path: ${{ runner.temp }}/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download local coverage file
+        if: ${{ needs.compile-and-test-local-custom-image.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: build-local-${{ inputs.arch }}
+          path: ${{ runner.temp }}/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy build folder in repo
+        run: |
+          mv ${{ runner.temp }}/build .
+
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: build/meson-logs/coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: "60 80"
+      
+      - name: Add arch to coveraget file
+        run: |
+          sed -i '1i # Coverage ${{ inputs.arch }}' code-coverage-results.md
+
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          header: ${{ inputs.arch }}
+          message: |
+            Coverage for ${{ inputs.arch }}
+          recreate: true
+          path: code-coverage-results.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meson-logs-${{ inputs.arch }}
+          path: build/meson-logs/

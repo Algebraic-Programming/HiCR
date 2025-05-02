@@ -1,5 +1,7 @@
 FROM ubuntu:24.04
 
+ARG ARCH=none
+
 ENV USER=hicr
 ENV ROOT_USER=root
 ENV HOME=/home/$USER
@@ -145,9 +147,11 @@ RUN git clone --recursive -b v29.3 --single-branch --depth 1 https://github.com/
   cd .. && \
   rm -rf $HOME/protobuf
 
-
-RUN sudo apt install -y intel-opencl-icd
-RUN sudo apt install -y nvidia-driver-570-server
+RUN echo "arch is ${ARCH}"
+RUN if [ $ARCH == "amd64" ]; then \
+      sudo apt install -y intel-opencl-icd; \
+      sudo apt install -y nvidia-driver-570-server; \
+    fi
 
 RUN sudo apt purge -y g++-10
 RUN sudo apt purge -y gcc-10
@@ -172,7 +176,6 @@ RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig' >> $HOME/.
 RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig' >> $HOME/.hicr-env.sh
 RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/share/pkgconfig' >> $HOME/.hicr-env.sh
 RUN echo 'source ${HOME}/.venv/bin/activate' >> $HOME/.hicr-env.sh
-
 
 RUN echo 'source $HOME/.hicr-env.sh' >> $HOME/.bashrc
 USER $ROOT_USER
