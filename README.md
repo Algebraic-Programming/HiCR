@@ -1,4 +1,4 @@
-[![Build and Run Tests](https://github.com/Algebraic-Programming/HiCR/actions/workflows/hicr.yml/badge.svg)](https://github.com/Algebraic-Programming/HiCR/actions/workflows/hicr.yml)
+[![Build and Run Tests](https://github.com/Algebraic-Programming/HiCR/actions/workflows/pr-merged.yml/badge.svg)](https://github.com/Algebraic-Programming/HiCR/actions/workflows/pr-merged.yml)
 ```
  _   _ ___ ____ ____  
 | | | |_ _/ ___|  _ \ 
