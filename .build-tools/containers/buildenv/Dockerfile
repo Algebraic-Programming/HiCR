@@ -48,7 +48,11 @@ RUN useradd -d $HOME -m $USER -G root \
 
 USER $USER
 
-RUN python3 -m venv ${HOME}/.venv
+RUN sudo apt install -y software-properties-common apt-utils
+RUN sudo -E add-apt-repository -y 'ppa:deadsnakes/ppa'
+RUN sudo apt update && sudo apt install -y python3.10
+RUN sudo apt install -y python3.10-venv
+RUN python3.10 -m venv ${HOME}/.venv
 RUN source ${HOME}/.venv/bin/activate \
   && pip3 install --upgrade pip \
   && pip3 install 'cmake>=3.31.4' \
@@ -141,6 +145,7 @@ RUN git clone --recursive -b v29.3 --single-branch --depth 1 https://github.com/
   -D protobuf_ABSL_PROVIDER=module        \
   -D protobuf_BUILD_LIBUPB=OFF             \
   -D protobuf_BUILD_SHARED_LIBS=ON         \
+  -D protobuf_LOCAL_DEPEDENCIES_ONLY=ON \
   -G Ninja .. &&  \
   sudo ${HOME}/.venv/bin/ninja && \
   sudo ${HOME}/.venv/bin/ninja install && \
