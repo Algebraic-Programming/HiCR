@@ -1,5 +1,5 @@
 build:
-  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-x86_64:latest
+  image: ghcr.io/algebraic-programming/hicr/buildenv:latest
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   tags:
@@ -33,7 +33,7 @@ build:
   - master
 
 build-ascend:
-  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-ascend-arm64v8:latest
+  image: ghcr.io/algebraic-programming/hicr/buildenv-ascend:latest
   tags:
   - docker
   - ascend
