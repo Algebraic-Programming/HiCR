@@ -1,5 +1,7 @@
 FROM ubuntu:24.04
 
+ARG ARCH=none
+
 ENV USER=hicr
 ENV ROOT_USER=root
 ENV HOME=/home/$USER
@@ -46,7 +48,11 @@ RUN useradd -d $HOME -m $USER -G root \
 
 USER $USER
 
-RUN python3 -m venv ${HOME}/.venv
+RUN sudo apt install -y software-properties-common apt-utils
+RUN sudo -E add-apt-repository -y 'ppa:deadsnakes/ppa'
+RUN sudo apt update && sudo apt install -y python3.10
+RUN sudo apt install -y python3.10-venv
+RUN python3.10 -m venv ${HOME}/.venv
 RUN source ${HOME}/.venv/bin/activate \
   && pip3 install --upgrade pip \
   && pip3 install 'cmake>=3.31.4' \
@@ -139,15 +145,18 @@ RUN git clone --recursive -b v29.3 --single-branch --depth 1 https://github.com/
   -D protobuf_ABSL_PROVIDER=module        \
   -D protobuf_BUILD_LIBUPB=OFF             \
   -D protobuf_BUILD_SHARED_LIBS=ON         \
+  -D protobuf_LOCAL_DEPEDENCIES_ONLY=ON \
   -G Ninja .. &&  \
   sudo ${HOME}/.venv/bin/ninja && \
   sudo ${HOME}/.venv/bin/ninja install && \
   cd .. && \
   rm -rf $HOME/protobuf
 
-
-RUN sudo apt install -y intel-opencl-icd
-RUN sudo apt install -y nvidia-driver-570-server
+RUN echo "arch is ${ARCH}"
+RUN if [ $ARCH == "amd64" ]; then \
+      sudo apt install -y intel-opencl-icd; \
+      sudo apt install -y nvidia-driver-570-server; \
+    fi
 
 RUN sudo apt purge -y g++-10
 RUN sudo apt purge -y gcc-10
@@ -172,7 +181,6 @@ RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig' >> $HOME/.
 RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig' >> $HOME/.hicr-env.sh
 RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/share/pkgconfig' >> $HOME/.hicr-env.sh
 RUN echo 'source ${HOME}/.venv/bin/activate' >> $HOME/.hicr-env.sh
-
 
 RUN echo 'source $HOME/.hicr-env.sh' >> $HOME/.bashrc
 USER $ROOT_USER
