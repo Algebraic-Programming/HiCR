@@ -24,7 +24,7 @@ Instance Management
 Instantiation
 -----------------
 
-To use the MPI-based instance manager backend, we need to include:
+To use an Instance Manager, such as the MPI-based one, we need to include:
 
 ..  code-block:: C++
 
