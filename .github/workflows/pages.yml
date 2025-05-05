@@ -52,6 +52,7 @@ jobs:
             python3 -m pip install sphinx_toolbox
             python3 -m pip install sphinx-theme
             python3 -m pip install sphinx-book-theme
+            sudo apt update --fix-missing
             sudo apt install -y build-essential \
             doxygen \
             graphviz \

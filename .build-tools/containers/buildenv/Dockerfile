@@ -182,6 +182,7 @@ RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig' >> $
 RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/share/pkgconfig' >> $HOME/.hicr-env.sh
 RUN echo 'source ${HOME}/.venv/bin/activate' >> $HOME/.hicr-env.sh
 
+
 RUN echo 'source $HOME/.hicr-env.sh' >> $HOME/.bashrc
 USER $ROOT_USER
 RUN chown -R $USER $HOME
