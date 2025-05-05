@@ -12,13 +12,13 @@ env:
 
 jobs:
   build-docker-arm64:
-    uses: lterrac/HiCR/.github/workflows/pr-merged-build-workflow.yml@ci/buildMultiPlatform
+    uses: lterrac/HiCR/.github/workflows/master-build-workflow.yml@ci/buildMultiPlatform
     with:
       os: ubuntu-24.04-arm
       arch: arm64
   
   build-docker-amd64:
-    uses: lterrac/HiCR/.github/workflows/pr-merged-build-workflow.yml@ci/buildMultiPlatform
+    uses: lterrac/HiCR/.github/workflows/master-build-workflow.yml@ci/buildMultiPlatform
     with:
       os: ubuntu-24.04
       arch: amd64
@@ -50,7 +50,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.push-buildenv-manifest.result, 'success') || contains(needs.push-buildenv-manifest.result, 'skipped'))
-    uses: lterrac/HiCR/.github/workflows/pr-merged-test-workflow.yml@ci/buildMultiPlatform
+    uses: lterrac/HiCR/.github/workflows/master-test-workflow.yml@ci/buildMultiPlatform
     with:
       os: ubuntu-24.04-arm
       arch: arm64
@@ -60,7 +60,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.push-buildenv-manifest.result, 'success') || contains(needs.push-buildenv-manifest.result, 'skipped'))
-    uses: lterrac/HiCR/.github/workflows/pr-merged-test-workflow.yml@ci/buildMultiPlatform
+    uses: lterrac/HiCR/.github/workflows/master-test-workflow.yml@ci/buildMultiPlatform
     with:
       os: ubuntu-24.04
       arch: amd64
@@ -70,7 +70,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.push-buildenv-manifest.result, 'success') || contains(needs.push-buildenv-manifest.result, 'skipped'))
-    uses: lterrac/HiCR/.github/workflows/pr-merged-build-ascend-workflow.yml@ci/buildAscend
+    uses: lterrac/HiCR/.github/workflows/master-build-ascend-workflow.yml@ci/buildAscend
     with:
       os: ubuntu-24.04-arm
       arch: arm64
@@ -80,7 +80,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.push-buildenv-manifest.result, 'success') || contains(needs.push-buildenv-manifest.result, 'skipped'))
-    uses: lterrac/HiCR/.github/workflows/pr-merged-build-ascend-workflow.yml@ci/buildAscend
+    uses: lterrac/HiCR/.github/workflows/master-build-ascend-workflow.yml@ci/buildAscend
     with:
       os: ubuntu-24.04
       arch: amd64
