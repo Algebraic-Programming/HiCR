@@ -44,7 +44,7 @@ The following libraries and tools are only necessary for certain HiCR backends:
 
 * :ref:`nosv backend` :code:`nos-v (version >= 3.1.0)`
 
-* :ref:`opencl backend` :code:`intel-opencl-icd (version >= 3.0)`
+* :ref:`opencl backend` :code:`opencl (version >= 3.0)` and a compatible :code:`opencl icd loader`
 
 * :ref:`pthreads backend`
 
