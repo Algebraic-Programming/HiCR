@@ -70,7 +70,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.push-buildenv-manifest.result, 'success') || contains(needs.push-buildenv-manifest.result, 'skipped'))
-    uses: Algebraic-Programming/HiCR/.github/workflows/master-build-ascend-workflow.yml@ci/buildAscend
+    uses: Algebraic-Programming/HiCR/.github/workflows/master-build-ascend-workflow.yml@master
     with:
       os: ubuntu-24.04-arm
       arch: arm64
@@ -80,7 +80,7 @@ jobs:
     if: |
       always() &&
       (contains(needs.push-buildenv-manifest.result, 'success') || contains(needs.push-buildenv-manifest.result, 'skipped'))
-    uses: Algebraic-Programming/HiCR/.github/workflows/master-build-ascend-workflow.yml@ci/buildAscend
+    uses: Algebraic-Programming/HiCR/.github/workflows/master-build-ascend-workflow.yml@master
     with:
       os: ubuntu-24.04
       arch: amd64
