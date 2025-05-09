@@ -1,6 +1,6 @@
 # HiCR RPC Engine Frontend Configuration
 
-backendIncludes = include_directories([
+frontendIncludes = include_directories([
 ])
 
 frontendDependencies = [
