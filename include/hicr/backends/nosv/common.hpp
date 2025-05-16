@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <pthread.h>
+#include <unistd.h>
 #include <sys/syscall.h> // For syscall(SYS_gettid)
 #include <nosv.h>
 #include <nosv/hwinfo.h>
