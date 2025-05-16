@@ -1,0 +1,67 @@
+name: PR development - Build and Run Tests Workflow
+
+# if statements modified to avoid: https://stackoverflow.com/questions/69354003/github-action-job-fire-when-previous-job-skipped
+
+on:
+  workflow_run:
+    workflows: [ci-amd64, ci-arm64]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  DOCKERIMAGE: ghcr.io/algebraic-programming/hicr/buildenv
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  update-coverage-PR-amd64:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+    - name: Download standard coverage file
+      uses: actions/download-artifact@v4
+      with:
+        name: meson-logs-amd64
+        path: ${{ runner.temp }}/build
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request' || github.event_name == 'pull_request'
+      with:
+        header: amd64
+        message: |
+          Coverage for amd64
+        recreate: true
+        path: code-coverage-results.md
+
+  update-coverage-PR-arm64:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+    - name: Download standard coverage file
+      uses: actions/download-artifact@v4
+      with:
+        name: meson-logs-arm64
+        path: ${{ runner.temp }}/build
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request' || github.event_name == 'pull_request'
+      with:
+        header: arm64
+        message: |
+          Coverage for arm64
+        recreate: true
+        path: code-coverage-results.md

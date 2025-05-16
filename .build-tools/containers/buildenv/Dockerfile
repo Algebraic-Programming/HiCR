@@ -1,10 +1,10 @@
 FROM ubuntu:24.04
 
-ARG OVNI_ACCESS_TOKEN=
+ARG ARCH=none
 
-ENV USER hicr
-ENV ROOT_USER root
-ENV HOME /home/$USER
+ENV USER=hicr
+ENV ROOT_USER=root
+ENV HOME=/home/$USER
 
 RUN apt update --fix-missing
 RUN DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends tzdata
@@ -48,7 +48,11 @@ RUN useradd -d $HOME -m $USER -G root \
 
 USER $USER
 
-RUN python3 -m venv ${HOME}/.venv
+RUN sudo apt install -y software-properties-common apt-utils
+RUN sudo -E add-apt-repository -y 'ppa:deadsnakes/ppa'
+RUN sudo apt update && sudo apt install -y python3.10
+RUN sudo apt install -y python3.10-venv
+RUN python3.10 -m venv ${HOME}/.venv
 RUN source ${HOME}/.venv/bin/activate \
   && pip3 install --upgrade pip \
   && pip3 install 'cmake>=3.31.4' \
@@ -97,8 +101,7 @@ RUN git clone -b noc_extension --single-branch --depth 1 https://github.com/Alge
   && sudo rm -rf $HOME/lpf
 
 
-RUN echo "toke is ${OVNI_ACCESS_TOKEN}"
-RUN git clone  -b master --single-branch --depth 1 https://oauth2:${OVNI_ACCESS_TOKEN}@gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/ovni.git $HOME/ovni \
+RUN git clone -b 1.11.0 --single-branch --depth 1 https://github.com/bsc-pm/ovni.git $HOME/ovni \
   && cd $HOME/ovni  \
   && mkdir build  \
   && cd build \ 
@@ -128,9 +131,32 @@ RUN git clone -b v2024.10.24 --single-branch --depth 1 https://github.com/Khrono
   sudo cmake --build ./build --config Release --target install && \
   cd .. && \
   rm -rf $HOME/opencl
-  
-RUN sudo apt install -y intel-opencl-icd
-RUN sudo apt install -y nvidia-driver-570-server
+
+# Download protobuf
+RUN git clone --recursive -b v29.3 --single-branch --depth 1 https://github.com/protocolbuffers/protobuf.git $HOME/protobuf && \
+  cd $HOME/protobuf && \
+  git submodule update --init --recursive && \
+  mkdir build && \
+  cd    build && \
+  cmake -D CMAKE_INSTALL_PREFIX=/usr/local  \
+  -D CMAKE_BUILD_TYPE=Release  \
+  -D CMAKE_SKIP_INSTALL_RPATH=ON  \
+  -D protobuf_BUILD_TESTS=OFF              \
+  -D protobuf_ABSL_PROVIDER=module        \
+  -D protobuf_BUILD_LIBUPB=OFF             \
+  -D protobuf_BUILD_SHARED_LIBS=ON         \
+  -D protobuf_LOCAL_DEPEDENCIES_ONLY=ON \
+  -G Ninja .. &&  \
+  sudo ${HOME}/.venv/bin/ninja && \
+  sudo ${HOME}/.venv/bin/ninja install && \
+  cd .. && \
+  rm -rf $HOME/protobuf
+
+RUN echo "arch is ${ARCH}"
+RUN if [ $ARCH == "amd64" ]; then \
+      sudo apt install -y intel-opencl-icd; \
+      sudo apt install -y nvidia-driver-570-server; \
+    fi
 
 RUN sudo apt purge -y g++-10
 RUN sudo apt purge -y gcc-10
@@ -139,6 +165,8 @@ RUN sudo apt install -y gcc-14
 RUN sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 30
 RUN sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 30
 RUN sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-14 30
+
+RUN sudo apt install -y vim nano
 
 RUN touch $HOME/.hicr-env.sh
 RUN chmod +rwx $HOME/.hicr-env.sh

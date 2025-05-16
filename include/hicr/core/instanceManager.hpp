@@ -86,7 +86,7 @@ class InstanceManager
    * This function prompts the backend to perform the necessary steps to discover and list the currently created (active or not)
    * \return A set of pointers to HiCR instances that refer to both local and remote instances
    */
-  [[nodiscard]] __INLINE__ const instanceList_t &getInstances() const { return _instances; }
+  [[nodiscard]] __INLINE__ instanceList_t &getInstances() { return _instances; }
 
   /**
    * Function to retrieve the currently executing instance
