@@ -103,7 +103,7 @@ class ExecutionState final : public HiCR::ExecutionState
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == nullptr) HICR_THROW_LOGIC("The passed execution unit is not supported by this execution state type\n");
-    
+
     // Initialize the nosv type with the new defined task type and its metadata
     check(nosv_type_init(&_executionStateTaskType, run_callback, NULL, completed_callback, "executionUnitTaskType", NULL, NULL, NOSV_TYPE_INIT_NONE));
 
@@ -112,7 +112,7 @@ class ExecutionState final : public HiCR::ExecutionState
 
     // Access the execution state task metadata
     auto metadata = (taskMetadata_t *)getTaskMetadata(_executionStateTask);
-    
+
     // Store the function and function argument in the metadata
     metadata->executionState = this;
     metadata->fc             = c->getFunction();
@@ -183,15 +183,16 @@ class ExecutionState final : public HiCR::ExecutionState
   /**
    * nOS-V runtime callback wrapper for the fc
    */
-  static __INLINE__ void run_callback(nosv_task_t task) {
+  static __INLINE__ void run_callback(nosv_task_t task)
+  {
 // TraCR set trace of thread executing a task
 #ifdef ENABLE_INSTRUMENTATION
-  INSTRUMENTATION_THREAD_MARK_SET((long)0);
+    INSTRUMENTATION_THREAD_MARK_SET((long)0);
 #endif
-    
+
     // Accessing metadata from the task
     auto metadata = (taskMetadata_t *)getTaskMetadata(task);
-    
+
     // Unblocking the worker mainLoop  as the run_callback successfully has been called from here
     if (metadata->mainLoop) check(nosv_barrier_wait(metadata->mainLoop_barrier));
 
@@ -221,7 +222,7 @@ class ExecutionState final : public HiCR::ExecutionState
     if (!(metadata->mainLoop))
     {
       if (!(metadata->parent_task)) HICR_THROW_RUNTIME("The parent task is not existing (i.e. NULL).");
-      
+
       // sleeping somehow helps the problem of this rare bug not occuring:
       // [HiCR] Runtime Exception: Task has to be either in suspended or in finished state but I got State: 2. IsFinished: 0
       // sleep(0.01);

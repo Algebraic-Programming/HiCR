@@ -77,10 +77,7 @@ inline void *getTaskTypeMetadata(nosv_task_t task)
 /**
   * Print current CPU and Thread ID (For debugging)
   */
-inline void print_CPU_TID()
-{
-  printf("[CPU: %d Thread: %ld] ", nosv_get_current_logical_cpu(), syscall(SYS_gettid));
-}
+inline void print_CPU_TID() { printf("[CPU: %d Thread: %ld] ", nosv_get_current_logical_cpu(), syscall(SYS_gettid)); }
 
 /**
   * Print but with CPU and TID (For debugging)
