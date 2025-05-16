@@ -180,7 +180,7 @@ class Task
 
 // TraCR set trace of thread executing a task
 #ifdef ENABLE_INSTRUMENTATION
-    INSTRUMENTATION_THREAD_MARK_SET(0);
+    INSTRUMENTATION_THREAD_MARK_SET((long)0);
 #endif
 
     // Now resuming the task's execution
@@ -188,17 +188,17 @@ class Task
 
 // TraCR set trace of thread polling again
 #ifdef ENABLE_INSTRUMENTATION
-    INSTRUMENTATION_THREAD_MARK_SET(2);
+    INSTRUMENTATION_THREAD_MARK_SET((long)2);
 #endif
 
     // Checking execution state finalization
-    _executionState->checkFinalization();
+    bool isFinished = _executionState->checkFinalization();
 
     // Getting state after execution
     const auto state = getState();
 
     if (state != HiCR::ExecutionState::state_t::suspended && state != HiCR::ExecutionState::state_t::finished)
-      HICR_THROW_RUNTIME("Task has to be either in suspended or in finished state but I got State: %d.\n", state);
+      HICR_THROW_RUNTIME("Task has to be either in suspended or in finished state but I got State: %d. IsFinished: %b\n", state, isFinished);
 
     // If the task is suspended and callback map is defined, trigger the corresponding callback.
     if (state == HiCR::ExecutionState::state_t::suspended)

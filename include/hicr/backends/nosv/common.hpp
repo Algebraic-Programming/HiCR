@@ -26,6 +26,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/syscall.h> // For syscall(SYS_gettid)
 #include <nosv.h>
 #include <nosv/hwinfo.h>
 
@@ -76,12 +78,7 @@ inline void *getTaskTypeMetadata(nosv_task_t task)
 /**
   * Print current CPU and Thread ID (For debugging)
   */
-inline void print_CPU_TID()
-{
-  printf("[CPU: %d Thread: %ld] ", nosv_get_current_logical_cpu(), pthread_self());
-
-  fflush(stdout);
-}
+inline void print_CPU_TID() { printf("[CPU: %d Thread: %ld] ", nosv_get_current_logical_cpu(), syscall(SYS_gettid)); }
 
 /**
   * Print but with CPU and TID (For debugging)

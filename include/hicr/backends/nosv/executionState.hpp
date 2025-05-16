@@ -104,35 +104,11 @@ class ExecutionState final : public HiCR::ExecutionState
     // Checking whether the execution unit passed is compatible with this backend
     if (c == nullptr) HICR_THROW_LOGIC("The passed execution unit is not supported by this execution state type\n");
 
-    // nOS-V runtime callback wrapper for the fc
-    nosv_task_run_callback_t run_callback = [](nosv_task_t task) {
-// TraCR set trace of thread executing a task
-#ifdef ENABLE_INSTRUMENTATION
-      INSTRUMENTATION_THREAD_MARK_SET(0);
-#endif
-
-      // Accessing metadata from the task
-      auto TaskMetadata = (taskMetadata_t *)getTaskMetadata(task);
-
-      // Unblocking the worker mainLoop  as the run_callback successfully has been called from here
-      if (TaskMetadata->mainLoop) check(nosv_barrier_wait(TaskMetadata->mainLoop_barrier));
-
-      // Get the fc
-      auto fc = TaskMetadata->fc;
-
-      // Get the argument pointer to pass over the function
-      auto arg = TaskMetadata->arg;
-
-      // Executing the function (Else we throw at runtime)
-      if (fc) { fc(arg); }
-      else { HICR_THROW_RUNTIME("Error: No valid callback function.\n"); }
-    };
-
     // Initialize the nosv type with the new defined task type and its metadata
-    check(nosv_type_init(&_executionUnitTaskType, run_callback, NULL, completed_callback, "executionUnitTaskType", NULL, NULL, NOSV_TYPE_INIT_NONE));
+    check(nosv_type_init(&_executionStateTaskType, run_callback, NULL, completed_callback, "executionUnitTaskType", NULL, NULL, NOSV_TYPE_INIT_NONE));
 
     // nosv create the execution task
-    check(nosv_create(&_executionStateTask, _executionUnitTaskType, sizeof(taskMetadata_t), NOSV_CREATE_NONE));
+    check(nosv_create(&_executionStateTask, _executionStateTaskType, sizeof(taskMetadata_t), NOSV_CREATE_NONE));
 
     // Access the execution state task metadata
     auto metadata = (taskMetadata_t *)getTaskMetadata(_executionStateTask);
@@ -183,13 +159,13 @@ class ExecutionState final : public HiCR::ExecutionState
 
     auto metadata = (taskMetadata_t *)getTaskMetadata(self_task);
 
-    // Resume the parent task to continue running other tasks.
-    check(nosv_submit(metadata->parent_task, NOSV_SUBMIT_NONE));
-
 // TraCR set trace of thread polling again (as it suspended his task)
 #ifdef ENABLE_INSTRUMENTATION
-    INSTRUMENTATION_THREAD_MARK_SET(2);
+    INSTRUMENTATION_THREAD_MARK_SET((long)2);
 #endif
+
+    // Resume the parent task to continue running other tasks.
+    check(nosv_submit(metadata->parent_task, NOSV_SUBMIT_NONE));
 
     // Now suspending this execution state.
     check(nosv_pause(NOSV_PAUSE_NONE));
@@ -205,6 +181,33 @@ class ExecutionState final : public HiCR::ExecutionState
   private:
 
   /**
+   * nOS-V runtime callback wrapper for the fc
+   */
+  static __INLINE__ void run_callback(nosv_task_t task)
+  {
+// TraCR set trace of thread executing a task
+#ifdef ENABLE_INSTRUMENTATION
+    INSTRUMENTATION_THREAD_MARK_SET((long)0);
+#endif
+
+    // Accessing metadata from the task
+    auto metadata = (taskMetadata_t *)getTaskMetadata(task);
+
+    // Unblocking the worker mainLoop  as the run_callback successfully has been called from here
+    if (metadata->mainLoop) check(nosv_barrier_wait(metadata->mainLoop_barrier));
+
+    // Get the fc
+    auto fc = metadata->fc;
+
+    // Get the argument pointer to pass over the function
+    auto arg = metadata->arg;
+
+    // Executing the function (Else we throw at runtime)
+    if (fc) { fc(arg); }
+    else { HICR_THROW_RUNTIME("Error: No valid callback function.\n"); }
+  }
+
+  /**
    * The completed_callback function of nosv. 
    * This will be called after the run_callback and it is save to continue the parent_task
    */
@@ -212,24 +215,29 @@ class ExecutionState final : public HiCR::ExecutionState
   {
     auto metadata = (taskMetadata_t *)getTaskMetadata(task);
 
+    // mark task as completed
     metadata->executionState->_completed = true;
 
     // Resume the parent task as its child task has just finished
     if (!(metadata->mainLoop))
     {
       if (!(metadata->parent_task)) HICR_THROW_RUNTIME("The parent task is not existing (i.e. NULL).");
+
+      // sleeping somehow helps the problem of this rare bug not occuring:
+      // [HiCR] Runtime Exception: Task has to be either in suspended or in finished state but I got State: 2. IsFinished: 0
+      // sleep(0.01);
       check(nosv_submit(metadata->parent_task, NOSV_SUBMIT_UNLOCKED));
     }
 
-    // destroying this task
-    // TODO: Destroy a nOS-V task when no longer needed. Destroying the nOS-V task here does not work for all the TaskR examples (e.g. Jacobi3D).
+    // Destroying this task
+    // TODO: Destroy a nOS-V task when no longer needed. Destroying the nOS-V task here does not work for all the TaskR examples (e.g. abcTasks and Jacobi3D).
     // check(nosv_destroy(task, NOSV_DESTROY_NONE));
   }
 
   /**
    * nosv task type of the executionUnit
    */
-  nosv_task_type_t _executionUnitTaskType;
+  nosv_task_type_t _executionStateTaskType;
 
   /**
    * boolean to determine if the fc has finished.

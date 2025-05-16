@@ -120,7 +120,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     // Move the ovnership of the execution state to this instance
     _executionState = std::move(c);
 
-    // Set execution statte task metadata for this PU
+    // Set execution state task metadata for this PU
     auto metadata      = (ExecutionState::taskMetadata_t *)getTaskMetadata(_executionState->_executionStateTask);
     metadata->mainLoop = true;
 
@@ -135,6 +135,9 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
 
     // Barrier to as we have to wait until the execution state task is properly initialized and running
     check(nosv_barrier_wait(metadata->mainLoop_barrier));
+
+    // Destroying the barrier as it is no longer needed
+    check(nosv_barrier_destroy(metadata->mainLoop_barrier));
   }
 
   /**
@@ -142,7 +145,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    */
   __INLINE__ void terminate()
   {
-    // Nothing to do here. Just wait for the nOS-V worker thread to finalize on its own
+    // Nothing to do here. Just wait for the nOS-V worker thread to finalize on its own.
   }
 
   /**
