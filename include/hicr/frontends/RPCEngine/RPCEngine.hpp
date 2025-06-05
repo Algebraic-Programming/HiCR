@@ -125,6 +125,20 @@ class RPCEngine
   }
 
   /**
+   * Function to check whether there is a pending RPC to listen to.
+   * 
+   * @return true, if there is a pending RPC; false, otherwise.
+   */
+  __INLINE__ bool hasPendingRPCs()
+  {
+    // Updating depth
+    _RPCConsumerChannel->updateDepth();
+
+    // Checking if empty
+    return _RPCConsumerChannel->isEmpty() == false;
+  }
+
+  /**
    * Function to put the current instance to listen for incoming RPCs
    */
   __INLINE__ void listen()
