@@ -205,6 +205,11 @@ class ExecutionState final : public HiCR::ExecutionState
     // Executing the function (Else we throw at runtime)
     if (fc) { fc(arg); }
     else { HICR_THROW_RUNTIME("Error: No valid callback function.\n"); }
+
+// TraCR reset marker to nothing as otherwise nOS-V continues displaying them.
+#ifdef ENABLE_INSTRUMENTATION
+    INSTRUMENTATION_VMARKER_RESET();
+#endif
   }
 
   /**
