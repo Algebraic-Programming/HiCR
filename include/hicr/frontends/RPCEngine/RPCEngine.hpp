@@ -161,6 +161,13 @@ class RPCEngine
   }
 
   /**
+   * Function to retrieve a pointer to the instance who has requested the executing RPC
+   * 
+   * @return a pointer to the instance who requested the RPC
+   */
+  __INLINE__ std::shared_ptr<HiCR::Instance> getRPCRequester() { return _instanceManager.getInstances()[_requesterInstanceIdx]; }
+
+  /**
    * Function to request the execution of a remote function in a remote HiCR instance
    * \param[in] RPCName The name of the RPC to run
    * \param[in] instance Instance on which to run the RPC
