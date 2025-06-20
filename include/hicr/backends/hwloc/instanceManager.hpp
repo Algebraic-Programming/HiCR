@@ -73,7 +73,7 @@ class InstanceManager final : public HiCR::InstanceManager
 
   protected:
 
-  __INLINE__ std::shared_ptr<HiCR::Instance> createInstanceImpl(const std::shared_ptr<HiCR::InstanceTemplate> &instanceTemplate) override
+  __INLINE__ std::shared_ptr<HiCR::Instance> createInstanceImpl(const HiCR::InstanceTemplate instanceTemplate) override
   {
     HICR_THROW_LOGIC("The Host backend does not currently support the launching of new instances during runtime");
   }

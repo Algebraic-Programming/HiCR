@@ -109,13 +109,13 @@ class InstanceManager
    * \param[in] instanceTemplate The HiCR instance template to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  __INLINE__ std::shared_ptr<HiCR::Instance> createInstance(const std::shared_ptr<HiCR::InstanceTemplate> &instanceTemplate)
+  __INLINE__ std::shared_ptr<HiCR::Instance> createInstance(const HiCR::InstanceTemplate instanceTemplate)
   {
     // Requesting the creating of the instance to the specific backend
     auto newInstance = createInstanceImpl(instanceTemplate);
 
     // If successul, adding the instance to the internal list
-    _instances.push_back(newInstance);
+    if (newInstance != nullptr) _instances.push_back(newInstance);
 
     // Returning value for immediate use
     return newInstance;
@@ -160,7 +160,7 @@ class InstanceManager
    * \param[in] instanceTemplate The HiCR instance template to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  virtual std::shared_ptr<HiCR::Instance> createInstanceImpl(const std::shared_ptr<HiCR::InstanceTemplate> &instanceTemplate) = 0;
+  virtual std::shared_ptr<HiCR::Instance> createInstanceImpl(const HiCR::InstanceTemplate instanceTemplate) = 0;
 
   /**
    * Backend-specific implementation of the addInstance function
