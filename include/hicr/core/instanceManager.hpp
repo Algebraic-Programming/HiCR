@@ -122,6 +122,16 @@ class InstanceManager
   }
 
   /**
+   * Function to terminate a given instance
+   * \param[in] instance The HiCR instance to terminate
+   */
+  __INLINE__ void terminateInstance(const std::shared_ptr<HiCR::Instance> instance)
+  {
+    // Requesting the terminating of the instance to the specific backend
+    terminateInstanceImpl(instance);
+  }
+
+  /**
    * Function to add a new instance to the set of instances tracked by the instance manager.
    * 
    * \param[in] instanceId the id of the instance
@@ -160,14 +170,29 @@ class InstanceManager
    * \param[in] instanceTemplate The HiCR instance template to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  virtual std::shared_ptr<HiCR::Instance> createInstanceImpl(const HiCR::InstanceTemplate instanceTemplate) = 0;
+  virtual std::shared_ptr<HiCR::Instance> createInstanceImpl(const HiCR::InstanceTemplate instanceTemplate)
+  {
+    HICR_THROW_LOGIC("This backend does not currently support the launching of new instances during runtime");
+  }
 
   /**
    * Backend-specific implementation of the addInstance function
    * \param[in] instanceId the id of the instance
    * \return A pointer to the backend-specific instance
   */
-  virtual std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId) = 0;
+  virtual std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId)
+  {
+    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
+  }
+
+  /**
+   * Backend-specific implementation of the terminate function
+   * \param[in] instance The HiCR instance to terminate
+  */
+  virtual void terminateInstanceImpl(const std::shared_ptr<HiCR::Instance> instance)
+  {
+    HICR_THROW_LOGIC("The Host backend does not currently support the termination of instances during runtime");
+  }
 
   protected:
 

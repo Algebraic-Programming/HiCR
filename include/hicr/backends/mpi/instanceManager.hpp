@@ -125,18 +125,6 @@ class InstanceManager final : public HiCR::InstanceManager
 
   [[nodiscard]] __INLINE__ HiCR::Instance::instanceId_t getRootInstanceId() const override { return HiCR::backend::mpi::_HICR_MPI_INSTANCE_ROOT_ID; }
 
-  protected:
-
-  __INLINE__ std::shared_ptr<HiCR::Instance> createInstanceImpl [[noreturn]] (const HiCR::InstanceTemplate instanceTemplate) override
-  {
-    HICR_THROW_LOGIC("The MPI backend does not currently support the launching of new instances during runtime");
-  }
-
-  __INLINE__ std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId) override
-  {
-    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
-  }
-
   private:
 
   /**

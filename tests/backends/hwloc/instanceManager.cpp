@@ -44,7 +44,7 @@ TEST(MemoryManager, Lifetime)
   HiCR::Topology                          topology;
   std::shared_ptr<HiCR::InstanceTemplate> instanceTemplate(NULL);
   EXPECT_NO_THROW(instanceTemplate = im->createInstanceTemplate(topology));
-  EXPECT_ANY_THROW(im->createInstance(instanceTemplate));
+  EXPECT_ANY_THROW(im->createInstance(*instanceTemplate));
 
   EXPECT_DEATH(im->abort(1), "");
 }

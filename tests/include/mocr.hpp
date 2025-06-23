@@ -112,8 +112,6 @@ class MockInstanceManager : public HiCR::InstanceManager
   MOCK_METHOD(void, finalize, (), (override));
   MOCK_METHOD(void, abort, (int), (override));
   MOCK_METHOD(HiCR::Instance::instanceId_t, getRootInstanceId, (), (const, override));
-  MOCK_METHOD(std::shared_ptr<HiCR::Instance>, createInstanceImpl, (const std::shared_ptr<HiCR::InstanceTemplate> &), (override));
-  MOCK_METHOD(std::shared_ptr<HiCR::Instance>, addInstanceImpl, (HiCR::Instance::instanceId_t), (override));
 
   MockInstanceManager()
   {
