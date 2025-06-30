@@ -109,7 +109,7 @@ class InstanceManager
    * \param[in] instanceTemplate The HiCR instance template to try to obtain in the new instance
    * \return A pointer to the newly created instance (if successful), a null pointer otherwise.
    */
-  __INLINE__ std::shared_ptr<HiCR::Instance> createInstance(const HiCR::InstanceTemplate instanceTemplate)
+  __INLINE__ std::shared_ptr<HiCR::Instance> createInstance(const HiCR::InstanceTemplate instanceTemplate = HiCR::InstanceTemplate())
   {
     // Requesting the creating of the instance to the specific backend
     auto newInstance = createInstanceImpl(instanceTemplate);

@@ -52,9 +52,8 @@ class InstanceTemplate
    * \param[in] topology HiCR topology used to construct instances
    *
    */
-  InstanceTemplate(const HiCR::Topology &topology)
+  InstanceTemplate(const HiCR::Topology topology = HiCR::Topology())
     : _topology(topology){};
-  InstanceTemplate() = delete;
 
   /**
    * Default destructor
