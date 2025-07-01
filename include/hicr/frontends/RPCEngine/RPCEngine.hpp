@@ -67,6 +67,23 @@ class RPCEngine
   using RPCTargetIndex_t = uint64_t;
 
   /**
+   * Type definition for an optional argument/closure
+   */
+  using RPCArgument_t = uint64_t;
+
+  /**
+   * Struct that describes the payload for an RPC message (index+argument)
+   */
+  struct RPCPayload_t
+  {
+    /// Index of the RPC
+    RPCTargetIndex_t index;
+
+    /// Optional argument to the RPC
+    RPCArgument_t argument;
+  };
+
+  /**
    * Constructor
    *
    * @param[in] communicationManager The communication manager to use to communicate with other instances
@@ -147,17 +164,20 @@ class RPCEngine
     while (_RPCConsumerChannel->getDepth() == 0) _RPCConsumerChannel->updateDepth();
 
     // Once a request has arrived, gather its value from the channel
-    auto              request   = _RPCConsumerChannel->peek();
-    auto              requester = request[0];
-    RPCTargetIndex_t *buffer    = (RPCTargetIndex_t *)(_RPCConsumerChannel->getTokenBuffers()[requester]->getSourceLocalMemorySlot()->getPointer());
-    auto              rpcIdx    = buffer[request[1]];
+    auto          request   = _RPCConsumerChannel->peek();
+    auto          requester = request[0];
+    RPCPayload_t *buffer    = (RPCPayload_t *)(_RPCConsumerChannel->getTokenBuffers()[requester]->getSourceLocalMemorySlot()->getPointer());
+    RPCPayload_t  payload   = buffer[request[1]];
     _RPCConsumerChannel->pop();
 
     // Setting requester instance index
     _requesterInstanceIdx = requester;
 
+    // Storing rpc argument
+    _currentRPCArgument = payload.argument;
+
     // Execute RPC
-    executeRPC(rpcIdx);
+    executeRPC(payload.index);
   }
 
   /**
@@ -168,17 +188,29 @@ class RPCEngine
   __INLINE__ std::shared_ptr<HiCR::Instance> getRPCRequester() { return _instanceManager.getInstances()[_requesterInstanceIdx]; }
 
   /**
+   * Function to retrieve a pointer to the instance who has requested the executing RPC
+   * 
+   * @return a pointer to the instance who requested the RPC
+   */
+  [[nodiscard]] __INLINE__ const RPCArgument_t getRPCArgument() { return _currentRPCArgument; }
+
+  /**
    * Function to request the execution of a remote function in a remote HiCR instance
    * \param[in] RPCName The name of the RPC to run
    * \param[in] instance Instance on which to run the RPC
+   * \param[in] argument An optional numerical argument to provide to the RPC
    */
-  virtual void requestRPC(HiCR::Instance &instance, const std::string &RPCName)
+  virtual void requestRPC(HiCR::Instance &instance, const std::string &RPCName, const HiCR::frontend::RPCEngine::RPCArgument_t argument = 0)
   {
     const auto targetInstanceId = instance.getId();
-    const auto targetRPCIdx     = getRPCTargetIndexFromString(RPCName);
+
+    // Creating message payload
+    RPCPayload_t RPCPayload;
+    RPCPayload.index    = getRPCTargetIndexFromString(RPCName);
+    RPCPayload.argument = argument;
 
     // Registering source buffer
-    auto tempBufferSlot = _memoryManager.registerLocalMemorySlot(_bufferMemorySpace, (void *)&targetRPCIdx, sizeof(RPCTargetIndex_t));
+    auto tempBufferSlot = _memoryManager.registerLocalMemorySlot(_bufferMemorySpace, (void *)&RPCPayload, sizeof(RPCPayload_t));
 
     // Sending source buffer
     _RPCProducerChannels.at(targetInstanceId)->push(tempBufferSlot);
@@ -311,7 +343,7 @@ class RPCEngine
     const uint64_t _HICR_RPC_ENGINE_CHANNEL_CONSUMER_COORDINATION_BUFFER_TAG = _baseTag + 6;
 
     // Getting required buffer sizes
-    auto tokenSize = sizeof(RPCTargetIndex_t);
+    auto tokenSize = sizeof(RPCPayload_t);
 
     // Getting required buffer sizes
     auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(tokenSize, _HICR_RPC_ENGINE_CHANNEL_COUNT_CAPACITY);
@@ -569,7 +601,8 @@ class RPCEngine
 
   const uint64_t _baseTag;
 
-  size_t _requesterInstanceIdx;
+  size_t        _requesterInstanceIdx;
+  RPCArgument_t _currentRPCArgument;
 
   /**
    * Consumer channels for receiving return value messages from all other instances
