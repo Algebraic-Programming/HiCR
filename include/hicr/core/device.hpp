@@ -25,6 +25,7 @@
 #include <memory>
 #include <unordered_set>
 #include <nlohmann_json/json.hpp>
+#include <nlohmann_json/parser.hpp>
 #include <hicr/core/computeResource.hpp>
 #include <hicr/core/memorySpace.hpp>
 #include <utility>
@@ -68,7 +69,7 @@ class Device
    *
    * \return A string containing a human-readable description of the compute resource type
    */
-  [[nodiscard]] virtual std::string getType() const = 0;
+  [[nodiscard]] __INLINE__ std::string getType() const { return _type; };
 
   /**
    * This function returns the list of queried compute resources, as visible by the device.
@@ -124,7 +125,7 @@ class Device
     nlohmann::json output;
 
     // Getting device type
-    output["Type"] = getType();
+    output["Type"] = _type;
 
     // Getting device-specific serialization information
     serializeImpl(output);
@@ -167,6 +168,9 @@ class Device
         HICR_THROW_LOGIC("In '%s', entry information information is invalid, as the 'Type' entry is not a string", _HICR_DEVICE_COMPUTE_RESOURCES_KEY_);
     }
 
+    // Setting device type
+    _type = hicr::json::getString(input, "Type");
+
     if (input.contains(_HICR_DEVICE_MEMORY_SPACES_KEY_) == false)
       HICR_THROW_LOGIC("Serialized device information is invalid, as it lacks the '%s' entry", _HICR_DEVICE_MEMORY_SPACES_KEY_);
     if (input[_HICR_DEVICE_MEMORY_SPACES_KEY_].is_array() == false)
@@ -204,14 +208,51 @@ class Device
    *
    * @param[out] output Serialized device information
    */
-  virtual void serializeImpl(nlohmann::json &output) const = 0;
+  virtual void serializeImpl(nlohmann::json &output) const
+  {
+
+  }
 
   /**
    * Backend-specific implementation of the deserialize function
    *
    * @param[in] input Serialized device information
    */
-  virtual void deserializeImpl(const nlohmann::json &input) = 0;
+  virtual void deserializeImpl(const nlohmann::json &input)
+  {
+    // Iterating over the compute resource list
+    for (const auto &computeResource : input[_HICR_DEVICE_COMPUTE_RESOURCES_KEY_])
+    {
+      // Getting device type
+      const auto type = computeResource["Type"].get<std::string>();
+
+      // Deserializing new device
+      auto computeResourceObj = std::make_shared<ComputeResource>(computeResource);
+
+      // Inserting device into the list
+      this->addComputeResource(computeResourceObj);
+    }
+
+    // Iterating over the memory space list
+    for (const auto &memorySpace : input[_HICR_DEVICE_MEMORY_SPACES_KEY_])
+    {
+      // Getting device type
+      const auto type = memorySpace["Type"].get<std::string>();
+
+      // Deserializing new device
+      auto memorySpaceObj = std::make_shared<MemorySpace>(memorySpace);
+
+      // Inserting device into the list
+      this->addMemorySpace(memorySpaceObj);
+    }
+  }
+
+  protected:
+  
+  /**
+   * Device type, used to identify exactly this device's model/technology 
+   */
+  std::string _type;
 
   private:
 

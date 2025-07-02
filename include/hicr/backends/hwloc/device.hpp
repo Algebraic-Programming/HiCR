@@ -58,7 +58,10 @@ class Device final : public HiCR::Device
    * Empty constructor for serialization / deserialization
    */
   Device()
-    : HiCR::Device(){};
+    : HiCR::Device()
+    {
+      _type = "NUMA Domain";
+    };
 
   /**
    * Deserializing constructor
@@ -78,10 +81,6 @@ class Device final : public HiCR::Device
    * Default destructor
    */
   ~Device() override = default;
-
-  protected:
-
-  [[nodiscard]] __INLINE__ std::string getType() const override { return "NUMA Domain"; }
 
   private:
 
