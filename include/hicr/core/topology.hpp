@@ -112,7 +112,6 @@ class Topology
     }
   };
 
-
   /**
   * Checks whether the given topology is a subset of this topology
   * That is, whether it contains the given devices in the current type provided
@@ -197,8 +196,7 @@ class Topology
           for (const auto &givenDeviceMemorySpace : givenDeviceMemorySpaces)
           {
             bool foundMemorySpace = false;
-            for (auto currentMemorySpaceItr = currentMemorySpaces.begin(); currentMemorySpaceItr != currentMemorySpaces.end() && foundMemorySpace == false;
-                 currentMemorySpaceItr++)
+            for (auto currentMemorySpaceItr = currentMemorySpaces.begin(); currentMemorySpaceItr != currentMemorySpaces.end() && foundMemorySpace == false; currentMemorySpaceItr++)
             {
               // Getting current device object
               const auto &currentDeviceMemorySpace = currentMemorySpaceItr.operator*();
@@ -248,7 +246,7 @@ class Topology
     //printf("Requirements met\n");
     return true;
   }
-  
+
   /**
    * A function to get internal topology metadata
    * 
