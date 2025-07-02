@@ -73,8 +73,6 @@ class MemorySpace final : public HiCR::MemorySpace
     deserialize(input);
   }
 
-  __INLINE__ std::string getType() const override { return _type; }
-
   /**
    * Function to get the OpenCL device associated to this memory space
    *

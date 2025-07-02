@@ -71,8 +71,6 @@ class ComputeResource final : public HiCR::ComputeResource
     deserialize(input);
   }
 
-  __INLINE__ std::string getType() const override { return _type; }
-
   /**
    * Function to get the device id associated to this memory space
    *
@@ -98,8 +96,6 @@ class ComputeResource final : public HiCR::ComputeResource
    * \note If this class has been created through deserialization, it is not meant to be used as this pointer remains undefined
    */
   std::weak_ptr<opencl::Device> _device;
-
-  std::string _type;
 };
 
 } // namespace HiCR::backend::opencl

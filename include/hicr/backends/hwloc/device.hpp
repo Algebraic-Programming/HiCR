@@ -59,9 +59,9 @@ class Device final : public HiCR::Device
    */
   Device()
     : HiCR::Device()
-    {
-      _type = "NUMA Domain";
-    };
+  {
+    _type = "NUMA Domain";
+  };
 
   /**
    * Deserializing constructor
@@ -111,11 +111,8 @@ class Device final : public HiCR::Device
       // Getting device type
       const auto type = computeResource["Type"].get<std::string>();
 
-      // Checking whether the type is correct
-      if (type != "Processing Unit") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
-
       // Deserializing new device
-      auto computeResourceObj = std::make_shared<hwloc::ComputeResource>(computeResource);
+      auto computeResourceObj = std::make_shared<HiCR::ComputeResource>(computeResource);
 
       // Inserting device into the list
       this->addComputeResource(computeResourceObj);
@@ -127,11 +124,8 @@ class Device final : public HiCR::Device
       // Getting device type
       const auto type = memorySpace["Type"].get<std::string>();
 
-      // Checking whether the type is correct
-      if (type != "RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
-
       // Deserializing new device
-      auto memorySpaceObj = std::make_shared<hwloc::MemorySpace>(memorySpace);
+      auto memorySpaceObj = std::make_shared<HiCR::MemorySpace>(memorySpace);
 
       // Inserting device into the list
       this->addMemorySpace(memorySpaceObj);

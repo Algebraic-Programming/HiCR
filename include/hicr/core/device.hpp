@@ -65,6 +65,28 @@ class Device
   using memorySpaceList_t = std::vector<std::shared_ptr<MemorySpace>>;
 
   /**
+   * Deserializing constructor
+   *
+   * @param[in] input A JSON-encoded serialized device information
+   */
+  Device(const nlohmann::json &input) { deserialize(input); }
+
+  /**
+   * Default destructor
+   */
+  virtual ~Device() = default;
+
+  /**
+   *  Constructor requires at least to provide the initial set of compute resources and memory spaces
+   *
+   * \param[in] computeResources The list of detected compute resources contained in this device
+   * \param[in] memorySpaces The list of detected memory spaces contained in this device
+   */
+  Device(computeResourceList_t computeResources, memorySpaceList_t memorySpaces)
+    : _computeResources(std::move(computeResources)),
+      _memorySpaces(std::move(memorySpaces)){};
+
+  /**
    * Indicates what type of device is represented in this instance
    *
    * \return A string containing a human-readable description of the compute resource type
@@ -98,21 +120,6 @@ class Device
    * \param[in] memorySpace The compute resource to add
    */
   __INLINE__ void addMemorySpace(const std::shared_ptr<HiCR::MemorySpace> &memorySpace) { _memorySpaces.push_back(memorySpace); }
-
-  /**
-   * Default destructor
-   */
-  virtual ~Device() = default;
-
-  /**
-   *  Constructor requires at least to provide the initial set of compute resources and memory spaces
-   *
-   * \param[in] computeResources The list of detected compute resources contained in this device
-   * \param[in] memorySpaces The list of detected memory spaces contained in this device
-   */
-  Device(computeResourceList_t computeResources, memorySpaceList_t memorySpaces)
-    : _computeResources(std::move(computeResources)),
-      _memorySpaces(std::move(memorySpaces)){};
 
   /**
    * Serialization function to enable sharing device information
@@ -152,6 +159,9 @@ class Device
    */
   __INLINE__ void deserialize(const nlohmann::json &input)
   {
+    // Setting device type
+    _type = hicr::json::getString(input, "Type");
+
     // First, discard all existing information
     _computeResources.clear();
     _memorySpaces.clear();
@@ -167,9 +177,6 @@ class Device
       if (c["Type"].is_string() == false)
         HICR_THROW_LOGIC("In '%s', entry information information is invalid, as the 'Type' entry is not a string", _HICR_DEVICE_COMPUTE_RESOURCES_KEY_);
     }
-
-    // Setting device type
-    _type = hicr::json::getString(input, "Type");
 
     if (input.contains(_HICR_DEVICE_MEMORY_SPACES_KEY_) == false)
       HICR_THROW_LOGIC("Serialized device information is invalid, as it lacks the '%s' entry", _HICR_DEVICE_MEMORY_SPACES_KEY_);
@@ -208,10 +215,7 @@ class Device
    *
    * @param[out] output Serialized device information
    */
-  virtual void serializeImpl(nlohmann::json &output) const
-  {
-
-  }
+  virtual void serializeImpl(nlohmann::json &output) const {}
 
   /**
    * Backend-specific implementation of the deserialize function
@@ -223,10 +227,7 @@ class Device
     // Iterating over the compute resource list
     for (const auto &computeResource : input[_HICR_DEVICE_COMPUTE_RESOURCES_KEY_])
     {
-      // Getting device type
-      const auto type = computeResource["Type"].get<std::string>();
-
-      // Deserializing new device
+      // Deserializing new compute resource
       auto computeResourceObj = std::make_shared<ComputeResource>(computeResource);
 
       // Inserting device into the list
@@ -236,10 +237,7 @@ class Device
     // Iterating over the memory space list
     for (const auto &memorySpace : input[_HICR_DEVICE_MEMORY_SPACES_KEY_])
     {
-      // Getting device type
-      const auto type = memorySpace["Type"].get<std::string>();
-
-      // Deserializing new device
+      // Deserializing new memory space
       auto memorySpaceObj = std::make_shared<MemorySpace>(memorySpace);
 
       // Inserting device into the list
@@ -248,7 +246,7 @@ class Device
   }
 
   protected:
-  
+
   /**
    * Device type, used to identify exactly this device's model/technology 
    */

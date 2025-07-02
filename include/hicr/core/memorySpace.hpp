@@ -30,7 +30,7 @@ namespace HiCR
 {
 
 /**
- * This class represents an abstract definition for a Memory Space that:
+ * This class represents an generic definition for a Memory Space that:
  *
  * - Represents a autonomous unit of byte-addressable memory (e.g., host memory, NUMA domain, device global RAM)
  * - The space is assumed to be contiguous and have a fixed sized determined at construction time
@@ -45,11 +45,26 @@ class MemorySpace
   public:
 
   /**
-   * Indicates what type of memory space is contained in this instance
+   * Deserializing constructor
+   *
+   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed host RAM
+   * This instance should NOT be used for anything else than reporting/printing the contained resources
+   *
+   * @param[in] input A JSON-encoded serialized host RAM information
+   */
+  MemorySpace(const nlohmann::json &input) { deserialize(input); }
+
+  /**
+   * Default destructor
+   */
+  virtual ~MemorySpace() = default;
+
+  /**
+   * Indicates what type of memory space this represents
    *
    * \return A string containing a human-readable description of the memory space type
    */
-  [[nodiscard]] virtual std::string getType() const = 0;
+  [[nodiscard]] __INLINE__ std::string getType() const { return _type; };
 
   /**
    * Returns the memory space's size
@@ -94,11 +109,6 @@ class MemorySpace
   }
 
   /**
-   * Default destructor
-   */
-  virtual ~MemorySpace() = default;
-
-  /**
    * Serialization function to enable sharing memory space information
    *
    * @return JSON-formatted serialized memory space information
@@ -112,7 +122,7 @@ class MemorySpace
     serializeImpl(output);
 
     // Getting memory space type
-    output["Type"] = getType();
+    output["Type"] = _type;
 
     // Getting size
     output["Size"] = getSize();
@@ -131,6 +141,9 @@ class MemorySpace
    */
   __INLINE__ void deserialize(const nlohmann::json &input)
   {
+    // Setting memory space type
+    _type = hicr::json::getString(input, "Type");
+
     // Obtaining backend-specific information
     deserializeImpl(input);
 
@@ -168,14 +181,19 @@ class MemorySpace
    *
    * @param[out] output JSON-formatted serialized compute resource information
    */
-  virtual void serializeImpl(nlohmann::json &output) const = 0;
+  virtual void serializeImpl(nlohmann::json &output) const {}
 
   /**
    * Backend-specific implementation of the deserialize function
    *
    * @param[in] input Serialized compute resource information corresponding to the specific backend's topology manager
    */
-  virtual void deserializeImpl(const nlohmann::json &input) = 0;
+  virtual void deserializeImpl(const nlohmann::json &input) {}
+
+  /**
+   * Type, used to identify exactly this memory space's model/technology 
+   */
+  std::string _type;
 
   private:
 
