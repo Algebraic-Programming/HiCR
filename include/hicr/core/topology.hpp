@@ -49,6 +49,13 @@ class Topology
   ~Topology() = default;
 
   /**
+   * Deserializing constructor
+   *
+   * @param[in] input A JSON-encoded serialized topology information
+   */
+  Topology(const nlohmann::json &input) { deserialize(input); }
+
+  /**
    * This function prompts the backend to perform the necessary steps to return  existing devices
    * \return A set of pointers to HiCR currents that refer to both local and remote currents
    */
@@ -93,6 +100,22 @@ class Topology
     // Returning topology
     return output;
   }
+
+  /**
+   * De-serialization function to re-construct the serialized topology information coming (typically) from remote instances
+   *
+   * @param[in] input JSON-formatted serialized device information
+   *
+   * \note Important: Deserialized devices are not meant to be used in any from other than printing or reporting its topology.
+   *       Any attempt of actually using them for computation or data transfers will result in undefined behavior.
+   */
+  __INLINE__ void deserialize(const nlohmann::json &input)
+  {
+    const auto &devicesJs = hicr::json::getArray<nlohmann::json>(input, "Devices");
+    for (const auto &deviceJs : devicesJs) addDevice(std::make_shared<Device>(deviceJs));
+
+    _metadata = hicr::json::getObject(input, "Metadata");
+  };
 
   /**
    * Verifies the provided input (encoded in JSON) satisfied the standard format to describe a topology
