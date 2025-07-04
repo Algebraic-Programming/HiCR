@@ -53,9 +53,9 @@ class Device final : public HiCR::Device
   Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces)
     : HiCR::Device(computeResources, memorySpaces),
       _NUMADomainId(NUMADomainId)
-      {
-        _type = "NUMA Domain";    
-      };
+  {
+    _type = "NUMA Domain";
+  };
 
   /**
    * Empty constructor for serialization / deserialization
