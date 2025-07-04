@@ -111,10 +111,13 @@ class Topology
    */
   __INLINE__ void deserialize(const nlohmann::json &input)
   {
-    const auto &devicesJs = hicr::json::getArray<nlohmann::json>(input, "Devices");
-    for (const auto &deviceJs : devicesJs) addDevice(std::make_shared<Device>(deviceJs));
+    if (input.contains("Devices"))
+    {
+      const auto &devicesJs = hicr::json::getArray<nlohmann::json>(input, "Devices");
+      for (const auto &deviceJs : devicesJs) addDevice(std::make_shared<Device>(deviceJs));
+    }
 
-    _metadata = hicr::json::getObject(input, "Metadata");
+    if (input.contains("Metadata")) _metadata = hicr::json::getObject(input, "Metadata");
   };
 
   /**
