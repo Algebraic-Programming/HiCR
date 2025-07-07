@@ -84,6 +84,18 @@ class RPCEngine
   };
 
   /**
+   * Struct that describes an RPC target
+   */
+  struct RPCTarget_t
+  {
+    /// RPC name
+    std::string name;
+
+    /// RPC execution unit
+    std::shared_ptr<HiCR::ExecutionUnit> executionUnit;
+  };
+
+  /**
    * Constructor
    *
    * @param[in] communicationManager The communication manager to use to communicate with other instances
@@ -138,7 +150,7 @@ class RPCEngine
     const auto idx = getRPCTargetIndexFromString(RPCName);
 
     // Inserting the new entry
-    _RPCTargetMap[idx] = e;
+    _RPCTargetMap[idx] = {RPCName, e};
   }
 
   /**
@@ -319,14 +331,18 @@ class RPCEngine
   {
     // Getting RPC target from the index
     if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
-    auto e = _RPCTargetMap.at(rpcIdx);
+    auto &target              = _RPCTargetMap.at(rpcIdx);
+    auto &targetName          = target.name;
+    auto &targetExecutionUnit = target.executionUnit;
+
+    printf("Running: %s\n", targetName.c_str());
 
     // Creating new processing unit to execute the RPC
     auto p = _computeManager.createProcessingUnit(_computeResource);
     _computeManager.initialize(p);
 
     // Creating execution state
-    auto s = _computeManager.createExecutionState(e);
+    auto s = _computeManager.createExecutionState(targetExecutionUnit);
 
     // Executing RPC
     _computeManager.start(p, s);
@@ -627,7 +643,7 @@ class RPCEngine
   /**
    * Map of execute units, representing potential RPC requests
    */
-  std::map<RPCTargetIndex_t, std::shared_ptr<HiCR::ExecutionUnit>> _RPCTargetMap;
+  std::map<RPCTargetIndex_t, RPCTarget_t> _RPCTargetMap;
 };
 
 } // namespace HiCR::frontend
