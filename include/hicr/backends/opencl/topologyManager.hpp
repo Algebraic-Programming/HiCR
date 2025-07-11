@@ -89,8 +89,8 @@ class TopologyManager final : public HiCR::TopologyManager
         // Create HiCR device, memory space, and compute resource
         auto openclDevice = std::make_shared<opencl::Device>(
           deviceId, deviceType, std::make_shared<cl::Device>(device), HiCR::Device::computeResourceList_t({}), HiCR::Device::memorySpaceList_t({}));
-        auto openclDeviceMemorySpace     = std::make_shared<opencl::MemorySpace>(openclDevice, deviceType + " RAM", deviceMemorySize);
-        auto openclDeviceComputeResource = std::make_shared<opencl::ComputeResource>(openclDevice, deviceType + " Processing Unit");
+        auto openclDeviceMemorySpace     = std::make_shared<opencl::MemorySpace>(openclDevice, deviceMemorySize);
+        auto openclDeviceComputeResource = std::make_shared<opencl::ComputeResource>(openclDevice);
         openclDevice->addMemorySpace(openclDeviceMemorySpace);
         openclDevice->addComputeResource(openclDeviceComputeResource);
 

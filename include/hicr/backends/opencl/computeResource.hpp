@@ -48,10 +48,21 @@ class ComputeResource final : public HiCR::ComputeResource
    * \param device The OpenCL device that contains this compute resource
    * \param type device resource type
    */
-  ComputeResource(const std::shared_ptr<opencl::Device> &device, const std::string &type)
+  ComputeResource(const std::shared_ptr<opencl::Device> &device)
     : HiCR::ComputeResource(),
-      _device(device),
-      _type(type){};
+      _device(device)
+  {
+    _type = "OpenCL Processor";
+  };
+
+  /**
+   * Default constructor for resource requesting
+   */
+  ComputeResource()
+    : HiCR::ComputeResource()
+  {
+    _type = "OpenCL Processor";
+  }
 
   /**
    * Default destructor
@@ -96,6 +107,8 @@ class ComputeResource final : public HiCR::ComputeResource
    * \note If this class has been created through deserialization, it is not meant to be used as this pointer remains undefined
    */
   std::weak_ptr<opencl::Device> _device;
+
+  std::string _type;
 };
 
 } // namespace HiCR::backend::opencl

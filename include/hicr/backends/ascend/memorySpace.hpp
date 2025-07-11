@@ -56,6 +56,16 @@ class MemorySpace final : public HiCR::MemorySpace
     _type = "Ascend Device RAM";
   };
 
+
+  /**
+   * Default constructor for resource requesting
+   */
+  MemorySpace()
+    : HiCR::MemorySpace()
+  {
+    _type = "Ascend Device RAM";
+  }
+
   /**
    * Default destructor
    */
