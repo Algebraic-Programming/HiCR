@@ -24,6 +24,7 @@
 
 #include <string>
 #include <nlohmann_json/json.hpp>
+#include <nlohmann_json/parser.hpp>
 #include <hicr/core/exceptions.hpp>
 
 namespace HiCR
