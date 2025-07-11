@@ -25,6 +25,7 @@
 #include <memory>
 #include <unordered_set>
 #include <nlohmann_json/json.hpp>
+#include <nlohmann_json/parser.hpp>
 #include <hicr/core/device.hpp>
 
 namespace HiCR
