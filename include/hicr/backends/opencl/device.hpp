@@ -66,7 +66,9 @@ class Device final : public HiCR::Device
    */
   Device()
     : HiCR::Device()
-  {}
+  {
+    _type = "OpenCL Device";
+  }
 
   /**
    * Deserializing constructor
@@ -95,13 +97,6 @@ class Device final : public HiCR::Device
    * \return device id
   */
   __INLINE__ deviceIdentifier_t getId() const { return _id; }
-
-  /**
-   * Get device type 
-   * 
-   * \return device type 
-  */
-  __INLINE__ std::string getType() const override { return _type; }
 
   /**
    * Get OpenCL Device 

@@ -50,10 +50,21 @@ class MemorySpace final : public HiCR::MemorySpace
    * \param type The memory space type
    * \param size The size of this memory space
    */
-  MemorySpace(const std::weak_ptr<opencl::Device> device, const std::string &type, const size_t size)
+  MemorySpace(const std::weak_ptr<opencl::Device> device, const size_t size)
     : HiCR::MemorySpace(size),
-      _device(device),
-      _type(type){};
+      _device(device)
+  {
+    _type = "OpenCL Device RAM";
+  };
+
+  /**
+   * Default constructor for resource requesting
+   */
+  MemorySpace()
+    : HiCR::MemorySpace()
+  {
+    _type = "OpenCL Device RAM";
+  }
 
   /**
    * Default destructor
