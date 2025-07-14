@@ -59,7 +59,7 @@ class Device final : public HiCR::Device
     : HiCR::Device(computeResources, memorySpaces),
       _id(id),
       _type(type),
-      _device(device) {};
+      _device(device){};
 
   /**
    * Default constructor for resource requesting
@@ -87,7 +87,7 @@ class Device final : public HiCR::Device
   /**
    * Device destructor
    */
-  ~Device() {
+  ~Device(){
 
   };
 
