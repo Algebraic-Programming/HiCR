@@ -61,4 +61,4 @@ and for OpenCL, for example:
     
   + 'OpenCL GPU'
     Compute Resources: 1 OpenCL GPU Processing Unit(s)
-    Memory Space:     'OpenCL GPU RAM', 49.908493 Gb
+    Memory Space:     'OpenCL Device RAM', 49.908493 Gb

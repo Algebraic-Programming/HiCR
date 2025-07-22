@@ -94,7 +94,7 @@ class MockMemorySpace : public HiCR::MemorySpace
 {
   public:
 
-  MOCK_METHOD(std::string, getType, (), (const, override));
+  MOCK_METHOD(std::string, getType, (), (const));
   MOCK_METHOD(void, serializeImpl, (nlohmann::json &), (const, override));
   MOCK_METHOD(void, deserializeImpl, (const nlohmann::json &), (override));
 
