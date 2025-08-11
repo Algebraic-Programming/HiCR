@@ -491,6 +491,21 @@ class CommunicationManager
    */
   __INLINE__ virtual void flushReceived() {}
 
+  /**
+   * Accessor for the Global slots/tag key map
+   * @return A reference to the Global slots/tag key map
+   */
+  [[nodiscard]] __INLINE__ auto &getGlobalMemorySlotTagKeyMap() { return _globalMemorySlotTagKeyMap; }
+
+  /**
+   * Setter for the Global slots/tag key map
+   * @param globalMemorySlotTagKeyMap the new map
+   */
+  __INLINE__ void setGlobalMemorySlotTagKeyMap(const HiCR::CommunicationManager::globalMemorySlotTagKeyMap_t &globalMemorySlotTagKeyMap)
+  {
+    _globalMemorySlotTagKeyMap = globalMemorySlotTagKeyMap;
+  }
+
   protected:
 
   /**
@@ -635,14 +650,6 @@ class CommunicationManager
    * @return A reference to the Global slots to destroy per tag field
    */
   [[nodiscard]] __INLINE__ auto &getGlobalMemorySlotsToDestroyPerTag() { return _globalMemorySlotsToDestroyPerTag; }
-
-  /**
-   * Accessor for the Global slots/tag key map
-   * @return A reference to the Global slots/tag key map
-   */
-  [[nodiscard]] __INLINE__ auto &getGlobalMemorySlotTagKeyMap() { return _globalMemorySlotTagKeyMap; }
-
-  protected:
 
   /**
    *  Increases the message receive counter for a given memory slot
