@@ -46,7 +46,6 @@ class ComputeResource final : public HiCR::ComputeResource
    * Constructor for the compute resource class of the OpenCL backend
    *
    * \param device The OpenCL device that contains this compute resource
-   * \param type device resource type
    */
   ComputeResource(const std::shared_ptr<opencl::Device> &device)
     : HiCR::ComputeResource(),
