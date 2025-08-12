@@ -62,22 +62,14 @@ class MemoryManager final : public HiCR::MemoryManager
 
   __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::MemorySpace> memorySpace, const size_t size) override
   {
-    auto memSpaceType = memSpaceType_t::none;
-
     // Getting up-casted pointer for the opencl instance, first try with the device memory space
-    auto openclMemorySpace = dynamic_pointer_cast<const opencl::MemorySpace>(memorySpace);
+    auto openclMemorySpace = dynamic_pointer_cast<opencl::MemorySpace>(memorySpace);
     auto hwlocMemorySpace  = dynamic_pointer_cast<hwloc::MemorySpace>(memorySpace);
 
     // Checking whether the memory space passed belongs to the device or to the host
-    if (hwlocMemorySpace != nullptr) { memSpaceType = memSpaceType_t::host; }
-    if (openclMemorySpace != nullptr)
-    {
-      if (openclMemorySpace->getType() == "OpenCL Host RAM") { memSpaceType = memSpaceType_t::host; }
-      if (openclMemorySpace->getType() == "OpenCL GPU RAM") { memSpaceType = memSpaceType_t::device; }
-    }
+    if (hwlocMemorySpace != nullptr) { return allocateLocalDeviceMemorySlot(memorySpace, size); }
+    if (openclMemorySpace != nullptr) { return allocateLocalHostMemorySlot(memorySpace, size); }
 
-    if (memSpaceType == memSpaceType_t::device) { return allocateLocalDeviceMemorySlot(memorySpace, size); }
-    if (memSpaceType == memSpaceType_t::host) { return allocateLocalHostMemorySlot(memorySpace, size); }
     HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager. Supported opencl and hwloc\n");
   }
 
@@ -126,25 +118,11 @@ class MemoryManager final : public HiCR::MemoryManager
   */
   __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> registerLocalMemorySlotImpl(std::shared_ptr<HiCR::MemorySpace> memorySpace, void *const ptr, const size_t size) override
   {
-    auto memSpaceType = memSpaceType_t::none;
-
     // Getting up-casted pointer for the opencl instance, first try with the device memory space
     auto openclMemorySpace = dynamic_pointer_cast<const opencl::MemorySpace>(memorySpace);
-    auto hwlocMemorySpace  = dynamic_pointer_cast<hwloc::MemorySpace>(memorySpace);
 
     // Checking whether the memory space passed belongs to the device or to the host
-    if (hwlocMemorySpace != nullptr) { memSpaceType = memSpaceType_t::host; }
-    if (openclMemorySpace != nullptr)
-    {
-      if (openclMemorySpace->getType() == "OpenCL Host RAM") { memSpaceType = memSpaceType_t::host; }
-      if (openclMemorySpace->getType() == "OpenCL GPU RAM") { memSpaceType = memSpaceType_t::device; }
-    }
-
-    // Checking whether the memory space passed belongs to the host
-    if (memSpaceType == memSpaceType_t::device) [[unlikely]]
-    {
-      HICR_THROW_RUNTIME("Can not register local memory slot on the provided memory space: %s", memorySpace->getType().c_str());
-    }
+    if (openclMemorySpace != nullptr) [[unlikely]] { HICR_THROW_RUNTIME("Can not register local memory slot on the provided memory space: %s", memorySpace->getType().c_str()); }
 
     cl_int err;
     auto   queue   = getQueue(memorySpace);

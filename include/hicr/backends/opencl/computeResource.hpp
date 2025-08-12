@@ -48,10 +48,21 @@ class ComputeResource final : public HiCR::ComputeResource
    * \param device The OpenCL device that contains this compute resource
    * \param type device resource type
    */
-  ComputeResource(const std::shared_ptr<opencl::Device> &device, const std::string &type)
+  ComputeResource(const std::shared_ptr<opencl::Device> &device)
     : HiCR::ComputeResource(),
-      _device(device),
-      _type(type){};
+      _device(device)
+  {
+    _type = "OpenCL Processor";
+  };
+
+  /**
+   * Default constructor for resource requesting
+   */
+  ComputeResource()
+    : HiCR::ComputeResource()
+  {
+    _type = "OpenCL Processor";
+  }
 
   /**
    * Default destructor
@@ -70,8 +81,6 @@ class ComputeResource final : public HiCR::ComputeResource
   {
     deserialize(input);
   }
-
-  __INLINE__ std::string getType() const override { return _type; }
 
   /**
    * Function to get the device id associated to this memory space

@@ -25,6 +25,7 @@
 #include <memory>
 #include <unordered_set>
 #include <nlohmann_json/json.hpp>
+#include <nlohmann_json/parser.hpp>
 #include <hicr/core/device.hpp>
 
 namespace HiCR
@@ -33,7 +34,7 @@ namespace HiCR
 /**
  * This class represents an abstract definition for a HiCR Topology that:
  *
- * - Describes the physical resources (devices) of a given system (real or constructed for requesting new instances)
+ * - Describes the physical resources (devices) of a given system (real or constructed for requesting new currents)
  * - Information about the connectivity between the given devices
  */
 class Topology
@@ -49,8 +50,15 @@ class Topology
   ~Topology() = default;
 
   /**
+   * Deserializing constructor
+   *
+   * @param[in] input A JSON-encoded serialized topology information
+   */
+  Topology(const nlohmann::json &input) { deserialize(input); }
+
+  /**
    * This function prompts the backend to perform the necessary steps to return  existing devices
-   * \return A set of pointers to HiCR instances that refer to both local and remote instances
+   * \return A set of pointers to HiCR currents that refer to both local and remote currents
    */
   [[nodiscard]] __INLINE__ const deviceList_t &getDevices() const { return _deviceList; }
 
@@ -64,7 +72,7 @@ class Topology
   /**
    * This function allows manually merging one topology information into another
    *
-   * @param[in] source The source topology to add into this instance
+   * @param[in] source The source topology to add into this current
    */
   __INLINE__ void merge(const Topology &source)
   {
@@ -73,7 +81,7 @@ class Topology
   }
 
   /**
-   * Serialization function to enable sharing topology information across different HiCR instances (or any other purposes)
+   * Serialization function to enable sharing topology information across different HiCR currents (or any other purposes)
    *
    * @return JSON-formatted serialized topology, as detected by this topology manager
    */
@@ -95,6 +103,25 @@ class Topology
   }
 
   /**
+   * De-serialization function to re-construct the serialized topology information coming (typically) from remote instances
+   *
+   * @param[in] input JSON-formatted serialized device information
+   *
+   * \note Important: Deserialized devices are not meant to be used in any from other than printing or reporting its topology.
+   *       Any attempt of actually using them for computation or data transfers will result in undefined behavior.
+   */
+  __INLINE__ void deserialize(const nlohmann::json &input)
+  {
+    if (input.contains("Devices"))
+    {
+      const auto &devicesJs = hicr::json::getArray<nlohmann::json>(input, "Devices");
+      for (const auto &deviceJs : devicesJs) addDevice(std::make_shared<Device>(deviceJs));
+    }
+
+    if (input.contains("Metadata")) _metadata = hicr::json::getObject(input, "Metadata");
+  };
+
+  /**
    * Verifies the provided input (encoded in JSON) satisfied the standard format to describe a topology
    *
    * @param[in] input JSON-formatted serialized topology
@@ -111,6 +138,141 @@ class Topology
       if (device["Type"].is_string() == false) HICR_THROW_LOGIC("Serialized device information is invalid, as the 'Type' entry is not a string");
     }
   };
+
+  /**
+  * Checks whether the given topology is a subset of this topology
+  * That is, whether it contains the given devices in the current type provided
+  *
+  * The devices are checked in order. That is the first current device that satisfies a given device
+  * will be removed from the list when checking the next given device.
+  * 
+  * @param[in] givenTopology The given topology to compare this topology with
+  * 
+  * @return true, if this current satisfies the current type; false, otherwise.
+  */
+  [[nodiscard]] __INLINE__ bool isSubset(const HiCR::Topology givenTopology)
+  {
+    // Making a copy of the current topology.
+    // Devices will be removed as we match them with the given device
+    auto currentDevices = getDevices();
+
+    ////////// Checking for given devices
+    const auto givenDevices = givenTopology.getDevices();
+
+    for (const auto &givenDevice : givenDevices)
+    {
+      const auto givenDeviceType             = givenDevice->getType();
+      const auto givenDeviceMemorySpaces     = givenDevice->getMemorySpaceList();
+      const auto givenDeviceComputeResources = givenDevice->getComputeResourceList();
+
+      // Iterating over all the current devices to see if one of them satisfies this given device
+      bool foundCompatibleDevice = false;
+      for (auto currentDeviceItr = currentDevices.begin(); currentDeviceItr != currentDevices.end() && foundCompatibleDevice == false; currentDeviceItr++)
+      {
+        // Getting current device object
+        const auto &currentDevice = currentDeviceItr.operator*();
+
+        // Checking type
+        const auto &currentDeviceType = currentDevice->getType();
+
+        // If this device is the same type as given, proceed to check compute resources and memory spaces
+        if (currentDeviceType == givenDeviceType)
+        {
+          // Flag to indicate this device is compatible with the request
+          bool deviceIsCompatible = true;
+
+          ///// Checking given compute resources
+          auto currentComputeResources = currentDevice->getComputeResourceList();
+
+          // Getting compute resources in this current device
+          for (const auto &givenComputeResource : givenDeviceComputeResources)
+          {
+            bool foundComputeResource = false;
+            for (auto currentComputeResourceItr = currentComputeResources.begin(); currentComputeResourceItr != currentComputeResources.end() && foundComputeResource == false;
+                 currentComputeResourceItr++)
+            {
+              // Getting current device object
+              const auto &currentComputeResource = currentComputeResourceItr.operator*();
+
+              // If it's the same type as given
+              if (currentComputeResource->getType() == givenComputeResource->getType())
+              {
+                // Set compute resource as found
+                foundComputeResource = true;
+
+                // Erase this element from the list to not re-use it
+                currentComputeResources.erase(currentComputeResourceItr);
+              }
+            }
+
+            // If no compute resource was found, abandon search in this device
+            if (foundComputeResource == false)
+            {
+              deviceIsCompatible = false;
+              break;
+            }
+          }
+
+          // If no suitable device was found, advance with the next one
+          if (deviceIsCompatible == false) continue;
+
+          ///// Checking given compute resources
+          auto currentMemorySpaces = currentDevice->getMemorySpaceList();
+
+          // Getting compute resources in this current device
+          for (const auto &givenDeviceMemorySpace : givenDeviceMemorySpaces)
+          {
+            bool foundMemorySpace = false;
+            for (auto currentMemorySpaceItr = currentMemorySpaces.begin(); currentMemorySpaceItr != currentMemorySpaces.end() && foundMemorySpace == false; currentMemorySpaceItr++)
+            {
+              // Getting current device object
+              const auto &currentDeviceMemorySpace = currentMemorySpaceItr.operator*();
+
+              // If it's the same type as given
+              if (currentDeviceMemorySpace->getType() == givenDeviceMemorySpace->getType())
+              {
+                // Check whether the size is at least as big as given
+                if (currentDeviceMemorySpace->getSize() >= givenDeviceMemorySpace->getSize())
+                {
+                  // Set compute resource as found
+                  foundMemorySpace = true;
+
+                  // Erase this element from the list to not re-use it
+                  currentMemorySpaces.erase(currentMemorySpaceItr);
+                }
+              }
+            }
+
+            // If no compute resource was found, abandon search in this device
+            if (foundMemorySpace == false)
+            {
+              deviceIsCompatible = false;
+              break;
+            }
+          }
+
+          // If no suitable device was found, advance with the next one
+          if (deviceIsCompatible == false) continue;
+
+          // If we reached this point, we've found the device
+          foundCompatibleDevice = true;
+
+          // Deleting device to prevent it from being counted again
+          currentDevices.erase(currentDeviceItr);
+
+          // Stop checking
+          break;
+        }
+      }
+
+      // If no current devices could satisfy the given device, return false now
+      if (foundCompatibleDevice == false) return false;
+    }
+
+    // All requirements have been met, returning true
+    //printf("Requirements met\n");
+    return true;
+  }
 
   /**
    * A function to get internal topology metadata

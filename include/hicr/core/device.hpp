@@ -25,6 +25,7 @@
 #include <memory>
 #include <unordered_set>
 #include <nlohmann_json/json.hpp>
+#include <nlohmann_json/parser.hpp>
 #include <hicr/core/computeResource.hpp>
 #include <hicr/core/memorySpace.hpp>
 #include <utility>
@@ -64,11 +65,33 @@ class Device
   using memorySpaceList_t = std::vector<std::shared_ptr<MemorySpace>>;
 
   /**
+   * Deserializing constructor
+   *
+   * @param[in] input A JSON-encoded serialized device information
+   */
+  Device(const nlohmann::json &input) { deserialize(input); }
+
+  /**
+   * Default destructor
+   */
+  virtual ~Device() = default;
+
+  /**
+   *  Constructor requires at least to provide the initial set of compute resources and memory spaces
+   *
+   * \param[in] computeResources The list of detected compute resources contained in this device
+   * \param[in] memorySpaces The list of detected memory spaces contained in this device
+   */
+  Device(computeResourceList_t computeResources, memorySpaceList_t memorySpaces)
+    : _computeResources(std::move(computeResources)),
+      _memorySpaces(std::move(memorySpaces)){};
+
+  /**
    * Indicates what type of device is represented in this instance
    *
    * \return A string containing a human-readable description of the compute resource type
    */
-  [[nodiscard]] virtual std::string getType() const = 0;
+  [[nodiscard]] __INLINE__ std::string getType() const { return _type; };
 
   /**
    * This function returns the list of queried compute resources, as visible by the device.
@@ -99,21 +122,6 @@ class Device
   __INLINE__ void addMemorySpace(const std::shared_ptr<HiCR::MemorySpace> &memorySpace) { _memorySpaces.push_back(memorySpace); }
 
   /**
-   * Default destructor
-   */
-  virtual ~Device() = default;
-
-  /**
-   *  Constructor requires at least to provide the initial set of compute resources and memory spaces
-   *
-   * \param[in] computeResources The list of detected compute resources contained in this device
-   * \param[in] memorySpaces The list of detected memory spaces contained in this device
-   */
-  Device(computeResourceList_t computeResources, memorySpaceList_t memorySpaces)
-    : _computeResources(std::move(computeResources)),
-      _memorySpaces(std::move(memorySpaces)){};
-
-  /**
    * Serialization function to enable sharing device information
    *
    * @return JSON-formatted serialized device information
@@ -124,7 +132,7 @@ class Device
     nlohmann::json output;
 
     // Getting device type
-    output["Type"] = getType();
+    output["Type"] = _type;
 
     // Getting device-specific serialization information
     serializeImpl(output);
@@ -151,6 +159,9 @@ class Device
    */
   __INLINE__ void deserialize(const nlohmann::json &input)
   {
+    // Setting device type
+    _type = hicr::json::getString(input, "Type");
+
     // First, discard all existing information
     _computeResources.clear();
     _memorySpaces.clear();
@@ -204,14 +215,42 @@ class Device
    *
    * @param[out] output Serialized device information
    */
-  virtual void serializeImpl(nlohmann::json &output) const = 0;
+  virtual void serializeImpl(nlohmann::json &output) const {}
 
   /**
    * Backend-specific implementation of the deserialize function
    *
    * @param[in] input Serialized device information
    */
-  virtual void deserializeImpl(const nlohmann::json &input) = 0;
+  virtual void deserializeImpl(const nlohmann::json &input)
+  {
+    // Iterating over the compute resource list
+    for (const auto &computeResource : input[_HICR_DEVICE_COMPUTE_RESOURCES_KEY_])
+    {
+      // Deserializing new compute resource
+      auto computeResourceObj = std::make_shared<ComputeResource>(computeResource);
+
+      // Inserting device into the list
+      this->addComputeResource(computeResourceObj);
+    }
+
+    // Iterating over the memory space list
+    for (const auto &memorySpace : input[_HICR_DEVICE_MEMORY_SPACES_KEY_])
+    {
+      // Deserializing new memory space
+      auto memorySpaceObj = std::make_shared<MemorySpace>(memorySpace);
+
+      // Inserting device into the list
+      this->addMemorySpace(memorySpaceObj);
+    }
+  }
+
+  protected:
+
+  /**
+   * Device type, used to identify exactly this device's model/technology 
+   */
+  std::string _type;
 
   private:
 

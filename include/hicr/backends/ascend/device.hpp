@@ -66,7 +66,9 @@ class Device final : public HiCR::Device
    */
   Device()
     : HiCR::Device()
-  {}
+  {
+    _type = "Ascend Device";
+  }
 
   /**
    * Deserializing constructor
@@ -96,13 +98,6 @@ class Device final : public HiCR::Device
     aclError err = aclrtDestroyContext(*_context.get());
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not destroy context for device %ld. Error %d", _id, err);
   };
-
-  /**
-   * Returns a string representing the Ascend device type
-   * 
-   * \return The string representing the Ascend device type
-  */
-  __INLINE__ std::string getType() const override { return "Ascend Device"; }
 
   /**
    * Returns the internal id of the current Ascend device

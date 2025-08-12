@@ -49,7 +49,10 @@ class ComputeResource final : public HiCR::ComputeResource
    */
   ComputeResource(const std::shared_ptr<ascend::Device> &device)
     : HiCR::ComputeResource(),
-      _device(device){};
+      _device(device)
+  {
+    _type = "Ascend Processor";
+  };
 
   /**
    * Default destructor
@@ -68,8 +71,6 @@ class ComputeResource final : public HiCR::ComputeResource
   {
     deserialize(input);
   }
-
-  __INLINE__ std::string getType() const override { return "Ascend Processor"; }
 
   /**
    * Function to get the device id associated to this memory space

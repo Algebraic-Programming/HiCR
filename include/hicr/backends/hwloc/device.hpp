@@ -52,13 +52,19 @@ class Device final : public HiCR::Device
    */
   Device(const NUMADomainID_t NUMADomainId, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces)
     : HiCR::Device(computeResources, memorySpaces),
-      _NUMADomainId(NUMADomainId){};
+      _NUMADomainId(NUMADomainId)
+  {
+    _type = "NUMA Domain";
+  };
 
   /**
    * Empty constructor for serialization / deserialization
    */
   Device()
-    : HiCR::Device(){};
+    : HiCR::Device()
+  {
+    _type = "NUMA Domain";
+  };
 
   /**
    * Deserializing constructor
@@ -78,10 +84,6 @@ class Device final : public HiCR::Device
    * Default destructor
    */
   ~Device() override = default;
-
-  protected:
-
-  [[nodiscard]] __INLINE__ std::string getType() const override { return "NUMA Domain"; }
 
   private:
 
@@ -112,11 +114,8 @@ class Device final : public HiCR::Device
       // Getting device type
       const auto type = computeResource["Type"].get<std::string>();
 
-      // Checking whether the type is correct
-      if (type != "Processing Unit") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
-
       // Deserializing new device
-      auto computeResourceObj = std::make_shared<hwloc::ComputeResource>(computeResource);
+      auto computeResourceObj = std::make_shared<HiCR::ComputeResource>(computeResource);
 
       // Inserting device into the list
       this->addComputeResource(computeResourceObj);
@@ -128,11 +127,8 @@ class Device final : public HiCR::Device
       // Getting device type
       const auto type = memorySpace["Type"].get<std::string>();
 
-      // Checking whether the type is correct
-      if (type != "RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
-
       // Deserializing new device
-      auto memorySpaceObj = std::make_shared<hwloc::MemorySpace>(memorySpace);
+      auto memorySpaceObj = std::make_shared<HiCR::MemorySpace>(memorySpace);
 
       // Inserting device into the list
       this->addMemorySpace(memorySpaceObj);

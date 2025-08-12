@@ -48,21 +48,10 @@ class MemorySpace final : public HiCR::MemorySpace
   MemorySpace(const size_t size, const hwloc_obj_t hwlocObject, const hwloc::LocalMemorySlot::binding_type bindingSupport)
     : HiCR::MemorySpace(size),
       _hwlocObject(hwlocObject),
-      _bindingSupport(bindingSupport){};
-
-  /**
-   * Deserializing constructor
-   *
-   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed host RAM
-   * This instance should NOT be used for anything else than reporting/printing the contained resources
-   *
-   * @param[in] input A JSON-encoded serialized host RAM information
-   */
-  MemorySpace(const nlohmann::json &input)
-    : HiCR::MemorySpace()
+      _bindingSupport(bindingSupport)
   {
-    deserialize(input);
-  }
+    _type = "RAM";
+  };
 
   /**
    * Default destructor
@@ -83,8 +72,6 @@ class MemorySpace final : public HiCR::MemorySpace
    */
   [[nodiscard]] __INLINE__ const hwloc_obj_t getHWLocObject() const { return _hwlocObject; }
 
-  [[nodiscard]] __INLINE__ std::string getType() const override { return "RAM"; }
-
   private:
 
   __INLINE__ void serializeImpl(nlohmann::json &output) const override
@@ -95,6 +82,9 @@ class MemorySpace final : public HiCR::MemorySpace
 
   __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
+    // Checking whether the type is correct
+    if (_type != "RAM") HICR_THROW_LOGIC("The passed memory space type '%s' is not compatible with this topology manager", _type.c_str());
+
     std::string key = "Binding Support";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
     if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());

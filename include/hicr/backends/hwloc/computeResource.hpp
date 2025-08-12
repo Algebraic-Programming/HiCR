@@ -66,7 +66,10 @@ class ComputeResource final : public HiCR::ComputeResource
       _logicalProcessorId(logicalProcessorId),
       _physicalProcessorId(detectPhysicalProcessorId(topology, logicalProcessorId)),
       _numaAffinity(detectCoreNUMAffinity(topology, logicalProcessorId)),
-      _caches(detectCpuCaches(topology, logicalProcessorId)){};
+      _caches(detectCpuCaches(topology, logicalProcessorId))
+  {
+    _type = "Processing Unit";
+  };
 
   /**
    * Constructor for the compute resource class of the hwloc backend
@@ -83,15 +86,17 @@ class ComputeResource final : public HiCR::ComputeResource
       _logicalProcessorId(logicalProcessorId),
       _physicalProcessorId(physicalProcessorId),
       _numaAffinity(numaAffinity),
-      _caches(std::move(caches)){};
+      _caches(std::move(caches))
+  {
+    _type = "Processing Unit";
+  };
+
   ~ComputeResource() override = default;
 
   /**
    * Default constructor for serialization/deserialization purposes
    */
-  ComputeResource() = default;
-
-  __INLINE__ std::string getType() const override { return "Processing Unit"; }
+  ComputeResource() { _type = "Processing Unit"; };
 
   /**
    * Function to return the compute resource processor id
@@ -107,16 +112,6 @@ class ComputeResource final : public HiCR::ComputeResource
    * \return The physical ID of the hardware Core
    */
   __INLINE__ physicalProcessorId_t getPhysicalProcessorId() const { return _physicalProcessorId; }
-
-  /**
-   * Deserializing constructor
-   *
-   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed processing unit
-   * This instance should NOT be used for anything else than reporting/printing the contained resources
-   *
-   * @param[in] input A JSON-encoded serialized  processing unit information
-   */
-  ComputeResource(const nlohmann::json &input) { deserialize(input); }
 
   /**
    * Uses HWloc to recursively (tree-like) identify the host's basic processing units (PUs)
@@ -336,6 +331,9 @@ class ComputeResource final : public HiCR::ComputeResource
 
   __INLINE__ void deserializeImpl(const nlohmann::json &input) override
   {
+    // Checking whether the type is correct
+    if (_type != "Processing Unit") HICR_THROW_LOGIC("The passed compute resource type '%s' is not compatible with this topology manager", _type.c_str());
+
     std::string key = "Logical Processor Id";
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
     if (input[key].is_number() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());

@@ -51,7 +51,19 @@ class MemorySpace final : public HiCR::MemorySpace
    */
   MemorySpace(const std::weak_ptr<ascend::Device> device, const size_t size)
     : HiCR::MemorySpace(size),
-      _device(device){};
+      _device(device)
+  {
+    _type = "Ascend Device RAM";
+  };
+
+  /**
+   * Default constructor for resource requesting
+   */
+  MemorySpace()
+    : HiCR::MemorySpace()
+  {
+    _type = "Ascend Device RAM";
+  }
 
   /**
    * Default destructor
@@ -70,8 +82,6 @@ class MemorySpace final : public HiCR::MemorySpace
   {
     deserialize(input);
   }
-
-  __INLINE__ std::string getType() const override { return "Ascend Device RAM"; }
 
   /**
    * Function to get the Ascend device associated to this memory space
