@@ -110,10 +110,14 @@ class InstanceManager final : public HiCR::InstanceManager
     MPI_Initialized(&initialized);
     if (initialized == 0)
     {
-      int requested = MPI_THREAD_SINGLE;
+      int requested = MPI_THREAD_MULTIPLE;
       int provided  = 0;
       MPI_Init_thread(argc, argv, requested, &provided);
-      if (provided < requested) fprintf(stderr, "Warning, your application may not work properly if MPI does not support  threaded access\n");
+      if (provided != requested)
+      {
+        fprintf(stderr, "Warning, your application may not work properly if MPI does not support  threaded access\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
     }
 
     // Setting MPI_COMM_WORLD error handler
