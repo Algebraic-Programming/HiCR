@@ -529,21 +529,27 @@ class CommunicationManager : public HiCR::CommunicationManager
   __INLINE__ void lockMPIWindow(int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
     // Locking MPI window to ensure the messages arrives before returning
-    int mpiStatus = 0;
-    do {
-      mpiStatus = MPI_Win_lock(MPILockType, rank, MPIAssert, *window) != MPI_SUCCESS;
+    int mpiStatus = MPI_Win_lock(MPILockType, rank, MPIAssert, *window);
+    if (mpiStatus != MPI_SUCCESS)
+    {
+      char err_string[MPI_MAX_ERROR_STRING];
+      int  len;
+      MPI_Error_string(mpiStatus, err_string, &len);
+      HICR_THROW_LOGIC("MPI_Win_lock failed for rank %d: %s", rank, err_string);
     }
-    while (mpiStatus != MPI_SUCCESS);
   }
 
   __INLINE__ void unlockMPIWindow(int rank, MPI_Win *window)
   {
     // Unlocking window after copy is completed
-    int mpiStatus = 0;
-    do {
-      mpiStatus = MPI_Win_unlock(rank, *window) != MPI_SUCCESS;
+    int mpiStatus = MPI_Win_unlock(rank, *window);
+    if (mpiStatus != MPI_SUCCESS)
+    {
+      char err_string[MPI_MAX_ERROR_STRING];
+      int  len;
+      MPI_Error_string(mpiStatus, err_string, &len);
+      HICR_THROW_LOGIC("MPI_Win_unlock failed for rank %d: %s", rank, err_string);
     }
-    while (mpiStatus != MPI_SUCCESS);
   }
 
   __INLINE__ void increaseWindowCounter(int rank, MPI_Win *window)
