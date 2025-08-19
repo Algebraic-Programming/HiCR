@@ -335,7 +335,7 @@ class RPCEngine
     auto &targetName          = target.name;
     auto &targetExecutionUnit = target.executionUnit;
 
-    printf("Running: %s\n", targetName.c_str());
+    // printf("Running: %s\n", targetName.c_str());
 
     // Creating new processing unit to execute the RPC
     auto p = _computeManager.createProcessingUnit(_computeResource);
