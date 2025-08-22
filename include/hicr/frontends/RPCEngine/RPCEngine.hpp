@@ -331,7 +331,7 @@ class RPCEngine
   {
     // Getting RPC target from the index
     if (_RPCTargetMap.contains(rpcIdx) == false) HICR_THROW_RUNTIME("Attempting to run an RPC target (Hash: %lu) that was not defined in this instance (0x%lX).\n", rpcIdx, this);
-    auto &target              = _RPCTargetMap.at(rpcIdx);
+    auto &target = _RPCTargetMap.at(rpcIdx);
     // auto &targetName          = target.name;
     auto &targetExecutionUnit = target.executionUnit;
 
