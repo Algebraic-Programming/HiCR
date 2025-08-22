@@ -118,7 +118,7 @@ class Topology
       for (const auto &deviceJs : devicesJs) addDevice(std::make_shared<Device>(deviceJs));
     }
 
-    if (input.contains("Metadata")) _metadata = hicr::json::getObject(input, "Metadata");
+    if (input.contains("Metadata")) _metadata = input["Metadata"];
   };
 
   /**
