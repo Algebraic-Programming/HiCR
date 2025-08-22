@@ -75,23 +75,6 @@ class CommunicationManager
   virtual ~CommunicationManager() = default;
 
   /**
-   * Backend-internal implementation of the locking of a mutual exclusion mechanism.
-   * By default, a single mutex can protect access to internal fields.
-   * It is up to the application developer to ensure that the mutex is used correctly
-   * and efficiently, e.g., grouping multiple operations under a single lock.
-   *
-   * \todo: Implement a more fine-grained locking mechanism, e.g., per map mutex or parallel maps,
-   *        and expose thread-safe operations to the user.
-   */
-  virtual void lock() { _mutex.lock(); };
-
-  /**
-   * Backend-internal implementation of the unlocking of a mutual exclusion mechanism.
-   * Same considerations as for lock() apply.
-   */
-  virtual void unlock() { _mutex.unlock(); };
-
-  /**
    * Exchanges memory slots among different local instances of HiCR to enable global (remote) communication
    *
    * \param[in] tag Identifies a particular subset of global memory slots
@@ -376,14 +359,12 @@ class CommunicationManager
    */
   __INLINE__ void fence(GlobalMemorySlot::tag_t tag)
   {
-    lock();
     // Now call the proper fence, as implemented by the backend
     fenceImpl(tag);
 
     // Clear the memory slots to destroy
     _globalMemorySlotsToDestroyPerTag[tag].clear();
     _globalMemorySlotsToDestroyPerTag.erase(tag);
-    unlock();
   }
 
   /**
@@ -682,12 +663,6 @@ class CommunicationManager
   __INLINE__ void setMessagesSent(HiCR::LocalMemorySlot &memorySlot, const size_t count) noexcept { memorySlot.setMessagesSent(count); }
 
   private:
-
-  /**
-   * Allow programmers to use a mutex to protect the communication manager's state when doing opeartions like
-   * deregistering and marking memory slots for destruction, internally protect backend (e.g., MPI) calls, etc.
-   */
-  std::mutex _mutex;
 
   /**
    * Storage for global tag/key associated global memory slot exchange

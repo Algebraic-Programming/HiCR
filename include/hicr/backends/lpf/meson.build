@@ -13,8 +13,8 @@ lpfDep = dependency('lpf-noc', required:false)
 if lpfDep.found() == false
   # Now looking for LPF-specific libraries
   cc = meson.get_compiler('cpp')
-  lib_lpfcore = cc.find_library('lpf_core_univ_zero_Release')
-  lib_lpfimp = cc.find_library('lpf_core_univ_imp_Release')
+  lib_lpfcore = cc.find_library('lpf_core_univ_zero_Release') # lpf_core_univ_zero_Debug
+  lib_lpfimp = cc.find_library('lpf_core_univ_imp_Release')   # lpf_core_univ_imp_Debug
   lib_lpfhl = cc.find_library('lpf_hl')
 
   # Update the LPF dependency accordingly
