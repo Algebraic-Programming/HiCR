@@ -23,9 +23,9 @@
 
 #include <thread>
 #include "gtest/gtest.h"
-#include <hicr/backends/host/hwloc/memoryManager.hpp>
-#include <hicr/backends/host/pthreads/communicationManager.hpp>
-#include <hicr/backends/host/hwloc/topologyManager.hpp>
+#include <hicr/backends/hwloc/memoryManager.hpp>
+#include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
 
@@ -44,13 +44,13 @@ TEST(ProducerChannel, Construction)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::MemoryManager m(&topology);
+  HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -108,13 +108,13 @@ TEST(ProducerChannel, Push)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::MemoryManager m(&topology);
+  HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -193,13 +193,13 @@ TEST(ProducerChannel, PushWait)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::MemoryManager m(&topology);
+  HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();

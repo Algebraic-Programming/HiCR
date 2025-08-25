@@ -26,9 +26,9 @@
 #include <hicr/core/exceptions.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
-#include <hicr/backends/host/hwloc/memoryManager.hpp>
-#include <hicr/backends/host/pthreads/communicationManager.hpp>
-#include <hicr/backends/host/hwloc/topologyManager.hpp>
+#include <hicr/backends/hwloc/memoryManager.hpp>
+#include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/hwloc/topologyManager.hpp>
 
 #define CHANNEL_TAG 0
 #define TOKEN_BUFFER_KEY 0
@@ -46,13 +46,13 @@ TEST(ConsumerChannel, Construction)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::MemoryManager m(&topology);
+  HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -115,13 +115,13 @@ TEST(ConsumerChannel, PeekPop)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::MemoryManager m(&topology);
+  HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
@@ -195,6 +195,151 @@ TEST(ConsumerChannel, PeekPop)
   EXPECT_THROW(consumer.peek(), HiCR::RuntimeException);
 }
 
+TEST(ConsumerChannel, PeekOrderPop)
+{
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  // Instantiating HWloc-based host (CPU) memory manager
+  HiCR::backend::hwloc::MemoryManager m(&topology);
+
+  // Instantiating Pthread-based host (CPU) communication manager
+  HiCR::backend::pthreads::CommunicationManager c(1);
+
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
+
+  // Asking backend to check the available devices
+  const auto t = tm.queryTopology();
+
+  // Getting first device found
+  auto d = *t.getDevices().begin();
+
+  // Obtaining memory spaces
+  auto memSpaces = d->getMemorySpaceList();
+
+  // Channel configuration
+  const auto tokenSize       = sizeof(int);
+  const auto channelCapacity = 16;
+
+  // Allocating correct memory slots
+  auto tokenBuffer                = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
+  auto producerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Producer::getCoordinationBufferSize());
+  auto consumerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getCoordinationBufferSize());
+
+  // Initializing coordination buffer (sets to zero the counters)
+  HiCR::channel::fixedSize::SPSC::Producer::initializeCoordinationBuffer(producerCoordinationBuffer);
+  HiCR::channel::fixedSize::SPSC::Consumer::initializeCoordinationBuffer(consumerCoordinationBuffer);
+
+  // Exchanging local memory slots to become global for them to be used by the remote end
+  c.exchangeGlobalMemorySlots(
+    CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}, {CONSUMER_COORDINATION_BUFFER_KEY, consumerCoordinationBuffer}});
+
+  // Synchronizing so that all actors have finished registering their global memory slots
+  c.fence(CHANNEL_TAG);
+
+  // Obtaining the globally exchanged memory slots
+  auto globalTokenBuffer                = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+  auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
+
+  // Creating producer and Consumer channels
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+
+  // Send tokens
+  for (int i = 0; i < channelCapacity; i++)
+  {
+    auto memSlot = m.registerLocalMemorySlot(*memSpaces.begin(), &i, sizeof(i));
+    producer.push(memSlot, 1);
+  }
+
+  // Get receive buffer pointer
+  const auto tokenBufferPtr = ((unsigned int *)tokenBuffer->getPointer());
+
+  for (int i = 0; i < channelCapacity; i++)
+  {
+    EXPECT_EQ(((int *)tokenBufferPtr)[consumer.peek(0)], i);
+    consumer.pop();
+  }
+}
+
+
+TEST(ConsumerChannel, PeekOrder)
+{
+  // Creating HWloc topology object
+  hwloc_topology_t topology;
+
+  // Reserving memory for hwloc
+  hwloc_topology_init(&topology);
+
+  // Instantiating HWloc-based host (CPU) memory manager
+  HiCR::backend::hwloc::MemoryManager m(&topology);
+
+  // Instantiating Pthread-based host (CPU) communication manager
+  HiCR::backend::pthreads::CommunicationManager c(1);
+
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
+
+  // Asking backend to check the available devices
+  const auto t = tm.queryTopology();
+
+  // Getting first device found
+  auto d = *t.getDevices().begin();
+
+  // Obtaining memory spaces
+  auto memSpaces = d->getMemorySpaceList();
+
+  // Channel configuration
+  const auto tokenSize       = sizeof(int);
+  const auto channelCapacity = 16;
+
+  // Allocating correct memory slots
+  auto tokenBuffer                = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getTokenBufferSize(tokenSize, channelCapacity));
+  auto producerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Producer::getCoordinationBufferSize());
+  auto consumerCoordinationBuffer = m.allocateLocalMemorySlot(*memSpaces.begin(), HiCR::channel::fixedSize::SPSC::Consumer::getCoordinationBufferSize());
+
+  // Initializing coordination buffer (sets to zero the counters)
+  HiCR::channel::fixedSize::SPSC::Producer::initializeCoordinationBuffer(producerCoordinationBuffer);
+  HiCR::channel::fixedSize::SPSC::Consumer::initializeCoordinationBuffer(consumerCoordinationBuffer);
+
+  // Exchanging local memory slots to become global for them to be used by the remote end
+  c.exchangeGlobalMemorySlots(
+    CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBuffer}, {PRODUCER_COORDINATION_BUFFER_KEY, producerCoordinationBuffer}, {CONSUMER_COORDINATION_BUFFER_KEY, consumerCoordinationBuffer}});
+
+  // Synchronizing so that all actors have finished registering their global memory slots
+  c.fence(CHANNEL_TAG);
+
+  // Obtaining the globally exchanged memory slots
+  auto globalTokenBuffer                = c.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+  auto globalProducerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
+  auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
+
+  // Creating producer and Consumer channels
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+
+  // Send tokens
+  for (int i = 0; i < channelCapacity; i++)
+  {
+    auto memSlot = m.registerLocalMemorySlot(*memSpaces.begin(), &i, sizeof(i));
+    producer.push(memSlot, 1);
+  }
+
+  // Get receive buffer pointer
+  const auto tokenBufferPtr = ((unsigned int *)tokenBuffer->getPointer());
+
+  for (int i = 0; i < channelCapacity; i++)
+  {
+    EXPECT_EQ(((int *)tokenBufferPtr)[consumer.peek(i)], i);
+  }
+}
+
+
 TEST(ConsumerChannel, PeekWait)
 {
   // Creating HWloc topology object
@@ -204,13 +349,13 @@ TEST(ConsumerChannel, PeekWait)
   hwloc_topology_init(&topology);
 
   // Instantiating HWloc-based host (CPU) memory manager
-  HiCR::backend::host::hwloc::MemoryManager m(&topology);
+  HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::host::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(1);
 
   // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::host::hwloc::TopologyManager tm(&topology);
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
   const auto t = tm.queryTopology();
