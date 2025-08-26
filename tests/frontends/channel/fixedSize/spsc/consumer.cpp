@@ -267,7 +267,6 @@ TEST(ConsumerChannel, PeekOrderPop)
   }
 }
 
-
 TEST(ConsumerChannel, PeekOrder)
 {
   // Creating HWloc topology object
@@ -333,12 +332,8 @@ TEST(ConsumerChannel, PeekOrder)
   // Get receive buffer pointer
   const auto tokenBufferPtr = ((unsigned int *)tokenBuffer->getPointer());
 
-  for (int i = 0; i < channelCapacity; i++)
-  {
-    EXPECT_EQ(((int *)tokenBufferPtr)[consumer.peek(i)], i);
-  }
+  for (int i = 0; i < channelCapacity; i++) { EXPECT_EQ(((int *)tokenBufferPtr)[consumer.peek(i)], i); }
 }
-
 
 TEST(ConsumerChannel, PeekWait)
 {
