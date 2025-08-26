@@ -120,13 +120,6 @@ class Producer : public fixedSize::Base
       HICR_THROW_RUNTIME(
         "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, getCircularBuffer()->getCapacity());
 
-    /**
-     * Because it is possible that head advance (by producer)
-     * and tail advance (signalled by consumer) overlap,
-     * we allow for temporary illegal (tail > head) by using the
-     * cached depth when advancing the head
-     */
-    getCircularBuffer()->setCachedDepth(curDepth);
     for (size_t i = 0; i < n; i++)
     {
       // Copying with source increasing offset per token
@@ -139,7 +132,7 @@ class Producer : public fixedSize::Base
     getCommunicationManager()->fence(sourceSlot, n, 0);
 
     // read possibly slightly outdated depth here (will be updated next round)
-    getCircularBuffer()->advanceHead(n, true);
+    getCircularBuffer()->advanceHead(n);
 
     /*
      * In this implementation of producer-consumer, the producer
