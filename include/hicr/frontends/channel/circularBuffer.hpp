@@ -187,58 +187,6 @@ class CircularBuffer
    */
   [[nodiscard]] __INLINE__ bool isEmpty() const noexcept { return *_headAdvanceCounter == *_tailAdvanceCounter; }
 
-  /**
-   * Forces the head advance counter into a specific absolute value
-   *
-   * @param[in] headAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the circular buffer has negative depth
-   */
-  __INLINE__ void setHead(const size_t headAdvanceCounter)
-  {
-    // Sanity check
-    if (*_tailAdvanceCounter > headAdvanceCounter)
-      HICR_THROW_FATAL("Circular buffer new head advance value is smaller than tail's (%lu < %lu). This is probably a bug in HiCR.\n", headAdvanceCounter, *_tailAdvanceCounter);
-
-    // Calculating new depth
-    const auto newDepth = calculateDepth(headAdvanceCounter, *_tailAdvanceCounter);
-
-    // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Circular new buffer depth (%lu) exceeded capacity (%lu) on setHead. This is probably a bug in HiCR.\n", newDepth, _capacity);
-
-    // Setting head
-    *_headAdvanceCounter = headAdvanceCounter;
-  }
-
-  /**
-   * Forces the tail advance counter into a specific absolute value
-   *
-   * @param[in] tailAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the circular buffer has negative depth
-   */
-  __INLINE__ void setTail(const size_t tailAdvanceCounter)
-  {
-    // Sanity check
-    if (tailAdvanceCounter > *_headAdvanceCounter)
-      HICR_THROW_FATAL("Circular buffer new tail advance value exceeds head (%lu > %lu). This is probably a bug in HiCR.\n", tailAdvanceCounter, *_headAdvanceCounter);
-
-    // Calculating new depth
-    const auto newDepth = calculateDepth(*_headAdvanceCounter, tailAdvanceCounter);
-
-    // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Circular buffer new buffer depth (%lu) exceeded capacity (%lu) on setTail. This is probably a bug in HiCR.\n", newDepth, _capacity);
-
-    // Setting head
-    *_tailAdvanceCounter = tailAdvanceCounter;
-  }
-
-  /**
-   * @returns The absolute counter for the number of times the head was advanced
-   */
-  [[nodiscard]] __INLINE__ size_t getHeadAdvanceCounter() const noexcept { return *_headAdvanceCounter; }
-
-  /**
-   * @returns The absolute counter for the number of times the tail was advanced
-   */
-  [[nodiscard]] __INLINE__ size_t getTailAdvanceCounter() const noexcept { return *_tailAdvanceCounter; }
-
   private:
 
   /**

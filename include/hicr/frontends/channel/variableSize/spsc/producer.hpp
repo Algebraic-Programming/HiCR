@@ -88,12 +88,6 @@ class Producer : public variableSize::Base
   __INLINE__ void updateDepth() {}
 
   /**
-   * advance payload buffer tail by a number of bytes
-   * @param[in] n bytes to advance payload buffer tail by
-   */
-  __INLINE__ void advancePayloadTail(const size_t n = 1) { getCircularBufferForPayloads()->advanceTail(n); }
-
-  /**
    * get payload buffer head position
    * @return payload buffer head position (in bytes)
    */
