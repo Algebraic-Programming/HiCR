@@ -16,7 +16,7 @@
 
 /**
  * @file kernel.hpp
- * @brief This file implements the Kernel class for the Ascend backend
+ * @brief This file implements the Kernel class for the acl backend
  * @author S. M. Martin & L. Terracciano
  * @date 8/11/2023
  */
@@ -26,11 +26,11 @@
 #include <acl/acl.h>
 #include <hicr/core/definitions.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 /**
- * This class represents a replicable kernel for the Ascend backend.
- * A Kernel is a piece of computation meant to be executed on an Ascend device.
+ * This class represents a replicable kernel for the acl backend.
+ * A Kernel is a piece of computation meant to be executed on an Huawei device.
  */
 class Kernel
 {
@@ -50,4 +50,4 @@ class Kernel
    */
   __INLINE__ virtual void start(const aclrtStream stream) = 0;
 };
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

@@ -1,4 +1,4 @@
-name: Merge into master - Build Ascend Workflow
+name: Merge into master - Build acl Workflow
 
 # if statements modified to avoid: https://stackoverflow.com/questions/69354003/github-action-job-fire-when-previous-job-skipped
 
@@ -17,7 +17,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  DOCKERIMAGE: ghcr.io/algebraic-programming/hicr/buildenv-ascend
+  DOCKERIMAGE: ghcr.io/algebraic-programming/hicr/buildenv-acl
 
 defaults:
   run:
@@ -45,7 +45,7 @@ jobs:
           MODIFIED_FILES_PATH: ${{ runner.temp }}/diff.txt
         run: |
           cat $MODIFIED_FILES_PATH
-          if cat $MODIFIED_FILES_PATH | grep -q 'buildenv-ascend/Dockerfile' ; then
+          if cat $MODIFIED_FILES_PATH | grep -q 'buildenv-acl/Dockerfile' ; then
             echo "Dockerfile was modified"
             echo "dockerfile-modified=true" >> $GITHUB_OUTPUT
           else
@@ -90,7 +90,7 @@ jobs:
       - name: Build and push docker image
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:.build-tools/containers/buildenv-ascend"
+          context: "{{defaultContext}}:.build-tools/containers/buildenv-acl"
           push: true
           tags: ${{ steps.dockermeta.outputs.tags }}
           labels: ${{ steps.dockermeta.outputs.labels }}

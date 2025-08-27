@@ -16,7 +16,7 @@
 
 /**
  * @file memoryKernel.hpp
- * @brief This file implements the kernel class for the Ascend backend
+ * @brief This file implements the kernel class for the acl backend
  * @author S. M. Martin & L. Terracciano
  * @date 13/11/2023
  */
@@ -26,12 +26,12 @@
 #include <acl/acl.h>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/localMemorySlot.hpp>
-#include <hicr/backends/ascend/communicationManager.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/backends/acl/communicationManager.hpp>
+#include <hicr/backends/acl/kernel.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 { /**
- * This class represents a replicable Memory Kernel for the Ascend backend.
+ * This class represents a replicable Memory Kernel for the acl backend.
  * A Memory Kernel enable the execution of memcopy operations in a stream/sequence of Kernels.
  * Memory Kernels currently supports memcpy operations on the same device, since they are meant to be chained
  * with other Kernels.
@@ -41,22 +41,22 @@ class MemoryKernel final : public Kernel
   public:
 
   /**
-   * Constructor for the execution unit class of the Ascend backend
+   * Constructor for the execution unit class of the acl backend
    *
-   * \param commManager the Ascend communication manager
+   * \param commManager the acl communication manager
    * \param destination destination pointer
    * \param destinationOffset destination offset
    * \param source source pointer
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(ascend::CommunicationManager          *commManager,
+  MemoryKernel(acl::CommunicationManager          *commManager,
                std::shared_ptr<HiCR::LocalMemorySlot> destination,
                const size_t                           destinationOffset,
                std::shared_ptr<HiCR::LocalMemorySlot> source,
                const size_t                           sourceOffset,
                size_t                                 size)
-    : ascend::Kernel(),
+    : acl::Kernel(),
       _dst(destination),
       _src(source),
       _dstOffset(destinationOffset),
@@ -104,8 +104,8 @@ class MemoryKernel final : public Kernel
   const size_t _size;
 
   /**
-   * Ascend memory manager
+   * acl memory manager
    */
-  ascend::CommunicationManager *const _commManager;
+  acl::CommunicationManager *const _commManager;
 };
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

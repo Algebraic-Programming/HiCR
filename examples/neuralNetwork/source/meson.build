@@ -22,19 +22,19 @@ if 'pthreads' in enabledBackends and 'hwloc' in enabledBackends
 	)
 endif
 
-if 'ascend' in enabledBackends and 'hwloc' in enabledBackends
-	ascend = executable(
-		'ascend',
+if 'acl' in enabledBackends and 'hwloc' in enabledBackends
+	acl = executable(
+		'acl',
 		[
-			'ascend.cpp',
-			'include/factory/executionUnit/ascend/executionUnitFactory.cpp',
-			'include/tensor/ascend/tensor.cpp',
+			'acl.cpp',
+			'include/factory/executionUnit/acl/executionUnitFactory.cpp',
+			'include/tensor/acl/tensor.cpp',
 		],
 		dependencies: [NNHiCRBuildDep],
 	)
 	test(
-		'ascend',
-		ascend,
+		'acl',
+		acl,
 		args: [
 			modelPath,
 			testsetDir,	

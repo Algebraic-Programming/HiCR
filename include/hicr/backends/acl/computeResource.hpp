@@ -16,7 +16,7 @@
 
 /**
  * @file computeResource.hpp
- * @brief This file implements the compute resource class for the Ascend backend
+ * @brief This file implements the compute resource class for the acl backend
  * @author L. Terracciano & S. M. Martin
  * @date 15/12/2023
  */
@@ -28,30 +28,30 @@
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/computeResource.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 /**
- * Forward declaration of the Ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the Huawei device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class Device;
 
 /**
- * This class represents a compute resource, visible by the Ascend backend. That is, a processing unit (Ascend device) with information about the ascend context.
+ * This class represents a compute resource, visible by the acl backend. That is, a processing unit (Huawei device) with information about the acl context.
  */
 class ComputeResource final : public HiCR::ComputeResource
 {
   public:
 
   /**
-   * Constructor for the compute resource class of the Ascend backend
+   * Constructor for the compute resource class of the acl backend
    *
-   * \param device The Ascend device that contains this compute resource
+   * \param device The Huawei device that contains this compute resource
    */
-  ComputeResource(const std::shared_ptr<ascend::Device> &device)
+  ComputeResource(const std::shared_ptr<acl::Device> &device)
     : HiCR::ComputeResource(),
       _device(device)
   {
-    _type = "Ascend Processor";
+    _type = "Huawei Processor";
   };
 
   /**
@@ -77,7 +77,7 @@ class ComputeResource final : public HiCR::ComputeResource
    *
    * @return The device id corresponding to this memory space
    */
-  __INLINE__ const std::weak_ptr<const ascend::Device> getDevice() const { return _device; }
+  __INLINE__ const std::weak_ptr<const acl::Device> getDevice() const { return _device; }
 
   private:
 
@@ -96,7 +96,7 @@ class ComputeResource final : public HiCR::ComputeResource
    *
    * \note If this class has been created through deserialization, it is not meant to be used as this pointer remains undefined
    */
-  std::weak_ptr<ascend::Device> _device;
+  std::weak_ptr<acl::Device> _device;
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

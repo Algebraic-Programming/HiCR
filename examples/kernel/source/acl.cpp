@@ -20,21 +20,21 @@
 #include <stdio.h>
 #include <acl/acl.h>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/backends/ascend/computationKernel.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/backends/ascend/memoryKernel.hpp>
-#include <hicr/backends/ascend/executionUnit.hpp>
-#include <hicr/backends/ascend/processingUnit.hpp>
-#include <hicr/backends/ascend/memoryManager.hpp>
-#include <hicr/backends/ascend/topologyManager.hpp>
-#include <hicr/backends/ascend/communicationManager.hpp>
-#include <hicr/backends/ascend/computeManager.hpp>
+#include <hicr/backends/acl/computationKernel.hpp>
+#include <hicr/backends/acl/kernel.hpp>
+#include <hicr/backends/acl/memoryKernel.hpp>
+#include <hicr/backends/acl/executionUnit.hpp>
+#include <hicr/backends/acl/processingUnit.hpp>
+#include <hicr/backends/acl/memoryManager.hpp>
+#include <hicr/backends/acl/topologyManager.hpp>
+#include <hicr/backends/acl/communicationManager.hpp>
+#include <hicr/backends/acl/computeManager.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 
 #include "./include/common.hpp"
 #include "./include/kernel.hpp"
 
-namespace ascend = HiCR::backend::ascend;
+namespace acl = HiCR::backend::acl;
 
 /**
  * Populate a matrix contained in a memory slot with the desired value converted to aclFloat16
@@ -73,11 +73,11 @@ void printMatrix(const std::shared_ptr<HiCR::LocalMemorySlot> &memSlot, uint32_t
  * @param[in] outputs output tensor related data structure
  * @param[in] kernelAttributes kernel attributes
  * 
- * @return the ascend compute kernel
+ * @return the acl compute kernel
 */
-std::shared_ptr<ascend::ComputationKernel> createComputeKernelFromFile(const std::string                                    &path,
-                                                                       std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
-                                                                       std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+std::shared_ptr<acl::ComputationKernel> createComputeKernelFromFile(const std::string                                    &path,
+                                                                       std::vector<acl::ComputationKernel::tensorData_t> &inputs,
+                                                                       std::vector<acl::ComputationKernel::tensorData_t> &outputs,
                                                                        const aclopAttr                                      *kernelAttributes);
 
 /**
@@ -88,70 +88,70 @@ std::shared_ptr<ascend::ComputationKernel> createComputeKernelFromFile(const std
  * @param[in] outputs output tensor related data structure
  * @param[in] kernelAttributes kernel attributes
  * 
- * @return the ascend compute kernel
+ * @return the acl compute kernel
 */
-std::shared_ptr<ascend::ComputationKernel> createComputeKernelFromDirectory(const std::string                                    &path,
-                                                                            std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
-                                                                            std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+std::shared_ptr<acl::ComputationKernel> createComputeKernelFromDirectory(const std::string                                    &path,
+                                                                            std::vector<acl::ComputationKernel::tensorData_t> &inputs,
+                                                                            std::vector<acl::ComputationKernel::tensorData_t> &outputs,
                                                                             const aclopAttr                                      *kernelAttributes);
 
 int main(int argc, char **argv)
 {
   // Initialize ACL runtime
   aclError err = aclInit(NULL);
-  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize acl. Error %d", err);
 
   // Creating HWloc topology object
   hwloc_topology_t topology;
   hwloc_topology_init(&topology);
 
-  ///////// Instantiate HiCR-specific entities for hwloc and ascend
+  ///////// Instantiate HiCR-specific entities for hwloc and acl
   // Initializing HWLoc-based host topology manager and retrieve host memory space
   HiCR::backend::hwloc::TopologyManager hostTopologyManager(&topology);
   auto                                  hostTopology = hostTopologyManager.queryTopology();
   auto                                  hostDevice   = *hostTopology.getDevices().begin();
   auto                                  hostMemSpace = *hostDevice->getMemorySpaceList().begin();
 
-  // Initializing ascend topology manager and retrieve memory space and compute resource of one of the devices
-  HiCR::backend::ascend::TopologyManager ascendTopologyManager;
-  auto                                   ascendTopology        = ascendTopologyManager.queryTopology();
-  auto                                   ascendDevice          = *ascendTopology.getDevices().begin();
-  auto                                   deviceMemSpace        = *ascendDevice->getMemorySpaceList().begin();
-  auto                                   deviceComputeResource = *ascendDevice->getComputeResourceList().begin();
+  // Initializing acl topology manager and retrieve memory space and compute resource of one of the devices
+  HiCR::backend::acl::TopologyManager aclTopologyManager;
+  auto                                   aclTopology        = aclTopologyManager.queryTopology();
+  auto                                   aclDevice          = *aclTopology.getDevices().begin();
+  auto                                   deviceMemSpace        = *aclDevice->getMemorySpaceList().begin();
+  auto                                   deviceComputeResource = *aclDevice->getComputeResourceList().begin();
 
-  // Instantiating Ascend memory, compute, and communication manager
-  HiCR::backend::ascend::MemoryManager        ascendMemoryManager;
-  HiCR::backend::ascend::ComputeManager       ascendComputeManager;
-  HiCR::backend::ascend::CommunicationManager ascendCommunicationManager;
+  // Instantiating acl memory, compute, and communication manager
+  HiCR::backend::acl::MemoryManager        aclMemoryManager;
+  HiCR::backend::acl::ComputeManager       aclComputeManager;
+  HiCR::backend::acl::CommunicationManager aclCommunicationManager;
 
   /////////  Allocate input and output buffers on both host and the device
   // First matrix [M, K]
   auto input1Size   = M * K * sizeof(aclFloat16);
-  auto input1Host   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, input1Size);
-  auto input1Device = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input1Size);
+  auto input1Host   = aclMemoryManager.allocateLocalMemorySlot(hostMemSpace, input1Size);
+  auto input1Device = aclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input1Size);
 
   // Second matrix [K, N]
   auto input2Size   = K * N * sizeof(aclFloat16);
-  auto input2Host   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, input2Size);
-  auto input2Device = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input2Size);
+  auto input2Host   = aclMemoryManager.allocateLocalMemorySlot(hostMemSpace, input2Size);
+  auto input2Device = aclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input2Size);
 
   // Third matrix [M, N]
   auto input3Size   = M * N * sizeof(aclFloat16);
-  auto input3Host   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, input3Size);
-  auto input3Device = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input3Size);
+  auto input3Host   = aclMemoryManager.allocateLocalMemorySlot(hostMemSpace, input3Size);
+  auto input3Device = aclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input3Size);
 
   // Alpha coefficient
   auto sizeAlphaBeta = sizeof(aclFloat16);
-  auto alphaHost     = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeAlphaBeta);
-  auto alphaDevice   = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeAlphaBeta);
+  auto alphaHost     = aclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeAlphaBeta);
+  auto alphaDevice   = aclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeAlphaBeta);
 
   // Beta coefficient
-  auto betaHost   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeAlphaBeta);
-  auto betaDevice = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeAlphaBeta);
+  auto betaHost   = aclMemoryManager.allocateLocalMemorySlot(hostMemSpace, sizeAlphaBeta);
+  auto betaDevice = aclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, sizeAlphaBeta);
 
   // Output matrix. Stores (alpha * M * N) + (beta * K)
-  auto outputHost   = ascendMemoryManager.allocateLocalMemorySlot(hostMemSpace, input3Size);
-  auto outputDevice = ascendMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input3Size);
+  auto outputHost   = aclMemoryManager.allocateLocalMemorySlot(hostMemSpace, input3Size);
+  auto outputDevice = aclMemoryManager.allocateLocalMemorySlot(deviceMemSpace, input3Size);
 
   ///////// Fill matrix with data
   populateMemorySlot(input1Host, M, K, 1.0);
@@ -182,16 +182,16 @@ int main(int argc, char **argv)
   if (alphaBetaTensorDescriptor == NULL) HICR_THROW_RUNTIME("Can not create tensor descriptor");
 
   // Map the input tensor descriptors with the allocated buffers
-  std::vector<ascend::ComputationKernel::tensorData_t> inputs({
-    ascend::ComputationKernel::createTensorData(input1Device, input1TensorDescriptor),
-    ascend::ComputationKernel::createTensorData(input2Device, input2TensorDescriptor),
-    ascend::ComputationKernel::createTensorData(input3Device, input3TensorDescriptor),
-    ascend::ComputationKernel::createTensorData(alphaDevice, alphaBetaTensorDescriptor),
-    ascend::ComputationKernel::createTensorData(betaDevice, alphaBetaTensorDescriptor),
+  std::vector<acl::ComputationKernel::tensorData_t> inputs({
+    acl::ComputationKernel::createTensorData(input1Device, input1TensorDescriptor),
+    acl::ComputationKernel::createTensorData(input2Device, input2TensorDescriptor),
+    acl::ComputationKernel::createTensorData(input3Device, input3TensorDescriptor),
+    acl::ComputationKernel::createTensorData(alphaDevice, alphaBetaTensorDescriptor),
+    acl::ComputationKernel::createTensorData(betaDevice, alphaBetaTensorDescriptor),
   });
 
   // Map the output tensor descriptors with the allocated buffer
-  std::vector<ascend::ComputationKernel::tensorData_t> outputs({ascend::ComputationKernel::createTensorData(outputDevice, input3TensorDescriptor)});
+  std::vector<acl::ComputationKernel::tensorData_t> outputs({acl::ComputationKernel::createTensorData(outputDevice, input3TensorDescriptor)});
 
   // Create kernel attributes
   auto kernelAttributes = aclopCreateAttr();
@@ -199,25 +199,25 @@ int main(int argc, char **argv)
 
   ///////// Kernels definitions
   // Copy the inputs from the host buffers to the device buffers using a MemoryKernel abstraction
-  auto copyInput1MemoryKernel = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, input1Device, 0, input1Host, 0, input1Size);
-  auto copyInput2MemoryKernel = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, input2Device, 0, input2Host, 0, input2Size);
-  auto copyInput3MemoryKernel = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, input3Device, 0, input3Host, 0, input3Size);
-  auto copyAlphaMemoryKernel  = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, alphaDevice, 0, alphaHost, 0, sizeAlphaBeta);
-  auto copyBetaMemoryKernel   = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, betaDevice, 0, betaHost, 0, sizeAlphaBeta);
+  auto copyInput1MemoryKernel = std::make_shared<acl::MemoryKernel>(&aclCommunicationManager, input1Device, 0, input1Host, 0, input1Size);
+  auto copyInput2MemoryKernel = std::make_shared<acl::MemoryKernel>(&aclCommunicationManager, input2Device, 0, input2Host, 0, input2Size);
+  auto copyInput3MemoryKernel = std::make_shared<acl::MemoryKernel>(&aclCommunicationManager, input3Device, 0, input3Host, 0, input3Size);
+  auto copyAlphaMemoryKernel  = std::make_shared<acl::MemoryKernel>(&aclCommunicationManager, alphaDevice, 0, alphaHost, 0, sizeAlphaBeta);
+  auto copyBetaMemoryKernel   = std::make_shared<acl::MemoryKernel>(&aclCommunicationManager, betaDevice, 0, betaHost, 0, sizeAlphaBeta);
 
   // Copy the result back on the host using a MemoryKernel abstraction
-  auto copyOutputMemoryKernel = std::make_shared<ascend::MemoryKernel>(&ascendCommunicationManager, outputHost, 0, outputDevice, 0, input3Size);
+  auto copyOutputMemoryKernel = std::make_shared<acl::MemoryKernel>(&aclCommunicationManager, outputHost, 0, outputDevice, 0, input3Size);
 
   // Create the ComputationKernel by reading it from file
   auto fileComputationKernel =
     createComputeKernelFromFile("/../examples/kernel/op_models/0_GEMM_1_2_4_8_1_2_8_2_1_2_4_2_1_2_1_1_2_1_1_2_4_2.om", inputs, outputs, kernelAttributes);
 
   // Create the stream of Kernel operations to be executed on the device
-  auto operations = std::vector<std::shared_ptr<ascend::Kernel>>{
+  auto operations = std::vector<std::shared_ptr<acl::Kernel>>{
     copyInput1MemoryKernel, copyInput2MemoryKernel, copyInput3MemoryKernel, copyAlphaMemoryKernel, copyBetaMemoryKernel, fileComputationKernel, copyOutputMemoryKernel};
 
   // Create execution unit
-  auto executionUnit = ascendComputeManager.createExecutionUnit(operations);
+  auto executionUnit = aclComputeManager.createExecutionUnit(operations);
 
   // Print input matrices
   printf("First matrix [M, K]\n");
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
   printMatrix(input3Host, M, N);
 
   ///////// Execute the kernels through HiCR
-  executeKernel(ascendComputeManager, deviceComputeResource, executionUnit);
+  executeKernel(aclComputeManager, deviceComputeResource, executionUnit);
 
   // Print the result
   printf("\nOutput matrix [M, N]\n");
@@ -241,31 +241,31 @@ int main(int argc, char **argv)
   auto directoryComputationKernel = createComputeKernelFromDirectory("/../examples/kernel/op_models", inputs, outputs, kernelAttributes);
 
   // Create the stream of Kernel operations to be executed on the device
-  operations = std::vector<std::shared_ptr<ascend::Kernel>>{copyInput1MemoryKernel, copyInput2MemoryKernel, directoryComputationKernel, copyOutputMemoryKernel};
+  operations = std::vector<std::shared_ptr<acl::Kernel>>{copyInput1MemoryKernel, copyInput2MemoryKernel, directoryComputationKernel, copyOutputMemoryKernel};
 
   // Create execution unit
-  executionUnit = ascendComputeManager.createExecutionUnit(operations);
+  executionUnit = aclComputeManager.createExecutionUnit(operations);
 
   ///////// Execute the kernels through HiCR
-  executeKernel(ascendComputeManager, deviceComputeResource, executionUnit);
+  executeKernel(aclComputeManager, deviceComputeResource, executionUnit);
 
   // Print the result
   printf("\nOutput matrix [M, N]\n");
   printMatrix(outputHost, M, N);
 
   // Free memory slots
-  ascendMemoryManager.freeLocalMemorySlot(input1Host);
-  ascendMemoryManager.freeLocalMemorySlot(input1Device);
-  ascendMemoryManager.freeLocalMemorySlot(input2Host);
-  ascendMemoryManager.freeLocalMemorySlot(input2Device);
-  ascendMemoryManager.freeLocalMemorySlot(input3Host);
-  ascendMemoryManager.freeLocalMemorySlot(input3Device);
-  ascendMemoryManager.freeLocalMemorySlot(alphaHost);
-  ascendMemoryManager.freeLocalMemorySlot(alphaDevice);
-  ascendMemoryManager.freeLocalMemorySlot(betaHost);
-  ascendMemoryManager.freeLocalMemorySlot(betaDevice);
-  ascendMemoryManager.freeLocalMemorySlot(outputHost);
-  ascendMemoryManager.freeLocalMemorySlot(outputDevice);
+  aclMemoryManager.freeLocalMemorySlot(input1Host);
+  aclMemoryManager.freeLocalMemorySlot(input1Device);
+  aclMemoryManager.freeLocalMemorySlot(input2Host);
+  aclMemoryManager.freeLocalMemorySlot(input2Device);
+  aclMemoryManager.freeLocalMemorySlot(input3Host);
+  aclMemoryManager.freeLocalMemorySlot(input3Device);
+  aclMemoryManager.freeLocalMemorySlot(alphaHost);
+  aclMemoryManager.freeLocalMemorySlot(alphaDevice);
+  aclMemoryManager.freeLocalMemorySlot(betaHost);
+  aclMemoryManager.freeLocalMemorySlot(betaDevice);
+  aclMemoryManager.freeLocalMemorySlot(outputHost);
+  aclMemoryManager.freeLocalMemorySlot(outputDevice);
 
   // Destroy tensor descriptors and kernel attributes
   aclDestroyTensorDesc(input1TensorDescriptor);
@@ -276,29 +276,29 @@ int main(int argc, char **argv)
 
   // Finalize ACL runtime and hwloc
   err = aclFinalize();
-  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize Ascend Computing Language. Error %d", err);
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to finalize acl. Error %d", err);
 
   hwloc_topology_destroy(topology);
 
   return 0;
 }
 
-std::shared_ptr<ascend::ComputationKernel> createComputeKernelFromFile(const std::string                                    &path,
-                                                                       std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
-                                                                       std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+std::shared_ptr<acl::ComputationKernel> createComputeKernelFromFile(const std::string                                    &path,
+                                                                       std::vector<acl::ComputationKernel::tensorData_t> &inputs,
+                                                                       std::vector<acl::ComputationKernel::tensorData_t> &outputs,
                                                                        const aclopAttr                                      *kernelAttributes)
 {
   const auto currentPath = std::filesystem::current_path().string();
   auto       kernelPath  = currentPath + std::string(path);
 
   // Instantiate a ComputationKernel abstraction by providing a path to an .om file. The kernel is loaded internally
-  auto kernel = std::make_shared<ascend::ComputationKernel>(kernelPath.c_str(), "GEMM", std::move(inputs), std::move(outputs), kernelAttributes);
+  auto kernel = std::make_shared<acl::ComputationKernel>(kernelPath.c_str(), "GEMM", std::move(inputs), std::move(outputs), kernelAttributes);
   return kernel;
 }
 
-std::shared_ptr<ascend::ComputationKernel> createComputeKernelFromDirectory(const std::string                                    &path,
-                                                                            std::vector<ascend::ComputationKernel::tensorData_t> &inputs,
-                                                                            std::vector<ascend::ComputationKernel::tensorData_t> &outputs,
+std::shared_ptr<acl::ComputationKernel> createComputeKernelFromDirectory(const std::string                                    &path,
+                                                                            std::vector<acl::ComputationKernel::tensorData_t> &inputs,
+                                                                            std::vector<acl::ComputationKernel::tensorData_t> &outputs,
                                                                             const aclopAttr                                      *kernelAttributes)
 {
   aclError err;
@@ -311,6 +311,6 @@ std::shared_ptr<ascend::ComputationKernel> createComputeKernelFromDirectory(cons
   if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not set the model directory %s in ACL runtime. Error: %d", kernelPath.c_str(), err);
 
   // Instantiate a ComputationKernel abstraction by providing only its features. The kernel has been already loaded in aclopSetModelDir()
-  auto kernel = std::make_shared<ascend::ComputationKernel>("GEMM", std::move(inputs), std::move(outputs), kernelAttributes);
+  auto kernel = std::make_shared<acl::ComputationKernel>("GEMM", std::move(inputs), std::move(outputs), kernelAttributes);
   return kernel;
 }

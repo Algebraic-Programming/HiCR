@@ -15,8 +15,8 @@
  */
 
 /**
- * @file ascend/localMemorySlot.hpp
- * @brief Provides a definition for the local memory slot class for the Ascend backend
+ * @file acl/localMemorySlot.hpp
+ * @brief Provides a definition for the local memory slot class for the acl backend
  * @author L. Terracciano & S. M. Martin
  * @date 19/10/2023
  */
@@ -26,23 +26,23 @@
 #include <hicr/core/localMemorySlot.hpp>
 #include <hicr/core/memorySpace.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * This class represents an abstract definition for a Local Memory Slot resource for the Ascend backend
+ * This class represents an abstract definition for a Local Memory Slot resource for the acl backend
  */
 class LocalMemorySlot final : public HiCR::LocalMemorySlot
 {
   public:
 
   /**
-   * Constructor for a MemorySlot class for the Ascend backend
+   * Constructor for a MemorySlot class for the acl backend
    *
    * \param pointer if this is a local slot (same rank as this the running process), this pointer indicates the address of the local memory segment
    * \param size the size of the memory slot, assumed to be contiguous
    * \param dataBuffer the ACL data buffer created for the memory slot
-   * \param memorySpace the Ascend memory from which this memory slot was obtained
+   * \param memorySpace the Huawei device memory from which this memory slot was obtained
    */
   LocalMemorySlot(void *const pointer, size_t size, const aclDataBuffer *dataBuffer, std::shared_ptr<HiCR::MemorySpace> memorySpace)
     : HiCR::LocalMemorySlot(pointer, size, memorySpace),
@@ -63,9 +63,9 @@ class LocalMemorySlot final : public HiCR::LocalMemorySlot
   private:
 
   /**
-   * The Ascend Data Buffer associated with the memory slot
+   * The acl Data Buffer associated with the memory slot
    */
   const aclDataBuffer *_dataBuffer;
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

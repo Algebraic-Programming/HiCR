@@ -72,7 +72,7 @@ int main(int argc, char **argv)
   memSpaceOrder.insert(memSpaceOrder.end(), openclMemorySpaces.begin(), openclMemorySpaces.end());
   memSpaceOrder.emplace_back(hostMemorySpace);
 
-  // Instantiating Ascend memory and communication managers
+  // Instantiating acl memory and communication managers
   HiCR::backend::opencl::MemoryManager        openclMemoryManager(deviceQueueMap);
   HiCR::backend::opencl::CommunicationManager openclCommunicationManager(deviceQueueMap);
 

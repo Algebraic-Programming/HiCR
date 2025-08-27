@@ -2,7 +2,7 @@
 
 #include "tensor.hpp"
 
-using namespace tensor::ascend;
+using namespace tensor::acl;
 
 Tensor::Tensor(std::vector<uint64_t> shape, std::shared_ptr<HiCR::LocalMemorySlot> &data)
   : tensor_t(shape, data)
@@ -18,7 +18,7 @@ Tensor::~Tensor()
 
 std::shared_ptr<tensor_t> Tensor::create(std::vector<uint64_t> &shape, std::shared_ptr<HiCR::LocalMemorySlot> &data)
 {
-  return std::make_shared<tensor::ascend::Tensor>(shape, data);
+  return std::make_shared<tensor::acl::Tensor>(shape, data);
 }
 
 std::shared_ptr<tensor_t> Tensor::clone(const tensor_t                     &other,
@@ -28,7 +28,7 @@ std::shared_ptr<tensor_t> Tensor::clone(const tensor_t                     &othe
 {
   auto memSlot = memoryManager.allocateLocalMemorySlot(memorySpace, other.getData()->getSize());
   communicationManager.memcpy(memSlot, 0, other.getData(), 0, other.getData()->getSize());
-  return std::make_shared<tensor::ascend::Tensor>(other.getShape(), memSlot);
+  return std::make_shared<tensor::acl::Tensor>(other.getShape(), memSlot);
 }
 
 std::shared_ptr<HiCR::LocalMemorySlot> Tensor::toHost(HiCR::MemoryManager                      &memoryManager,

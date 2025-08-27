@@ -2,7 +2,7 @@
 
 #include "../tensor.hpp"
 
-namespace tensor::ascend
+namespace tensor::acl
 {
 /**
  * Class representing a 1D or 2D Tensor.
@@ -38,4 +38,4 @@ class Tensor : public tensor_t
 
   aclTensorDesc *_tensorDescriptor = nullptr;
 };
-}; // namespace tensor::ascend
+}; // namespace tensor::acl

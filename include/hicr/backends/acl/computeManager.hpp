@@ -21,7 +21,7 @@
 
 /**
  * @file computeManager.hpp
- * @brief This is a minimal backend for compute management of Ascend devices
+ * @brief This is a minimal backend for compute management of acl devices
  * @author S. M. Martin and L. Terracciano
  * @date 30/10/2023
  */
@@ -31,25 +31,25 @@
 #include <acl/acl.h>
 #include <memory>
 #include <unordered_map>
-#include <hicr/backends/ascend/executionUnit.hpp>
-#include <hicr/backends/ascend/processingUnit.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/backends/acl/executionUnit.hpp>
+#include <hicr/backends/acl/processingUnit.hpp>
+#include <hicr/backends/acl/kernel.hpp>
 #include <hicr/core/computeManager.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * Implementation of the HiCR Ascend backend compute manager.
+ * Implementation of the HiCR acl backend compute manager.
  *
- * It stores the processing units detected by Ascend Computing Language.
+ * It stores the processing units detected by acl.
  */
 class ComputeManager final : public HiCR::ComputeManager
 {
   public:
 
   /**
-   * Constructor for the Compute Manager class for the Ascend backend
+   * Constructor for the Compute Manager class for the acl backend
    */
   ComputeManager()
     : HiCR::ComputeManager(){};
@@ -63,22 +63,22 @@ class ComputeManager final : public HiCR::ComputeManager
    *
    * \return a pointer to the new execution unit
    */
-  __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const std::vector<std::shared_ptr<ascend::Kernel>> &kernelOperations)
+  __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const std::vector<std::shared_ptr<acl::Kernel>> &kernelOperations)
   {
     return std::make_shared<ExecutionUnit>(kernelOperations);
   }
 
   /**
-   * Creates an execution state using the device context information and the exection unit to run on the Ascend
+   * Creates an execution state using the device context information and the exection unit to be run
    *
-   * \param[in] executionUnit execution Unit to launch on the ascend
-   * \param[in] argument argument (not required by ascend)
+   * \param[in] executionUnit execution Unit to launch on the acl
+   * \param[in] argument argument (not required by acl)
    *
    * \return return a unique pointer to the newly created Execution State
    */
   __INLINE__ std::unique_ptr<HiCR::ExecutionState> createExecutionState(std::shared_ptr<HiCR::ExecutionUnit> executionUnit, void *const argument = nullptr) const override
   {
-    return std::make_unique<ascend::ExecutionState>(executionUnit);
+    return std::make_unique<acl::ExecutionState>(executionUnit);
   }
 
   /**
@@ -102,7 +102,7 @@ class ComputeManager final : public HiCR::ComputeManager
    */
   __INLINE__ void initializeImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override
   {
-    auto p = getAscendPointer(processingUnit);
+    auto p = getACLPointer(processingUnit);
     p->initialize();
   }
 
@@ -114,7 +114,7 @@ class ComputeManager final : public HiCR::ComputeManager
    */
   __INLINE__ void startImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit, std::unique_ptr<HiCR::ExecutionState> &executionState) override
   {
-    auto p = getAscendPointer(processingUnit);
+    auto p = getACLPointer(processingUnit);
     p->start(executionState);
   }
 
@@ -123,14 +123,14 @@ class ComputeManager final : public HiCR::ComputeManager
    * 
    * @param processingUnit the processing unit to operate on
    */
-  __INLINE__ void suspendImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Suspend functionality not supported by Ascend backend"); }
+  __INLINE__ void suspendImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Suspend functionality not supported by acl backend"); }
 
   /**
    * Internal implementation of resumeImpl
    * 
    * @param processingUnit the processing unit to operate on
    */
-  __INLINE__ void resumeImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Resume functionality not supported by Ascend backend"); }
+  __INLINE__ void resumeImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override { HICR_THROW_RUNTIME("Resume functionality not supported by acl backend"); }
 
   /**
    * Internal implementation of terminateImpl
@@ -146,24 +146,24 @@ class ComputeManager final : public HiCR::ComputeManager
    */
   __INLINE__ void awaitImpl(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit) override
   {
-    auto p = getAscendPointer(processingUnit);
+    auto p = getACLPointer(processingUnit);
     p->await();
   }
 
   private:
 
   /**
-   * Return a pointer to an ascend processing unit.
+   * Return a pointer to an acl processing unit.
    * 
    * \param processingUnit HiCR processing unit
    * 
-   * \return ascend processung unit
+   * \return acl processung unit
   */
-  [[nodiscard]] __INLINE__ ascend::ProcessingUnit *getAscendPointer(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit)
+  [[nodiscard]] __INLINE__ acl::ProcessingUnit *getACLPointer(std::unique_ptr<HiCR::ProcessingUnit> &processingUnit)
   {
-    // We can only handle processing units of Ascend type. Make sure we got the correct one
+    // We can only handle processing units of acl type. Make sure we got the correct one
     // To make it fast and avoid string comparisons, we use the dynamic cast method
-    auto p = dynamic_cast<ascend::ProcessingUnit *>(processingUnit.get());
+    auto p = dynamic_cast<acl::ProcessingUnit *>(processingUnit.get());
 
     // If the processing unit is not recognized, throw error. We can use the processing unit's type (string) now.
     if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType());
@@ -173,4 +173,4 @@ class ComputeManager final : public HiCR::ComputeManager
   }
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

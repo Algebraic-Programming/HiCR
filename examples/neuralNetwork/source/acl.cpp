@@ -4,18 +4,18 @@
 #include <hicr/backends/hwloc/memorySpace.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 
-#include <hicr/backends/ascend/computeResource.hpp>
-#include <hicr/backends/ascend/memorySpace.hpp>
-#include <hicr/backends/ascend/memoryManager.hpp>
-#include <hicr/backends/ascend/topologyManager.hpp>
-#include <hicr/backends/ascend/communicationManager.hpp>
-#include <hicr/backends/ascend/computeManager.hpp>
+#include <hicr/backends/acl/computeResource.hpp>
+#include <hicr/backends/acl/memorySpace.hpp>
+#include <hicr/backends/acl/memoryManager.hpp>
+#include <hicr/backends/acl/topologyManager.hpp>
+#include <hicr/backends/acl/communicationManager.hpp>
+#include <hicr/backends/acl/computeManager.hpp>
 #include <hicr/core/exceptions.hpp>
 
 #include "./include/network.hpp"
 #include "./include/imageLoader.hpp"
-#include "./include/factory/executionUnit/ascend/executionUnitFactory.hpp"
-#include "./include/tensor/ascend/tensor.hpp"
+#include "./include/factory/executionUnit/acl/executionUnitFactory.hpp"
+#include "./include/tensor/acl/tensor.hpp"
 
 int main(int argc, char **argv)
 {
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
   uint64_t          imagesToAnalyze   = std::stoull(argv[4]);
   const std::string kernelsPath       = argv[5];
 
-  ////// Initialize Ascend Computing Language runtime
+  ////// Initialize acl runtime
   auto err = aclInit(nullptr);
   if (err != ACL_SUCCESS) { HICR_THROW_RUNTIME("Can not init ACL runtime %d", err); }
 
@@ -41,15 +41,15 @@ int main(int argc, char **argv)
 
   // Instantiating HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager  hostTopologyManager(&hwlocTopology);
-  HiCR::backend::ascend::TopologyManager ascendTopologyManager;
+  HiCR::backend::acl::TopologyManager aclTopologyManager;
 
-  HiCR::backend::ascend::MemoryManager        ascendMemoryManager;
-  HiCR::backend::ascend::CommunicationManager ascendCommunicationManager;
-  HiCR::backend::ascend::ComputeManager       ascendComputeManager;
+  HiCR::backend::acl::MemoryManager        aclMemoryManager;
+  HiCR::backend::acl::CommunicationManager aclCommunicationManager;
+  HiCR::backend::acl::ComputeManager       aclComputeManager;
 
   // Asking backend to check the available devices
   auto hostTopology   = hostTopologyManager.queryTopology();
-  auto deviceTopology = ascendTopologyManager.queryTopology();
+  auto deviceTopology = aclTopologyManager.queryTopology();
 
   // Getting first device found in the topology
   auto host   = *hostTopology.getDevices().begin();
@@ -63,10 +63,10 @@ int main(int argc, char **argv)
   auto deviceMemorySpace      = *deviceMemorySpaces.begin();
   auto deviceComputeResource  = *deviceComputeResources.begin();
 
-  auto deviceProcessingUnit = ascendComputeManager.createProcessingUnit(deviceComputeResource);
+  auto deviceProcessingUnit = aclComputeManager.createProcessingUnit(deviceComputeResource);
 
   // Create execution unit factory
-  auto executioUnitFactory = factory::ascend::ExecutionUnitFactory(ascendComputeManager, ascendCommunicationManager, ascendMemoryManager, deviceMemorySpace, hostMemorySpace);
+  auto executioUnitFactory = factory::acl::ExecutionUnitFactory(aclComputeManager, aclCommunicationManager, aclMemoryManager, deviceMemorySpace, hostMemorySpace);
 
   ////// Load ONNX model
   // Declare ONNX model
@@ -87,31 +87,31 @@ int main(int argc, char **argv)
   for (uint64_t i = 0; i < imagesToAnalyze; i++)
   {
     // Create the neural network
-    auto neuralNetwork = NeuralNetwork(ascendComputeManager,
+    auto neuralNetwork = NeuralNetwork(aclComputeManager,
                                        std::move(deviceProcessingUnit),
-                                       ascendCommunicationManager,
-                                       ascendMemoryManager,
+                                       aclCommunicationManager,
+                                       aclMemoryManager,
                                        deviceMemorySpace,
                                        executioUnitFactory,
-                                       tensor::ascend::Tensor::create,
-                                       tensor::ascend::Tensor::clone);
+                                       tensor::acl::Tensor::create,
+                                       tensor::acl::Tensor::clone);
 
     // Load data of the pre-trained model
     neuralNetwork.loadPreTrainedData(model, hostMemorySpace);
 
     // Create the imageTensor
     auto imageFilePath = imagePathPrefix + "/image_" + std::to_string(i) + ".bin";
-    auto imageTensor   = loadImage(imageFilePath, ascendCommunicationManager, ascendMemoryManager, hostMemorySpace, deviceMemorySpace, tensor::ascend::Tensor::create);
+    auto imageTensor   = loadImage(imageFilePath, aclCommunicationManager, aclMemoryManager, hostMemorySpace, deviceMemorySpace, tensor::acl::Tensor::create);
 
     // Run the inference on the imageTensor
     const auto output = neuralNetwork.forward(imageTensor);
 
     deviceProcessingUnit = neuralNetwork.releaseProcessingUnit();
 
-    auto o = dynamic_pointer_cast<tensor::ascend::Tensor>(output);
+    auto o = dynamic_pointer_cast<tensor::acl::Tensor>(output);
     if (o == nullptr) { HICR_THROW_RUNTIME("Can not downcast tensor to supported type"); }
 
-    auto hostOutputTensor = o->toHost(ascendMemoryManager, ascendCommunicationManager, hostMemorySpace);
+    auto hostOutputTensor = o->toHost(aclMemoryManager, aclCommunicationManager, hostMemorySpace);
 
     auto desiredPrediction = labels[i];
     auto actualPrediction  = neuralNetwork.getPrediction(hostOutputTensor, output->size());
@@ -120,10 +120,10 @@ int main(int argc, char **argv)
 
     if (i == 0) { printf("img-0 score: %.9f\n", ((const float *)hostOutputTensor->getPointer())[actualPrediction]); }
 
-    ascendMemoryManager.freeLocalMemorySlot(hostOutputTensor);
+    aclMemoryManager.freeLocalMemorySlot(hostOutputTensor);
 
     // Free the input image tensor
-    ascendMemoryManager.freeLocalMemorySlot(imageTensor->getData());
+    aclMemoryManager.freeLocalMemorySlot(imageTensor->getData());
 
     if (i % 100 == 0 && i > 0) { printf("Analyzed images: %lu/%lu\n", i, labels.size()); }
   }
