@@ -47,7 +47,6 @@ class MemorySpace final : public HiCR::MemorySpace
    * Constructor for the compute resource class of the OpenCL backend
    *
    * \param device The OpenCL device in which this memory space was detected
-   * \param type The memory space type
    * \param size The size of this memory space
    */
   MemorySpace(const std::weak_ptr<opencl::Device> device, const size_t size)
