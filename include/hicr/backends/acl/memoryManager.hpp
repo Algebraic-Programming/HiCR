@@ -83,8 +83,8 @@ class MemoryManager final : public HiCR::MemoryManager
 
     // do a malloc on the acl and create the databuffer
     auto aclMemSpace = dynamic_pointer_cast<acl::MemorySpace>(memorySpace);
-    ptr                 = deviceAlloc(aclMemSpace, size);
-    dataBuffer          = aclCreateDataBuffer(ptr, size);
+    ptr              = deviceAlloc(aclMemSpace, size);
+    dataBuffer       = aclCreateDataBuffer(ptr, size);
     if (dataBuffer == NULL) HICR_THROW_RUNTIME("Can not create data buffer in device");
 
     // create the new memory slot

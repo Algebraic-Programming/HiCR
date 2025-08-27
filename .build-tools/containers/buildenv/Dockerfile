@@ -100,7 +100,6 @@ RUN git clone -b noc_extension --single-branch --depth 1 https://github.com/Alge
   && sudo make install || true \
   && sudo rm -rf $HOME/lpf
 
-
 RUN git clone -b 1.11.0 --single-branch --depth 1 https://github.com/bsc-pm/ovni.git $HOME/ovni \
   && cd $HOME/ovni  \
   && mkdir build  \

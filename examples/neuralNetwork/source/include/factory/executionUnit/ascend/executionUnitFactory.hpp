@@ -31,8 +31,8 @@ class ExecutionUnitFactory final : public factory::ExecutionUnitFactory
   ExecutionUnitFactory(HiCR::backend::acl::ComputeManager       &computeManager,
                        HiCR::backend::acl::CommunicationManager &communicationManager,
                        HiCR::backend::acl::MemoryManager        &memoryManager,
-                       std::shared_ptr<HiCR::MemorySpace>          &deviceMemorySpace,
-                       std::shared_ptr<HiCR::MemorySpace>          &hostMemorySpace);
+                       std::shared_ptr<HiCR::MemorySpace>       &deviceMemorySpace,
+                       std::shared_ptr<HiCR::MemorySpace>       &hostMemorySpace);
 
   ~ExecutionUnitFactory();
 

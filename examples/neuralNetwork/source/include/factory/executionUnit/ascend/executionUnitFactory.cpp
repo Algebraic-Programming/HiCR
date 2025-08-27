@@ -6,8 +6,8 @@ using namespace factory::acl;
 ExecutionUnitFactory::ExecutionUnitFactory(HiCR::backend::acl::ComputeManager       &computeManager,
                                            HiCR::backend::acl::CommunicationManager &communicationManager,
                                            HiCR::backend::acl::MemoryManager        &memoryManager,
-                                           std::shared_ptr<HiCR::MemorySpace>          &deviceMemorySpace,
-                                           std::shared_ptr<HiCR::MemorySpace>          &hostMemorySpace)
+                                           std::shared_ptr<HiCR::MemorySpace>       &deviceMemorySpace,
+                                           std::shared_ptr<HiCR::MemorySpace>       &hostMemorySpace)
   : _computeManager(computeManager),
     _communicationManager(communicationManager),
     _memoryManager(memoryManager),
@@ -56,12 +56,11 @@ std::shared_ptr<HiCR::ExecutionUnit> ExecutionUnitFactory::gemm(const gemmArgs_t
 
   auto inputs =
     std::vector<HiCR::backend::acl::ComputationKernel::tensorData_t>{HiCR::backend::acl::ComputationKernel::createTensorData(A->getData(), A->getTensorDescriptor()),
-                                                                        HiCR::backend::acl::ComputationKernel::createTensorData(B->getData(), B->getTensorDescriptor()),
-                                                                        HiCR::backend::acl::ComputationKernel::createTensorData(C->getData(), C->getTensorDescriptor()),
-                                                                        HiCR::backend::acl::ComputationKernel::createTensorData(alphaDeviceMemSlot, alphaBetaTensorDescriptor),
-                                                                        HiCR::backend::acl::ComputationKernel::createTensorData(betaDeviceMemSlot, alphaBetaTensorDescriptor)};
-  auto outputs =
-    std::vector<HiCR::backend::acl::ComputationKernel::tensorData_t>{HiCR::backend::acl::ComputationKernel::createTensorData(C->getData(), C->getTensorDescriptor())};
+                                                                     HiCR::backend::acl::ComputationKernel::createTensorData(B->getData(), B->getTensorDescriptor()),
+                                                                     HiCR::backend::acl::ComputationKernel::createTensorData(C->getData(), C->getTensorDescriptor()),
+                                                                     HiCR::backend::acl::ComputationKernel::createTensorData(alphaDeviceMemSlot, alphaBetaTensorDescriptor),
+                                                                     HiCR::backend::acl::ComputationKernel::createTensorData(betaDeviceMemSlot, alphaBetaTensorDescriptor)};
+  auto outputs = std::vector<HiCR::backend::acl::ComputationKernel::tensorData_t>{HiCR::backend::acl::ComputationKernel::createTensorData(C->getData(), C->getTensorDescriptor())};
 
   auto gemmKernelAttributes = aclopCreateAttr();
   if (gemmKernelAttributes == nullptr) { HICR_THROW_RUNTIME("Can not create GEMM kernel attributes"); }

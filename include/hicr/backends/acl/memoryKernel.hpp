@@ -50,7 +50,7 @@ class MemoryKernel final : public Kernel
    * \param sourceOffset source offset
    * \param size the number of bytes to copy
    */
-  MemoryKernel(acl::CommunicationManager          *commManager,
+  MemoryKernel(acl::CommunicationManager             *commManager,
                std::shared_ptr<HiCR::LocalMemorySlot> destination,
                const size_t                           destinationOffset,
                std::shared_ptr<HiCR::LocalMemorySlot> source,
