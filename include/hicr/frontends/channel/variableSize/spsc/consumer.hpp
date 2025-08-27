@@ -177,28 +177,6 @@ class Consumer final : public variableSize::Base
   }
 
   /**
-   * This function inspects the newest \n variable-sized elements in the token buffer to find how many bytes they occupy in the payload buffer
-   * @param[in] n element count to inspect, starting from newest, in the token buffer
-   * @return total byte size that the newest \n elements take in payload buffer
-   */
-  size_t getNewPayloadBytes(size_t n)
-  {
-    if (n == 0) return 0;
-    size_t *tokenBufferPtr = static_cast<size_t *>(_tokenSizeBuffer->getSourceLocalMemorySlot()->getPointer());
-    size_t  payloadBytes   = 0;
-    for (size_t i = 0; i < n; i++)
-    {
-      size_t ind = getCircularBufferForCounts()->getDepth() - 1 - i;
-      assert(ind >= 0);
-      size_t pos         = basePeek(ind);
-      auto   payloadSize = tokenBufferPtr[pos];
-      payloadBytes += payloadSize;
-    }
-
-    return payloadBytes;
-  }
-
-  /**
    * Removes the last \n variable-sized elements from the payload buffer, and
    * the associated metadata in the token buffer.
    * This is a one-sided blocking call that need not be made collectively.
