@@ -9,7 +9,7 @@ nnDeps += onnxProtoDep
 ####### Defines: modelPath, testsetDir
 subdir('python')
 
-####### Compile Ascend operators
+####### Compile acl operators
 ####### Defines: kernelsPath
 subdir('kernels')
 

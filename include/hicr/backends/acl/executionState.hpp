@@ -16,7 +16,7 @@
 
 /**
  * @file executionState.hpp
- * @brief This file implements the execution state class for the Ascend backend
+ * @brief This file implements the execution state class for the acl backend
  * @author L. Terracciano
  * @date 1/11/2023
  */
@@ -26,14 +26,14 @@
 #include <acl/acl.h>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/executionState.hpp>
-#include <hicr/backends/ascend/executionUnit.hpp>
-#include <hicr/backends/ascend/device.hpp>
+#include <hicr/backends/acl/executionUnit.hpp>
+#include <hicr/backends/acl/device.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * This class represents the execution state of a stream of kernel for the Ascend backend.
+ * This class represents the execution state of a stream of kernel for the acl backend.
  * Since kernels are not preemptible, it does not offer suspend/resume functionality.
  */
 class ExecutionState final : public HiCR::ExecutionState
@@ -41,7 +41,7 @@ class ExecutionState final : public HiCR::ExecutionState
   public:
 
   /**
-   * Constructor for an ascend execution state
+   * Constructor for an acl execution state
    *
    * \param executionUnit execution unit containing the kernel to execute
    */
@@ -49,7 +49,7 @@ class ExecutionState final : public HiCR::ExecutionState
     : HiCR::ExecutionState(executionUnit)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = dynamic_pointer_cast<ascend::ExecutionUnit>(executionUnit);
+    auto e = dynamic_pointer_cast<acl::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType());
@@ -111,7 +111,7 @@ class ExecutionState final : public HiCR::ExecutionState
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
   }
 
-  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by Ascend backend"); }
+  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by acl backend"); }
 
   /**
    * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and
@@ -158,4 +158,4 @@ class ExecutionState final : public HiCR::ExecutionState
   bool _isStreamActive = false;
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

@@ -4,16 +4,16 @@
 #include <memory>
 #include <unordered_set>
 
-#include <hicr/backends/ascend/communicationManager.hpp>
-#include <hicr/backends/ascend/computeManager.hpp>
-#include <hicr/backends/ascend/memoryManager.hpp>
-#include <hicr/backends/ascend/computationKernel.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
-#include <hicr/backends/ascend/memoryKernel.hpp>
+#include <hicr/backends/acl/communicationManager.hpp>
+#include <hicr/backends/acl/computeManager.hpp>
+#include <hicr/backends/acl/memoryManager.hpp>
+#include <hicr/backends/acl/computationKernel.hpp>
+#include <hicr/backends/acl/kernel.hpp>
+#include <hicr/backends/acl/memoryKernel.hpp>
 
 #include "../executionUnitFactory.hpp"
 
-namespace factory::ascend
+namespace factory::acl
 {
 /**
  * Factory class to create execution unit for each of the network operation
@@ -28,9 +28,9 @@ class ExecutionUnitFactory final : public factory::ExecutionUnitFactory
    * @param[in] computeManager a HiCR compute manager
    *
   */
-  ExecutionUnitFactory(HiCR::backend::ascend::ComputeManager       &computeManager,
-                       HiCR::backend::ascend::CommunicationManager &communicationManager,
-                       HiCR::backend::ascend::MemoryManager        &memoryManager,
+  ExecutionUnitFactory(HiCR::backend::acl::ComputeManager       &computeManager,
+                       HiCR::backend::acl::CommunicationManager &communicationManager,
+                       HiCR::backend::acl::MemoryManager        &memoryManager,
                        std::shared_ptr<HiCR::MemorySpace>          &deviceMemorySpace,
                        std::shared_ptr<HiCR::MemorySpace>          &hostMemorySpace);
 
@@ -66,22 +66,22 @@ class ExecutionUnitFactory final : public factory::ExecutionUnitFactory
   private:
 
   /**
-   * Ascend compute manager
+   * acl compute manager
   */
-  HiCR::backend::ascend::ComputeManager &_computeManager;
+  HiCR::backend::acl::ComputeManager &_computeManager;
 
   /**
- * Ascend communication manager
+ * acl communication manager
  */
-  HiCR::backend::ascend::CommunicationManager &_communicationManager;
+  HiCR::backend::acl::CommunicationManager &_communicationManager;
 
   /**
- * Ascend memory manager
+ * acl memory manager
  */
-  HiCR::backend::ascend::MemoryManager &_memoryManager;
+  HiCR::backend::acl::MemoryManager &_memoryManager;
 
   /**
- * Ascend device memory space
+ * acl device memory space
  */
   std::shared_ptr<HiCR::MemorySpace> &_deviceMemorySpace;
 
@@ -106,4 +106,4 @@ class ExecutionUnitFactory final : public factory::ExecutionUnitFactory
   std::unordered_set<aclTensorDesc *> _alphaBetaTensorDescriptors;
 };
 
-}; // namespace factory::ascend
+}; // namespace factory::acl

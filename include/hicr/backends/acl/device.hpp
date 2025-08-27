@@ -16,7 +16,7 @@
 
 /**
  * @file device.hpp
- * @brief This file implements the Device class for the Ascend backend
+ * @brief This file implements the Device class for the acl backend
  * @author L. Terracciano & S. M. Martin
  * @date 20/12/2023
  */
@@ -26,29 +26,29 @@
 #include <acl/acl.h>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/device.hpp>
-#include <hicr/backends/ascend/computeResource.hpp>
-#include <hicr/backends/ascend/memorySpace.hpp>
+#include <hicr/backends/acl/computeResource.hpp>
+#include <hicr/backends/acl/memorySpace.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * This class represents a device, as visible by the Ascend backend.
+ * This class represents a device, as visible by the acl backend.
  */
 class Device final : public HiCR::Device
 {
   public:
 
   /**
-   * Type definition for the Ascend Device identifier
+   * Type definition for the Huawei Device identifier
    */
   typedef uint64_t deviceIdentifier_t;
 
   /**
-   * Constructor for an Ascend device
+   * Constructor for an Huawei device
    *
    * \param id Internal unique identifier for the device
-   * \param computeResources The compute resources associated to this device (typically just one, the main Ascend processor)
+   * \param computeResources The compute resources associated to this device (typically just one, the main Huawei processor)
    * \param memorySpaces The memory spaces associated to this device (DRAM + other use-specific or high-bandwidth memories)
    */
   Device(const deviceIdentifier_t id, const computeResourceList_t &computeResources, const memorySpaceList_t &memorySpaces)
@@ -67,16 +67,16 @@ class Device final : public HiCR::Device
   Device()
     : HiCR::Device()
   {
-    _type = "Ascend Device";
+    _type = "Huawei Device";
   }
 
   /**
    * Deserializing constructor
    *
-   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed Ascend device
+   * The instance created will contain all information, if successful in deserializing it, corresponding to the passed Huawei device
    * This instance should NOT be used for anything else than reporting/printing the contained resources
    *
-   * @param[in] input A JSON-encoded serialized Ascend device information
+   * @param[in] input A JSON-encoded serialized Huawei device information
    */
   Device(const nlohmann::json &input)
     : HiCR::Device()
@@ -100,9 +100,9 @@ class Device final : public HiCR::Device
   };
 
   /**
-   * Returns the internal id of the current Ascend device
+   * Returns the internal id of the current Huawei device
    *
-   * \return The id of the Ascend device
+   * \return The id of the Huawei device
    */
   __INLINE__ deviceIdentifier_t getId() const { return _id; }
 
@@ -136,10 +136,10 @@ class Device final : public HiCR::Device
       const auto type = computeResource["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "Ascend Processor") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
+      if (type != "Huawei Processor") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
 
       // Deserializing new device
-      auto computeResourceObj = std::make_shared<ascend::ComputeResource>(computeResource);
+      auto computeResourceObj = std::make_shared<acl::ComputeResource>(computeResource);
 
       // Inserting device into the list
       addComputeResource(computeResourceObj);
@@ -152,10 +152,10 @@ class Device final : public HiCR::Device
       const auto type = memorySpace["Type"].get<std::string>();
 
       // Checking whether the type is correct
-      if (type != "Ascend Device RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
+      if (type != "Huawei Device RAM") HICR_THROW_LOGIC("The passed device type '%s' is not compatible with this topology manager", type.c_str());
 
       // Deserializing new device
-      auto memorySpaceObj = std::make_shared<ascend::MemorySpace>(memorySpace);
+      auto memorySpaceObj = std::make_shared<acl::MemorySpace>(memorySpace);
 
       // Inserting device into the list
       addMemorySpace(memorySpaceObj);
@@ -163,12 +163,12 @@ class Device final : public HiCR::Device
   }
 
   /**
-   * Individual identifier for the Ascend device
+   * Individual identifier for the Huawei device
    */
   deviceIdentifier_t _id;
 
   /**
-   * The internal Ascend context associated to the device
+   * The internal acl context associated to the device
    */
   const std::unique_ptr<aclrtContext> _context;
 
@@ -188,4 +188,4 @@ class Device final : public HiCR::Device
   }
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

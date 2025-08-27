@@ -1,16 +1,16 @@
 kernelsPath = ''
 
-###### Compile Ascend kernels
-if 'ascend' in enabledBackends
+###### Compile acl kernels
+if 'acl' in enabledBackends
     fs = import('fs')
-    # Check if ascend directory exists. If not, compile kernels
-    if not fs.is_dir(meson.current_source_dir() + '/ascend')
-        run_command('compile-ascend.sh', check: true)
-    	message('Compiled Ascend kernels')
+    # Check if acl directory exists. If not, compile kernels
+    if not fs.is_dir(meson.current_source_dir() + '/acl')
+        run_command('compile-acl.sh', check: true)
+    	message('Compiled acl kernels')
     else
-        message('Use existing Ascend kernels')
+        message('Use existing acl kernels')
     endif
-    kernelsPath = meson.current_source_dir() + '/ascend'
+    kernelsPath = meson.current_source_dir() + '/acl'
 endif
 
 ###### Set the kernelPath to opencl file

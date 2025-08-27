@@ -16,7 +16,7 @@
 
 /**
  * @file processingUnit.hpp
- * @brief Implements the processing unit class for the Ascend backend.
+ * @brief Implements the processing unit class for the acl backend.
  * @author L. Terracciano & S. M. Martin
  * @date 1/11/2023
  */
@@ -26,28 +26,28 @@
 #include <memory>
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/processingUnit.hpp>
-#include <hicr/backends/ascend/computeResource.hpp>
-#include <hicr/backends/ascend/executionState.hpp>
-#include <hicr/backends/ascend/executionUnit.hpp>
+#include <hicr/backends/acl/computeResource.hpp>
+#include <hicr/backends/acl/executionState.hpp>
+#include <hicr/backends/acl/executionUnit.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * Forward declaration of the Ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the Huawei device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class ComputeManager;
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * Implementation of a processing unit (a device capable of executing kernels) for the Ascend backend
+ * Implementation of a processing unit (a device capable of executing kernels) for the acl backend
  */
 class ProcessingUnit final : public HiCR::ProcessingUnit
 {
-  friend class HiCR::backend::ascend::ComputeManager;
+  friend class HiCR::backend::acl::ComputeManager;
 
   public:
 
@@ -60,7 +60,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     : HiCR::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the instance
-    auto c = dynamic_pointer_cast<ascend::ComputeResource>(computeResource);
+    auto c = dynamic_pointer_cast<acl::ComputeResource>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == NULL) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
@@ -90,7 +90,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
    * \return processing unit type
   */
 
-  [[nodiscard]] __INLINE__ std::string getType() override { return "Ascend Device"; }
+  [[nodiscard]] __INLINE__ std::string getType() override { return "Huawei Device"; }
 
   private:
 
@@ -110,7 +110,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   __INLINE__ void initialize() {}
 
   /**
-   * Ascend backend implementation that starts the execution state in the processing unit.
+   * acl backend implementation that starts the execution state in the processing unit.
    *
    * \param executionState the execution state to start
    */
@@ -126,9 +126,9 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     _executionState = std::move(e);
 
     // Getting up-casted pointer for the instance
-    auto c = static_cast<ascend::ComputeResource *>(getComputeResource().get());
+    auto c = static_cast<acl::ComputeResource *>(getComputeResource().get());
 
-    // select the curent Ascend card before starting the execution state
+    // select the curent device before starting the execution state
     c->getDevice().lock()->select();
 
     // set the stream in the execution state
@@ -139,32 +139,32 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
   }
 
   /**
-   * Ascend backend implementation that wait for execution state completion
+   * acl backend implementation that wait for execution state completion
    */
   __INLINE__ void await()
   {
     // Getting up-casted pointer for the instance
-    auto c = static_cast<ascend::ComputeResource *>(getComputeResource().get());
+    auto c = static_cast<acl::ComputeResource *>(getComputeResource().get());
 
-    // select the curent Ascend card before starting the execution state
+    // select the current device before starting the execution state
     c->getDevice().lock()->select();
 
     // force the execution state to finalize
     _executionState.get()->finalizeStream();
   }
 
-  [[nodiscard]] __INLINE__ ascend::ExecutionState *getAscendExecutionStatePointer(std::unique_ptr<HiCR::ExecutionState> &executionState)
+  [[nodiscard]] __INLINE__ acl::ExecutionState *getACLExecutionStatePointer(std::unique_ptr<HiCR::ExecutionState> &executionState)
   {
-    // We can only handle execution state of Ascend type. Make sure we got the correct one
+    // We can only handle execution state of acl type. Make sure we got the correct one
     // To make it fast and avoid string comparisons, we use the dynamic cast method
-    auto p = dynamic_cast<ascend::ExecutionState *>(executionState.get());
+    auto p = dynamic_cast<acl::ExecutionState *>(executionState.get());
 
     // If the execution state is not recognized, throw error
-    if (p == nullptr) HICR_THROW_LOGIC("Execution state is not of type Ascend");
+    if (p == nullptr) HICR_THROW_LOGIC("Execution state is not of type acl");
 
     // Returning converted pointer
     return p;
   }
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

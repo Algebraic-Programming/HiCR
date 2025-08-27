@@ -8,7 +8,7 @@ fi
 task="${1}";
 rootDir=`realpath "${2}"`
 fileDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-fileList=`find ${rootDir} -name "*.hpp" -not -path "${rootDir}/extern/*" -not -path "${rootDir}/tests/*" -not -path "${rootDir}/examples/*" -not -path "*/channelsImpl.hpp" -not -path "*/ascend/*" -not -path "*/exceptions.hpp"`
+fileList=`find ${rootDir} -name "*.hpp" -not -path "${rootDir}/extern/*" -not -path "${rootDir}/tests/*" -not -path "${rootDir}/examples/*" -not -path "*/channelsImpl.hpp" -not -path "*/acl/*" -not -path "*/exceptions.hpp"`
 
 fixFlag=""
 if [[ ${task} == "fix" ]]; then fixFlag="--fix-errors --fix-notes"; fi

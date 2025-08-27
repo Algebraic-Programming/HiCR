@@ -60,9 +60,9 @@ void coordinatorFc(HiCR::frontend::RPCEngine &rpcEngine)
       topology.merge(HiCR::backend::hwloc::TopologyManager::deserializeTopology(topologyJson));
 #endif // _HICR_USE_HWLOC_BACKEND_
 
-#ifdef _HICR_USE_ASCEND_BACKEND_
-      topology.merge(HiCR::backend::ascend::TopologyManager::deserializeTopology(topologyJson));
-#endif // _HICR_USE_ASCEND_BACKEND_
+#ifdef _HICR_USE_ACL_BACKEND_
+      topology.merge(HiCR::backend::acl::TopologyManager::deserializeTopology(topologyJson));
+#endif // _HICR_USE_ACL_BACKEND_
 
       // Now summarizing the devices seen by this topology
       printf("* Worker %lu Topology:\n", instance->getId());

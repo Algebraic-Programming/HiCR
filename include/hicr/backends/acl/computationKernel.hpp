@@ -16,7 +16,7 @@
 
 /**
  * @file computationKernel.hpp
- * @brief This file implements the computation kernel class for the Ascend backend
+ * @brief This file implements the computation kernel class for the acl backend
  * @author S. M. Martin & L. Terracciano
  * @date 8/11/2023
  */
@@ -31,13 +31,13 @@
 #include <acl/acl.h>
 #include <hicr/core/localMemorySlot.hpp>
 #include <hicr/core/exceptions.hpp>
-#include <hicr/backends/ascend/localMemorySlot.hpp>
-#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/backends/acl/localMemorySlot.hpp>
+#include <hicr/backends/acl/kernel.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 /**
- * This class represents a replicable Computation Kernel for the Ascend backend.
+ * This class represents a replicable Computation Kernel for the acl backend.
  * A Computation Kernel enables the kernel execution in the HiCR runtime, and in particular enables
  * the concatenation of kernel execution and memcpy operations in a common stream of operations.
  */
@@ -46,7 +46,7 @@ class ComputationKernel final : public Kernel
   public:
 
   /**
-   * Keep track of input and output tensor-specific data for executing ascend kernel
+   * Keep track of input and output tensor-specific data for executing acl kernel
    */
   struct tensorData_t
   {
@@ -61,7 +61,7 @@ class ComputationKernel final : public Kernel
   };
 
   /**
-   * Constructor for the Computation Kernel unit class of the Ascend backend.
+   * Constructor for the Computation Kernel unit class of the acl backend.
    * This will not perform any model loading so this aspect should be handled manually (e.g., with aclopSetModelDir())
    *
    * \param kernelName name of the kernel
@@ -80,7 +80,7 @@ class ComputationKernel final : public Kernel
   };
 
   /**
-   * Constructor for the Computation Kernel unit class of the Ascend backend.
+   * Constructor for the Computation Kernel unit class of the acl backend.
    * This will load an operator binary file located at the provided path with aclopLoad()
    *
    * \param kernelPath path the the kernel .om file
@@ -100,22 +100,22 @@ class ComputationKernel final : public Kernel
   ~ComputationKernel() = default;
 
   /**
-   * Creates the Ascend-specific Tensor data to be used as input/output parameter to Ascend kernels
+   * Creates the acl-specific Tensor data to be used as input/output parameter to acl kernels
    *
    * \param memorySlot The memory slot to be used as input/output
-   * \param tensorDescriptor Ascend-specific metadata about the passed memory slot
-   * \return The new Ascend tensor data object
+   * \param tensorDescriptor acl-specific metadata about the passed memory slot
+   * \return The new acl tensor data object
    */
   static tensorData_t createTensorData(const std::shared_ptr<HiCR::LocalMemorySlot> &memorySlot, aclTensorDesc *tensorDescriptor)
   {
     // Using up-casting to determine device types
-    auto ascendSlot = dynamic_pointer_cast<ascend::LocalMemorySlot>(memorySlot);
+    auto aclSlot = dynamic_pointer_cast<acl::LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot passed is compatible with this backend
-    if (ascendSlot == NULL) HICR_THROW_LOGIC("Attempting to create Ascend tensor data with a memory slot that is not supported by this backend\n");
+    if (aclSlot == NULL) HICR_THROW_LOGIC("Attempting to create acl tensor data with a memory slot that is not supported by this backend\n");
 
     // Creating and returning new tensor
-    return ascend::ComputationKernel::tensorData_t{.dataBuffer = ascendSlot->getDataBuffer(), .tensorDescriptor = tensorDescriptor};
+    return acl::ComputationKernel::tensorData_t{.dataBuffer = aclSlot->getDataBuffer(), .tensorDescriptor = tensorDescriptor};
   }
 
   /**
@@ -220,4 +220,4 @@ class ComputationKernel final : public Kernel
   }
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

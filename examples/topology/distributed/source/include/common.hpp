@@ -22,10 +22,10 @@
 
 // Enabling topology managers (to discover the system's hardware) based on the selected backends during compilation
 
-#ifdef _HICR_USE_ASCEND_BACKEND_
+#ifdef _HICR_USE_ACL_BACKEND_
   #include <acl/acl.h>
-  #include <hicr/backends/ascend/topologyManager.hpp>
-#endif // _HICR_USE_ASCEND_BACKEND_
+  #include <hicr/backends/acl/topologyManager.hpp>
+#endif // _HICR_USE_ACL_BACKEND_
 
 #ifdef _HICR_USE_HWLOC_BACKEND_
   #include <hwloc.h>

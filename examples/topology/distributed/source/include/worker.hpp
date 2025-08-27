@@ -49,19 +49,19 @@ void sendTopology(HiCR::frontend::RPCEngine &rpcEngine)
 
 #endif // _HICR_USE_HWLOC_BACKEND_
 
-#ifdef _HICR_USE_ASCEND_BACKEND_
+#ifdef _HICR_USE_ACL_BACKEND_
 
-  // Initialize (Ascend's) ACL runtime
+  // Initialize ACL runtime
   aclError err = aclInit(NULL);
-  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize Ascend Computing Language. Error %d", err);
+  if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Failed to initialize acl. Error %d", err);
 
-  // Initializing ascend topology manager
-  auto ascendTopologyManager = std::make_shared<HiCR::backend::ascend::TopologyManager>();
+  // Initializing acl topology manager
+  auto aclTopologyManager = std::make_shared<HiCR::backend::acl::TopologyManager>();
 
   // Adding topology manager to the list
-  topologyManagerList.push_back(ascendTopologyManager);
+  topologyManagerList.push_back(aclTopologyManager);
 
-#endif // _HICR_USE_ASCEND_BACKEND_
+#endif // _HICR_USE_ACL_BACKEND_
 
   // For each topology manager detected
   for (const auto &tm : topologyManagerList)

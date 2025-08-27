@@ -16,7 +16,7 @@
 
 /**
  * @file memorySpace.hpp
- * @brief This file implements the memory space class for the Ascend backend
+ * @brief This file implements the memory space class for the acl backend
  * @author L. Terracciano & S. M. Martin
  * @date 15/12/2023
  */
@@ -26,34 +26,34 @@
 #include <nlohmann_json/json.hpp>
 #include <hicr/core/definitions.hpp>
 #include <hicr/core/memorySpace.hpp>
-#include <hicr/backends/ascend/localMemorySlot.hpp>
+#include <hicr/backends/acl/localMemorySlot.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * Forward declaration of the Ascend device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
+ * Forward declaration of the Huawei device class -- a not-so-elegant solution to a circular dependency, but all we can do for now
  */
 class Device;
 
 /**
- * This class represents a memory space, as visible by the Ascend backend. That is, the entire RAM that the running CPU has access to.
+ * This class represents a memory space, as visible by the acl backend. That is, the entire RAM that the running CPU has access to.
  */
 class MemorySpace final : public HiCR::MemorySpace
 {
   public:
 
   /**
-   * Constructor for the compute resource class of the Ascend backend
+   * Constructor for the compute resource class of the acl backend
    *
-   * \param device The Ascend device in which this memory space was detected
+   * \param device The Huawei device in which this memory space was detected
    * \param size The size of this memory space
    */
-  MemorySpace(const std::weak_ptr<ascend::Device> device, const size_t size)
+  MemorySpace(const std::weak_ptr<acl::Device> device, const size_t size)
     : HiCR::MemorySpace(size),
       _device(device)
   {
-    _type = "Ascend Device RAM";
+    _type = "Huawei Device RAM";
   };
 
   /**
@@ -62,7 +62,7 @@ class MemorySpace final : public HiCR::MemorySpace
   MemorySpace()
     : HiCR::MemorySpace()
   {
-    _type = "Ascend Device RAM";
+    _type = "Huawei Device RAM";
   }
 
   /**
@@ -84,11 +84,11 @@ class MemorySpace final : public HiCR::MemorySpace
   }
 
   /**
-   * Function to get the Ascend device associated to this memory space
+   * Function to get the Huawei device associated to this memory space
    *
-   * @return The Ascend device corresponding to this memory space
+   * @return The Huawei device corresponding to this memory space
    */
-  __INLINE__ const std::weak_ptr<const ascend::Device> getDevice() const { return _device; }
+  __INLINE__ const std::weak_ptr<const acl::Device> getDevice() const { return _device; }
 
   private:
 
@@ -107,7 +107,7 @@ class MemorySpace final : public HiCR::MemorySpace
    *
    * \note If this class has been created through deserialization, it is not meant to be used as this pointer remains undefined
    */
-  std::weak_ptr<ascend::Device> _device;
+  std::weak_ptr<acl::Device> _device;
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

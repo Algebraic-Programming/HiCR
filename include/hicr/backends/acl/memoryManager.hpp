@@ -21,7 +21,7 @@
 
 /**
  * @file memoryManager.hpp
- * @brief This file implements the memory manager class for the Ascend backend
+ * @brief This file implements the memory manager class for the acl backend
  * @author L. Terracciano & S. M. Martin
  * @date 11/9/2023
  */
@@ -29,20 +29,20 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/backends/ascend/device.hpp>
-#include <hicr/backends/ascend/memorySpace.hpp>
-#include <hicr/backends/ascend/localMemorySlot.hpp>
+#include <hicr/backends/acl/device.hpp>
+#include <hicr/backends/acl/memorySpace.hpp>
+#include <hicr/backends/acl/localMemorySlot.hpp>
 #include <hicr/backends/hwloc/memorySpace.hpp>
 #include <hicr/core/memoryManager.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * Implementation of the Memory Manager for the Ascend backend.
+ * Implementation of the Memory Manager for the acl backend.
  *
  * \note Supported memory spaces:
- * - Ascend
+ * - acl
  * - HWLoC
  */
 class MemoryManager final : public HiCR::MemoryManager
@@ -50,7 +50,7 @@ class MemoryManager final : public HiCR::MemoryManager
   public:
 
   /**
-   * Constructor for the ascend memory manager class for the Ascend backend.
+   * Constructor for the acl memory manager class for the acl backend.
    */
   MemoryManager()
     : HiCR::MemoryManager()
@@ -61,11 +61,11 @@ class MemoryManager final : public HiCR::MemoryManager
 
   __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::MemorySpace> memorySpace, const size_t size) override
   {
-    // Getting up-casted pointer for the ascend instance, first try with the device memory space
-    auto ascendMemSpace = dynamic_pointer_cast<const ascend::MemorySpace>(memorySpace);
+    // Getting up-casted pointer for the acl instance, first try with the device memory space
+    auto aclMemSpace = dynamic_pointer_cast<const acl::MemorySpace>(memorySpace);
 
     // Checking whether the memory space passed belongs to the device
-    if (ascendMemSpace != NULL) return allocateLocalDeviceMemorySlot(memorySpace, size);
+    if (aclMemSpace != NULL) return allocateLocalDeviceMemorySlot(memorySpace, size);
 
     // Retry with the host memory space
     auto hostMemSpace = dynamic_pointer_cast<hwloc::MemorySpace>(memorySpace);
@@ -73,7 +73,7 @@ class MemoryManager final : public HiCR::MemoryManager
     // Checking whether the memory space passed belongs to the host
     if (hostMemSpace != NULL) return allocateLocalHostMemorySlot(memorySpace, size);
 
-    HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager. Supported ascend and hwloc\n");
+    HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager. Supported acl and hwloc\n");
   }
 
   __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> allocateLocalDeviceMemorySlot(const std::shared_ptr<HiCR::MemorySpace> memorySpace, const size_t size)
@@ -81,9 +81,9 @@ class MemoryManager final : public HiCR::MemoryManager
     void          *ptr = NULL;
     aclDataBuffer *dataBuffer;
 
-    // do a malloc on the ascend and create the databuffer
-    auto ascendMemSpace = dynamic_pointer_cast<ascend::MemorySpace>(memorySpace);
-    ptr                 = deviceAlloc(ascendMemSpace, size);
+    // do a malloc on the acl and create the databuffer
+    auto aclMemSpace = dynamic_pointer_cast<acl::MemorySpace>(memorySpace);
+    ptr                 = deviceAlloc(aclMemSpace, size);
     dataBuffer          = aclCreateDataBuffer(ptr, size);
     if (dataBuffer == NULL) HICR_THROW_RUNTIME("Can not create data buffer in device");
 
@@ -95,7 +95,7 @@ class MemoryManager final : public HiCR::MemoryManager
   {
     void *ptr = NULL;
 
-    // do a malloc on the ascend and create the databuffer
+    // do a malloc on the acl and create the databuffer
     ptr = hostAlloc(memorySpace, size);
 
     // create the new memory slot
@@ -103,12 +103,12 @@ class MemoryManager final : public HiCR::MemoryManager
   }
 
   /**
-   * Allocate memory on the Ascend memory through Ascend-dedicated functions.
+   * Allocate memory on the acl memory through acl-dedicated functions.
    *
    * \param[in] memorySpace device id where memory is allocated
    * \param[in] size allocation size
    */
-  __INLINE__ void *deviceAlloc(std::shared_ptr<ascend::MemorySpace> memorySpace, const size_t size)
+  __INLINE__ void *deviceAlloc(std::shared_ptr<acl::MemorySpace> memorySpace, const size_t size)
   {
     // Getting device associated with this memory space
     auto device = memorySpace->getDevice().lock();
@@ -121,14 +121,14 @@ class MemoryManager final : public HiCR::MemoryManager
 
     // Do the allocation on device memory
     aclError err = aclrtMalloc(&ptr, size, ACL_MEM_MALLOC_HUGE_FIRST);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not allocate memory on Ascend device %d. Error %d", device->getId(), err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not allocate memory on Huawei device %d. Error %d", device->getId(), err);
 
     // Returning allocated pointer
     return ptr;
   }
 
   /**
-   * Allocate memory on the host memory through Ascend-dedicated functions.
+   * Allocate memory on the host memory through acl-dedicated functions.
    *
    * \param[in] memorySpace device id where memory is allocated
    * \param[in] size allocation size
@@ -140,7 +140,7 @@ class MemoryManager final : public HiCR::MemoryManager
 
     // Do the allocation on device memory
     aclError err = aclrtMallocHost(&ptr, size);
-    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not allocate memory on host through ascend-dedicated function. Error %d", err);
+    if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Can not allocate memory on host through acl-dedicated function. Error %d", err);
 
     // Returning allocated pointer
     return ptr;
@@ -154,7 +154,7 @@ class MemoryManager final : public HiCR::MemoryManager
   __INLINE__ void memsetImpl(const std::shared_ptr<HiCR::LocalMemorySlot> memorySlot, int value, size_t size) override
   {
     // Filling the memory slot with the provided value
-    // Ascend aclrtMemset() automatically understands if the memory resides on the device or the host, so we can use it directly
+    // aclrtMemset() automatically understands if the memory resides on the device or the host, so we can use it directly
     aclError err = aclrtMemset(memorySlot->getPointer(), memorySlot->getSize(), value, size);
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("Error while performing memset. Error %d", err);
   }
@@ -162,7 +162,7 @@ class MemoryManager final : public HiCR::MemoryManager
   __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the memory slot
-    auto m = dynamic_pointer_cast<ascend::LocalMemorySlot>(memorySlot);
+    auto m = dynamic_pointer_cast<acl::LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot passed is compatible with this backend
     if (m == NULL) freeLocalHostMemorySlot(memorySlot);
@@ -173,7 +173,7 @@ class MemoryManager final : public HiCR::MemoryManager
   {
     // Getting memory slot info
     const auto memorySlotPointer     = memorySlot->getPointer();
-    const auto memorySlotMemorySpace = dynamic_pointer_cast<HiCR::backend::ascend::MemorySpace>(memorySlot->getMemorySpace());
+    const auto memorySlotMemorySpace = dynamic_pointer_cast<HiCR::backend::acl::MemorySpace>(memorySlot->getMemorySpace());
     const auto memorySlotDevice      = memorySlotMemorySpace->getDevice().lock();
     const auto memorySlotDeviceId    = memorySlotDevice->getId();
 
@@ -198,4 +198,4 @@ class MemoryManager final : public HiCR::MemoryManager
   __INLINE__ void deregisterLocalMemorySlotImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override {}
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

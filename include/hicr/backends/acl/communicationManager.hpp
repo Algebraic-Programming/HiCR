@@ -21,7 +21,7 @@
 
 /**
  * @file communicationManager.hpp
- * @brief This file implements the communication manager class for the Ascend backend
+ * @brief This file implements the communication manager class for the acl backend
  * @author L. Terracciano & S. M. Martin
  * @date 21/12/2023
  */
@@ -29,20 +29,20 @@
 #pragma once
 
 #include <acl/acl.h>
-#include <hicr/backends/ascend/memorySpace.hpp>
-#include <hicr/backends/ascend/device.hpp>
-#include <hicr/backends/ascend/localMemorySlot.hpp>
+#include <hicr/backends/acl/memorySpace.hpp>
+#include <hicr/backends/acl/device.hpp>
+#include <hicr/backends/acl/localMemorySlot.hpp>
 #include <hicr/core/communicationManager.hpp>
 #include <hicr/core/globalMemorySlot.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * Implementation of the Communication Manager for the Ascend backend.
+ * Implementation of the Communication Manager for the acl backend.
  
  * \note Supported local memory slots:
- * - Ascend
+ * - acl
  * - HWLoC
  */
 class CommunicationManager final : public HiCR::CommunicationManager
@@ -65,20 +65,20 @@ class CommunicationManager final : public HiCR::CommunicationManager
     host,
 
     /**
-     * Device -- Involves an Ascend device memory (DRAM) in the operation
+     * Device -- Involves an Huawei device memory (DRAM) in the operation
      */
     device
   };
 
   /**
-   * Constructor for the ascend communication manager class for the Ascend backend.
+   * Constructor for the acl communication manager class for the acl backend.
    */
   CommunicationManager()
     : HiCR::CommunicationManager(){};
   ~CommunicationManager() = default;
 
   /**
-   * Backend-internal asyncrhonous implementation of the memcpy operation. It passes an Ascend stream as context for later asynchrounous check for completion
+   * Backend-internal asyncrhonous implementation of the memcpy operation. It passes an acl stream as context for later asynchrounous check for completion
    *
    * For more information, see: memcpyImpl
    *
@@ -87,7 +87,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
    * \param[in] source source memory slot
    * \param[in] src_offset source offset
    * \param[in] size the number of bytes to copy
-   * \param[in] stream Ascend stream containing the state of the operation for later checks for completion
+   * \param[in] stream acl stream containing the state of the operation for later checks for completion
    */
   __INLINE__ void memcpyAsync(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
                               const size_t                                  dst_offset,
@@ -165,8 +165,8 @@ class CommunicationManager final : public HiCR::CommunicationManager
     deviceType_t dstType = deviceType_t::none;
 
     // Using up-casting to determine device types
-    auto sd = dynamic_pointer_cast<ascend::LocalMemorySlot>(source);
-    auto dd = dynamic_pointer_cast<ascend::LocalMemorySlot>(destination);
+    auto sd = dynamic_pointer_cast<acl::LocalMemorySlot>(source);
+    auto dd = dynamic_pointer_cast<acl::LocalMemorySlot>(destination);
     auto sh = dynamic_pointer_cast<HiCR::LocalMemorySlot>(source);
     auto dh = dynamic_pointer_cast<HiCR::LocalMemorySlot>(destination);
 
@@ -185,7 +185,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
     auto            dstPtr = destination->getPointer();
 
     // Determining which device context to use for copying
-    std::shared_ptr<ascend::LocalMemorySlot> deviceMemSlot = NULL;
+    std::shared_ptr<acl::LocalMemorySlot> deviceMemSlot = NULL;
     if (srcType == deviceType_t::host && dstType == deviceType_t::host)
     {
       deviceMemSlot = NULL;
@@ -212,7 +212,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
     const auto actualDstPtr = (uint8_t *)dstPtr + dst_offset;
 
     // If a device is involved in this operation, select it and use its stream to perform the operation
-    if (deviceMemSlot != NULL) dynamic_pointer_cast<ascend::MemorySpace>(deviceMemSlot->getMemorySpace())->getDevice().lock()->select();
+    if (deviceMemSlot != NULL) dynamic_pointer_cast<acl::MemorySpace>(deviceMemSlot->getMemorySpace())->getDevice().lock()->select();
 
     // Now executing memcpy depending on whether a stream was specified
     aclError err;
@@ -237,4 +237,4 @@ class CommunicationManager final : public HiCR::CommunicationManager
   __INLINE__ void releaseGlobalLockImpl(std::shared_ptr<HiCR::GlobalMemorySlot> memorySlot) override { HICR_THROW_RUNTIME("Not yet implemented for this backend"); }
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl

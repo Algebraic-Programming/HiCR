@@ -1,4 +1,4 @@
-# HiCR Ascend Backend Configuration
+# HiCR acl Backend Configuration
 
 backendIncludes = include_directories([
    '/usr/local/Ascend/ascend-toolkit/latest/include'
@@ -7,7 +7,7 @@ backendIncludes = include_directories([
 backendDependencies = [ ]
     
 backendCppArgs = [
-   '-D_HICR_USE_ASCEND_BACKEND_'
+   '-D_HICR_USE_ACL_BACKEND_'
  ]
 
 backendLinkArgs = [

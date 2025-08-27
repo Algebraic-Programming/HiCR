@@ -20,7 +20,7 @@
 
 int main(int argc, char **argv)
 {
-  // Initializing ascend topology manager
+  // Initializing acl topology manager
   HiCR::backend::opencl::TopologyManager tm;
 
   // Calling common function for printing the topology

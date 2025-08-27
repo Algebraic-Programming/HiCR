@@ -16,7 +16,7 @@
 
 /**
  * @file executionUnit.hpp
- * @brief This file implements the execution unit class for the Ascend backend
+ * @brief This file implements the execution unit class for the acl backend
  * @author L. Terracciano
  * @date 30/10/2023
  */
@@ -27,25 +27,25 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <hicr/backends/ascend/kernel.hpp>
+#include <hicr/backends/acl/kernel.hpp>
 #include <hicr/core/executionUnit.hpp>
 
-namespace HiCR::backend::ascend
+namespace HiCR::backend::acl
 {
 
 /**
- * This class represents a replicable sequence of kernels meant to be executed on Ascend.
+ * This class represents a replicable sequence of kernels meant to be executed on Huawei devices.
  */
 class ExecutionUnit final : public HiCR::ExecutionUnit
 {
   public:
 
   /**
-   * Constructor for the execution unit class of the Ascend backend
+   * Constructor for the execution unit class of the acl backend
    *
    * \param kernelOperations kernels to execute
    */
-  ExecutionUnit(const std::vector<std::shared_ptr<ascend::Kernel>> &kernelOperations)
+  ExecutionUnit(const std::vector<std::shared_ptr<acl::Kernel>> &kernelOperations)
     : HiCR::ExecutionUnit(),
       _kernels(kernelOperations){};
   ExecutionUnit() = delete;
@@ -60,7 +60,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
    *
    * \return a string indicating the execution unit type
    */
-  __INLINE__ std::string getType() const override { return "Ascend Kernel"; }
+  __INLINE__ std::string getType() const override { return "acl Kernel"; }
 
   /**
    * Start the sequence of kernels on the specified \p stream
@@ -77,7 +77,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
   /**
    * Ordered sequence of kernels meant to be executed as a unique stream of operations.
    */
-  const std::vector<std::shared_ptr<ascend::Kernel>> _kernels;
+  const std::vector<std::shared_ptr<acl::Kernel>> _kernels;
 };
 
-} // namespace HiCR::backend::ascend
+} // namespace HiCR::backend::acl
