@@ -20,74 +20,80 @@
 #include <hicr/core/memoryManager.hpp>
 #include <hicr/core/communicationManager.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
+#include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
 
 void consumerFc(HiCR::MemoryManager               &memoryManager,
                 HiCR::CommunicationManager        &communicationManager,
                 std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
-                const size_t                       channelCapacity)
+                 const size_t                           channelCapacity,
+                const int msgCount,
+                const int tokenSize
+                )
 {
   // Getting required buffer sizes
-  auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
+  auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(tokenSize, channelCapacity);
 
   // Allocating token buffer as a local memory slot
-  auto tokenBufferSlot = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, tokenBufferSize);
+  auto pingBufferSlot = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, tokenBufferSize);
 
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::channel::fixedSize::Base::getCoordinationBufferSize();
 
   // Allocating coordination buffer as a local memory slot
-  auto coordinationBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+  auto pingCoordinationBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+
+  // Allocating coordination buffer as a local memory slot
+  // auto pongCoordinationBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
-  HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(coordinationBuffer);
+  HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(pingCoordinationBuffer);
+  // HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(pongCoordinationBuffer);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  communicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBufferSlot}, {CONSUMER_COORDINATION_BUFFER_KEY, coordinationBuffer}});
+ 
+  communicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {{CONSUMER_PING_COORDINATION_BUFFER_KEY, pingCoordinationBuffer}, 
+  // {CONSUMER_PONG_COORDINATION_BUFFER_KEY, pongCoordinationBuffer}, 
+  {PING_BUFFER_KEY, pingBufferSlot}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto globalTokenBufferSlot      = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
-  auto producerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_KEY);
-  auto consumerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
+  auto pingTokenBufferSlot      = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PING_BUFFER_KEY);
+  // auto pongTokenBufferSlot      = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PONG_BUFFER_KEY);
+  auto producerPingCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_PING_COORDINATION_BUFFER_KEY);
+  // auto producerPongCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_PONG_COORDINATION_BUFFER_KEY);
+  auto consumerPingCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PING_COORDINATION_BUFFER_KEY);
+  // auto consumerPongCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PONG_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto consumer =
-    HiCR::channel::fixedSize::SPSC::Consumer(communicationManager, globalTokenBufferSlot, coordinationBuffer, producerCoordinationBuffer, sizeof(ELEMENT_TYPE), channelCapacity);
+  auto pingChannel =
+    HiCR::channel::fixedSize::SPSC::Consumer(communicationManager, pingTokenBufferSlot, pingCoordinationBuffer, producerPingCoordinationBuffer, tokenSize, channelCapacity);
+  // auto pongChannel =
+  //   HiCR::channel::fixedSize::SPSC::Producer(communicationManager, pongTokenBufferSlot, pongCoordinationBuffer, producerPongCoordinationBuffer, tokenSize, channelCapacity);
 
   // Getting a single value from the channel
-  while (consumer.isEmpty()) consumer.updateDepth();
-
-  // Getting internal pointer of the token buffer slot
-  auto tokenBuffer = (ELEMENT_TYPE *)tokenBufferSlot->getPointer();
-
-  printf("Received Value: %u\n", tokenBuffer[consumer.peek()]);
-  consumer.pop();
-
-  // Getting two values from the channel at once
-  while (consumer.getDepth() < 2) consumer.updateDepth();
-  printf("Received Value: %u\n", tokenBuffer[consumer.peek(0)]);
-  printf("Received Value: %u\n", tokenBuffer[consumer.peek(1)]);
-  consumer.pop(2);
+  for (int i=0; i < msgCount; i++) {
+      while (pingChannel.isEmpty()) pingChannel.updateDepth();
+      pingChannel.pop();
+      
+      // while (pongChannel.isFull()) pongChannel.updateDepth();
+      // pongChannel.push(pingBufferSlot);
+  }
 
   // Synchronizing so that all actors have finished registering their global memory slots
   communicationManager.fence(CHANNEL_TAG);
 
-  // De-registering global slots
-  communicationManager.deregisterGlobalMemorySlot(globalTokenBufferSlot);
-  communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffer);
-  communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
-
-  // Destroying global slots
-  communicationManager.destroyGlobalMemorySlot(globalTokenBufferSlot);
-  communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffer);
-  communicationManager.destroyGlobalMemorySlot(consumerCoordinationBuffer);
-
-  // Fence for the destroys to occur
-  communicationManager.fence(CHANNEL_TAG);
+  // De-registering global slots (collective calls)
+  communicationManager.deregisterGlobalMemorySlot(pingTokenBufferSlot);
+  // communicationManager.deregisterGlobalMemorySlot(pongTokenBufferSlot);
+  communicationManager.deregisterGlobalMemorySlot(consumerPingCoordinationBuffer);
+  // communicationManager.deregisterGlobalMemorySlot(consumerPongCoordinationBuffer);
+  communicationManager.deregisterGlobalMemorySlot(producerPingCoordinationBuffer);
+  // communicationManager.deregisterGlobalMemorySlot(producerPongCoordinationBuffer);
 
   // Freeing up local memory
-  memoryManager.freeLocalMemorySlot(tokenBufferSlot);
-  memoryManager.freeLocalMemorySlot(coordinationBuffer);
+  memoryManager.freeLocalMemorySlot(pingBufferSlot);
+  memoryManager.freeLocalMemorySlot(pingCoordinationBuffer);
+  // memoryManager.freeLocalMemorySlot(pongCoordinationBuffer);
 }

@@ -40,14 +40,19 @@ int main(int argc, char **argv)
   }
 
   // Checking arguments
-  if (argc != 2)
+  if (argc != 4)
   {
-    if (rankId == 0) fprintf(stderr, "Error: Must provide the channel capacity as argument.\n");
-    return MPI_Finalize();
+    if (rankId == 0)
+    {
+      fprintf(stderr, "Error: Must provide <channel capacity> <message count> <token size in bytes> as arguments.\n");
+      MPI_Abort(MPI_COMM_WORLD, -1);
+    }
   }
 
   // Reading argument
   auto channelCapacity = std::atoi(argv[1]);
+  auto msgCount        = std::atoi(argv[2]);
+  auto tokenSize       = std::atoi(argv[3]);
 
   // Capacity must be larger than zero
   if (channelCapacity == 0)
@@ -81,9 +86,14 @@ int main(int argc, char **argv)
   // Getting a reference to the first memory space
   auto firstMemorySpace = *memSpaces.begin();
 
+  auto start = MPI_Wtime();
+
   // Rank 0 is producer, Rank 1 is consumer
-  if (rankId == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
-  if (rankId == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
+  if (rankId == 0) producerFc(m, c, firstMemorySpace, channelCapacity, msgCount, tokenSize);
+  if (rankId == 1) consumerFc(m, c, firstMemorySpace, channelCapacity, msgCount, tokenSize);
+
+  auto end = MPI_Wtime();
+  if (rankId == 0) { printf("Time: %lf seconds\n", end - start); }
 
   // Finalizing MPI
   MPI_Finalize();
