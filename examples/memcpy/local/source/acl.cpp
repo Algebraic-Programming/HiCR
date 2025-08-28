@@ -44,8 +44,8 @@ int main(int argc, char **argv)
 
   // Initializing acl topology manager
   HiCR::backend::acl::TopologyManager aclTopologyManager;
-  const auto                             deviceTopology = aclTopologyManager.queryTopology();
-  auto                                   aclDevices  = deviceTopology.getDevices();
+  const auto                          deviceTopology = aclTopologyManager.queryTopology();
+  auto                                aclDevices     = deviceTopology.getDevices();
 
   // Getting access to all Huawei devices memory spaces
   std::vector<std::shared_ptr<HiCR::MemorySpace>> aclMemorySpaces;

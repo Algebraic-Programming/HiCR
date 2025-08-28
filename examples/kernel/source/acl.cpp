@@ -75,10 +75,10 @@ void printMatrix(const std::shared_ptr<HiCR::LocalMemorySlot> &memSlot, uint32_t
  * 
  * @return the acl compute kernel
 */
-std::shared_ptr<acl::ComputationKernel> createComputeKernelFromFile(const std::string                                    &path,
-                                                                       std::vector<acl::ComputationKernel::tensorData_t> &inputs,
-                                                                       std::vector<acl::ComputationKernel::tensorData_t> &outputs,
-                                                                       const aclopAttr                                      *kernelAttributes);
+std::shared_ptr<acl::ComputationKernel> createComputeKernelFromFile(const std::string                                 &path,
+                                                                    std::vector<acl::ComputationKernel::tensorData_t> &inputs,
+                                                                    std::vector<acl::ComputationKernel::tensorData_t> &outputs,
+                                                                    const aclopAttr                                   *kernelAttributes);
 
 /**
  * Create a Compute Kernel from a single .om file
@@ -90,10 +90,10 @@ std::shared_ptr<acl::ComputationKernel> createComputeKernelFromFile(const std::s
  * 
  * @return the acl compute kernel
 */
-std::shared_ptr<acl::ComputationKernel> createComputeKernelFromDirectory(const std::string                                    &path,
-                                                                            std::vector<acl::ComputationKernel::tensorData_t> &inputs,
-                                                                            std::vector<acl::ComputationKernel::tensorData_t> &outputs,
-                                                                            const aclopAttr                                      *kernelAttributes);
+std::shared_ptr<acl::ComputationKernel> createComputeKernelFromDirectory(const std::string                                 &path,
+                                                                         std::vector<acl::ComputationKernel::tensorData_t> &inputs,
+                                                                         std::vector<acl::ComputationKernel::tensorData_t> &outputs,
+                                                                         const aclopAttr                                   *kernelAttributes);
 
 int main(int argc, char **argv)
 {
@@ -114,10 +114,10 @@ int main(int argc, char **argv)
 
   // Initializing acl topology manager and retrieve memory space and compute resource of one of the devices
   HiCR::backend::acl::TopologyManager aclTopologyManager;
-  auto                                   aclTopology        = aclTopologyManager.queryTopology();
-  auto                                   aclDevice          = *aclTopology.getDevices().begin();
-  auto                                   deviceMemSpace        = *aclDevice->getMemorySpaceList().begin();
-  auto                                   deviceComputeResource = *aclDevice->getComputeResourceList().begin();
+  auto                                aclTopology           = aclTopologyManager.queryTopology();
+  auto                                aclDevice             = *aclTopology.getDevices().begin();
+  auto                                deviceMemSpace        = *aclDevice->getMemorySpaceList().begin();
+  auto                                deviceComputeResource = *aclDevice->getComputeResourceList().begin();
 
   // Instantiating acl memory, compute, and communication manager
   HiCR::backend::acl::MemoryManager        aclMemoryManager;
@@ -283,10 +283,10 @@ int main(int argc, char **argv)
   return 0;
 }
 
-std::shared_ptr<acl::ComputationKernel> createComputeKernelFromFile(const std::string                                    &path,
-                                                                       std::vector<acl::ComputationKernel::tensorData_t> &inputs,
-                                                                       std::vector<acl::ComputationKernel::tensorData_t> &outputs,
-                                                                       const aclopAttr                                      *kernelAttributes)
+std::shared_ptr<acl::ComputationKernel> createComputeKernelFromFile(const std::string                                 &path,
+                                                                    std::vector<acl::ComputationKernel::tensorData_t> &inputs,
+                                                                    std::vector<acl::ComputationKernel::tensorData_t> &outputs,
+                                                                    const aclopAttr                                   *kernelAttributes)
 {
   const auto currentPath = std::filesystem::current_path().string();
   auto       kernelPath  = currentPath + std::string(path);
@@ -296,10 +296,10 @@ std::shared_ptr<acl::ComputationKernel> createComputeKernelFromFile(const std::s
   return kernel;
 }
 
-std::shared_ptr<acl::ComputationKernel> createComputeKernelFromDirectory(const std::string                                    &path,
-                                                                            std::vector<acl::ComputationKernel::tensorData_t> &inputs,
-                                                                            std::vector<acl::ComputationKernel::tensorData_t> &outputs,
-                                                                            const aclopAttr                                      *kernelAttributes)
+std::shared_ptr<acl::ComputationKernel> createComputeKernelFromDirectory(const std::string                                 &path,
+                                                                         std::vector<acl::ComputationKernel::tensorData_t> &inputs,
+                                                                         std::vector<acl::ComputationKernel::tensorData_t> &outputs,
+                                                                         const aclopAttr                                   *kernelAttributes)
 {
   aclError err;
 

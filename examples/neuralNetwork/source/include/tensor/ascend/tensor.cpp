@@ -16,10 +16,7 @@ Tensor::~Tensor()
   if (_tensorDescriptor != nullptr) { aclDestroyTensorDesc(_tensorDescriptor); }
 };
 
-std::shared_ptr<tensor_t> Tensor::create(std::vector<uint64_t> &shape, std::shared_ptr<HiCR::LocalMemorySlot> &data)
-{
-  return std::make_shared<tensor::acl::Tensor>(shape, data);
-}
+std::shared_ptr<tensor_t> Tensor::create(std::vector<uint64_t> &shape, std::shared_ptr<HiCR::LocalMemorySlot> &data) { return std::make_shared<tensor::acl::Tensor>(shape, data); }
 
 std::shared_ptr<tensor_t> Tensor::clone(const tensor_t                     &other,
                                         HiCR::MemoryManager                &memoryManager,

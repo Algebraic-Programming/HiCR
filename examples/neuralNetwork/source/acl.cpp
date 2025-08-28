@@ -40,8 +40,8 @@ int main(int argc, char **argv)
   hwloc_topology_init(&hwlocTopology);
 
   // Instantiating HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::TopologyManager  hostTopologyManager(&hwlocTopology);
-  HiCR::backend::acl::TopologyManager aclTopologyManager;
+  HiCR::backend::hwloc::TopologyManager hostTopologyManager(&hwlocTopology);
+  HiCR::backend::acl::TopologyManager   aclTopologyManager;
 
   HiCR::backend::acl::MemoryManager        aclMemoryManager;
   HiCR::backend::acl::CommunicationManager aclCommunicationManager;
