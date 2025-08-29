@@ -1,16 +1,25 @@
-project('HiCR', [ 'cpp', 'c'],
-  default_options : [
-  'cpp_std=c++20',
-  'buildtype=release',
+project(
+  'HiCR',
+  ['cpp', 'c'],
+  default_options: [
+    'cpp_std=c++20',
+    'buildtype=release',
   ],
-  version: '1.0.0'
+  subproject_dir: 'extern',
+  version: '1.0.0',
 )
 
 ####### Getting selected built-in backends
 
 # Including selected built-in backends
 enabledBackends = get_option('backends')
-HiCRBackendDependencies = [ ]
+HiCRBackendDependencies = []
+
+
+####### Get reference to acl backend mock subproject
+if 'acl' in enabledBackends and get_option('aclPath') == ''
+   aclBackendMockSubproject = subproject('aclMock', required: true)
+endif
 
 foreach backend : enabledBackends
   subdir('include/hicr/backends/' + backend)
@@ -20,7 +29,7 @@ endforeach
 
 # Including selected built-in frontends
 enabledFrontends = get_option('frontends')
-HiCRFrontendDependencies = [ ]
+HiCRFrontendDependencies = []
 
 foreach frontend : enabledFrontends
   subdir('include/hicr/frontends/' + frontend)
@@ -36,12 +45,12 @@ if meson.is_subproject() == false
 
   # Build example targets
   if get_option('buildExamples')
-  subdir('examples')
+    subdir('examples')
   endif
 
   # Build test targets
   if get_option('buildTests')
-  subdir('tests')
+    subdir('tests')
   endif
 
 endif

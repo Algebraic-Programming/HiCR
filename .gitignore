@@ -11,3 +11,4 @@ atlas_*
 **/*ubyte*
 **/.venv
 .cache
+examples/neuralNetwork/proto/onnx.proto3.pb.*
