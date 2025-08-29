@@ -26,5 +26,5 @@ option('compileWarningsAsErrors', type : 'boolean', value : false,
 
 ###### Backend-specific options
 option('aclPath', type : 'string', value : '',
-       description: 'Indicates home directory where the acl libraries are e.g., /usr/local/Ascend/ascend-toolkit/<acl version>/)'
+       description: 'Indicates acl home directory where the include and lib folders are'
 )
