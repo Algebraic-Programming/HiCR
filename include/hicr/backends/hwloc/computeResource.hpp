@@ -42,6 +42,11 @@ class ComputeResource final : public HiCR::ComputeResource
   public:
 
   /**
+   * Index of the object within the hwloc topology
+   */
+  using hwlocObjectIndex_t = unsigned int;
+
+  /**
    * System-given logical processor (core or hyperthread) identifier that this class instance represents
    */
   using logicalProcessorId_t = unsigned int;
@@ -59,14 +64,15 @@ class ComputeResource final : public HiCR::ComputeResource
   /**
    * Constructor for the compute resource class of the hwloc backend
    * \param topology HWLoc topology object for discovery
-   * \param logicalProcessorId Os-determied core affinity assigned to this compute resource
+   * \param hwlocObjectIndex The index of the core within the hwloc topology
    */
-  ComputeResource(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  ComputeResource(hwloc_topology_t topology, const hwlocObjectIndex_t hwlocObjectIndex)
     : HiCR::ComputeResource(),
-      _logicalProcessorId(logicalProcessorId),
-      _physicalProcessorId(detectPhysicalProcessorId(topology, logicalProcessorId)),
-      _numaAffinity(detectCoreNUMAffinity(topology, logicalProcessorId)),
-      _caches(detectCpuCaches(topology, logicalProcessorId))
+      _hwlocObjectIndex(hwlocObjectIndex),
+      _logicalProcessorId(detectLogicalProcessorId(topology, hwlocObjectIndex)),
+      _physicalProcessorId(detectPhysicalProcessorId(topology, hwlocObjectIndex)),
+      _numaAffinity(detectCoreNUMAffinity(topology, hwlocObjectIndex)),
+      _caches(detectCpuCaches(topology, hwlocObjectIndex))
   {
     _type = "Processing Unit";
   };
@@ -78,15 +84,17 @@ class ComputeResource final : public HiCR::ComputeResource
    * \param[in] caches The set of caches contained to or accessible by this core
    * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
-  ComputeResource(const logicalProcessorId_t                                 logicalProcessorId,
+  ComputeResource(const hwlocObjectIndex_t                                   hwlocObjectIndex,
+                  const logicalProcessorId_t                                 logicalProcessorId,
                   const physicalProcessorId_t                                physicalProcessorId,
                   const numaAffinity_t                                       numaAffinity,
                   std::unordered_set<std::shared_ptr<backend::hwloc::Cache>> caches)
     : HiCR::ComputeResource(),
+      _hwlocObjectIndex(hwlocObjectIndex),
       _logicalProcessorId(logicalProcessorId),
       _physicalProcessorId(physicalProcessorId),
       _numaAffinity(numaAffinity),
-      _caches(std::move(caches))
+      _caches(caches)
   {
     _type = "Processing Unit";
   };
@@ -127,25 +135,46 @@ class ComputeResource final : public HiCR::ComputeResource
     for (unsigned int i = 0; i < obj->arity; i++) detectThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
   }
 
-  /**
-   * Uses HWloc to discover the (physical) processor ID, associated with a given logical processor ID
+    /**
+   * Uses HWloc to discover the (logical) processor ID, associated with a given hwloc object ID
    *
    * \param[in] topology An HWLoc topology object, already initialized
-   * \param[in] logicalProcessorId The logical ID of the processor we are doing the search for
-   * \returns The ID of the associated physical identifier related to the passed logical processor id
+   * \param[in] objectId The hwlod index of the processor we are doing the search for
+   * \returns The ID of the associated logical identifier related to the passed logical processor id
    */
-  __INLINE__ static physicalProcessorId_t detectPhysicalProcessorId(hwloc_topology_t topology, const logicalProcessorId_t logicalProcessorId)
+  __INLINE__ static logicalProcessorId_t detectLogicalProcessorId(hwloc_topology_t topology, const hwlocObjectIndex_t objectId)
   {
-    hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logicalProcessorId);
-    if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%lu) in this backend", logicalProcessorId);
+    hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, objectId);
+    if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%u) in this backend", objectId);
 
     // Acquire the parent core object
     // There is an asumption here that a HWLOC_OBJ_PU type always has a parent of type HWLOC_OBJ_CORE,
     // which is consistent with current HWloc, but maybe reconsider it.
     obj = obj->parent;
-    if (obj->type != HWLOC_OBJ_CORE) HICR_THROW_RUNTIME("Unexpected hwloc object type while trying to access Core/CPU (%lu)", logicalProcessorId);
+    if (obj->type != HWLOC_OBJ_CORE) HICR_THROW_RUNTIME("Unexpected hwloc object type while trying to access Core/CPU (%u)", objectId);
 
     return obj->logical_index;
+  }
+
+  /**
+   * Uses HWloc to discover the (physical) processor ID, associated with a given hwloc object ID
+   *
+   * \param[in] topology An HWLoc topology object, already initialized
+   * \param[in] objectId The hwloc index of the processor we are doing the search for
+   * \returns The ID of the associated physical identifier related to the passed logical processor id
+   */
+  __INLINE__ static physicalProcessorId_t detectPhysicalProcessorId(hwloc_topology_t topology, const hwlocObjectIndex_t objectId)
+  {
+    hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, objectId);
+    if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%u) in this backend", objectId);
+
+    // Acquire the parent core object
+    // There is an asumption here that a HWLOC_OBJ_PU type always has a parent of type HWLOC_OBJ_CORE,
+    // which is consistent with current HWloc, but maybe reconsider it.
+    obj = obj->parent;
+    if (obj->type != HWLOC_OBJ_CORE) HICR_THROW_RUNTIME("Unexpected hwloc object type while trying to access Core/CPU (%u)", objectId);
+
+    return obj->os_index;
   }
 
   /**
@@ -367,21 +396,26 @@ class ComputeResource final : public HiCR::ComputeResource
   private:
 
   /**
+   * Id of the core within the hwloc topology
+  */
+  hwlocObjectIndex_t _hwlocObjectIndex;
+
+  /**
    * The logical ID of the hardware core / processing unit
    */
-  logicalProcessorId_t _logicalProcessorId{};
+  logicalProcessorId_t _logicalProcessorId;
 
   /**
    * The ID of the hardware core; in SMT systems that will mean the core ID,
    * which may also have other HW threads. In non SMT systems it is expected
    * for logical and system IDs to be 1-to-1.
    */
-  physicalProcessorId_t _physicalProcessorId{};
+  physicalProcessorId_t _physicalProcessorId;
 
   /**
    * The ID of the hardware NUMA domain that this core is associated to
    */
-  numaAffinity_t _numaAffinity{};
+  numaAffinity_t _numaAffinity;
 
   /**
    * List of Cache objects associated with the CPU. There is the assumption

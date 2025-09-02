@@ -140,68 +140,69 @@ class Topology
   };
 
   /**
-  * Checks whether the given topology is a subset of this topology
+  * Checks whether the given topology 2 is a subset of a given topology 1
   * That is, whether it contains the given devices in the current type provided
   *
   * The devices are checked in order. That is the first current device that satisfies a given device
   * will be removed from the list when checking the next given device.
   * 
-  * @param[in] givenTopology The given topology to compare this topology with
+  * @param[in] topology1 The topology proposed as superset
+  * @param[in] topology2 The topology proposed as subset
   * 
-  * @return true, if this current satisfies the current type; false, otherwise.
+  * @return true, if topology2 is a subset of topology 1; false, otherwise.
   */
-  [[nodiscard]] __INLINE__ bool isSubset(const HiCR::Topology givenTopology)
+  [[nodiscard]] static __INLINE__ bool isSubset(const HiCR::Topology& topology1, const HiCR::Topology& topology2) 
   {
     // Making a copy of the current topology.
     // Devices will be removed as we match them with the given device
-    auto currentDevices = getDevices();
+    auto devices1 = topology1.getDevices();
 
     ////////// Checking for given devices
-    const auto givenDevices = givenTopology.getDevices();
+    const auto devices2 = topology2.getDevices();
 
-    for (const auto &givenDevice : givenDevices)
+    for (const auto &device2 : devices2)
     {
-      const auto givenDeviceType             = givenDevice->getType();
-      const auto givenDeviceMemorySpaces     = givenDevice->getMemorySpaceList();
-      const auto givenDeviceComputeResources = givenDevice->getComputeResourceList();
+      const auto device2Type             = device2->getType();
+      const auto device2MemorySpaces     = device2->getMemorySpaceList();
+      const auto device2ComputeResources = device2->getComputeResourceList();
 
       // Iterating over all the current devices to see if one of them satisfies this given device
       bool foundCompatibleDevice = false;
-      for (auto currentDeviceItr = currentDevices.begin(); currentDeviceItr != currentDevices.end() && foundCompatibleDevice == false; currentDeviceItr++)
+      for (auto device1Itr = devices1.begin(); device1Itr != devices1.end() && foundCompatibleDevice == false; device1Itr++)
       {
         // Getting current device object
-        const auto &currentDevice = currentDeviceItr.operator*();
+        const auto &device1 = device1Itr.operator*();
 
         // Checking type
-        const auto &currentDeviceType = currentDevice->getType();
+        const auto &device1Type = device1->getType();
 
         // If this device is the same type as given, proceed to check compute resources and memory spaces
-        if (currentDeviceType == givenDeviceType)
+        if (device1Type == device2Type)
         {
           // Flag to indicate this device is compatible with the request
           bool deviceIsCompatible = true;
 
           ///// Checking given compute resources
-          auto currentComputeResources = currentDevice->getComputeResourceList();
+          auto device1ComputeResources = device1->getComputeResourceList();
 
           // Getting compute resources in this current device
-          for (const auto &givenComputeResource : givenDeviceComputeResources)
+          for (const auto &givenComputeResource : device2ComputeResources)
           {
             bool foundComputeResource = false;
-            for (auto currentComputeResourceItr = currentComputeResources.begin(); currentComputeResourceItr != currentComputeResources.end() && foundComputeResource == false;
-                 currentComputeResourceItr++)
+            for (auto device1ComputeResourceItr = device1ComputeResources.begin(); device1ComputeResourceItr != device1ComputeResources.end() && foundComputeResource == false;
+                 device1ComputeResourceItr++)
             {
               // Getting current device object
-              const auto &currentComputeResource = currentComputeResourceItr.operator*();
+              const auto &device1ComputeResource = device1ComputeResourceItr.operator*();
 
               // If it's the same type as given
-              if (currentComputeResource->getType() == givenComputeResource->getType())
+              if (device1ComputeResource->getType() == givenComputeResource->getType())
               {
                 // Set compute resource as found
                 foundComputeResource = true;
 
                 // Erase this element from the list to not re-use it
-                currentComputeResources.erase(currentComputeResourceItr);
+                device1ComputeResources.erase(device1ComputeResourceItr);
               }
             }
 
@@ -217,28 +218,28 @@ class Topology
           if (deviceIsCompatible == false) continue;
 
           ///// Checking given compute resources
-          auto currentMemorySpaces = currentDevice->getMemorySpaceList();
+          auto device1MemorySpaces = device1->getMemorySpaceList();
 
           // Getting compute resources in this current device
-          for (const auto &givenDeviceMemorySpace : givenDeviceMemorySpaces)
+          for (const auto &device2MemorySpace : device2MemorySpaces)
           {
             bool foundMemorySpace = false;
-            for (auto currentMemorySpaceItr = currentMemorySpaces.begin(); currentMemorySpaceItr != currentMemorySpaces.end() && foundMemorySpace == false; currentMemorySpaceItr++)
+            for (auto device1MemorySpaceItr = device1MemorySpaces.begin(); device1MemorySpaceItr != device1MemorySpaces.end() && foundMemorySpace == false; device1MemorySpaceItr++)
             {
               // Getting current device object
-              const auto &currentDeviceMemorySpace = currentMemorySpaceItr.operator*();
+              const auto &device1MemorySpace = device1MemorySpaceItr.operator*();
 
               // If it's the same type as given
-              if (currentDeviceMemorySpace->getType() == givenDeviceMemorySpace->getType())
+              if (device1MemorySpace->getType() == device2MemorySpace->getType())
               {
                 // Check whether the size is at least as big as given
-                if (currentDeviceMemorySpace->getSize() >= givenDeviceMemorySpace->getSize())
+                if (device1MemorySpace->getSize() >= device2MemorySpace->getSize())
                 {
                   // Set compute resource as found
                   foundMemorySpace = true;
 
                   // Erase this element from the list to not re-use it
-                  currentMemorySpaces.erase(currentMemorySpaceItr);
+                  device1MemorySpaces.erase(device1MemorySpaceItr);
                 }
               }
             }
@@ -258,7 +259,7 @@ class Topology
           foundCompatibleDevice = true;
 
           // Deleting device to prevent it from being counted again
-          currentDevices.erase(currentDeviceItr);
+          devices1.erase(device1Itr);
 
           // Stop checking
           break;
