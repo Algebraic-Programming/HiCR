@@ -151,7 +151,7 @@ class Topology
   * 
   * @return true, if topology2 is a subset of topology 1; false, otherwise.
   */
-  [[nodiscard]] static __INLINE__ bool isSubset(const HiCR::Topology& topology1, const HiCR::Topology& topology2) 
+  [[nodiscard]] static __INLINE__ bool isSubset(const HiCR::Topology &topology1, const HiCR::Topology &topology2)
   {
     // Making a copy of the current topology.
     // Devices will be removed as we match them with the given device

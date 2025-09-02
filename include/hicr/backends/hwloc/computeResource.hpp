@@ -135,7 +135,7 @@ class ComputeResource final : public HiCR::ComputeResource
     for (unsigned int i = 0; i < obj->arity; i++) detectThreadPUs(topology, obj->children[i], depth + 1, threadPUs);
   }
 
-    /**
+  /**
    * Uses HWloc to discover the (logical) processor ID, associated with a given hwloc object ID
    *
    * \param[in] topology An HWLoc topology object, already initialized
