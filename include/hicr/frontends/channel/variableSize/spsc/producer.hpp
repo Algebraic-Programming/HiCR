@@ -88,12 +88,6 @@ class Producer : public variableSize::Base
   __INLINE__ void updateDepth() {}
 
   /**
-   * advance payload buffer tail by a number of bytes
-   * @param[in] n bytes to advance payload buffer tail by
-   */
-  __INLINE__ void advancePayloadTail(const size_t n = 1) { getCircularBufferForPayloads()->advanceTail(n); }
-
-  /**
    * get payload buffer head position
    * @return payload buffer head position (in bytes)
    */
@@ -150,7 +144,6 @@ class Producer : public variableSize::Base
 
     // Updating depth of token (message sizes) and payload buffers
     updateDepth();
-    auto currentCountsDepth  = getCircularBufferForCounts()->getDepth();
     auto currentPayloadDepth = getCircularBufferForPayloads()->getDepth();
     auto currentDepth        = getDepth();
 
@@ -169,9 +162,7 @@ class Producer : public variableSize::Base
      *  that the payload fits into available circular buffer,
      *  but it is possible it spills over the end into the
      *  beginning. Cover this corner case below
-     *
      */
-    getCircularBufferForPayloads()->setCachedDepth(currentPayloadDepth);
     if (requiredBufferSize + getPayloadHeadPosition() > getPayloadCapacity())
     {
       size_t first_chunk  = getPayloadCapacity() - getPayloadHeadPosition();
@@ -197,7 +188,7 @@ class Producer : public variableSize::Base
       getCommunicationManager()->fence(sourceSlot, 1, 0);
     }
 
-    getCircularBufferForPayloads()->advanceHead(requiredBufferSize, true);
+    getCircularBufferForPayloads()->advanceHead(requiredBufferSize);
 
     // update the consumer coordination buffers (consumer does not update
     // its own coordination head positions)
@@ -222,20 +213,13 @@ class Producer : public variableSize::Base
                          getDepth(),
                          getCircularBufferForCounts()->getCapacity());
 
-    getCircularBufferForCounts()->setCachedDepth(currentCountsDepth);
-    /*
-     * Advance head, as we have added new elements.
-     * It is important to do the advanceHead and copy together,
-     * or else issues such as advancing head index too early or too late might occur!
-     */
-
     getCommunicationManager()->memcpy(_tokenBuffer,                                                     /* destination */
                                       getTokenSize() * getCircularBufferForCounts()->getHeadPosition(), /* dst_offset */
                                       _sizeInfoBuffer,                                                  /* source */
                                       0,                                                                /* src_offset */
                                       getTokenSize());                                                  /* size */
     getCommunicationManager()->fence(_sizeInfoBuffer, 1, 0);
-    getCircularBufferForCounts()->advanceHead(1, true);
+    getCircularBufferForCounts()->advanceHead(1);
 
     getCommunicationManager()->memcpy(_consumerCoordinationBufferForCounts,
                                       _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),

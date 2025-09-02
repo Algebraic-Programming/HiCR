@@ -7,7 +7,7 @@ This example showcases how the abstract HiCR Core API can be used to discover co
 
 * :code:`source/` contains the different variants of this example corresponding to different backends
 
-    * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` backend implementation
+    * :code:`acl.cpp` corresponds to the :ref:`acl backend` backend implementation
     * :code:`hwloc.cpp` corresponds to the :ref:`hwloc backend` (CPU) backend implementation
 
 Topology detection
@@ -44,16 +44,16 @@ The result of running the hwloc example might be, for example:
     Compute Resources: 44 Processing Unit(s)
     Memory Space:     'RAM', 93.024166 Gb
 
-Whereas, for the Ascend example, it would look as follows:
+Whereas, for the acl example, it would look as follows:
 
 .. code-block:: bash
     
-    + 'Ascend Device'
-      Compute Resources: 1 Ascend Processor(s)
-      Memory Space:     'Ascend Device RAM', 32.000000 Gb
-    + 'Ascend Device'
-      Compute Resources: 1 Ascend Processor(s)
-      Memory Space:     'Ascend Device RAM', 32.000000 Gb
+    + 'Huawei Device'
+      Compute Resources: 1 Huawei Processor(s)
+      Memory Space:     'Huawei Device RAM', 32.000000 Gb
+    + 'Huawei Device'
+      Compute Resources: 1 Huawei Processor(s)
+      Memory Space:     'Huawei Device RAM', 32.000000 Gb
 
 and for OpenCL, for example:
 

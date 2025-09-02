@@ -1,4 +1,4 @@
-option('backends', type : 'array', choices : ['hwloc', 'boost', 'pthreads', 'mpi', 'lpf', 'ascend', 'nosv', 'opencl'], 
+option('backends', type : 'array', choices : ['hwloc', 'boost', 'pthreads', 'mpi', 'lpf', 'acl', 'nosv', 'opencl'], 
        description : 'Specifies which builtin backends to enable for compilation with HiCR',
        value: [ 'hwloc', 'pthreads', 'boost' ]
 )
@@ -6,8 +6,7 @@ option('backends', type : 'array', choices : ['hwloc', 'boost', 'pthreads', 'mpi
 option('frontends', type : 'array', choices : [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ],
        description : 'Specifies which builtin frontends to enable for compilation with HiCR',
        value: [ 'channel', 'RPCEngine', 'tasking', 'objectStore' ]
-)
-             
+)     
       
 option('buildTests', type : 'boolean', value : false,
        description: 'Indicates whether to build tests'
@@ -24,3 +23,8 @@ option('exceptionModel', type : 'combo', choices : [ 'stdexception', 'abort' ], 
 option('compileWarningsAsErrors', type : 'boolean', value : false,
        description: 'Indicates whether a compilation warning should result in a fatal error. This is useful for CI testing but may result in inconveniences for normal users, hence it should be false by default'
 ) 
+
+###### Backend-specific options
+option('aclPath', type : 'string', value : '',
+       description: 'Indicates acl home directory where the include and lib folders are'
+)

@@ -229,7 +229,7 @@ jobs:
           docker run --name hicr --shm-size=1024M --privileged -v $PWD:/home/hicr/hicr -w /home/hicr/hicr -td ${{ env.DOCKERIMAGE }}:${{ inputs.arch }}-latest bash
 
       - name: Setup
-        run: docker exec -u hicr hicr bash -c "meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true"
+        run: docker exec -u hicr hicr bash -c "meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl,acl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true"
 
       - name: Compile
         run: docker exec -u hicr hicr bash -c "meson compile -C build"
@@ -269,7 +269,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup
-        run: source /home/hicr/.bashrc && meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
+        run: source /home/hicr/.bashrc && meson setup build -Dbackends=hwloc,pthreads,mpi,lpf,nosv,boost,opencl,acl -Dfrontends=channel,RPCEngine,tasking,objectStore -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true
 
       - name: Compile
         run: source /home/hicr/.bashrc && meson compile -C build

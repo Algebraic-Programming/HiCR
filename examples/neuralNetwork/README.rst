@@ -8,10 +8,10 @@ The folder contains the following folders:
 
 * :code:`python/` contains the serialized trained model (using `ONNX <https://onnx.ai/>`_), the script to train it, and the script to download the test set
 * :code:`proto/` contains cpp protobuf parsers to read ONNX models
-* :code:`kernels/` contains :ref:`opencl backend` and :ref:`ascend backend` kernel definitions
+* :code:`kernels/` contains :ref:`opencl backend` and :ref:`acl backend` kernel definitions
 * :code:`groundTruth/` contains the network non-HiCR implementation used as a ground truth
 * :code:`source/` contains the different variants of this example corresponding to different backends
-    * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` backend implementation. The available kernels are compiled for Ascend 910. Run :code:`kernels/compile-ascend.sh` to call `ATC <https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devaids/devtools/atc/atlasatc_16_0005.html>`__ and compile the kernel.
+    * :code:`acl.cpp` corresponds to the :ref:`acl backend` backend implementation. The available kernels are compiled for Huawei 910. Run :code:`kernels/compile-acl.sh` to call `ATC <https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/81RC1alpha001/devaids/devtools/atc/atlasatc_16_0005.html>`__ and compile the kernel.
     * :code:`opencl.cpp` corresponds to the :ref:`opencl backend` backend implementation. The available kernels are compiled for OpenCL.
     * :code:`pthreads.cpp` corresponds to the :ref:`pthreads backend` backend implementation
 

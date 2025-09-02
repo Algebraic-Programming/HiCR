@@ -19,7 +19,7 @@ The code is structured as follows:
 * :code:`source/` contains variants of the main program implemented under different backends
 
     * :code:`pthreads.cpp` corresponds to the :ref:`pthreads backend` + :ref:`hwloc backend` backend implementation. This variant moves the initial allocation across all of the system's RAM NUMA domains.
-    * :code:`ascend.cpp` corresponds to the :ref:`ascend backend` + :ref:`hwloc backend` backend implementation. This variant moves the initial allocation across all Ascend GPU devices found.
+    * :code:`acl.cpp` corresponds to the :ref:`acl backend` + :ref:`hwloc backend` backend implementation. This variant moves the initial allocation across all Huawei GPU devices found.
     * :code:`opencl.cpp` corresponds to the :ref:`opencl backend` + :ref:`hwloc backend` backend implementation. This variant moves the initial allocation across all devices found by the OpenCL platform.
 
 Both the producer and consumer functions receive a set of :code:`HiCR::MemorySpace`, each of which will take a turn in the telephone game. They also receive an instance of the :code:`HiCR::MemoryManager`, for the allocation of local memory slots across all memory spaces provided, and; an instance of :code:`HiCR::CommunicationManager`, to communicate the data the HICR memory spaces. 
@@ -37,8 +37,8 @@ First, we detect the available topology using one topology manager or more than 
     // Pthreads example will only use this
     HiCR::backend::hwloc::TopologyManager ht(&topology);
    
-    // Use to detect Ascend devices
-    HiCR::backend::ascend::TopologyManager at();
+    // Use to detect Huawei devices
+    HiCR::backend::acl::TopologyManager at();
 
     // Query topologies
     ht.queryTopology();

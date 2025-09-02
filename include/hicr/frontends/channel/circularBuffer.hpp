@@ -89,17 +89,11 @@ class CircularBuffer
    * The head cannot advance in such a way that the depth exceeds capacity.
    *
    * \param[in] n The number of positions to advance
-   * \param[in] useCachedDepth A boolean signalling if we should read a cached,
-   * slightly outdated channel depth. This parameter can be used if
-   * in a combination of push from producer and pop from consumer the two
-   * might cross over and lead to a brief tail index > head index.
-   * This is normally illegal. In this scenario, getCached = true 
-   * allows a crossover between push and pop to complete 
    */
-  __INLINE__ void advanceHead(const size_t n = 1, bool useCachedDepth = false)
+  __INLINE__ void advanceHead(const size_t n = 1)
   {
     // Current depth
-    const auto curDepth = useCachedDepth ? getCachedDepth() : getDepth();
+    const auto curDepth = getDepth();
 
     // Calculating new depth
     const auto newDepth = curDepth + n;
@@ -154,20 +148,6 @@ class CircularBuffer
   [[nodiscard]] __INLINE__ size_t getDepth() const noexcept { return calculateDepth(*_headAdvanceCounter, *_tailAdvanceCounter); }
 
   /**
-   * A setter function for the attribute
-   * cached depth of the channel
-   * @param[in] depth Value to set _cachedDepth to
-   */
-  void setCachedDepth(size_t depth) { _cachedDepth = depth; }
-
-  /**
-   * A getter function for the attribute
-   * _cachedDepth
-   * @returns cached depth of channel
-   */
-  [[nodiscard]] __INLINE__ size_t getCachedDepth() const noexcept { return _cachedDepth; }
-
-  /**
    * This function can be used to quickly check whether the circular buffer is full.
    *
    * It affects the internal state of the circular buffer because it detects any updates in the internal state of the buffers
@@ -187,58 +167,6 @@ class CircularBuffer
    */
   [[nodiscard]] __INLINE__ bool isEmpty() const noexcept { return *_headAdvanceCounter == *_tailAdvanceCounter; }
 
-  /**
-   * Forces the head advance counter into a specific absolute value
-   *
-   * @param[in] headAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the circular buffer has negative depth
-   */
-  __INLINE__ void setHead(const size_t headAdvanceCounter)
-  {
-    // Sanity check
-    if (*_tailAdvanceCounter > headAdvanceCounter)
-      HICR_THROW_FATAL("Circular buffer new head advance value is smaller than tail's (%lu < %lu). This is probably a bug in HiCR.\n", headAdvanceCounter, *_tailAdvanceCounter);
-
-    // Calculating new depth
-    const auto newDepth = calculateDepth(headAdvanceCounter, *_tailAdvanceCounter);
-
-    // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Circular new buffer depth (%lu) exceeded capacity (%lu) on setHead. This is probably a bug in HiCR.\n", newDepth, _capacity);
-
-    // Setting head
-    *_headAdvanceCounter = headAdvanceCounter;
-  }
-
-  /**
-   * Forces the tail advance counter into a specific absolute value
-   *
-   * @param[in] tailAdvanceCounter the new value of the head advance counter. This value should never be smaller than the current tail advance counter, othewise this means the circular buffer has negative depth
-   */
-  __INLINE__ void setTail(const size_t tailAdvanceCounter)
-  {
-    // Sanity check
-    if (tailAdvanceCounter > *_headAdvanceCounter)
-      HICR_THROW_FATAL("Circular buffer new tail advance value exceeds head (%lu > %lu). This is probably a bug in HiCR.\n", tailAdvanceCounter, *_headAdvanceCounter);
-
-    // Calculating new depth
-    const auto newDepth = calculateDepth(*_headAdvanceCounter, tailAdvanceCounter);
-
-    // Sanity check
-    if (newDepth > _capacity) HICR_THROW_FATAL("Circular buffer new buffer depth (%lu) exceeded capacity (%lu) on setTail. This is probably a bug in HiCR.\n", newDepth, _capacity);
-
-    // Setting head
-    *_tailAdvanceCounter = tailAdvanceCounter;
-  }
-
-  /**
-   * @returns The absolute counter for the number of times the head was advanced
-   */
-  [[nodiscard]] __INLINE__ size_t getHeadAdvanceCounter() const noexcept { return *_headAdvanceCounter; }
-
-  /**
-   * @returns The absolute counter for the number of times the tail was advanced
-   */
-  [[nodiscard]] __INLINE__ size_t getTailAdvanceCounter() const noexcept { return *_tailAdvanceCounter; }
-
   private:
 
   /**
@@ -255,11 +183,6 @@ class CircularBuffer
    * Stores how many position has the tail advanced so far
    */
   __volatile__ size_t *const _tailAdvanceCounter;
-
-  /**
-   * A cached depth value only set via setCachedDepth
-   */
-  size_t _cachedDepth{0};
 
   protected:
 

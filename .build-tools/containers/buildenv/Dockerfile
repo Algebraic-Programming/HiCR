@@ -100,7 +100,6 @@ RUN git clone -b noc_extension --single-branch --depth 1 https://github.com/Alge
   && sudo make install || true \
   && sudo rm -rf $HOME/lpf
 
-
 RUN git clone -b 1.11.0 --single-branch --depth 1 https://github.com/bsc-pm/ovni.git $HOME/ovni \
   && cd $HOME/ovni  \
   && mkdir build  \
@@ -183,7 +182,6 @@ RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig' >> $HOME/.
 RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig' >> $HOME/.hicr-env.sh
 RUN echo 'export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/share/pkgconfig' >> $HOME/.hicr-env.sh
 RUN echo 'source ${HOME}/.venv/bin/activate' >> $HOME/.hicr-env.sh
-
 
 RUN echo 'source $HOME/.hicr-env.sh' >> $HOME/.bashrc
 USER $ROOT_USER

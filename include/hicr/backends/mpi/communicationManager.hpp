@@ -109,9 +109,8 @@ class CommunicationManager : public HiCR::CommunicationManager
 
     // Obtaining the local slots to exchange per process in the communicator
     std::vector<int> perProcessSlotCount(_size);
-    lock();
+
     MPI_Allgather(&localSlotCount, 1, MPI_INT, perProcessSlotCount.data(), 1, MPI_INT, _comm);
-    unlock();
 
     // Calculating respective offsets
     std::vector<int> perProcessSlotOffsets(_size);
@@ -146,13 +145,11 @@ class CommunicationManager : public HiCR::CommunicationManager
     }
 
     // Exchanging global sizes, keys and process ids
-    lock();
     MPI_Allgatherv(
       localSlotSizes.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotSizes.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
     MPI_Allgatherv(
       localSlotKeys.data(), localSlotCount, MPI_UNSIGNED_LONG, globalSlotKeys.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_UNSIGNED_LONG, _comm);
     MPI_Allgatherv(localSlotProcessId.data(), localSlotCount, MPI_INT, globalSlotProcessId.data(), perProcessSlotCount.data(), perProcessSlotOffsets.data(), MPI_INT, _comm);
-    unlock();
 
     // Now also creating pointer vector to remember local pointers, when required for memcpys
     std::vector<void **>                                globalSlotPointers(globalSlotCount);
@@ -189,10 +186,8 @@ class CommunicationManager : public HiCR::CommunicationManager
       void *ptr = nullptr;
 
       // Creating MPI window for data transferring
-      lock();
       auto status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? (int)globalSlotSizes[i] : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getDataWindow().get());
       MPI_Win_set_errhandler(*memorySlot->getDataWindow(), MPI_ERRORS_RETURN);
-      unlock();
 
       // Unfortunately, we need to do an effective duplucation of the original local memory slot storage
       // since no modern MPI library supports MPI_Win_create over user-allocated storage anymore
@@ -202,9 +197,7 @@ class CommunicationManager : public HiCR::CommunicationManager
         std::memcpy(ptr, *(globalSlotPointers[i]), globalSlotSizes[i]);
 
         // Freeing up memory
-        lock();
         MPI_Free_mem(*(globalSlotPointers[i]));
-        unlock();
 
         // Swapping pointers
         *(globalSlotPointers[i]) = ptr;
@@ -213,18 +206,14 @@ class CommunicationManager : public HiCR::CommunicationManager
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
 
       // Creating MPI window for message received count transferring
-      lock();
       status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getRecvMessageCountWindow().get());
       MPI_Win_set_errhandler(*memorySlot->getRecvMessageCountWindow(), MPI_ERRORS_RETURN);
-      unlock();
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI received message count window on exchange global memory slots.");
 
       // Creating MPI window for message sent count transferring
-      lock();
       status = MPI_Win_allocate(globalSlotProcessId[i] == _rank ? sizeof(size_t) : 0, 1, MPI_INFO_NULL, _comm, &ptr, memorySlot->getSentMessageCountWindow().get());
       MPI_Win_set_errhandler(*memorySlot->getSentMessageCountWindow(), MPI_ERRORS_RETURN);
-      unlock();
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI sent message count window on exchange global memory slots.");
 
@@ -405,17 +394,15 @@ class CommunicationManager : public HiCR::CommunicationManager
 
     // Executing the get operation
     {
-      lock();
       auto status = MPI_Get(destinationPointer, (int)size, MPI_BYTE, sourceRank, (int)sourceOffset, (int)size, MPI_BYTE, *sourceDataWindow);
-      unlock();
+
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Get");
     }
 
     // Making sure the operation finished
     {
-      lock();
       auto status = MPI_Win_flush(sourceRank, *sourceDataWindow);
-      unlock();
+
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run MPI_Win_flush");
     }
 
@@ -459,17 +446,15 @@ class CommunicationManager : public HiCR::CommunicationManager
 
     // Executing the put operation
     {
-      lock();
       auto status = MPI_Put(sourcePointer, (int)size, MPI_BYTE, destinationRank, (int)dst_offset, (int)size, MPI_BYTE, *destinationDataWindow);
-      unlock();
+
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Put");
     }
 
     // Making sure the operation finished
     {
-      lock();
       auto status = MPI_Win_flush(destinationRank, *destinationDataWindow);
-      unlock();
+
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to run data MPI_Win_flush");
     }
 
@@ -544,25 +529,27 @@ class CommunicationManager : public HiCR::CommunicationManager
   __INLINE__ void lockMPIWindow(int rank, MPI_Win *window, int MPILockType, int MPIAssert)
   {
     // Locking MPI window to ensure the messages arrives before returning
-    int mpiStatus = 0;
-    do {
-      lock();
-      mpiStatus = MPI_Win_lock(MPILockType, rank, MPIAssert, *window) != MPI_SUCCESS;
-      unlock();
+    int mpiStatus = MPI_Win_lock(MPILockType, rank, MPIAssert, *window);
+    if (mpiStatus != MPI_SUCCESS)
+    {
+      char err_string[MPI_MAX_ERROR_STRING];
+      int  len;
+      MPI_Error_string(mpiStatus, err_string, &len);
+      HICR_THROW_LOGIC("MPI_Win_lock failed for rank %d: %s", rank, err_string);
     }
-    while (mpiStatus != MPI_SUCCESS);
   }
 
   __INLINE__ void unlockMPIWindow(int rank, MPI_Win *window)
   {
     // Unlocking window after copy is completed
-    int mpiStatus = 0;
-    do {
-      lock();
-      mpiStatus = MPI_Win_unlock(rank, *window) != MPI_SUCCESS;
-      unlock();
+    int mpiStatus = MPI_Win_unlock(rank, *window);
+    if (mpiStatus != MPI_SUCCESS)
+    {
+      char err_string[MPI_MAX_ERROR_STRING];
+      int  len;
+      MPI_Error_string(mpiStatus, err_string, &len);
+      HICR_THROW_LOGIC("MPI_Win_unlock failed for rank %d: %s", rank, err_string);
     }
-    while (mpiStatus != MPI_SUCCESS);
   }
 
   __INLINE__ void increaseWindowCounter(int rank, MPI_Win *window)
@@ -579,9 +566,7 @@ class CommunicationManager : public HiCR::CommunicationManager
 
     // There is no datatype in MPI for size_t (the counters), but
     // MPI_AINT is supposed to be large enough and portable
-    lock();
     auto status = MPI_Fetch_and_op(&one, &value, MPI_AINT, rank, 0, MPI_SUM, *window);
-    unlock();
 
     // Checking execution status
     if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to increase remote message counter (on operation: MPI_Put) for rank %d, MPI Window pointer %p", rank, window);

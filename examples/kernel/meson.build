@@ -23,12 +23,12 @@ if 'hwloc' in enabledBackends and 'pthreads' in enabledBackends
 		endif
 	endif
 
-	# ascend
-	if 'ascend' in enabledBackends
-		ascend = executable('ascend', [ 'source/ascend.cpp'], dependencies: hicrBuildDep)
+	# acl
+	if 'acl' in enabledBackends
+		acl = executable('acl', [ 'source/acl.cpp'], dependencies: hicrBuildDep)
 
 		if get_option('buildTests')
-		test('ascend', ascend, args : [ ], is_parallel: false, suite: testSuite )
+		test('acl', acl, args : [ ], is_parallel: false, suite: testSuite )
 		endif
 	endif
 endif

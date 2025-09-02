@@ -32,7 +32,7 @@ Before installing HiCR, make sure the following libraries and tools are installe
 
 The following libraries and tools are only necessary for certain HiCR backends:
 
-* :ref:`ascend backend` :code:`ascend-toolkit 7.0.RC1.alpha003`
+* :ref:`acl backend` :code:`cann-toolkit 7.0.RC1.alpha003`
 
 * :ref:`boost backend` :code:`libboost-context-dev (version >= 1.71)`
 
@@ -61,7 +61,7 @@ HiCR uses `meson` as build and installation system. To build HiCR, you can run t
   meson setup build 
 
   # [Example] Configuring HiCR's meson project, with all its backends, and frontends. The build folder is "build"
-  meson setup build -DbuildExamples=true -DbuildTests=true -Dbackends=hwloc,boost,pthreads,mpi,lpf,ascend,nosv,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore 
+  meson setup build -DbuildExamples=true -DbuildTests=true -Dbackends=hwloc,boost,pthreads,mpi,lpf,acl,nosv,opencl -Dfrontends=channel,RPCEngine,tasking,objectStore 
 
   # Compiling 
   meson compile -C build

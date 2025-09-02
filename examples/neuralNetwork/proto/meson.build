@@ -1,5 +1,5 @@
 ####### Creating ONNX Protobuf dependency
-protoDep = dependency('protobuf', required: true, version: '29.3.0', modules: ['protobuf::libprotobuf'])
+protoDep = dependency('protobuf', required: true, version: '>=29.3.0', modules: ['protobuf::libprotobuf'])
 
 # if the cpp generated protobuf files do not exist run the script to create them
 fs = import('fs')
