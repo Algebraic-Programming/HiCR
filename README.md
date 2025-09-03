@@ -13,7 +13,7 @@ This repository provides include-only C++ implementation of the HiCR model. It a
 
 For a detailed explanation of the HiCR model, please see our preprint:
 
-* [HiCR, an Abstract Model for Distributed Heterogeneous Programming](https://github.com/Algebraic-Programming/Preprints/tree/master/HiCR)
+* [HiCR, an Abstract Model for Distributed Heterogeneous Programming](https://arxiv.org/abs/2509.01425)
 
 ## Documentation
 
