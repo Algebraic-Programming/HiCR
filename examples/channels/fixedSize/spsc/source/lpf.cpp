@@ -84,9 +84,16 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Getting reference to the first memory space detected
   auto firstMemorySpace = *memSpaces.begin();
 
+  auto   start  = MPI_Wtime();
+  size_t rankId = pid;
+
   // Rank 0 is producer, Rank 1 is consumer
   if (pid == 0) producerFc(m, c, firstMemorySpace, argList->capacity, argList->msgCount, argList->tokenSize);
   if (pid == 1) consumerFc(m, c, firstMemorySpace, argList->capacity, argList->msgCount, argList->tokenSize);
+
+  auto end = MPI_Wtime();
+
+  if (rankId == 0) printf("Time: %lf seconds\n", end - start);
 }
 
 int main(int argc, char **argv)
@@ -96,7 +103,7 @@ int main(int argc, char **argv)
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  int capacity;
+  int capacity, msgCount, tokenSize;
   if (rank == 0)
   {
     if (size != 2)
@@ -105,20 +112,28 @@ int main(int argc, char **argv)
       MPI_Abort(MPI_COMM_WORLD, -1);
     }
     // Checking arguments
-    if (argc != 2)
+    if (argc != 4)
     {
-      fprintf(stderr, "Error: Must provide the channel capacity as argument.\n");
+      fprintf(stderr, "Error: Must provide <channel capacity> <message count> <token size in bytes> as arguments.\n");
       MPI_Abort(MPI_COMM_WORLD, -1);
     }
     // For portability, only read STDIN from process 0
-    capacity = atoi(argv[1]);
+    capacity  = atoi(argv[1]);
+    msgCount  = atoi(argv[2]);
+    tokenSize = atoi(argv[3]);
   }
   MPI_Bcast(&capacity, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&msgCount, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&tokenSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  argList_t myArgs;
+  myArgs.capacity  = capacity;
+  myArgs.msgCount  = msgCount;
+  myArgs.tokenSize = tokenSize;
   lpf_args_t args;
   memset(&args, 0, sizeof(lpf_args_t));
-  args.input       = &capacity;
-  args.input_size  = sizeof(int);
+  args.input       = &myArgs;
+  args.input_size  = sizeof(argList_t);
   args.output      = nullptr;
   args.output_size = 0;
   args.f_size      = 0;
