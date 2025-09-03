@@ -40,11 +40,18 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
  */
 #define DEFAULT_MSGSLOTS 100
 
+typedef struct argList
+{
+  int capacity;
+  int msgCount;
+  int tokenSize;
+} argList_t;
+
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
   // Capacity must be larger than zero
-  int channelCapacity = (*(int *)args.input);
-  if (channelCapacity == 0)
+  argList_t *argList = (argList_t *)args.input;
+  if (argList->capacity == 0)
     if (pid == 0) fprintf(stderr, "Error: Cannot create channel with zero capacity.\n");
 
   // Initializing LPF
@@ -78,8 +85,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   auto firstMemorySpace = *memSpaces.begin();
 
   // Rank 0 is producer, Rank 1 is consumer
-  if (pid == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
-  if (pid == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
+  if (pid == 0) producerFc(m, c, firstMemorySpace, argList->capacity, argList->msgCount, argList->tokenSize);
+  if (pid == 1) consumerFc(m, c, firstMemorySpace, argList->capacity, argList->msgCount, argList->tokenSize);
 }
 
 int main(int argc, char **argv)
