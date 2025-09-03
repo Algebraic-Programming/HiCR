@@ -30,7 +30,7 @@
 
 TEST(ProcessingUnit, Construction)
 {
-  auto computeResource = HiCR::backend::hwloc::ComputeResource(0, 0, 0, {});
+  auto computeResource = HiCR::backend::hwloc::ComputeResource(0, 0, 0, 0, {});
   auto cPtr            = std::make_shared<HiCR::backend::hwloc::ComputeResource>(computeResource);
 
   HiCR::backend::pthreads::ProcessingUnit *p = nullptr;
@@ -67,7 +67,7 @@ TEST(ProcessingUnit, ThreadAffinity)
   HiCR::backend::pthreads::ComputeManager m;
 
   // Creating compute resource (core) manually
-  auto computeResource = HiCR::backend::hwloc::ComputeResource(0, 0, 0, {});
+  auto computeResource = HiCR::backend::hwloc::ComputeResource(0, 0, 0, 0, {});
   auto cPtr            = std::make_shared<HiCR::backend::hwloc::ComputeResource>(computeResource);
 
   // Creating processing unit from resource
@@ -132,7 +132,7 @@ TEST(ProcessingUnit, LifeCycle)
   HiCR::backend::pthreads::ComputeManager m;
 
   // Creating compute resource (core) manually
-  auto computeResource = HiCR::backend::hwloc::ComputeResource(0, 0, 0, {});
+  auto computeResource = HiCR::backend::hwloc::ComputeResource(0, 0, 0, 0, {});
   auto cPtr            = std::make_shared<HiCR::backend::hwloc::ComputeResource>(computeResource);
 
   // Creating processing unit from resource
