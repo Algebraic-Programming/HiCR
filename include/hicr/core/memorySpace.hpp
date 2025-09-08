@@ -154,11 +154,10 @@ class MemorySpace
     if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
     _size = input[key].get<size_t>();
 
-    // Deserializing usage
+    // Deserializing usage -- do not fail if unspecified
     key = "Usage";
-    if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
-    if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
-    _usage = input[key].get<size_t>();
+    _usage = 0;
+    if (input.contains(key) && input[key].is_number_unsigned()) _usage = input[key].get<size_t>();
   }
 
   protected:
