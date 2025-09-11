@@ -155,7 +155,7 @@ class MemorySpace
     _size = input[key].get<size_t>();
 
     // Deserializing usage -- do not fail if unspecified
-    key = "Usage";
+    key    = "Usage";
     _usage = 0;
     if (input.contains(key) && input[key].is_number_unsigned()) _usage = input[key].get<size_t>();
   }

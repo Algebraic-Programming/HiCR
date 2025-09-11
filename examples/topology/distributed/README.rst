@@ -78,14 +78,14 @@ The Root instance requests the topology from all the other instances, merge them
 
     // Invoke RPC
     for (const auto &instance : instances)
-      if (instance->getId() != coordinator->getId()) rpcEngine.requestRPC(*instance, TOPOLOGY_RPC_NAME);
+      if (instance->getId() != coordinator->getId()) rpcEngine.requestRPC(instance->getId(), TOPOLOGY_RPC_NAME);
 
     // Getting return values from the RPCs containing each of the worker's topology
     for (const auto &instance : instances)
       if (instance == coordinator)
       {
         // Getting return value as a memory slot
-        auto returnValue = rpcEngine.getReturnValue(*instance);
+        auto returnValue = rpcEngine.getReturnValue();
 
         // Receiving raw serialized topology information from the worker
         std::string serializedTopology = (char *)returnValue->getPointer();

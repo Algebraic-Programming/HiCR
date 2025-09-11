@@ -46,7 +46,7 @@ void RPCTestFc(HiCR::CommunicationManager            &cm,
   if (currentInstance->isRootInstance())
   {
     for (auto &instance : im.getInstances())
-      if (instance != currentInstance) rpcEngine.requestRPC(*instance, "Test RPC");
+      if (instance != currentInstance) rpcEngine.requestRPC(instance->getId(), "Test RPC");
   }
   else
     rpcEngine.listen();

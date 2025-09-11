@@ -93,7 +93,7 @@ The RPC caller can then wait for the reception of the return value by specifying
     instanceManager.launchRPC(*someInstance, RPC1_TARGET_ID);
 
     // Getting return value
-    auto returnValue = *(int *)instanceManager.getReturnValue(*someInstance);
+    auto returnValue = *(int *)instanceManager.getReturnValue();
 
     // Printing return value
     printf("Obtained return value: %d\n", returnValue);
