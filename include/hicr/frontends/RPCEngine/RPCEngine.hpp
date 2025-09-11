@@ -208,14 +208,12 @@ class RPCEngine
 
   /**
    * Function to request the execution of a remote function in a remote HiCR instance
-   * \param[in] RPCName The name of the RPC to run
-   * \param[in] instance Instance on which to run the RPC
+   * \param[in] targetInstanceId Instance ID of where the rpc is to be executed
+   * \param[in] RPCName RPC Name
    * \param[in] argument An optional numerical argument to provide to the RPC
    */
-  virtual void requestRPC(HiCR::Instance &instance, const std::string &RPCName, const HiCR::frontend::RPCEngine::RPCArgument_t argument = 0)
+  virtual void requestRPC(HiCR::Instance::instanceId_t targetInstanceId, const std::string &RPCName, const HiCR::frontend::RPCEngine::RPCArgument_t argument = 0)
   {
-    const auto targetInstanceId = instance.getId();
-
     // Creating message payload
     RPCPayload_t RPCPayload;
     RPCPayload.index    = getRPCTargetIndexFromString(RPCName);
@@ -254,10 +252,9 @@ class RPCEngine
 
   /**
    * Function to get a return value from a remote instance that ran an RPC
-   * \param[in] instance Instance from which to read the return value. An RPC request should be sent to that instance before calling this function.
    * \return A pointer to a newly allocated local memory slot containing the return value
    */
-  __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> getReturnValue(HiCR::Instance &instance) const
+  __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> getReturnValue() const
   {
     // Calling the backend-specific implementation of the listen function
     while (_returnValueConsumerChannel->isEmpty());
