@@ -63,8 +63,8 @@ class ComputeResource final : public HiCR::ComputeResource
 
   /**
    * Constructor for the compute resource class of the hwloc backend
-   * \param topology HWLoc topology object for discovery
-   * \param hwlocObjectIndex The index of the core within the hwloc topology
+   * \param[in] topology HWLoc topology object for discovery
+   * \param[in] hwlocObjectIndex The index of the core within the hwloc topology
    */
   ComputeResource(hwloc_topology_t topology, const hwlocObjectIndex_t hwlocObjectIndex)
     : HiCR::ComputeResource(),
@@ -79,10 +79,11 @@ class ComputeResource final : public HiCR::ComputeResource
 
   /**
    * Constructor for the compute resource class of the hwloc backend
+   * \param[in] hwlocObjectIndex The index of the core within the hwloc topology
    * \param[in] logicalProcessorId Unique identifier for the core assigned to this compute resource
+   * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    * \param[in] numaAffinity The NUMA domain associated to this core
    * \param[in] caches The set of caches contained to or accessible by this core
-   * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
   ComputeResource(const hwlocObjectIndex_t                                   hwlocObjectIndex,
                   const logicalProcessorId_t                                 logicalProcessorId,
