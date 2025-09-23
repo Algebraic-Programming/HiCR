@@ -190,11 +190,14 @@ class RPCEngine
    */
   __INLINE__ bool tryListen()
   {
+    // If there are messages to process early return
+    if (_RPCConsumerChannel->getDepth() > 0) return true;
+
     // If the channel is empty, check if new messages arrived since last check
-    if (_RPCConsumerChannel->getDepth() == 0) _RPCConsumerChannel->updateDepth();
+    _RPCConsumerChannel->updateDepth();
 
     // Return whether there are new messages
-    return _RPCConsumerChannel->getDepth() == 0;
+    return _RPCConsumerChannel->getDepth() > 0;
   }
 
   __INLINE__ void parseAndExecuteRPC()
