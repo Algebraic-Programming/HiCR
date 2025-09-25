@@ -168,13 +168,40 @@ class RPCEngine
   }
 
   /**
-   * Function to put the current instance to listen for incoming RPCs
+   * Blocking function to put the current instance to listen for incoming RPCs.
+   * 
+   * \note This is function stalls the current thread on waiting for incoming messages
    */
   __INLINE__ void listen()
   {
-    // Calling the backend-specific implementation of the listen function
+    // Keep querying the channel until a new message arrives
     while (_RPCConsumerChannel->getDepth() == 0) _RPCConsumerChannel->updateDepth();
 
+    // Execute the RPC
+    parseAndExecuteRPC();
+  }
+
+  /**
+   * Non-blocking function to put the current instance to listen for incoming RPCs
+   * 
+   * \return boolean telling whether there are new messages to process
+   * 
+   * \note Function to be used in conjuntion with \ref parseAndExecuteRPC "parseAndExecuteRPC()"
+   */
+  __INLINE__ bool tryListen()
+  {
+    // If there are messages to process early return
+    if (_RPCConsumerChannel->getDepth() > 0) return true;
+
+    // If the channel is empty, check if new messages arrived since last check
+    _RPCConsumerChannel->updateDepth();
+
+    // Return whether there are new messages
+    return _RPCConsumerChannel->getDepth() > 0;
+  }
+
+  __INLINE__ void parseAndExecuteRPC()
+  {
     // Once a request has arrived, gather its value from the channel
     auto          request   = _RPCConsumerChannel->peek();
     auto          requester = request[0];

@@ -63,8 +63,8 @@ class ComputeResource final : public HiCR::ComputeResource
 
   /**
    * Constructor for the compute resource class of the hwloc backend
-   * \param topology HWLoc topology object for discovery
-   * \param hwlocObjectIndex The index of the core within the hwloc topology
+   * \param[in] topology HWLoc topology object for discovery
+   * \param[in] hwlocObjectIndex The index of the core within the hwloc topology
    */
   ComputeResource(hwloc_topology_t topology, const hwlocObjectIndex_t hwlocObjectIndex)
     : HiCR::ComputeResource(),
@@ -79,10 +79,11 @@ class ComputeResource final : public HiCR::ComputeResource
 
   /**
    * Constructor for the compute resource class of the hwloc backend
+   * \param[in] hwlocObjectIndex The index of the core within the hwloc topology
    * \param[in] logicalProcessorId Unique identifier for the core assigned to this compute resource
+   * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    * \param[in] numaAffinity The NUMA domain associated to this core
    * \param[in] caches The set of caches contained to or accessible by this core
-   * \param[in] physicalProcessorId The identifier of the physical core as assigned by the OS
    */
   ComputeResource(const hwlocObjectIndex_t                                   hwlocObjectIndex,
                   const logicalProcessorId_t                                 logicalProcessorId,
@@ -147,12 +148,6 @@ class ComputeResource final : public HiCR::ComputeResource
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, objectId);
     if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%u) in this backend", objectId);
 
-    // Acquire the parent core object
-    // There is an asumption here that a HWLOC_OBJ_PU type always has a parent of type HWLOC_OBJ_CORE,
-    // which is consistent with current HWloc, but maybe reconsider it.
-    obj = obj->parent;
-    if (obj->type != HWLOC_OBJ_CORE) HICR_THROW_RUNTIME("Unexpected hwloc object type while trying to access Core/CPU (%u)", objectId);
-
     return obj->logical_index;
   }
 
@@ -167,12 +162,6 @@ class ComputeResource final : public HiCR::ComputeResource
   {
     hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, objectId);
     if (!obj) HICR_THROW_RUNTIME("Attempting to access a compute resource that does not exist (%u) in this backend", objectId);
-
-    // Acquire the parent core object
-    // There is an asumption here that a HWLOC_OBJ_PU type always has a parent of type HWLOC_OBJ_CORE,
-    // which is consistent with current HWloc, but maybe reconsider it.
-    obj = obj->parent;
-    if (obj->type != HWLOC_OBJ_CORE) HICR_THROW_RUNTIME("Unexpected hwloc object type while trying to access Core/CPU (%u)", objectId);
 
     return obj->os_index;
   }
