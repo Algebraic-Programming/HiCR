@@ -154,6 +154,7 @@ class CommunicationManager : public HiCR::CommunicationManager
     // Now also creating pointer vector to remember local pointers, when required for memcpys
     std::vector<void **>                                globalSlotPointers(globalSlotCount);
     std::vector<std::shared_ptr<HiCR::LocalMemorySlot>> globalSourceSlots(globalSlotCount);
+    std::vector<std::shared_ptr<HiCR::MemorySpace>>     globalMemorySpaces(globalSlotCount);
     size_t                                              localPointerPos = 0;
     for (size_t i = 0; i < globalSlotPointers.size(); i++)
     {
@@ -162,12 +163,14 @@ class CommunicationManager : public HiCR::CommunicationManager
       {
         globalSlotPointers[i] = nullptr;
         globalSourceSlots[i]  = nullptr;
+        globalMemorySpaces[i]  = nullptr;
       }
       else
       {
         const auto memorySlot = memorySlots[localPointerPos++].second;
         globalSlotPointers[i] = &memorySlot->getPointer();
         globalSourceSlots[i]  = memorySlot;
+        globalMemorySpaces[i]  = memorySlot->getMemorySpace();
       }
     }
 
@@ -196,11 +199,16 @@ class CommunicationManager : public HiCR::CommunicationManager
         // Copying existing data over to the new storage
         std::memcpy(ptr, *(globalSlotPointers[i]), globalSlotSizes[i]);
 
-        // Freeing up memory
-        MPI_Free_mem(*(globalSlotPointers[i]));
+        // Freeing up memory of the old local memory slot
+        // Commented out: it is the user who must free up this local memory slot
+        // MPI_Free_mem(*(globalSlotPointers[i])); 
 
         // Swapping pointers
         *(globalSlotPointers[i]) = ptr;
+
+        // Registering the pointer as a local memory slot
+        auto newLocalMemorySlot = std::make_shared<HiCR::backend::mpi::LocalMemorySlot>(ptr, globalSlotSizes[i], globalMemorySpaces[i]);
+        memorySlot->setSourceLocalMemorySlot(newLocalMemorySlot);
       }
 
       if (status != MPI_SUCCESS) HICR_THROW_RUNTIME("Failed to create MPI data window on exchange global memory slots.");
