@@ -58,7 +58,8 @@ class Producer final : public fixedSize::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    *            tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
    * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
@@ -66,13 +67,14 @@ class Producer final : public fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(CommunicationManager                   &communicationManager,
+  Producer(CommunicationManager                   &coordinationCommunicationManager,
+           CommunicationManager                   &payloadCommunicationManager,
            std::shared_ptr<GlobalMemorySlot>       tokenBuffer,
            const std::shared_ptr<LocalMemorySlot> &internalCoordinationBuffer,
            std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBuffer,
            const size_t                            tokenSize,
            const size_t                            capacity)
-    : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+    : fixedSize::Base(coordinationCommunicationManager, payloadCommunicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(std::move(tokenBuffer)),
       _consumerCoordinationBuffer(std::move(consumerCoordinationBuffer))
   {}
@@ -111,17 +113,21 @@ class Producer final : public fixedSize::Base
     // Flag to record whether the operation was successful or not (it simplifies code by releasing locks only once)
     bool successFlag = false;
 
+    auto coordinationCommunicationManager = getCoordinationCommunicationManager();
+
     // Locking remote token and coordination buffer slots
-    if (getCommunicationManager()->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
+    if (coordinationCommunicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
 
     // Updating local coordination buffer
-    getCommunicationManager()->memcpy(getCoordinationBuffer(), 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
+    coordinationCommunicationManager->memcpy(getCoordinationBuffer(), 0, _consumerCoordinationBuffer, 0, getCoordinationBufferSize());
 
     // Adding fence operation to ensure buffers are ready for re-use
-    getCommunicationManager()->fence(getCoordinationBuffer(), 0, 1);
+    coordinationCommunicationManager->fence(getCoordinationBuffer(), 0, 1);
 
     // Calculating current channel depth
     const auto depth = getDepth();
+
+    auto payloadCommunicationManager = getPayloadCommunicationManager();
 
     // If the exchange buffer does not have n free slots, reject the operation
     if (depth + n <= getCircularBuffer()->getCapacity())
@@ -129,28 +135,28 @@ class Producer final : public fixedSize::Base
       // Copying with source increasing offset per token
       for (size_t i = 0; i < n; i++)
       {
-        getCommunicationManager()->memcpy(_tokenBuffer,                                            /* destination */
-                                          getTokenSize() * getCircularBuffer()->getHeadPosition(), /* dst_offset */
-                                          sourceSlot,                                              /* source */
-                                          i * getTokenSize(),                                      /* src_offset */
-                                          getTokenSize());                                         /* size*/
+        payloadCommunicationManager->memcpy(_tokenBuffer,                                            /* destination */
+                                            getTokenSize() * getCircularBuffer()->getHeadPosition(), /* dst_offset */
+                                            sourceSlot,                                              /* source */
+                                            i * getTokenSize(),                                      /* src_offset */
+                                            getTokenSize());                                         /* size*/
         // Advance head here, since the memcpy relies on the up-to-date head position
         getCircularBuffer()->advanceHead(1);
       }
 
-      getCommunicationManager()->fence(sourceSlot, n, 0);
+      payloadCommunicationManager->fence(sourceSlot, n, 0);
 
       // Updating global coordination buffer
-      getCommunicationManager()->memcpy(_consumerCoordinationBuffer, 0, getCoordinationBuffer(), 0, getCoordinationBufferSize());
+      coordinationCommunicationManager->memcpy(_consumerCoordinationBuffer, 0, getCoordinationBuffer(), 0, getCoordinationBufferSize());
       // Adding fence operation to ensure buffers are ready for re-use
-      getCommunicationManager()->fence(getCoordinationBuffer(), 1, 0);
+      coordinationCommunicationManager->fence(getCoordinationBuffer(), 1, 0);
 
       // Mark operation as successful
       successFlag = true;
     }
 
     // Releasing remote token and coordination buffer slots
-    getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBuffer);
+    coordinationCommunicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Succeeded
     return successFlag;

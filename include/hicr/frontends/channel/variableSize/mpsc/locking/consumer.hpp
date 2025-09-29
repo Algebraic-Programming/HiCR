@@ -44,7 +44,8 @@ class Consumer final : public variableSize::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] payloadBuffer The memory slot pertaining to the payload buffer. The producer will push new tokens
    *            into this buffer, while there is enough space (in bytes). This buffer should be big enough to hold at least the
    *            largest message of the variable-sized messages to be pushed.
@@ -62,7 +63,8 @@ class Consumer final : public variableSize::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
-  Consumer(CommunicationManager                    &communicationManager,
+  Consumer(CommunicationManager                    &coordinationCommunicationManager,
+           CommunicationManager                    &payloadCommunicationManager,
            std::shared_ptr<GlobalMemorySlot>        payloadBuffer,
            std::shared_ptr<GlobalMemorySlot>        tokenBuffer,
            const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBufferForCounts,
@@ -71,7 +73,12 @@ class Consumer final : public variableSize::Base
            std::shared_ptr<GlobalMemorySlot>        consumerCoordinationBufferForPayloads,
            const size_t                             payloadCapacity,
            const size_t                             capacity)
-    : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
+    : variableSize::Base(coordinationCommunicationManager,
+                         payloadCommunicationManager,
+                         internalCoordinationBufferForCounts,
+                         internalCoordinationBufferForPayloads,
+                         capacity,
+                         payloadCapacity),
       _payloadBuffer(std::move(payloadBuffer)),
       _tokenSizeBuffer(std::move(tokenBuffer)),
       _consumerCoordinationBufferForCounts(consumerCoordinationBufferForCounts),
@@ -80,8 +87,8 @@ class Consumer final : public variableSize::Base
     assert(internalCoordinationBufferForCounts != nullptr);
     assert(internalCoordinationBufferForPayloads != nullptr);
     assert(consumerCoordinationBufferForCounts != nullptr);
-    getCommunicationManager()->queryMemorySlotUpdates(_tokenSizeBuffer->getSourceLocalMemorySlot());
-    getCommunicationManager()->queryMemorySlotUpdates(_payloadBuffer->getSourceLocalMemorySlot());
+    getCoordinationCommunicationManager()->queryMemorySlotUpdates(_tokenSizeBuffer->getSourceLocalMemorySlot());
+    getPayloadCommunicationManager()->queryMemorySlotUpdates(_payloadBuffer->getSourceLocalMemorySlot());
   }
 
   /**
@@ -136,7 +143,8 @@ class Consumer final : public variableSize::Base
    */
   __INLINE__ std::array<size_t, 2> peek(const size_t pos = 0)
   {
-    getCommunicationManager()->flushReceived();
+    getCoordinationCommunicationManager()->flushReceived();
+    getPayloadCommunicationManager()->flushReceived();
     std::array<size_t, 2> result{};
     if (pos != 0) { HICR_THROW_FATAL("peek only implemented for n = 0 at the moment!"); }
     if (pos >= getCircularBufferForCounts()->getDepth())
@@ -211,8 +219,10 @@ class Consumer final : public variableSize::Base
   {
     bool successFlag = false;
 
+    auto coordinationCommunicationManager = getCoordinationCommunicationManager();
+    
     // Locking remote coordination buffer slot
-    if (getCommunicationManager()->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false) return successFlag;
+    if (coordinationCommunicationManager->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false) return successFlag;
 
     if (n > getCircularBufferForCounts()->getCapacity())
       HICR_THROW_LOGIC("Attempting to pop (%lu) tokens, which is larger than the channel capacity (%lu)", n, getCircularBufferForCounts()->getCapacity());
@@ -227,7 +237,7 @@ class Consumer final : public variableSize::Base
     getCircularBufferForCounts()->advanceTail(n);
     getCircularBufferForPayloads()->advanceTail(bytesOldestEntry);
 
-    getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBufferForCounts);
+    coordinationCommunicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
     successFlag = true;
     return successFlag;
   }

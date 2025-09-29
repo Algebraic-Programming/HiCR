@@ -58,7 +58,8 @@ class Producer : public fixedSize::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    *            tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
    * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
@@ -67,13 +68,14 @@ class Producer : public fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(CommunicationManager                   &communicationManager,
+  Producer(CommunicationManager                   &coordinationCommunicationManager,
+           CommunicationManager                   &payloadCommunicationManager,
            std::shared_ptr<GlobalMemorySlot>       tokenBuffer,
            const std::shared_ptr<LocalMemorySlot> &internalCoordinationBuffer,
            std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBuffer,
            const size_t                            tokenSize,
            const size_t                            capacity)
-    : fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+    : fixedSize::Base(coordinationCommunicationManager, payloadCommunicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(std::move(tokenBuffer)),
       _consumerCoordinationBuffer(std::move(consumerCoordinationBuffer))
   {}
@@ -120,16 +122,17 @@ class Producer : public fixedSize::Base
       HICR_THROW_RUNTIME(
         "Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n", n, curDepth, getCircularBuffer()->getCapacity());
 
+    auto payloadCommunicationManager = getPayloadCommunicationManager();
     for (size_t i = 0; i < n; i++)
     {
       // Copying with source increasing offset per token
-      getCommunicationManager()->memcpy(_tokenBuffer,                                            /* destination */
-                                        getTokenSize() * getCircularBuffer()->getHeadPosition(), /* dst_offset */
-                                        sourceSlot,                                              /* source */
-                                        i * getTokenSize(),                                      /* src_offset */
-                                        getTokenSize());                                         /* size */
+      payloadCommunicationManager->memcpy(_tokenBuffer,                                            /* destination */
+                                          getTokenSize() * getCircularBuffer()->getHeadPosition(), /* dst_offset */
+                                          sourceSlot,                                              /* source */
+                                          i * getTokenSize(),                                      /* src_offset */
+                                          getTokenSize());                                         /* size */
     }
-    getCommunicationManager()->fence(sourceSlot, n, 0);
+    payloadCommunicationManager->fence(sourceSlot, n, 0);
 
     // read possibly slightly outdated depth here (will be updated next round)
     getCircularBuffer()->advanceHead(n);
@@ -140,12 +143,13 @@ class Producer : public fixedSize::Base
      * This implementation has some advantages for MPSC implementations
      * on top of SPSC
      */
-    getCommunicationManager()->memcpy(_consumerCoordinationBuffer,
+    auto coordinationCommunicationManager = getCoordinationCommunicationManager();
+    coordinationCommunicationManager->memcpy(_consumerCoordinationBuffer,
                                       _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
                                       getCoordinationBuffer(),
                                       _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
                                       sizeof(size_t));
-    getCommunicationManager()->fence(getCoordinationBuffer(), 1, 0);
+    coordinationCommunicationManager->fence(getCoordinationBuffer(), 1, 0);
   }
 
   /**
@@ -154,7 +158,7 @@ class Producer : public fixedSize::Base
   __INLINE__ void updateDepth()
   {
     // Perform a non-blocking check of the coordination and token buffers, to see and/or notify if there are new messages
-    getCommunicationManager()->queryMemorySlotUpdates(getCoordinationBuffer());
+    getCoordinationCommunicationManager()->queryMemorySlotUpdates(getCoordinationBuffer());
   }
 };
 

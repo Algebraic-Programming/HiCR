@@ -47,7 +47,8 @@ class Base : public channel::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend's memory manager to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] coordinationBuffer This is a small buffer that needs to be allocated at the producer side.
    *            enables the consumer to signal how many tokens it has popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
@@ -59,8 +60,12 @@ class Base : public channel::Base
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(CommunicationManager &communicationManager, const std::shared_ptr<LocalMemorySlot> &coordinationBuffer, const size_t tokenSize, const size_t capacity)
-    : channel::Base(communicationManager, coordinationBuffer, tokenSize, capacity)
+  Base(CommunicationManager                   &coordinationCommunicationManager,
+       CommunicationManager                   &payloadCommunicationManager,
+       const std::shared_ptr<LocalMemorySlot> &coordinationBuffer,
+       const size_t                            tokenSize,
+       const size_t                            capacity)
+    : channel::Base(coordinationCommunicationManager, payloadCommunicationManager, coordinationBuffer, tokenSize, capacity)
   {}
 };
 

@@ -47,7 +47,8 @@ class Consumer final : public variableSize::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] payloadBuffer The memory slot pertaining to the payload buffer. The producer will push new tokens
    *            into this buffer, while there is enough space (in bytes). This buffer should be big enough to hold at least the
    *            largest message of the variable-sized messages to be pushed.
@@ -65,7 +66,8 @@ class Consumer final : public variableSize::Base
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
-  Consumer(CommunicationManager                    &communicationManager,
+  Consumer(CommunicationManager                    &coordinationCommunicationManager,
+           CommunicationManager                    &payloadCommunicationManager,
            std::shared_ptr<GlobalMemorySlot>        payloadBuffer,
            std::shared_ptr<GlobalMemorySlot>        tokenBuffer,
            const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBufferForCounts,
@@ -74,7 +76,12 @@ class Consumer final : public variableSize::Base
            std::shared_ptr<GlobalMemorySlot>        producerCoordinationBufferForPayloads,
            const size_t                             payloadCapacity,
            const size_t                             capacity)
-    : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
+    : variableSize::Base(coordinationCommunicationManager,
+                         payloadCommunicationManager,
+                         internalCoordinationBufferForCounts,
+                         internalCoordinationBufferForPayloads,
+                         capacity,
+                         payloadCapacity),
 
       _payloadBuffer(std::move(payloadBuffer)),
       _tokenSizeBuffer(std::move(tokenBuffer)),
@@ -201,22 +208,24 @@ class Consumer final : public variableSize::Base
     getCircularBufferForCounts()->advanceTail(n);
     getCircularBufferForPayloads()->advanceTail(payloadBytes);
 
+    auto coordinationCommunicationManager = getCoordinationCommunicationManager();
+
     const auto coordBuffElemSize = sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
     // Notifying producer(s) of buffer liberation
-    getCommunicationManager()->memcpy(_producerCoordinationBufferForCounts, /* destination */
-                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                      getCoordinationBufferForCounts(),
-                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                      coordBuffElemSize);
+    coordinationCommunicationManager->memcpy(_producerCoordinationBufferForCounts, /* destination */
+                                             _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                             getCoordinationBufferForCounts(),
+                                             _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                             coordBuffElemSize);
 
-    getCommunicationManager()->memcpy(_producerCoordinationBufferForPayloads, /* destination */
-                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                      getCoordinationBufferForPayloads(), /* source */
-                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                      coordBuffElemSize);
+    coordinationCommunicationManager->memcpy(_producerCoordinationBufferForPayloads, /* destination */
+                                             _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                             getCoordinationBufferForPayloads(), /* source */
+                                             _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                             coordBuffElemSize);
 
-    getCommunicationManager()->fence(getCoordinationBufferForCounts(), 1, 0);
-    getCommunicationManager()->fence(getCoordinationBufferForPayloads(), 1, 0);
+    coordinationCommunicationManager->fence(getCoordinationBufferForCounts(), 1, 0);
+    coordinationCommunicationManager->fence(getCoordinationBufferForPayloads(), 1, 0);
   }
 
   /**

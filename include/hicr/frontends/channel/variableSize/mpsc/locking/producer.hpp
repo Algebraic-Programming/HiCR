@@ -42,9 +42,8 @@ class Producer final : public variableSize::Base
   /**
    * The constructor of the variable-sized producer channel class.
    *
-   * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
-   *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] sizeInfoBuffer The local memory slot used to hold the information about the next message size
    * \param[in] payloadBuffer The global memory slot pertaining to the payload of all messages. The producer will push messages into this
    *            buffer, while there is enough space. This buffer should be big enough to hold at least the largest of the variable-size messages.
@@ -59,7 +58,8 @@ class Producer final : public variableSize::Base
    * \param[in] payloadSize size in bytes of the datatype used for variable-sized messages
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(CommunicationManager                   &communicationManager,
+  Producer(CommunicationManager                   &coordinationCommunicationManager,
+           CommunicationManager                   &payloadCommunicationManager,
            std::shared_ptr<LocalMemorySlot>        sizeInfoBuffer,
            std::shared_ptr<GlobalMemorySlot>       payloadBuffer,
            std::shared_ptr<GlobalMemorySlot>       tokenBuffer,
@@ -70,7 +70,12 @@ class Producer final : public variableSize::Base
            const size_t                            payloadCapacity,
            const size_t                            payloadSize,
            const size_t                            capacity)
-    : variableSize::Base(communicationManager, internalCoordinationBufferForCounts, internalCoordinationBufferForPayloads, capacity, payloadCapacity),
+    : variableSize::Base(coordinationCommunicationManager,
+                         payloadCommunicationManager,
+                         internalCoordinationBufferForCounts,
+                         internalCoordinationBufferForPayloads,
+                         capacity,
+                         payloadCapacity),
       _payloadBuffer(std::move(payloadBuffer)),
       _sizeInfoBuffer(std::move(sizeInfoBuffer)),
       _payloadSize(payloadSize),
@@ -87,20 +92,21 @@ class Producer final : public variableSize::Base
    */
   __INLINE__ void updateDepth() // NOTE: we DO know we have the lock!!!!
   {
-    getCommunicationManager()->memcpy(getCoordinationBufferForCounts(),                            /* destination */
-                                      0,                                                           /* dst_offset */
-                                      _consumerCoordinationBufferForCounts,                        /* source */
-                                      0,                                                           /* src_offset */
-                                      2 * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE)); /* size */
+    auto coordinationCommunicationManager = getCoordinationCommunicationManager();
+    coordinationCommunicationManager->memcpy(getCoordinationBufferForCounts(),                            /* destination */
+                                             0,                                                           /* dst_offset */
+                                             _consumerCoordinationBufferForCounts,                        /* source */
+                                             0,                                                           /* src_offset */
+                                             2 * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE)); /* size */
 
-    getCommunicationManager()->memcpy(getCoordinationBufferForPayloads(),                          /* destination */
-                                      0,                                                           /* dst_offset */
-                                      _consumerCoordinationBufferForPayloads,                      /* source */
-                                      0,                                                           /* src_offset */
-                                      2 * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE)); /* size */
+    coordinationCommunicationManager->memcpy(getCoordinationBufferForPayloads(),                          /* destination */
+                                             0,                                                           /* dst_offset */
+                                             _consumerCoordinationBufferForPayloads,                      /* source */
+                                             0,                                                           /* src_offset */
+                                             2 * sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE)); /* size */
 
-    getCommunicationManager()->fence(getCoordinationBufferForCounts(), 0, 1);
-    getCommunicationManager()->fence(getCoordinationBufferForPayloads(), 0, 1);
+    coordinationCommunicationManager->fence(getCoordinationBufferForCounts(), 0, 1);
+    coordinationCommunicationManager->fence(getCoordinationBufferForPayloads(), 0, 1);
     /**
      * Now we know the exact buffer state at the consumer
      */
@@ -146,8 +152,10 @@ class Producer final : public variableSize::Base
     // Flag to record whether the operation was successful or not (it simplifies code by releasing locks only once)
     bool successFlag = false;
 
+    auto coordinationCommunicationManager = getCoordinationCommunicationManager();
+
     // Locking remote token and coordination buffer slots
-    if (getCommunicationManager()->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false) return successFlag;
+    if (coordinationCommunicationManager->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false) return successFlag;
 
     // Updating depth of token (message sizes) and payload buffers from the consumer
     updateDepth();
@@ -157,7 +165,7 @@ class Producer final : public variableSize::Base
     // If not, reject the operation
     if (getCircularBufferForPayloads()->getDepth() + requiredBufferSize > getCircularBufferForPayloads()->getCapacity())
     {
-      getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBufferForCounts);
+      coordinationCommunicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
       return successFlag;
     }
 
@@ -167,7 +175,7 @@ class Producer final : public variableSize::Base
     // Check if the consumer buffer has n free slots. If not, reject the operation
     if (getCircularBufferForCounts()->getDepth() + 1 > getCircularBufferForCounts()->getCapacity())
     {
-      getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBufferForCounts);
+      coordinationCommunicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
       return successFlag;
     }
 
@@ -175,13 +183,15 @@ class Producer final : public variableSize::Base
      * Phase 1: Update the size (in bytes) of the pending payload
      * at the consumer
      */
-    getCommunicationManager()->memcpy(_tokenSizeBuffer,                                                 /* destination */
-                                      getTokenSize() * getCircularBufferForCounts()->getHeadPosition(), /* dst_offset */
-                                      _sizeInfoBuffer,                                                  /* source */
-                                      0,                                                                /* src_offset */
-                                      getTokenSize());                                                  /* size */
-    getCommunicationManager()->fence(_sizeInfoBuffer, 1, 0);
+    coordinationCommunicationManager->memcpy(_tokenSizeBuffer,                                                 /* destination */
+                                             getTokenSize() * getCircularBufferForCounts()->getHeadPosition(), /* dst_offset */
+                                             _sizeInfoBuffer,                                                  /* source */
+                                             0,                                                                /* src_offset */
+                                             getTokenSize());                                                  /* size */
+    coordinationCommunicationManager->fence(_sizeInfoBuffer, 1, 0);
     successFlag = true;
+
+    auto payloadCommunicationManager = getPayloadCommunicationManager();
 
     /**
      * Phase 2: Payload copy:
@@ -196,24 +206,24 @@ class Producer final : public variableSize::Base
       size_t first_chunk  = getCircularBufferForPayloads()->getCapacity() - getCircularBufferForPayloads()->getHeadPosition();
       size_t second_chunk = requiredBufferSize - first_chunk;
       // copy first part to end of buffer
-      getCommunicationManager()->memcpy(_payloadBuffer,                                    /* destination */
-                                        getCircularBufferForPayloads()->getHeadPosition(), /* dst_offset */
-                                        sourceSlot,                                        /* source */
-                                        0,                                                 /* src_offset */
-                                        first_chunk);                                      /* size */
+      payloadCommunicationManager->memcpy(_payloadBuffer,                                    /* destination */
+                                          getCircularBufferForPayloads()->getHeadPosition(), /* dst_offset */
+                                          sourceSlot,                                        /* source */
+                                          0,                                                 /* src_offset */
+                                          first_chunk);                                      /* size */
       // copy second part to beginning of buffer
-      getCommunicationManager()->memcpy(_payloadBuffer, /* destination */
-                                        0,              /* dst_offset */
-                                        sourceSlot,     /* source */
-                                        first_chunk,    /* src_offset */
-                                        second_chunk);  /* size */
+      payloadCommunicationManager->memcpy(_payloadBuffer, /* destination */
+                                          0,              /* dst_offset */
+                                          sourceSlot,     /* source */
+                                          first_chunk,    /* src_offset */
+                                          second_chunk);  /* size */
 
-      getCommunicationManager()->fence(sourceSlot, 2, 0);
+      payloadCommunicationManager->fence(sourceSlot, 2, 0);
     }
     else
     {
-      getCommunicationManager()->memcpy(_payloadBuffer, getCircularBufferForPayloads()->getHeadPosition(), sourceSlot, 0, requiredBufferSize);
-      getCommunicationManager()->fence(sourceSlot, 1, 0);
+      payloadCommunicationManager->memcpy(_payloadBuffer, getCircularBufferForPayloads()->getHeadPosition(), sourceSlot, 0, requiredBufferSize);
+      payloadCommunicationManager->fence(sourceSlot, 1, 0);
     }
 
     // Remotely push an element into consumer side, updating consumer head indices
@@ -221,14 +231,15 @@ class Producer final : public variableSize::Base
     getCircularBufferForPayloads()->advanceHead(requiredBufferSize);
 
     // only update head index at consumer (byte size = one buffer element)
-    getCommunicationManager()->memcpy(_consumerCoordinationBufferForCounts, 0, getCoordinationBufferForCounts(), 0, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+    coordinationCommunicationManager->memcpy(_consumerCoordinationBufferForCounts, 0, getCoordinationBufferForCounts(), 0, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
     // only update head index at consumer (byte size = one buffer element)
-    getCommunicationManager()->memcpy(_consumerCoordinationBufferForPayloads, 0, getCoordinationBufferForPayloads(), 0, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
+    coordinationCommunicationManager->memcpy(
+      _consumerCoordinationBufferForPayloads, 0, getCoordinationBufferForPayloads(), 0, sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE));
     // backend LPF needs this to complete
-    getCommunicationManager()->fence(getCoordinationBufferForCounts(), 1, 0);
-    getCommunicationManager()->fence(getCoordinationBufferForPayloads(), 1, 0);
+    coordinationCommunicationManager->fence(getCoordinationBufferForCounts(), 1, 0);
+    coordinationCommunicationManager->fence(getCoordinationBufferForPayloads(), 1, 0);
 
-    getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBufferForCounts);
+    coordinationCommunicationManager->releaseGlobalLock(_consumerCoordinationBufferForCounts);
 
     return successFlag;
   }
