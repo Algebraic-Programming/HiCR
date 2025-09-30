@@ -85,8 +85,8 @@ int main(int argc, char **argv)
   size_t producerCount = rankCount - 1;
 
   // Rank 0 is consumer, the rest are producers
-  if (rankId == 0) consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);
-  if (rankId >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, rankId);
+  if (rankId == 0) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, producerCount);
+  if (rankId >= 1) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, rankId);
 
   // Finalizing MPI
   MPI_Finalize();

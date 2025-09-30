@@ -78,8 +78,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   auto firstMemorySpace = *memSpaces.begin();
 
   // Rank 0 is producer, Rank 1 is consumer
-  if (pid == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
-  if (pid == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
+  if (pid == 0) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity);
+  if (pid == 1) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity);
 }
 
 int main(int argc, char **argv)

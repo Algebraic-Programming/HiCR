@@ -82,8 +82,8 @@ int main(int argc, char **argv)
   auto firstMemorySpace = *memSpaces.begin();
 
   // Rank 0 is producer, Rank 1 is consumer
-  if (rankId == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
-  if (rankId == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
+  if (rankId == 0) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity);
+  if (rankId == 1) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity);
 
   // Finalizing MPI
   MPI_Finalize();

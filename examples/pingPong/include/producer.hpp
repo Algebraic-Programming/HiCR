@@ -49,11 +49,11 @@ void producerFc(HiCR::MemoryManager               &memoryManager,
   auto consumerPongCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PONG_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto pingChannel =
-    HiCR::channel::fixedSize::SPSC::Producer(communicationManager, pingTokenBufferSlot, pingCoordinationBuffer, consumerPingCoordinationBuffer, tokenSize, channelCapacity);
+  auto pingChannel = HiCR::channel::fixedSize::SPSC::Producer(
+    communicationManager, communicationManager, pingTokenBufferSlot, pingCoordinationBuffer, consumerPingCoordinationBuffer, tokenSize, channelCapacity);
   // For the ponger, the consumer buffer i
-  auto pongChannel =
-    HiCR::channel::fixedSize::SPSC::Consumer(communicationManager, pongTokenBufferSlot, pongCoordinationBuffer, consumerPongCoordinationBuffer, tokenSize, channelCapacity);
+  auto pongChannel = HiCR::channel::fixedSize::SPSC::Consumer(
+    communicationManager, communicationManager, pongTokenBufferSlot, pongCoordinationBuffer, consumerPongCoordinationBuffer, tokenSize, channelCapacity);
 
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer[tokenSize] = {'a'};

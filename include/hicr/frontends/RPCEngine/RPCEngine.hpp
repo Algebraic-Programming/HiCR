@@ -462,8 +462,13 @@ class RPCEngine
         globalConsumerCoordinationBuffers.push_back(consumerCoordinationBuffer);
       }
 
-      _RPCConsumerChannel = std::make_shared<HiCR::channel::fixedSize::MPSC::nonlocking::Consumer>(
-        _communicationManager, globalConsumerTokenBuffers, localConsumerCoordinationBuffers, globalProducerCoordinationBuffers, tokenSize, _HICR_RPC_ENGINE_CHANNEL_COUNT_CAPACITY);
+      _RPCConsumerChannel = std::make_shared<HiCR::channel::fixedSize::MPSC::nonlocking::Consumer>(_communicationManager,
+                                                                                                   _communicationManager,
+                                                                                                   globalConsumerTokenBuffers,
+                                                                                                   localConsumerCoordinationBuffers,
+                                                                                                   globalProducerCoordinationBuffers,
+                                                                                                   tokenSize,
+                                                                                                   _HICR_RPC_ENGINE_CHANNEL_COUNT_CAPACITY);
     }
 
     ////////// Creating producer channels to send fixed sized RPC requests to other instances
@@ -499,6 +504,7 @@ class RPCEngine
         // the producer of MPSC::nonlocking has the same view
         _RPCProducerChannels[consumerInstanceId] =
           std::make_shared<HiCR::channel::fixedSize::MPSC::nonlocking::Producer>(_communicationManager,
+                                                                                 _communicationManager,
                                                                                  globalConsumerTokenBuffers[i],
                                                                                  globalProducerCoordinationBuffers[i]->getSourceLocalMemorySlot(),
                                                                                  globalConsumerCoordinationBuffers[i],
@@ -564,6 +570,7 @@ class RPCEngine
 
     // Creating channel
     _returnValueConsumerChannel = std::make_shared<HiCR::channel::variableSize::MPSC::locking::Consumer>(_communicationManager,
+                                                                                                         _communicationManager,
                                                                                                          consumerMessagePayloadBuffer,
                                                                                                          consumerMessageSizesBuffer,
                                                                                                          localConsumerCoordinationBufferMessageSizes,
@@ -596,6 +603,7 @@ class RPCEngine
 
       // Creating channel
       _returnValueProducerChannels[consumerInstanceId] = std::make_shared<HiCR::channel::variableSize::MPSC::locking::Producer>(_communicationManager,
+                                                                                                                                _communicationManager,
                                                                                                                                 localProducerSizeInfoBuffer,
                                                                                                                                 consumerMessagePayloadBuffer,
                                                                                                                                 consumerMessageSizesBuffer,

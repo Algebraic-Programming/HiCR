@@ -80,8 +80,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   size_t producerCount = nprocs - 1;
 
   // Rank 0 is consumer, the rest are producers
-  if (pid == 0) consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);
-  if (pid >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, pid);
+  if (pid == 0) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, producerCount);
+  if (pid >= 1) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, pid);
 }
 
 int main(int argc, char **argv)
