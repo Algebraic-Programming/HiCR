@@ -77,8 +77,8 @@ class Consumer
     // create p (= number of producers) SPSC channels
     for (size_t i = 0; i < internalCoordinationBuffers.size(); i++)
     {
-      std::shared_ptr<fixedSize::SPSC::Consumer> consumerPtr(
-        new fixedSize::SPSC::Consumer(coordinationCommunicationManager, payloadCommunicationManager, tokenBuffers[i], internalCoordinationBuffers[i], producerCoordinationBuffers[i], tokenSize, capacity));
+      std::shared_ptr<fixedSize::SPSC::Consumer> consumerPtr(new fixedSize::SPSC::Consumer(
+        coordinationCommunicationManager, payloadCommunicationManager, tokenBuffers[i], internalCoordinationBuffers[i], producerCoordinationBuffers[i], tokenSize, capacity));
       _spscList.push_back(consumerPtr);
       _depths.push_back(0);
     }

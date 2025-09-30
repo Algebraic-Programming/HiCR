@@ -53,14 +53,20 @@ class Producer final : public fixedSize::SPSC::Producer
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(CommunicationManager                   &coordinationCommunicationManager,
-           CommunicationManager                   &payloadCommunicationManager,
+  Producer(CommunicationManager                    &coordinationCommunicationManager,
+           CommunicationManager                    &payloadCommunicationManager,
            std::shared_ptr<GlobalMemorySlot>        tokenBuffer,
            const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBuffer,
            const std::shared_ptr<GlobalMemorySlot> &producerCoordinationBuffer,
            const size_t                             tokenSize,
            const size_t                             capacity)
-    : fixedSize::SPSC::Producer(coordinationCommunicationManager, payloadCommunicationManager, std::move(tokenBuffer), internalCoordinationBuffer, producerCoordinationBuffer, tokenSize, capacity)
+    : fixedSize::SPSC::Producer(coordinationCommunicationManager,
+                                payloadCommunicationManager,
+                                std::move(tokenBuffer),
+                                internalCoordinationBuffer,
+                                producerCoordinationBuffer,
+                                tokenSize,
+                                capacity)
   {}
   ~Producer() = default;
 };

@@ -43,7 +43,7 @@ void producerFc(HiCR::MemoryManager               &coordinationMemoryManager,
   // Initializing coordination buffers for message sizes and payloads (sets to zero the counters)
   HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferForCounts);
   HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferForPayloads);
-  
+
   // Exchanging local memory slots to become global for them to be used by the remote end
   coordinationCommunicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {});
   payloadCommunicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {});

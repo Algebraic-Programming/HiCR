@@ -52,10 +52,10 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
   auto consumerPongCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PONG_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto pingChannel =
-    HiCR::channel::fixedSize::SPSC::Consumer(communicationManager, communicationManager, pingTokenBufferSlot, pingCoordinationBuffer, producerPingCoordinationBuffer, tokenSize, channelCapacity);
-  auto pongChannel =
-    HiCR::channel::fixedSize::SPSC::Producer(communicationManager, communicationManager, pongTokenBufferSlot, pongCoordinationBuffer, producerPongCoordinationBuffer, tokenSize, channelCapacity);
+  auto pingChannel = HiCR::channel::fixedSize::SPSC::Consumer(
+    communicationManager, communicationManager, pingTokenBufferSlot, pingCoordinationBuffer, producerPingCoordinationBuffer, tokenSize, channelCapacity);
+  auto pongChannel = HiCR::channel::fixedSize::SPSC::Producer(
+    communicationManager, communicationManager, pongTokenBufferSlot, pongCoordinationBuffer, producerPongCoordinationBuffer, tokenSize, channelCapacity);
 
   // Getting a single value from the channel
   for (int i = 0; i < msgCount; i++)

@@ -220,7 +220,7 @@ class Consumer final : public variableSize::Base
     bool successFlag = false;
 
     auto coordinationCommunicationManager = getCoordinationCommunicationManager();
-    
+
     // Locking remote coordination buffer slot
     if (coordinationCommunicationManager->acquireGlobalLock(_consumerCoordinationBufferForCounts) == false) return successFlag;
 

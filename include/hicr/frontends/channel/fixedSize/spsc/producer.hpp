@@ -145,10 +145,10 @@ class Producer : public fixedSize::Base
      */
     auto coordinationCommunicationManager = getCoordinationCommunicationManager();
     coordinationCommunicationManager->memcpy(_consumerCoordinationBuffer,
-                                      _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
-                                      getCoordinationBuffer(),
-                                      _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
-                                      sizeof(size_t));
+                                             _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
+                                             getCoordinationBuffer(),
+                                             _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
+                                             sizeof(size_t));
     coordinationCommunicationManager->fence(getCoordinationBuffer(), 1, 0);
   }
 
