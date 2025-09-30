@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 #include <hicr/backends/hwloc/memoryManager.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
@@ -46,8 +47,12 @@ TEST(ProducerChannel, Construction)
   // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);
@@ -110,8 +115,12 @@ TEST(ProducerChannel, Push)
   // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);
@@ -195,8 +204,12 @@ TEST(ProducerChannel, PushWait)
   // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);
