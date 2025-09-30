@@ -103,7 +103,7 @@ class CommunicationManager
     else
     {
       // If the requested tag and key are not found, return empty storage
-      if (_globalMemorySlotTagKeyMap.contains(tag) == false) HICR_THROW_LOGIC("Requesting a global memory slot for a tag (%lu) that has not been registered.", tag); 
+      if (_globalMemorySlotTagKeyMap.contains(tag) == false) HICR_THROW_LOGIC("Requesting a global memory slot with key %lu for a tag (%lu) that has not been registered.", globalKey, tag); 
       if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false) HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
 
       // Getting requested memory slot
