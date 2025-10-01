@@ -163,14 +163,14 @@ class CommunicationManager : public HiCR::CommunicationManager
       {
         globalSlotPointers[i] = nullptr;
         globalSourceSlots[i]  = nullptr;
-        globalMemorySpaces[i]  = nullptr;
+        globalMemorySpaces[i] = nullptr;
       }
       else
       {
         const auto memorySlot = memorySlots[localPointerPos++].second;
         globalSlotPointers[i] = &memorySlot->getPointer();
         globalSourceSlots[i]  = memorySlot;
-        globalMemorySpaces[i]  = memorySlot->getMemorySpace();
+        globalMemorySpaces[i] = memorySlot->getMemorySpace();
       }
     }
 
@@ -201,7 +201,7 @@ class CommunicationManager : public HiCR::CommunicationManager
 
         // Freeing up memory of the old local memory slot
         // Commented out: it is the user who must free up this local memory slot
-        // MPI_Free_mem(*(globalSlotPointers[i])); 
+        // MPI_Free_mem(*(globalSlotPointers[i]));
 
         // Swapping pointers
         *(globalSlotPointers[i]) = ptr;

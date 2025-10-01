@@ -20,7 +20,6 @@
 #include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 
-
 int main(int argc, char **argv)
 {
   // Creating HWloc topology object
@@ -36,8 +35,8 @@ int main(int argc, char **argv)
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Create shared memory
-  auto sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
-  auto &sharedMemory = sharedMemoryFactory.get(0, 1);
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
 
   // Instantiating host (CPU) communication manager
   HiCR::backend::pthreads::CommunicationManager c(sharedMemory);

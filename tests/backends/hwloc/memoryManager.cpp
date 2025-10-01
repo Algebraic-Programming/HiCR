@@ -50,9 +50,9 @@ TEST(MemoryManager, Memory)
   // Creating HWloc topology object
   hwloc_topology_t topology;
 
-    // Create shared memory
-  auto sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
-  auto &sharedMemory = sharedMemoryFactory.get(0, 1);
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
 
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
