@@ -108,9 +108,6 @@ class CommunicationManager final : public HiCR::CommunicationManager
       // Creating new memory slot
       auto globalMemorySlot = std::make_shared<HiCR::backend::hwloc::GlobalMemorySlot>(tag, globalKey, memorySlot);
 
-      // Registering memory slot
-      registerGlobalMemorySlot(globalMemorySlot);
-
       // Push it to shared memory
       _sharedMemory.insert(tag, globalKey, globalMemorySlot);
     }
@@ -122,11 +119,18 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   /**
-   * Implementation of the fence operation for the pthreads backend. In this case, nothing needs to be done, as
-   * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
-   * ensures its completion.
+   * Implementation of the fence operation for the pthreads backend. After all threads exchanged
+   * their slots, each one of those updates their internal map of global memory slots
+   * 
+   * \param[in] tag
    */
-  __INLINE__ void fenceImpl(const HiCR::GlobalMemorySlot::tag_t tag) override { _sharedMemory.barrier(); }
+  __INLINE__ void fenceImpl(const HiCR::GlobalMemorySlot::tag_t tag) override
+  {
+    // Wait all threads to reach this point
+    _sharedMemory.barrier();
+    // Registering memory slot
+    for (const auto &[key, slot] : _sharedMemory.getKeyMemorySlots(tag)) { registerGlobalMemorySlot(slot); }
+  }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
                              const size_t                                  dst_offset,
