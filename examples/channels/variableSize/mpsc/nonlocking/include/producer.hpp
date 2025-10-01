@@ -138,8 +138,8 @@ void producerFc(HiCR::MemoryManager               &coordinationMemoryManager,
   // deregister global slots -- needs to be in synch at consumer and ALL producers
   for (size_t i = 0; i < producerCount; i++)
   {
+    payloadCommunicationManager.deregisterGlobalMemorySlot(globalBuffersForPayloads[i]);
     coordinationCommunicationManager.deregisterGlobalMemorySlot(globalBuffersForCounts[i]);
-    coordinationCommunicationManager.deregisterGlobalMemorySlot(globalBuffersForPayloads[i]);
     coordinationCommunicationManager.deregisterGlobalMemorySlot(coordinationBuffersForCountsAsSlots[i]);
     coordinationCommunicationManager.deregisterGlobalMemorySlot(coordinationBuffersForPayloadsAsSlots[i]);
     coordinationCommunicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffersForCounts[i]);
@@ -150,12 +150,12 @@ void producerFc(HiCR::MemoryManager               &coordinationMemoryManager,
   coordinationCommunicationManager.destroyGlobalMemorySlot(producerCoordinationBuffersForPayloads[producerId]);
 
   // Fences for global slots destructions/cleanup
+  payloadCommunicationManager.fence(CONSUMER_PAYLOAD_KEY);
   coordinationCommunicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   coordinationCommunicationManager.fence(CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
   coordinationCommunicationManager.fence(CONSUMER_TOKEN_KEY);
   coordinationCommunicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
   coordinationCommunicationManager.fence(PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
-  payloadCommunicationManager.fence(CONSUMER_PAYLOAD_KEY);
 
   coordinationMemoryManager.freeLocalMemorySlot(coordinationBufferForCounts);
   coordinationMemoryManager.freeLocalMemorySlot(coordinationBufferForPayloads);
