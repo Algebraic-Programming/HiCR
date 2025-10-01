@@ -18,8 +18,8 @@
 #include <hicr/backends/mpi/memoryManager.hpp>
 #include <hicr/backends/mpi/communicationManager.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
-#include "include/consumer.hpp"
-#include "include/producer.hpp"
+#include "../include/consumer.hpp"
+#include "../include/producer.hpp"
 
 int main(int argc, char **argv)
 {
