@@ -17,6 +17,7 @@
 #include <hicr/backends/hwloc/topologyManager.hpp>
 #include <hicr/backends/hwloc/memoryManager.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
 
 #include <hicr/frontends/objectStore/objectStore.hpp>
 
@@ -32,8 +33,12 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // Using default instance, communication and memory manager for single instance
-  auto communicationManager = std::make_unique<HiCR::backend::pthreads::CommunicationManager>();
+  auto communicationManager = std::make_unique<HiCR::backend::pthreads::CommunicationManager>(sharedMemory);
   auto memoryManager        = std::make_unique<HiCR::backend::hwloc::MemoryManager>(&topology);
 
   // Using HWLoc as topology managers

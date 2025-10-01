@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <hicr/frontends/objectStore/objectStore.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
 
 #include <mocr.hpp>
 
@@ -81,8 +82,12 @@ TEST_F(ObjectStoreTest, PublishTest)
 // Test get method
 TEST_F(ObjectStoreTest, GetTest)
 {
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // We need a real communication manager for this test
-  HiCR::backend::pthreads::CommunicationManager communicationManager;
+  HiCR::backend::pthreads::CommunicationManager communicationManager(sharedMemory);
 
   ObjectStore store(communicationManager, tag, memoryManager, memorySpace, instanceId);
   char        data[8] = "test 12";

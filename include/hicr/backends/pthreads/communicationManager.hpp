@@ -24,10 +24,13 @@
 #pragma once
 
 #include <cstring>
-#include "pthread.h"
+#include <pthread.h>
+
 #include <hicr/core/communicationManager.hpp>
 #include <hicr/core/localMemorySlot.hpp>
 #include <hicr/backends/hwloc/globalMemorySlot.hpp>
+
+#include "sharedMemory.hpp"
 
 namespace HiCR::backend::pthreads
 {
@@ -42,43 +45,24 @@ class CommunicationManager final : public HiCR::CommunicationManager
   public:
 
   /**
-   * Constructor for the memory manager class for the Pthreads backend
+   * Constructor for the communication manager class for the pthreads backend
    *
-   * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
+   * \param[in] sharedMemory the shared memory used to exchange global slots among other threads 
    */
-  CommunicationManager(const size_t fenceCount = 1)
-    : HiCR::CommunicationManager()
-  {
-    // Initializing barrier for fence operation
-    pthread_barrier_init(&_barrier, nullptr, fenceCount);
-
-    // Initializing mutex object
-    pthread_mutex_init(&_mutex, nullptr);
-  }
+  CommunicationManager(SharedMemory &sharedMemory)
+    : HiCR::CommunicationManager(),
+      _sharedMemory(sharedMemory)
+  {}
 
   /**
    * The destructor deletes all created barrier/mutex locks
    */
-  ~CommunicationManager() override
-  {
-    // Freeing barrier memory
-    pthread_barrier_destroy(&_barrier);
-
-    // Freeing mutex memory
-    pthread_mutex_destroy(&_mutex);
-  }
+  ~CommunicationManager() = default;
 
   __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::backend::hwloc::GlobalMemorySlot::tag_t       tag,
                                                                              const HiCR::backend::hwloc::GlobalMemorySlot::globalKey_t globalKey) override
   {
-    if (_shadowMap.find(tag) != _shadowMap.end())
-    {
-      if (_shadowMap[tag].find(globalKey) != _shadowMap[tag].end())
-        return _shadowMap[tag][globalKey];
-      else
-        return nullptr;
-    }
-    else { return nullptr; }
+    return _sharedMemory.get(tag, globalKey);
   }
 
   /**
@@ -110,21 +94,8 @@ class CommunicationManager final : public HiCR::CommunicationManager
 
   private:
 
-  /**
-   * Stores a barrier object to check on a barrier operation
-   */
-  pthread_barrier_t _barrier{};
-
-  /**
-   * A mutex to make sure threads do not bother each other during certain operations
-   */
-  pthread_mutex_t _mutex{};
-
   __INLINE__ void exchangeGlobalMemorySlotsImpl(const HiCR::GlobalMemorySlot::tag_t tag, const std::vector<globalKeyMemorySlotPair_t> &memorySlots) override
   {
-    // Synchronize all intervening threads in this call
-    barrier();
-
     // Simply adding local memory slots to the global map
     for (const auto &entry : memorySlots)
     {
@@ -139,11 +110,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
 
       // Registering memory slot
       registerGlobalMemorySlot(globalMemorySlot);
-      _shadowMap[tag][globalKey] = globalMemorySlot;
-    }
 
-    // Do not allow any thread to continue until the exchange is made
-    barrier();
+      // Push it to shared memory
+      _sharedMemory.insert(tag, globalKey, globalMemorySlot);
+    }
   }
 
   __INLINE__ void queryMemorySlotUpdatesImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override
@@ -152,16 +122,11 @@ class CommunicationManager final : public HiCR::CommunicationManager
   }
 
   /**
-   * A barrier implementation that synchronizes all threads in the HiCR instance
-   */
-  __INLINE__ void barrier() { pthread_barrier_wait(&_barrier); }
-
-  /**
    * Implementation of the fence operation for the pthreads backend. In this case, nothing needs to be done, as
    * the system's memcpy operation is synchronous. This means that it's mere execution (whether immediate or deferred)
    * ensures its completion.
    */
-  __INLINE__ void fenceImpl(const HiCR::GlobalMemorySlot::tag_t tag) override { barrier(); }
+  __INLINE__ void fenceImpl(const HiCR::GlobalMemorySlot::tag_t tag) override { _sharedMemory.barrier(); }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
                              const size_t                                  dst_offset,
@@ -193,7 +158,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
    */
   __INLINE__ void destroyGlobalMemorySlotImpl(std::shared_ptr<HiCR::GlobalMemorySlot> memorySlot) override
   {
-    // Nothing to do here
+    _sharedMemory.remove(memorySlot->getGlobalTag(), memorySlot->getGlobalKey());
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::GlobalMemorySlot> &destination,
@@ -202,17 +167,11 @@ class CommunicationManager final : public HiCR::CommunicationManager
                              const size_t                                   src_offset,
                              const size_t                                   size) override
   {
-    // Getting up-casted pointer for the execution unit
-    auto dst = dynamic_pointer_cast<HiCR::GlobalMemorySlot>(destination);
-
-    // Checking whether the execution unit passed is compatible with this backend
-    if (dst == nullptr) HICR_THROW_LOGIC("The passed destination memory slot is not supported by this backend\n");
-
     // Checking whether the memory slot is local. This backend only supports local data transfers
-    if (dst->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed destination memory slot is not local (required by this backend)\n");
+    if (destination->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed destination memory slot is not local (required by this backend)\n");
 
     // Executing actual memcpy
-    memcpy(dst->getSourceLocalMemorySlot(), dst_offset, source, src_offset, size);
+    memcpy(destination->getSourceLocalMemorySlot(), dst_offset, source, src_offset, size);
 
     // Increasing message received/sent counters for both memory slots
     increaseMessageRecvCounter(*destination->getSourceLocalMemorySlot());
@@ -225,17 +184,11 @@ class CommunicationManager final : public HiCR::CommunicationManager
                              const size_t                                   src_offset,
                              const size_t                                   size) override
   {
-    // Getting up-casted pointer for the execution unit
-    auto src = dynamic_pointer_cast<HiCR::GlobalMemorySlot>(source);
-
-    // Checking whether the memory slot is compatible with this backend
-    if (src == nullptr) HICR_THROW_LOGIC("The passed source memory slot is not supported by this backend\n");
-
     // Checking whether the memory slot is local. This backend only supports local data transfers
-    if (src->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed source memory slot is not local (required by this backend)\n");
+    if (source->getSourceLocalMemorySlot() == nullptr) HICR_THROW_LOGIC("The passed source memory slot is not local (required by this backend)\n");
 
     // Executing actual memcpy
-    memcpy(destination, dst_offset, src->getSourceLocalMemorySlot(), src_offset, size);
+    memcpy(destination, dst_offset, source->getSourceLocalMemorySlot(), src_offset, size);
 
     // Increasing message received/sent counters for both memory slots
     increaseMessageRecvCounter(*destination);
@@ -266,24 +219,12 @@ class CommunicationManager final : public HiCR::CommunicationManager
     m->unlock();
   }
 
-  __INLINE__ void lock()
-  {
-    // Locking the pthread mutex
-    pthread_mutex_lock(&_mutex);
-  }
-
-  __INLINE__ void unlock()
-  {
-    // Locking the pthread mutex
-    pthread_mutex_unlock(&_mutex);
-  }
-
   private:
 
-  // this map shadows the core HiCR map _globalMemorySlotTagKeyMap
-  // to support getGlobalMemorySlot implementation
-  // for this backend
-  globalMemorySlotTagKeyMap_t _shadowMap;
+  /**
+   * Shared Memory to exchange slots
+  */
+  SharedMemory &_sharedMemory;
 };
 
 } // namespace HiCR::backend::pthreads
