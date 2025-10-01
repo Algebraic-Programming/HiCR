@@ -30,36 +30,67 @@
 namespace HiCR::backend::pthreads
 {
 
+/**
+ * Identifier for shared memory
+*/
 using sharedMemoryId_t = uint64_t;
 
 /**
- * Implementation of the Pthreads shared memory space to exchange global memory slots among HiCR instances
- *
+ * Shared memory factory class that creates and holds Shared Memory objects
+ * 
  * This backend uses pthread-based mutexes and barriers to prevent concurrent access violations
  */
 class SharedMemoryFactory
 {
   public:
 
+  /**
+   * Constructor
+  */
   SharedMemoryFactory() { pthread_mutex_init(&_mutex, nullptr); }
 
+  /**
+ * Destructor
+*/
   ~SharedMemoryFactory() { pthread_mutex_destroy(&_mutex); }
 
+  /**
+   * Get a shared memory by its id. If not present, it will create one with the specifiec fence count
+   * 
+   * \param[in] id shared memory id
+   * \param[in] fenceCount fence count
+   * 
+   * \return a shared memory reference
+  */
   __INLINE__ SharedMemory &get(const sharedMemoryId_t id, const size_t fenceCount)
   {
+    // Lock the resource
     pthread_mutex_lock(&_mutex);
 
+    // Find the shared memory
     auto it = _sharedMemoryMap.find(id);
+
+    // If there is none
     if (it == _sharedMemoryMap.end())
     {
+      // Create a new shared memory
       auto  sharedMemoryPtr = std::unique_ptr<SharedMemory>(new SharedMemory(fenceCount));
       auto &sharedMemory    = *sharedMemoryPtr;
+
+      // Store it into the global slots map
       _sharedMemoryMap.emplace(id, std::move(sharedMemoryPtr));
+
+      // Unlock the resource
       pthread_mutex_unlock(&_mutex);
+
+      // Return the newly created shared memory
       return sharedMemory;
     }
 
+    // Unlock the resource
     pthread_mutex_unlock(&_mutex);
+
+    // Return the already present shared memory
     return *it->second;
   }
 
@@ -71,7 +102,7 @@ class SharedMemoryFactory
   pthread_mutex_t _mutex{};
 
   /**
-   * 
+   * Map of shared memory objects
    */
   std::unordered_map<sharedMemoryId_t, std::unique_ptr<SharedMemory>> _sharedMemoryMap;
 };

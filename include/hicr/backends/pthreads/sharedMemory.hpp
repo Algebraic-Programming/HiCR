@@ -16,7 +16,7 @@
 
 /**
  * @file sharedMemory.hpp
- * @brief This file implements the shared memory mechanism to exchange slots for the Pthreads backend
+ * @brief This file implements the shared memory mechanism to exchange slots for the pthreads backend
  * @author L. Terracciano
  * @date 30/9/2025
  */
@@ -36,12 +36,17 @@ namespace HiCR::backend::pthreads
 class SharedMemoryFactory;
 
 /**
- * Implementation of the Pthreads shared memory space to exchange global memory slots among HiCR instances
+ * Implementation of the Pthreads shared memory space to exchange global memory slots among HiCR instances.
+ * It holds a shared space among threads involved in the communication where one can exchange, retrieve, and destroy global memory slots
+ * It can be created only by \ref SharedMemoryFactory
  *
  * This backend uses pthread-based mutexes and barriers to prevent concurrent access violations
  */
 class SharedMemory
 {
+  /**
+   * The factory is a friend class that can call the constructor
+  */
   friend class SharedMemoryFactory;
 
   public:
@@ -60,39 +65,72 @@ class SharedMemory
   SharedMemory(SharedMemory &&)                 = delete;
   SharedMemory &operator=(SharedMemory &&)      = delete;
 
-  __INLINE__ void insert(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t key, const std::shared_ptr<GlobalMemorySlot> &globalMemorySlot)
+  /**
+   * Add an element into the shared memory space
+   * 
+   * \param[in] tag slot tag
+   * \param[in] key slot key
+   * \param[in] slot global memory slot
+  */
+  __INLINE__ void insert(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t key, const std::shared_ptr<GlobalMemorySlot> &slot)
   {
     // Lock the resource
     pthread_mutex_lock(&_mutex);
 
-    // add the memory slot
-    _globalMemorySlots[tag][key] = globalMemorySlot;
+    // Add the memory slot
+    _globalMemorySlots[tag][key] = slot;
 
     // Unlock the resource
     pthread_mutex_unlock(&_mutex);
   }
 
-  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> get(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t globalKey)
+  /**
+   * Retrieve a global memory slot
+   * 
+   * \param[in] tag slot tag
+   * \param[in] key slot key
+   * 
+   * \return shared pointer to global memory slot if present, nullptr otherwise
+  */
+  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> get(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t key)
   {
     std::shared_ptr<HiCR::GlobalMemorySlot> value = nullptr;
 
+    // Lock the resource
     pthread_mutex_lock(&_mutex);
+
+    // Look for the tag
     if (_globalMemorySlots.find(tag) != _globalMemorySlots.end())
     {
-      if (_globalMemorySlots[tag].find(globalKey) != _globalMemorySlots[tag].end()) { value = _globalMemorySlots[tag][globalKey]; }
+      // Look for the key
+      if (_globalMemorySlots[tag].find(key) != _globalMemorySlots[tag].end()) { value = _globalMemorySlots[tag][key]; }
     }
+
+    // Unlock the resource
     pthread_mutex_unlock(&_mutex);
 
     return value;
   }
 
+  /**
+   * Removes a global memory slot from the shared memory if present
+   * 
+   * \param[in] tag slot tag
+   * \param[in] key slot key
+  */
   __INLINE__ void remove(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t globalKey)
   {
+    // Lock the resource
     pthread_mutex_lock(&_mutex);
+
+    // Look for the tag
     if (_globalMemorySlots.find(tag) != _globalMemorySlots.end())
     {
+      // Look for the key
       if (_globalMemorySlots[tag].find(globalKey) != _globalMemorySlots[tag].end()) { _globalMemorySlots[tag].erase(globalKey); }
     }
+
+    // Unlock the resource
     pthread_mutex_unlock(&_mutex);
   }
 
@@ -103,6 +141,11 @@ class SharedMemory
 
   private:
 
+  /**
+   * Private constructor. Can be called only by \ref SharedMemoryFactory
+   * 
+   * \param[in] fenceCount barrier size. Indicates how many threads should reach the barrier before continuing
+  */
   SharedMemory(const size_t fenceCount)
     : _fenceCount(fenceCount)
   {

@@ -45,9 +45,9 @@ class CommunicationManager final : public HiCR::CommunicationManager
   public:
 
   /**
-   * Constructor for the memory manager class for the Pthreads backend
+   * Constructor for the communication manager class for the pthreads backend
    *
-   * \param[in] fenceCount Specifies how many times a fence has to be called for it to release callers
+   * \param[in] sharedMemory the shared memory used to exchange global slots among other threads 
    */
   CommunicationManager(SharedMemory &sharedMemory)
     : HiCR::CommunicationManager(),
