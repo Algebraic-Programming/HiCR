@@ -200,6 +200,9 @@ class RPCEngine
     return _RPCConsumerChannel->getDepth() > 0;
   }
 
+  /**
+   * Parse information of the incoming RPC and trigger its execution
+   */
   __INLINE__ void parseAndExecuteRPC()
   {
     // Once a request has arrived, gather its value from the channel

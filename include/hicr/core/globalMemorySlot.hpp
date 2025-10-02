@@ -86,6 +86,11 @@ class GlobalMemorySlot
    */
   __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> getSourceLocalMemorySlot() noexcept { return _sourceLocalMemorySlot; }
 
+  /**
+   * Set the source local memory slot for the global slot
+   * 
+   * \param[in] sourceLocalMemorySlot the source local memory slot
+   */
   __INLINE__ void setSourceLocalMemorySlot(std::shared_ptr<HiCR::LocalMemorySlot> sourceLocalMemorySlot) { _sourceLocalMemorySlot = sourceLocalMemorySlot; }
 
   private:
