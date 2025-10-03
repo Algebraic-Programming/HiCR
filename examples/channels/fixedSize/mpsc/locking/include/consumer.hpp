@@ -22,9 +22,12 @@
 #include <hicr/frontends/channel/fixedSize/mpsc/locking/consumer.hpp>
 #include "common.hpp"
 
-void consumerFc(HiCR::MemoryManager               &memoryManager,
-                HiCR::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
+void consumerFc(HiCR::MemoryManager               &coordinationMemoryManager,
+                HiCR::MemoryManager               &payloadMemoryManager,
+                HiCR::CommunicationManager        &coordinationCommunicationManager,
+                HiCR::CommunicationManager        &payloadCommunicationManager,
+                std::shared_ptr<HiCR::MemorySpace> coordinationMemorySpace,
+                std::shared_ptr<HiCR::MemorySpace> payloadMemorySpace,
                 const size_t                       channelCapacity,
                 const size_t                       producerCount)
 {
@@ -32,31 +35,32 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
   auto tokenBufferSize = HiCR::channel::fixedSize::Base::getTokenBufferSize(sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Registering token buffer as a local memory slot
-  auto tokenBufferSlot = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, tokenBufferSize);
+  auto tokenBufferSlot = payloadMemoryManager.allocateLocalMemorySlot(payloadMemorySpace, tokenBufferSize);
 
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::channel::fixedSize::Base::getCoordinationBufferSize();
 
   // Registering token buffer as a local memory slot
-  auto coordinationBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+  auto coordinationBuffer = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
   HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(coordinationBuffer);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  communicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG,                          /* global tag */
-                                                 {{TOKEN_BUFFER_KEY, tokenBufferSlot}, /* key-slot pairs */
-                                                  {CONSUMER_COORDINATION_BUFFER_KEY, coordinationBuffer}});
+  coordinationCommunicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {{CONSUMER_COORDINATION_BUFFER_KEY, coordinationBuffer}});
+  payloadCommunicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {{TOKEN_BUFFER_KEY, tokenBufferSlot}});
 
   // Synchronizing so that all actors have finished registering their global memory slots
-  communicationManager.fence(CHANNEL_TAG);
+  coordinationCommunicationManager.fence(CHANNEL_TAG);
+  payloadCommunicationManager.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto globalTokenBufferSlot      = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
-  auto consumerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
+  auto consumerCoordinationBuffer = coordinationCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
+  auto globalTokenBufferSlot      = payloadCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto consumer = HiCR::channel::fixedSize::MPSC::locking::Consumer(communicationManager,
+  auto consumer = HiCR::channel::fixedSize::MPSC::locking::Consumer(coordinationCommunicationManager,
+                                                                    payloadCommunicationManager,
                                                                     globalTokenBufferSlot, /* tokenBuffer */
                                                                     coordinationBuffer,    /* internalCoordinationBuffer */
                                                                     consumerCoordinationBuffer,
@@ -90,18 +94,20 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
   }
 
   // Synchronizing so that all actors have finished registering their global memory slots
-  communicationManager.fence(CHANNEL_TAG);
+  coordinationCommunicationManager.fence(CHANNEL_TAG);
+  payloadCommunicationManager.fence(CHANNEL_TAG);
 
   // De-registering global slots
-  communicationManager.deregisterGlobalMemorySlot(globalTokenBufferSlot);
-  communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
+  payloadCommunicationManager.deregisterGlobalMemorySlot(globalTokenBufferSlot);
+  coordinationCommunicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
 
-  communicationManager.destroyGlobalMemorySlot(globalTokenBufferSlot);
-  communicationManager.destroyGlobalMemorySlot(consumerCoordinationBuffer);
+  payloadCommunicationManager.destroyGlobalMemorySlot(globalTokenBufferSlot);
+  coordinationCommunicationManager.destroyGlobalMemorySlot(consumerCoordinationBuffer);
 
-  communicationManager.fence(CHANNEL_TAG);
+  coordinationCommunicationManager.fence(CHANNEL_TAG);
+  payloadCommunicationManager.fence(CHANNEL_TAG);
 
   // Freeing up local memory
-  memoryManager.freeLocalMemorySlot(tokenBufferSlot);
-  memoryManager.freeLocalMemorySlot(coordinationBuffer);
+  payloadMemoryManager.freeLocalMemorySlot(tokenBufferSlot);
+  coordinationMemoryManager.freeLocalMemorySlot(coordinationBuffer);
 }

@@ -66,6 +66,7 @@ void reader(HiCR::MemoryManager &memoryManager, HiCR::CommunicationManager &comm
 
   // Creating producer and consumer channels
   auto consumer = HiCR::channel::variableSize::SPSC::Consumer(communicationManager,
+                                                              communicationManager,
                                                               payloadBuffer /*payload buffer */,
                                                               globalSizesBufferSlot,
                                                               coordinationBufferForCounts,

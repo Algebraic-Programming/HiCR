@@ -49,6 +49,11 @@ class SharedMemory
   */
   friend class SharedMemoryFactory;
 
+  /**
+ * Identifier for shared memory
+*/
+  using sharedMemoryId_t = uint64_t;
+
   public:
 
   ~SharedMemory()
@@ -92,7 +97,7 @@ class SharedMemory
    * 
    * \return shared pointer to global memory slot if present, nullptr otherwise
   */
-  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> get(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t key)
+  __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> get(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t key) const
   {
     std::shared_ptr<HiCR::GlobalMemorySlot> value = nullptr;
 
@@ -103,7 +108,7 @@ class SharedMemory
     if (_globalMemorySlots.find(tag) != _globalMemorySlots.end())
     {
       // Look for the key
-      if (_globalMemorySlots[tag].find(key) != _globalMemorySlots[tag].end()) { value = _globalMemorySlots[tag][key]; }
+      if (_globalMemorySlots.at(tag).find(key) != _globalMemorySlots.at(tag).end()) { value = _globalMemorySlots.at(tag).at(key); }
     }
 
     // Unlock the resource
@@ -118,7 +123,7 @@ class SharedMemory
    * \param[in] tag slot tag
    * \param[in] key slot key
   */
-  __INLINE__ void remove(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t globalKey)
+  __INLINE__ void remove(const GlobalMemorySlot::tag_t tag, const GlobalMemorySlot::globalKey_t key)
   {
     // Lock the resource
     pthread_mutex_lock(&_mutex);
@@ -127,7 +132,7 @@ class SharedMemory
     if (_globalMemorySlots.find(tag) != _globalMemorySlots.end())
     {
       // Look for the key
-      if (_globalMemorySlots[tag].find(globalKey) != _globalMemorySlots[tag].end()) { _globalMemorySlots[tag].erase(globalKey); }
+      if (_globalMemorySlots[tag].find(key) != _globalMemorySlots[tag].end()) { _globalMemorySlots[tag].erase(key); }
     }
 
     // Unlock the resource
@@ -135,19 +140,61 @@ class SharedMemory
   }
 
   /**
+ * Return the pair key-slots for a given tag
+ * 
+ * \param[in] tag
+ * 
+ * \return key-slots pair, empty map otherwise
+*/
+  __INLINE__ CommunicationManager::globalKeyToMemorySlotMap_t getKeyMemorySlots(const GlobalMemorySlot::tag_t tag) const
+  {
+    CommunicationManager::globalKeyToMemorySlotMap_t keyMemorySlots;
+
+    // Lock the resource
+    pthread_mutex_lock(&_mutex);
+
+    // Search for the tag
+    auto it = _globalMemorySlots.find(tag);
+
+    // Fail if not found
+    if (it == _globalMemorySlots.end())
+    {
+      // Unlock the resource
+      pthread_mutex_unlock(&_mutex);
+
+      return keyMemorySlots;
+    }
+
+    // Unlock the resource
+    pthread_mutex_unlock(&_mutex);
+
+    // Return key slot pairs
+    return it->second;
+  }
+
+  /**
    * A barrier implementation that synchronizes all threads in the HiCR instance
    */
   __INLINE__ void barrier() { pthread_barrier_wait(&_barrier); }
+
+  /**
+   * Id getter
+   * 
+   * \return Identifier of the shared memory instance
+   */
+  __INLINE__ sharedMemoryId_t getId() const { return _id; }
 
   private:
 
   /**
    * Private constructor. Can be called only by \ref SharedMemoryFactory
    * 
+   * \param[in] id Identifier for the instance of shared memory
    * \param[in] fenceCount barrier size. Indicates how many threads should reach the barrier before continuing
   */
-  SharedMemory(const size_t fenceCount)
-    : _fenceCount(fenceCount)
+  SharedMemory(const sharedMemoryId_t id, const size_t fenceCount)
+    : _id(id),
+      _fenceCount(fenceCount)
   {
     // Init barrier
     pthread_barrier_init(&_barrier, nullptr, _fenceCount);
@@ -157,14 +204,21 @@ class SharedMemory
   }
 
   /**
+   * Shared Memory ID
+  */
+  const sharedMemoryId_t _id;
+
+  /**
    * Stores a barrier object to check on a barrier operation
    */
   pthread_barrier_t _barrier{};
 
   /**
-   * A mutex to make sure threads do not bother each other during certain operations
+   * A mutex to make sure threads do not bother each other during certain operations.
+   * Mutability allows const getter functions to lock the mutex, because this does not modify the logical
+   * state of the shared memory
    */
-  pthread_mutex_t _mutex{};
+  mutable pthread_mutex_t _mutex{};
 
   /**
    * How many threads should reach the fence before proceeding

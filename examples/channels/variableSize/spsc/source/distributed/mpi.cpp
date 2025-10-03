@@ -18,8 +18,8 @@
 #include <hicr/backends/mpi/memoryManager.hpp>
 #include <hicr/backends/mpi/communicationManager.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
-#include "include/consumer.hpp"
-#include "include/producer.hpp"
+#include "../include/consumer.hpp"
+#include "../include/producer.hpp"
 
 int main(int argc, char **argv)
 {
@@ -66,11 +66,11 @@ int main(int argc, char **argv)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::TopologyManager tm(&topology);
+  // Initializing host (CPU) topology manager
+  HiCR::backend::hwloc::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
-  const auto t = tm.queryTopology();
+  const auto t = dm.queryTopology();
 
   // Getting first device found
   auto d = *t.getDevices().begin();
@@ -82,8 +82,8 @@ int main(int argc, char **argv)
   auto firstMemorySpace = *memSpaces.begin();
 
   // Rank 0 is producer, Rank 1 is consumer
-  if (rankId == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
-  if (rankId == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
+  if (rankId == 0) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity);
+  if (rankId == 1) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity);
 
   // Finalizing MPI
   MPI_Finalize();

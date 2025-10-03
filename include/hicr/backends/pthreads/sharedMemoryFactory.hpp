@@ -74,7 +74,7 @@ class SharedMemoryFactory
     if (it == _sharedMemoryMap.end())
     {
       // Create a new shared memory
-      auto  sharedMemoryPtr = std::unique_ptr<SharedMemory>(new SharedMemory(fenceCount));
+      auto  sharedMemoryPtr = std::unique_ptr<SharedMemory>(new SharedMemory(id, fenceCount));
       auto &sharedMemory    = *sharedMemoryPtr;
 
       // Store it into the global slots map

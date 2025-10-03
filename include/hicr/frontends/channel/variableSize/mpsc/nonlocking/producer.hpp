@@ -44,7 +44,8 @@ class Producer final : public variableSize::SPSC::Producer
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] sizeInfoBuffer The local memory slot used to hold the information about the next message size
    * \param[in] payloadBuffer The global memory slot pertaining to the payload of all messages. The producer will push messages into this
    *            buffer, while there is enough space. This buffer should be large enough to hold at least the largest of the variable-size messages.
@@ -59,7 +60,8 @@ class Producer final : public variableSize::SPSC::Producer
    * \param[in] payloadSize size in bytes of the datatype used for variable-sized messages
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(CommunicationManager                   &communicationManager,
+  Producer(CommunicationManager                   &coordinationCommunicationManager,
+           CommunicationManager                   &payloadCommunicationManager,
            std::shared_ptr<LocalMemorySlot>        sizeInfoBuffer,
            std::shared_ptr<GlobalMemorySlot>       payloadBuffer,
            std::shared_ptr<GlobalMemorySlot>       tokenBuffer,
@@ -70,7 +72,8 @@ class Producer final : public variableSize::SPSC::Producer
            const size_t                            payloadCapacity,
            const size_t                            payloadSize,
            const size_t                            capacity)
-    : variableSize::SPSC::Producer(communicationManager,
+    : variableSize::SPSC::Producer(coordinationCommunicationManager,
+                                   payloadCommunicationManager,
                                    std::move(sizeInfoBuffer),
                                    std::move(payloadBuffer),
                                    std::move(tokenBuffer),

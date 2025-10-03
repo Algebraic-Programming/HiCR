@@ -20,8 +20,8 @@
 #include <hicr/backends/lpf/memoryManager.hpp>
 #include <hicr/backends/lpf/communicationManager.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
-#include "include/consumer.hpp"
-#include "include/producer.hpp"
+#include "../include/consumer.hpp"
+#include "../include/producer.hpp"
 
 // flag needed when using MPI to launch
 const int LPF_MPI_AUTO_INITIALIZE = 0;
@@ -58,11 +58,11 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing hwloc-based host (CPU) topology manager
-  HiCR::backend::hwloc::TopologyManager dm(&topology);
+  // Initializing HWLoc-based host (CPU) topology manager
+  HiCR::backend::hwloc::TopologyManager tm(&topology);
 
   // Asking backend to check the available devices
-  const auto t = dm.queryTopology();
+  const auto t = tm.queryTopology();
 
   // Getting first device found
   auto d = *t.getDevices().begin();
@@ -78,33 +78,36 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   auto firstMemorySpace = *memSpaces.begin();
   // Calculating the number of producer processes
   size_t producerCount = nprocs - 1;
+  size_t rankId        = pid;
 
   // Rank 0 is consumer, the rest are producers
-  if (pid == 0) consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);
-  if (pid >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, pid);
+  if (rankId == 0) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, producerCount);
+  if (rankId >= 1) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, rankId - 1, producerCount);
 }
 
 int main(int argc, char **argv)
 {
   MPI_Init(&argc, &argv);
 
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int rankId, rankCount;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rankId);
+  MPI_Comm_size(MPI_COMM_WORLD, &rankCount);
   int capacity;
-  if (rank == 0)
+  // Sanity Check
+  if (rankCount < 2)
   {
-    if (size < 2)
-    {
-      fprintf(stderr, "Error: Must use at least 2 processes\n");
-      MPI_Abort(MPI_COMM_WORLD, -1);
-    }
-    // Checking arguments
-    if (argc != 2)
-    {
-      fprintf(stderr, "Error: Must provide the channel capacity as argument.\n");
-      MPI_Abort(MPI_COMM_WORLD, -1);
-    }
+    if (rankId == 0) fprintf(stderr, "Launch error: MPI process count must be at least 2\n");
+    return MPI_Finalize();
+  }
+
+  // Checking arguments
+  if (argc != 2)
+  {
+    if (rankId == 0) fprintf(stderr, "Error: Must provide the channel capacity as argument.\n");
+    return MPI_Finalize();
+  }
+  if (rankId == 0)
+  {
     // For portability, only read STDIN from process 0
     capacity = atoi(argv[1]);
   }

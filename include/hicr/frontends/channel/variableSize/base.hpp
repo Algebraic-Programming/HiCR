@@ -46,7 +46,8 @@ class Base : public channel::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend's memory manager to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] coordinationBufferForCounts This is a small buffer that enables the consumer to signal how many payloads (as a count) it has popped.
    * \param[in] coordinationBufferForPayloads This is a small buffer that enables the consumer to signal how many bytes from the payload data it has popped.
    * \param[in] capacity The maximum number of elements (possibly different-sized) that can be held by this channel
@@ -55,12 +56,13 @@ class Base : public channel::Base
    * The key extension to the base channel class is the use of an extended circular buffer instead of a circular buffer.
    * This is because we need to manage payload head and tail in addition to the head an tail pointers for different elements.
    */
-  Base(CommunicationManager                   &communicationManager,
+  Base(CommunicationManager                   &coordinationCommunicationManager,
+       CommunicationManager                   &payloadCommunicationManager,
        const std::shared_ptr<LocalMemorySlot> &coordinationBufferForCounts,
        const std::shared_ptr<LocalMemorySlot> &coordinationBufferForPayloads,
        const size_t                            capacity,
        const size_t                            payloadCapacity)
-    : channel::Base(communicationManager, coordinationBufferForCounts, sizeof(size_t), capacity),
+    : channel::Base(coordinationCommunicationManager, payloadCommunicationManager, coordinationBufferForCounts, sizeof(size_t), capacity),
       _coordinationBufferForCounts(coordinationBufferForCounts),
       _coordinationBufferForPayloads(coordinationBufferForPayloads)
   {

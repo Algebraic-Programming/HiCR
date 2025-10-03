@@ -173,7 +173,8 @@ class Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend's memory manager to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] coordinationBuffer This is a small buffer that needs to be allocated at the producer side.
    *            enables the consumer to signal how many tokens it has popped. It may also be used for other coordination signals.
    * \param[in] tokenSize The size of each token.
@@ -185,8 +186,13 @@ class Base
    * before. That is, if the received message counter starts as zero, it will transition to 1 and then to to 2, if
    * 'A' arrives before than 'B', or; directly to 2, if 'B' arrives before 'A'.
    */
-  Base(CommunicationManager &communicationManager, const std::shared_ptr<LocalMemorySlot> &coordinationBuffer, const size_t tokenSize, const size_t capacity)
-    : _communicationManager(&communicationManager),
+  Base(CommunicationManager                   &coordinationCommunicationManager,
+       CommunicationManager                   &payloadCommunicationManager,
+       const std::shared_ptr<LocalMemorySlot> &coordinationBuffer,
+       const size_t                            tokenSize,
+       const size_t                            capacity)
+    : _coordinationCommunicationManager(&coordinationCommunicationManager),
+      _payloadCommunicationManager(&payloadCommunicationManager),
       _coordinationBuffer(coordinationBuffer),
       _tokenSize(tokenSize)
   {
@@ -211,10 +217,16 @@ class Base
   ~Base() = default;
 
   /**
-   * Get the internal communication buffer assigned to this channel
-   * @return The internal communication buffer assigned to this channel
+   * Get the payload communication manager assigned to this channel
+   * @return The payload communication manager assigned to this channel
    */
-  [[nodiscard]] __INLINE__ CommunicationManager *getCommunicationManager() const { return _communicationManager; }
+  [[nodiscard]] __INLINE__ CommunicationManager *getPayloadCommunicationManager() const { return _payloadCommunicationManager; }
+
+  /**
+   * Get the coordination communication manager assigned to this channel
+   * @return The coordination communication manager assigned to this channel
+   */
+  [[nodiscard]] __INLINE__ CommunicationManager *getCoordinationCommunicationManager() const { return _coordinationCommunicationManager; }
 
   /**
    * Get the internal coordination buffer assigned to this channel
@@ -225,9 +237,14 @@ class Base
   private:
 
   /**
-   * Pointer to the backend that is in charge of executing the memory transfer operations
+   * Pointer to the backend that is in charge of updating coordination buffers 
    */
-  CommunicationManager *const _communicationManager;
+  CommunicationManager *const _coordinationCommunicationManager;
+
+  /**
+   * Pointer to the backend that is in charge of executing the payload memory transfer operations
+   */
+  CommunicationManager *const _payloadCommunicationManager;
 
   /**
    * Local storage of coordination metadata

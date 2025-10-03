@@ -20,8 +20,8 @@
 #include <hicr/backends/lpf/memoryManager.hpp>
 #include <hicr/backends/lpf/communicationManager.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
-#include "include/consumer.hpp"
-#include "include/producer.hpp"
+#include "../include/consumer.hpp"
+#include "../include/producer.hpp"
 
 // flag needed when using MPI to launch
 const int LPF_MPI_AUTO_INITIALIZE = 0;
@@ -31,14 +31,14 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
  * in lpf_resize_memory_register . This value is currently
  * guessed as sufficiently large for a program
  */
-#define DEFAULT_MEMSLOTS 128
+#define DEFAULT_MEMSLOTS 100
 
 /**
  * #DEFAULT_MSGSLOTS The message slots used by LPF
  * in lpf_resize_message_queue . This value is currently
  * guessed as sufficiently large for a program
  */
-#define DEFAULT_MSGSLOTS 128
+#define DEFAULT_MSGSLOTS 100
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
@@ -80,8 +80,8 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   size_t producerCount = nprocs - 1;
 
   // Rank 0 is consumer, the rest are producers
-  if (pid == 0) consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);
-  if (pid >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, pid - 1, producerCount);
+  if (pid == 0) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, producerCount);
+  if (pid >= 1) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, pid);
 }
 
 int main(int argc, char **argv)

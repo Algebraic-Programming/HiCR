@@ -102,13 +102,13 @@ TEST(ConsumerChannel, Construction)
   auto badGlobalTokenBuffer             = c.getGlobalMemorySlot(CHANNEL_TAG, BAD_TOKEN_BUFFER_KEY);
 
   // Creating with incorrect parameters
-  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, globalTokenBuffer, badConsumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
+  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, c, globalTokenBuffer, badConsumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
                HiCR::LogicException);
-  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, badGlobalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
+  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, c, badGlobalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
                HiCR::LogicException);
 
   // Creating with correct parameters
-  EXPECT_NO_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));
+  EXPECT_NO_THROW(new HiCR::channel::fixedSize::SPSC::Consumer(c, c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));
 }
 
 TEST(ConsumerChannel, PeekPop)
@@ -167,8 +167,8 @@ TEST(ConsumerChannel, PeekPop)
   auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and Consumer channels
-  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
-  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
@@ -260,8 +260,8 @@ TEST(ConsumerChannel, PeekOrderPop)
   auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and Consumer channels
-  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
-  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Send tokens
   for (int i = 0; i < channelCapacity; i++)
@@ -336,8 +336,8 @@ TEST(ConsumerChannel, PeekOrder)
   auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and Consumer channels
-  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
-  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Send tokens
   for (int i = 0; i < channelCapacity; i++)
@@ -411,8 +411,8 @@ TEST(ConsumerChannel, PeekWait)
   auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating channel
-  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
-  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Attempting to push more tokens than channel size (should throw exception)
   EXPECT_THROW(consumer.peek(channelCapacity + 1), HiCR::LogicException);
