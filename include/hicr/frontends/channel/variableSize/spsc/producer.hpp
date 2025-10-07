@@ -112,6 +112,16 @@ class Producer : public variableSize::Base
   __INLINE__ size_t getPayloadCapacity() { return getCircularBufferForPayloads()->getCapacity(); }
 
   /**
+   * Given a proposed message, indicate whether there is enough payload space to push it
+   */
+  __INLINE__ bool hasEnoughPayloadSpace(const size_t msgSize)
+  {
+    auto currentPayloadDepth = getCircularBufferForPayloads()->getDepth();
+    if (msgSize + currentPayloadDepth > getPayloadCapacity()) return false;
+    return true;
+  }
+  
+  /**
    * Puts new variable-sized messages unto the channel. 
    * The implementation consists of two phases. In phase 1, we copy the
    * payload data. In phase 2, we copy the message size of the data we
@@ -150,7 +160,7 @@ class Producer : public variableSize::Base
     /*
      * Part 1: Copy the payload data
      */
-    if (currentPayloadDepth + requiredBufferSize > providedBufferCapacity)
+    if (hasEnoughPayloadSpace(requiredBufferSize) == false)
       HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has payload depth (%lu). This would exceed capacity (%lu).\n",
                          requiredBufferSize,
                          currentPayloadDepth,
