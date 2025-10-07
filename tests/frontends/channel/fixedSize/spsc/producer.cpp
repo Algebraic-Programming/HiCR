@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 #include <hicr/backends/hwloc/memoryManager.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
@@ -46,8 +47,12 @@ TEST(ProducerChannel, Construction)
   // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);
@@ -91,12 +96,12 @@ TEST(ProducerChannel, Construction)
   auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating with incorrect parameters
-  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Producer(c, globalTokenBuffer, badCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
+  EXPECT_THROW(new HiCR::channel::fixedSize::SPSC::Producer(c, c, globalTokenBuffer, badCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity),
                HiCR::LogicException);
 
   // Creating with correct parameters
   EXPECT_NO_THROW(
-    new HiCR::channel::fixedSize::SPSC::Producer(c, globalTokenBuffer, correctProducerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));
+    new HiCR::channel::fixedSize::SPSC::Producer(c, c, globalTokenBuffer, correctProducerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity));
 }
 
 TEST(ProducerChannel, Push)
@@ -110,8 +115,12 @@ TEST(ProducerChannel, Push)
   // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);
@@ -152,7 +161,7 @@ TEST(ProducerChannel, Push)
   auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer channel
-  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;
@@ -195,8 +204,12 @@ TEST(ProducerChannel, PushWait)
   // Instantiating HWloc-based host (CPU) memory manager
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(1);
+  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);
@@ -236,8 +249,8 @@ TEST(ProducerChannel, PushWait)
   auto globalConsumerCoordinationBuffer = c.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  HiCR::channel::fixedSize::SPSC::Producer producer(c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
-  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Producer producer(c, c, globalTokenBuffer, producerCoordinationBuffer, globalConsumerCoordinationBuffer, tokenSize, channelCapacity);
+  HiCR::channel::fixedSize::SPSC::Consumer consumer(c, c, globalTokenBuffer, consumerCoordinationBuffer, globalProducerCoordinationBuffer, tokenSize, channelCapacity);
 
   // Creating send buffer
   auto sendBufferCapacity = channelCapacity + 1;

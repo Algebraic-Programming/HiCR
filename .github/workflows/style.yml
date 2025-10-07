@@ -20,10 +20,52 @@ jobs:
       run: sudo apt update
     - name: Installing clang-tormat
       run: |
-            python3 -m pip install 'clang-format==18.1.0'
+        python3 -m pip install --upgrade pip
+        python3 -m pip install 'clang-format==18.1.0'
+        python3 -m pip install sphinx
+        python3 -m pip install sphinx_rtd_theme
+        python3 -m pip install sphinxcontrib-bibtex
+        python3 -m pip install doxysphinx
+        python3 -m pip install sphinxcontrib.needs
+        python3 -m pip install sphinxcontrib.plantuml
+        python3 -m pip install autoapi
+        python3 -m pip install sphinx-autoapi
+        python3 -m pip install myst_parser
+        python3 -m pip install sphinx_copybutton
+        python3 -m pip install sphinxcontrib.doxylink
+        python3 -m pip install sphinx_design
+        python3 -m pip install Sphinx-Substitution-Extensions
+        python3 -m pip install sphinx_toolbox
+        python3 -m pip install sphinx-theme
+        python3 -m pip install sphinx-book-theme
+        sudo apt update --fix-missing
+        sudo apt install -y build-essential \
+        doxygen \
+        graphviz \
+        fonts-freefont-ttf \
+        texlive \
+        texlive-latex-extra \
+        texlive-fonts-extra \
+        libffi-dev \
+        ghostscript \
+        texlive-extra-utils \
+        texlive-font-utils
+
+        python3 -m pip install 'sphinx==7.2.6'
+        sphinx-build --version
     - name: Checking style
       run: |
         echo "Checking HiCR source and test formatting..."
         .build-tools/style/check-style.sh check include
         .build-tools/style/check-style.sh check tests
         .build-tools/style/check-style.sh check examples
+    - name: Build documentation
+      run: |
+          echo "Building code documentation..."
+          make -j1 -C docs
+          mkdir public
+          cp -r docs/build/html/* public
+    - uses: actions/upload-artifact@v4
+      with:
+        name: docs
+        path: docs/build/html

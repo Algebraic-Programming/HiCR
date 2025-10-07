@@ -42,7 +42,8 @@ class Consumer
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] payloadBuffers The list of memory slots pertaining to the payload buffers. The producers will push new messages
    *            into these buffers as long as space allows. This buffer should be large enough to hold at least the
    *            largest message of the variable-sized messages to be pushed.
@@ -61,7 +62,8 @@ class Consumer
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
-  Consumer(CommunicationManager                                 &communicationManager,
+  Consumer(CommunicationManager                                 &coordinationCommunicationManager,
+           CommunicationManager                                 &payloadCommunicationManager,
            const std::vector<std::shared_ptr<GlobalMemorySlot>> &payloadBuffers,
            const std::vector<std::shared_ptr<GlobalMemorySlot>> &tokenBuffers,
            const std::vector<std::shared_ptr<LocalMemorySlot>>  &internalCoordinationBufferForCounts,
@@ -71,7 +73,8 @@ class Consumer
            const size_t                                          payloadCapacity,
            const size_t                                          payloadSize,
            const size_t                                          capacity)
-    : _communicationManager(&communicationManager)
+    : _coordinationCommunicationManager(&coordinationCommunicationManager),
+      _payloadCommunicationManager(&payloadCommunicationManager)
   {
     // make sure producer and consumer sides have the same element size
     // the size is hopefully the producer count
@@ -84,7 +87,8 @@ class Consumer
     // create p (= number of producers) SPSC channels
     for (size_t i = 0; i < producerCount; i++)
     {
-      std::shared_ptr<variableSize::SPSC::Consumer> consumerPtr(new variableSize::SPSC::Consumer(communicationManager,
+      std::shared_ptr<variableSize::SPSC::Consumer> consumerPtr(new variableSize::SPSC::Consumer(coordinationCommunicationManager,
+                                                                                                 payloadCommunicationManager,
                                                                                                  payloadBuffers[i],
                                                                                                  tokenBuffers[i],
                                                                                                  internalCoordinationBufferForCounts[i],
@@ -129,7 +133,8 @@ class Consumer
     // be of type std::vector instead of std::queue
     if (pos > 0) HICR_THROW_LOGIC("Nonblocking MPSC not yet implemented for peek with n!=0");
 
-    _communicationManager->flushReceived();
+    _coordinationCommunicationManager->flushReceived();
+    _payloadCommunicationManager->flushReceived();
     updateDepth();
     if (_channelPushes.empty()) HICR_THROW_RUNTIME("Attempting to peek position (%lu) but supporting queue has size (%lu)", pos, _channelPushes.size());
 
@@ -244,10 +249,16 @@ class Consumer
    * A snapshot of the last recorded depths in all SPSC channels (initialized with 0s)
    */
   std::vector<size_t> _depths;
+
+  /**
+   * Pointer to the backend that is in charge of updating coordination buffers 
+   */
+  CommunicationManager *const _coordinationCommunicationManager;
+
   /**
    * Pointer to the backend that is in charge of executing the memory transfer operations
    */
-  CommunicationManager *const _communicationManager;
+  CommunicationManager *const _payloadCommunicationManager;
 };
 
 } // namespace HiCR::channel::variableSize::MPSC::nonlocking

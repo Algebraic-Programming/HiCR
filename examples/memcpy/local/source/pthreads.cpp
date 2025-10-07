@@ -17,6 +17,7 @@
 #include "include/telephoneGame.hpp"
 #include <hicr/backends/hwloc/memoryManager.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
+#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 
 int main(int argc, char **argv)
@@ -33,8 +34,12 @@ int main(int argc, char **argv)
   // Instantiating host (CPU) memory manager
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
+  // Create shared memory
+  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
+  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+
   // Instantiating host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c;
+  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
 
   // Asking backend to check the available devices
   const auto t = dm.queryTopology();

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include <mpi.h>
 #include <lpf/core.h>
 #include <lpf/mpi.h>
+#include <mpi.h>
 #include <hicr/backends/lpf/memoryManager.hpp>
 #include <hicr/backends/lpf/communicationManager.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
-#include "include/consumer.hpp"
-#include "include/producer.hpp"
+#include "../include/consumer.hpp"
+#include "../include/producer.hpp"
 
 // flag needed when using MPI to launch
 const int LPF_MPI_AUTO_INITIALIZE = 0;
@@ -31,14 +31,14 @@ const int LPF_MPI_AUTO_INITIALIZE = 0;
  * in lpf_resize_memory_register . This value is currently
  * guessed as sufficiently large for a program
  */
-#define DEFAULT_MEMSLOTS 100
+#define DEFAULT_MEMSLOTS 128
 
 /**
  * #DEFAULT_MSGSLOTS The message slots used by LPF
  * in lpf_resize_message_queue . This value is currently
  * guessed as sufficiently large for a program
  */
-#define DEFAULT_MSGSLOTS 100
+#define DEFAULT_MSGSLOTS 128
 
 void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 {
@@ -58,11 +58,11 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
 
-  // Initializing HWLoc-based host (CPU) topology manager
-  HiCR::backend::hwloc::TopologyManager tm(&topology);
+  // Initializing hwloc-based host (CPU) topology manager
+  HiCR::backend::hwloc::TopologyManager dm(&topology);
 
   // Asking backend to check the available devices
-  const auto t = tm.queryTopology();
+  const auto t = dm.queryTopology();
 
   // Getting first device found
   auto d = *t.getDevices().begin();
@@ -76,10 +76,12 @@ void spmd(lpf_t lpf, lpf_pid_t pid, lpf_pid_t nprocs, lpf_args_t args)
 
   // Getting reference to the first memory space detected
   auto firstMemorySpace = *memSpaces.begin();
+  // Calculating the number of producer processes
+  size_t producerCount = nprocs - 1;
 
-  // Rank 0 is producer, Rank 1 is consumer
-  if (pid == 0) producerFc(m, c, firstMemorySpace, channelCapacity);
-  if (pid == 1) consumerFc(m, c, firstMemorySpace, channelCapacity);
+  // Rank 0 is consumer, the rest are producers
+  if (pid == 0) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, producerCount);
+  if (pid >= 1) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, pid - 1, producerCount);
 }
 
 int main(int argc, char **argv)
@@ -92,9 +94,9 @@ int main(int argc, char **argv)
   int capacity;
   if (rank == 0)
   {
-    if (size != 2)
+    if (size < 2)
     {
-      fprintf(stderr, "Error: Must use 2 processes\n");
+      fprintf(stderr, "Error: Must use at least 2 processes\n");
       MPI_Abort(MPI_COMM_WORLD, -1);
     }
     // Checking arguments

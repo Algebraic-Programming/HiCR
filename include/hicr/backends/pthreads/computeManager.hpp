@@ -144,7 +144,7 @@ class ComputeManager : public HiCR::ComputeManager
     auto p = dynamic_cast<pthreads::ProcessingUnit *>(processingUnit.get());
 
     // If the processing unit is not recognized, throw error. We can use the processing unit's type (string) now.
-    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType());
+    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType().c_str());
 
     // Returning converted pointer
     return p;

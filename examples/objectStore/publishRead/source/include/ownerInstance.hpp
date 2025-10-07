@@ -54,6 +54,7 @@ void owner(HiCR::MemoryManager &memoryManager, HiCR::CommunicationManager &commu
 
   // Creating producer and consumer channels
   auto producer = HiCR::channel::variableSize::SPSC::Producer(communicationManager,
+                                                              communicationManager,
                                                               sizeInfoBuffer,
                                                               payloadBuffer,
                                                               sizesBuffer,

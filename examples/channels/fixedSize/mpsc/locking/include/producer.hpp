@@ -22,9 +22,12 @@
 #include <hicr/frontends/channel/fixedSize/mpsc/locking/producer.hpp>
 #include "common.hpp"
 
-void producerFc(HiCR::MemoryManager               &memoryManager,
-                HiCR::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
+void producerFc(HiCR::MemoryManager               &coordinationMemoryManager,
+                HiCR::MemoryManager               &payloadMemoryManager,
+                HiCR::CommunicationManager        &coordinationCommunicationManager,
+                HiCR::CommunicationManager        &payloadCommunicationManager,
+                std::shared_ptr<HiCR::MemorySpace> coordinationMemorySpace,
+                std::shared_ptr<HiCR::MemorySpace> payloadMemorySpace,
                 const size_t                       channelCapacity,
                 const size_t                       producerId)
 {
@@ -32,23 +35,26 @@ void producerFc(HiCR::MemoryManager               &memoryManager,
   auto coordinationBufferSize = HiCR::channel::fixedSize::Base::getCoordinationBufferSize();
 
   // Registering token buffer as a local memory slot
-  auto coordinationBuffer = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+  auto coordinationBuffer = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, coordinationBufferSize);
 
   // Initializing coordination buffer (sets to zero the counters)
   HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(coordinationBuffer);
 
   // Exchanging local memory slots to become global for them to be used by the remote end
-  communicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {});
+  coordinationCommunicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {});
+  payloadCommunicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {});
 
   // Synchronizing so that all actors have finished registering their global memory slots
-  communicationManager.fence(CHANNEL_TAG);
+  coordinationCommunicationManager.fence(CHANNEL_TAG);
+  payloadCommunicationManager.fence(CHANNEL_TAG);
 
   // Obtaining the globally exchanged memory slots
-  auto globalTokenBufferSlot      = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
-  auto consumerCoordinationBuffer = communicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
+  auto globalTokenBufferSlot      = payloadCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, TOKEN_BUFFER_KEY);
+  auto consumerCoordinationBuffer = coordinationCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_KEY);
 
   // Creating producer and consumer channels
-  auto producer = HiCR::channel::fixedSize::MPSC::locking::Producer(communicationManager,
+  auto producer = HiCR::channel::fixedSize::MPSC::locking::Producer(coordinationCommunicationManager,
+                                                                    payloadCommunicationManager,
                                                                     globalTokenBufferSlot, /* tokenBuffer */
                                                                     coordinationBuffer,    /* internalCoordinationBuffer */
                                                                     consumerCoordinationBuffer,
@@ -58,7 +64,7 @@ void producerFc(HiCR::MemoryManager               &memoryManager,
   // Allocating a send slot to put the values we want to communicate
   ELEMENT_TYPE sendBuffer    = 0;
   auto         sendBufferPtr = &sendBuffer;
-  auto         sendSlot      = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBufferPtr, sizeof(ELEMENT_TYPE));
+  auto         sendSlot      = payloadMemoryManager.registerLocalMemorySlot(payloadMemorySpace, sendBufferPtr, sizeof(ELEMENT_TYPE));
 
   // Pushing values to the channel, one by one, suspending when/if the channel is full
   for (size_t i = 0; i < MESSAGES_PER_PRODUCER; i++)
@@ -74,15 +80,17 @@ void producerFc(HiCR::MemoryManager               &memoryManager,
   }
 
   // Synchronizing so that all actors have finished registering their global memory slots
-  communicationManager.fence(CHANNEL_TAG);
+  coordinationCommunicationManager.fence(CHANNEL_TAG);
+  payloadCommunicationManager.fence(CHANNEL_TAG);
 
   // De-registering global slots
-  communicationManager.deregisterGlobalMemorySlot(globalTokenBufferSlot);
-  communicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
+  payloadCommunicationManager.deregisterGlobalMemorySlot(globalTokenBufferSlot);
+  coordinationCommunicationManager.deregisterGlobalMemorySlot(consumerCoordinationBuffer);
 
   // Destroying global slots
-  communicationManager.fence(CHANNEL_TAG);
+  coordinationCommunicationManager.fence(CHANNEL_TAG);
+  payloadCommunicationManager.fence(CHANNEL_TAG);
 
   // Freeing up local memory
-  memoryManager.freeLocalMemorySlot(coordinationBuffer);
+  coordinationMemoryManager.freeLocalMemorySlot(coordinationBuffer);
 }

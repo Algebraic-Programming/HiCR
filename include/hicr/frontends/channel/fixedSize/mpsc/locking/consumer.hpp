@@ -59,7 +59,8 @@ class Consumer final : public channel::fixedSize::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
@@ -68,13 +69,14 @@ class Consumer final : public channel::fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(CommunicationManager                   &communicationManager,
+  Consumer(CommunicationManager                   &coordinationCommunicationManager,
+           CommunicationManager                   &payloadCommunicationManager,
            std::shared_ptr<GlobalMemorySlot>       tokenBuffer,
            const std::shared_ptr<LocalMemorySlot> &internalCoordinationBuffer,
            std::shared_ptr<GlobalMemorySlot>       consumerCoordinationBuffer,
            const size_t                            tokenSize,
            const size_t                            capacity)
-    : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+    : channel::fixedSize::Base(coordinationCommunicationManager, payloadCommunicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(std::move(tokenBuffer)),
       _consumerCoordinationBuffer(std::move(consumerCoordinationBuffer))
   {}
@@ -115,10 +117,13 @@ class Consumer final : public channel::fixedSize::Base
     // Value to return, initially set as -1 as default (not able to find the requested value)
     ssize_t bufferPos = -1;
 
-    // Obtaining coordination buffer slot lock
-    if (getCommunicationManager()->acquireGlobalLock(_consumerCoordinationBuffer) == false) return bufferPos;
+    auto coordinationCommunicationManager = getCoordinationCommunicationManager();
 
-    getCommunicationManager()->flushReceived();
+    // Obtaining coordination buffer slot lock
+    if (coordinationCommunicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return bufferPos;
+
+    coordinationCommunicationManager->flushReceived();
+    getPayloadCommunicationManager()->flushReceived();
     // Calculating current channel depth
     const auto curDepth = getDepth();
 
@@ -126,7 +131,7 @@ class Consumer final : public channel::fixedSize::Base
     if (pos < curDepth) bufferPos = (ssize_t)((getCircularBuffer()->getTailPosition() + pos) % getCircularBuffer()->getCapacity());
 
     // Releasing coordination buffer slot lock
-    getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBuffer);
+    coordinationCommunicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Succeeded in pushing the token(s)
     return bufferPos;
@@ -154,8 +159,10 @@ class Consumer final : public channel::fixedSize::Base
     // Flag to indicate whether the operaton was successful
     bool successFlag = false;
 
+    auto coordinationCommunicationManager = getCoordinationCommunicationManager();
+
     // Obtaining coordination buffer slot lock
-    if (getCommunicationManager()->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
+    if (coordinationCommunicationManager->acquireGlobalLock(_consumerCoordinationBuffer) == false) return successFlag;
 
     // If the exchange buffer does not have n tokens pushed, reject operation, otherwise succeed
     if (n <= getDepth())
@@ -168,7 +175,7 @@ class Consumer final : public channel::fixedSize::Base
     }
 
     // Releasing coordination buffer slot lock
-    getCommunicationManager()->releaseGlobalLock(_consumerCoordinationBuffer);
+    coordinationCommunicationManager->releaseGlobalLock(_consumerCoordinationBuffer);
 
     // Operation was successful
     return successFlag;

@@ -60,7 +60,8 @@ class Consumer final : public channel::fixedSize::Base
    *
    * It requires the user to provide the allocated memory slots for the exchange (data) and coordination buffers.
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    * tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one
    * token.
@@ -69,13 +70,14 @@ class Consumer final : public channel::fixedSize::Base
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Consumer(CommunicationManager                    &communicationManager,
+  Consumer(CommunicationManager                    &coordinationCommunicationManager,
+           CommunicationManager                    &payloadCommunicationManager,
            const std::shared_ptr<GlobalMemorySlot> &tokenBuffer,
            const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBuffer,
            std::shared_ptr<GlobalMemorySlot>        producerCoordinationBuffer,
            const size_t                             tokenSize,
            const size_t                             capacity)
-    : channel::fixedSize::Base(communicationManager, internalCoordinationBuffer, tokenSize, capacity),
+    : channel::fixedSize::Base(coordinationCommunicationManager, payloadCommunicationManager, internalCoordinationBuffer, tokenSize, capacity),
       _tokenBuffer(tokenBuffer),
       _producerCoordinationBuffer(std::move(producerCoordinationBuffer))
 
@@ -123,7 +125,8 @@ class Consumer final : public channel::fixedSize::Base
       HICR_THROW_LOGIC("Attempting to peek for a token with position (%lu), which is beyond than the channel capacity (%lu)", pos, getCircularBuffer()->getCapacity());
 
     // Make sure receiver queues are occasionally processed
-    getCommunicationManager()->flushReceived();
+    getCoordinationCommunicationManager()->flushReceived();
+    getPayloadCommunicationManager()->flushReceived();
 
     // Updating channel depth
     updateDepth();
@@ -167,14 +170,16 @@ class Consumer final : public channel::fixedSize::Base
     // Advancing tail (removes elements from the circular buffer)
     getCircularBuffer()->advanceTail(n);
 
-    const auto coordBuffElemSize = sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
+    const auto coordBuffElemSize                = sizeof(_HICR_CHANNEL_COORDINATION_BUFFER_ELEMENT_TYPE);
+    auto       coordinationCommunicationManager = getCoordinationCommunicationManager();
+
     // Notifying producer(s) of buffer liberation
-    getCommunicationManager()->memcpy(_producerCoordinationBuffer,
-                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                      getCoordinationBuffer(),
-                                      _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
-                                      coordBuffElemSize);
-    getCommunicationManager()->fence(getCoordinationBuffer(), 1, 0);
+    coordinationCommunicationManager->memcpy(_producerCoordinationBuffer,
+                                             _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                             getCoordinationBuffer(),
+                                             _HICR_CHANNEL_TAIL_ADVANCE_COUNT_IDX * coordBuffElemSize,
+                                             coordBuffElemSize);
+    coordinationCommunicationManager->fence(getCoordinationBuffer(), 1, 0);
   }
 
   /**

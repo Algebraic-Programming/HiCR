@@ -23,9 +23,12 @@
 #include <hicr/frontends/channel/fixedSize/mpsc/nonlocking/consumer.hpp>
 #include "common.hpp"
 
-void consumerFc(HiCR::MemoryManager               &memoryManager,
-                HiCR::CommunicationManager        &communicationManager,
-                std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
+void consumerFc(HiCR::MemoryManager               &coordinationMemoryManager,
+                HiCR::MemoryManager               &payloadMemoryManager,
+                HiCR::CommunicationManager        &coordinationCommunicationManager,
+                HiCR::CommunicationManager        &payloadCommunicationManager,
+                std::shared_ptr<HiCR::MemorySpace> coordinationMemorySpace,
+                std::shared_ptr<HiCR::MemorySpace> payloadMemorySpace,
                 const size_t                       channelCapacity,
                 const size_t                       producerCount)
 {
@@ -41,37 +44,37 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
   for (size_t i = 0; i < producerCount; i++)
   {
     // consumer needs to allocate #producers token buffers for #producers SPSCs
-    auto tokenBufferSlot = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, tokenBufferSize);
+    auto tokenBufferSlot = payloadMemoryManager.allocateLocalMemorySlot(payloadMemorySpace, tokenBufferSize);
     tokenBuffers.push_back(std::make_pair(i, tokenBufferSlot));
     // consumer needs to allocate #producers consumer side coordination buffers for #producers SPSCs
     auto coordinationBufferSize = HiCR::channel::fixedSize::Base::getCoordinationBufferSize();
-    auto coordinationBuffer     = memoryManager.allocateLocalMemorySlot(bufferMemorySpace, coordinationBufferSize);
+    auto coordinationBuffer     = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, coordinationBufferSize);
     HiCR::channel::fixedSize::Base::initializeCoordinationBuffer(coordinationBuffer);
     localCoordinationBuffers.push_back(coordinationBuffer);
     consumerCoordinationBuffers.push_back(std::make_pair(i, coordinationBuffer));
   }
 
   // communicate to producers the token buffer references
-  communicationManager.exchangeGlobalMemorySlots(TOKEN_TAG, tokenBuffers);
-  communicationManager.fence(TOKEN_TAG);
+  payloadCommunicationManager.exchangeGlobalMemorySlots(TOKEN_TAG, tokenBuffers);
+  payloadCommunicationManager.fence(TOKEN_TAG);
   // get from producers their coordination buffer references
-  communicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_TAG, {});
-  communicationManager.fence(PRODUCER_COORDINATION_TAG);
+  coordinationCommunicationManager.exchangeGlobalMemorySlots(PRODUCER_COORDINATION_TAG, {});
+  coordinationCommunicationManager.fence(PRODUCER_COORDINATION_TAG);
   // communicate to producers the consumer buffers
-  communicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_TAG, consumerCoordinationBuffers);
-  communicationManager.fence(CONSUMER_COORDINATION_TAG);
+  coordinationCommunicationManager.exchangeGlobalMemorySlots(CONSUMER_COORDINATION_TAG, consumerCoordinationBuffers);
+  coordinationCommunicationManager.fence(CONSUMER_COORDINATION_TAG);
 
   for (size_t i = 0; i < producerCount; i++)
   {
-    auto globalTokenBufferSlot = communicationManager.getGlobalMemorySlot(TOKEN_TAG, i);
+    auto globalTokenBufferSlot = payloadCommunicationManager.getGlobalMemorySlot(TOKEN_TAG, i);
     globalTokenBuffers.push_back(globalTokenBufferSlot);
-    auto producerCoordinationBuffer = communicationManager.getGlobalMemorySlot(PRODUCER_COORDINATION_TAG, i);
+    auto producerCoordinationBuffer = coordinationCommunicationManager.getGlobalMemorySlot(PRODUCER_COORDINATION_TAG, i);
     producerCoordinationBuffers.push_back(producerCoordinationBuffer);
   }
 
   // Creating producer and consumer channels
   auto consumer = HiCR::channel::fixedSize::MPSC::nonlocking::Consumer(
-    communicationManager, globalTokenBuffers, localCoordinationBuffers, producerCoordinationBuffers, sizeof(ELEMENT_TYPE), channelCapacity);
+    coordinationCommunicationManager, payloadCommunicationManager, globalTokenBuffers, localCoordinationBuffers, producerCoordinationBuffers, sizeof(ELEMENT_TYPE), channelCapacity);
 
   // Calculating the expected message count
   size_t expectedMessageCount = MESSAGES_PER_PRODUCER * producerCount;
@@ -102,21 +105,21 @@ void consumerFc(HiCR::MemoryManager               &memoryManager,
     consumer.pop();
   }
 
-  communicationManager.fence(TOKEN_TAG);
-  communicationManager.fence(PRODUCER_COORDINATION_TAG);
-  communicationManager.fence(CONSUMER_COORDINATION_TAG);
+  payloadCommunicationManager.fence(TOKEN_TAG);
+  coordinationCommunicationManager.fence(PRODUCER_COORDINATION_TAG);
+  coordinationCommunicationManager.fence(CONSUMER_COORDINATION_TAG);
 
   for (size_t i = 0; i < producerCount; i++)
   {
-    communicationManager.deregisterGlobalMemorySlot(globalTokenBuffers[i]);
-    communicationManager.destroyGlobalMemorySlot(globalTokenBuffers[i]);
-    memoryManager.freeLocalMemorySlot(globalTokenBuffers[i]->getSourceLocalMemorySlot());
-    communicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffers[i]);
-    communicationManager.destroyGlobalMemorySlot(producerCoordinationBuffers[i]);
-    memoryManager.freeLocalMemorySlot(localCoordinationBuffers[i]);
+    payloadCommunicationManager.deregisterGlobalMemorySlot(globalTokenBuffers[i]);
+    payloadMemoryManager.freeLocalMemorySlot(globalTokenBuffers[i]->getSourceLocalMemorySlot());
+    coordinationCommunicationManager.destroyGlobalMemorySlot(globalTokenBuffers[i]);
+    coordinationCommunicationManager.deregisterGlobalMemorySlot(producerCoordinationBuffers[i]);
+    coordinationCommunicationManager.destroyGlobalMemorySlot(producerCoordinationBuffers[i]);
+    coordinationMemoryManager.freeLocalMemorySlot(localCoordinationBuffers[i]);
   }
 
-  communicationManager.fence(TOKEN_TAG);
-  communicationManager.fence(PRODUCER_COORDINATION_TAG);
-  communicationManager.fence(CONSUMER_COORDINATION_TAG);
+  payloadCommunicationManager.fence(TOKEN_TAG);
+  coordinationCommunicationManager.fence(PRODUCER_COORDINATION_TAG);
+  coordinationCommunicationManager.fence(CONSUMER_COORDINATION_TAG);
 }

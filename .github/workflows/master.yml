@@ -75,35 +75,37 @@ jobs:
       os: ubuntu-24.04-arm
       arch: arm64
   
-  build-acl-docker-amd64:
-    needs: [ push-buildenv-manifest ]
-    if: |
-      always() &&
-      (contains(needs.push-buildenv-manifest.result, 'success') || contains(needs.push-buildenv-manifest.result, 'skipped'))
-    uses: Algebraic-Programming/HiCR/.github/workflows/master-build-acl-workflow.yml@master
-    with:
-      os: ubuntu-24.04
-      arch: amd64
+  # disabled because of broken docker image creation
+
+  # build-acl-docker-amd64:
+  #   needs: [ push-buildenv-manifest ]
+  #   if: |
+  #     always() &&
+  #     (contains(needs.push-buildenv-manifest.result, 'success') || contains(needs.push-buildenv-manifest.result, 'skipped'))
+  #   uses: Algebraic-Programming/HiCR/.github/workflows/master-build-acl-workflow.yml@master
+  #   with:
+  #     os: ubuntu-24.04
+  #     arch: amd64
   
-  push-buildenv-acl-manifest:
-    runs-on: ubuntu-latest
-    needs: [ build-acl-docker-amd64, build-acl-docker-arm64 ]
-    if: |
-      always() &&
-      contains(needs.build-acl-docker-amd64.result, 'success') &&
-      contains(needs.build-acl-docker-arm64.result, 'success') 
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  # push-buildenv-acl-manifest:
+  #   runs-on: ubuntu-latest
+  #   needs: [ build-acl-docker-amd64, build-acl-docker-arm64 ]
+  #   if: |
+  #     always() &&
+  #     contains(needs.build-acl-docker-amd64.result, 'success') &&
+  #     contains(needs.build-acl-docker-arm64.result, 'success') 
+  #   steps:
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Log in to the Container registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ${{ env.REGISTRY }}
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create and push manifest images
-        run:
-          docker buildx imagetools create --tag ${{ env.DOCKERIMAGE }}-acl:latest ${{ env.DOCKERIMAGE }}-acl:amd64-latest ${{ env.DOCKERIMAGE }}-acl:arm64-latest
+  #     - name: Create and push manifest images
+  #       run:
+  #         docker buildx imagetools create --tag ${{ env.DOCKERIMAGE }}-acl:latest ${{ env.DOCKERIMAGE }}-acl:amd64-latest ${{ env.DOCKERIMAGE }}-acl:arm64-latest
 

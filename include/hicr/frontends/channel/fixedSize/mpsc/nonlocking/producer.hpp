@@ -44,7 +44,8 @@ class Producer final : public fixedSize::SPSC::Producer
   /**
    * This constructor simply calls the SPSC Producer constructor
    *
-   * \param[in] communicationManager The backend to facilitate communication between the producer and consumer sides
+   * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
+   * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. The producer will push new
    *            tokens into this buffer, while there is enough space. This buffer should be big enough to hold at least one token.
    * \param[in] internalCoordinationBuffer This is a small buffer to hold the internal (loca) state of the channel's circular buffer
@@ -52,13 +53,20 @@ class Producer final : public fixedSize::SPSC::Producer
    * \param[in] tokenSize The size of each token.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    */
-  Producer(CommunicationManager                    &communicationManager,
+  Producer(CommunicationManager                    &coordinationCommunicationManager,
+           CommunicationManager                    &payloadCommunicationManager,
            std::shared_ptr<GlobalMemorySlot>        tokenBuffer,
            const std::shared_ptr<LocalMemorySlot>  &internalCoordinationBuffer,
            const std::shared_ptr<GlobalMemorySlot> &producerCoordinationBuffer,
            const size_t                             tokenSize,
            const size_t                             capacity)
-    : fixedSize::SPSC::Producer(communicationManager, std::move(tokenBuffer), internalCoordinationBuffer, producerCoordinationBuffer, tokenSize, capacity)
+    : fixedSize::SPSC::Producer(coordinationCommunicationManager,
+                                payloadCommunicationManager,
+                                std::move(tokenBuffer),
+                                internalCoordinationBuffer,
+                                producerCoordinationBuffer,
+                                tokenSize,
+                                capacity)
   {}
   ~Producer() = default;
 };

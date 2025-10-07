@@ -18,8 +18,8 @@
 #include <hicr/backends/mpi/memoryManager.hpp>
 #include <hicr/backends/mpi/communicationManager.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
-#include "include/consumer.hpp"
-#include "include/producer.hpp"
+#include "../include/consumer.hpp"
+#include "../include/producer.hpp"
 
 int main(int argc, char **argv)
 {
@@ -85,8 +85,8 @@ int main(int argc, char **argv)
   size_t producerCount = rankCount - 1;
 
   // Rank 0 is consumer, the rest are producers
-  if (rankId == 0) consumerFc(m, c, firstMemorySpace, channelCapacity, producerCount);
-  if (rankId >= 1) producerFc(m, c, firstMemorySpace, channelCapacity, rankId - 1, producerCount);
+  if (rankId == 0) consumerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, producerCount);
+  if (rankId >= 1) producerFc(m, m, c, c, firstMemorySpace, firstMemorySpace, channelCapacity, rankId);
 
   // Finalizing MPI
   MPI_Finalize();
