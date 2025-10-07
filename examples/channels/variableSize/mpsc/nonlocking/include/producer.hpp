@@ -129,7 +129,7 @@ void producerFc(HiCR::MemoryManager               &coordinationMemoryManager,
     // is the message sizes buffer full?
     // Note: it might be necessary sometimes to also check the payload buffers
     // as they might overflow independently of the message size buffers
-    while (producer.isFull()) { producer.updateDepth(); }
+    while (producer.isFull(nextElemSize)) { producer.updateDepth(); }
 
     producer.push(sendSlot);
     Printer<ELEMENT_TYPE>::printBytes(prefix, elements[i].first, payloadCapacity, 0, nextElemSize);

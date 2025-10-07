@@ -243,23 +243,28 @@ class Consumer final : public variableSize::Base
    * receiving the message counts (phase 2), returning this depth should guarantee
    * we already have received the payloads
    *
-   * \note This is not a thread-safe call
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
    * @return The number of elements in variable-size consumer channel
+   * 
+   * \note This is not a thread-safe call
+   * \note Even though there might be space for additional tokens in the coordination buffer, it is not guaranteed that 
+   *       the push() will succeed due to insufficient space in the payload buffer
    */
-  size_t getDepth() { return getCircularBufferForCounts()->getDepth(); }
+  size_t getCoordinationDepth() { return getCircularBufferForCounts()->getDepth(); }
 
   /**
    * Returns the current depth of the channel holding the payloads
    *
-   * \note This is not a thread-safe call
    *
    * This is a getter function that should complete in \f$ \Theta(1) \f$ time.
    *
    * @returns The number of total bytes in the payloads channel
    *
+   * \note This is not a thread-safe call
+   * \note Even though there might be space for additional tokens in the payload buffer, it is not guaranteed that 
+   *       the push() will succeed due to insufficient space in the coordination buffer
    */
   size_t getPayloadDepth() { return getCircularBufferForPayloads()->getDepth(); }
 
@@ -271,7 +276,25 @@ class Consumer final : public variableSize::Base
    * \returns true, if both message count and payload buffers are empty
    * \returns false, if one of the buffers is not empty
    */
-  bool isEmpty() { return (getDepth() == 0); }
+  bool isEmpty() { return getCoordinationDepth() == 0; }
+
+  /**
+   * This funciton can be used to quickly check whether the channel is becoming full when trying 
+   * to push an element of a given size
+   * 
+   * \param[in] requiredBufferSize size of the token to push into the channel
+   * 
+   * \return true if there is enough space to push the token, false otherwise
+  */
+  bool isFull(size_t requiredBufferSize)
+  {
+    auto coordinationCircularBuffer = getCircularBufferForCounts();
+    if (coordinationCircularBuffer->getDepth() == coordinationCircularBuffer->getCapacity()) return true;
+    auto payloadCircularBuffer = getCircularBufferForPayloads();
+    if (payloadCircularBuffer->getDepth() + requiredBufferSize > payloadCircularBuffer->getCapacity()) return true;
+
+    return false;
+  }
 
   /**
    * Retrieves the pointer to the channel's payload buffer

@@ -104,7 +104,7 @@ class Consumer
       * immediately upon creation of the SPSC channel. Therefore we do not reset
       * _depths to zero, and check for "early" received messages
       */
-      _depths.push_back(consumerPtr->getDepth());
+      _depths.push_back(consumerPtr->getCoordinationDepth());
       for (size_t j = 0; j < _depths.back(); j++) { _channelPushes.push(i); }
     }
   }
@@ -222,7 +222,7 @@ class Consumer
     for (size_t i = 0; i < _spscList.size(); i++)
     {
       _spscList[i]->updateDepth();
-      newDepths[i] = _spscList[i]->getDepth();
+      newDepths[i] = _spscList[i]->getCoordinationDepth();
     }
 
     for (size_t i = 0; i < _spscList.size(); i++)

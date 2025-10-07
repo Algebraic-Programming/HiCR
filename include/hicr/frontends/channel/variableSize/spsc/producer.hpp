@@ -48,7 +48,8 @@ class Producer : public variableSize::Base
    * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] sizeInfoBuffer The local memory slot used to hold the information about the next message size
    * \param[in] payloadBuffer The global memory slot pertaining to the payload of all messages. The producer will push messages into this
-   *            buffer, while there is enough space. This buffer should be large enough to hold at least the largest of the variable-size messages.
+   *            buffer, while there is enough space. This buffer should be large enough to hold twice the capacity specified by @ref payloadCapacity argument.
+   *            Half of the buffer is used as excess buffer to avoid internal fragmentation of messages
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer, which is used to hold message size data.
    *            The producer will push message sizes into this buffer, while there is enough space. This buffer should be large enough to
    *            hold at least one message size.
@@ -107,8 +108,11 @@ class Producer : public variableSize::Base
   __INLINE__ size_t getPayloadSize() { return _payloadSize; }
 
   /**
-   * get payload buffer depth
-   * @return payload buffer depth (in bytes)
+   * Get payload buffer depth
+   * 
+   * \return payload buffer depth (in bytes). It is the occupancy of the buffers
+   * \note Even though there might be space for additional tokens in the payload buffer, it is not guaranteed that 
+   *       the push() will succeed due to insufficient space in the coordination buffer
    */
   __INLINE__ size_t getPayloadDepth() { return getCircularBufferForPayloads()->getDepth(); }
 
@@ -117,16 +121,6 @@ class Producer : public variableSize::Base
    * @return payload buffer capacity (in bytes)
    */
   __INLINE__ size_t getPayloadCapacity() { return getCircularBufferForPayloads()->getCapacity(); }
-
-  /**
-   * Given a proposed message, indicate whether there is enough payload space to push it
-   */
-  __INLINE__ bool hasEnoughPayloadSpace(const size_t msgSize)
-  {
-    auto currentPayloadDepth = getCircularBufferForPayloads()->getDepth();
-    if (msgSize + currentPayloadDepth > getPayloadCapacity()) return false;
-    return true;
-  }
   
   /**
    * Puts new variable-sized messages unto the channel. 
@@ -156,64 +150,59 @@ class Producer : public variableSize::Base
     if (n != 1) HICR_THROW_RUNTIME("HiCR currently has no implementation for n != 1 with push(sourceSlot, n) for variable size version.");
 
     // Make sure source slot is beg enough to satisfy the operation
-    size_t requiredBufferSize     = sourceSlot->getSize();
-    size_t providedBufferCapacity = getPayloadCapacity();
+    size_t requiredPayloadBufferSize     = sourceSlot->getSize();
+    size_t providedPayloadBufferCapacity = getPayloadCapacity();
+
+    // size_t requiredCoordinationBufferSize     = getTokenSize();
+    // size_t providedCoordinationBufferCapacity = getPayloadCapacity();
 
     // Updating depth of token (message sizes) and payload buffers
     updateDepth();
     auto currentPayloadDepth = getCircularBufferForPayloads()->getDepth();
-    auto currentDepth        = getDepth();
+    auto currentDepth        = getCoordinationDepth();
 
-    /*
-     * Part 1: Copy the payload data
-     */
-    if (hasEnoughPayloadSpace(requiredBufferSize) == false)
+    /**
+     * Payload copy.
+     * 2 possible scenarios:
+     * 
+     * 1) we still have space after the head after the push
+     * 2) we do not have enough space ahead after the push, but we have it at the beginning of the buffer
+     *    and their sum allows us to push the token. In such case, push to the excess buffer so that we avoid
+     *    breaking the token in 2 chunks. The head is always pointing to a valid position in the buffer
+     * 
+     * 0               buffer capacity                End of excess buffer
+     *                 TAIL                 HEAD1
+     * |-------|--------|-------|-------------|----------|
+     *        HEAD
+     * 
+     * In this case HEAD1 indicates where the the token ends in the implementation, while HEAD its logical position
+     * 
+     * If neither of those is true, we can not push
+     * */
+
+    // Check that the token to push is smaller than the buffer capacity
+    if (requiredPayloadBufferSize > providedPayloadBufferCapacity)
+      HICR_THROW_RUNTIME("Attempting to push (%lu) bytes, while the channel has a maximum capacity of (%lu)", requiredPayloadBufferSize, providedPayloadBufferCapacity);
+
+    // Check whether there is enough space in the buffer to push the token
+    if (currentPayloadDepth + requiredPayloadBufferSize > providedPayloadBufferCapacity)
       HICR_THROW_RUNTIME("Attempting to push (%lu) bytes while the channel currently has payload depth (%lu). This would exceed capacity (%lu).\n",
-                         requiredBufferSize,
+                         requiredPayloadBufferSize,
                          currentPayloadDepth,
-                         providedBufferCapacity);
+                         providedPayloadBufferCapacity);
 
     // Get communication managers
-    auto payloadCommunicationManager = getPayloadCommunicationManager();
-
-    /*
-     * Payload copy:
-     *  - We have checked (requiredBufferSize  <= depth)
-     *  that the payload fits into available circular buffer,
-     *  but it is possible it spills over the end into the
-     *  beginning. Cover this corner case below
-     */
-    if (requiredBufferSize + getPayloadHeadPosition() > getPayloadCapacity())
-    {
-      size_t first_chunk  = getPayloadCapacity() - getPayloadHeadPosition();
-      size_t second_chunk = requiredBufferSize - first_chunk;
-
-      // copy first part to end of buffer
-      payloadCommunicationManager->memcpy(_payloadBuffer,           /* destination */
-                                          getPayloadHeadPosition(), /* dst_offset */
-                                          sourceSlot,               /* source */
-                                          0,                        /* src_offset */
-                                          first_chunk);             /* size */
-      // copy second part to beginning of buffer
-      payloadCommunicationManager->memcpy(_payloadBuffer, /* destination */
-                                          0,              /* dst_offset */
-                                          sourceSlot,     /* source */
-                                          first_chunk,    /* src_offset */
-                                          second_chunk);  /* size */
-      payloadCommunicationManager->fence(sourceSlot, 2, 0);
-    }
-    else
-    {
-      payloadCommunicationManager->memcpy(_payloadBuffer, getPayloadHeadPosition(), sourceSlot, 0, requiredBufferSize);
-      payloadCommunicationManager->fence(sourceSlot, 1, 0);
-    }
-
-    getCircularBufferForPayloads()->advanceHead(requiredBufferSize);
-
+    auto payloadCommunicationManager      = getPayloadCommunicationManager();
     auto coordinationCommunicationManager = getCoordinationCommunicationManager();
 
-    // update the consumer coordination buffers (consumer does not update
-    // its own coordination head positions)
+    //  Payload copy. Just push to the channel, we know there is enough space
+    payloadCommunicationManager->memcpy(_payloadBuffer, getPayloadHeadPosition(), sourceSlot, 0, requiredPayloadBufferSize);
+    payloadCommunicationManager->fence(sourceSlot, 1, 0);
+
+    // Advance the head in the payload buffer
+    getCircularBufferForPayloads()->advanceHead(requiredPayloadBufferSize);
+
+    // update the consumer coordination buffers (consumer does not update its own coordination head positions)
     coordinationCommunicationManager->memcpy(_consumerCoordinationBufferForPayloads,
                                              _HICR_CHANNEL_HEAD_ADVANCE_COUNT_IDX * sizeof(size_t),
                                              getCoordinationBufferForPayloads(),
@@ -224,15 +213,14 @@ class Producer : public variableSize::Base
     /*
      * Part 2: Copy the message size
      */
-
     auto *sizeInfoBufferPtr = static_cast<size_t *>(_sizeInfoBuffer->getPointer());
-    sizeInfoBufferPtr[0]    = requiredBufferSize;
+    sizeInfoBufferPtr[0]    = requiredPayloadBufferSize;
 
     // If the exchange buffer does not have n free slots, reject the operation
     if (currentDepth + 1 > getCircularBufferForCounts()->getCapacity())
       HICR_THROW_RUNTIME("Attempting to push with (%lu) tokens while the channel has (%lu) tokens and this would exceed capacity (%lu).\n",
                          1,
-                         getDepth(),
+                         getCoordinationDepth(),
                          getCircularBufferForCounts()->getCapacity());
 
     coordinationCommunicationManager->memcpy(_tokenBuffer,                                                     /* destination */
@@ -252,14 +240,16 @@ class Producer : public variableSize::Base
   }
 
   /**
-   * Get depth of variable-size producer. Since we have 2 buffers - one
-   * for counts, and one for payloads, we need to be careful.
+   * Get depth of the coordination buffer of variable-size producer.
    * Because the current implementation first receives the payload (phase 1) before
     // receiving the message counts (phase 2), returning this depth should guarantee
     // we already have received the payloads
    * @return The number of elements in the variable-size producer channel
+   * 
+   * \note Even though there might be space for additional tokens in the coordination buffer, it is not guaranteed that 
+   *       the push() will succeed due to insufficient space in the payload buffer
    */
-  size_t getDepth() { return getCircularBufferForCounts()->getDepth(); }
+  size_t getCoordinationDepth() { return getCircularBufferForCounts()->getDepth(); }
 
   /**
    * This function can be used to quickly check whether the channel is empty.
@@ -268,8 +258,27 @@ class Producer : public variableSize::Base
    *
    * \returns true, if both message count and payload buffers are empty
    * \returns false, if one of the buffers is not empty
+   * 
    */
-  bool isEmpty() { return getDepth() == 0; }
+  bool isEmpty() { return getCoordinationDepth() == 0; }
+
+  /**
+   * This funciton can be used to quickly check whether the channel is becoming full when trying 
+   * to push an element of a given size
+   * 
+   * \param[in] requiredBufferSize size of the token to push into the channel
+   * 
+   * \return true if there is enough space to push the token, false otherwise
+  */
+  bool isFull(size_t requiredBufferSize)
+  {
+    auto coordinationCircularBuffer = getCircularBufferForCounts();
+    if (coordinationCircularBuffer->getDepth() == coordinationCircularBuffer->getCapacity()) return true;
+    auto payloadCircularBuffer = getCircularBufferForPayloads();
+    if (payloadCircularBuffer->getDepth() + requiredBufferSize == payloadCircularBuffer->getCapacity()) return true;
+
+    return false;
+  }
 
   private:
 
