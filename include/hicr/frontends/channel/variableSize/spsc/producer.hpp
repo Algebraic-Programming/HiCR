@@ -48,7 +48,7 @@ class Producer : public variableSize::Base
    * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
    * \param[in] sizeInfoBuffer The local memory slot used to hold the information about the next message size
    * \param[in] payloadBuffer The global memory slot pertaining to the payload of all messages. The producer will push messages into this
-   *            buffer, while there is enough space. This buffer should be large enough to hold twice the capacity specified by \ref payloadCapacity argument.
+   *            buffer, while there is enough space. This buffer should be large enough to hold twice the capacity specified by payloadCapacity argument.
    *            Half of the buffer is used as excess buffer to avoid internal fragmentation of messages
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer, which is used to hold message size data.
    *            The producer will push message sizes into this buffer, while there is enough space. This buffer should be large enough to
@@ -235,7 +235,7 @@ class Producer : public variableSize::Base
    * @return payload buffer capacity (in bytes)
    */
   __INLINE__ size_t getPayloadCapacity() { return getCircularBufferForPayloads()->getCapacity(); }
-  
+
   /**
    * Get depth of the coordination buffer of variable-size producer.
    * Because the current implementation first receives the payload (phase 1) before
@@ -264,7 +264,7 @@ class Producer : public variableSize::Base
    * This funciton can be used to quickly check whether the channel is becoming full when trying 
    * to push an element of a given size. First thing, we are checking if we can still 
    * push tokens (i.e., if the coordination buffer has space). Second thing, we are checking the
-   * payload buffer. If the current depth of the payload and the \ref requiredBufferSize to push 
+   * payload buffer. If the current depth of the payload and the requiredBufferSize to push 
    * exceed the channel capacity, the channel is considered full.
    * 
    * \param[in] requiredBufferSize size of the token to push into the channel
