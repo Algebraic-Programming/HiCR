@@ -36,7 +36,7 @@ void consumerFc(HiCR::MemoryManager               &coordinationMemoryManager,
   auto sizesBufferSlot = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, sizesBufferSize);
 
   // Allocating payload buffer as a local memory slot
-  auto payloadBufferSlot = payloadMemoryManager.allocateLocalMemorySlot(payloadMemorySpace, PAYLOAD_CAPACITY);
+  auto payloadBufferSlot = payloadMemoryManager.allocateLocalMemorySlot(payloadMemorySpace, PAYLOAD_CAPACITY * 2);
 
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
@@ -86,7 +86,7 @@ void consumerFc(HiCR::MemoryManager               &coordinationMemoryManager,
                                                               channelCapacity);
 
   // Getting a single value from the channel
-  while (consumer.getDepth() != 1) consumer.updateDepth();
+  while (consumer.getCoordinationDepth() != 1) consumer.updateDepth();
 
   // Getting internal pointer of the token buffer slot
   auto payloadBufferPtr = (ELEMENT_TYPE *)payloadBufferSlot->getPointer();
