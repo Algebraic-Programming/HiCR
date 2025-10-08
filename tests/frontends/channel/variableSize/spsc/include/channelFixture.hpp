@@ -167,51 +167,45 @@ class ChannelFixture : public ::testing::Test
                                                                          channelCapacity);
   }
 
-  std::unique_ptr<HiCR::CommunicationManager>              _communicationManager;
-  std::unique_ptr<HiCR::InstanceManager>                   _instanceManager;
-  std::unique_ptr<HiCR::MemoryManager>                     _memoryManager;
-  std::unique_ptr<HiCR::TopologyManager>                   _topologyManager;
-  std::unique_ptr<HiCR::backend::pthreads::ComputeManager> _computeManager;
+  std::unique_ptr<HiCR::CommunicationManager>              communicationManager;
+  std::unique_ptr<HiCR::InstanceManager>                   instanceManager;
+  std::unique_ptr<HiCR::MemoryManager>                     memoryManager;
+  std::unique_ptr<HiCR::TopologyManager>                   topologyManager;
+  std::unique_ptr<HiCR::backend::pthreads::ComputeManager> computeManager;
 
-  std::unique_ptr<HiCR::channel::variableSize::SPSC::Consumer> _consumer;
-  std::unique_ptr<HiCR::channel::variableSize::SPSC::Producer> _producer;
+  std::unique_ptr<HiCR::channel::variableSize::SPSC::Consumer> consumer;
+  std::unique_ptr<HiCR::channel::variableSize::SPSC::Producer> producer;
 
-  std::shared_ptr<HiCR::MemorySpace> _memorySpace;
+  std::shared_ptr<HiCR::MemorySpace> memorySpace;
 
   protected:
 
   void SetUp() override
   {
-    _instanceManager = std::make_unique<HiCR::backend::mpi::InstanceManager>(MPI_COMM_WORLD);
+    instanceManager = std::make_unique<HiCR::backend::mpi::InstanceManager>(MPI_COMM_WORLD);
 
     // Sanity Check
-    if (_instanceManager->getInstances().size() != 2)
+    if (instanceManager->getInstances().size() != 2)
     {
-      if (_instanceManager->getCurrentInstance()->isRootInstance()) fprintf(stderr, "Launch error: MPI process count must be equal to 2\n");
+      if (instanceManager->getCurrentInstance()->isRootInstance()) fprintf(stderr, "Launch error: MPI process count must be equal to 2\n");
       MPI_Finalize();
     }
 
-    _communicationManager = std::make_unique<HiCR::backend::mpi::CommunicationManager>(MPI_COMM_WORLD);
-    _memoryManager        = std::make_unique<HiCR::backend::mpi::MemoryManager>();
-    _computeManager       = std::make_unique<HiCR::backend::pthreads::ComputeManager>();
-    _topologyManager      = HiCR::backend::hwloc::TopologyManager::createDefault();
+    communicationManager = std::make_unique<HiCR::backend::mpi::CommunicationManager>(MPI_COMM_WORLD);
+    memoryManager        = std::make_unique<HiCR::backend::mpi::MemoryManager>();
+    computeManager       = std::make_unique<HiCR::backend::pthreads::ComputeManager>();
+    topologyManager      = HiCR::backend::hwloc::TopologyManager::createDefault();
 
-    _topology    = _topologyManager->queryTopology();
-    _memorySpace = _topology.getDevices().begin().operator*()->getMemorySpaceList().begin().operator*();
-
-    if (_instanceManager->getCurrentInstance()->isRootInstance())
-    {
-      _producer = createProducer(*_memoryManager, *_memoryManager, *_communicationManager, *_communicationManager, _memorySpace, _memorySpace, CHANNEL_CAPACITY);
-    }
-    else { _consumer = createConsumer(*_memoryManager, *_memoryManager, *_communicationManager, *_communicationManager, _memorySpace, _memorySpace, CHANNEL_CAPACITY); }
+    _topology   = topologyManager->queryTopology();
+    memorySpace = _topology.getDevices().begin().operator*()->getMemorySpaceList().begin().operator*();
   }
 
   void TearDown() override
   {
-    for (auto &g : _globalSlots) { _communicationManager->deregisterGlobalMemorySlot(g); }
-    for (auto &g : _globalSlotsToDestroy) { _communicationManager->destroyGlobalMemorySlot(g); }
-    _communicationManager->fence(CHANNEL_TAG);
-    for (auto &l : _localSlots) { _memoryManager->freeLocalMemorySlot(l); }
+    for (auto &g : _globalSlots) { communicationManager->deregisterGlobalMemorySlot(g); }
+    for (auto &g : _globalSlotsToDestroy) { communicationManager->destroyGlobalMemorySlot(g); }
+    communicationManager->fence(CHANNEL_TAG);
+    for (auto &l : _localSlots) { memoryManager->freeLocalMemorySlot(l); }
   }
 
   private:

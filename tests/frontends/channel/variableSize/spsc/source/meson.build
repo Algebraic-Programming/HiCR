@@ -1,21 +1,30 @@
 testSuite = ['tests', 'channels', 'variableSize', 'spsc', 'distributed']
 test_timeout = 60
 
-if 'mpi' in enabledBackends and 'hwloc' in enabledBackends
-	mpi = executable(
-		'fillBuffers',
-		['fillBuffers.cpp'],
-		dependencies: channelsTestMPIDep,
-		include_directories: [exampleBuildIncludes],
-	)
+sourceList = [
+	'fillBufferOneToken',
+	'fillBufferMultipleTokens',
+	'fillCoordination',
+	'excessBuffer',
+]
 
-	if get_option('buildTests')
-		test(
-			'fillBuffers',
-			mpirunExecutable,
-			args: ['-np', '2', '--oversubscribe', mpi.full_path()],
-			timeout: test_timeout,
-			suite: testSuite,
+foreach source : sourceList
+	if 'mpi' in enabledBackends and 'hwloc' in enabledBackends
+		mpi = executable(
+			source,
+			[source + '.cpp'],
+			dependencies: channelsTestMPIDep,
+			include_directories: [exampleBuildIncludes],
 		)
+
+		if get_option('buildTests')
+			test(
+				source,
+				mpirunExecutable,
+				args: ['-np', '2', '--oversubscribe', mpi.full_path()],
+				timeout: test_timeout,
+				suite: testSuite,
+			)
+		endif
 	endif
-endif
+endforeach
