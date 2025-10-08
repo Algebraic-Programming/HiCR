@@ -23,61 +23,12 @@
 
 #include "common.hpp"
 
-void producerFc(HiCR::MemoryManager               &coordinationMemoryManager,
-                HiCR::MemoryManager               &payloadMemoryManager,
-                HiCR::CommunicationManager        &coordinationCommunicationManager,
-                HiCR::CommunicationManager        &payloadCommunicationManager,
-                std::shared_ptr<HiCR::MemorySpace> coordinationMemorySpace,
-                std::shared_ptr<HiCR::MemorySpace> payloadMemorySpace,
-                const size_t                       channelCapacity)
+void producerFc(HiCR::MemoryManager                         &payloadMemoryManager,
+                HiCR::CommunicationManager                  &coordinationCommunicationManager,
+                HiCR::CommunicationManager                  &payloadCommunicationManager,
+                std::shared_ptr<HiCR::MemorySpace>           payloadMemorySpace,
+                HiCR::channel::variableSize::SPSC::Producer &producer)
 {
-  // Getting required buffer size
-  auto coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
-
-  // Allocating sizes buffer as a local memory slot
-  auto coordinationBufferForCounts = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, coordinationBufferSize);
-
-  auto coordinationBufferForPayloads = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, coordinationBufferSize);
-
-  auto sizeInfoBuffer = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, sizeof(size_t));
-
-  // Initializing coordination buffers for message sizes and payloads (sets to zero the counters)
-  HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferForCounts);
-  HiCR::channel::variableSize::Base::initializeCoordinationBuffer(coordinationBufferForPayloads);
-
-  // Exchanging local memory slots to become global for them to be used by the remote end
-  coordinationCommunicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG,                                                                /* global tag */
-                                                             {{PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY, coordinationBufferForCounts}, /* key-slot pairs */
-                                                              {PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY, coordinationBufferForPayloads}});
-
-  payloadCommunicationManager.exchangeGlobalMemorySlots(CHANNEL_TAG, {});
-
-  // Synchronizing so that all actors have finished registering their global memory slots
-  coordinationCommunicationManager.fence(CHANNEL_TAG);
-  payloadCommunicationManager.fence(CHANNEL_TAG);
-
-  // Obtaining the globally exchanged memory slots
-  auto sizesBuffer                           = coordinationCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, SIZES_BUFFER_KEY);
-  auto producerCoordinationBufferForCounts   = coordinationCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_SIZES_KEY);
-  auto producerCoordinationBufferForPayloads = coordinationCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, PRODUCER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
-  auto consumerCoordinationBufferForCounts   = coordinationCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_SIZES_KEY);
-  auto consumerCoordinationBufferForPayloads = coordinationCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_COORDINATION_BUFFER_FOR_PAYLOADS_KEY);
-  auto payloadBuffer                         = payloadCommunicationManager.getGlobalMemorySlot(CHANNEL_TAG, CONSUMER_PAYLOAD_KEY);
-
-  // Creating producer and consumer channels
-  auto producer = HiCR::channel::variableSize::SPSC::Producer(coordinationCommunicationManager,
-                                                              payloadCommunicationManager,
-                                                              sizeInfoBuffer,
-                                                              payloadBuffer,
-                                                              sizesBuffer,
-                                                              coordinationBufferForCounts,
-                                                              coordinationBufferForPayloads,
-                                                              consumerCoordinationBufferForCounts,
-                                                              consumerCoordinationBufferForPayloads,
-                                                              CHANNEL_CAPACITY * sizeof(ELEMENT_TYPE),
-                                                              sizeof(ELEMENT_TYPE),
-                                                              channelCapacity);
-
   ////////////////////// Test begin
 
   // Send a buffer big as the buffer channel
@@ -146,17 +97,4 @@ void producerFc(HiCR::MemoryManager               &coordinationMemoryManager,
   // Wait for the consumer 5
   coordinationCommunicationManager.fence(CHANNEL_TAG);
   payloadCommunicationManager.fence(CHANNEL_TAG);
-
-  // Destroying global slots (collective calls)
-  coordinationCommunicationManager.destroyGlobalMemorySlot(sizesBuffer);
-  coordinationCommunicationManager.destroyGlobalMemorySlot(producerCoordinationBufferForCounts);
-  coordinationCommunicationManager.destroyGlobalMemorySlot(producerCoordinationBufferForPayloads);
-
-  coordinationCommunicationManager.fence(CHANNEL_TAG);
-  payloadCommunicationManager.fence(CHANNEL_TAG);
-
-  // Freeing up local memory
-  coordinationMemoryManager.freeLocalMemorySlot(coordinationBufferForCounts);
-  coordinationMemoryManager.freeLocalMemorySlot(coordinationBufferForPayloads);
-  coordinationMemoryManager.freeLocalMemorySlot(sizeInfoBuffer);
 }
