@@ -49,9 +49,9 @@ class Consumer final : public variableSize::Base
    *
    * \param[in] coordinationCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer coordination buffers
    * \param[in] payloadCommunicationManager The backend's memory manager to facilitate communication between the producer and consumer payload buffers
-   * \param[in] payloadBuffer The memory slot pertaining to the payload buffer. The producer will push new tokens
-   *            into this buffer, while there is enough space (in bytes). This buffer should be big enough to hold at least the
-   *            largest message of the variable-sized messages to be pushed.
+   * \param[in] payloadBuffer The memory slot pertaining to the payload buffer. The producer will push messages into this
+   *            buffer, while there is enough space. This buffer should be large enough to hold twice the capacity specified by \ref payloadCapacity argument.
+   *            Half of the buffer is used as excess buffer to avoid internal fragmentation of messages
    * \param[in] tokenBuffer The memory slot pertaining to the token buffer. This buffer is only used to exchange internal metadata
    *            about the sizes of the individual messages being sent.
    * \param[in] internalCoordinationBufferForCounts This is a small buffer to hold the internal (local) state of the
@@ -62,7 +62,7 @@ class Consumer final : public variableSize::Base
    *            buffer for message counts, used for remote updates on pop()
    * \param[in] producerCoordinationBufferForPayloads A global reference to the producer channel's internal coordination
    *            buffer for payload sizes (in bytes), used for remote updates on pop()
-   * \param[in] payloadCapacity The capacity (in bytes) of the buffer for variable-sized messages
+   * \param[in] payloadCapacity The capacity (in bytes) of the buffer for variable-sized messages.
    * \param[in] capacity The maximum number of tokens that will be held by this channel
    * @note: The token size in var-size channels is used only internally, and is passed as having a type size_t (with size sizeof(size_t))
    */
@@ -280,7 +280,10 @@ class Consumer final : public variableSize::Base
 
   /**
    * This funciton can be used to quickly check whether the channel is becoming full when trying 
-   * to push an element of a given size
+   * to push an element of a given size. First thing, we are checking if we can still 
+   * push tokens (i.e., if the coordination buffer has space). Second thing, we are checking the
+   * payload buffer. If the current depth of the payload and the \ref requiredBufferSize to push 
+   * exceed the channel capacity, the channel is considered full.
    * 
    * \param[in] requiredBufferSize size of the token to push into the channel
    * 
