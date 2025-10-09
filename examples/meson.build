@@ -1,3 +1,4 @@
+subdir('createInstance')
 subdir('memcpy')
 subdir('kernel')
 subdir('topology')
