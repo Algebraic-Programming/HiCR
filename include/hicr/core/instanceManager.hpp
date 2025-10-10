@@ -119,6 +119,9 @@ class InstanceManager
   {
     // Requesting the terminating of the instance to the specific backend
     terminateInstanceImpl(instance);
+
+    // Remove from internal list
+    _instances.erase(std::remove_if(_instances.begin(), _instances.end(), [&](std::shared_ptr<Instance> &i) { return i->getId() == instance->getId(); }), _instances.end());
   }
 
   /**
@@ -172,7 +175,7 @@ class InstanceManager
   */
   virtual std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId)
   {
-    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
+    HICR_THROW_LOGIC("This backend does not currently support the detection of new instances during runtime");
   }
 
   /**
@@ -181,7 +184,7 @@ class InstanceManager
   */
   virtual void terminateInstanceImpl(const std::shared_ptr<HiCR::Instance> instance)
   {
-    HICR_THROW_LOGIC("The Host backend does not currently support the termination of instances during runtime");
+    HICR_THROW_LOGIC("This backend does not currently support the termination of instances during runtime");
   }
 
   protected:
