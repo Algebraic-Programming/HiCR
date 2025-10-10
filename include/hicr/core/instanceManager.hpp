@@ -58,16 +58,6 @@ class InstanceManager
   public:
 
   /**
-   * Type definition for an index for a listenable unit.
-   */
-  using RPCTargetIndex_t = uint64_t;
-
-  /**
-   * Type definition for a function that can be executed as RPC
-   */
-  using RPCFunction_t = std::function<void()>;
-
-  /**
    * Type definition for an unsorted set of unique pointers to the detected instances
    */
   using instanceList_t = std::vector<std::shared_ptr<HiCR::Instance>>;
@@ -129,6 +119,9 @@ class InstanceManager
   {
     // Requesting the terminating of the instance to the specific backend
     terminateInstanceImpl(instance);
+
+    // Remove from internal list
+    _instances.erase(std::remove_if(_instances.begin(), _instances.end(), [&](std::shared_ptr<Instance> &i) { return i->getId() == instance->getId(); }), _instances.end());
   }
 
   /**
@@ -182,7 +175,7 @@ class InstanceManager
   */
   virtual std::shared_ptr<HiCR::Instance> addInstanceImpl(HiCR::Instance::instanceId_t instanceId)
   {
-    HICR_THROW_LOGIC("The Host backend does not currently support the detection of new instances during runtime");
+    HICR_THROW_LOGIC("This backend does not currently support the detection of new instances during runtime");
   }
 
   /**
@@ -191,7 +184,7 @@ class InstanceManager
   */
   virtual void terminateInstanceImpl(const std::shared_ptr<HiCR::Instance> instance)
   {
-    HICR_THROW_LOGIC("The Host backend does not currently support the termination of instances during runtime");
+    HICR_THROW_LOGIC("This backend does not currently support the termination of instances during runtime");
   }
 
   protected:
@@ -219,11 +212,6 @@ class InstanceManager
    * Pointer to current instance
    */
   std::shared_ptr<HiCR::Instance> _currentInstance;
-
-  /**
-   * Map of executable functions, representing potential RPC requests
-   */
-  std::map<RPCTargetIndex_t, RPCFunction_t> _RPCTargetMap;
 };
 
 } // namespace HiCR
