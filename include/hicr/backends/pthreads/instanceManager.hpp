@@ -1,3 +1,26 @@
+/*
+ *   Copyright 2025 Huawei Technologies Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @file instanceManager.hpp
+ * @brief This file implements the instance manager class for the Pthreads backend
+ * @author L. Terracciano
+ * @date 10/10/2025
+ */
+
 #pragma once
 
 #include <pthread.h>
@@ -5,62 +28,46 @@
 #include <hicr/core/instanceManager.hpp>
 
 #include "instance.hpp"
-#include "instancePool.hpp"
 
 namespace HiCR::backend::pthreads
 {
 
-class InstanceManager;
-
 /**
-   * Type for any entrypoint function
-  */
+ * Type for the instance entrypoint function
+ */
 typedef std::function<void(InstanceManager *)> entryPoint_t;
 
+/**
+ * Implementation of HiCR InstanceManager class. It creates new HiCR Instance using pthreads
+*/
 class InstanceManager final : public HiCR::InstanceManager
 {
   public:
 
-  InstanceManager(Instance::instanceId_t rootInstanceId, entryPoint_t entrypoint, InstancePool &instancePool)
+  /**
+   * Constructor
+   * 
+   * \param[in] rootInstanceId Id of HiCR root Instance
+   * \param[in] entrypoint function executed by the Instances when created
+  */
+  InstanceManager(Instance::instanceId_t rootInstanceId, entryPoint_t entrypoint)
     : HiCR::InstanceManager(),
       _rootInstanceId(rootInstanceId),
-      _entrypoint(entrypoint),
-      _instancePool(instancePool)
+      _entrypoint(entrypoint)
   {
-    auto currentInstance = std::make_shared<Instance>(pthread_self(), _rootInstanceId);
-    setCurrentInstance(currentInstance);
+    // Create and set current instance in the base class
+    setCurrentInstance(std::make_shared<Instance>(pthread_self(), _rootInstanceId));
   }
 
   ~InstanceManager() override = default;
 
-  void detectInstances(size_t initialInstanceCount)
-  {
-    // Get current instance
-    auto currentInstance = getCurrentInstance();
-
-    // Lock the pool
-    _instancePool.lock();
-
-    // Add the instance to the pool
-    _instancePool.insertInstance(currentInstance);
-
-    // Update the barrier
-    _instancePool.updateBarrier(initialInstanceCount);
-
-    // Unlock the pool
-    _instancePool.unlock();
-
-    // Wait for all the threads to add their own instance
-    _instancePool.barrier();
-
-    // Add all the instances
-    for (auto &i : _instancePool.getInstances())
-    {
-      // Skip current instance
-      if (i->getId() != currentInstance->getId()) { addInstance(i); }
-    }
-  }
-
+  /**
+   * Create a new instance inside a pthread
+   * 
+   * \param[in] instanceTemplate instance template used to create the instance
+   * 
+   * \return a HiCR instance
+  */
   std::shared_ptr<HiCR::Instance> createInstanceImpl(const HiCR::InstanceTemplate instanceTemplate) override
   {
     // Storage for the new instance id
@@ -74,61 +81,88 @@ class InstanceManager final : public HiCR::InstanceManager
     _createdThreads.insert(newInstanceId);
 
     // Create a new HiCR instance
-    auto instance = std::make_shared<Instance>(newInstanceId, _rootInstanceId);
-
-    // Lock the pool
-    _instancePool.lock();
-
-    // Add the new instance
-    _instancePool.insertInstance(instance);
-
-    // Update the barrier
-    _instancePool.updateBarrier(_instancePool.getInstances().size());
-
-    // Unlock
-    _instancePool.unlock();
-
-    return instance;
+    return std::make_shared<Instance>(newInstanceId, _rootInstanceId);
   }
 
+  /**
+   * Add an instance.
+   * 
+   * \param[in] instanceId Id of the instance
+   * 
+   * \return a HiCR instance
+  */
   std::shared_ptr<HiCR::Instance> addInstanceImpl(Instance::instanceId_t instanceId) override { return std::make_shared<Instance>(instanceId, _rootInstanceId); }
 
+  /**
+   * Terminate an instance. Nothing to do other than waiting for the pthread to finish
+   * 
+   * \param[in] instance instance to terminate
+  */
   void terminateInstanceImpl(const std::shared_ptr<HiCR::Instance> instance) override
   {
-    // Lock the pool
-    _instancePool.lock();
-
-    // Delete instance
-    _instancePool.deleteInstance(instance);
-
-    // Unlock
-    _instancePool.unlock();
+    // Nothing to do here
   }
 
+  /**
+   * Wait for all created threads to finalize
+   */
   void finalize() override
   {
-    for (auto threadId : _createdThreads) { pthread_join(threadId, nullptr); }
+    for (auto thread : _createdThreads) { pthread_join(thread, nullptr); }
   }
 
+  /**
+   * Abort execution
+   * 
+   * \param[in] errorCode exit code
+  */
   void abort(int errorCode) override { exit(errorCode); }
 
+  /**
+   * Getter for root instance id
+   * 
+   * \return root instance id
+  */
   HiCR::Instance::instanceId_t getRootInstanceId() const override { return _rootInstanceId; }
 
+  /**
+   * Getter for the entrypoint. Useful if the intention is to 
+   * propagate the same entrypoint across instance managers
+   * 
+   * \return the entrypoint function
+  */
   entryPoint_t getEntrypoint() const { return _entrypoint; }
 
   private:
 
-  __INLINE__ static void *launchWrapper(void *im)
+  /**
+   * Wrapper to launch the entrypoint of the new instance
+   * 
+   * \param[in] parentInstanceManager instance manager of the creator instance
+  */
+  __INLINE__ static void *launchWrapper(void *parentInstanceManager)
   {
-    auto instanceManager = static_cast<InstanceManager *>(im);
-    instanceManager->_entrypoint(instanceManager);
+    // Cast to a Pthread InstanceManager
+    auto p = static_cast<InstanceManager *>(parentInstanceManager);
+
+    // Run the entrypoint
+    p->_entrypoint(p);
     return 0;
   }
 
+  /**
+   * Id of the HiCR root Instance
+  */
   HiCR::Instance::instanceId_t _rootInstanceId;
-  entryPoint_t                 _entrypoint;
-  InstancePool                &_instancePool;
 
+  /**
+   * Function that each newly created instance runs
+   */
+  entryPoint_t _entrypoint;
+
+  /**
+   * Pool of threads created by the Instance Manager
+  */
   std::unordered_set<pthread_t> _createdThreads;
 };
 } // namespace HiCR::backend::pthreads

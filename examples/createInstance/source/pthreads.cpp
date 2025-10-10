@@ -4,65 +4,47 @@
 
 #include <hicr/backends/hwloc/topologyManager.hpp>
 #include <hicr/backends/pthreads/instanceManager.hpp>
-#include <hicr/backends/pthreads/instancePool.hpp>
 
 #include "../include/createInstance.hpp"
 
 int main(int argc, char const *argv[])
 {
   // Check argvs
-  if (argc != 3) { HICR_THROW_RUNTIME("Pass the instance count as argument"); }
+  if (argc != 2) { HICR_THROW_RUNTIME("Pass the number of instances to create as argument"); }
 
   // Get instance count
-  size_t instanceCount    = std::atoi(argv[1]);
-  size_t instanceToCreate = std::atoi(argv[2]);
+  size_t instancesToCreate = std::atoi(argv[1]);
 
   // Determine the root instance id
   HiCR::Instance::instanceId_t rootInstanceId = pthread_self();
 
-  // Create Instance pool
-  HiCR::backend::pthreads::InstancePool instancePool(0);
-
   // Declare entrypoint
-  auto entrypoint = [&](HiCR::backend::pthreads::InstanceManager *creatorIm) {
-    auto im = HiCR::backend::pthreads::InstanceManager(rootInstanceId, creatorIm->getEntrypoint(), instancePool);
-    printf("[Instance %lu] Hello World\n", im.getCurrentInstance()->getId());
-  };
+  auto entrypoint = [&](HiCR::InstanceManager *parentInstanceManager) {
+    // Cast to pthread instance manager
+    auto p = dynamic_cast<HiCR::backend::pthreads::InstanceManager *>(parentInstanceManager);
 
-  // Define initial threads function
-  auto workload = [&]() {
+    // Fail if the casting is not successful
+    if (p == nullptr) { HICR_THROW_RUNTIME("Can not cast instance manager to a pthread-specific one"); }
+
     // Create instance manager
-    auto im = HiCR::backend::pthreads::InstanceManager(rootInstanceId, entrypoint, instancePool);
+    auto createdInstanceManager = HiCR::backend::pthreads::InstanceManager(rootInstanceId, p->getEntrypoint());
 
-    // Detect already started instances
-    im.detectInstances(instanceCount);
-
-    // Discover local topology
-    auto tm = HiCR::backend::hwloc::TopologyManager::createDefault();
-    auto t  = tm->queryTopology();
-
-    // Create the new instance
-    createInstances(im, instanceToCreate, t);
-
-    // Finalize instance manager
-    im.finalize();
+    // Run worker function
+    workerFc(createdInstanceManager);
   };
 
-  std::vector<std::unique_ptr<std::thread>> initialThreads;
-  for (size_t i = 0; i < instanceCount - 1; i++)
-  {
-    // Create thread running the workload
-    auto thread = std::make_unique<std::thread>(workload);
+  // Create instance manager
+  auto instanceManager = HiCR::backend::pthreads::InstanceManager(rootInstanceId, entrypoint);
 
-    // Add to the vector of initial threads
-    initialThreads.push_back(std::move(thread));
-  }
+  // Discover local topology
+  auto topologyManager = HiCR::backend::hwloc::TopologyManager::createDefault();
+  auto topology        = topologyManager->queryTopology();
 
-  // Run the workload
-  workload();
+  // Create the new instance
+  createInstances(instanceManager, instancesToCreate, topology);
 
-  // Wait for all the threads to join
-  for (auto &thread : initialThreads) { thread->join(); }
+  // Finalize instance manager
+  instanceManager.finalize();
 
   printf("Terminating execution\n");
 

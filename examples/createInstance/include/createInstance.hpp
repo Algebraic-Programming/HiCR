@@ -4,13 +4,27 @@
 #include <hicr/core/instanceManager.hpp>
 #include <hicr/core/topology.hpp>
 
-void createInstances(HiCR::InstanceManager &im, size_t instanceCount, HiCR::Topology &t)
+/**
+ * Create new HiCR instances
+ * 
+ * \param[in] instanceManager
+ * \param[in] instanceCount
+ * \param[in] topology
+*/
+void createInstances(HiCR::InstanceManager &instanceManager, size_t instanceCount, HiCR::Topology &topology)
 {
-  auto instanceTemplate = im.createInstanceTemplate(t);
+  auto instanceTemplate = instanceManager.createInstanceTemplate(topology);
 
   for (size_t i = 0; i < instanceCount; i++)
   {
-    auto instance = im.createInstance(*instanceTemplate);
-    printf("[Instance %lu] Create instance %lu\n", im.getCurrentInstance()->getId(), instance->getId());
+    auto instance = instanceManager.createInstance(*instanceTemplate);
+    printf("[Instance %lu] Create instance %lu\n", instanceManager.getCurrentInstance()->getId(), instance->getId());
   }
 }
+
+/**
+ * Function that all the created instances should execute
+ * 
+ * \param[in] instanceManager
+*/
+void workerFc(HiCR::InstanceManager &instanceManager) { printf("[Instance %lu] Hello World\n", instanceManager.getCurrentInstance()->getId()); }
