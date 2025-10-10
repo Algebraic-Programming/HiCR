@@ -65,6 +65,7 @@ class SharedMemory
     pthread_mutex_destroy(&_mutex);
   }
 
+  // Disable object copy
   SharedMemory(const SharedMemory &)            = delete;
   SharedMemory &operator=(const SharedMemory &) = delete;
   SharedMemory(SharedMemory &&)                 = delete;
@@ -214,7 +215,7 @@ class SharedMemory
   pthread_barrier_t _barrier{};
 
   /**
-   * A mutex to make sure threads do not bother each other during certain operations.
+   * Mutex to enable thread safety in the class.
    * Mutability allows const getter functions to lock the mutex, because this does not modify the logical
    * state of the shared memory
    */
