@@ -23,19 +23,16 @@
 
 #pragma once
 
+#include <memory>
 #include <pthread.h>
 
 #include <hicr/core/instanceManager.hpp>
 
+#include "core.hpp"
 #include "instance.hpp"
 
 namespace HiCR::backend::pthreads
 {
-
-/**
- * Type for the instance entrypoint function
- */
-typedef std::function<void(InstanceManager *)> entryPoint_t;
 
 /**
  * Implementation of HiCR InstanceManager class. It creates new HiCR Instance using pthreads
@@ -47,19 +44,34 @@ class InstanceManager final : public HiCR::InstanceManager
   /**
    * Constructor
    * 
-   * \param[in] rootInstanceId Id of HiCR root Instance
-   * \param[in] entrypoint function executed by the Instances when created
+   * \param[in] core pthread core
   */
-  InstanceManager(Instance::instanceId_t rootInstanceId, entryPoint_t entrypoint)
+  InstanceManager(Core &core)
     : HiCR::InstanceManager(),
-      _rootInstanceId(rootInstanceId),
-      _entrypoint(entrypoint)
+      _core(core)
   {
     // Create and set current instance in the base class
-    setCurrentInstance(std::make_shared<Instance>(pthread_self(), _rootInstanceId));
+    setCurrentInstance(_core.addInstance(pthread_self()));
+
+    // Get root instance id
+    _rootInstanceId = _core.getRootInstanceId();
   }
 
   ~InstanceManager() override = default;
+
+  /**
+   * Detect all the running instances
+   * 
+   * \note this call is collective that needs to be called by all the instances registered in the core
+  */
+  void detectInstances()
+  {
+    // Wait for all the threads to add their own instance
+    _core.fence();
+
+    // Add all the instances to the base class
+    for (auto &i : _core.getInstances()) { addInstance(i); }
+  }
 
   /**
    * Create a new instance inside a pthread
@@ -67,22 +79,10 @@ class InstanceManager final : public HiCR::InstanceManager
    * \param[in] instanceTemplate instance template used to create the instance
    * 
    * \return a HiCR instance
+   * 
+   * \note not supported
   */
-  std::shared_ptr<HiCR::Instance> createInstanceImpl(const HiCR::InstanceTemplate instanceTemplate) override
-  {
-    // Storage for the new instance id
-    pthread_t newInstanceId;
-
-    // Launch a new pthread executing the entrypoint
-    auto status = pthread_create(&newInstanceId, nullptr, launchWrapper, this);
-    if (status != 0) { HICR_THROW_RUNTIME("Could not create instance thread. Error: %d", status); }
-
-    // Add to the pool of created pthreads
-    _createdThreads.insert(newInstanceId);
-
-    // Create a new HiCR instance
-    return std::make_shared<Instance>(newInstanceId, _rootInstanceId);
-  }
+  std::shared_ptr<HiCR::Instance> createInstanceImpl(const HiCR::InstanceTemplate instanceTemplate) override { HICR_THROW_RUNTIME("This backend does not support this operation"); }
 
   /**
    * Add an instance.
@@ -91,7 +91,12 @@ class InstanceManager final : public HiCR::InstanceManager
    * 
    * \return a HiCR instance
   */
-  std::shared_ptr<HiCR::Instance> addInstanceImpl(Instance::instanceId_t instanceId) override { return std::make_shared<Instance>(instanceId, _rootInstanceId); }
+  std::shared_ptr<HiCR::Instance> addInstanceImpl(Instance::instanceId_t instanceId) override
+  {
+    // Get the instance from the core. Someone else already created it
+    auto instance = _core.getInstance(instanceId);
+    return instance;
+  }
 
   /**
    * Terminate an instance. Nothing to do other than waiting for the pthread to finish
@@ -106,10 +111,7 @@ class InstanceManager final : public HiCR::InstanceManager
   /**
    * Wait for all created threads to finalize
    */
-  void finalize() override
-  {
-    for (auto thread : _createdThreads) { pthread_join(thread, nullptr); }
-  }
+  void finalize() override {}
 
   /**
    * Abort execution
@@ -125,44 +127,16 @@ class InstanceManager final : public HiCR::InstanceManager
   */
   HiCR::Instance::instanceId_t getRootInstanceId() const override { return _rootInstanceId; }
 
-  /**
-   * Getter for the entrypoint. Useful if the intention is to 
-   * propagate the same entrypoint across instance managers
-   * 
-   * \return the entrypoint function
-  */
-  entryPoint_t getEntrypoint() const { return _entrypoint; }
-
   private:
 
   /**
-   * Wrapper to launch the entrypoint of the new instance
-   * 
-   * \param[in] parentInstanceManager instance manager of the creator instance
+   * Reference to pthread core
   */
-  __INLINE__ static void *launchWrapper(void *parentInstanceManager)
-  {
-    // Cast to a Pthread InstanceManager
-    auto p = static_cast<InstanceManager *>(parentInstanceManager);
-
-    // Run the entrypoint
-    p->_entrypoint(p);
-    return 0;
-  }
+  Core &_core;
 
   /**
    * Id of the HiCR root Instance
   */
   HiCR::Instance::instanceId_t _rootInstanceId;
-
-  /**
-   * Function that each newly created instance runs
-   */
-  entryPoint_t _entrypoint;
-
-  /**
-   * Pool of threads created by the Instance Manager
-  */
-  std::unordered_set<pthread_t> _createdThreads;
 };
 } // namespace HiCR::backend::pthreads

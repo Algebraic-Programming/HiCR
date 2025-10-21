@@ -6,7 +6,7 @@
 #include <hicr/backends/hwloc/topologyManager.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
 #include <hicr/backends/pthreads/computeManager.hpp>
-#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
+#include <hicr/backends/pthreads/core.hpp>
 #include <hicr/core/exceptions.hpp>
 
 #include "./include/network.hpp"
@@ -29,13 +29,12 @@ int main(int argc, char **argv)
   hwloc_topology_init(&hwlocTopology);
 
   // Create shared memory
-  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
-  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+  auto core = HiCR::backend::pthreads::Core(1);
 
   // Instantiating HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager         topologyManager(&hwlocTopology);
   HiCR::backend::hwloc::MemoryManager           memoryManager(&hwlocTopology);
-  HiCR::backend::pthreads::CommunicationManager communicationManager(sharedMemory);
+  HiCR::backend::pthreads::CommunicationManager communicationManager(core);
   HiCR::backend::pthreads::ComputeManager       computeManager;
 
   // Asking backend to check the available devices

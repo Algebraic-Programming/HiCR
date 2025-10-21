@@ -20,7 +20,7 @@
 #include <hicr/backends/hwloc/topologyManager.hpp>
 #include <hicr/backends/hwloc/memoryManager.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
-#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
+#include <hicr/backends/pthreads/core.hpp>
 
 #include "../include/consumer.hpp"
 #include "../include/producer.hpp"
@@ -67,9 +67,8 @@ int main(int argc, char **argv)
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Create shared memory
-  auto  sharedMemoryFactory      = HiCR::backend::pthreads::SharedMemoryFactory();
-  auto &coordinationSharedMemory = sharedMemoryFactory.get(0, threadPoolSize);
-  auto &payloadSharedMemory      = sharedMemoryFactory.get(1, threadPoolSize);
+  auto coordinationSharedMemory = HiCR::backend::pthreads::Core(threadPoolSize);
+  auto payloadSharedMemory      = HiCR::backend::pthreads::Core(threadPoolSize);
 
   // Create communication managers
   std::vector<HiCR::backend::pthreads::CommunicationManager> coordinationCommunicationManagers;

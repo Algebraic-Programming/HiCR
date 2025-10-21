@@ -27,7 +27,7 @@
 #include <hicr/core/device.hpp>
 #include <hicr/backends/hwloc/memoryManager.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
-#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
+#include <hicr/backends/pthreads/core.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 
 TEST(MemoryManager, Construction)
@@ -51,13 +51,12 @@ TEST(MemoryManager, Memory)
   hwloc_topology_t topology;
 
   // Create shared memory
-  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
-  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+  auto core = HiCR::backend::pthreads::Core(1);
 
   // Reserving memory for hwloc
   hwloc_topology_init(&topology);
   HiCR::backend::hwloc::MemoryManager           m(&topology);
-  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
+  HiCR::backend::pthreads::CommunicationManager c(core);
 
   // Initializing hwloc-based topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);

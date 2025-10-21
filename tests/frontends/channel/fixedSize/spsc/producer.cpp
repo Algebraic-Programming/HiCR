@@ -25,7 +25,7 @@
 #include "gtest/gtest.h"
 #include <hicr/backends/hwloc/memoryManager.hpp>
 #include <hicr/backends/pthreads/communicationManager.hpp>
-#include <hicr/backends/pthreads/sharedMemoryFactory.hpp>
+#include <hicr/backends/pthreads/core.hpp>
 #include <hicr/backends/hwloc/topologyManager.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
@@ -48,11 +48,10 @@ TEST(ProducerChannel, Construction)
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Create shared memory
-  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
-  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+  auto core = HiCR::backend::pthreads::Core(1);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
+  HiCR::backend::pthreads::CommunicationManager c(core);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);
@@ -116,11 +115,10 @@ TEST(ProducerChannel, Push)
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Create shared memory
-  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
-  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+  auto core = HiCR::backend::pthreads::Core(1);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
+  HiCR::backend::pthreads::CommunicationManager c(core);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);
@@ -205,11 +203,10 @@ TEST(ProducerChannel, PushWait)
   HiCR::backend::hwloc::MemoryManager m(&topology);
 
   // Create shared memory
-  auto  sharedMemoryFactory = HiCR::backend::pthreads::SharedMemoryFactory();
-  auto &sharedMemory        = sharedMemoryFactory.get(0, 1);
+  auto core = HiCR::backend::pthreads::Core(1);
 
   // Instantiating Pthread-based host (CPU) communication manager
-  HiCR::backend::pthreads::CommunicationManager c(sharedMemory);
+  HiCR::backend::pthreads::CommunicationManager c(core);
 
   // Initializing HWLoc-based host (CPU) topology manager
   HiCR::backend::hwloc::TopologyManager tm(&topology);

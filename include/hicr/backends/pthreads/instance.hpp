@@ -41,21 +41,35 @@ class Instance : public HiCR::Instance
    * Constructor
    * 
    * \param[in] instanceId the id of the instance
+   * \param[in] pthreadId the pthread id 
    * \param[in] rootInstanceId the id of root
   */
-  Instance(instanceId_t instanceId, instanceId_t rootInstanceId)
+  Instance(const instanceId_t instanceId, const pthread_t pthreadId, const instanceId_t rootInstanceId)
     : HiCR::Instance(instanceId),
+      _pthreadId(pthreadId),
       _rootInstanceId(rootInstanceId){};
 
   ~Instance() = default;
 
-  bool isRootInstance() const override { return getId() != _rootInstanceId; };
+  bool isRootInstance() const override { return getId() == _rootInstanceId; };
+
+  /**
+   * Getter for pthread id
+   * 
+   * \return ptread id
+  */
+  pthread_t getPthreadId() const { return _pthreadId; }
 
   private:
 
   /**
+   * Pthread id
+  */
+  const pthread_t _pthreadId;
+
+  /**
    * Id of HiCR root instance
   */
-  instanceId_t _rootInstanceId;
+  const instanceId_t _rootInstanceId;
 };
 } // namespace HiCR::backend::pthreads

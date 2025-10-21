@@ -1,4 +1,4 @@
-subdir('createInstance')
+subdir('detectInstances')
 subdir('memcpy')
 subdir('kernel')
 subdir('topology')

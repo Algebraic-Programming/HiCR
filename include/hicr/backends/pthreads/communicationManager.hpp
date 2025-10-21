@@ -30,7 +30,7 @@
 #include <hicr/core/localMemorySlot.hpp>
 #include <hicr/backends/hwloc/globalMemorySlot.hpp>
 
-#include "sharedMemory.hpp"
+#include "core.hpp"
 
 namespace HiCR::backend::pthreads
 {
@@ -47,11 +47,11 @@ class CommunicationManager final : public HiCR::CommunicationManager
   /**
    * Constructor for the communication manager class for the pthreads backend
    *
-   * \param[in] sharedMemory the shared memory used to exchange global slots among other threads 
+   * \param[in] core the shared memory used to exchange global slots among other threads 
    */
-  CommunicationManager(SharedMemory &sharedMemory)
+  CommunicationManager(Core &core)
     : HiCR::CommunicationManager(),
-      _sharedMemory(sharedMemory)
+      _core(core)
   {}
 
   /**
@@ -62,7 +62,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
   __INLINE__ std::shared_ptr<HiCR::GlobalMemorySlot> getGlobalMemorySlotImpl(const HiCR::backend::hwloc::GlobalMemorySlot::tag_t       tag,
                                                                              const HiCR::backend::hwloc::GlobalMemorySlot::globalKey_t globalKey) override
   {
-    return _sharedMemory.get(tag, globalKey);
+    return _core.getGlobalSlot(tag, globalKey);
   }
 
   /**
@@ -109,7 +109,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
       auto globalMemorySlot = std::make_shared<HiCR::backend::hwloc::GlobalMemorySlot>(tag, globalKey, memorySlot);
 
       // Push it to shared memory
-      _sharedMemory.insert(tag, globalKey, globalMemorySlot);
+      _core.insertGlobalSlot(tag, globalKey, globalMemorySlot);
     }
   }
 
@@ -127,9 +127,10 @@ class CommunicationManager final : public HiCR::CommunicationManager
   __INLINE__ void fenceImpl(const HiCR::GlobalMemorySlot::tag_t tag) override
   {
     // Wait all threads to reach this point
-    _sharedMemory.barrier();
+    _core.fence();
+
     // Registering memory slot
-    for (const auto &[key, slot] : _sharedMemory.getKeyMemorySlots(tag)) { registerGlobalMemorySlot(slot); }
+    for (const auto &[key, slot] : _core.getKeyMemorySlots(tag)) { registerGlobalMemorySlot(slot); }
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::LocalMemorySlot> &destination,
@@ -162,7 +163,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
    */
   __INLINE__ void destroyGlobalMemorySlotImpl(std::shared_ptr<HiCR::GlobalMemorySlot> memorySlot) override
   {
-    _sharedMemory.remove(memorySlot->getGlobalTag(), memorySlot->getGlobalKey());
+    _core.removeGlobalSlot(memorySlot->getGlobalTag(), memorySlot->getGlobalKey());
   }
 
   __INLINE__ void memcpyImpl(const std::shared_ptr<HiCR::GlobalMemorySlot> &destination,
@@ -228,7 +229,7 @@ class CommunicationManager final : public HiCR::CommunicationManager
   /**
    * Shared Memory to exchange slots
   */
-  SharedMemory &_sharedMemory;
+  Core &_core;
 };
 
 } // namespace HiCR::backend::pthreads
