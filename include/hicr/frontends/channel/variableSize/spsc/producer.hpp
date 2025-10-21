@@ -271,7 +271,7 @@ class Producer : public variableSize::Base
    * 
    * \return true if there is enough space to push the token, false otherwise
   */
-  bool isFull(size_t requiredBufferSize)
+  bool isFull(const size_t requiredBufferSize)
   {
     // Check if we can push one more token
     auto coordinationCircularBuffer = getCircularBufferForCounts();
