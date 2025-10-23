@@ -55,23 +55,15 @@ class InstanceManager final : public HiCR::InstanceManager
 
     // Get root instance id
     _rootInstanceId = _core.getRootInstanceId();
-  }
 
-  ~InstanceManager() override = default;
-
-  /**
-   * Detect all the running instances
-   * 
-   * \note this call is collective that needs to be called by all the instances registered in the core
-  */
-  void detectInstances()
-  {
     // Wait for all the threads to add their own instance
     _core.fence();
 
     // Add all the instances to the base class
     for (auto &i : _core.getInstances()) { addInstance(i); }
   }
+
+  ~InstanceManager() override = default;
 
   /**
    * Create a new instance inside a pthread

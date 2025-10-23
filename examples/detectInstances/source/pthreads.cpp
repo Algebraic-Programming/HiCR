@@ -9,9 +9,6 @@ void launcher(int argc, char const *argv[], HiCR::backend::pthreads::Core *core)
   // Create instance manager
   auto instanceManager = HiCR::backend::pthreads::InstanceManager(*core);
 
-  // Wait for all the instances to detect the instances
-  instanceManager.detectInstances();
-
   // Get current instance
   auto currentInstance = instanceManager.getCurrentInstance();
 
