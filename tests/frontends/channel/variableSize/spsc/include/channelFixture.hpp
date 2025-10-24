@@ -102,7 +102,8 @@ class ChannelFixture : public ::testing::Test
     auto sizesBufferSlot = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, sizesBufferSize);
 
     // Allocating payload buffer as a local memory slot
-    auto payloadBufferSlot = payloadMemoryManager.allocateLocalMemorySlot(payloadMemorySpace, 2 * CHANNEL_CAPACITY * sizeof(ELEMENT_TYPE));
+    auto payloadBufferSlot =
+      payloadMemoryManager.allocateLocalMemorySlot(payloadMemorySpace, HiCR::channel::variableSize::SPSC::Consumer::getPayloadBufferSize(CHANNEL_CAPACITY * sizeof(ELEMENT_TYPE)));
 
     // Getting required buffer size
     auto coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
