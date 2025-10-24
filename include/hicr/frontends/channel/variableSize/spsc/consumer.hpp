@@ -135,6 +135,16 @@ class Consumer final : public variableSize::Base
   }
 
   /**
+   * This function can be used to check the size of the payload buffer that needs to be provided
+   * in the creation of the channel. The returned size might differ based on the specific channle implementation
+   *
+   * \param[in] payloadSize the desired payload buffer size
+   * 
+   * \return Size (bytes) of the payload buffer
+   */
+  __INLINE__ static size_t getPayloadBufferSize(const size_t payloadSize) noexcept { return payloadSize * 2; }
+
+  /**
    * This function gets the (starting position, size) pair for a given element in the consumer channel
    * @param[in] pos The payload position required. \p pos = 0 indicates earliest payload that
    *                is currently present in the buffer. \p pos = getDepth()-1 indicates

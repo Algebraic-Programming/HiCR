@@ -36,7 +36,7 @@ void consumerFc(HiCR::MemoryManager               &coordinationMemoryManager,
   auto sizesBufferSlot = coordinationMemoryManager.allocateLocalMemorySlot(coordinationMemorySpace, sizesBufferSize);
 
   // Allocating payload buffer as a local memory slot
-  auto payloadBufferSlot = payloadMemoryManager.allocateLocalMemorySlot(payloadMemorySpace, PAYLOAD_CAPACITY * 2);
+  auto payloadBufferSlot = payloadMemoryManager.allocateLocalMemorySlot(payloadMemorySpace, HiCR::channel::variableSize::SPSC::Consumer::getPayloadBufferSize(PAYLOAD_CAPACITY));
 
   // Getting required buffer size
   auto coordinationBufferSize = HiCR::channel::variableSize::Base::getCoordinationBufferSize();
