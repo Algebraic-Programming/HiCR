@@ -45,10 +45,10 @@ class Core
   /**
    * Constructor
    * 
-   * \param[in] fenceCount barrier size. Indicates how many threads should reach the barrier before continuing
+   * \param[in] instanceCount how many instances will be in the application
   */
-  Core(const size_t fenceCount)
-    : _fenceCount(fenceCount),
+  Core(const size_t instanceCount)
+    : _fenceCount(instanceCount),
       _currentInstanceId(0)
   {
     // Init barrier
