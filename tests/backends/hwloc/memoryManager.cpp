@@ -90,9 +90,6 @@ TEST(MemoryManager, Memory)
   // Making sure the system has enough memory for the next test
   ASSERT_GE(totalMem, testMemAllocSize);
 
-  // Trying to allocate more than allowed
-  EXPECT_THROW(m.allocateLocalMemorySlot(r, std::numeric_limits<ssize_t>::max()), HiCR::LogicException);
-
   // Allocating memory correctly now
   std::shared_ptr<HiCR::LocalMemorySlot> s1 = NULL;
   EXPECT_NO_THROW(s1 = m.allocateLocalMemorySlot(r, testMemAllocSize));

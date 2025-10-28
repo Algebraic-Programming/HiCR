@@ -75,41 +75,6 @@ class MemorySpace
   [[nodiscard]] __INLINE__ virtual const size_t getSize() const { return _size; }
 
   /**
-   *  If supported, obtain the amount of memory currently in use.
-   * In conjunction with the total size above, the user may deduce
-   * information like, usage%, if a particular allocation will be
-   * possible etc.
-   *
-   * \return The current memory usage for this memory space
-   */
-  [[nodiscard]] __INLINE__ virtual size_t getUsage() const { return _usage; };
-
-  /**
-   * Registers an increase in the used memory size of the current memory space, either by allocation or manual registering
-   *
-   * \param delta How much (in bytes) has the memory usage increased
-   */
-  __INLINE__ void increaseUsage(const size_t delta)
-  {
-    if (_usage + delta > _size)
-      HICR_THROW_LOGIC("Increasing memory space usage beyond its capacity (current_usage + increase > capacity | %lu + %lu > %lu)\n", _usage, delta, _size);
-
-    _usage += delta;
-  }
-
-  /**
-   * Registers a decrease in the used memory size of the current memory space, either by freeing or manual deregistering
-   *
-   * \param delta How much (in bytes) has the memory usage decreased
-   */
-  __INLINE__ void decreaseUsage(const size_t delta)
-  {
-    if (delta > _usage) HICR_THROW_LOGIC("Decreasing memory space usage below zero (probably a bug in HiCR) (current_usage - decrease < 0 | %lu - %lu < 0)\n", _usage, delta);
-
-    _usage -= delta;
-  }
-
-  /**
    * Serialization function to enable sharing memory space information
    *
    * @return JSON-formatted serialized memory space information
@@ -127,9 +92,6 @@ class MemorySpace
 
     // Getting size
     output["Size"] = getSize();
-
-    // Getting current usage
-    output["Usage"] = getUsage();
 
     // Returning serialized information
     return output;
@@ -153,11 +115,6 @@ class MemorySpace
     if (input.contains(key) == false) HICR_THROW_LOGIC("The serialized object contains no '%s' key", key.c_str());
     if (input[key].is_number_unsigned() == false) HICR_THROW_LOGIC("The '%s' entry is not a number", key.c_str());
     _size = input[key].get<size_t>();
-
-    // Deserializing usage -- do not fail if unspecified
-    key    = "Usage";
-    _usage = 0;
-    if (input.contains(key) && input[key].is_number_unsigned()) _usage = input[key].get<size_t>();
   }
 
   protected:
@@ -201,11 +158,6 @@ class MemorySpace
    * The memory space size, defined at construction time
    */
   size_t _size{};
-
-  /**
-   * This variable keeps track of the memory space usage (through allocation and frees)
-   */
-  size_t _usage = 0;
 };
 
 } // namespace HiCR

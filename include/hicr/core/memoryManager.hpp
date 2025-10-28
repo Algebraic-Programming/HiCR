@@ -65,9 +65,6 @@ class MemoryManager
    */
   __INLINE__ std::shared_ptr<LocalMemorySlot> allocateLocalMemorySlot(const std::shared_ptr<MemorySpace> &memorySpace, const size_t size)
   {
-    // Increasing memory space usage
-    memorySpace->increaseUsage(size);
-
     // Creating new memory slot structure
     auto newMemSlot = allocateLocalMemorySlotImpl(memorySpace, size);
 
@@ -85,9 +82,6 @@ class MemoryManager
    */
   virtual std::shared_ptr<LocalMemorySlot> registerLocalMemorySlot(const std::shared_ptr<HiCR::MemorySpace> &memorySpace, void *const ptr, const size_t size)
   {
-    // Increasing memory space usage
-    memorySpace->increaseUsage(size);
-
     // Creating new memory slot structure
     auto newMemSlot = registerLocalMemorySlotImpl(memorySpace, ptr, size);
 
@@ -102,9 +96,6 @@ class MemoryManager
    */
   __INLINE__ void deregisterLocalMemorySlot(const std::shared_ptr<HiCR::LocalMemorySlot> &memorySlot)
   {
-    // Decreasing memory space usage
-    memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
-
     // Calling internal implementation
     deregisterLocalMemorySlotImpl(memorySlot);
   }
@@ -137,9 +128,6 @@ class MemoryManager
    */
   __INLINE__ void freeLocalMemorySlot(const std::shared_ptr<HiCR::LocalMemorySlot> &memorySlot)
   {
-    // Decreasing memory space usage
-    memorySlot->getMemorySpace()->decreaseUsage(memorySlot->getSize());
-
     // Actually freeing up slot
     freeLocalMemorySlotImpl(memorySlot);
   }
