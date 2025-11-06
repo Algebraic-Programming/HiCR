@@ -33,7 +33,6 @@
 #include <hicr/core/exceptions.hpp>
 #include <hicr/core/processingUnit.hpp>
 #include <hicr/core/computeManager.hpp>
-#include <hicr/backends/pthreads/computeManager.hpp>
 #include "task.hpp"
 
 namespace HiCR::tasking
