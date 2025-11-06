@@ -43,7 +43,7 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
    *
    * \param fc A replicable C++ function to run in this execution unit
    */
-  ExecutionUnit(Coroutine::coroutineFc_t fc)
+  ExecutionUnit(replicableFc_t fc)
     : HiCR::ExecutionUnit(),
       _fc(std::move(fc)){};
   ExecutionUnit() = delete;
@@ -60,14 +60,14 @@ class ExecutionUnit final : public HiCR::ExecutionUnit
    *
    * \return The internal function stored inside this execution unit
    */
-  [[nodiscard]] __INLINE__ const Coroutine::coroutineFc_t &getFunction() const { return _fc; }
+  [[nodiscard]] __INLINE__ const replicableFc_t &getFunction() const { return _fc; }
 
   private:
 
   /**
    * Replicable internal C++ function to run in this execution unit
    */
-  const Coroutine::coroutineFc_t _fc;
+  const replicableFc_t _fc;
 };
 
 } // namespace HiCR::backend::boost

@@ -56,13 +56,10 @@ class ComputeManager : public HiCR::ComputeManager
    *
    * Its default constructor takes a simple replicable CPU-executable function
    *
-   * \param[in] coroutineFunction The replicable function to execute
+   * \param[in] function The replicable function to execute
    * @return The newly created execution unit
    */
-  __INLINE__ static std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const Coroutine::coroutineFc_t &coroutineFunction)
-  {
-    return std::make_shared<boost::ExecutionUnit>(coroutineFunction);
-  }
+  __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const replicableFc_t &function) override { return std::make_shared<boost::ExecutionUnit>(function); }
 
   /**
    * Creates a new execution state (coroutine)
