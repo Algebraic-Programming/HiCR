@@ -79,6 +79,7 @@ class ComputeResource final : public HiCR::ComputeResource
 
   /**
    * Constructor for the compute resource class of the hwloc backend
+   * \param[in] hwlocObjectIndex Index within the hwloc topology object
    * \param[in] logicalProcessorId Unique identifier for the core assigned to this compute resource
    * \param[in] numaAffinity The NUMA domain associated to this core
    * \param[in] caches The set of caches contained to or accessible by this core

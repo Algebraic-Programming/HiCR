@@ -41,14 +41,6 @@ class Coroutine
   public:
 
   /**
-   * Defines the type accepted by the coroutine function
-   *
-   * \internal The question as to whether std::function entails too much overhead needs to evaluated, and perhaps deprecate it in favor of static function references. For the time being, this seems adequate enough.
-   *
-   */
-  using coroutineFc_t = std::function<void(void *)>;
-
-  /**
    * Resumes the execution of the coroutine. The coroutine needs to have been started before this, otherwise undefined behavior is to be expected.
    */
   __INLINE__ void resume()
@@ -86,7 +78,7 @@ class Coroutine
    * \param[in] fc Function to run by the coroutine
    * \param[in] arg Argument (closure) to be passed to the function
    */
-  __INLINE__ void start(const coroutineFc_t &fc, void *const arg)
+  __INLINE__ void start(const replicableFc_t &fc, void *const arg)
   {
     const auto coroutineFc = [this, fc, arg](::boost::context::continuation &&sink) {
       // Storing caller context

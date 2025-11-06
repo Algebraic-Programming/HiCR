@@ -53,6 +53,18 @@ class ComputeManager
    */
   virtual ~ComputeManager() = default;
 
+  /** This function enables the creation of an execution unit.
+   *
+   * Its default constructor takes a simple replicable CPU-executable function
+   *
+   * \param[in] function The replicable function to execute
+   * @return The newly created execution unit
+   */
+  virtual __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const replicableFc_t &function)
+  {
+    HICR_THROW_RUNTIME("This compute manager cannot create execution units out of replicable CPU-executable functions");
+  }
+
   /**
    * Creates a new processing unit from the provided compute resource
    *

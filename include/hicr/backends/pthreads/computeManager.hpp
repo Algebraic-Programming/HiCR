@@ -34,11 +34,6 @@ namespace HiCR::backend::pthreads
 {
 
 /**
- * Defines the function type including a closure pointer to be accepted for executiong by a pthread processing unit
- */
-using pthreadFc_t = std::function<void(void *)>;
-
-/**
  * Implementation of the pthreads compute manager.
  */
 class ComputeManager : public HiCR::ComputeManager
@@ -61,13 +56,10 @@ class ComputeManager : public HiCR::ComputeManager
    *
    * Its default constructor takes a simple replicable CPU-executable function
    *
-   * \param[in] threadFunction The replicable function to execute
+   * \param[in] function The replicable function to execute
    * @return The newly created execution unit
    */
-  __INLINE__ static std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const pthreadFc_t &threadFunction)
-  {
-    return std::make_shared<pthreads::ExecutionUnit>(threadFunction);
-  }
+  __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const replicableFc_t &function) override { return std::make_shared<pthreads::ExecutionUnit>(function); }
 
   /**
    * Creates an execution state from an execution unit

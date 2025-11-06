@@ -23,9 +23,15 @@
 #pragma once
 
 #include <string>
+#include <functional>
 
 namespace HiCR
 {
+
+/**
+ * Defines a basic replicable CPU-executable function type including a closure pointer to be accepted for execution by a processing unit
+ */
+using replicableFc_t = std::function<void(void *)>;
 
 /**
  * This class represents an abstract definition for a Execution Unit that:

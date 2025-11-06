@@ -231,7 +231,7 @@ class Worker
     _state = state_t::running;
 
     // Creating new execution unit (the processing unit must support an execution unit of 'host' type)
-    auto executionUnit = HiCR::backend::pthreads::ComputeManager::createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
+    auto executionUnit = _executionStateComputeManager->createExecutionUnit([](void *worker) { static_cast<HiCR::tasking::Worker *>(worker)->mainLoop(); });
 
     // Creating worker's execution state
     auto executionState = _executionStateComputeManager->createExecutionState(executionUnit, this);
