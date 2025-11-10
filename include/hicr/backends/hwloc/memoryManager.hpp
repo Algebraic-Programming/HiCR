@@ -97,7 +97,7 @@ class MemoryManager final : public HiCR::MemoryManager
   __INLINE__ std::shared_ptr<HiCR::LocalMemorySlot> allocateLocalMemorySlotImpl(std::shared_ptr<HiCR::MemorySpace> memorySpace, const size_t size) override
   {
     // Getting up-casted pointer for the MPI instance
-    auto m = dynamic_pointer_cast<MemorySpace>(memorySpace);
+    auto m = std::dynamic_pointer_cast<MemorySpace>(memorySpace);
 
     // Checking whether the memory space passed is compatible with this backend
     if (m == nullptr) HICR_THROW_LOGIC("The passed memory space is not supported by this memory manager\n");
@@ -157,7 +157,7 @@ class MemoryManager final : public HiCR::MemoryManager
   __INLINE__ void freeLocalMemorySlotImpl(std::shared_ptr<HiCR::LocalMemorySlot> memorySlot) override
   {
     // Getting up-casted pointer for the memory slot
-    auto m = dynamic_pointer_cast<LocalMemorySlot>(memorySlot);
+    auto m = std::dynamic_pointer_cast<LocalMemorySlot>(memorySlot);
 
     // Checking whether the memory slot passed is compatible with this backend
     if (m == nullptr) HICR_THROW_LOGIC("The passed memory slot is not supported by this backend\n");

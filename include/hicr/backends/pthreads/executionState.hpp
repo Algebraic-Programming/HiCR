@@ -48,7 +48,7 @@ class ExecutionState final : public HiCR::ExecutionState
       _argument(argument)
   {
     // Getting up-casted pointer for the execution unit
-    auto e = static_pointer_cast<pthreads::ExecutionUnit>(executionUnit);
+    auto e = std::static_pointer_cast<pthreads::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (e == nullptr) HICR_THROW_LOGIC("The passed execution of type '%s' is not supported by this backend\n", executionUnit->getType().c_str());

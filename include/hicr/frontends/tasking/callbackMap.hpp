@@ -68,7 +68,7 @@ class CallbackMap
    */
   __INLINE__ void trigger(T arg, const E callback) const
   {
-    if (_callbackMap.contains(callback)) _callbackMap.at(callback)(arg);
+    if (isCallbackSet(callback)) _callbackMap.at(callback)(arg);
   }
 
   /**
@@ -77,7 +77,7 @@ class CallbackMap
    * \param[in] callback The callback to check for
    * \return True, if the callback has been set; false, otherwise
    */
-  __INLINE__ bool isCallbackSet(const E callback) const { return _callbackMap.contains(callback); }
+  __INLINE__ bool isCallbackSet(const E callback) const { return _callbackMap.find(callback) != _callbackMap.end(); }
 
   private:
 

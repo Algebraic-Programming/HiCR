@@ -162,7 +162,9 @@ class Worker
       _processingUnitComputeManager(processingUnitComputeManager),
       _pullFunction(std::move(pullFunction)),
       _callbackMap(callbackMap)
-  {}
+  {
+    _state = state_t::uninitialized;
+  }
 
   virtual ~Worker() = default;
 
@@ -360,7 +362,7 @@ class Worker
   /**
    * Represents the internal state of the worker. Uninitialized upon construction.
    */
-  std::atomic<state_t> _state = state_t::uninitialized;
+  std::atomic<state_t> _state;
 
   /**
    * Group of resources the worker can freely use

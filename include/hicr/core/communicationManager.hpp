@@ -103,13 +103,14 @@ class CommunicationManager
     else
     {
       // If the requested tag and key are not found, return empty storage
-      if (_globalMemorySlotTagKeyMap.contains(tag) == false)
+      if (_globalMemorySlotTagKeyMap.find(tag) == _globalMemorySlotTagKeyMap.end())
         HICR_THROW_LOGIC("Requesting a global memory slot with key %lu for a tag (%lu) that has not been registered.", globalKey, tag);
-      if (_globalMemorySlotTagKeyMap.at(tag).contains(globalKey) == false)
-        HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
+
+      const auto &keyMap = _globalMemorySlotTagKeyMap.at(tag);
+      if (keyMap.find(globalKey) == keyMap.end()) HICR_THROW_LOGIC("Requesting a global memory slot for a  global key (%lu) not registered within the tag (%lu).", globalKey, tag);
 
       // Getting requested memory slot
-      auto value = _globalMemorySlotTagKeyMap.at(tag).at(globalKey);
+      auto value = keyMap.at(globalKey);
 
       // Returning value
       return value;
@@ -176,7 +177,7 @@ class CommunicationManager
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
+    if (_globalMemorySlotTagKeyMap.find(memorySlotTag) == _globalMemorySlotTagKeyMap.end())
     {
       HICR_THROW_LOGIC("Attempting to de-register a global memory slot but its tag/key pair is not registered in this backend");
     }
@@ -421,12 +422,12 @@ class CommunicationManager
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
+    if (_globalMemorySlotTagKeyMap.find(memorySlotTag) == _globalMemorySlotTagKeyMap.end())
       HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false)
-      HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
+    const auto &keyMap = _globalMemorySlotTagKeyMap.at(memorySlotTag);
+    if (keyMap.find(memorySlotGlobalKey) == keyMap.end()) HICR_THROW_LOGIC("Attempting to lock a global memory slot but its tag/key pair is not registered in this backend");
 
     // Calling internal implementation
     return acquireGlobalLockImpl(memorySlot);
@@ -444,16 +445,14 @@ class CommunicationManager
     const auto memorySlotGlobalKey = memorySlot->getGlobalKey();
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.contains(memorySlotTag) == false)
+    if (_globalMemorySlotTagKeyMap.find(memorySlotTag) == _globalMemorySlotTagKeyMap.end())
     {
       HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
     }
 
     // Checking whether the memory slot is correctly registered as global
-    if (_globalMemorySlotTagKeyMap.at(memorySlotTag).contains(memorySlotGlobalKey) == false)
-    {
-      HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend");
-    }
+    const auto &keyMap = _globalMemorySlotTagKeyMap.at(memorySlotTag);
+    if (keyMap.find(memorySlotGlobalKey) == keyMap.end()) { HICR_THROW_LOGIC("Attempting to release a global memory slot but its tag/key pair is not registered in this backend"); }
 
     // Calling internal implementation
     releaseGlobalLockImpl(memorySlot);

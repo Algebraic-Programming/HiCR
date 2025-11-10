@@ -33,12 +33,12 @@
 /**
  * HiCR standard denomination of the compute resources key
  */
-constexpr std::string_view _HICR_DEVICE_COMPUTE_RESOURCES_KEY_ = "Compute Resources";
+#define _HICR_DEVICE_COMPUTE_RESOURCES_KEY_ "Compute Resources"
 
 /**
  * HiCR standard denomination of the memory spaces key
  */
-constexpr std::string_view _HICR_DEVICE_MEMORY_SPACES_KEY_ = "Memory Spaces";
+#define _HICR_DEVICE_MEMORY_SPACES_KEY_ "Memory Spaces"
 
 namespace HiCR
 {

@@ -27,6 +27,7 @@
 #include <set>
 #include <sched.h>
 #include <fcntl.h>
+#include <memory>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <pthread.h>
@@ -129,7 +130,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     : HiCR::ProcessingUnit(computeResource)
   {
     // Getting up-casted pointer for the processing unit
-    auto c = dynamic_pointer_cast<HiCR::backend::hwloc::ComputeResource>(computeResource);
+    auto c = std::dynamic_pointer_cast<HiCR::backend::hwloc::ComputeResource>(computeResource);
 
     // Checking whether the execution unit passed is compatible with this backend
     if (c == nullptr) HICR_THROW_LOGIC("The passed compute resource is not supported by this processing unit type\n");
@@ -166,7 +167,7 @@ class ProcessingUnit final : public HiCR::ProcessingUnit
     auto thread = static_cast<pthreads::ProcessingUnit *>(p);
 
     // Getting associated compute unit reference
-    auto computeResource = dynamic_pointer_cast<HiCR::backend::hwloc::ComputeResource>(thread->getComputeResource());
+    auto computeResource = std::dynamic_pointer_cast<HiCR::backend::hwloc::ComputeResource>(thread->getComputeResource());
 
     // Setting signal to hear for suspend/resume
     signal(HICR_SUSPEND_SIGNAL, ProcessingUnit::catchSuspendSignal);
