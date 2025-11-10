@@ -76,8 +76,8 @@ class Task final : public HiCR::tasking::Task
    * @param[in] label The unique label to assign to this task
    * @param[in] executionUnit Specifies the function/kernel to execute.
    */
-  __INLINE__ Task(const label_t label, const HiCR::backend::pthreads::ExecutionUnit::pthreadFc_t threadFunction)
-    : HiCR::tasking::Task(HiCR::backend::pthreads::ComputeManager::createExecutionUnit(threadFunction), nullptr),
+  __INLINE__ Task(const label_t label, const HiCR::backend::pthreads::ExecutionUnit::pthreadFc_t threadFunction, HiCR::ComputeManager *computeManager)
+    : HiCR::tasking::Task(computeManager->createExecutionUnit(threadFunction), nullptr),
       _label(label)
   {}
 

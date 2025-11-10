@@ -26,6 +26,7 @@
 #include <functional>
 #include <boost/context/continuation.hpp>
 #include <hicr/core/exceptions.hpp>
+#include <hicr/core/executionUnit.hpp>
 
 namespace HiCR::backend::boost
 {
@@ -78,7 +79,7 @@ class Coroutine
    * \param[in] fc Function to run by the coroutine
    * \param[in] arg Argument (closure) to be passed to the function
    */
-  __INLINE__ void start(const replicableFc_t &fc, void *const arg)
+  __INLINE__ void start(const HiCR::replicableFc_t &fc, void *const arg)
   {
     const auto coroutineFc = [this, fc, arg](::boost::context::continuation &&sink) {
       // Storing caller context

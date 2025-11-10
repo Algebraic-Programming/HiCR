@@ -22,6 +22,7 @@
 
 static Runtime              *_runtime;
 static std::atomic<uint64_t> _taskCounter;
+static HiCR::ComputeManager *_computeManager;
 
 // This function serves to encode a fibonacci task label
 inline const uint64_t getFibonacciLabel(const uint64_t x, const uint64_t _initialValue) { return _initialValue; }
@@ -44,8 +45,8 @@ uint64_t fibonacci(Task *currentTask, const uint64_t x)
   uint64_t taskId1 = _taskCounter.fetch_add(1);
   uint64_t taskId2 = _taskCounter.fetch_add(1);
 
-  auto task1 = new Task(taskId1, fibFc1);
-  auto task2 = new Task(taskId2, fibFc2);
+  auto task1 = new Task(taskId1, fibFc1, _computeManager);
+  auto task2 = new Task(taskId2, fibFc2, _computeManager);
 
   _runtime->addTask(task1);
   _runtime->addTask(task2);
@@ -58,8 +59,11 @@ uint64_t fibonacci(Task *currentTask, const uint64_t x)
   return result1 + result2;
 }
 
-uint64_t fibonacciDriver(Runtime &runtime, const uint64_t initialValue)
+uint64_t fibonacciDriver(Runtime &runtime, const uint64_t initialValue, HiCR::ComputeManager *computeManager)
 {
+  // Setting compute manager for the creation of new tasks
+  _computeManager = computeManager;
+
   // Setting event handler to re-add task to the queue after it suspended itself
   runtime.setCallbackHandler(HiCR::tasking::Task::callback_t::onTaskSuspend, [&](HiCR::tasking::Task *task) { runtime.awakenTask(task); });
 
@@ -74,7 +78,7 @@ uint64_t fibonacciDriver(Runtime &runtime, const uint64_t initialValue)
   auto initialFc = [&](void *arg) { result = fibonacci((Task *)arg, initialValue); };
 
   // Now creating tasks and their dependency graph
-  auto initialTask = new Task(_taskCounter.fetch_add(1), initialFc);
+  auto initialTask = new Task(_taskCounter.fetch_add(1), initialFc, _computeManager);
   runtime.addTask(initialTask);
 
   // Running runtime

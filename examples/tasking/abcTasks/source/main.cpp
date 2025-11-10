@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   for (const auto &computeResource : computeResources) runtime.addProcessingUnit(computeManager.createProcessingUnit(computeResource));
 
   // Running ABCtasks example
-  abcTasks(runtime);
+  abcTasks(runtime, &computeManager);
 
   // Freeing up memory
   hwloc_topology_destroy(topology);

@@ -21,7 +21,7 @@
 
 #define ITERATIONS 10
 
-void abcTasks(Runtime &runtime)
+void abcTasks(Runtime &runtime, HiCR::ComputeManager *computeManager)
 {
   // Creating task functions
   auto taskAfc = [&runtime](void *arg) { printf("Task A %lu\n", ((Task *)arg)->getLabel()); };
@@ -31,21 +31,21 @@ void abcTasks(Runtime &runtime)
   // Now creating tasks and their dependency graph
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto cTask = new Task(i * 3 + 2, taskCfc);
+    auto cTask = new Task(i * 3 + 2, taskCfc, computeManager);
     cTask->addTaskDependency(i * 3 + 1);
     runtime.addTask(cTask);
   }
 
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto bTask = new Task(i * 3 + 1, taskBfc);
+    auto bTask = new Task(i * 3 + 1, taskBfc, computeManager);
     bTask->addTaskDependency(i * 3 + 0);
     runtime.addTask(bTask);
   }
 
   for (size_t i = 0; i < ITERATIONS; i++)
   {
-    auto aTask = new Task(i * 3 + 0, taskAfc);
+    auto aTask = new Task(i * 3 + 0, taskAfc, computeManager);
     if (i > 0) aTask->addTaskDependency(i * 3 - 1);
     runtime.addTask(aTask);
   }

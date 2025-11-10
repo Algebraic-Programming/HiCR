@@ -78,7 +78,7 @@ int main(int argc, char **argv)
   for (const auto &computeResource : computeResources) runtime.addProcessingUnit(pthreadsComputeManager.createProcessingUnit(computeResource));
 
   // Running Fibonacci example
-  auto result = fibonacciDriver(runtime, initialValue);
+  auto result = fibonacciDriver(runtime, initialValue, &boostComputeManager);
 
   // Printing result
   printf("Fib(%lu) = %lu\n", initialValue, result);

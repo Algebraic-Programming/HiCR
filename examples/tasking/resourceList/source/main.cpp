@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 
   // Adding multiple compute tasks
   printf("Running %lu work tasks with %lu processing units...\n", workTaskCount, coreSubset.size());
-  for (size_t i = 0; i < workTaskCount; i++) runtime.addTask(new Task(i, taskFc));
+  for (size_t i = 0; i < workTaskCount; i++) runtime.addTask(new Task(i, taskFc, &computeManager));
 
   // Running runtime only on the core subset
   auto t0 = std::chrono::high_resolution_clock::now();
