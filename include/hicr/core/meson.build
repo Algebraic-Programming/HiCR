@@ -12,7 +12,7 @@ endif
 # Warning handling option
 warningAsErrorFlags=[]
 if get_option('compileWarningsAsErrors') == true
-  warningAsErrorFlags=[ '-Werror' ]
+  warningAsErrorFlags=[ '-Werror', '-Wall' ]
 endif
 
 hicrBuildLinkArgs = [

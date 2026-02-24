@@ -68,7 +68,6 @@ class ComputeResource final : public HiCR::ComputeResource
    */
   ComputeResource(hwloc_topology_t topology, const hwlocObjectIndex_t hwlocObjectIndex)
     : HiCR::ComputeResource(),
-      _hwlocObjectIndex(hwlocObjectIndex),
       _logicalProcessorId(detectLogicalProcessorId(topology, hwlocObjectIndex)),
       _physicalProcessorId(detectPhysicalProcessorId(topology, hwlocObjectIndex)),
       _numaAffinity(detectCoreNUMAffinity(topology, hwlocObjectIndex)),
@@ -91,7 +90,6 @@ class ComputeResource final : public HiCR::ComputeResource
                   const numaAffinity_t                                       numaAffinity,
                   std::unordered_set<std::shared_ptr<backend::hwloc::Cache>> caches)
     : HiCR::ComputeResource(),
-      _hwlocObjectIndex(hwlocObjectIndex),
       _logicalProcessorId(logicalProcessorId),
       _physicalProcessorId(physicalProcessorId),
       _numaAffinity(numaAffinity),
@@ -383,11 +381,6 @@ class ComputeResource final : public HiCR::ComputeResource
   }
 
   private:
-
-  /**
-   * Id of the core within the hwloc topology
-  */
-  hwlocObjectIndex_t _hwlocObjectIndex;
 
   /**
    * The logical ID of the hardware core / processing unit

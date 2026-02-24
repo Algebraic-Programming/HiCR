@@ -55,6 +55,11 @@ class ComputeManager final : public HiCR::ComputeManager
   ~ComputeManager() override = default;
 
   /**
+   * Reintroduce base class function to avoid hiding
+   */
+  using HiCR::ComputeManager::createExecutionUnit;
+
+  /**
    * Creates an execution unit given a stream/vector of \p kernelOperations to be executed on the device
    *
    * \param[in] kernelOperations the sequence of kernel operations to executed
@@ -159,7 +164,7 @@ class ComputeManager final : public HiCR::ComputeManager
     auto p = dynamic_cast<opencl::ProcessingUnit *>(processingUnit.get());
 
     // If the processing unit is not recognized, throw error. We can use the processing unit's type (string) now.
-    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType());
+    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType().c_str());
 
     // Returning converted pointer
     return p;

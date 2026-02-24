@@ -106,16 +106,6 @@ class Runtime
   std::vector<std::unique_ptr<HiCR::ProcessingUnit>> _processingUnits;
 
   /**
-   * Determines the maximum amount of tasks (required by the lock-free queue)
-  */
-  const size_t _maxTasks;
-
-  /**
-   * Determines the maximum amount of workers (required by the lock-free queue)
-  */
-  const size_t _maxWorkers;
-
-  /**
    * This function checks whether a given task is ready to go (i.e., all its dependencies have been satisfied)
    *
    * \param[in] task The task to check
@@ -139,18 +129,13 @@ class Runtime
   /**
    * Constructor of the example tasking runtime.
    */
-  Runtime(HiCR::ComputeManager *executionStateComputeManager,
-          HiCR::ComputeManager *processingUnitComputeManager,
-          const size_t          maxTasks   = __TASKR_DEFAULT_MAX_TASKS,
-          const size_t          maxWorkers = __TASKR_DEFAULT_MAX_WORKERS)
+  Runtime(HiCR::ComputeManager *executionStateComputeManager, HiCR::ComputeManager *processingUnitComputeManager, const size_t maxTasks = __TASKR_DEFAULT_MAX_TASKS)
     : _executionStateComputeManager(executionStateComputeManager),
-      _processingUnitComputeManager(processingUnitComputeManager),
-      _maxTasks(maxTasks),
-      _maxWorkers(maxWorkers)
+      _processingUnitComputeManager(processingUnitComputeManager)
   {
     _callbackMap          = new HiCR::tasking::Task::taskCallbackMap_t();
     _waitingTaskQueue     = new HiCR::concurrent::Queue<HiCR::tasking::Task>(maxTasks);
-    _suspendedWorkerQueue = new HiCR::concurrent::Queue<HiCR::tasking::Worker>(maxWorkers);
+    _suspendedWorkerQueue = new HiCR::concurrent::Queue<HiCR::tasking::Worker>(__TASKR_DEFAULT_MAX_WORKERS);
   }
 
   // Destructor (frees previous allocations)

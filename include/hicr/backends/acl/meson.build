@@ -12,7 +12,7 @@ if aclPath == ''
 else
    backendIncludes = include_directories([aclPath + '/include'])
    backendLinkArgs = [
-      '-L' + aclPath + '/acllib/lib64/stub',
+      '-L' + aclPath / host_machine.cpu_family() + '-linux/lib64',
       '-lascendcl',
    ]
 endif

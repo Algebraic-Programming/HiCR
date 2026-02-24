@@ -52,7 +52,7 @@ class ExecutionState final : public HiCR::ExecutionState
     auto e = dynamic_pointer_cast<acl::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType());
+    if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType().c_str());
 
     _executionUnit = e;
   }
@@ -111,7 +111,7 @@ class ExecutionState final : public HiCR::ExecutionState
     if (err != ACL_SUCCESS) HICR_THROW_RUNTIME("can not set sync bit to 1. Error %d", err);
   }
 
-  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by acl backend"); }
+  __INLINE__ void suspendImpl() override { HICR_THROW_RUNTIME("Suspend functionality not supported by acl backend"); }
 
   /**
    * Internal implementation of checkFinalization routine. It periodically query the ACL event on the stream to check for completion and

@@ -39,13 +39,13 @@ class ObjectStoreTest : public ::testing::Test
   {
     memorySpace = std::make_shared<MockMemorySpace>(1024);
 
-    auto customRegisterLocalMemorySlotImpl = [this](std::shared_ptr<HiCR::MemorySpace> memorySpace, void *const ptr, const size_t size) {
+    auto customRegisterLocalMemorySlotImpl = [](std::shared_ptr<HiCR::MemorySpace> memorySpace, void *const ptr, const size_t size) {
       return std::make_shared<HiCR::LocalMemorySlot>(ptr, size, memorySpace);
     };
 
     ON_CALL(memoryManager, registerLocalMemorySlotImpl(_, _, _)).WillByDefault(Invoke(customRegisterLocalMemorySlotImpl));
 
-    auto customPromoteLocalMemorySlot = [this](std::shared_ptr<HiCR::LocalMemorySlot> slot, HiCR::GlobalMemorySlot::tag_t tag) {
+    auto customPromoteLocalMemorySlot = [](std::shared_ptr<HiCR::LocalMemorySlot> slot, HiCR::GlobalMemorySlot::tag_t tag) {
       return std::make_shared<HiCR::GlobalMemorySlot>(tag, 0, slot);
     };
 

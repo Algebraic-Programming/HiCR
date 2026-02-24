@@ -30,7 +30,6 @@
 
 #include <acl/acl.h>
 #include <memory>
-#include <unordered_map>
 #include <hicr/backends/acl/executionUnit.hpp>
 #include <hicr/backends/acl/processingUnit.hpp>
 #include <hicr/backends/acl/kernel.hpp>
@@ -55,6 +54,11 @@ class ComputeManager final : public HiCR::ComputeManager
     : HiCR::ComputeManager(){};
 
   ~ComputeManager() override = default;
+
+  /**
+   * Avoid shadowing of base class implementation
+   */
+  using HiCR::ComputeManager::createExecutionUnit;
 
   /**
    * Creates an execution unit given a stream/vector of \p kernelOperations to be executed on the device
@@ -166,7 +170,7 @@ class ComputeManager final : public HiCR::ComputeManager
     auto p = dynamic_cast<acl::ProcessingUnit *>(processingUnit.get());
 
     // If the processing unit is not recognized, throw error. We can use the processing unit's type (string) now.
-    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType());
+    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType().c_str());
 
     // Returning converted pointer
     return p;

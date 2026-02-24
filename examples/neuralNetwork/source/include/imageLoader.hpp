@@ -18,7 +18,7 @@
 std::vector<uint32_t> loadLabels(const std::string &labelFilePath)
 {
   std::ifstream in(labelFilePath, std::ios::binary);
-  if (!in) { HICR_THROW_RUNTIME("Cannot open label file: %s", labelFilePath); }
+  if (!in) { HICR_THROW_RUNTIME("Cannot open label file: %s", labelFilePath.c_str()); }
 
   // Determine the file size
   in.seekg(0, std::ios::end);
@@ -30,7 +30,7 @@ std::vector<uint32_t> loadLabels(const std::string &labelFilePath)
   std::vector<uint32_t> labels(numLabels);
 
   // Read the entire file into the vector
-  if (!in.read(reinterpret_cast<char *>(labels.data()), fileSize)) { HICR_THROW_RUNTIME("Error reading label file: %s", labelFilePath); }
+  if (!in.read(reinterpret_cast<char *>(labels.data()), fileSize)) { HICR_THROW_RUNTIME("Error reading label file: %s", labelFilePath.c_str()); }
 
   // Close file
   in.close();

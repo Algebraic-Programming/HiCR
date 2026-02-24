@@ -6,8 +6,6 @@
 #include <hicr/frontends/channel/fixedSize/spsc/producer.hpp>
 #include <hicr/frontends/channel/fixedSize/spsc/consumer.hpp>
 
-#include <iostream>
-
 void producerFc(HiCR::MemoryManager               &memoryManager,
                 HiCR::CommunicationManager        &communicationManager,
                 std::shared_ptr<HiCR::MemorySpace> bufferMemorySpace,
@@ -56,9 +54,9 @@ void producerFc(HiCR::MemoryManager               &memoryManager,
     communicationManager, communicationManager, pongTokenBufferSlot, pongCoordinationBuffer, consumerPongCoordinationBuffer, tokenSize, channelCapacity);
 
   // Allocating a send slot to put the values we want to communicate
-  ELEMENT_TYPE sendBuffer[tokenSize] = {'a'};
-  auto         sendBufferPtr         = sendBuffer;
-  auto         sendSlot              = memoryManager.registerLocalMemorySlot(bufferMemorySpace, sendBufferPtr, tokenSize);
+  auto sendBuffer    = std::vector<ELEMENT_TYPE>(tokenSize, 'a');
+  auto sendBufferPtr = sendBuffer;
+  auto sendSlot      = memoryManager.registerLocalMemorySlot(bufferMemorySpace, static_cast<void *>(sendBufferPtr.data()), tokenSize);
 
   // Pushing values to the channel, one by one, suspending when/if the channel is full
   for (int i = 0; i < msgCount; i++)

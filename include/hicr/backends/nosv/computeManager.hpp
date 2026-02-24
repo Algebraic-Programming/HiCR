@@ -51,7 +51,7 @@ class ComputeManager : public HiCR::ComputeManager
    * \param[in] executionUnit The replicable function to execute
    * @return The newly created execution unit
    */
-  __INLINE__ static std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const std::function<void(void *)> &executionUnit)
+  __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const std::function<void(void *)> &executionUnit) override
   {
     return std::make_shared<HiCR::backend::nosv::ExecutionUnit>(executionUnit);
   }
@@ -176,7 +176,7 @@ class ComputeManager : public HiCR::ComputeManager
     auto p = dynamic_cast<nosv::ProcessingUnit *>(processingUnit.get());
 
     // If the processing unit is not recognized, throw error. We can use the processing unit's type (string) now.
-    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType());
+    if (p == nullptr) HICR_THROW_LOGIC("This compute manager cannot handle processing units of type '%s'", processingUnit->getType().c_str());
 
     // Returning converted pointer
     return p;
