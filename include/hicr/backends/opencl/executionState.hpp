@@ -51,7 +51,7 @@ class ExecutionState final : public HiCR::ExecutionState
     auto e = dynamic_pointer_cast<opencl::ExecutionUnit>(executionUnit);
 
     // Checking whether the execution unit passed is compatible with this backend
-    if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType());
+    if (e == NULL) HICR_THROW_LOGIC("The execution unit of type '%s' is not supported by this backend\n", executionUnit->getType().c_str());
 
     _executionUnit = e;
   }
@@ -101,7 +101,7 @@ class ExecutionState final : public HiCR::ExecutionState
     if (err != CL_SUCCESS) [[unlikely]] { HICR_THROW_RUNTIME("Failed to write event in the queue", err); }
   }
 
-  __INLINE__ void suspendImpl() { HICR_THROW_RUNTIME("Suspend functionality not supported by OpenCL backend"); }
+  __INLINE__ void suspendImpl() override { HICR_THROW_RUNTIME("Suspend functionality not supported by OpenCL backend"); }
 
   /**
    * Internal implementation of checkFinalization routine. It periodically query the OpenCL event on the queue to check for completion and

@@ -70,13 +70,6 @@ class InstanceManager final : public HiCR::InstanceManager
   }
 
   [[nodiscard]] __INLINE__ HiCR::Instance::instanceId_t getRootInstanceId() const override { return 0; }
-
-  private:
-
-  /**
-   * The return value buffer is stored locally 
-  */
-  void *_returnValueBuffer{};
 };
 
 } // namespace HiCR::backend::hwloc

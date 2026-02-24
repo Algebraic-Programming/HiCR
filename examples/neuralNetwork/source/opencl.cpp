@@ -102,8 +102,7 @@ int main(int argc, char **argv)
   }
 
   // Create execution unit factory
-  auto executioUnitFactory =
-    factory::opencl::ExecutionUnitFactory(openclComputeManager, openclCommunicationManager, openclMemoryManager, deviceMemorySpace, hostMemorySpace, program);
+  auto executioUnitFactory = factory::opencl::ExecutionUnitFactory(openclComputeManager, program);
 
   ////// Load ONNX model
   // Declare ONNX model

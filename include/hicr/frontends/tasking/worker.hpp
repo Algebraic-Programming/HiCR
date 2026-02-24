@@ -392,7 +392,7 @@ class Worker
       if (_callbackMap != nullptr) _callbackMap->trigger(this, callback_t::onWorkerTaskPulled);
 
       // If a task was returned, then start or execute it
-      if (_currentTask != nullptr) 
+      if (_currentTask != nullptr)
       {
         // If the task hasn't been initialized yet, we need to do it now
         if (_currentTask->getState() == HiCR::ExecutionState::state_t::uninitialized)
@@ -409,7 +409,7 @@ class Worker
       }
 
       // Requesting processing units to terminate as soon as possible
-      if (_state == state_t::suspending) 
+      if (_state == state_t::suspending)
       {
         // Setting state as suspended
         _state = state_t::suspended;

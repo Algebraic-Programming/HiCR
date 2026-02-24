@@ -21,7 +21,6 @@
  * @date 16/8/2024
  */
 
-#include <limits>
 #include "gtest/gtest.h"
 #include <hicr/core/instance.hpp>
 #include <hicr/backends/hwloc/instanceManager.hpp>

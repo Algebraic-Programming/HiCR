@@ -129,8 +129,6 @@ class MemoryManager final : public HiCR::MemoryManager
     void        *ptr       = malloc(newSize);
     if (ptr == nullptr) HICR_THROW_RUNTIME("Could not allocate memory of size %lu", newSize);
 
-    // Update the memory usage for the memory space
-    memorySpace->increaseUsage(newSize - size);
     // Creating and returning new memory slot
     return registerLocalMemorySlotImpl(memorySpace, ptr, newSize);
   }

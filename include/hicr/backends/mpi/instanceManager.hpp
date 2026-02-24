@@ -132,11 +132,6 @@ class InstanceManager final : public HiCR::InstanceManager
   private:
 
   /**
-   * This value remembers what is the MPI rank of the instance that requested the execution of an RPC
-   */
-  int _RPCRequestRank = 0;
-
-  /**
    * Default MPI communicator to use for this backend
    */
   const MPI_Comm _comm;

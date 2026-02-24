@@ -27,17 +27,8 @@ class ExecutionUnitFactory final : public factory::ExecutionUnitFactory
    * @param[in] computeManager a HiCR compute manager
    *
   */
-  ExecutionUnitFactory(HiCR::backend::opencl::ComputeManager       &computeManager,
-                       HiCR::backend::opencl::CommunicationManager &communicationManager,
-                       HiCR::backend::opencl::MemoryManager        &memoryManager,
-                       std::shared_ptr<HiCR::MemorySpace>          &deviceMemorySpace,
-                       std::shared_ptr<HiCR::MemorySpace>          &hostMemorySpace,
-                       cl::Program                                 &program)
+  ExecutionUnitFactory(HiCR::backend::opencl::ComputeManager &computeManager, cl::Program &program)
     : _computeManager(computeManager),
-      _communicationManager(communicationManager),
-      _memoryManager(memoryManager),
-      _deviceMemorySpace(deviceMemorySpace),
-      _hostMemorySpace(hostMemorySpace),
       _program(program)
   {}
 
@@ -76,26 +67,6 @@ class ExecutionUnitFactory final : public factory::ExecutionUnitFactory
    * OpenCL compute manager
   */
   HiCR::backend::opencl::ComputeManager &_computeManager;
-
-  /**
- * OpenCL communication manager
- */
-  HiCR::backend::opencl::CommunicationManager &_communicationManager;
-
-  /**
- * OpenCL memory manager
- */
-  HiCR::backend::opencl::MemoryManager &_memoryManager;
-
-  /**
- * OpenCL device memory space
- */
-  std::shared_ptr<HiCR::MemorySpace> &_deviceMemorySpace;
-
-  /**
- * Host memory space
- */
-  std::shared_ptr<HiCR::MemorySpace> &_hostMemorySpace;
 
   /**
    * OpenCL program
