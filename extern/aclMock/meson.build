@@ -10,7 +10,7 @@ project(
 
 # HiCR acl Mock Backend Configuration
 
-backendIncludes = include_directories(['.'])
+backendIncludes = include_directories(['include'])
 
 aclDependency = declare_dependency(
   sources: ['acl.cpp'],
