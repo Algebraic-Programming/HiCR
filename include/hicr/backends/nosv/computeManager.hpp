@@ -51,7 +51,7 @@ class ComputeManager : public HiCR::ComputeManager
    * \param[in] executionUnit The replicable function to execute
    * @return The newly created execution unit
    */
-  __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const std::function<void(void *)> &executionUnit) override
+  __INLINE__ std::shared_ptr<HiCR::ExecutionUnit> createExecutionUnit(const replicableFc_t &executionUnit) override
   {
     return std::make_shared<HiCR::backend::nosv::ExecutionUnit>(executionUnit);
   }
